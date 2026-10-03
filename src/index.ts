@@ -8,11 +8,12 @@ import {
   Plugin as SyPlugin,
   showMessage,
 } from "siyuan"
-import { getBlockAttrs, getChildBlocks, insertBlock, setBlockAttrs, sql, chatAI } from "@/api"
+import { getBlockAttrs, getChildBlocks, insertBlock, setBlockAttrs, sql, chatAI, putFile } from "@/api"
 import { analyzeSlideSplits } from "@/ai/auto-splitter"
 import { generateSpeakerNotesWithAI } from "@/ai/notes-generator"
 import { extractBlockRefs } from "@/compiler/block-ref-resolver"
 import { buildSlidevDocument } from "@/compiler/slidev-ast-builder"
+import { CliDevServerBridge } from "@/engine/cli-devserver-bridge"
 import {
   globalSandboxBridge,
   mountDock,
@@ -22,7 +23,8 @@ import {
 } from "@/main"
 import { mirrorBlockSelection } from "@/sync/selection-mirror"
 import { PropertyManagerBridge } from "@/synergy/property-manager-bridge"
-import type { ISiYuanBlockNode } from "@/types/slidev-protocol"
+import type { ISlidevDocument, ISiYuanBlockNode } from "@/types/slidev-protocol"
+
 import {
   closeCurrentPopover,
   openElementAnimBar,
@@ -42,8 +44,11 @@ const STORAGE_NAME = "slidev-config.json"
 export default class SiYuanSlidevPlugin extends SyPlugin {
   public isMobile = false
   public currentDocId = ""
+  public latestCompiledDoc: ISlidevDocument | null = null
+  private cliBridge = new CliDevServerBridge()
   private debounceTimer: number | null = null
   private activeCursorBlockId = ""
+
 
   private onSwitchProtyleBound = this.onSwitchProtyle.bind(this)
   private onWsMainBound = this.onWsMain.bind(this)
@@ -259,6 +264,69 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
         }
       },
     })
+
+    this.addCommand({
+      langKey: "slidevExportCliMd",
+      langText: "Slidev Pro: 导出 Slidev 标准 slides.md 文档 (下载到本地)",
+      hotkey: "",
+      enabled: () => true,
+      execute: async () => {
+        if (!this.latestCompiledDoc) {
+          await this.compileCurrentDocument()
+        }
+        if (!this.latestCompiledDoc) {
+          showMessage("请先打开并放映一篇思源笔记文档")
+          return
+        }
+        const ok = this.cliBridge.downloadSlidesMd(this.latestCompiledDoc, `slides-${this.currentDocId || "demo"}.md`)
+        if (ok) {
+          showMessage("已生成标准 Slidev Markdown 并触发下载，可在本地使用 npx @slidev/cli 运行")
+        }
+      },
+    })
+
+    this.addCommand({
+      langKey: "slidevProbeCliDevServer",
+      langText: "Slidev Pro: 检测本地 Slidev CLI DevServer 状态 (localhost:3030)",
+      hotkey: "",
+      enabled: () => true,
+      execute: async () => {
+        showMessage("正在探测本地 Slidev CLI DevServer (http://localhost:3030)...")
+        const alive = await this.cliBridge.probeServer(1500)
+        if (alive) {
+          showMessage("🟢 本地 Slidev CLI DevServer 运行正常！可直接在浏览器访问 http://localhost:3030")
+        } else {
+          showMessage("⚪ 未检测到运行中的本地 Slidev CLI DevServer (端口 3030 未开启)")
+        }
+      },
+    })
+
+    this.addCommand({
+      langKey: "slidevSyncToCliWorkspace",
+      langText: "Slidev Pro: 同步 slides.md 至思源工作空间存储目录",
+      hotkey: "",
+      enabled: () => true,
+      execute: async () => {
+        if (!this.latestCompiledDoc) {
+          await this.compileCurrentDocument()
+        }
+        if (!this.latestCompiledDoc) {
+          showMessage("请先打开并放映一篇思源笔记文档")
+          return
+        }
+        const res = await this.cliBridge.syncToWorkspaceFile(
+          this.latestCompiledDoc,
+          "/data/storage/petal/siyuan-slidev/slides.md",
+          putFile,
+        )
+        if (res.success) {
+          showMessage(`已成功同步最新 slides.md 至工作空间：${res.path}`)
+        } else {
+          showMessage(`同步失败：${res.error}`)
+        }
+      },
+    })
+
 
 
 
@@ -704,8 +772,10 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
       const slidevDoc = buildSlidevDocument(docId, docAttrs, blockNodes, { baseUrl, refContentMap })
 
       // 8. 推送更新至沙箱
+      this.latestCompiledDoc = slidevDoc
       updateDockDocument(slidevDoc)
     } catch (err) {
+
       console.error("[SiYuanSlidev] Failed to compile document:", err)
     }
   }

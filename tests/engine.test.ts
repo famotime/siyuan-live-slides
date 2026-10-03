@@ -151,3 +151,71 @@ describe("EngineManager (双模引擎调度器)", () => {
     manager.destroy()
   })
 })
+
+describe("CliDevServerBridge (Slidev 标准 Markdown 构建与同步)", () => {
+  const sampleDoc = {
+    docId: "doc-cli-1",
+    config: {
+      theme: "seriph",
+      aspectRatio: "16/9",
+      highlighter: "shiki",
+      defaultTransition: "slide-left",
+      colorSchema: "dark",
+    },
+    fullMarkdown: "",
+    slides: [
+      {
+        pageIndex: 1,
+        startBlockId: "p1",
+        frontmatter: { layout: "cover" },
+        notes: "演讲者首演备注",
+        blocks: [
+          { id: "b1", type: "h", content: "Slidev 演示主题", rawMarkdown: "# Slidev 演示主题" },
+        ],
+        rawMarkdown: "",
+      },
+      {
+        pageIndex: 2,
+        startBlockId: "p2",
+        frontmatter: { layout: "two-cols", transition: "fade" },
+        notes: "双栏讲解备忘",
+        blocks: [
+          { id: "b2", type: "p", content: "左栏内容", rawMarkdown: "左栏内容" },
+          { id: "b3", type: "p", content: "右栏内容", rawMarkdown: "右栏内容", slot: "right" },
+        ],
+        rawMarkdown: "",
+      },
+    ],
+  } as any
+
+  it("应生成符合 Slidev 官方规范的标准 slides.md", () => {
+    const manager = new EngineManager()
+    const md = manager.cliBridge.buildStandardSlidevMarkdown(sampleDoc)
+
+    expect(md).toContain("theme: seriph")
+    expect(md).toContain('aspectRatio: "16/9"')
+    expect(md).toContain("colorSchema: dark")
+    expect(md).toContain("# Slidev 演示主题")
+    expect(md).toContain("<!--\n演讲者首演备注\n-->")
+    expect(md).toContain("---\nlayout: two-cols\ntransition: fade\n---")
+    expect(md).toContain("::right::")
+    expect(md).toContain("<!--\n双栏讲解备忘\n-->")
+  })
+
+  it("应成功调用 putFileFn 将 slides.md 写入目标路径", async () => {
+    const manager = new EngineManager()
+    const mockPutFile = vi.fn().mockResolvedValue({ code: 0 })
+
+    const result = await manager.cliBridge.syncToWorkspaceFile(
+      sampleDoc,
+      "/data/storage/petal/siyuan-slidev/slides.md",
+      mockPutFile,
+    )
+
+    expect(result.success).toBe(true)
+    expect(result.path).toBe("/data/storage/petal/siyuan-slidev/slides.md")
+    expect(mockPutFile).toHaveBeenCalledTimes(1)
+    expect(manager.cliBridge.getLastSyncTime()).toBeTypeOf("number")
+  })
+})
+
