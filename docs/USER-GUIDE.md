@@ -18,15 +18,16 @@ Traditional presentation plugins often force users to insert messy Frontmatter b
 
 ### 2.1 Launching and Live Preview
 
-- **Shortcut**: Press `Alt+P` (`⌥P` on macOS) to instantly compile the active document and open the Slidev preview dock;
-- **Top Bar Icon**: Click the Slidev icon in the top toolbar to start the presentation;
-- **Incremental Hot Reload**: An elastic 150ms debounce controller automatically updates the dock preview whenever you type in the editor.
+- **Shortcut**: Press `Alt+P` (`⌥P` on macOS) to open the wide split preview tab (`SlidevPreviewTab`) directly beneath your active document;
+- **Top Bar Icon**: Click the Slidev icon in the top toolbar to launch the bottom split preview;
+- **Incremental Hot Reload**: An elastic 150ms debounce controller automatically updates the bottom preview whenever you type in the editor;
+- **Right Inspector Dock**: The right dock panel (`SlidevInspectorDockView`) serves exclusively as a live presentation property and action inspector following your cursor.
 
 ### 2.2 Common Shortcuts
 
 | Shortcut | Description | Scenario |
 | :--- | :--- | :--- |
-| `Alt+P` / `⌥P` | Compile & preview current document | Anytime while editing notes |
+| `Alt+P` / `⌥P` | Open/refresh bottom split presentation preview | Anytime while editing notes |
 | `Alt+M` / `⌥M` | Open dual-screen Presenter Mode console | Presenting with external displays |
 | `Arrow Left/Right` / `Space` | Navigate previous/next slide or animation step | In presentation sandbox |
 | `F` | Toggle fullscreen mode | In presentation sandbox |
@@ -34,23 +35,28 @@ Traditional presentation plugins often force users to insert messy Frontmatter b
 
 ---
 
-## 3. Dedicated Visual Micro-Interactions
+## 3. Modern Presentation UI Architecture
 
-### 3.1 Horizontal Divider Popover (`QuickDividerPopover`)
-Click any horizontal divider (`---`) directly in the editor to trigger a translucent floating toolbar:
-- **Layout Picker**: Switch between `cover`, `default`, `two-cols`, `fact`, and `center` with one click;
-- **Transition Selector**: Hover over transition options to preview real-time 1-second CSS animations (`slide-left`, `fade`, `slide-up`, `zoom`);
-- **Background & Notes**: Edit page background colors and speaker notes directly.
+### 3.1 Bottom Split Preview Tab (`SlidevPreviewTab`)
+Launched via `Alt+P` or the top bar icon directly below the editor:
+- **Wide Viewport**: Full-width split tab with resizable height, eliminating sidebar space constraints;
+- **📌 Pin Toggle Button**: Locks presentation preview to the current document. When unlocked, it follows document switching automatically; when pinned, it stays focused on the presentation even when you browse reference notes;
+- **Full Control Toolbar**: Slide navigation, page indicator badge, 📑 outline drawer, 🎤 presenter mode, 📥 single-file HTML export, 🖨️ PDF export, 🔄 refresh, and ⛶ fullscreen.
 
-### 3.2 Block Icon Menu & Animation Bar (`ElementAnimBar`)
-Click the block icon on the left side of any element, and choose **Slidev Element Settings** -> **✨ Open Animation Floating Bar** to set incremental step animations (`v-click`) or multi-column slots (`::right::`).
+### 3.2 Right Presentation Inspector Dock (`SlidevInspectorDockView`)
+Replaces cumbersome nested block icon submenus and eliminates obstructive floating popovers:
+- **Dynamic Context Switching**:
+  - **Regular Content Blocks**: Configures ✨ incremental steps (`v-click`), ▥ multi-column slots (`slot: left / right`), and 🔍 code spotlight (`Shiki Lines`); provides quick actions to insert page dividers and set two-cols layouts.
+  - **Horizontal Dividers (`---`)**: Displays slide page Frontmatter settings (Layout picker, Transition selector, Background, Speaker Notes with 🤖 AI generation), and quick actions to add or remove slides.
+  - **Document Root**: Manages global document presentation parameters (Theme, Aspect Ratio, Default Transition) and presentation shortcuts.
+- **Immediate Persistence**: Changes are instantly saved to block attributes and re-rendered in the bottom preview tab.
 
 ---
 
 ## 4. Millisecond Bidirectional Cursor Tracking
 
-- **Forward Tracking**: Move the cursor in SiYuan Note to automatically slide the preview dock to the matching page and highlight the block;
-- **Reverse Selection**: Click any element inside the right preview sandbox to smoothly scroll and highlight the source block in SiYuan Note.
+- **Forward Tracking**: Move the cursor in SiYuan Note to automatically slide the bottom preview tab to the matching slide page and highlight the block, while updating the right inspector panel in real-time;
+- **Reverse Selection**: Click any element inside the bottom preview sandbox to smoothly scroll and highlight the source block in SiYuan Note.
 
 ---
 

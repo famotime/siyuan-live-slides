@@ -13,6 +13,8 @@
 | [3. 关键特性规划与用户场景矩阵](file:///d:/MyCodingProjects/siyuan-slidev/docs/features-and-use-cases.md) | 功能规划与价值分析 | 结合思源笔记独特优势（块级细粒度、本地优先、开放 API、预置 AI Agent），梳理 5 大核心使用场景、用户价值模型及功能规格。 |
 | [4. 技术规格定义与实施路线图](file:///d:/MyCodingProjects/siyuan-slidev/docs/technical-specification-and-roadmap.md) | 数据协议与工程落地 | 详细定义 `custom-slidev-*` 块属性字典规范、AST 编译器管道、内部通信事件与四阶段研发里程碑（Roadmap）。 |
 | [5. 详细方案与开发实施计划](file:///d:/MyCodingProjects/siyuan-slidev/docs/implementation-plan-and-development-schedule.md) | 模块拆解与敏捷排期 | 详细规划代码工程目录结构、各模块实现细节、与「属性管家」协同落地机制、8 周甘特排期与质量风控策略。 |
+| [6. 用户使用指南 (中文)](file:///d:/MyCodingProjects/siyuan-slidev/docs/USER-GUIDE.zh-CN.md) | 终端用户操作手册 | 包含下方分屏预览页签、📌 Pin 图钉锁定、右侧动态配置面板、快捷键与离线导出全方位说明。 |
+| [7. User Guide (English)](file:///d:/MyCodingProjects/siyuan-slidev/docs/USER-GUIDE.md) | User Guide | English user guide for split-screen presentation preview, right inspector dock, and exports. |
 
 ---
 
@@ -24,7 +26,7 @@
 **SiYuan Slidev** 深度依托思源笔记底层的**块级架构（Block Architecture）**与**块属性系统（Block Attributes）**，将现代前端最先进的组件化演示框架 **Slidev** 引入思源生态：
 - **正文纯净可读**：所有版式、动画、高亮、演讲备注完全存储于思源块属性中，Markdown 正文 0 污染；
 - **现代前端动效**：原生继承 Slidev 的 UnoCSS、Vue SFC 组件、Shiki 逐行代码高亮与动态 `v-click` / `v-motion` 动效；
-- **丝滑双向联动**：左侧编辑笔记，右侧毫秒级响应式预览，光标所至即为所讲；
+- **丝滑双向联动**：上方编辑笔记，下方宽屏分屏即时预览与右侧情境配置，光标所至即为所讲；
 - **AI 智能加速**：结合思源预置 AI Agent，一键实现长文智能分页、演讲词提炼与动效智能填充。
 
 ## 附录：相关项目源码

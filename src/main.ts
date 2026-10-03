@@ -1,49 +1,99 @@
 import type { App as VueApp } from 'vue'
 import { createApp } from 'vue'
 import type { Plugin } from 'siyuan'
-import SlidevDockView from './ui/dock/SlidevDockView.vue'
+import SlidevPreviewTab from './ui/tab/SlidevPreviewTab.vue'
+import SlidevInspectorDockView from './ui/dock/SlidevInspectorDockView.vue'
 import { WebSandboxBridge } from './engine/web-sandbox-bridge'
-import type { ISlidevDocument } from './types/slidev-protocol'
+import type { IActiveBlockInfo, ISlidevDocument } from './types/slidev-protocol'
 
-let dockApp: VueApp | null = null
-let dockComponentInstance: any = null
 export const globalSandboxBridge = new WebSandboxBridge()
 
-export function mountDock(element: HTMLElement, pluginInstance: Plugin): any {
-  if (dockApp) {
-    unmountDock(element)
+// 1. 下方分屏预览页签 (SlidevPreviewTab) 实例管理
+let previewTabApp: VueApp | null = null
+let previewTabInstance: any = null
+
+export function mountPreviewTab(element: HTMLElement, pluginInstance: Plugin): any {
+  if (previewTabApp) {
+    unmountPreviewTab(element)
   }
 
-  dockApp = createApp(SlidevDockView)
-  dockApp.provide('plugin', pluginInstance)
-  dockApp.provide('sandboxBridge', globalSandboxBridge)
+  previewTabApp = createApp(SlidevPreviewTab)
+  previewTabApp.provide('plugin', pluginInstance)
+  previewTabApp.provide('sandboxBridge', globalSandboxBridge)
 
-  const mounted = dockApp.mount(element)
-  dockComponentInstance = mounted
+  const mounted = previewTabApp.mount(element)
+  previewTabInstance = mounted
   return mounted
 }
 
-export function unmountDock(element: HTMLElement): void {
-  if (dockApp) {
-    dockApp.unmount()
-    dockApp = null
-    dockComponentInstance = null
+export function unmountPreviewTab(element: HTMLElement): void {
+  if (previewTabApp) {
+    previewTabApp.unmount()
+    previewTabApp = null
+    previewTabInstance = null
   }
 }
 
-export function updateDockDocument(doc: ISlidevDocument): void {
-  if (dockComponentInstance?.updateDocument) {
-    dockComponentInstance.updateDocument(doc)
+export function isPreviewTabMounted(): boolean {
+  return previewTabInstance !== null
+}
+
+// 2. 右侧演示配置 Dock 面板 (SlidevInspectorDockView) 实例管理
+let inspectorDockApp: VueApp | null = null
+let inspectorDockInstance: any = null
+
+export function mountInspectorDock(element: HTMLElement, pluginInstance: Plugin): any {
+  if (inspectorDockApp) {
+    unmountInspectorDock(element)
+  }
+
+  inspectorDockApp = createApp(SlidevInspectorDockView)
+  inspectorDockApp.provide('plugin', pluginInstance)
+  inspectorDockApp.provide('sandboxBridge', globalSandboxBridge)
+
+  const mounted = inspectorDockApp.mount(element)
+  inspectorDockInstance = mounted
+  return mounted
+}
+
+export function unmountInspectorDock(element: HTMLElement): void {
+  if (inspectorDockApp) {
+    inspectorDockApp.unmount()
+    inspectorDockApp = null
+    inspectorDockInstance = null
+  }
+}
+
+// 兼容别名
+export const mountDock = mountInspectorDock
+export const unmountDock = unmountInspectorDock
+
+// 3. 数据调度与联动桥梁
+export function updateDockDocument(doc: ISlidevDocument, targetDocId?: string): void {
+  // 更新右侧配置面板
+  if (inspectorDockInstance?.updateDocument) {
+    inspectorDockInstance.updateDocument(doc)
+  }
+
+  // 更新下方分屏预览页签
+  if (previewTabInstance?.updateDocument) {
+    previewTabInstance.updateDocument(doc, targetDocId)
   } else {
-    // 即使 Dock 尚未渲染挂载，沙箱桥接器也会自动排队
+    // 即使页签未挂载，沙箱桥接器也自动缓存当前文档数据
     globalSandboxBridge.updateSlides(doc.slides, doc.config, doc.fullMarkdown)
   }
 }
 
 export function navigateDockToBlock(blockId: string): void {
-  if (dockComponentInstance?.navigateToBlock) {
-    dockComponentInstance.navigateToBlock(blockId)
+  if (previewTabInstance?.navigateToBlock) {
+    previewTabInstance.navigateToBlock(blockId)
   } else {
     globalSandboxBridge.highlightElement(blockId)
+  }
+}
+
+export function updateInspectorCurrentBlock(info: IActiveBlockInfo): void {
+  if (inspectorDockInstance?.setActiveBlock) {
+    inspectorDockInstance.setActiveBlock(info)
   }
 }

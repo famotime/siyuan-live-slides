@@ -5,6 +5,7 @@ import type {
 } from "siyuan"
 import {
   getFrontend,
+  openTab,
   Plugin as SyPlugin,
   showMessage,
 } from "siyuan"
@@ -16,20 +17,17 @@ import { buildSlidevDocument } from "@/compiler/slidev-ast-builder"
 import { CliDevServerBridge } from "@/engine/cli-devserver-bridge"
 import {
   globalSandboxBridge,
-  mountDock,
+  mountInspectorDock,
+  mountPreviewTab,
   navigateDockToBlock,
-  unmountDock,
+  unmountInspectorDock,
+  unmountPreviewTab,
   updateDockDocument,
+  updateInspectorCurrentBlock,
 } from "@/main"
 import { mirrorBlockSelection } from "@/sync/selection-mirror"
 import { PropertyManagerBridge } from "@/synergy/property-manager-bridge"
 import type { ISlidevDocument, ISiYuanBlockNode } from "@/types/slidev-protocol"
-
-import {
-  closeCurrentPopover,
-  openElementAnimBar,
-  openQuickDividerPopover,
-} from "@/ui/popover-manager"
 import "@/index.scss"
 
 // 专属 SVG 幻灯片放映图标
@@ -39,6 +37,7 @@ const ICON_SLIDEV_SVG = `<symbol id="iconSlidev" viewBox="0 0 1024 1024">
 </symbol>`
 
 const DOCK_TYPE = "slidev-dock"
+const TAB_TYPE = "slidev-preview-tab"
 const STORAGE_NAME = "slidev-config.json"
 
 export default class SiYuanSlidevPlugin extends SyPlugin {
@@ -53,7 +52,6 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
   private onSwitchProtyleBound = this.onSwitchProtyle.bind(this)
   private onWsMainBound = this.onWsMain.bind(this)
   private onBlockClickedBound = this.onBlockClickedFromSlide.bind(this)
-  private onClickBlockIconBound = this.onClickBlockIcon.bind(this)
   private onClickEditorTitleIconBound = this.onClickEditorTitleIcon.bind(this)
   private onEditorClickBound = this.onEditorClick.bind(this)
   private onSelectionChangeBound = this.onSelectionChange.bind(this)
@@ -65,25 +63,26 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     // 1. 注册图标
     this.addIcons(ICON_SLIDEV_SVG)
 
-    // 2. 注册顶栏快捷放映入口
+    // 2. 注册顶栏快捷放映入口 (在文档下方分屏)
     this.addTopBar({
       id: "slidev-topbar-play",
       icon: "iconSlidev",
-      title: "Slidev 演示",
+      title: "Slidev 演示 (下方分屏)",
       position: "right",
       callback: () => {
-        this.compileCurrentDocument()
+        this.openBottomPreviewTab()
       },
     })
 
     // 3. 注册命令
     this.addCommand({
       langKey: "slidevPresentation",
+      langText: "Slidev: 在文档下方开启分屏演示预览",
       hotkey: "⌥P",
       hotkeys: ["⌥P", "Alt+P"],
       enabled: () => true,
       execute: () => {
-        this.compileCurrentDocument()
+        this.openBottomPreviewTab()
       },
     })
 
@@ -330,34 +329,44 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
 
 
 
-    // 4. 注册右侧 Dock 分屏预览面板
+    // 4. 注册下方分屏预览页签
     const self = this
+    this.addTab({
+      type: TAB_TYPE,
+      init() {
+        mountPreviewTab(this.element as HTMLElement, self)
+      },
+      destroy() {
+        unmountPreviewTab(this.element as HTMLElement)
+      },
+    })
+
+    // 5. 注册右侧 Dock 演示配置面板
     this.addDock({
       config: {
         position: "RightTop",
-        size: { width: 360, height: 0 },
+        size: { width: 320, height: 0 },
         icon: "iconSlidev",
-        title: "Slidev 演示",
+        title: "Slidev 演示配置",
       },
       data: {},
       type: DOCK_TYPE,
       init() {
-        mountDock(this.element as HTMLElement, self)
+        mountInspectorDock(this.element as HTMLElement, self)
       },
       destroy() {
-        unmountDock(this.element as HTMLElement)
+        unmountInspectorDock(this.element as HTMLElement)
       },
     })
 
-    // 5. 监听思源内核与编辑器事件
+    // 6. 监听思源内核与编辑器事件
     this.eventBus.on("switch-protyle", this.onSwitchProtyleBound)
     this.eventBus.on("ws-main", this.onWsMainBound)
     this.eventBus.on("slidev:request-compile" as any, () => this.compileCurrentDocument())
     this.eventBus.on("slidev:block-clicked" as any, this.onBlockClickedBound)
-    this.eventBus.on("click-blockicon", this.onClickBlockIconBound)
     this.eventBus.on("click-editortitleicon", this.onClickEditorTitleIconBound)
 
-    // 6. 监听编辑器选区变动与点击（双向光标联动中枢）
+    // 7. 监听编辑器选区变动与点击（双向光标联动中枢）
     if (typeof document !== "undefined") {
       document.addEventListener("click", this.onEditorClickBound, true)
       document.addEventListener("selectionchange", this.onSelectionChangeBound)
@@ -371,161 +380,35 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     }
     this.eventBus.off("switch-protyle", this.onSwitchProtyleBound)
     this.eventBus.off("ws-main", this.onWsMainBound)
-    this.eventBus.off("click-blockicon", this.onClickBlockIconBound)
     this.eventBus.off("click-editortitleicon", this.onClickEditorTitleIconBound)
     if (typeof document !== "undefined") {
       document.removeEventListener("click", this.onEditorClickBound, true)
       document.removeEventListener("selectionchange", this.onSelectionChangeBound)
     }
-    closeCurrentPopover()
     globalSandboxBridge.detach()
   }
 
   /**
-   * 监听块标右键上下文菜单，注入 Slidev 版式与动效快捷操作
+   * 在当前文档下方开启分屏演示预览
    */
-  private onClickBlockIcon(event: CustomEvent<any>) {
-    const detail = event.detail
-    const menu = detail?.menu
-    const blockElements = detail?.blockElements as HTMLElement[]
-    if (!menu || !blockElements || blockElements.length === 0) return
-
-    const targetEl = blockElements[0]
-    const blockId = targetEl.getAttribute("data-node-id")
-    const blockType = targetEl.getAttribute("data-type")
-    if (!blockId) return
-
-    const isDivider = blockType === "NodeThematicBreak"
-
-    const submenu: any[] = []
-
-    if (isDivider) {
-      submenu.push(
-        {
-          icon: "iconEdit",
-          label: "⚡ 打开幻灯片页面设置气泡",
-          click: async () => {
-            const attrs = await getBlockAttrs(blockId).catch(() => ({}))
-            openQuickDividerPopover(targetEl, blockId, attrs, () => {
-              this.compileCurrentDocument()
-            })
-          },
-        },
-        { type: "separator" },
-      )
-    } else {
-      const isCode = blockType === "NodeCodeBlock"
-      submenu.push(
-        {
-          icon: "iconPlay",
-          label: "✨ 打开动效与排版浮动条",
-          click: async () => {
-            const attrs = await getBlockAttrs(blockId).catch(() => ({}))
-            openElementAnimBar(targetEl, blockId, isCode, attrs, () => {
-              this.compileCurrentDocument()
-            })
-          },
-        },
-        { type: "separator" },
-      )
+  public async openBottomPreviewTab(): Promise<void> {
+    if (!this.currentDocId) {
+      const activeEl = document.querySelector(".protyle-content[data-doc-id]")
+      this.currentDocId = activeEl?.getAttribute("data-doc-id") || ""
     }
-
-    submenu.push(
-      {
-        icon: "iconLayout",
-        label: "版式: 🎯 封面 (cover)",
-        click: async () => {
-          await setBlockAttrs(blockId, { "custom-slidev-layout": "cover" })
-          showMessage("已设置版式为封面 (cover)")
-          this.compileCurrentDocument()
-        },
+    await openTab({
+      app: this.app,
+      custom: {
+        id: this.name + TAB_TYPE,
+        title: "Slidev 演示预览",
+        icon: "iconSlidev",
+        data: { docId: this.currentDocId },
       },
-      {
-        icon: "iconLayout",
-        label: "版式: 📄 标准 (default)",
-        click: async () => {
-          await setBlockAttrs(blockId, { "custom-slidev-layout": "default" })
-          showMessage("已设置版式为标准 (default)")
-          this.compileCurrentDocument()
-        },
-      },
-      {
-        icon: "iconLayout",
-        label: "版式: ▥ 双栏对比 (two-cols)",
-        click: async () => {
-          await setBlockAttrs(blockId, { "custom-slidev-layout": "two-cols" })
-          showMessage("已设置版式为双栏对比 (two-cols)")
-          this.compileCurrentDocument()
-        },
-      },
-      {
-        icon: "iconLayout",
-        label: "版式: 🔢 大字报 (fact)",
-        click: async () => {
-          await setBlockAttrs(blockId, { "custom-slidev-layout": "fact" })
-          showMessage("已设置版式为大字报 (fact)")
-          this.compileCurrentDocument()
-        },
-      },
-      {
-        icon: "iconLayout",
-        label: "版式: 🀄 居中 (center)",
-        click: async () => {
-          await setBlockAttrs(blockId, { "custom-slidev-layout": "center" })
-          showMessage("已设置版式为居中 (center)")
-          this.compileCurrentDocument()
-        },
-      },
-      { type: "separator" },
-      {
-        icon: "iconRefresh",
-        label: "转场: ↔ 向左滑入 (slide-left)",
-        click: async () => {
-          await setBlockAttrs(blockId, { "custom-slidev-transition": "slide-left" })
-          showMessage("已设置转场为向左滑入 (slide-left)")
-          this.compileCurrentDocument()
-        },
-      },
-      {
-        icon: "iconRefresh",
-        label: "转场: 🌫 淡入淡出 (fade)",
-        click: async () => {
-          await setBlockAttrs(blockId, { "custom-slidev-transition": "fade" })
-          showMessage("已设置转场为淡入淡出 (fade)")
-          this.compileCurrentDocument()
-        },
-      },
-    )
-
-    if (!isDivider) {
-      submenu.push(
-        { type: "separator" },
-        {
-          icon: "iconPlay",
-          label: "动效: 逐步出现 (v-click)",
-          click: async () => {
-            await setBlockAttrs(blockId, { "custom-slidev-click": "+1" })
-            showMessage("已添加逐步出现动效 (v-click)")
-            this.compileCurrentDocument()
-          },
-        },
-        {
-          icon: "iconSplit",
-          label: "多栏插槽: 放入右栏 (::right::)",
-          click: async () => {
-            await setBlockAttrs(blockId, { "custom-slidev-slot": "right" })
-            showMessage("已设为右栏内容")
-            this.compileCurrentDocument()
-          },
-        },
-      )
-    }
-
-    menu.addItem({
-      icon: "iconSlidev",
-      label: isDivider ? "Slidev 分页设置" : "Slidev 元素设置",
-      submenu,
+      position: "bottom",
     })
+    if (this.currentDocId) {
+      this.compileCurrentDocument(this.currentDocId)
+    }
   }
 
   /**
@@ -606,8 +489,14 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     const protyle = event.detail?.protyle
     const docId = (protyle as any)?.block?.rootID
     if (docId && docId !== this.currentDocId) {
-
       this.currentDocId = docId
+      this.activeCursorBlockId = ""
+      updateInspectorCurrentBlock({
+        id: "",
+        rootId: docId,
+        type: "doc",
+        attrs: {},
+      })
       this.compileCurrentDocument(docId)
     }
   }
@@ -637,7 +526,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
   }
 
   /**
-   * 监听编辑器点击事件（点击分割线唤起气泡，点击任意块联动光标）
+   * 监听编辑器点击事件（点击任意块联动光标并更新右侧演示配置面板）
    */
   private onEditorClick(e: MouseEvent) {
     const target = e.target as HTMLElement | null
@@ -651,25 +540,18 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     if (!blockEl) return
 
     const blockId = blockEl.getAttribute("data-node-id")
-    if (blockId && blockId !== this.activeCursorBlockId) {
-      this.activeCursorBlockId = blockId
-      navigateDockToBlock(blockId)
-    }
-
-    // 若点击的是水平分割线，弹出快捷气泡
-    const isDivider = blockEl.getAttribute("data-type") === "NodeThematicBreak"
-    if (isDivider && blockId) {
-      setTimeout(async () => {
-        const attrs = await getBlockAttrs(blockId).catch(() => ({}))
-        openQuickDividerPopover(blockEl, blockId, attrs, () => {
-          this.compileCurrentDocument()
-        })
-      }, 50)
+    const blockType = blockEl.getAttribute("data-type") || ""
+    if (blockId) {
+      if (blockId !== this.activeCursorBlockId) {
+        this.activeCursorBlockId = blockId
+        navigateDockToBlock(blockId)
+      }
+      this.syncInspectorBlock(blockEl, blockId, blockType)
     }
   }
 
   /**
-   * 监听选区变化（键盘上下左右移动光标时联动幻灯片）
+   * 监听选区变化（键盘上下左右移动光标时联动幻灯片与配置面板）
    */
   private onSelectionChange() {
     if (typeof window === "undefined") return
@@ -681,12 +563,35 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     const el = anchor.nodeType === Node.ELEMENT_NODE ? (anchor as Element) : anchor.parentElement
     if (!el || !el.closest(".protyle-wysiwyg")) return
 
-    const blockEl = el.closest("[data-node-id]")
+    const blockEl = el.closest("[data-node-id]") as HTMLElement | null
     const blockId = blockEl?.getAttribute("data-node-id")
-    if (blockId && blockId !== this.activeCursorBlockId) {
-      this.activeCursorBlockId = blockId
-      navigateDockToBlock(blockId)
+    const blockType = blockEl?.getAttribute("data-type") || ""
+    if (blockEl && blockId) {
+      if (blockId !== this.activeCursorBlockId) {
+        this.activeCursorBlockId = blockId
+        navigateDockToBlock(blockId)
+      }
+      this.syncInspectorBlock(blockEl, blockId, blockType)
     }
+  }
+
+  /**
+   * 同步当前激活块元信息至右侧演示配置面板
+   */
+  private async syncInspectorBlock(blockEl: HTMLElement, blockId: string, blockType: string) {
+    const isDivider = blockType === "NodeThematicBreak"
+    const isCode = blockType === "NodeCodeBlock"
+    const contentText = blockEl.innerText?.trim() || ""
+    const attrs = await getBlockAttrs(blockId).catch(() => ({}))
+    updateInspectorCurrentBlock({
+      id: blockId,
+      rootId: this.currentDocId,
+      type: blockType,
+      content: contentText,
+      attrs,
+      isDivider,
+      isCode,
+    })
   }
 
   /**
@@ -772,9 +677,9 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
       const baseUrl = typeof location !== "undefined" ? location.origin : ""
       const slidevDoc = buildSlidevDocument(docId, docAttrs, blockNodes, { baseUrl, refContentMap })
 
-      // 8. 推送更新至沙箱
+      // 8. 推送更新至沙箱与分屏预览
       this.latestCompiledDoc = slidevDoc
-      updateDockDocument(slidevDoc)
+      updateDockDocument(slidevDoc, docId)
     } catch (err) {
 
       console.error("[SiYuanSlidev] Failed to compile document:", err)

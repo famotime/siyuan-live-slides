@@ -59,7 +59,7 @@ flowchart TD
 - **现象**：每次击键若触发全屏重刷，会导致动画状态重置、屏幕闪烁、光标跳动。
 - **破解方案：增量差异补丁 + 双向光标定位状态机**：
   - 结合思源内核 WebSocket 事件 `ws-main` 捕获保存事务，利用防抖（Debounce）更新对应页面的 Virtual DOM；
-  - 建立 `Block ID <-> Slide Page Index & Step` 的双向索引表，确保左侧编辑器修改哪个段落，右侧 PPT 精准跳转到对应幻灯片与动效步骤。
+  - 建立 `Block ID <-> Slide Page Index & Step` 的双向索引表，确保主编辑器修改哪个段落，下方分屏与右侧面板精准跳转到对应幻灯片与动效步骤。
 
 ---
 
@@ -71,9 +71,9 @@ SiYuan Slidev 采用清晰的四层分层架构，确保高内聚、低耦合，
 graph TD
     subgraph UI_Layer[1. 交互与表现层 Presentation & UI]
         ToolbarBtn[顶部栏一键演示按钮]
-        DockView[右侧分屏即时预览面板 (Dock)]
+        BottomTab[下方分屏预览页签 (SlidevPreviewTab)]
+        InspectorDock[右侧演示配置面板 (SlidevInspectorDockView)]
         PresenterWin[独立全屏/双屏演讲者窗口]
-        BlockMenu[块标悬浮菜单 & 动画配置弹窗]
         AIAssistant[AI 智能演示编排助手面板]
     end
 
@@ -296,8 +296,8 @@ sequenceDiagram
 graph TD
     subgraph SlidevPlugin[SiYuan Slidev 演示插件]
         subgraph BuiltinUI[内置演示专精 UI (微观/即时)]
-            BlockPopover[水平分割线/块标浮动弹窗: 九宫格版式 / 动效预览]
-            SlideInspector[右侧 Dock 幻灯片大纲与当前页检查器]
+            InspectorDock[右侧 Dock 演示配置面板: 动态情境卡片与快捷操作]
+            BottomPreview[下方独立分屏预览页签: 宽屏沙箱与 Pin 锁定]
         end
         RenderEngine[Slidev 渲染与实时预览引擎]
     end
@@ -324,10 +324,10 @@ graph TD
 ```
 
 #### 1. 轨道一：Slidev 插件内置“面向演示场景的专精微交互 UI”（确保独立性与极致体验）
-- **定位**：解决“单页/单个块即时演示微调”的刚需；
+- **定位**：解决“单页/单个块即时演示微调与大屏放映”的刚需；
 - **核心组件**：
-  - **分割线快捷配置弹窗（Slide Page Quick Popover）**：用户在编辑器中点击 `---` 水平分割线时，弹出气泡面板，直接呈现直观的九宫格排版图标（封面/双栏/大字报）、转场动画下拉（鼠标悬停即播放 1 秒动效预览）、拾色器背景选择；
-  - **右侧 Dock 幻灯片检查器（Slide Inspector）**：与右侧实时预览画面并列，直接以“第 N 页幻灯片”的卡片形式呈现配置，完全不需要用户直面枯燥的键值对。
+  - **下方分屏独立预览页签（Slidev Preview Tab）**：在文档下方以宽屏原生页签渲染，支持 📌 Pin 图钉锁定当前文档与大纲缩略抽屉；
+  - **右侧演示配置面板（Slidev Inspector Dock）**：随光标动态识别普通内容块、分页符与全局文档，直接通过可视化芯片和快捷动作完成版式、动效、双栏插槽等设置，无需气泡遮挡与层层菜单。
 
 #### 2. 轨道二：深度桥接“属性管家”（赋予宏观批量运维与知识沉淀的顶级超能力）
 - **定位**：解决“全库元数据治理、标准化模板批量分发与全局批量重构”的高阶场景；

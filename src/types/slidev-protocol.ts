@@ -101,3 +101,16 @@ export interface ISiYuanBlockNode {
   ial?: Record<string, string>
   children?: ISiYuanBlockNode[]
 }
+
+/** 当前激活块的编辑与演示元信息接口 */
+export interface IActiveBlockInfo {
+  id: string
+  rootId?: string
+  type: string
+  subType?: string
+  content?: string
+  markdown?: string
+  attrs: Record<string, string>
+  isDivider?: boolean
+  isCode?: boolean
+}
