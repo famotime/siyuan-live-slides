@@ -1,0 +1,53 @@
+import { describe, expect, it, vi } from "vitest"
+import { SLIDEV_PRESET_TEMPLATES } from "../src/synergy/preset-templates"
+import { PropertyManagerBridge } from "../src/synergy/property-manager-bridge"
+
+describe("PropertyManagerBridge (属性管家协同桥接)", () => {
+  it("应输出符合属性管家规范的预设模板", () => {
+    const bridge = new PropertyManagerBridge()
+    const templates = bridge.getPresetTemplates()
+
+    expect(templates.length).toBeGreaterThanOrEqual(4)
+    const coverTpl = templates.find(t => t.id === "slidev-cover")
+    expect(coverTpl).toBeDefined()
+    expect(coverTpl?.attrs.some(a => a.key === "custom-slidev-layout" && a.value === "cover")).toBe(true)
+
+    const twoColsTpl = templates.find(t => t.id === "slidev-two-cols")
+    expect(twoColsTpl?.attrs.some(a => a.value === "two-cols")).toBe(true)
+  })
+
+  it("应生成正确的全库属性检索与转场统计 SQL", () => {
+    const bridge = new PropertyManagerBridge()
+    const scanSql = bridge.buildScanSlidevBlocksSql()
+    expect(scanSql).toContain("SELECT block_id, name, value FROM attributes WHERE name LIKE 'custom-slidev-%'")
+
+    const statsSql = bridge.buildTransitionStatsSql()
+    expect(statsSql).toContain("custom-slidev-transition")
+    expect(statsSql).toContain("GROUP BY value")
+  })
+
+  it("应支持全库批量重构转场属性", async () => {
+    const bridge = new PropertyManagerBridge()
+    const mockSqlExecutor = vi.fn().mockResolvedValue([
+      { block_id: "block-101" },
+      { block_id: "block-102" },
+    ])
+    const mockSetAttrs = vi.fn().mockResolvedValue(true)
+
+    const result = await bridge.batchUpdateTransitions(
+      "fade",
+      "slide-left",
+      mockSqlExecutor,
+      mockSetAttrs,
+    )
+
+    expect(result.updatedCount).toBe(2)
+    expect(mockSetAttrs).toHaveBeenCalledTimes(2)
+    expect(mockSetAttrs).toHaveBeenCalledWith("block-101", {
+      "custom-slidev-transition": "slide-left",
+    })
+    expect(mockSetAttrs).toHaveBeenCalledWith("block-102", {
+      "custom-slidev-transition": "slide-left",
+    })
+  })
+})

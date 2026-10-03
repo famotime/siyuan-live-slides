@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slidev 演讲者专业视图 (Presenter Mode)</title>
+  <style>
+    :root {
+      --bg-dark: #0f1117;
+      --card-bg: #1a1d26;
+      --border-color: #2e3346;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent-color: #3b82f6;
+      --accent-green: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg-dark);
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* Top Bar */
+    .presenter-header {
+      height: 52px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+
+    .presenter-title {
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-timer {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-family: "JetBrains Mono", Consolas, monospace;
+      font-size: 16px;
+    }
+
+    .timer-badge {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .timer-controls button {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .timer-controls button:hover {
+      background: var(--border-color);
+      color: var(--text-main);
+    }
+
+    /* Main Grid */
+    .presenter-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 16px;
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    .slide-panels {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      height: 100%;
+    }
+
+    .panel-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .current-slide-panel {
+      flex: 1.4;
+    }
+
+    .next-slide-panel {
+      flex: 1;
+    }
+
+    .panel-header {
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .panel-preview {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      text-align: center;
+      background: #181920;
+    }
+
+    .panel-preview h2 {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+      color: #60a5fa;
+    }
+
+    .panel-preview p {
+      font-size: 1.1rem;
+      opacity: 0.8;
+    }
+
+    /* Notes Panel */
+    .notes-panel {
+      height: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .notes-content {
+      flex: 1;
+      padding: 20px;
+      font-size: 1.25rem;
+      line-height: 1.8;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      color: #e2e8f0;
+    }
+
+    /* Bottom Action Bar */
+    .presenter-actions {
+      height: 48px;
+      background: var(--card-bg);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+
+    .btn-nav {
+      background: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 6px 18px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-nav:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  </style>
+  <script src="./assets/vue.global.prod.js"></script>
+</head>
+<body>
+  <div id="presenter-app">
+    <!-- 顶栏状态 -->
+    <header class="presenter-header">
+      <div class="presenter-title">
+        <span>🎤 Slidev 演讲者控制台</span>
+        <span style="opacity: 0.5;">|</span>
+        <span>第 {{ currentPage }} / {{ totalPages || 1 }} 页</span>
+      </div>
+
+      <div class="header-timer">
+        <div class="timer-badge">⏱ 已演讲: {{ formattedTime }}</div>
+        <div class="timer-controls">
+          <button @click="toggleTimer">{{ isTimerRunning ? '暂停' : '开始' }}</button>
+          <button @click="resetTimer">重置</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主展示网格 -->
+    <main class="presenter-grid">
+      <!-- 左侧：当前幻灯片与下一页预览 -->
+      <section class="slide-panels">
+        <!-- 当前播放页 -->
+        <div class="panel-box current-slide-panel">
+          <div class="panel-header">
+            <span>当前大屏放映 (Page {{ currentPage }})</span>
+            <span>布局: {{ currentSlide?.frontmatter?.layout || 'default' }}</span>
+          </div>
+          <div class="panel-preview">
+            <h2>{{ currentSlideTitle }}</h2>
+            <p>{{ currentSlideSnippet }}</p>
+          </div>
+        </div>
+
+        <!-- 下一页预告 -->
+        <div class="panel-box next-slide-panel">
+          <div class="panel-header">
+            <span>下一页预告 (Page {{ currentPage + 1 }})</span>
+            <span v-if="currentPage >= totalPages">已到达最后一页</span>
+          </div>
+          <div class="panel-preview" style="opacity: 0.75;">
+            <h2>{{ nextSlideTitle }}</h2>
+            <p>{{ nextSlideSnippet }}</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 右侧：演讲者提词卡 (Notes) -->
+      <section class="notes-panel">
+        <div class="panel-header">
+          <span>📝 演讲者私有备忘录 (Speaker Notes)</span>
+          <span>字号适配</span>
+        </div>
+        <div class="notes-content">
+          {{ currentNotes || '（本页未设置演讲者备忘录）' }}
+        </div>
+      </section>
+    </main>
+
+    <!-- 底栏翻页 -->
+    <footer class="presenter-actions">
+      <button class="btn-nav" :disabled="currentPage <= 1" @click="prevSlide">◀ 上一页 (Left)</button>
+      <span>按键盘左右方向键或空格键翻页，大屏画面实时联动</span>
+      <button class="btn-nav" :disabled="currentPage >= totalPages" @click="nextSlide">下一页 (Right) ▶</button>
+    </footer>
+  </div>
+
+  <script>
+    const { createApp, ref, computed, onMounted, onUnmounted } = Vue
+
+    createApp({
+      setup() {
+        const slides = ref([])
+        const currentPage = ref(1)
+        const totalPages = computed(() => slides.value.length)
+
+        // 计时器状态
+        const elapsedSeconds = ref(0)
+        const isTimerRunning = ref(true)
+        let timerInterval = null
+
+        const formattedTime = computed(() => {
+          const m = String(Math.floor(elapsedSeconds.value / 60)).padStart(2, '0')
+          const s = String(elapsedSeconds.value % 60).padStart(2, '0')
+          return `${m}:${s}`
+        })
+
+        function toggleTimer() {
+          isTimerRunning.value = !isTimerRunning.value
+        }
+
+        function resetTimer() {
+          elapsedSeconds.value = 0
+        }
+
+        // 当前页与下一页计算
+        const currentSlide = computed(() => {
+          if (slides.value.length === 0) return null
+          return slides.value[currentPage.value - 1]
+        })
+
+        const nextSlide = computed(() => {
+          if (currentPage.value >= slides.value.length) return null
+          return slides.value[currentPage.value]
+        })
+
+        const currentSlideTitle = computed(() => {
+          if (!currentSlide.value) return "无内容"
+          const first = currentSlide.value.blocks?.[0]
+          return first?.content || first?.rawMarkdown || `第 ${currentPage.value} 页`
+        })
+
+        const currentSlideSnippet = computed(() => {
+          if (!currentSlide.value) return ""
+          const blocks = currentSlide.value.blocks || []
+          return blocks.slice(1).map(b => b.content || b.rawMarkdown).join(" | ").slice(0, 100)
+        })
+
+        const nextSlideTitle = computed(() => {
+          if (!nextSlide.value) return "演示结束"
+          const first = nextSlide.value.blocks?.[0]
+          return first?.content || first?.rawMarkdown || `第 ${currentPage.value + 1} 页`
+        })
+
+        const nextSlideSnippet = computed(() => {
+          if (!nextSlide.value) return "这是最后一页"
+          const blocks = nextSlide.value.blocks || []
+          return blocks.slice(1).map(b => b.content || b.rawMarkdown).join(" | ").slice(0, 100)
+        })
+
+        const currentNotes = computed(() => {
+          return currentSlide.value?.notes || ""
+        })
+
+        // 双向广播信道
+        let broadcastChannel = null
+        try {
+          broadcastChannel = new BroadcastChannel("siyuan-slidev-sync")
+          broadcastChannel.onmessage = (event) => {
+            const data = event.data
+            if (!data) return
+            if (data.type === "SYNC_PAGE" && typeof data.page === "number") {
+              currentPage.value = data.page
+            }
+            if (data.type === "SYNC_SLIDES" && Array.isArray(data.slides)) {
+              slides.value = data.slides
+            }
+          }
+        } catch (e) {
+          console.warn("BroadcastChannel not supported", e)
+        }
+
+        function syncToMain(page) {
+          if (broadcastChannel) {
+            broadcastChannel.postMessage({ type: "SYNC_PAGE", page })
+          }
+          if (window.opener) {
+            window.opener.postMessage({
+              source: "siyuan-slidev-presenter",
+              action: "NAVIGATE_PAGE",
+              payload: { pageIndex: page }
+            }, "*")
+          }
+        }
+
+        function nextSlide() {
+          if (currentPage.value < totalPages.value) {
+            currentPage.value++
+            syncToMain(currentPage.value)
+          }
+        }
+
+        function prevSlide() {
+          if (currentPage.value > 1) {
+            currentPage.value--
+            syncToMain(currentPage.value)
+          }
+        }
+
+        function onKeyDown(e) {
+          if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") {
+            e.preventDefault()
+            nextSlide()
+          } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+            e.preventDefault()
+            prevSlide()
+          }
+        }
+
+        onMounted(() => {
+          window.addEventListener("keydown", onKeyDown)
+          timerInterval = setInterval(() => {
+            if (isTimerRunning.value) {
+              elapsedSeconds.value++
+            }
+          }, 1000)
+
+          // 尝试从 opener 拉取当前状态
+          if (window.opener) {
+            window.opener.postMessage({
+              source: "siyuan-slidev-presenter",
+              action: "REQUEST_SYNC",
+              payload: {}
+            }, "*")
+          }
+        })
+
+        onUnmounted(() => {
+          window.removeEventListener("keydown", onKeyDown)
+          if (timerInterval) clearInterval(timerInterval)
+          if (broadcastChannel) broadcastChannel.close()
+        })
+
+        return {
+          slides,
+          currentPage,
+          totalPages,
+          elapsedSeconds,
+          isTimerRunning,
+          formattedTime,
+          toggleTimer,
+          resetTimer,
+          currentSlide,
+          nextSlide,
+          currentSlideTitle,
+          currentSlideSnippet,
+          nextSlideTitle,
+          nextSlideSnippet,
+          currentNotes,
+          nextSlide,
+          prevSlide
+        }
+      }
+    }).mount("#presenter-app")
+  </script>
+</body>
+</html>

@@ -377,6 +377,7 @@
         <span>{{ currentPageIndex }} / {{ totalPages || 1 }}</span>
         <button :disabled="currentPageIndex >= totalPages && isMaxStep" @click="nextStepOrSlide" title="下一动作 / 下一页 (Right Arrow / Space)">▶</button>
         <button @click="toggleTheme" title="切换明暗主题">🌓</button>
+        <button @click="openPresenter" title="打开双屏演讲者控制台 (P)">🎤</button>
         <button @click="toggleFullScreen" title="全屏演示 (F)">⛶</button>
       </div>
     </div>
@@ -581,6 +582,37 @@
           }, "*")
         }
 
+        // 双向广播频道用于双屏演讲者模式同步
+        let broadcastChannel = null
+        try {
+          broadcastChannel = new BroadcastChannel("siyuan-slidev-sync")
+          broadcastChannel.onmessage = (e) => {
+            if (e.data?.type === "SYNC_PAGE" && typeof e.data.page === "number") {
+              currentPageIndex.value = Math.max(1, Math.min(e.data.page, totalPages.value || 1))
+              currentStep.value = 0
+              notifySlideChanged()
+            }
+          }
+        } catch (e) {}
+
+        function broadcastSync() {
+          if (broadcastChannel) {
+            broadcastChannel.postMessage({
+              type: "SYNC_PAGE",
+              page: currentPageIndex.value
+            })
+            broadcastChannel.postMessage({
+              type: "SYNC_SLIDES",
+              slides: slides.value
+            })
+          }
+        }
+
+        function openPresenter() {
+          broadcastSync()
+          window.open("presenter.html", "SlidevPresenter", "width=1200,height=800")
+        }
+
         // 监听键盘快捷键
         function onKeyDown(e) {
           if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") {
@@ -592,6 +624,9 @@
           } else if (e.key === "f" || e.key === "F") {
             e.preventDefault()
             toggleFullScreen()
+          } else if (e.key === "p" || e.key === "P") {
+            e.preventDefault()
+            openPresenter()
           }
         }
 
@@ -607,6 +642,7 @@
                 if (currentPageIndex.value > slides.value.length) {
                   currentPageIndex.value = Math.max(1, slides.value.length)
                 }
+                broadcastSync()
               }
               if (data.payload.config) {
                 config.value = { ...config.value, ...data.payload.config }
