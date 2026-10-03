@@ -68,7 +68,7 @@ export async function extractSlidevZip(
     } else if (MEDIA_EXTENSIONS.test(p)) {
       const bytes = await entry.file.async("uint8array")
       const fileName = p.split("/").pop() || p
-      const blob = typeof Blob !== "undefined" ? new Blob([bytes]) : undefined
+      const blob = typeof Blob !== "undefined" ? new Blob([bytes as any]) : undefined
       assets.push({
         zipPath: p,
         fileName,

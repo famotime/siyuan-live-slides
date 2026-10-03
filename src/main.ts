@@ -97,3 +97,11 @@ export function updateInspectorCurrentBlock(info: IActiveBlockInfo): void {
     inspectorDockInstance.setActiveBlock(info)
   }
 }
+
+export function openDockImportDialog(): boolean {
+  if (inspectorDockInstance?.openImportDialog) {
+    inspectorDockInstance.openImportDialog()
+    return true
+  }
+  return false
+}

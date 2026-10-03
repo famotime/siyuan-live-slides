@@ -24,6 +24,7 @@ import {
   unmountPreviewTab,
   updateDockDocument,
   updateInspectorCurrentBlock,
+  openDockImportDialog,
 } from "@/main"
 import { mirrorBlockSelection } from "@/sync/selection-mirror"
 import { PropertyManagerBridge } from "@/synergy/property-manager-bridge"
@@ -82,6 +83,19 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
       enabled: () => true,
       execute: () => {
         this.openBottomPreviewTab()
+      },
+    })
+
+    this.addCommand({
+      langKey: "slidevImport",
+      langText: "Slidev: 导入 Slidev 演示文档 (.md / .zip)",
+      hotkey: "⌥I",
+      enabled: () => true,
+      execute: () => {
+        const opened = openDockImportDialog()
+        if (!opened) {
+          showMessage("请先在右侧栏打开「Slidev 演示配置」Dock 面板以呼起导入窗口")
+        }
       },
     })
 

@@ -10,6 +10,15 @@
       </div>
 
       <div class="spm-inspector-topbar-actions">
+        <!-- 导入 Slidev 演示文档 -->
+        <button
+          class="spm-btn-pill spm-btn-secondary"
+          title="导入 Slidev 演示文档 (.md / .zip)"
+          @click="showImportDialog = true"
+        >
+          📥 导入
+        </button>
+
         <!-- 快捷打开下方分屏预览 -->
         <button
           class="spm-btn-pill spm-btn-primary"
@@ -340,6 +349,13 @@
         </div>
       </div>
     </div>
+
+    <!-- 导入 Slidev 演示对话框 -->
+    <SlidevImportDialog
+      v-if="showImportDialog"
+      @close="showImportDialog = false"
+      @success="onImportSuccess"
+    />
   </div>
 </template>
 
@@ -350,6 +366,7 @@ import { showMessage } from 'siyuan'
 import { setBlockAttrs, insertBlock, deleteBlock, chatAI } from '@/api'
 import LayoutPicker from '@/ui/components/LayoutPicker.vue'
 import TransitionSelector from '@/ui/components/TransitionSelector.vue'
+import SlidevImportDialog from '@/ui/components/SlidevImportDialog.vue'
 import { generateSpeakerNotesWithAI } from '@/ai/notes-generator'
 import type {
   IActiveBlockInfo,
@@ -369,6 +386,15 @@ import {
 } from '@/types/slidev-protocol'
 
 const plugin = inject<any>('plugin')
+const showImportDialog = ref(false)
+
+function onImportSuccess(data: { docId: string }) {
+  showImportDialog.value = false
+  currentDocId.value = data.docId
+  if (plugin?.compileCurrentDocument) {
+    plugin.compileCurrentDocument(data.docId)
+  }
+}
 
 // 当前激活块元信息
 const activeBlockId = ref('')
@@ -665,6 +691,9 @@ defineExpose({
   updateDocument(doc: ISlidevDocument) {
     latestDoc.value = doc
     currentDocId.value = doc.docId
+  },
+  openImportDialog() {
+    showImportDialog.value = true
   },
   setCurrentDocId(docId: string) {
     currentDocId.value = docId
@@ -1002,6 +1031,26 @@ defineExpose({
   background: #3b82f6;
   color: #ffffff;
   font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.2s;
+}
+
+.spm-btn-pill.spm-btn-secondary {
+  background: var(--b3-theme-surface, #ffffff);
+  border: 1px solid var(--b3-border-color, #cbd5e1);
+  color: var(--b3-theme-on-surface, #1e293b);
+  &:hover {
+    background: var(--b3-theme-surface-hover, #f1f5f9);
+    border-color: #94a3b8;
+  }
+}
+
+.spm-inspector-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .spm-btn-text {

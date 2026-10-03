@@ -22,6 +22,7 @@
     "worktree:remove": "node ./scripts/worktree.mjs remove"
   },
   "dependencies": {
+    "jszip": "^3.10.1",
     "vue": "^3.3.8"
   },
   "devDependencies": {
