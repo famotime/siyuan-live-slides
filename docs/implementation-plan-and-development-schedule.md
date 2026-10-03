@@ -175,10 +175,10 @@ gantt
 #### Phase 1：内核筑基与 MVP 验证（第 1 ~ 2 周）
 - **核心目标**：跑通纯前端沙箱，实现“编辑笔记，右侧 Dock 毫秒级显示 Slidev 演示稿”。
 - **任务清单**：
-  - [ ] 搭建 `public/slidev-client` 预编译静态沙箱，集成 Vue 3 运行时与 Slidev 核心排版组件；
-  - [ ] 实现 `src/compiler/scope-mapper.ts`，识别文档根块与 `---` 分割线，生成初始虚拟 SlideInfo；
-  - [ ] 实现本地图片 `assets/...` 的绝对代理路径重写；
-  - [ ] 完成思源右侧 Dock 栏的嵌入，基于 `postMessage` 建立单向增量同步。
+  - [x] 搭建 `public/slidev-client` 预编译静态沙箱，集成 Vue 3 运行时与 Slidev 核心排版组件；
+  - [x] 实现 `src/compiler/scope-mapper.ts`，识别文档根块与 `---` 分割线，生成初始虚拟 SlideInfo；
+  - [x] 实现本地图片 `assets/...` 的绝对代理路径重写；
+  - [x] 完成思源右侧 Dock 栏的嵌入，基于 `postMessage` 建立单向增量同步。
 - **验收标准**：在思源中输入两段文字并用 `---` 隔开，右侧 Dock 能实时无报错呈现两页幻灯片，图片可正常显示。
 
 #### Phase 2：专精微交互与动效全面增强（第 3 ~ 4 周）

@@ -74,6 +74,10 @@ export default defineConfig(({
             src: "./src/i18n/**",
             dest: "./i18n/",
           },
+          {
+            src: "./public/slidev-client/**",
+            dest: "./slidev-client/",
+          },
         ],
       }),
     ],

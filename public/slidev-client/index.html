@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SiYuan Slidev Client Sandbox</title>
+  <style>
+    :root {
+      --slide-bg: #ffffff;
+      --slide-text: #1a1a1a;
+      --slide-accent: #3b82f6;
+      --slide-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+      --slide-code-bg: #f3f4f6;
+    }
+
+    [data-theme="dark"] {
+      --slide-bg: #121214;
+      --slide-text: #e2e8f0;
+      --slide-accent: #60a5fa;
+      --slide-code-bg: #1e1e24;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0f1115;
+      font-family: var(--slide-font);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+    }
+
+    #app {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .slide-stage-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 12px;
+    }
+
+    .slide-viewport {
+      position: relative;
+      background: var(--slide-bg);
+      color: var(--slide-text);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .slide-viewport.ratio-16-9 {
+      aspect-ratio: 16 / 9;
+      width: min(100%, calc((100vh - 48px) * 16 / 9));
+      max-height: calc(100vh - 48px);
+    }
+
+    .slide-viewport.ratio-4-3 {
+      aspect-ratio: 4 / 3;
+      width: min(100%, calc((100vh - 48px) * 4 / 3));
+      max-height: calc(100vh - 48px);
+    }
+
+    .slide-viewport.ratio-16-10 {
+      aspect-ratio: 16 / 10;
+      width: min(100%, calc((100vh - 48px) * 16 / 10));
+      max-height: calc(100vh - 48px);
+    }
+
+    .slide-content-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      padding: 48px 56px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Layouts */
+    .layout-cover {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .layout-cover h1 {
+      font-size: 3.2rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .layout-cover p {
+      font-size: 1.4rem;
+      opacity: 0.85;
+    }
+
+    .layout-center {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .layout-two-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      height: 100%;
+      align-items: start;
+    }
+
+    .layout-fact {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .layout-fact h1 {
+      font-size: 5rem;
+      font-weight: 900;
+      color: var(--slide-accent);
+    }
+
+    /* Blocks */
+    .slide-block {
+      margin-bottom: 14px;
+      line-height: 1.6;
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 4px 6px;
+      transition: all 0.2s ease;
+    }
+
+    .slide-block:hover {
+      background: rgba(59, 130, 246, 0.08);
+    }
+
+    .slide-block.highlighted {
+      outline: 2px solid var(--slide-accent);
+      background: rgba(59, 130, 246, 0.15);
+      animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { box-shadow: 0 0 4px var(--slide-accent); }
+      to { box-shadow: 0 0 16px var(--slide-accent); }
+    }
+
+    .slide-block h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 12px; }
+    .slide-block h2 { font-size: 1.7rem; font-weight: 600; margin-bottom: 10px; }
+    .slide-block h3 { font-size: 1.3rem; font-weight: 600; margin-bottom: 8px; }
+    .slide-block p { font-size: 1.15rem; }
+
+    .slide-block pre {
+      background: var(--slide-code-bg);
+      padding: 14px 18px;
+      border-radius: 6px;
+      font-family: "JetBrains Mono", Consolas, monospace;
+      font-size: 0.95rem;
+      overflow-x: auto;
+    }
+
+    .slide-block blockquote {
+      border-left: 4px solid var(--slide-accent);
+      padding-left: 14px;
+      opacity: 0.85;
+      font-style: italic;
+    }
+
+    .slide-block img {
+      max-width: 100%;
+      max-height: 45vh;
+      border-radius: 6px;
+      object-fit: contain;
+    }
+
+    /* v-click Progressive Animation */
+    .v-click-hidden {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transform: translateY(8px);
+    }
+
+    .v-click-visible {
+      opacity: 1 !important;
+      transform: translateY(0);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    /* Transitions */
+    .transition-fade-enter-active,
+    .transition-fade-leave-active {
+      transition: opacity 0.3s ease;
+    }
+    .transition-fade-enter-from,
+    .transition-fade-leave-to {
+      opacity: 0;
+    }
+
+    .transition-slide-left-enter-active,
+    .transition-slide-left-leave-active {
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .transition-slide-left-enter-from {
+      opacity: 0;
+      transform: translateX(40px);
+    }
+    .transition-slide-left-leave-to {
+      opacity: 0;
+      transform: translateX(-40px);
+    }
+
+    .transition-slide-up-enter-active,
+    .transition-slide-up-leave-active {
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .transition-slide-up-enter-from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    .transition-slide-up-leave-to {
+      opacity: 0;
+      transform: translateY(-40px);
+    }
+
+    /* Bottom Control Bar */
+    .controls-bar {
+      position: absolute;
+      bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(24, 24, 27, 0.75);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 6px 16px;
+      border-radius: 20px;
+      color: #f4f4f5;
+      font-size: 0.85rem;
+      z-index: 100;
+      opacity: 0.2;
+      transition: opacity 0.2s ease;
+    }
+
+    .controls-bar:hover {
+      opacity: 1;
+    }
+
+    .controls-bar button {
+      background: transparent;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+
+    .controls-bar button:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .controls-bar button:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      opacity: 0.6;
+      text-align: center;
+    }
+  </style>
+  <script src="./assets/vue.global.prod.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div class="slide-stage-container" :data-theme="currentThemeMode">
+      <div
+        class="slide-viewport"
+        :class="viewportRatioClass"
+        :style="pageBackgroundStyle"
+      >
+        <transition :name="transitionClass" mode="out-in">
+          <div
+            v-if="currentSlide"
+            :key="currentSlide.pageIndex"
+            class="slide-content-wrapper"
+            :class="['layout-' + (currentSlide.frontmatter.layout || 'default'), currentSlide.frontmatter.class]"
+          >
+            <!-- 双栏布局 -->
+            <template v-if="currentSlide.frontmatter.layout === 'two-cols'">
+              <div class="two-cols-left">
+                <div
+                  v-for="block in leftBlocks"
+                  :key="block.id"
+                  class="slide-block"
+                  :class="[getBlockClickClass(block), { highlighted: block.id === highlightedBlockId }]"
+                  :data-block-id="block.id"
+                  @click="onBlockClick(block.id)"
+                  v-html="renderBlockHtml(block)"
+                ></div>
+              </div>
+              <div class="two-cols-right">
+                <div
+                  v-for="block in rightBlocks"
+                  :key="block.id"
+                  class="slide-block"
+                  :class="[getBlockClickClass(block), { highlighted: block.id === highlightedBlockId }]"
+                  :data-block-id="block.id"
+                  @click="onBlockClick(block.id)"
+                  v-html="renderBlockHtml(block)"
+                ></div>
+              </div>
+            </template>
+
+            <!-- 常规布局 -->
+            <template v-else>
+              <div
+                v-for="block in currentSlide.blocks"
+                :key="block.id"
+                class="slide-block"
+                :class="[getBlockClickClass(block), { highlighted: block.id === highlightedBlockId }]"
+                :data-block-id="block.id"
+                @click="onBlockClick(block.id)"
+                v-html="renderBlockHtml(block)"
+              ></div>
+            </template>
+
+            <!-- 无块占位 -->
+            <div v-if="!currentSlide.blocks || currentSlide.blocks.length === 0" class="empty-state">
+              <p>幻灯片第 {{ currentSlide.pageIndex }} 页（空）</p>
+            </div>
+          </div>
+
+          <div v-else class="empty-state">
+            <p>等待思源笔记文档载入...</p>
+          </div>
+        </transition>
+      </div>
+
+      <!-- 悬浮播放控制条 -->
+      <div class="controls-bar">
+        <button :disabled="currentPageIndex <= 1" @click="prevStepOrSlide" title="上一动作 / 上一页 (Left Arrow)">◀</button>
+        <span>{{ currentPageIndex }} / {{ totalPages || 1 }}</span>
+        <button :disabled="currentPageIndex >= totalPages && isMaxStep" @click="nextStepOrSlide" title="下一动作 / 下一页 (Right Arrow / Space)">▶</button>
+        <button @click="toggleTheme" title="切换明暗主题">🌓</button>
+        <button @click="toggleFullScreen" title="全屏演示 (F)">⛶</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref, computed, onMounted, onUnmounted } = Vue
+
+    createApp({
+      setup() {
+        const slides = ref([])
+        const currentPageIndex = ref(1) // 1-based
+        const currentStep = ref(0) // 当前页内 v-click 步进计数
+        const highlightedBlockId = ref("")
+        const config = ref({
+          theme: "default",
+          aspectRatio: "16/9",
+          defaultTransition: "slide-left",
+          colorSchema: "auto"
+        })
+        const isDarkTheme = ref(true)
+
+        const totalPages = computed(() => slides.value.length)
+        const currentSlide = computed(() => {
+          if (slides.value.length === 0) return null
+          const idx = Math.max(1, Math.min(currentPageIndex.value, slides.value.length))
+          return slides.value[idx - 1]
+        })
+
+        // 宽高比适配类
+        const viewportRatioClass = computed(() => {
+          const r = config.value.aspectRatio || "16/9"
+          if (r === "4/3") return "ratio-4-3"
+          if (r === "16/10") return "ratio-16-10"
+          return "ratio-16-9"
+        })
+
+        const currentThemeMode = computed(() => isDarkTheme.value ? "dark" : "light")
+
+        // 页面背景样式
+        const pageBackgroundStyle = computed(() => {
+          if (!currentSlide.value) return {}
+          const bg = currentSlide.value.frontmatter?.background
+          if (!bg) return {}
+          if (bg.startsWith("http") || bg.startsWith("/") || bg.startsWith("data:") || bg.startsWith("assets/")) {
+            return {
+              backgroundImage: `url("${bg}")`,
+              backgroundSize: "cover",
+              backgroundPosition: "center"
+            }
+          }
+          return { background: bg }
+        })
+
+        // 转场动画类
+        const transitionClass = computed(() => {
+          const t = currentSlide.value?.frontmatter?.transition || config.value.defaultTransition || "slide-left"
+          return `transition-${t}`
+        })
+
+        // 分栏布局块过滤
+        const leftBlocks = computed(() => {
+          if (!currentSlide.value) return []
+          const left = currentSlide.value.blocks.filter(b => b.slot === "left")
+          return left.length > 0 ? left : currentSlide.value.blocks.filter(b => b.slot !== "right")
+        })
+
+        const rightBlocks = computed(() => {
+          if (!currentSlide.value) return []
+          return currentSlide.value.blocks.filter(b => b.slot === "right")
+        })
+
+        // 获取当前页最大 v-click 步数
+        const maxStepInCurrentSlide = computed(() => {
+          if (!currentSlide.value) return 0
+          let max = 0
+          for (const b of currentSlide.value.blocks) {
+            if (b.clicks) {
+              const num = parseInt(b.clicks, 10)
+              if (!isNaN(num) && num > max) max = num
+              else if (b.clicks === "+1" || b.clicks === "") max += 1
+            }
+          }
+          return max
+        })
+
+        const isMaxStep = computed(() => currentStep.value >= maxStepInCurrentSlide.value)
+
+        // 判断块的 v-click 显隐状态
+        function getBlockClickClass(block) {
+          if (!block.clicks) return "v-click-visible"
+          let requiredStep = 1
+          const num = parseInt(block.clicks, 10)
+          if (!isNaN(num)) requiredStep = num
+          return currentStep.value >= requiredStep ? "v-click-visible" : "v-click-hidden"
+        }
+
+        // 简易 Markdown / HTML 渲染转换
+        function renderBlockHtml(block) {
+          if (!block) return ""
+          let md = block.rawMarkdown || block.content || ""
+
+          // 标题转换
+          if (md.startsWith("### ")) return `<h3>${escapeHtml(md.slice(4))}</h3>`
+          if (md.startsWith("## ")) return `<h2>${escapeHtml(md.slice(3))}</h2>`
+          if (md.startsWith("# ")) return `<h1>${escapeHtml(md.slice(2))}</h1>`
+
+          // 代码块转换
+          if (md.startsWith("```")) {
+            const lines = md.split("\n")
+            const code = lines.slice(1, lines[lines.length - 1] === "```" ? -1 : undefined).join("\n")
+            return `<pre><code>${escapeHtml(code)}</code></pre>`
+          }
+
+          // 引用转换
+          if (md.startsWith("> ")) {
+            return `<blockquote><p>${escapeHtml(md.slice(2))}</p></blockquote>`
+          }
+
+          // 图片语法 ![alt](src)
+          const imgMatch = md.match(/!\[(.*?)\]\((.*?)\)/)
+          if (imgMatch) {
+            return `<img alt="${escapeHtml(imgMatch[1])}" src="${escapeHtml(imgMatch[2])}" />`
+          }
+
+          // 普通段落支持简单行内加粗和行内代码
+          let html = escapeHtml(md)
+          html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+          html = html.replace(/`([^`]+)`/g, "<code>$1</code>")
+          return `<p>${html}</p>`
+        }
+
+        function escapeHtml(str) {
+          return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;")
+        }
+
+        // 翻页与步进调度
+        function nextStepOrSlide() {
+          if (currentStep.value < maxStepInCurrentSlide.value) {
+            currentStep.value++
+            notifySlideChanged()
+            return
+          }
+          if (currentPageIndex.value < totalPages.value) {
+            currentPageIndex.value++
+            currentStep.value = 0
+            notifySlideChanged()
+          }
+        }
+
+        function prevStepOrSlide() {
+          if (currentStep.value > 0) {
+            currentStep.value--
+            notifySlideChanged()
+            return
+          }
+          if (currentPageIndex.value > 1) {
+            currentPageIndex.value--
+            currentStep.value = 0
+            notifySlideChanged()
+          }
+        }
+
+        function toggleTheme() {
+          isDarkTheme.value = !isDarkTheme.value
+        }
+
+        function toggleFullScreen() {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {})
+          } else {
+            document.exitFullscreen().catch(() => {})
+          }
+        }
+
+        function onBlockClick(blockId) {
+          highlightedBlockId.value = blockId
+          window.parent.postMessage({
+            source: "siyuan-slidev-client",
+            action: "BLOCK_CLICKED",
+            payload: {
+              currentPage: currentPageIndex.value,
+              clickedBlockId: blockId
+            }
+          }, "*")
+        }
+
+        function notifySlideChanged() {
+          window.parent.postMessage({
+            source: "siyuan-slidev-client",
+            action: "SLIDE_CHANGED",
+            payload: {
+              currentPage: currentPageIndex.value,
+              totalPages: totalPages.value,
+              currentBlockId: currentSlide.value?.startBlockId || ""
+            }
+          }, "*")
+        }
+
+        // 监听键盘快捷键
+        function onKeyDown(e) {
+          if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") {
+            e.preventDefault()
+            nextStepOrSlide()
+          } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+            e.preventDefault()
+            prevStepOrSlide()
+          } else if (e.key === "f" || e.key === "F") {
+            e.preventDefault()
+            toggleFullScreen()
+          }
+        }
+
+        // 监听来自宿主 (Plugin Host) 的 postMessage 消息
+        function onHostMessage(event) {
+          const data = event.data
+          if (!data || data.source !== "siyuan-slidev-host") return
+
+          switch (data.action) {
+            case "UPDATE_SLIDES":
+              if (data.payload.slides) {
+                slides.value = data.payload.slides
+                if (currentPageIndex.value > slides.value.length) {
+                  currentPageIndex.value = Math.max(1, slides.value.length)
+                }
+              }
+              if (data.payload.config) {
+                config.value = { ...config.value, ...data.payload.config }
+                if (data.payload.config.colorSchema === "light") isDarkTheme.value = false
+                else if (data.payload.config.colorSchema === "dark") isDarkTheme.value = true
+              }
+              break
+
+            case "NAVIGATE_PAGE":
+              if (typeof data.payload.pageIndex === "number") {
+                currentPageIndex.value = Math.max(1, Math.min(data.payload.pageIndex, totalPages.value || 1))
+                currentStep.value = 0
+              }
+              break
+
+            case "HIGHLIGHT_ELEMENT":
+              if (data.payload.targetBlockId) {
+                highlightedBlockId.value = data.payload.targetBlockId
+                // 如果该块在其他页，自动跳到该页
+                for (let i = 0; i < slides.value.length; i++) {
+                  if (slides.value[i].blocks.some(b => b.id === data.payload.targetBlockId)) {
+                    currentPageIndex.value = i + 1
+                    break
+                  }
+                }
+              }
+              break
+          }
+        }
+
+        onMounted(() => {
+          window.addEventListener("keydown", onKeyDown)
+          window.addEventListener("message", onHostMessage)
+
+          // 告知宿主客户端沙箱已准备就绪
+          window.parent.postMessage({
+            source: "siyuan-slidev-client",
+            action: "CLIENT_READY",
+            payload: {}
+          }, "*")
+        })
+
+        onUnmounted(() => {
+          window.removeEventListener("keydown", onKeyDown)
+          window.removeEventListener("message", onHostMessage)
+        })
+
+        return {
+          slides,
+          currentPageIndex,
+          totalPages,
+          currentSlide,
+          currentStep,
+          highlightedBlockId,
+          viewportRatioClass,
+          currentThemeMode,
+          pageBackgroundStyle,
+          transitionClass,
+          leftBlocks,
+          rightBlocks,
+          isMaxStep,
+          getBlockClickClass,
+          renderBlockHtml,
+          nextStepOrSlide,
+          prevStepOrSlide,
+          toggleTheme,
+          toggleFullScreen,
+          onBlockClick
+        }
+      }
+    }).mount("#app")
+  </script>
+</body>
+</html>

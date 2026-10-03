@@ -1,0 +1,192 @@
+import { describe, expect, it } from "vitest"
+import {
+  isLocalAssetUrl,
+  normalizeAssetPath,
+  rewriteAssetPaths,
+  rewriteSingleAssetUrl,
+} from "../src/compiler/assets-rewriter"
+import {
+  extractBlockMarkdown,
+  flattenBlockTree,
+  parseKramdownIAL,
+} from "../src/compiler/ast-crawler"
+import {
+  isPageBreak,
+  parseDocumentConfig,
+  parseElementAttrs,
+  parsePageAttrs,
+} from "../src/compiler/scope-mapper"
+import {
+  buildSlidevDocument,
+  injectShikiSpotlight,
+  stringifyFrontmatter,
+  wrapVClickDirective,
+} from "../src/compiler/slidev-ast-builder"
+
+describe("Scope Mapper (三层作用域解析)", () => {
+  it("应该正确解析文档全局属性 (Document Scope)", () => {
+    const docAttrs = {
+      "custom-slidev-theme": "seriph",
+      "custom-slidev-aspect-ratio": "4/3",
+      "custom-slidev-highlighter": "shiki",
+      "custom-slidev-default-transition": "fade",
+      "custom-slidev-color-schema": "dark",
+    }
+    const config = parseDocumentConfig(docAttrs)
+    expect(config.theme).toBe("seriph")
+    expect(config.aspectRatio).toBe("4/3")
+    expect(config.defaultTransition).toBe("fade")
+    expect(config.colorSchema).toBe("dark")
+  })
+
+  it("当无文档属性时应提供稳定默认值", () => {
+    const config = parseDocumentConfig(null)
+    expect(config.theme).toBe("default")
+    expect(config.aspectRatio).toBe("16/9")
+    expect(config.defaultTransition).toBe("slide-left")
+  })
+
+  it("应该准确识别水平分割线与分页标记", () => {
+    expect(isPageBreak({ id: "1", type: "thematic-break" })).toBe(true)
+    expect(isPageBreak({ id: "2", type: "b", markdown: "---" })).toBe(true)
+    expect(isPageBreak({ id: "3", type: "p", ial: { "custom-slidev-slide": "true" } })).toBe(true)
+    expect(isPageBreak({ id: "4", type: "p", markdown: "普通段落" })).toBe(false)
+  })
+
+  it("应该正确解析页面级属性 (Page Scope)", () => {
+    const pageAttrs = {
+      "custom-slidev-layout": "two-cols",
+      "custom-slidev-transition": "slide-up",
+      "custom-slidev-background": "assets/bg.jpg",
+      "custom-slidev-notes": "这是演讲备忘录",
+    }
+    const { frontmatter, notes } = parsePageAttrs(pageAttrs)
+    expect(frontmatter.layout).toBe("two-cols")
+    expect(frontmatter.transition).toBe("slide-up")
+    expect(frontmatter.background).toBe("assets/bg.jpg")
+    expect(notes).toBe("这是演讲备忘录")
+  })
+
+  it("应该正确解析元素动效级属性 (Element Scope)", () => {
+    const elemAttrs = {
+      "custom-slidev-click": "+1",
+      "custom-slidev-motion": JSON.stringify({ preset: "fade-in", duration: 300 }),
+      "custom-slidev-shiki-lines": "1-3|5",
+      "custom-slidev-slot": "right",
+    }
+    const parsed = parseElementAttrs(elemAttrs)
+    expect(parsed.clicks).toBe("+1")
+    expect(parsed.motion).toEqual({ preset: "fade-in", duration: 300 })
+    expect(parsed.shikiLines).toBe("1-3|5")
+    expect(parsed.slot).toBe("right")
+  })
+})
+
+describe("Assets Rewriter (本地资产代理重写器)", () => {
+  it("应该准确识别 assets 相对路径并规范化", () => {
+    expect(isLocalAssetUrl("assets/pic.png")).toBe(true)
+    expect(isLocalAssetUrl("./assets/pic.png")).toBe(true)
+    expect(isLocalAssetUrl("/assets/pic.png")).toBe(true)
+    expect(isLocalAssetUrl("https://example.com/pic.png")).toBe(false)
+
+    expect(normalizeAssetPath("./assets/pic.png")).toBe("assets/pic.png")
+    expect(normalizeAssetPath("/assets/pic.png")).toBe("assets/pic.png")
+  })
+
+  it("应该将 assets 路径拼接为带 baseUrl 的绝对代理地址", () => {
+    const options = { baseUrl: "http://127.0.0.1:6806" }
+    expect(rewriteSingleAssetUrl("assets/pic.png", options)).toBe("http://127.0.0.1:6806/assets/pic.png")
+  })
+
+  it("应该在 Markdown 图片与 HTML 中批量替换 assets 地址", () => {
+    const options = { baseUrl: "http://127.0.0.1:6806" }
+    const input = "一段文字 ![演示图](assets/demo.png) 还有 <img src=\"./assets/logo.svg\" />"
+    const output = rewriteAssetPaths(input, options)
+    expect(output).toContain("![演示图](http://127.0.0.1:6806/assets/demo.png)")
+    expect(output).toContain("<img src=\"http://127.0.0.1:6806/assets/logo.svg\" />")
+  })
+})
+
+describe("AST Crawler & Kramdown Parser", () => {
+  it("应该正确解析 Kramdown IAL 属性", () => {
+    const ial = '{: id="20261003-abc" custom-slidev-layout="cover" updated="20261003"}'
+    const attrs = parseKramdownIAL(ial)
+    expect(attrs.id).toBe("20261003-abc")
+    expect(attrs["custom-slidev-layout"]).toBe("cover")
+    expect(attrs.updated).toBe("20261003")
+  })
+
+  it("应该正确展平树形块结构", () => {
+    const tree = [
+      {
+        id: "1",
+        type: "p",
+        children: [
+          { id: "1-1", type: "p" },
+          { id: "1-2", type: "p" },
+        ],
+      },
+      { id: "2", type: "p" },
+    ]
+    const flat = flattenBlockTree(tree)
+    expect(flat.length).toBe(4)
+    expect(flat.map(n => n.id)).toEqual(["1", "1-1", "1-2", "2"])
+  })
+})
+
+describe("Slidev AST Builder (核心虚拟文档构建器)", () => {
+  it("应该正确包装 v-click 指令与注入 Shiki spotlight", () => {
+    expect(wrapVClickDirective("# 标题", "+1")).toBe("<v-click>\n\n# 标题\n\n</v-click>")
+    expect(wrapVClickDirective("# 标题", "2")).toBe("<v-click at=\"2\">\n\n# 标题\n\n</v-click>")
+
+    const code = "```ts\nconst a = 1\n```"
+    expect(injectShikiSpotlight(code, "1-2|4")).toBe("```ts {1-2|4}\nconst a = 1\n```")
+  })
+
+  it("应该将两段文字经由 --- 分割线准确拆分为两页幻灯片", () => {
+    const blocks = [
+      {
+        id: "block-1",
+        type: "h",
+        markdown: "# 第一页标题",
+      },
+      {
+        id: "divider-1",
+        type: "thematic-break",
+        markdown: "---",
+        ial: {
+          "custom-slidev-layout": "two-cols",
+          "custom-slidev-notes": "第二页讲师提示",
+        },
+      },
+      {
+        id: "block-2",
+        type: "p",
+        markdown: "第二页正文内容",
+        ial: {
+          "custom-slidev-click": "+1",
+        },
+      },
+    ]
+
+    const doc = buildSlidevDocument("doc-1", { "custom-slidev-theme": "apple-basic" }, blocks)
+
+    expect(doc.slides.length).toBe(2)
+    // 第一页为封面
+    expect(doc.slides[0].pageIndex).toBe(1)
+    expect(doc.slides[0].frontmatter.layout).toBe("cover")
+    expect(doc.slides[0].blocks[0].rawMarkdown).toBe("# 第一页标题")
+
+    // 第二页由分割线定义
+    expect(doc.slides[1].pageIndex).toBe(2)
+    expect(doc.slides[1].frontmatter.layout).toBe("two-cols")
+    expect(doc.slides[1].notes).toBe("第二页讲师提示")
+    expect(doc.slides[1].blocks[0].clicks).toBe("+1")
+
+    // 验证 Markdown 生成完整性
+    expect(doc.fullMarkdown).toContain("theme: apple-basic")
+    expect(doc.fullMarkdown).toContain("layout: two-cols")
+    expect(doc.fullMarkdown).toContain("<v-click>")
+    expect(doc.fullMarkdown).toContain("<!--\n第二页讲师提示\n-->")
+  })
+})
