@@ -82,19 +82,72 @@ describe("Single-File HTML Exporter (单文件离线 HTML 导出)", () => {
 })
 
 describe("PDF Exporter (高保真 PDF 讲义导出)", () => {
-  it("应生成支持打印分页的 HTML 视窗结构", () => {
+  it("应生成支持打印分页的 HTML 视窗结构与默认页眉页脚", () => {
     const html = buildPrintableHtml(dummyDoc)
     expect(html).toContain("@page")
     expect(html).toContain("pdf-slide-page")
-    expect(html).toContain("Page 1")
-    expect(html).toContain("Page 2")
-    expect(html).toContain("备注: 这是第一页备注")
+    expect(html).toContain("P. 1 / 2")
+    expect(html).toContain("P. 2 / 2")
+    expect(html).toContain("演讲备注:")
+    expect(html).toContain("这是第一页备注")
+    expect(html).toContain("size: 16in 9in;")
+  })
+
+  it("应正确支持配置项 (比例/暗黑主题/关闭备注与页码)", () => {
+    const html = buildPrintableHtml(dummyDoc, {
+      title: "产品发布会讲义",
+      pageRatio: "A4-landscape",
+      theme: "dark",
+      showNotes: false,
+      showPageNumber: false,
+    })
+
+    expect(html).toContain("<title>产品发布会讲义 - 高保真讲义</title>")
+    expect(html).toContain("size: 297mm 210mm;")
+    expect(html).toContain("theme-dark")
+    expect(html).not.toContain("演讲备注:")
+    expect(html).not.toContain("pdf-page-badge")
+  })
+
+  it("应正确渲染双栏布局 (two-cols) 与富文本块", () => {
+    const richDoc: ISlidevDocument = {
+      docId: "rich-1",
+      config: dummyDoc.config,
+      fullMarkdown: "",
+      slides: [
+        {
+          pageIndex: 1,
+          startBlockId: "s1",
+          frontmatter: { layout: "two-cols" },
+          notes: "",
+          blocks: [
+            { id: "b1", type: "h", content: "左栏标题", rawMarkdown: "## 左栏标题" },
+            { id: "b2", type: "c", content: "const a = 1", rawMarkdown: "```ts\nconst a = 1\n```" },
+            { id: "b3", type: "p", content: "右栏段落", rawMarkdown: "右栏段落 **粗体**", slot: "right" },
+            { id: "b4", type: "p", content: "", rawMarkdown: "> 重要引言", slot: "right" },
+          ],
+          rawMarkdown: "",
+        },
+      ],
+    }
+
+    const html = buildPrintableHtml(richDoc)
+    expect(html).toContain("pdf-two-cols-wrapper")
+    expect(html).toContain("pdf-col--left")
+    expect(html).toContain("pdf-col--right")
+    expect(html).toContain("<h2>左栏标题</h2>")
+    expect(html).toContain("pdf-code")
+    expect(html).toContain("const a = 1")
+    expect(html).toContain("<strong>粗体</strong>")
+    expect(html).toContain("pdf-quote")
+    expect(html).toContain("重要引言")
   })
 
   it("在非浏览器环境调用 triggerPdfExport 应安全返回 false", () => {
     expect(triggerPdfExport(dummyDoc)).toBe(false)
   })
 })
+
 
 describe("CliDevServerBridge (Pro 模式本地 DevServer 桥接)", () => {
   it("应默认连接 3030 端口并支持配置", () => {
