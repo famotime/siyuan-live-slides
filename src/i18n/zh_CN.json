@@ -1,3 +1,14 @@
 {
-  "addTopBarIcon": "PluginSampleViteVue"
+  "dockTitle": "Slidev 演示",
+  "playPresentation": "放映演示文稿",
+  "exportHtml": "导出单文件离线 HTML",
+  "exportPdf": "导出 PDF 讲义",
+  "presenterMode": "双屏演讲者视图",
+  "refresh": "重新编译并刷新",
+  "prevPage": "上一页",
+  "nextPage": "下一页",
+  "fullscreen": "全屏放映",
+  "outline": "大纲缩略图",
+  "settings": "演示设置",
+  "proMode": "Pro 极客模式 (本地 DevServer)"
 }

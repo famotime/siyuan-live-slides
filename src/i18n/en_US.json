@@ -1,3 +1,14 @@
 {
-  "addTopBarIcon": "PluginSampleViteVue"
+  "dockTitle": "Slidev Presentation",
+  "playPresentation": "Play Presentation",
+  "exportHtml": "Export Offline Single HTML",
+  "exportPdf": "Export PDF Handout",
+  "presenterMode": "Presenter Mode",
+  "refresh": "Recompile and Refresh",
+  "prevPage": "Previous Page",
+  "nextPage": "Next Page",
+  "fullscreen": "Fullscreen",
+  "outline": "Slide Outline",
+  "settings": "Presentation Settings",
+  "proMode": "Pro DevServer Mode"
 }

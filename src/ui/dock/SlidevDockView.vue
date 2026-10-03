@@ -37,6 +37,27 @@
         </button>
         <button
           class="spm-btn-icon"
+          title="双屏演讲者视图 (Presenter)"
+          @click="onOpenPresenter"
+        >
+          🎤
+        </button>
+        <button
+          class="spm-btn-icon"
+          title="导出离线单文件 HTML"
+          @click="onExportHtml"
+        >
+          📥
+        </button>
+        <button
+          class="spm-btn-icon"
+          title="导出 PDF 讲义"
+          @click="onExportPdf"
+        >
+          🖨️
+        </button>
+        <button
+          class="spm-btn-icon"
           title="重新编译并刷新"
           @click="onRefresh"
         >
@@ -154,9 +175,31 @@ function onFullscreen() {
   }
 }
 
+let latestDoc: ISlidevDocument | null = null
+
+function onOpenPresenter() {
+  window.open('/plugins/siyuan-slidev/slidev-client/presenter.html', 'SlidevPresenter', 'width=1200,height=800')
+}
+
+function onExportHtml() {
+  if (!latestDoc) return
+  import('@/export/single-html-exporter').then(({ buildStandaloneHtml, downloadHtmlFile }) => {
+    const html = buildStandaloneHtml(latestDoc!)
+    downloadHtmlFile('presentation.html', html)
+  })
+}
+
+function onExportPdf() {
+  if (!latestDoc) return
+  import('@/export/pdf-exporter').then(({ triggerPdfExport }) => {
+    triggerPdfExport(latestDoc!)
+  })
+}
+
 // 供父级调用的文档更新方法
 defineExpose({
   updateDocument(doc: ISlidevDocument) {
+    latestDoc = doc
     currentSlides.value = doc.slides
     totalPages.value = doc.slides.length
     cursorTracker.updateSlidesIndex(doc.slides)
