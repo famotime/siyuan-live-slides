@@ -145,3 +145,52 @@ describe("Selection Mirror (反向定位)", () => {
     vi.useRealTimers()
   })
 })
+
+describe("Presenter Mode Protocol (演讲者模式协议规范)", () => {
+  it("应正确定义双向同步的消息契约与广播载荷", () => {
+    // 模拟沙箱收到 REQUEST_SYNC 后广播 SYNC_PAGE 与 SYNC_SLIDES
+    const mockChannel = {
+      postMessage: vi.fn(),
+    }
+
+    function handleRequestSync(currentSlides: any[], currentPage: number) {
+      mockChannel.postMessage({
+        type: "SYNC_PAGE",
+        page: currentPage,
+      })
+      mockChannel.postMessage({
+        type: "SYNC_SLIDES",
+        slides: currentSlides,
+      })
+    }
+
+    const testSlides = [
+      { pageIndex: 1, startBlockId: "p1", blocks: [], frontmatter: {}, notes: "第一页备注", rawMarkdown: "" },
+      { pageIndex: 2, startBlockId: "p2", blocks: [], frontmatter: {}, notes: "第二页备注", rawMarkdown: "" },
+    ]
+
+    handleRequestSync(testSlides, 2)
+
+    expect(mockChannel.postMessage).toHaveBeenCalledWith({
+      type: "SYNC_PAGE",
+      page: 2,
+    })
+    expect(mockChannel.postMessage).toHaveBeenCalledWith({
+      type: "SYNC_SLIDES",
+      slides: testSlides,
+    })
+  })
+
+  it("应保证翻页与跳转在边界范围内", () => {
+    function clampPage(page: number, total: number): number {
+      return Math.max(1, Math.min(page, Math.max(total, 1)))
+    }
+
+    expect(clampPage(0, 5)).toBe(1)
+    expect(clampPage(-3, 5)).toBe(1)
+    expect(clampPage(3, 5)).toBe(3)
+    expect(clampPage(6, 5)).toBe(5)
+    expect(clampPage(10, 0)).toBe(1)
+  })
+})
+

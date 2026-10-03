@@ -243,6 +243,24 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
       },
     })
 
+    this.addCommand({
+      langKey: "slidevPresenterMode",
+      langText: "Slidev: 打开双屏演讲者控制台 (Presenter Mode)",
+      hotkey: "⌥M",
+      hotkeys: ["⌥M", "Alt+M"],
+      enabled: () => true,
+      execute: () => {
+        if (typeof window !== "undefined") {
+          window.open(
+            "/plugins/siyuan-slidev/slidev-client/presenter.html",
+            "SlidevPresenter",
+            "width=1200,height=800",
+          )
+        }
+      },
+    })
+
+
 
     // 4. 注册右侧 Dock 分屏预览面板
     const self = this

@@ -617,9 +617,12 @@
               currentPageIndex.value = Math.max(1, Math.min(e.data.page, totalPages.value || 1))
               currentStep.value = 0
               notifySlideChanged()
+            } else if (e.data?.type === "REQUEST_SYNC") {
+              broadcastSync()
             }
           }
         } catch (e) {}
+
 
         function broadcastSync() {
           if (!broadcastChannel) return
