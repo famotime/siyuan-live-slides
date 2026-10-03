@@ -69,31 +69,19 @@ export function stripInlineComment(val: string): string {
 }
 
 /**
- * 健壮轻量 YAML Frontmatter 解析器
+ * 健壮轻量 YAML Frontmatter 解析器，支持多行块标量（含空行）、嵌套对象字典、引号剥离与行内注释
  */
 export function parseYamlFrontmatter(yamlStr: string): Record<string, any> {
   const result: Record<string, any> = {}
   const lines = yamlStr.split(/\r?\n/)
-  let currentKey = ""
-  let inMultiLine = false
-  let multiLineBuffer: string[] = []
+  let i = 0
 
-  for (let i = 0; i < lines.length; i++) {
+  while (i < lines.length) {
     const rawLine = lines[i]
     const trimmed = rawLine.trim()
 
-    if (inMultiLine) {
-      if (rawLine.startsWith("  ") || rawLine.startsWith("\t")) {
-        multiLineBuffer.push(trimmed)
-        continue
-      } else {
-        result[currentKey] = multiLineBuffer.join("\n")
-        inMultiLine = false
-        multiLineBuffer = []
-      }
-    }
-
     if (!trimmed || trimmed.startsWith("#")) {
+      i++
       continue
     }
 
@@ -102,25 +90,101 @@ export function parseYamlFrontmatter(yamlStr: string): Record<string, any> {
       const key = rawLine.slice(0, colonIdx).trim()
       let val = rawLine.slice(colonIdx + 1).trim()
 
+      // 1. 多行标量 (| 逐行保留, > 折叠为空格)
       if (val === "|" || val === ">") {
-        currentKey = key
-        inMultiLine = true
-        multiLineBuffer = []
+        i++
+        const buffer: string[] = []
+        let baseIndent = -1
+
+        while (i < lines.length) {
+          const mLine = lines[i]
+          const mTrimmed = mLine.trim()
+
+          if (!mTrimmed) {
+            // 空行属于多行标量内部
+            buffer.push("")
+            i++
+            continue
+          }
+
+          const indentMatch = mLine.match(/^(\s+)/)
+          const currentIndent = indentMatch ? indentMatch[1].length : 0
+
+          if (baseIndent === -1) {
+            baseIndent = currentIndent
+          }
+
+          if (currentIndent < baseIndent) {
+            // 缩进减小，多行块结束，交由外层循环继续解析
+            break
+          }
+
+          buffer.push(mLine.slice(baseIndent))
+          i++
+        }
+
+        while (buffer.length > 0 && buffer[buffer.length - 1] === "") {
+          buffer.pop()
+        }
+        result[key] = val === ">" ? buffer.join(" ") : buffer.join("\n")
         continue
       }
 
       val = stripInlineComment(val)
 
+      // 2. 嵌套对象 (key: 后面无标量值，下一行具有更大缩进)
+      if (!val) {
+        let j = i + 1
+        const childLines: string[] = []
+        let childBaseIndent = -1
+
+        while (j < lines.length) {
+          const cLine = lines[j]
+          const cTrimmed = cLine.trim()
+
+          if (!cTrimmed || cTrimmed.startsWith("#")) {
+            if (childBaseIndent !== -1) {
+              childLines.push("")
+            }
+            j++
+            continue
+          }
+
+          const indentMatch = cLine.match(/^(\s+)/)
+          const currentIndent = indentMatch ? indentMatch[1].length : 0
+
+          if (childBaseIndent === -1) {
+            if (currentIndent > 0) {
+              childBaseIndent = currentIndent
+            } else {
+              break
+            }
+          }
+
+          if (currentIndent < childBaseIndent) {
+            break
+          }
+
+          childLines.push(cLine.slice(childBaseIndent))
+          j++
+        }
+
+        if (childLines.length > 0) {
+          result[key] = parseYamlFrontmatter(childLines.join("\n"))
+          i = j
+          continue
+        }
+      }
+
+      // 3. 常规标量值
       if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
         val = val.slice(1, -1)
       }
 
       result[key] = val
     }
-  }
 
-  if (inMultiLine && currentKey) {
-    result[currentKey] = multiLineBuffer.join("\n")
+    i++
   }
 
   return result
@@ -334,20 +398,132 @@ function replaceDivContainer(
 }
 
 /**
+ * 保护包含 Vue 交互事件 (@), Vue 指令 (v-), 属性绑定 (:), UnoCSS 布局类等特殊属性的 <div> 容器
+ */
+function protectVueDivContainers(html: string): { text: string; tokens: string[] } {
+  const tokens: string[] = []
+  let result = ""
+  let cursor = 0
+  const openTagRegex = /<div\b([^>]*)>/gi
+
+  while (cursor < html.length) {
+    openTagRegex.lastIndex = cursor
+    let match: RegExpExecArray | null
+    let found = false
+    let targetOpenIndex = -1
+    let openTagLength = 0
+
+    while ((match = openTagRegex.exec(html)) !== null) {
+      const attrs = match[1]
+      // 严谨检测 Vue 指令与 UnoCSS 特殊属性 (包括网格布局与定位容器)
+      if (
+        /(?:\s@[a-zA-Z0-9_-]+=\s*["']|\s:[a-zA-Z0-9_-]+=\s*["']|\sv-[a-zA-Z0-9_.-]+|\shover:[a-zA-Z0-9_.-]+=\s*["']|\sgrid=["']~|\bclass=["'][^"']*\b(?:abs-br|slidev-icon-btn|grid\s+|grid$|grid-cols-|relative\b)\b[^"']*["']|\bstyle=["'][^"']*\bgrid-[^"']*["'])/i.test(attrs)
+      ) {
+        found = true
+        targetOpenIndex = match.index
+        openTagLength = match[0].length
+        break
+      }
+    }
+
+    if (!found) {
+      result += html.slice(cursor)
+      break
+    }
+
+    result += html.slice(cursor, targetOpenIndex)
+
+    const bodyStart = targetOpenIndex + openTagLength
+    let depth = 1
+    let bodyEnd = -1
+    let closeTagEnd = -1
+
+    const tokenRegex = /<\/?div\b[^>]*>/gi
+    tokenRegex.lastIndex = bodyStart
+
+    let tokenMatch: RegExpExecArray | null
+    while ((tokenMatch = tokenRegex.exec(html)) !== null) {
+      if (tokenMatch[0].startsWith("</")) {
+        depth--
+        if (depth === 0) {
+          bodyEnd = tokenMatch.index
+          closeTagEnd = tokenMatch.index + tokenMatch[0].length
+          break
+        }
+      } else {
+        depth++
+      }
+    }
+
+    if (bodyEnd !== -1 && closeTagEnd !== -1) {
+      const fullMatchedDiv = html.slice(targetOpenIndex, closeTagEnd)
+      const placeholder = `__VUE_DIV_TOKEN_${tokens.length}__`
+      tokens.push(fullMatchedDiv)
+      result += placeholder
+      cursor = closeTagEnd
+    } else {
+      result += html.slice(targetOpenIndex, bodyStart)
+      cursor = bodyStart
+    }
+  }
+
+  return { text: result, tokens }
+}
+
+/**
  * 将幻灯片中的展示性 HTML 容器与标签智能剥离并转换为纯净原生的 Markdown 内容
  */
 export function convertHtmlToCleanMarkdown(html: string): string {
   // 1. 保护现有 Markdown 代码块与行内代码 (避免误伤代码块内的示例 HTML)
   const codeBlocks: string[] = []
-  let text = html.replace(/(```[\s\S]*?```|`[^`\n]+`)/g, (match) => {
+  let text = html.replace(/(````[\s\S]*?````|```[\s\S]*?```|`[^`\n]+`)/g, (match) => {
     const placeholder = `__CODE_TOKEN_${codeBlocks.length}__`
     codeBlocks.push(match)
     return placeholder
   })
 
-  // 2. 剥离样式块与脚本块
+  // 1.1 保护 Vue <script setup> 脚本块
+  const scriptBlocks: string[] = []
+  text = text.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, (match) => {
+    const placeholder = `__SCRIPT_TOKEN_${scriptBlocks.length}__`
+    scriptBlocks.push(match)
+    return placeholder
+  })
+
+  // 1.2 保护带有 Vue 指令与交互的 div 容器
+  const { text: textAfterVueDivs, tokens: vueDivTokens } = protectVueDivContainers(text)
+  text = textAfterVueDivs
+
+  // 1.3 保护特定组件与带 Vue 指令的自闭合或严格成对元素
+  const vueCompTokens: string[] = []
+  // (a) 自闭合组件标签 (以 /> 结尾，绝不跨越内容): <carbon:... />, <Toc ... />, <Tweet ... />, <Counter ... />, <PoweredBySlidev ... />, <arrow ... />, <v-drag-arrow ... />, <div h-3 />
+  text = text.replace(/<(?:[A-Z][a-zA-Z0-9_-]*|[a-z0-9_-]+:[a-z0-9_-]+|v-[a-z0-9_-]+|arrow\b|div\s+h-\d+)\b[^>]*\/>/gi, (match) => {
+    const placeholder = `__VUE_COMP_TOKEN_${vueCompTokens.length}__`
+    vueCompTokens.push(match)
+    return placeholder
+  })
+
+  // (b) 严格同名成对组件与交互标签: <v-drag>...</v-drag>, <button @click=...>...</button>
+  text = text.replace(/<(v-[a-z0-9_-]+|button)\b([^>]*)>([\s\S]*?)<\/\1>/gi, (match) => {
+    const placeholder = `__VUE_COMP_TOKEN_${vueCompTokens.length}__`
+    vueCompTokens.push(match)
+    return placeholder
+  })
+
+  // (c) 带有 Vue 指令(v-)的单行 p, span, img (如 <img v-click ... />, <p v-after ...>...</p>, <span v-mark ...>...</span>)
+  text = text.replace(/<img\b[^>]*?\bv-[a-z0-9_.-]+[^>]*\/?>/gi, (match) => {
+    const placeholder = `__VUE_COMP_TOKEN_${vueCompTokens.length}__`
+    vueCompTokens.push(match)
+    return placeholder
+  })
+  text = text.replace(/<(p|span)\b([^>]*?\bv-[a-z0-9_.-]+[^>]*)>([\s\S]*?)<\/\1>/gi, (match) => {
+    const placeholder = `__VUE_COMP_TOKEN_${vueCompTokens.length}__`
+    vueCompTokens.push(match)
+    return placeholder
+  })
+
+  // 2. 剥离独立样式块
   text = text.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
-  text = text.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
 
   // 3. 移除纯装饰型组件与元素
   text = text.replace(/<div class="terminal-bar">[\s\S]*?<\/div>/gi, "")
@@ -543,7 +719,12 @@ export function convertHtmlToCleanMarkdown(html: string): string {
   text = text.replace(/<p\s+class="ok">\s*●\s*([\s\S]*?)<\/p>/gi, "\n✅ **$1**\n")
   text = text.replace(/<p\s+class="caption">\s*([\s\S]*?)<\/p>/gi, "\n> *$1*\n")
   text = text.replace(/<p\s+class="lead">\s*([\s\S]*?)<\/p>/gi, "\n*$1*\n")
-  text = text.replace(/<p\b[^>]*>([\s\S]*?)<\/p>/gi, "\n$1\n\n")
+  text = text.replace(/<p\b([^>]*)>([\s\S]*?)<\/p>/gi, (match, attrs, inner) => {
+    if (/@|v-|:|class=/i.test(attrs)) {
+      return match
+    }
+    return `\n${inner.trim()}\n\n`
+  })
 
   // 18. 换行与分割符
   text = text.replace(/<br\s*\/?>/gi, "\n")
@@ -567,7 +748,13 @@ export function convertHtmlToCleanMarkdown(html: string): string {
   text = text.replace(/<ol\b[^>]*>([\s\S]*?)<\/ol>/gi, "\n$1\n")
 
   // 21. 链接与引用
-  text = text.replace(/<a\b[^>]*href=["'](.*?)["'][^>]*>([\s\S]*?)<\/a>/gi, "[$2]($1)")
+  text = text.replace(/<a\b([^>]*)href=["'](.*?)["']([^>]*)>([\s\S]*?)<\/a>/gi, (match, prefix, href, suffix, inner) => {
+    const trimmed = inner.trim()
+    if (trimmed.includes("<") || trimmed.includes("\n")) {
+      return match
+    }
+    return `[${trimmed}](${href})`
+  })
   text = text.replace(/<blockquote\b[^>]*>([\s\S]*?)<\/blockquote>/gi, (_, q) => {
     return "\n" + q.trim().split("\n").map((line: string) => `> ${line.trim()}`).join("\n") + "\n"
   })
@@ -577,7 +764,16 @@ export function convertHtmlToCleanMarkdown(html: string): string {
   text = text.replace(/<(?:div|section|header|footer|main|article|nav|aside)\b[^>]*>/gi, "")
   text = text.replace(/<\/?span\b[^>]*>/gi, "")
 
-  // 23. 恢复受保护的代码块
+  // 23. 恢复受保护的 Vue 元素、Script 块与代码块
+  for (let i = 0; i < vueCompTokens.length; i++) {
+    text = text.replace(`__VUE_COMP_TOKEN_${i}__`, vueCompTokens[i])
+  }
+  for (let i = 0; i < vueDivTokens.length; i++) {
+    text = text.replace(`__VUE_DIV_TOKEN_${i}__`, vueDivTokens[i])
+  }
+  for (let i = 0; i < scriptBlocks.length; i++) {
+    text = text.replace(`__SCRIPT_TOKEN_${i}__`, scriptBlocks[i])
+  }
   for (let i = 0; i < codeBlocks.length; i++) {
     text = text.replace(`__CODE_TOKEN_${i}__`, codeBlocks[i])
   }
@@ -676,18 +872,35 @@ export function parseSlidevPresentation(
   for (let idx = slideStartIndex; idx < rawSlides.length; idx++) {
     const rawSlide = rawSlides[idx]
 
+    const { frontmatter, content: slideBody } = extractSlideMatter(rawSlide)
+
     // 处理 src: ./pages/*.md 外部子页面展开
-    const srcMatch = rawSlide.match(/^src:\s*([^\n\r]+)/m)
-    if (srcMatch) {
-      const subPath = srcMatch[1].trim().replace(/^['"]|['"]$/g, "")
+    const srcRawMatch = rawSlide.match(/^\s*(?:---\s*)?src:\s*([^\n\r]+)/m)
+    const srcVal = frontmatter.src || (srcRawMatch ? srcRawMatch[1] : undefined)
+
+    if (srcVal) {
+      const subPath = String(srcVal).trim().replace(/^['"]|['"]$/g, "")
       const subContent = virtualFiles[subPath]
         || virtualFiles[subPath.replace(/^\.\//, "")]
         || virtualFiles[`pages/${subPath.replace(/^.*pages\//, "")}`]
 
       if (subContent) {
+        // 构建除 src 外继承给子页面的 frontmatter 控制属性 (如 hide: false 等)
+        const inheritedAttrs: Record<string, string> = {}
+        if (frontmatter.layout) inheritedAttrs[ATTR_PAGE_LAYOUT] = String(frontmatter.layout)
+        if (frontmatter.transition) inheritedAttrs[ATTR_PAGE_TRANSITION] = String(frontmatter.transition)
+        if (frontmatter.background) inheritedAttrs[ATTR_PAGE_BACKGROUND] = String(frontmatter.background)
+        if (frontmatter.class) inheritedAttrs[ATTR_PAGE_CLASS] = String(frontmatter.class)
+        for (const [k, v] of Object.entries(frontmatter)) {
+          if (!["src", "layout", "transition", "background", "class"].includes(k)) {
+            inheritedAttrs[`custom-slidev-${k}`] = typeof v === "object" ? JSON.stringify(v) : String(v)
+          }
+        }
+
         const subParsed = parseSlidevPresentation(subContent, { ...options, virtualFiles })
         for (const subSlide of subParsed.slides) {
           subSlide.pageIndex = pageIndex++
+          subSlide.pageAttrs = { ...inheritedAttrs, ...subSlide.pageAttrs }
           slides.push(subSlide)
           const l = subSlide.pageAttrs[ATTR_PAGE_LAYOUT] || "default"
           layoutDistribution[l] = (layoutDistribution[l] || 0) + 1
@@ -695,8 +908,6 @@ export function parseSlidevPresentation(
         continue
       }
     }
-
-    const { frontmatter, content: slideBody } = extractSlideMatter(rawSlide)
 
     const pageAttrs: Record<string, string> = {}
     if (frontmatter.layout) pageAttrs[ATTR_PAGE_LAYOUT] = String(frontmatter.layout)
@@ -712,27 +923,54 @@ export function parseSlidevPresentation(
 
     let body = slideBody
 
-    // 提取演讲者提词备注 <!-- notes --> (排除 TODO)
-    let pageNotes = ""
-    const notesRegex = /<!--([\s\S]*?)-->/g
-    let nMatch: RegExpExecArray | null
-    while ((nMatch = notesRegex.exec(body)) !== null) {
-      const noteContent = nMatch[1].trim()
-      if (!noteContent.startsWith("TODO:")) {
-        pageNotes = pageNotes ? `${pageNotes}\n\n${noteContent}` : noteContent
-        totalNotes++
-      }
-    }
+    // 保护正文中的所有代码块（包含 3 或 4 反引号，以及行内代码），防止代码块内部的注释被误识别为 slide notes
+    const codeTokens: string[] = []
+    let protectedBody = body.replace(/(````[\s\S]*?````|```[\s\S]*?```|`[^`\n]+`)/g, (match) => {
+      const token = `__CODE_TOKEN_NOTE_${codeTokens.length}__`
+      codeTokens.push(match)
+      return token
+    })
 
-    if (pageNotes) {
-      pageAttrs[ATTR_PAGE_NOTES] = pageNotes
-      if (pageIndex === 1) {
-        docRootAttrs[ATTR_PAGE_NOTES] = pageNotes
+    // 提取演讲者提词备注 <!-- notes --> (排除 TODO)
+    // 依循 Slidev 官方定义：只有位于幻灯片正文末尾的最后一个 HTML 注释块才是 slide notes
+    let pageNotes = ""
+    const commentMatches = Array.from(protectedBody.matchAll(/<!--([\s\S]*?)-->/g))
+    if (commentMatches.length > 0) {
+      const last = commentMatches[commentMatches.length - 1]
+      const trailingContent = protectedBody.slice(last.index! + last[0].length).trim()
+      const isTrailing = !trailingContent || !trailingContent.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "").trim()
+
+      if (isTrailing) {
+        const noteContent = last[1].trim()
+        if (!noteContent.startsWith("TODO:")) {
+          pageNotes = noteContent
+          totalNotes++
+        }
+        if (stripNotesFromMarkdown) {
+          protectedBody = protectedBody.slice(0, last.index).trimEnd() + protectedBody.slice(last.index! + last[0].length)
+        }
       }
     }
 
     if (stripNotesFromMarkdown) {
-      body = body.replace(/<!--(?![\s\S]*?TODO:)[\s\S]*?-->/g, "").trim()
+      // 移除其余普通 HTML 注释（非 notes 注释），保持笔记正文清爽（保留以 TODO 开头的待办标记）
+      protectedBody = protectedBody.replace(/<!--(?![\s\S]*?TODO:)[\s\S]*?-->/g, "").trim()
+    }
+
+    // 恢复受保护的代码块
+    for (let i = 0; i < codeTokens.length; i++) {
+      protectedBody = protectedBody.replace(`__CODE_TOKEN_NOTE_${i}__`, codeTokens[i])
+    }
+    body = protectedBody
+
+    if (pageNotes) {
+      for (let i = 0; i < codeTokens.length; i++) {
+        pageNotes = pageNotes.replace(`__CODE_TOKEN_NOTE_${i}__`, codeTokens[i])
+      }
+      pageAttrs[ATTR_PAGE_NOTES] = pageNotes
+      if (pageIndex === 1) {
+        docRootAttrs[ATTR_PAGE_NOTES] = pageNotes
+      }
     }
 
     // 隔离处理 <style> 标签 (Gap 2)
@@ -773,6 +1011,8 @@ export function parseSlidevPresentation(
 
     if (cleanShikiLines) {
       body = body.replace(/(```\w+)\s+\{[^}]+\}/g, "$1")
+      // 清理数学公式块中的 Slidev 渐进展示修饰符: $$ {1|3|all} -> $$
+      body = body.replace(/^\$\$\s+\{[^}]+\}/gm, () => "$$")
     }
 
     if (cleanSlots) {
