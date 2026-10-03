@@ -1,5 +1,6 @@
 /* eslint-disable node/prefer-global/process */
-import { resolve } from "node:path"
+import fs from "node:fs"
+import path, { resolve } from "node:path"
 import vue from "@vitejs/plugin-vue"
 import fg from "fast-glob"
 import minimist from "minimist"
@@ -12,6 +13,44 @@ import { viteStaticCopy } from "vite-plugin-static-copy"
 import zipPack from "vite-plugin-zip-pack"
 
 const pluginInfo = require("./plugin.json")
+
+function syncToSiyuanPlugin(targetDir: string) {
+  return {
+    name: "sync-to-siyuan",
+    closeBundle() {
+      if (!targetDir || !fs.existsSync(path.dirname(targetDir))) {
+        return
+      }
+      try {
+        if (!fs.existsSync(targetDir)) {
+          fs.mkdirSync(targetDir, { recursive: true })
+        }
+        // 清理目标目录中的所有遗留 .cjs 文件
+        const files = fs.readdirSync(targetDir)
+        for (const file of files) {
+          if (file.endsWith(".cjs")) {
+            fs.unlinkSync(path.join(targetDir, file))
+          }
+        }
+        // 复制 dist 下所有最新产物至思源工作空间插件目录
+        if (fs.existsSync("./dist")) {
+          const distFiles = fs.readdirSync("./dist")
+          for (const file of distFiles) {
+            const srcPath = path.join("./dist", file)
+            const destPath = path.join(targetDir, file)
+            fs.cpSync(srcPath, destPath, {
+              recursive: true,
+              force: true,
+            })
+          }
+          console.log(`\n[Sync] 成功将最新单文件插件同步至思源插件目录:\n${targetDir}`)
+        }
+      } catch (err) {
+        console.warn("\n[Sync] 同步插件至思源目录时出现警告:", err)
+      }
+    },
+  }
+}
 
 export default defineConfig(({
   mode,
@@ -80,6 +119,7 @@ export default defineConfig(({
           },
         ],
       }),
+      syncToSiyuanPlugin(devDistDir),
     ],
 
     // https://github.com/vitejs/vite/issues/1930
