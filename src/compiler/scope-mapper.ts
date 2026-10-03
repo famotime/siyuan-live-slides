@@ -59,10 +59,13 @@ export function isPageBreak(node: ISiYuanBlockNode): boolean {
     return true
   }
 
-  // 2. 原生思源水平分割线块 (ThematicBreak, 通常 type 为 "b" 且 markdown 或 content 为 "---" / "***")
+  // 2. 原生思源水平分割线块 (ThematicBreak, 思源内核中 type 为 "tb" 或 "NodeThematicBreak", markdown 为 "---" / "***")
   if (
-    node.type === "thematic-break"
+    node.type === "tb"
+    || node.type === "thematic-break"
     || node.type === "NodeThematicBreak"
+    || node.markdown?.trim() === "---"
+    || node.markdown?.trim() === "***"
     || (node.type === "b" && (node.markdown?.trim() === "---" || node.content?.trim() === "---"))
   ) {
     return true

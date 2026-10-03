@@ -8,7 +8,7 @@ import {
   Plugin as SyPlugin,
   showMessage,
 } from "siyuan"
-import { getBlockAttrs, sql } from "@/api"
+import { getBlockAttrs, getChildBlocks, setBlockAttrs, sql } from "@/api"
 import { buildSlidevDocument } from "@/compiler/slidev-ast-builder"
 import {
   globalSandboxBridge,
@@ -32,6 +32,12 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
   public isMobile = false
   public currentDocId = ""
   private debounceTimer: number | null = null
+
+  private onSwitchProtyleBound = this.onSwitchProtyle.bind(this)
+  private onWsMainBound = this.onWsMain.bind(this)
+  private onBlockClickedBound = this.onBlockClickedFromSlide.bind(this)
+  private onClickBlockIconBound = this.onClickBlockIcon.bind(this)
+  private onClickEditorTitleIconBound = this.onClickEditorTitleIcon.bind(this)
 
   async onload() {
     const frontEnd = getFrontend()
@@ -62,6 +68,28 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
       },
     })
 
+    this.addCommand({
+      langKey: "slidevInitAttrs",
+      langText: "Slidev: 初始化当前文档演示属性",
+      hotkey: "",
+      enabled: () => true,
+      execute: async () => {
+        if (!this.currentDocId) {
+          const activeEl = document.querySelector(".protyle-content[data-doc-id]")
+          this.currentDocId = activeEl?.getAttribute("data-doc-id") || ""
+        }
+        if (this.currentDocId) {
+          await setBlockAttrs(this.currentDocId, {
+            "custom-slidev-theme": "default",
+            "custom-slidev-aspect-ratio": "16/9",
+            "custom-slidev-default-transition": "slide-left",
+          })
+          showMessage("已为当前文档初始化 Slidev 演示属性")
+          this.compileCurrentDocument(this.currentDocId)
+        }
+      },
+    })
+
     // 4. 注册右侧 Dock 分屏预览面板
     const self = this
     this.addDock({
@@ -82,10 +110,12 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     })
 
     // 5. 监听思源内核与编辑器事件
-    this.eventBus.on("switch-protyle", this.onSwitchProtyle.bind(this))
-    this.eventBus.on("ws-main", this.onWsMain.bind(this))
+    this.eventBus.on("switch-protyle", this.onSwitchProtyleBound)
+    this.eventBus.on("ws-main", this.onWsMainBound)
     this.eventBus.on("slidev:request-compile" as any, () => this.compileCurrentDocument())
-    this.eventBus.on("slidev:block-clicked" as any, this.onBlockClickedFromSlide.bind(this))
+    this.eventBus.on("slidev:block-clicked" as any, this.onBlockClickedBound)
+    this.eventBus.on("click-blockicon", this.onClickBlockIconBound)
+    this.eventBus.on("click-editortitleicon", this.onClickEditorTitleIconBound)
   }
 
   onunload() {
@@ -93,7 +123,196 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
       window.clearTimeout(this.debounceTimer)
       this.debounceTimer = null
     }
+    this.eventBus.off("switch-protyle", this.onSwitchProtyleBound)
+    this.eventBus.off("ws-main", this.onWsMainBound)
+    this.eventBus.off("click-blockicon", this.onClickBlockIconBound)
+    this.eventBus.off("click-editortitleicon", this.onClickEditorTitleIconBound)
     globalSandboxBridge.detach()
+  }
+
+  /**
+   * 监听块标右键上下文菜单，注入 Slidev 版式与动效快捷操作
+   */
+  private onClickBlockIcon(event: CustomEvent<any>) {
+    const detail = event.detail
+    const menu = detail?.menu
+    const blockElements = detail?.blockElements as HTMLElement[]
+    if (!menu || !blockElements || blockElements.length === 0) return
+
+    const targetEl = blockElements[0]
+    const blockId = targetEl.getAttribute("data-node-id")
+    const blockType = targetEl.getAttribute("data-type")
+    if (!blockId) return
+
+    const isDivider = blockType === "NodeThematicBreak"
+
+    const submenu: any[] = [
+      {
+        icon: "iconLayout",
+        label: "版式: 🎯 封面 (cover)",
+        click: async () => {
+          await setBlockAttrs(blockId, { "custom-slidev-layout": "cover" })
+          showMessage("已设置版式为封面 (cover)")
+          this.compileCurrentDocument()
+        },
+      },
+      {
+        icon: "iconLayout",
+        label: "版式: 📄 标准 (default)",
+        click: async () => {
+          await setBlockAttrs(blockId, { "custom-slidev-layout": "default" })
+          showMessage("已设置版式为标准 (default)")
+          this.compileCurrentDocument()
+        },
+      },
+      {
+        icon: "iconLayout",
+        label: "版式: ▥ 双栏对比 (two-cols)",
+        click: async () => {
+          await setBlockAttrs(blockId, { "custom-slidev-layout": "two-cols" })
+          showMessage("已设置版式为双栏对比 (two-cols)")
+          this.compileCurrentDocument()
+        },
+      },
+      {
+        icon: "iconLayout",
+        label: "版式: 🔢 大字报 (fact)",
+        click: async () => {
+          await setBlockAttrs(blockId, { "custom-slidev-layout": "fact" })
+          showMessage("已设置版式为大字报 (fact)")
+          this.compileCurrentDocument()
+        },
+      },
+      {
+        icon: "iconLayout",
+        label: "版式: 🀄 居中 (center)",
+        click: async () => {
+          await setBlockAttrs(blockId, { "custom-slidev-layout": "center" })
+          showMessage("已设置版式为居中 (center)")
+          this.compileCurrentDocument()
+        },
+      },
+      { type: "separator" },
+      {
+        icon: "iconRefresh",
+        label: "转场: ↔ 向左滑入 (slide-left)",
+        click: async () => {
+          await setBlockAttrs(blockId, { "custom-slidev-transition": "slide-left" })
+          showMessage("已设置转场为向左滑入 (slide-left)")
+          this.compileCurrentDocument()
+        },
+      },
+      {
+        icon: "iconRefresh",
+        label: "转场: 🌫 淡入淡出 (fade)",
+        click: async () => {
+          await setBlockAttrs(blockId, { "custom-slidev-transition": "fade" })
+          showMessage("已设置转场为淡入淡出 (fade)")
+          this.compileCurrentDocument()
+        },
+      },
+    ]
+
+    if (!isDivider) {
+      submenu.push(
+        { type: "separator" },
+        {
+          icon: "iconPlay",
+          label: "动效: 逐步出现 (v-click)",
+          click: async () => {
+            await setBlockAttrs(blockId, { "custom-slidev-click": "+1" })
+            showMessage("已添加逐步出现动效 (v-click)")
+            this.compileCurrentDocument()
+          },
+        },
+        {
+          icon: "iconSplit",
+          label: "多栏插槽: 放入右栏 (::right::)",
+          click: async () => {
+            await setBlockAttrs(blockId, { "custom-slidev-slot": "right" })
+            showMessage("已设为右栏内容")
+            this.compileCurrentDocument()
+          },
+        },
+      )
+    }
+
+    menu.addItem({
+      icon: "iconSlidev",
+      label: isDivider ? "Slidev 分页设置" : "Slidev 元素设置",
+      submenu,
+    })
+  }
+
+  /**
+   * 监听文档大标题块标菜单，注入全局演示配置项
+   */
+  private onClickEditorTitleIcon(event: CustomEvent<any>) {
+    const detail = event.detail
+    const menu = detail?.menu
+    const docId = detail?.data?.id || this.currentDocId
+    if (!menu || !docId) return
+
+    menu.addItem({
+      icon: "iconSlidev",
+      label: "Slidev 全局演示配置",
+      submenu: [
+        {
+          label: "初始化演示属性 (custom-slidev-*)",
+          click: async () => {
+            await setBlockAttrs(docId, {
+              "custom-slidev-theme": "default",
+              "custom-slidev-aspect-ratio": "16/9",
+              "custom-slidev-default-transition": "slide-left",
+            })
+            showMessage("已为当前文档初始化 Slidev 演示属性")
+            this.compileCurrentDocument(docId)
+          },
+        },
+        { type: "separator" },
+        {
+          label: "主题: 默认 (default)",
+          click: async () => {
+            await setBlockAttrs(docId, { "custom-slidev-theme": "default" })
+            showMessage("已切换为 default 主题")
+            this.compileCurrentDocument(docId)
+          },
+        },
+        {
+          label: "主题: 优雅衬线 (seriph)",
+          click: async () => {
+            await setBlockAttrs(docId, { "custom-slidev-theme": "seriph" })
+            showMessage("已切换为 seriph 主题")
+            this.compileCurrentDocument(docId)
+          },
+        },
+        {
+          label: "主题: 苹果极简 (apple-basic)",
+          click: async () => {
+            await setBlockAttrs(docId, { "custom-slidev-theme": "apple-basic" })
+            showMessage("已切换为 apple-basic 主题")
+            this.compileCurrentDocument(docId)
+          },
+        },
+        { type: "separator" },
+        {
+          label: "画幅: 16 / 9 (宽屏)",
+          click: async () => {
+            await setBlockAttrs(docId, { "custom-slidev-aspect-ratio": "16/9" })
+            showMessage("已切换画幅为 16/9")
+            this.compileCurrentDocument(docId)
+          },
+        },
+        {
+          label: "画幅: 4 / 3 (标屏)",
+          click: async () => {
+            await setBlockAttrs(docId, { "custom-slidev-aspect-ratio": "4/3" })
+            showMessage("已切换画幅为 4/3")
+            this.compileCurrentDocument(docId)
+          },
+        },
+      ],
+    })
   }
 
   /**
@@ -159,33 +378,45 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
       // 1. 获取文档属性
       const docAttrs = await getBlockAttrs(docId).catch(() => ({}))
 
-      // 2. 通过 SQL 检索当前文档的所有直接子块
-      const querySql = `SELECT id, parent_id, root_id, type, sub_type as subType, content, markdown, ial FROM blocks WHERE root_id = '${docId}' AND parent_id = '${docId}' ORDER BY sort ASC`
-      const rows = (await sql(querySql).catch(() => [])) || []
+      // 2. 优先通过 getChildBlocks 获取按思源文档真实排版顺序排列的所有子块
+      let rawBlocks: any[] = await getChildBlocks(docId).catch(() => [])
 
-      // 3. 构造节点数组并反序列化 IAL
-      const blockNodes: ISiYuanBlockNode[] = rows.map((r: any) => {
-        let ialMap: Record<string, string> = {}
-        if (r.ial && typeof r.ial === "string") {
-          ialMap = this.parseIALString(r.ial)
+      // 3. 批量检索当前文档所有块的 IAL 属性字典
+      const ialQuery = `SELECT id, ial FROM blocks WHERE root_id = '${docId}'`
+      const ialRows = (await sql(ialQuery).catch(() => [])) || []
+      const ialMapById = new Map<string, Record<string, string>>()
+      for (const row of ialRows) {
+        if (row.id && row.ial) {
+          ialMapById.set(row.id, this.parseIALString(row.ial))
         }
+      }
+
+      // 4. 容错降级：如果 getChildBlocks 为空，从 SQL 回退检索
+      if (!rawBlocks || rawBlocks.length === 0) {
+        const fallbackSql = `SELECT id, parent_id, root_id, type, sub_type as subType, content, markdown, ial FROM blocks WHERE root_id = '${docId}' AND id != '${docId}' ORDER BY created ASC`
+        rawBlocks = (await sql(fallbackSql).catch(() => [])) || []
+      }
+
+      // 5. 构造节点数组并反序列化 IAL
+      const blockNodes: ISiYuanBlockNode[] = rawBlocks.map((r: any) => {
+        const ialMap = ialMapById.get(r.id) || (r.ial ? this.parseIALString(r.ial) : {})
         return {
           id: r.id,
           parent_id: r.parent_id,
-          root_id: r.root_id,
+          root_id: r.root_id || docId,
           type: r.type,
           subType: r.subType,
-          content: r.content,
-          markdown: r.markdown,
+          content: r.content || "",
+          markdown: r.markdown || "",
           ial: ialMap,
         }
       })
 
-      // 4. 调用核心 AST 编译器
+      // 6. 调用核心 AST 编译器
       const baseUrl = typeof location !== "undefined" ? location.origin : ""
       const slidevDoc = buildSlidevDocument(docId, docAttrs, blockNodes, { baseUrl })
 
-      // 5. 推送更新至沙箱
+      // 7. 推送更新至沙箱
       updateDockDocument(slidevDoc)
     } catch (err) {
       console.error("[SiYuanSlidev] Failed to compile document:", err)

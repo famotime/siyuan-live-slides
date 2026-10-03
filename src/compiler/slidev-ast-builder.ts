@@ -112,8 +112,28 @@ export function buildSlidevDocument(
   // 2. 遍历所有块节点进行三层作用域归类
   for (const node of blocks) {
     if (isPageBreak(node)) {
-      // 遇到水平分割线或显式切页标记，开启新幻灯片
       const pageMeta = parsePageAttrs(node.ial)
+
+      // 如果当前是第一页且尚未添加任何正文内容块，说明用户在文档开头放置了分割线来显式定义第一页配置
+      if (slides.length === 1 && currentPage.blocks.length === 0) {
+        currentPage.startBlockId = node.id
+        if (pageMeta.frontmatter.layout) {
+          currentPage.frontmatter.layout = pageMeta.frontmatter.layout
+        }
+        Object.assign(currentPage.frontmatter, pageMeta.frontmatter)
+        if (pageMeta.notes) {
+          currentPage.notes = pageMeta.notes
+        }
+        if (currentPage.frontmatter.background) {
+          currentPage.frontmatter.background = rewriteSingleAssetUrl(
+            currentPage.frontmatter.background,
+            options,
+          )
+        }
+        continue
+      }
+
+      // 遇到后续水平分割线或显式切页标记，开启新幻灯片
       currentPage = {
         pageIndex: slides.length + 1,
         startBlockId: node.id,

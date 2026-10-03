@@ -1,46 +1,171 @@
-# SiYuan Slidev Presentation Plugin
+# 思源笔记 Slidev 演示插件 (SiYuan Slidev)
 
-[简体中文](./README_zh_CN.md)
+[English](./README_EN.md) | [简体中文](./README.md)
 
-> **"Turn notes into presentations, bring presentations back to content; zero pollution of note content, powered by modern reactive web animation."**
-
-`siyuan-slidev` is an integrated presentation plugin for SiYuan Note. Leveraging SiYuan's granular block-level architecture and Inline Attribute List (IAL) system, it brings the state-of-the-art **Slidev** presentation framework into the SiYuan ecosystem.
-
----
-
-## Key Features
-
-- 🎯 **Zero-Pollution Metadata**: All layouts, transitions, backgrounds, and speaker notes are persisted in horizontal dividers (`---`) or block attributes `custom-slidev-*`.
-- ⚡ **Dual Presentation Engines**:
-  - **Built-in Lightweight Web Sandbox**: 0 external dependencies, no Node/CLI required, loaded in milliseconds.
-  - **Pro Mode**: Bridges directly to local running `slidev` CLI server (default port 3030) for full Vue SFC and npm ecosystem.
-- 🔄 **Bi-directional Millisecond Sync**:
-  - Move cursor in the editor, slide flips and highlights corresponding element immediately.
-  - Click any element in the presentation sandbox, editor smoothly scrolls to the block.
-- 🪄 **Visual Micro-Interactions**:
-  - **Quick Divider Popover**: Click horizontal line `---` to switch 9-grid layouts, preview transitions, and edit speaker notes.
-  - **Element Animation Bar**: Apply `v-click` progressive steps, column slots, and Shiki code spotlight with one click.
-- 🎤 **Presenter Mode**: Dual-screen projection console with elapsed timer, next slide preview, and speaker notes.
-- 📦 **Offline Export**: Export self-contained single-file HTML (offline playback) and high-resolution PDF handouts.
-- 🤝 **Synergy with Property Manager**: Preset Slidev templates and whole-notebook slide attribute refactoring.
-- 🤖 **AI Assistant**: Smart page splitting, animated list progressive steps, and automated speaker notes.
+> **“让笔记即是演示，让演讲回归内容；零污染元数据沉淀，现代前端级酷炫视觉呈现。”**
+> 
+> 专为 [思源笔记 (SiYuan Note)](https://b3log.org/siyuan/) 打造的现代化一体化演示插件。深度依托思源底层的**块级细粒度架构**与 **IAL 自定义属性系统**，将现代前端先进的组件化演示框架 **Slidev** 引入思源生态，彻底终结传统演示工具“排版丑陋、正文宏代码严重污染、打字卡顿、笔记与 PPT 割裂”的痛点。
 
 ---
 
-## Quick Start
+## 🌟 为什么选择「思源 Slidev」？
 
-1. Open any document in SiYuan Note.
-2. Click **"Slidev Presentation"** icon on the top bar (or press `Alt+P` / `⌥P`).
-3. Type `---` in your note to separate slides.
-4. Click on the divider to pick layouts (e.g. `cover`, `two-cols`, `fact`).
-5. Presentation Shortcuts:
-   - `→` / `Space` / `PageDown`: Next action / slide;
-   - `←` / `PageUp`: Previous action / slide;
-   - `F`: Fullscreen;
-   - `P`: Open Presenter console.
+在日常工作与学习中，制作演示文稿往往伴随着痛苦的割裂感：
+
+| 痛点场景 | 传统演示方案（PowerPoint / 传统 Markdown 幻灯片） | 「思源 Slidev」带来的革命性体验 |
+| :--- | :--- | :--- |
+| **笔记与 PPT 严重割裂** | 每次汇报都要从思源把内容重新复制粘贴到 PPT 里重新排版排几个小时；笔记更新后 PPT 沦为过时孤岛 | **笔记即是演示**：直接在思源笔记中开启演示，内容天然同源；支持块引用动态联动，源笔记修改 PPT 自动同步 |
+| **正文被宏代码严重污染** | 传统 Markdown 演示插件（如 Marp、Reveal、Obsidian Adv Slides）必须在正文中插入大量 `<!-- .slide: class="xxx" -->` 等脏代码 | **正文绝对零污染**：所有版式、动画、转场、演讲备注均保存在思源块属性（IAL）与分割线中，导出的 Markdown 依然纯净整洁 |
+| **排版简陋，缺乏现代动效** | 传统工具只能做单调的文字罗列，缺乏代码高亮聚光、列表逐步渐进展示（`v-click`）等高级表现力 | **现代前端级动效**：支持 `v-click` 渐进显隐、双栏插槽排版、Shiki 代码逐行聚光灯高亮与平滑转场 |
+| **复杂的环境依赖门槛** | 外部 Slidev 工具需要安装 Node.js、npm 依赖并手动启动本地终端服务，普通用户望而却步 | **开箱即用双引擎**：内置轻量 Web 沙箱，**0 依赖、免装 Node/CLI**，毫秒级即开即用；极客用户亦可一键接入本地 Pro 模式 |
+| **演示时不知所云** | 缺乏讲师视角，容易忘词，无法掌控演讲时间 | **专业双屏演讲者视图（Presenter Mode）**：外接大屏全屏放映，笔记本主屏实时显示计时器、当前页、下一页预告与大字号口播提词卡 |
+| **离线无法播放** | 依赖特定环境或在线网络，涉密汇报或出差机舱断网时无法打开 | **全渠道离线导出**：一键打包为**单文件独立 HTML**（脱机离线亦可在任意浏览器放映）或高清 PDF 讲义 |
 
 ---
 
-## License
+## 🎯 典型使用场景与用户价值
 
-[MIT License](./LICENSE)
+### 场景一：技术分享与架构演练
+- **痛点**：技术汇报中代码与架构图篇幅大，传统 PPT 贴代码格式错乱、无法按行分段讲解，架构图缺乏递进演进感。
+- **解决方案**：
+  - **Shiki 代码逐行聚光灯**：在代码块上一键配置高亮行（如 `1-3|5|all`），放映时敲击空格即可让聚光灯逐步在关键代码行之间切换。
+  - **Mermaid 架构图逐步呈现**：结合 `v-click` 动效，让复杂系统架构图分步按组件逐步浮现。
+  - **知识库代码直引**：通过思源 `((块引用))` 直接动态嵌入知识库中的真实代码片段，告别版本脱节。
+
+### 场景二：学术汇报、课题答辩与文献研讨
+- **痛点**：公式排版繁琐，结论数据来源于多篇关联笔记，答辩时因紧张容易遗忘关键推导逻辑。
+- **解决方案**：
+  - **原生 KaTeX 数学公式渲染**：高保真排版复杂数学公式与符号矩阵。
+  - **双屏演讲者模式 (Presenter Mode)**：按 `P` 键开启双屏视窗。外接投影仪放映纯净大屏，笔记本屏幕呈现演讲计时器与大字号口播提词卡。
+  - **AI 智能提词**：一键让 AI 分析本页重点，自动生成讲师过渡引导词并写入私有提词属性中。
+
+### 场景三：日常工作汇报、项目总结与 OKR 复盘
+- **痛点**：每周/每月制作工作周报 PPT 极耗时间，文字过多台下听众读不过来，数据表格难以整洁呈现。
+- **解决方案**：
+  - **开箱即用精美版式**：九宫格快速切换封面（Cover）、双栏对比（Two-Cols）、大字报结论（Fact）等多种专业版式。
+  - **列表项渐进出现**：为复盘要点一键打上 `v-click` 动效，随着演讲节奏逐项弹出，牢牢抓住听众注意力。
+  - **思源属性视图 (AV 数据库) 投影**：将思源数据库表格直接转化为幻灯片中的结构化卡片或进度对比表。
+
+### 场景四：边讲边记的共创研讨会
+- **痛点**：演示现场收到听众反馈时，传统 PPT 无法现场修改；会后还要耗时把修改意见整理回笔记。
+- **解决方案**：
+  - **双向毫秒级联动**：开启思源 Dock 分屏模式，左侧笔记随手记下听众建议，右侧投影画面毫秒级动态更新。
+  - **光标智能跟随与反向定位**：光标移动到某段落右侧幻灯片即刻翻到对应页；点击幻灯片元素左侧编辑器自动平滑滚动并对齐对应笔记块。
+
+### 场景五：涉密与脱机汇报的离线交付
+- **痛点**：在涉密会议室或出差无网络环境下，需要把演示文稿交给他人播放，但对方电脑没有安装思源笔记。
+- **解决方案**：
+  - **单文件独立离线 HTML 导出**：将所有脚本、样式、数据与图片一键封装为一个独立的 `.html` 文件，只需双击在任意浏览器即可全功能放映。
+  - **高保真 PDF 讲义导出**：支持调用系统打印直接输出 16:9 横版高分辨率讲义，便于打印分发。
+
+---
+
+## ✨ 核心功能全景矩阵
+
+```
+┌────────────────────────────────────────────────────────┐
+│                   思源 Slidev 功能全景                 │
+├──────────────┬──────────────┬──────────────┬───────────┤
+│   纯净写作   │   视觉动效   │   专业演说   │  离线交付 │
+│              │              │              │           │
+│ 零污染块属性 │ v-click 渐进 │ 双屏演讲视窗 │ 单文件HTML│
+│ 气泡悬浮菜单 │ 代码逐行聚光 │ 口播提词卡片 │ 高清PDF   │
+│ 双向毫秒联动 │ 九宫格版式   │ 计时与预告   │ 属性管家协同│
+└──────────────┴──────────────┴──────────────┴───────────┘
+```
+
+| 功能模块 | 核心能力 | 用户价值 |
+| :--- | :--- | :--- |
+| **正文零污染架构** | • 版式、动画、备注全部存放在块属性（IAL）或分割线<br>• 保持 Markdown 笔记纯粹整洁<br>• 兼容标准 Markdown 导出与移动端阅读 | 彻底摆脱传统工具在正文里插入杂乱宏代码的噩梦 |
+| **双模渲染引擎** | • **内置 Web 沙箱**：0 依赖，免装 Node/CLI，毫秒级即开即用<br>• **Pro 极客模式**：桥接本地 Slidev CLI (端口 3030)，支持 Vue SFC 深度定制 | 既给新手极致简单的开箱体验，又给极客无上限的扩展空间 |
+| **专精可视化微交互** | • **分割线悬浮气泡**：点击 `---` 弹出九宫格版式选择器、转场预览与提词输入<br>• **元素动效条**：选中文本一键配置 `v-click` 渐进显隐、双栏插槽 | 无需记忆任何语法或代码，全部通过直观图形界面点选完成 |
+| **双向毫秒级联动** | • 编辑器光标定位段落 -> 幻灯片自动翻页并高亮定位<br>• 幻灯片元素点击 -> 编辑器平滑滚动对齐笔记块 | 打字即排版，所见即所得，彻底消除多屏排版割裂感 |
+| **专业双屏演讲者视图** | • 快捷键 `P` 一键呼出独立讲师控制台<br>• 演讲计时器、当前大屏画面、下一页预告、大字号口播提词<br>• 基于 BroadcastChannel 双屏毫秒级广播同步 | 告别忘词与时间失控，现场演讲游刃有余 |
+| **全渠道离线导出** | • **单文件独立离线 HTML**：内联所有资源，脱机在任何浏览器全功能播放<br>• **高保真 PDF 讲义**：直接输出 16:9 横版高分辨率打印文件 | 随时随地自由分享与跨平台独立交付 |
+| **AI 智能赋能** | • **AI 智能分页**：根据长文层级自动在合适位置插入分页分割线<br>• **智能动效注入**：识别列表递进逻辑，自动配置 `v-click` 动画<br>• **智能提词生成**：自动从幻灯片内容提炼口播引导词 | 5 分钟将一篇长篇调研笔记快速转化为高水平演讲稿 |
+| **属性管家生态协同** | • 预设 Slidev 专属模板字典，一键批量套用<br>• 在「属性管家」中全库盘点演示资产，批量重构动效与版式 | 深度融入思源生态，资产管理规范高效 |
+
+---
+
+## 🎨 常用版式与属性速查
+
+在笔记中输入原生分割线 `---` 即可开启新幻灯片。点击分割线可直观挑选版式，底层自动维护对应属性：
+
+| 版式名称 (`layout`) | 适用场景 | 呈现效果 |
+| :--- | :--- | :--- |
+| `cover` | 演示封面 | 居中大标题、副标题与演讲者信息 |
+| `default` | 标准正文 | 顶部标题，下方富文本内容与列表 |
+| `two-cols` | 双栏对比 / 图文排版 | 左右双列自适应布局，支持分别放置文字与配图 |
+| `intro` | 章节过渡 / 个人简介 | 突出标题与引言，适合演讲转场 |
+| `fact` | 核心结论 / 金句大字报 | 超大字号居中呈现关键数据或结论金句 |
+| `center` | 居中内容 | 全内容水平垂直居中展示 |
+| `quote` | 名言引用 | 突出名言金句与出处说明 |
+| `end` | 结语感谢 | 演示结束页 |
+
+---
+
+## ⌨️ 常用放映快捷键
+
+进入演示模式后，您可以使用以下快捷键自如掌控全局：
+
+| 快捷键 | 功能操作 |
+| :--- | :--- |
+| `→` / `Space` / `PageDown` | 下一步动画动作 / 下一页幻灯片 |
+| `←` / `PageUp` | 上一步动作 / 上一页幻灯片 |
+| `Home` / `End` | 快速跳转至第一页 / 最后一页 |
+| `F` | 切换全屏放映 |
+| `P` | 呼出独立双屏演讲者控制台 (Presenter Mode) |
+| `D` | 切换暗色 / 亮色主题模式 |
+| `Esc` | 退出全屏或关闭弹层 |
+
+---
+
+## 🚀 快速上手操作指引
+
+### 1. 开启演示 Dock 侧边栏
+- 打开思源笔记中的任意文档。
+- 点击顶栏右上角的 **「Slidev 演示」** 图标（或使用快捷键 `Alt+P` / `⌥P`），右侧 Dock 栏即刻展开实时渲染面板。
+
+### 2. 插入分页与配置版式
+- 在笔记需要分页的地方，输入 `---`（水平分割线）。
+- 鼠标点击该分割线，弹出 **可视化气泡配置面板**：
+  - 点选九宫格版式（如封面、双栏等）；
+  - 点选页面切换转场动效（如淡入淡出、水平滑入等）；
+  - 在提词卡输入框中输入该页演讲时的私人口播备注。
+
+### 3. 配置元素动画（逐步显隐）
+- 选中文档中的列表项或段落，在弹出的动效工具条中点击 `v-click`，即可为该元素添加逐步渐进出现动效。
+
+### 4. 独立放映与离线导出
+- 点击 Dock 顶部的 **全屏** 图标进入现场放映模式，按 `P` 键开启双屏演讲者控制台。
+- 点击 Dock 顶部的 **导出** 按钮，选择「导出单文件 HTML」或「导出 PDF 讲义」，一键生成可脱机交付的文件。
+
+---
+
+## ❓ 常见问题 (FAQ)
+
+<details>
+<summary><b>Q1: 使用思源 Slidev 需要先在电脑上安装 Node.js 或 Slidev 命令行工具吗？</b></summary>
+<b>完全不需要！</b> 插件内置了独立的纯前端 Web 沙箱渲染引擎，安装插件后即可开箱即用，零环境依赖，即使在未配置开发环境的电脑上也能流畅使用。如果您是资深开发者且需要使用 npm 自定义 Vue 组件，可以在设置中开启「Pro 模式」桥接本地 Slidev CLI 端口。
+</details>
+
+<details>
+<summary><b>Q2: 插件会在我的笔记正文里添加奇怪的标记或代码吗？</b></summary>
+<b>绝对不会。</b> 「正文零污染」是本插件的核心设计原则。所有动画、版式、演讲提词均写入思源原生的 IAL 块属性字典（<code>custom-slidev-*</code>）和分割线中。您的 Markdown 正文保持 100% 纯净，导出或同步到手机端阅读时绝无任何乱码。
+</details>
+
+<details>
+<summary><b>Q3: 导出的单文件 HTML 可以在没有安装思源笔记和网络的电脑上播放吗？</b></summary>
+<b>可以。</b> 导出的单文件 HTML 将所有运行时脚本、排版样式、幻灯片数据及引用的本地图片资源完全内联打包。只需将该单文件发送给其他人，对方双击用任何现代浏览器（Chrome、Edge、Safari 等）打开即可离线全屏放映。
+</details>
+
+<details>
+<summary><b>Q4: 双屏演讲者视图如何使用？</b></summary>
+在全屏放映或 Dock 面板中按下键盘 <code>P</code> 键，系统会弹出演讲者控制台独立窗口。您可以将主幻灯片窗口拖至外接投影仪全屏，将演讲者控制台保留在笔记本屏幕上，两屏通过底层广播通道毫秒级双向同步翻页。
+</details>
+
+---
+
+## 📄 开源许可证
+
+本项目基于 [MIT License](./LICENSE) 开源发布。欢迎在 [GitHub Issues](https://github.com/famotime/siyuan-slidev/issues) 提出宝贵建议或功能诉求！

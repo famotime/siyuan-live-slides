@@ -74,6 +74,13 @@ const background = ref(props.initialAttrs?.[ATTR_PAGE_BACKGROUND] || '')
 const notes = ref(props.initialAttrs?.[ATTR_PAGE_NOTES] || '')
 const saveHint = ref('')
 
+watch(() => props.initialAttrs, (newAttrs) => {
+  layout.value = newAttrs?.[ATTR_PAGE_LAYOUT] || 'default'
+  transition.value = newAttrs?.[ATTR_PAGE_TRANSITION] || 'slide-left'
+  background.value = newAttrs?.[ATTR_PAGE_BACKGROUND] || ''
+  notes.value = newAttrs?.[ATTR_PAGE_NOTES] || ''
+}, { deep: true })
+
 async function updateAttr(key: string, value: string) {
   if (!props.blockId) return
   saveHint.value = '正在同步...'

@@ -51,6 +51,9 @@ describe("Scope Mapper (三层作用域解析)", () => {
     expect(isPageBreak({ id: "2", type: "b", markdown: "---" })).toBe(true)
     expect(isPageBreak({ id: "3", type: "p", ial: { "custom-slidev-slide": "true" } })).toBe(true)
     expect(isPageBreak({ id: "4", type: "p", markdown: "普通段落" })).toBe(false)
+    expect(isPageBreak({ id: "5", type: "tb", markdown: "---" })).toBe(true)
+    expect(isPageBreak({ id: "6", type: "NodeThematicBreak" })).toBe(true)
+    expect(isPageBreak({ id: "7", type: "tb" })).toBe(true)
   })
 
   it("应该正确解析页面级属性 (Page Scope)", () => {
@@ -188,5 +191,40 @@ describe("Slidev AST Builder (核心虚拟文档构建器)", () => {
     expect(doc.fullMarkdown).toContain("layout: two-cols")
     expect(doc.fullMarkdown).toContain("<v-click>")
     expect(doc.fullMarkdown).toContain("<!--\n第二页讲师提示\n-->")
+  })
+
+  it("应该正确处理以 --- 开头的多段落分割，并保持 4 页独立且顺序一致", () => {
+    const blocks = [
+      { id: "div-0", type: "tb", markdown: "---" },
+      { id: "h-1", type: "h", content: "第一段", markdown: "## 第一段" },
+      { id: "div-1", type: "tb", markdown: "---" },
+      { id: "h-2", type: "h", content: "第二段", markdown: "## 第二段" },
+      { id: "div-2", type: "tb", markdown: "---" },
+      { id: "h-3", type: "h", content: "第三段", markdown: "## 第三段" },
+      { id: "div-3", type: "tb", markdown: "---" },
+      { id: "p-4", type: "p", content: "测试", markdown: "测试" },
+    ]
+
+    const doc = buildSlidevDocument("doc-test", null, blocks)
+
+    expect(doc.slides.length).toBe(4)
+    expect(doc.slides[0].pageIndex).toBe(1)
+    expect(doc.slides[0].blocks[0].content).toBe("第一段")
+
+    expect(doc.slides[1].pageIndex).toBe(2)
+    expect(doc.slides[1].blocks[0].content).toBe("第二段")
+
+    expect(doc.slides[2].pageIndex).toBe(3)
+    expect(doc.slides[2].blocks[0].content).toBe("第三段")
+
+    expect(doc.slides[3].pageIndex).toBe(4)
+    expect(doc.slides[3].blocks[0].content).toBe("测试")
+
+    // 确保没有分割线残留在内容块中
+    for (const slide of doc.slides) {
+      for (const b of slide.blocks) {
+        expect(b.rawMarkdown).not.toBe("---")
+      }
+    }
   })
 })

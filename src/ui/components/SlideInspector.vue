@@ -15,6 +15,13 @@
         <div class="spm-card-top">
           <span class="spm-card-badge">P{{ slide.pageIndex }}</span>
           <span class="spm-card-layout">{{ slide.frontmatter.layout || 'default' }}</span>
+          <button
+            class="spm-card-btn-edit"
+            title="配置此页版式与属性"
+            @click.stop="openEditSlide(slide)"
+          >
+            ⚙️
+          </button>
         </div>
         <div class="spm-card-preview">
           {{ getSlideSummary(slide) }}
@@ -24,12 +31,35 @@
         </div>
       </div>
     </div>
+
+    <!-- 幻灯片页面设置浮层 -->
+    <div
+      v-if="editingSlide"
+      class="spm-inspector-modal-mask"
+      @click.self="editingSlide = null"
+    >
+      <div class="spm-inspector-modal-content">
+        <QuickDividerPopover
+          :block-id="editingSlide.startBlockId"
+          :initial-attrs="getSlideAttrs(editingSlide)"
+          @close="editingSlide = null"
+          @updated="onSlideAttrsUpdated"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue'
+import { ref, defineProps, defineEmits } from 'vue'
 import type { ISlidevVirtualPage } from '@/types/slidev-protocol'
+import QuickDividerPopover from './QuickDividerPopover.vue'
+import {
+  ATTR_PAGE_LAYOUT,
+  ATTR_PAGE_TRANSITION,
+  ATTR_PAGE_BACKGROUND,
+  ATTR_PAGE_NOTES,
+} from '@/types/slidev-protocol'
 
 const props = defineProps<{
   slides: ISlidevVirtualPage[]
@@ -38,7 +68,40 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'navigate', pageIndex: number): void
+  (e: 'refresh'): void
 }>()
+
+const editingSlide = ref<ISlidevVirtualPage | null>(null)
+
+function openEditSlide(slide: ISlidevVirtualPage) {
+  editingSlide.value = slide
+}
+
+function getSlideAttrs(slide: ISlidevVirtualPage): Record<string, string> {
+  const attrs: Record<string, string> = {}
+  if (slide.frontmatter.layout) attrs[ATTR_PAGE_LAYOUT] = slide.frontmatter.layout
+  if (slide.frontmatter.transition) attrs[ATTR_PAGE_TRANSITION] = slide.frontmatter.transition
+  if (slide.frontmatter.background) attrs[ATTR_PAGE_BACKGROUND] = slide.frontmatter.background
+  if (slide.notes) attrs[ATTR_PAGE_NOTES] = slide.notes
+  return attrs
+}
+
+function onSlideAttrsUpdated(updatedAttrs: Record<string, string>) {
+  if (!editingSlide.value) return
+  if (updatedAttrs[ATTR_PAGE_LAYOUT]) {
+    editingSlide.value.frontmatter.layout = updatedAttrs[ATTR_PAGE_LAYOUT]
+  }
+  if (updatedAttrs[ATTR_PAGE_TRANSITION]) {
+    editingSlide.value.frontmatter.transition = updatedAttrs[ATTR_PAGE_TRANSITION]
+  }
+  if (updatedAttrs[ATTR_PAGE_BACKGROUND]) {
+    editingSlide.value.frontmatter.background = updatedAttrs[ATTR_PAGE_BACKGROUND]
+  }
+  if (updatedAttrs[ATTR_PAGE_NOTES]) {
+    editingSlide.value.notes = updatedAttrs[ATTR_PAGE_NOTES]
+  }
+  emit('refresh')
+}
 
 function selectSlide(pageIndex: number) {
   emit('navigate', pageIndex)
@@ -129,6 +192,22 @@ function getSlideSummary(slide: ISlidevVirtualPage): string {
   -webkit-box-orient: vertical;
 }
 
+.spm-card-btn-edit {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 1px 3px;
+  border-radius: 3px;
+  font-size: 10px;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.spm-card-btn-edit:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.05);
+}
+
 .spm-card-notes {
   margin-top: 4px;
   font-size: 9px;
@@ -136,5 +215,24 @@ function getSlideSummary(slide: ISlidevVirtualPage): string {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.spm-inspector-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.spm-inspector-modal-content {
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 </style>

@@ -90,6 +90,7 @@
       :slides="currentSlides"
       :current-active-page="currentPage"
       @navigate="onNavigateOutline"
+      @refresh="onRefresh"
     />
   </div>
 </template>
