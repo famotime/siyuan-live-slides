@@ -1,6 +1,7 @@
 # 思源笔记 Slidev 演示插件 (SiYuan Slidev)
 
-[English](./README_EN.md) | [简体中文](./README.md)
+[English](./README_EN.md) | [简体中文](./README.md) | [📖 详细使用指南](./docs/USER-GUIDE.zh-CN.md) | [📖 User Guide](./docs/USER-GUIDE.md)
+
 
 > **“让笔记即是演示，让演讲回归内容；零污染元数据沉淀，现代前端级酷炫视觉呈现。”**
 > 

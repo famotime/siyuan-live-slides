@@ -604,8 +604,9 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
    */
   private onSwitchProtyle(event: CustomEvent<{ protyle: Protyle }>) {
     const protyle = event.detail?.protyle
-    const docId = protyle?.block?.rootID
+    const docId = (protyle as any)?.block?.rootID
     if (docId && docId !== this.currentDocId) {
+
       this.currentDocId = docId
       this.compileCurrentDocument(docId)
     }

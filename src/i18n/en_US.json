@@ -2,7 +2,7 @@
   "dockTitle": "Slidev Presentation",
   "playPresentation": "Play Presentation",
   "exportHtml": "Export Offline Single HTML",
-  "exportPdf": "Export PDF Handout",
+  "exportPdf": "Export High-Fidelity PDF Handout",
   "presenterMode": "Presenter Mode",
   "refresh": "Recompile and Refresh",
   "prevPage": "Previous Page",
@@ -10,5 +10,20 @@
   "fullscreen": "Fullscreen",
   "outline": "Slide Outline",
   "settings": "Presentation Settings",
-  "proMode": "Pro DevServer Mode"
+  "proMode": "Pro DevServer Mode",
+  "slidevPresentation": "Slidev: Play Current Document Slides",
+  "slidevInitAttrs": "Slidev: Initialize Presentation Attributes",
+  "slidevAiSplit": "Slidev AI: Smart Outline Split and Pagination",
+  "slidevAiNotes": "Slidev AI: Generate Speaker Notes",
+  "slidevBatchTransitions": "Slidev Synergy: Transition Statistics",
+  "slidevExportTemplates": "Slidev Synergy: Copy Preset Templates to Clipboard",
+  "slidevBatchReplaceTransition": "Slidev Synergy: Batch Replace Transitions (fade -> slide-left)",
+  "slidevPresenterMode": "Slidev: Open Presenter Console (Presenter Mode)",
+  "slidevExportCliMd": "Slidev Pro: Export Standard slides.md (Download)",
+  "slidevProbeCliDevServer": "Slidev Pro: Probe Local Slidev DevServer (localhost:3030)",
+  "slidevSyncToCliWorkspace": "Slidev Pro: Sync slides.md to Workspace Storage",
+  "openPopover": "Open Slide Settings Popover",
+  "openAnimBar": "Open Animation Floating Bar",
+  "globalConfig": "Slidev Global Presentation Config"
 }
+

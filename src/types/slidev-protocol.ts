@@ -68,6 +68,9 @@ export interface ISlidevBlockItem {
   attributes?: Record<string, string>
 }
 
+export type ISlidevBlock = ISlidevBlockItem
+
+
 /** 虚拟幻灯片单页模型 (Virtual Slide Page) */
 export interface ISlidevVirtualPage {
   pageIndex: number // 1-based

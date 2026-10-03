@@ -2,7 +2,7 @@
   "dockTitle": "Slidev 演示",
   "playPresentation": "放映演示文稿",
   "exportHtml": "导出单文件离线 HTML",
-  "exportPdf": "导出 PDF 讲义",
+  "exportPdf": "导出高保真 PDF 讲义",
   "presenterMode": "双屏演讲者视图",
   "refresh": "重新编译并刷新",
   "prevPage": "上一页",
@@ -10,5 +10,20 @@
   "fullscreen": "全屏放映",
   "outline": "大纲缩略图",
   "settings": "演示设置",
-  "proMode": "Pro 极客模式 (本地 DevServer)"
+  "proMode": "Pro 极客模式 (本地 DevServer)",
+  "slidevPresentation": "Slidev: 放映当前文档幻灯片",
+  "slidevInitAttrs": "Slidev: 初始化当前文档演示属性",
+  "slidevAiSplit": "Slidev AI: 智能大纲断页建议与自动分页",
+  "slidevAiNotes": "Slidev AI: 自动为当前文档生成演讲者提词卡 (Notes)",
+  "slidevBatchTransitions": "Slidev 协同: 统计全库转场效果分布",
+  "slidevExportTemplates": "Slidev 协同: 复制 Slidev 预设属性模板至剪贴板",
+  "slidevBatchReplaceTransition": "Slidev 协同: 批量替换全库淡入淡出转场为滑动 (fade -> slide-left)",
+  "slidevPresenterMode": "Slidev: 打开双屏演讲者控制台 (Presenter Mode)",
+  "slidevExportCliMd": "Slidev Pro: 导出 Slidev 标准 slides.md 文档 (下载到本地)",
+  "slidevProbeCliDevServer": "Slidev Pro: 检测本地 Slidev CLI DevServer 状态 (localhost:3030)",
+  "slidevSyncToCliWorkspace": "Slidev Pro: 同步 slides.md 至思源工作空间存储目录",
+  "openPopover": "打开幻灯片页面设置气泡",
+  "openAnimBar": "打开动效与排版浮动条",
+  "globalConfig": "Slidev 全局演示配置"
 }
+
