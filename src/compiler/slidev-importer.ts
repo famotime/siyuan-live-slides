@@ -434,7 +434,7 @@ export function convertHtmlToCleanMarkdown(html: string): string {
     )
     if (items.length > 0) {
       return (
-        "\n" +
+        "\n\n" +
         items
           .map((m: any) => {
             const cls = m[1] || ""
@@ -445,7 +445,7 @@ export function convertHtmlToCleanMarkdown(html: string): string {
             return `${prefix} **${m[2].trim()}** **${m[3].trim()}** — ${m[4].trim()}`
           })
           .join("\n") +
-        "\n"
+        "\n\n"
       )
     }
     return inner
@@ -460,7 +460,7 @@ export function convertHtmlToCleanMarkdown(html: string): string {
     )
     if (items.length > 0) {
       return (
-        "\n" +
+        "\n\n" +
         items
           .map((m: any, idx: number) => {
             const isHot = (m[1] || "").includes("hot")
@@ -468,7 +468,7 @@ export function convertHtmlToCleanMarkdown(html: string): string {
             return `${idx + 1}. ${icon}**${m[3].trim()}** (*${m[4].trim()}*)`
           })
           .join("\n") +
-        "\n"
+        "\n\n"
       )
     }
     return inner
@@ -481,7 +481,7 @@ export function convertHtmlToCleanMarkdown(html: string): string {
     )
     if (items.length > 0) {
       return (
-        "\n" +
+        "\n\n" +
         items
           .map((m: any) => {
             const isWarn = (m[1] || "").includes("warn")
@@ -489,7 +489,7 @@ export function convertHtmlToCleanMarkdown(html: string): string {
             return `- ${icon} **${m[2].trim()}**: ${m[3].trim()}`
           })
           .join("\n") +
-        "\n"
+        "\n\n"
       )
     }
     return inner
@@ -502,11 +502,11 @@ export function convertHtmlToCleanMarkdown(html: string): string {
     )
     if (items.length > 0) {
       return (
-        "\n" +
+        "\n\n" +
         items
           .map((m: any) => `## ${m[1].trim()} ${m[2].trim()}\n\n${m[3].trim()}`)
           .join("\n\n") +
-        "\n"
+        "\n\n"
       )
     }
     return inner
@@ -516,13 +516,13 @@ export function convertHtmlToCleanMarkdown(html: string): string {
   text = replaceDivContainer(text, "split-note", (inner) => {
     const items = Array.from(inner.matchAll(/<div>\s*<b>([\s\S]*?)<\/b>\s*<p>([\s\S]*?)<\/p>\s*<\/div>/gi))
     if (items.length > 0) {
-      return "\n" + items.map((m: any) => `> **${m[1].trim()}**: ${m[2].trim()}`).join("\n>\n") + "\n"
+      return "\n\n" + items.map((m: any) => `> **${m[1].trim()}**: ${m[2].trim()}`).join("\n>\n") + "\n\n"
     }
     return inner
   })
 
   text = text.replace(/<div class="mechanism">\s*<b>([\s\S]*?)<\/b>\s*<p>([\s\S]*?)<\/p>\s*<\/div>/gi, (_, title, desc) => {
-    return `\n> **${title.trim()}**: ${desc.trim()}\n`
+    return `\n\n> **${title.trim()}**: ${desc.trim()}\n\n`
   })
 
   // 15. 独立 pre 代码块 (剥离内嵌 span 样式)
@@ -572,8 +572,10 @@ export function convertHtmlToCleanMarkdown(html: string): string {
     return "\n" + q.trim().split("\n").map((line: string) => `> ${line.trim()}`).join("\n") + "\n"
   })
 
-  // 22. 解包剩余纯布局标签 (div, span, section, header, footer, etc.)
-  text = text.replace(/<\/?(?:div|span|section|header|footer|main|article|nav|aside)\b[^>]*>/gi, "")
+  // 22. 解包剩余纯布局标签，块级闭合标签转为换行，行内标签解包，确保块间自然断行
+  text = text.replace(/<\/(?:div|section|header|footer|main|article|nav|aside)\b[^>]*>/gi, "\n")
+  text = text.replace(/<(?:div|section|header|footer|main|article|nav|aside)\b[^>]*>/gi, "")
+  text = text.replace(/<\/?span\b[^>]*>/gi, "")
 
   // 23. 恢复受保护的代码块
   for (let i = 0; i < codeBlocks.length; i++) {
