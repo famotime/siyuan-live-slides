@@ -40,6 +40,17 @@
           <span v-else>📍 跟随</span>
         </button>
 
+        <!-- 🚀 双轨引擎切换徽章 -->
+        <button
+          class="spm-btn-icon spm-engine-badge"
+          :class="{ 'is-pro': engineMode === 'pro-cli' }"
+          :title="engineMode === 'pro-cli' ? '当前：官方原生 Pro 模式 (localhost:' + activeProPort + ')，点击切回内置高保真沙箱' : '当前：内置高保真沙箱 (0依赖)，点击切换至官方原生 Pro 模式'"
+          @click="toggleEngineMode"
+        >
+          <span v-if="engineMode === 'pro-cli'">🚀 Pro ({{ activeProPort }})</span>
+          <span v-else>🟢 高保真沙箱</span>
+        </button>
+
         <span class="spm-toolbar-divider"></span>
 
         <!-- 大纲缩略图 -->
@@ -125,6 +136,8 @@
 import { ref, onMounted, onUnmounted, inject } from 'vue'
 import type { Plugin } from 'siyuan'
 import { showMessage } from 'siyuan'
+import { putFile } from '@/api'
+import { EngineManager } from '@/engine/engine-manager'
 import { WebSandboxBridge } from '@/engine/web-sandbox-bridge'
 import SlideInspector from '@/ui/components/SlideInspector.vue'
 import { CursorTracker } from '@/sync/cursor-tracker'
@@ -135,6 +148,10 @@ import type { ISlidevDocument, ISlidevVirtualPage } from '@/types/slidev-protoco
 const plugin = inject<Plugin>('plugin')
 const sandboxBridge = inject<WebSandboxBridge>('sandboxBridge', new WebSandboxBridge())
 const cursorTracker = new CursorTracker(sandboxBridge)
+const engineManager = new EngineManager()
+
+const engineMode = ref<'web-sandbox' | 'pro-cli'>('web-sandbox')
+const activeProPort = ref(3030)
 
 const sandboxIframeRef = ref<HTMLIFrameElement | null>(null)
 const currentPage = ref(1)
@@ -150,11 +167,13 @@ const iframeSrc = ref('/plugins/siyuan-slidev/slidev-client/index.html')
 
 let unbindSlideChanged: (() => void) | null = null
 let unbindBlockClicked: (() => void) | null = null
+let unbindNativePageChanged: (() => void) | null = null
 let latestDoc: ISlidevDocument | null = null
 
 onMounted(() => {
   if (sandboxIframeRef.value) {
     sandboxBridge.attach(sandboxIframeRef.value)
+    engineManager.nativeBridge.attach(sandboxIframeRef.value)
   }
 
   unbindSlideChanged = sandboxBridge.onSlideChanged((page, total) => {
@@ -168,14 +187,51 @@ onMounted(() => {
       plugin.eventBus.emit('slidev:block-clicked' as any, { blockId, page })
     }
   })
+
+  unbindNativePageChanged = engineManager.nativeBridge.onPageChanged((page, total) => {
+    currentPage.value = page
+    totalPages.value = total
+  })
 })
 
 onUnmounted(() => {
   if (unbindSlideChanged) unbindSlideChanged()
   if (unbindBlockClicked) unbindBlockClicked()
+  if (unbindNativePageChanged) unbindNativePageChanged()
   sandboxBridge.detach()
   cursorTracker.destroy()
+  engineManager.destroy()
 })
+
+async function toggleEngineMode() {
+  if (engineMode.value === 'web-sandbox') {
+    if (!latestDoc) {
+      showMessage('请先在主编辑区打开演示文档')
+      return
+    }
+    showMessage('正在探测本地 Node 环境并编排 Slidev Pro 进程...')
+    const res = await engineManager.startProMode(latestDoc, putFile)
+    if (!res.success) {
+      showMessage(`无法启动官方 Pro 模式：${res.error}`)
+      return
+    }
+    engineMode.value = 'pro-cli'
+    activeProPort.value = res.port || 3030
+    iframeSrc.value = res.url
+    if (sandboxIframeRef.value) {
+      engineManager.nativeBridge.attach(sandboxIframeRef.value)
+    }
+    showMessage(`🟢 已成功接入官方原生 Slidev 服务 (端口: ${activeProPort.value})`)
+  } else {
+    engineManager.stopProMode()
+    engineMode.value = 'web-sandbox'
+    iframeSrc.value = '/plugins/siyuan-slidev/slidev-client/index.html'
+    if (sandboxIframeRef.value) {
+      sandboxBridge.attach(sandboxIframeRef.value)
+    }
+    showMessage('已切回内置高保真沙箱')
+  }
+}
 
 function togglePin() {
   isPinned.value = !isPinned.value
@@ -191,19 +247,31 @@ function togglePin() {
 
 function onPrevPage() {
   if (currentPage.value > 1) {
-    sandboxBridge.navigatePage(currentPage.value - 1)
+    if (engineMode.value === 'pro-cli') {
+      engineManager.nativeBridge.navigateToPage(currentPage.value - 1)
+    } else {
+      sandboxBridge.navigatePage(currentPage.value - 1)
+    }
   }
 }
 
 function onNextPage() {
   if (currentPage.value < totalPages.value) {
-    sandboxBridge.navigatePage(currentPage.value + 1)
+    if (engineMode.value === 'pro-cli') {
+      engineManager.nativeBridge.navigateToPage(currentPage.value + 1)
+    } else {
+      sandboxBridge.navigatePage(currentPage.value + 1)
+    }
   }
 }
 
 function onNavigateOutline(pageIndex: number) {
   currentPage.value = pageIndex
-  sandboxBridge.navigatePage(pageIndex)
+  if (engineMode.value === 'pro-cli') {
+    engineManager.nativeBridge.navigateToPage(pageIndex)
+  } else {
+    sandboxBridge.navigatePage(pageIndex)
+  }
 }
 
 function onRefresh() {
@@ -260,13 +328,19 @@ defineExpose({
     currentSlides.value = doc.slides
     totalPages.value = doc.slides.length
     cursorTracker.updateSlidesIndex(doc.slides)
-    sandboxBridge.updateSlides(doc.slides, doc.config, doc.fullMarkdown)
+    if (engineMode.value === 'pro-cli') {
+      engineManager.scaffolder.scaffold(doc, putFile).catch(() => {})
+    } else {
+      sandboxBridge.updateSlides(doc.slides, doc.config, doc.fullMarkdown)
+    }
   },
   navigateToBlock(blockId: string) {
     cursorTracker.onCursorFocusBlock(blockId)
   },
   isPinned,
   pinnedDocId,
+  engineMode,
+  toggleEngineMode,
 })
 </script>
 
@@ -367,6 +441,25 @@ defineExpose({
   background: rgba(239, 68, 68, 0.12);
   color: #ef4444;
   border-color: #ef4444;
+}
+
+.spm-engine-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.spm-engine-badge.is-pro {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.35);
 }
 
 .spm-toolbar-divider {

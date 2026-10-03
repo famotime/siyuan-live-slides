@@ -141,12 +141,15 @@ describe("WebSandboxBridge (沙箱通信管道)", () => {
 })
 
 describe("EngineManager (双模引擎调度器)", () => {
-  it("默认模式应为 web-sandbox，并支持切换", () => {
+  it("默认模式应为 web-sandbox，并支持切换与优雅停止", () => {
     const manager = new EngineManager()
     expect(manager.getMode()).toBe("web-sandbox")
 
     manager.setMode("pro-cli")
     expect(manager.getMode()).toBe("pro-cli")
+
+    manager.stopProMode()
+    expect(manager.getMode()).toBe("web-sandbox")
 
     manager.destroy()
   })
