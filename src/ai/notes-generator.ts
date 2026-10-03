@@ -40,3 +40,27 @@ export function generateSpeakerNotes(
 
   return lines.join("\n")
 }
+
+/**
+ * 优先调用思源内核 AI 提炼演讲者口播提词卡，若 AI 未配置或异常自动回退到规则生成
+ */
+export async function generateSpeakerNotesWithAI(
+  slide: ISlidevVirtualPage,
+  aiChatFn?: (prompt: string) => Promise<string | null>,
+): Promise<string> {
+  if (aiChatFn) {
+    const slideContent = slide.blocks.map(b => b.content || b.rawMarkdown || "").join("\n")
+    const prompt = `你是一位专业的演讲教练。请根据以下幻灯片内容，提炼出简短精炼的演讲口播提词卡（Notes），包含核心观点与口播要点，总字数在 150 字以内：\n${slideContent}`
+    try {
+      const aiResult = await aiChatFn(prompt)
+      if (aiResult && aiResult.trim()) {
+        return aiResult.trim()
+      }
+    } catch {
+      // 优雅降级
+    }
+  }
+
+  return generateSpeakerNotes(slide)
+}
+

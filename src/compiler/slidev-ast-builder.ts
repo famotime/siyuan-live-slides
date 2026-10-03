@@ -7,6 +7,7 @@ import type {
 import type { IAssetRewriteOptions } from "./assets-rewriter"
 import { extractBlockMarkdown } from "./ast-crawler"
 import { rewriteAssetPaths, rewriteSingleAssetUrl } from "./assets-rewriter"
+import { resolveBlockRefsSync } from "./block-ref-resolver"
 import {
   isPageBreak,
   parseDocumentConfig,
@@ -82,6 +83,10 @@ export function wrapVClickDirective(markdown: string, clicks?: string): string {
   return `<v-click at="${trimmed}">\n\n${markdown}\n\n</v-click>`
 }
 
+export interface IBuildSlidevDocOptions extends IAssetRewriteOptions {
+  refContentMap?: Record<string, string>
+}
+
 /**
  * 构建完整的 Slidev 虚拟文档与 Markdown 载荷
  */
@@ -89,7 +94,7 @@ export function buildSlidevDocument(
   docId: string,
   docAttrs: Record<string, string> | null | undefined,
   blocks: ISiYuanBlockNode[],
-  options?: IAssetRewriteOptions,
+  options?: IBuildSlidevDocOptions,
 ): ISlidevDocument {
   const config = parseDocumentConfig(docAttrs)
   const slides: ISlidevVirtualPage[] = []
@@ -164,6 +169,9 @@ export function buildSlidevDocument(
 
     // 重写本地资源路径
     rawMd = rewriteAssetPaths(rawMd, options)
+
+    // 动态展开思源块引用 ((block-id))
+    rawMd = resolveBlockRefsSync(rawMd, options?.refContentMap)
 
     // 注入 Shiki 代码高亮行号
     if (elemAttrs.shikiLines) {

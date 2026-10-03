@@ -586,4 +586,18 @@ export async function loadPluginPublishData(packageName: string): Promise<Record
   return request("/api/petal/loadPluginPublishData", { packageName })
 }
 
+// **************************************** AI (v3.8+) ****************************************
+
+export async function chatAI(prompt: string): Promise<string | null> {
+  const url = "/api/ai/chat"
+  try {
+    const res = await request(url, { prompt })
+    if (typeof res === "string") return res
+    if (res && typeof (res as any).content === "string") return (res as any).content
+    return null
+  } catch {
+    return null
+  }
+}
+
 

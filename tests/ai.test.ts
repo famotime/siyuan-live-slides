@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { generateAutoAnimations } from "../src/ai/auto-animator"
 import { analyzeSlideSplits } from "../src/ai/auto-splitter"
 import { generateSpeakerNotes } from "../src/ai/notes-generator"
@@ -74,5 +74,30 @@ describe("AI Modules (智能断页、动效注入与提词卡)", () => {
     expect(notes).toContain("【核心重点】：Slidev 渲染架构")
     expect(notes).toContain("【口播要点】：")
     expect(notes).toContain("【过渡提示】：")
+  })
+
+  it("generateSpeakerNotesWithAI 应优先使用 AI 返回结果并在异常时降级", async () => {
+    const { generateSpeakerNotesWithAI } = await import("../src/ai/notes-generator")
+    const slide: ISlidevVirtualPage = {
+      pageIndex: 1,
+      startBlockId: "start-1",
+      frontmatter: { layout: "default" },
+      notes: "",
+      blocks: [
+        { id: "h1", type: "h", content: "微服务架构演进", rawMarkdown: "# 微服务架构演进" },
+      ],
+      rawMarkdown: "",
+    }
+
+    // 1. AI 正常响应
+    const mockAiSuccess = vi.fn().mockResolvedValue("AI 生成的高水准口播提词卡")
+    const res1 = await generateSpeakerNotesWithAI(slide, mockAiSuccess)
+    expect(res1).toBe("AI 生成的高水准口播提词卡")
+    expect(mockAiSuccess).toHaveBeenCalled()
+
+    // 2. AI 异常降级
+    const mockAiFail = vi.fn().mockRejectedValue(new Error("AI 服务超时"))
+    const res2 = await generateSpeakerNotesWithAI(slide, mockAiFail)
+    expect(res2).toContain("【核心重点】：微服务架构演进")
   })
 })

@@ -227,4 +227,30 @@ describe("Slidev AST Builder (核心虚拟文档构建器)", () => {
       }
     }
   })
+
+  it("buildSlidevDocument 应在提供 refContentMap 时成功展开块引用 ((block-id))", () => {
+    const blocks = [
+      {
+        id: "b-ref-test",
+        type: "p",
+        markdown: "前文结论为：((target-block-1 \"旧标题\"))，更多请见 ((target-block-2))",
+      },
+    ]
+
+    const doc = buildSlidevDocument("doc-ref", {}, blocks, {
+      refContentMap: {
+        "target-block-1": "这是引用的真实实时内容",
+      },
+    })
+
+    const slideContent = doc.slides[0].rawMarkdown
+    // 已提供的 target-block-1 展开为卡片
+    expect(slideContent).toContain('class="slidev-block-ref"')
+    expect(slideContent).toContain("这是引用的真实实时内容")
+    expect(slideContent).toContain('data-ref-id="target-block-1"')
+
+    // 未提供的 target-block-2 降级为 tag 标签
+    expect(slideContent).toContain('class="slidev-ref-tag"')
+    expect(slideContent).toContain('data-ref-id="target-block-2"')
+  })
 })

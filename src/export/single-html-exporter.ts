@@ -1,17 +1,45 @@
 import type { ISlidevDocument } from "../types/slidev-protocol"
 
+export interface IStandaloneHtmlOptions {
+  title?: string
+  inlineVueBundle?: string
+  inlineAssetBase64Map?: Record<string, string>
+}
+
 /**
- * 构建无外部依赖的离线单文件独立 HTML 演示包
+ * 构建无外部依赖的离线单文件独立 HTML 演示包（支持 Base64 资产内联）
  */
 export function buildStandaloneHtml(
   doc: ISlidevDocument,
-  options?: {
-    title?: string
-    inlineVueBundle?: string
-  },
+  options?: IStandaloneHtmlOptions,
 ): string {
   const title = options?.title || "Slidev 演示文稿"
-  const slidesJson = JSON.stringify(doc.slides)
+  let processedSlides = doc.slides
+
+  // 若提供 Base64 字典，将各块中匹配到的本地资产 URL 替换为 Base64
+  if (options?.inlineAssetBase64Map && Object.keys(options.inlineAssetBase64Map).length > 0) {
+    const map = options.inlineAssetBase64Map
+    processedSlides = doc.slides.map(slide => {
+      let slideMd = slide.rawMarkdown
+      for (const [assetPath, b64] of Object.entries(map)) {
+        if (slideMd.includes(assetPath)) {
+          slideMd = slideMd.split(assetPath).join(b64)
+        }
+      }
+      const newBlocks = slide.blocks.map(b => {
+        let md = b.rawMarkdown
+        for (const [assetPath, b64] of Object.entries(map)) {
+          if (md.includes(assetPath)) {
+            md = md.split(assetPath).join(b64)
+          }
+        }
+        return { ...b, rawMarkdown: md }
+      })
+      return { ...slide, rawMarkdown: slideMd, blocks: newBlocks }
+    })
+  }
+
+  const slidesJson = JSON.stringify(processedSlides)
   const configJson = JSON.stringify(doc.config)
 
   return `<!DOCTYPE html>
@@ -95,6 +123,33 @@ export function buildStandaloneHtml(
       const btnNext = document.getElementById("btn-next");
       const btnFullscreen = document.getElementById("btn-fullscreen");
 
+      function renderBlock(block) {
+        const div = document.createElement("div");
+        div.className = "slide-block";
+        const md = block.rawMarkdown || block.content || "";
+
+        if (md.includes('class="slidev-block-ref"') || md.includes('class="slidev-ref-tag"')) {
+          div.innerHTML = md;
+          return div;
+        }
+
+        if (md.startsWith("### ")) div.innerHTML = "<h3>" + md.slice(4) + "</h3>";
+        else if (md.startsWith("## ")) div.innerHTML = "<h2>" + md.slice(3) + "</h2>";
+        else if (md.startsWith("# ")) div.innerHTML = "<h1>" + md.slice(2) + "</h1>";
+        else if (md.startsWith("\`\`\`")) div.innerHTML = "<pre><code>" + md.slice(3, -3) + "</code></pre>";
+        else if (md.startsWith("> ")) div.innerHTML = "<blockquote><p>" + md.slice(2) + "</p></blockquote>";
+        else {
+          const imgMatch = md.match(/!\\[(.*?)\\]\\((.*?)\\)/);
+          if (imgMatch) {
+            div.innerHTML = '<img alt="' + imgMatch[1] + '" src="' + imgMatch[2] + '" style="max-width:100%;max-height:45vh;object-fit:contain;" />';
+          } else {
+            let html = md.replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+            div.innerHTML = "<p>" + html + "</p>";
+          }
+        }
+        return div;
+      }
+
       function renderSlide(idx) {
         if (slides.length === 0) return;
         currentIndex = Math.max(0, Math.min(idx, slides.length - 1));
@@ -104,16 +159,23 @@ export function buildStandaloneHtml(
         container.className = "slide-content layout-" + (slide.frontmatter?.layout || "default");
         container.innerHTML = "";
 
-        for (const block of (slide.blocks || [])) {
-          const div = document.createElement("div");
-          div.className = "slide-block";
-          const md = block.rawMarkdown || block.content || "";
-          if (md.startsWith("### ")) div.innerHTML = "<h3>" + md.slice(4) + "</h3>";
-          else if (md.startsWith("## ")) div.innerHTML = "<h2>" + md.slice(3) + "</h2>";
-          else if (md.startsWith("# ")) div.innerHTML = "<h1>" + md.slice(2) + "</h1>";
-          else if (md.startsWith("\`\`\`")) div.innerHTML = "<pre><code>" + md.slice(3, -3) + "</code></pre>";
-          else div.innerHTML = "<p>" + md + "</p>";
-          container.appendChild(div);
+        if (slide.frontmatter?.layout === "two-cols") {
+          const leftCol = document.createElement("div");
+          leftCol.className = "two-cols-left";
+          const rightCol = document.createElement("div");
+          rightCol.className = "two-cols-right";
+
+          for (const block of (slide.blocks || [])) {
+            const el = renderBlock(block);
+            if (block.slot === "right") rightCol.appendChild(el);
+            else leftCol.appendChild(el);
+          }
+          container.appendChild(leftCol);
+          container.appendChild(rightCol);
+        } else {
+          for (const block of (slide.blocks || [])) {
+            container.appendChild(renderBlock(block));
+          }
         }
       }
 

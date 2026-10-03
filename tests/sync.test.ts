@@ -89,6 +89,16 @@ describe("CursorTracker (双向光标联动中枢)", () => {
     expect(mockBridge.navigatePage).toHaveBeenCalledWith(2)
     expect(mockBridge.highlightElement).toHaveBeenCalledWith("b-3")
 
+    // 重复移入相同块不应触发额外调用
+    tracker.onCursorFocusBlock("b-3")
+    vi.advanceTimersByTime(150)
+    expect(mockBridge.navigatePage).toHaveBeenCalledTimes(1)
+
+    // 空块 ID 不应触发
+    tracker.onCursorFocusBlock("")
+    vi.advanceTimersByTime(150)
+    expect(mockBridge.navigatePage).toHaveBeenCalledTimes(1)
+
     tracker.destroy()
     vi.useRealTimers()
   })
@@ -97,5 +107,41 @@ describe("CursorTracker (双向光标联动中枢)", () => {
 describe("Selection Mirror (反向定位)", () => {
   it("在非浏览器环境调用时安全返回 false", () => {
     expect(mirrorBlockSelection("some-block-id")).toBe(false)
+  })
+
+  it("当目标 DOM 元素存在时应成功平滑滚动并注入高亮样式", () => {
+    vi.useFakeTimers()
+    const mockEl = {
+      setAttribute: vi.fn(),
+      scrollIntoView: vi.fn(),
+      classList: {
+        add: vi.fn(),
+        remove: vi.fn(),
+      },
+      style: {
+        outline: "",
+        transition: "",
+      },
+    }
+
+    const origDoc = (globalThis as any).document
+    ;(globalThis as any).document = {
+      querySelector: vi.fn((sel: string) => {
+        if (sel.includes("mock-target-block")) return mockEl
+        return null
+      }),
+    }
+
+    const ok = mirrorBlockSelection("mock-target-block")
+    expect(ok).toBe(true)
+    expect(mockEl.scrollIntoView).toHaveBeenCalled()
+    expect(mockEl.classList.add).toHaveBeenCalledWith("protyle-wysiwyg--select")
+
+    // 1200ms 后应移除高亮类
+    vi.advanceTimersByTime(1250)
+    expect(mockEl.classList.remove).toHaveBeenCalledWith("protyle-wysiwyg--select")
+
+    ;(globalThis as any).document = origDoc
+    vi.useRealTimers()
   })
 })

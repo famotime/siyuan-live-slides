@@ -49,6 +49,33 @@ describe("Single-File HTML Exporter (单文件离线 HTML 导出)", () => {
     expect(html).toContain("layout-cover")
   })
 
+  it("应支持将本地资产路径内联替换为 Base64 data URL", () => {
+    const docWithImage: ISlidevDocument = {
+      ...dummyDoc,
+      slides: [
+        {
+          pageIndex: 1,
+          startBlockId: "s1",
+          frontmatter: {},
+          notes: "",
+          blocks: [
+            { id: "img-1", type: "p", content: "", rawMarkdown: "![架构图](assets/arch.png)" },
+          ],
+          rawMarkdown: "![架构图](assets/arch.png)",
+        },
+      ],
+    }
+
+    const html = buildStandaloneHtml(docWithImage, {
+      inlineAssetBase64Map: {
+        "assets/arch.png": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==",
+      },
+    })
+
+    expect(html).toContain("data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==")
+    expect(html).not.toContain("assets/arch.png")
+  })
+
   it("在非浏览器环境调用 downloadHtmlFile 应安全返回 false", () => {
     expect(downloadHtmlFile("demo.html", "<html></html>")).toBe(false)
   })

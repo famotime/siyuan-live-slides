@@ -8,15 +8,26 @@ import {
   Plugin as SyPlugin,
   showMessage,
 } from "siyuan"
-import { getBlockAttrs, getChildBlocks, setBlockAttrs, sql } from "@/api"
+import { getBlockAttrs, getChildBlocks, insertBlock, setBlockAttrs, sql, chatAI } from "@/api"
+import { analyzeSlideSplits } from "@/ai/auto-splitter"
+import { generateSpeakerNotesWithAI } from "@/ai/notes-generator"
+import { extractBlockRefs } from "@/compiler/block-ref-resolver"
 import { buildSlidevDocument } from "@/compiler/slidev-ast-builder"
 import {
   globalSandboxBridge,
   mountDock,
+  navigateDockToBlock,
   unmountDock,
   updateDockDocument,
 } from "@/main"
+import { mirrorBlockSelection } from "@/sync/selection-mirror"
+import { PropertyManagerBridge } from "@/synergy/property-manager-bridge"
 import type { ISiYuanBlockNode } from "@/types/slidev-protocol"
+import {
+  closeCurrentPopover,
+  openElementAnimBar,
+  openQuickDividerPopover,
+} from "@/ui/popover-manager"
 import "@/index.scss"
 
 // 专属 SVG 幻灯片放映图标
@@ -32,12 +43,15 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
   public isMobile = false
   public currentDocId = ""
   private debounceTimer: number | null = null
+  private activeCursorBlockId = ""
 
   private onSwitchProtyleBound = this.onSwitchProtyle.bind(this)
   private onWsMainBound = this.onWsMain.bind(this)
   private onBlockClickedBound = this.onBlockClickedFromSlide.bind(this)
   private onClickBlockIconBound = this.onClickBlockIcon.bind(this)
   private onClickEditorTitleIconBound = this.onClickEditorTitleIcon.bind(this)
+  private onEditorClickBound = this.onEditorClick.bind(this)
+  private onSelectionChangeBound = this.onSelectionChange.bind(this)
 
   async onload() {
     const frontEnd = getFrontend()
@@ -90,6 +104,113 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
       },
     })
 
+    this.addCommand({
+      langKey: "slidevAiSplit",
+      langText: "Slidev AI: 智能大纲断页建议与自动分页",
+      hotkey: "",
+      enabled: () => true,
+      execute: async () => {
+        if (!this.currentDocId) {
+          const activeEl = document.querySelector(".protyle-content[data-doc-id]")
+          this.currentDocId = activeEl?.getAttribute("data-doc-id") || ""
+        }
+        if (!this.currentDocId) {
+          showMessage("请先打开一篇思源笔记文档")
+          return
+        }
+
+        const rawBlocks: any[] = await getChildBlocks(this.currentDocId).catch(() => [])
+        if (!rawBlocks || rawBlocks.length === 0) {
+          showMessage("当前文档无内容，无需断页")
+          return
+        }
+
+        const nodes: ISiYuanBlockNode[] = rawBlocks.map((r: any) => ({
+          id: r.id,
+          type: r.type,
+          subType: r.subType,
+          content: r.content || "",
+          markdown: r.markdown || "",
+        }))
+
+        const suggestions = analyzeSlideSplits(nodes)
+        if (suggestions.length === 0) {
+          showMessage("AI 分析完毕：当前文档篇幅合理，暂无分页建议")
+          return
+        }
+
+        showMessage(`AI 分析完毕：发现 ${suggestions.length} 处建议分页点，正在自动插入分页分割线...`)
+        let inserted = 0
+        for (const sug of suggestions) {
+          try {
+            await insertBlock("markdown", "---", undefined, sug.blockId)
+            await setBlockAttrs(sug.blockId, { "custom-slidev-layout": sug.recommendedLayout })
+            inserted++
+          } catch (e) {
+            console.warn("Failed to insert divider:", e)
+          }
+        }
+        showMessage(`已成功在 ${inserted} 处插入分页线并重新编译`)
+        this.compileCurrentDocument(this.currentDocId)
+      },
+    })
+
+    this.addCommand({
+      langKey: "slidevAiNotes",
+      langText: "Slidev AI: 自动为当前文档生成演讲者提词卡 (Notes)",
+      hotkey: "",
+      enabled: () => true,
+      execute: async () => {
+        if (!this.currentDocId) {
+          const activeEl = document.querySelector(".protyle-content[data-doc-id]")
+          this.currentDocId = activeEl?.getAttribute("data-doc-id") || ""
+        }
+        if (!this.currentDocId) {
+          showMessage("请先打开一篇思源笔记文档")
+          return
+        }
+
+        showMessage("正在调用思源 AI 提炼演讲者口播提词...")
+        const rawBlocks: any[] = await getChildBlocks(this.currentDocId).catch(() => [])
+        const dummySlide = {
+          pageIndex: 1,
+          startBlockId: this.currentDocId,
+          frontmatter: {},
+          notes: "",
+          blocks: rawBlocks.map((r: any) => ({
+            id: r.id,
+            type: r.type,
+            content: r.content || "",
+            rawMarkdown: r.markdown || "",
+          })),
+          rawMarkdown: "",
+        }
+
+        const notes = await generateSpeakerNotesWithAI(dummySlide, chatAI)
+        await setBlockAttrs(this.currentDocId, { "custom-slidev-notes": notes })
+        showMessage("已成功生成口播提词卡并保存至文档属性")
+        this.compileCurrentDocument(this.currentDocId)
+      },
+    })
+
+    this.addCommand({
+      langKey: "slidevBatchTransitions",
+      langText: "Slidev 协同: 统计全库转场效果分布",
+      hotkey: "",
+      enabled: () => true,
+      execute: async () => {
+        const pmBridge = new PropertyManagerBridge()
+        const statsSql = pmBridge.buildTransitionStatsSql()
+        const rows = await sql(statsSql).catch(() => [])
+        if (!rows || rows.length === 0) {
+          showMessage("全库目前暂无已设置 Slidev 转场效果的块")
+          return
+        }
+        const summary = rows.map((r: any) => `${r.value}: ${r.count} 个`).join("，")
+        showMessage(`全库 Slidev 转场分布统计：${summary}`)
+      },
+    })
+
     // 4. 注册右侧 Dock 分屏预览面板
     const self = this
     this.addDock({
@@ -116,6 +237,12 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     this.eventBus.on("slidev:block-clicked" as any, this.onBlockClickedBound)
     this.eventBus.on("click-blockicon", this.onClickBlockIconBound)
     this.eventBus.on("click-editortitleicon", this.onClickEditorTitleIconBound)
+
+    // 6. 监听编辑器选区变动与点击（双向光标联动中枢）
+    if (typeof document !== "undefined") {
+      document.addEventListener("click", this.onEditorClickBound, true)
+      document.addEventListener("selectionchange", this.onSelectionChangeBound)
+    }
   }
 
   onunload() {
@@ -127,6 +254,11 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     this.eventBus.off("ws-main", this.onWsMainBound)
     this.eventBus.off("click-blockicon", this.onClickBlockIconBound)
     this.eventBus.off("click-editortitleicon", this.onClickEditorTitleIconBound)
+    if (typeof document !== "undefined") {
+      document.removeEventListener("click", this.onEditorClickBound, true)
+      document.removeEventListener("selectionchange", this.onSelectionChangeBound)
+    }
+    closeCurrentPopover()
     globalSandboxBridge.detach()
   }
 
@@ -146,7 +278,40 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
 
     const isDivider = blockType === "NodeThematicBreak"
 
-    const submenu: any[] = [
+    const submenu: any[] = []
+
+    if (isDivider) {
+      submenu.push(
+        {
+          icon: "iconEdit",
+          label: "⚡ 打开幻灯片页面设置气泡",
+          click: async () => {
+            const attrs = await getBlockAttrs(blockId).catch(() => ({}))
+            openQuickDividerPopover(targetEl, blockId, attrs, () => {
+              this.compileCurrentDocument()
+            })
+          },
+        },
+        { type: "separator" },
+      )
+    } else {
+      const isCode = blockType === "NodeCodeBlock"
+      submenu.push(
+        {
+          icon: "iconPlay",
+          label: "✨ 打开动效与排版浮动条",
+          click: async () => {
+            const attrs = await getBlockAttrs(blockId).catch(() => ({}))
+            openElementAnimBar(targetEl, blockId, isCode, attrs, () => {
+              this.compileCurrentDocument()
+            })
+          },
+        },
+        { type: "separator" },
+      )
+    }
+
+    submenu.push(
       {
         icon: "iconLayout",
         label: "版式: 🎯 封面 (cover)",
@@ -211,7 +376,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
           this.compileCurrentDocument()
         },
       },
-    ]
+    )
 
     if (!isDivider) {
       submenu.push(
@@ -348,13 +513,59 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
    */
   private onBlockClickedFromSlide(eventData: { blockId: string; page: number }) {
     if (!eventData?.blockId) return
-    const blockEl = document.querySelector(`[data-node-id="${eventData.blockId}"]`)
-    if (blockEl) {
-      blockEl.scrollIntoView({ behavior: "smooth", block: "center" })
-      blockEl.classList.add("protyle-wysiwyg--select")
-      setTimeout(() => {
-        blockEl.classList.remove("protyle-wysiwyg--select")
-      }, 1200)
+    mirrorBlockSelection(eventData.blockId)
+  }
+
+  /**
+   * 监听编辑器点击事件（点击分割线唤起气泡，点击任意块联动光标）
+   */
+  private onEditorClick(e: MouseEvent) {
+    const target = e.target as HTMLElement | null
+    if (!target) return
+
+    // 仅在思源正文编辑区有效
+    const protyle = target.closest(".protyle-wysiwyg")
+    if (!protyle) return
+
+    const blockEl = target.closest("[data-node-id]") as HTMLElement | null
+    if (!blockEl) return
+
+    const blockId = blockEl.getAttribute("data-node-id")
+    if (blockId && blockId !== this.activeCursorBlockId) {
+      this.activeCursorBlockId = blockId
+      navigateDockToBlock(blockId)
+    }
+
+    // 若点击的是水平分割线，弹出快捷气泡
+    const isDivider = blockEl.getAttribute("data-type") === "NodeThematicBreak"
+    if (isDivider && blockId) {
+      setTimeout(async () => {
+        const attrs = await getBlockAttrs(blockId).catch(() => ({}))
+        openQuickDividerPopover(blockEl, blockId, attrs, () => {
+          this.compileCurrentDocument()
+        })
+      }, 50)
+    }
+  }
+
+  /**
+   * 监听选区变化（键盘上下左右移动光标时联动幻灯片）
+   */
+  private onSelectionChange() {
+    if (typeof window === "undefined") return
+    const sel = window.getSelection()
+    if (!sel || sel.rangeCount === 0) return
+    const anchor = sel.anchorNode
+    if (!anchor) return
+
+    const el = anchor.nodeType === Node.ELEMENT_NODE ? (anchor as Element) : anchor.parentElement
+    if (!el || !el.closest(".protyle-wysiwyg")) return
+
+    const blockEl = el.closest("[data-node-id]")
+    const blockId = blockEl?.getAttribute("data-node-id")
+    if (blockId && blockId !== this.activeCursorBlockId) {
+      this.activeCursorBlockId = blockId
+      navigateDockToBlock(blockId)
     }
   }
 
@@ -412,11 +623,36 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
         }
       })
 
-      // 6. 调用核心 AST 编译器
-      const baseUrl = typeof location !== "undefined" ? location.origin : ""
-      const slidevDoc = buildSlidevDocument(docId, docAttrs, blockNodes, { baseUrl })
+      // 6. 批量检索并解析块引用 ((block-id))
+      const allRefIds = new Set<string>()
+      for (const node of blockNodes) {
+        const text = node.markdown || node.content || ""
+        if (text.includes("((")) {
+          const refs = extractBlockRefs(text)
+          for (const ref of refs) {
+            allRefIds.add(ref.blockId)
+          }
+        }
+      }
 
-      // 7. 推送更新至沙箱
+      const refContentMap: Record<string, string> = {}
+      if (allRefIds.size > 0) {
+        const quotedIds = Array.from(allRefIds).map(id => `'${id}'`).join(",")
+        const refRows = (await sql(`SELECT id, content, markdown FROM blocks WHERE id IN (${quotedIds})`).catch(() => [])) || []
+        if (Array.isArray(refRows)) {
+          for (const row of refRows) {
+            if (row.id) {
+              refContentMap[row.id] = row.markdown || row.content || ""
+            }
+          }
+        }
+      }
+
+      // 7. 调用核心 AST 编译器
+      const baseUrl = typeof location !== "undefined" ? location.origin : ""
+      const slidevDoc = buildSlidevDocument(docId, docAttrs, blockNodes, { baseUrl, refContentMap })
+
+      // 8. 推送更新至沙箱
       updateDockDocument(slidevDoc)
     } catch (err) {
       console.error("[SiYuanSlidev] Failed to compile document:", err)

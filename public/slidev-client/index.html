@@ -199,6 +199,27 @@
       object-fit: contain;
     }
 
+    .slide-block .slidev-block-ref {
+      background: rgba(59, 130, 246, 0.08);
+      border-left: 3px solid var(--slide-accent);
+      padding: 10px 14px;
+      border-radius: 4px;
+      margin: 8px 0;
+      font-size: 0.95em;
+    }
+
+    .slide-block .slidev-ref-tag {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(59, 130, 246, 0.12);
+      color: var(--slide-accent);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 0.85em;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
     /* v-click Progressive Animation */
     .v-click-hidden {
       opacity: 0 !important;
@@ -501,6 +522,11 @@
           const imgMatch = md.match(/!\[(.*?)\]\((.*?)\)/)
           if (imgMatch) {
             return `<img alt="${escapeHtml(imgMatch[1])}" src="${escapeHtml(imgMatch[2])}" />`
+          }
+
+          // 支持已解析的块引用与内联 HTML 结构
+          if (md.includes('class="slidev-block-ref"') || md.includes('class="slidev-ref-tag"')) {
+            return md
           }
 
           // 普通段落支持简单行内加粗和行内代码
