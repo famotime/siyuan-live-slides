@@ -1,4 +1,12 @@
 import type { ISlidevBlock, ISlidevDocument, ISlidevVirtualPage } from "../types/slidev-protocol"
+import {
+  convertBlockToHtml,
+  escapeHtml,
+  formatInlineMarkdown,
+  renderSlideBlocksToHtml,
+} from "./markdown-renderer"
+
+export { convertBlockToHtml as convertBlockToPrintHtml, escapeHtml, formatInlineMarkdown }
 
 export type TPdfPageRatio = "16:9" | "4:3" | "A4-landscape" | "A4-portrait"
 
@@ -8,127 +16,6 @@ export interface IPdfExportOptions {
   showNotes?: boolean
   showPageNumber?: boolean
   theme?: "light" | "dark"
-}
-
-/**
- * 将单块 Markdown / 内容转换为适合打印的高保真 HTML
- */
-export function convertBlockToPrintHtml(block: ISlidevBlock): string {
-  const md = (block.rawMarkdown || block.content || "").trim()
-  if (!md) return ""
-
-  // 若已经是展开的块引用卡片，直接保留其结构
-  if (md.includes('class="slidev-block-ref"') || md.includes('class="slidev-ref-tag"')) {
-    return `<div class="pdf-block pdf-block--ref">${md}</div>`
-  }
-
-  // 标题识别
-  if (md.startsWith("#### ")) {
-    return `<div class="pdf-block"><h4>${escapeHtml(md.slice(5))}</h4></div>`
-  }
-  if (md.startsWith("### ")) {
-    return `<div class="pdf-block"><h3>${escapeHtml(md.slice(4))}</h3></div>`
-  }
-  if (md.startsWith("## ")) {
-    return `<div class="pdf-block"><h2>${escapeHtml(md.slice(3))}</h2></div>`
-  }
-  if (md.startsWith("# ")) {
-    return `<div class="pdf-block"><h1>${escapeHtml(md.slice(2))}</h1></div>`
-  }
-
-  // 代码块
-  if (md.startsWith("```")) {
-    const lines = md.split("\n")
-    const codeContent = lines.slice(1, -1).join("\n") || md.slice(3, -3)
-    return `<div class="pdf-block"><pre class="pdf-code"><code>${escapeHtml(codeContent)}</code></pre></div>`
-  }
-
-  // 引用块
-  if (md.startsWith("> ")) {
-    return `<div class="pdf-block"><blockquote class="pdf-quote"><p>${formatInlineMarkdown(md.slice(2))}</p></blockquote></div>`
-  }
-
-  // 图片
-  const imgMatch = md.match(/^!\[(.*?)\]\((.*?)\)$/)
-  if (imgMatch) {
-    return `<div class="pdf-block pdf-block--image"><img alt="${escapeHtml(imgMatch[1])}" src="${imgMatch[2]}" class="pdf-image" /></div>`
-  }
-
-  // 无序列表项
-  if (/^[-*+]\s+/.test(md)) {
-    const listText = md.replace(/^[-*+]\s+/, "")
-    return `<div class="pdf-block pdf-list-item"><li>${formatInlineMarkdown(listText)}</li></div>`
-  }
-
-  // 有序列表项
-  if (/^\d+\.\s+/.test(md)) {
-    const listText = md.replace(/^\d+\.\s+/, "")
-    return `<div class="pdf-block pdf-list-item pdf-list-item--ordered"><li>${formatInlineMarkdown(listText)}</li></div>`
-  }
-
-  // 普通段落
-  return `<div class="pdf-block"><p>${formatInlineMarkdown(md)}</p></div>`
-}
-
-/**
- * 行内 Markdown 转义与渲染 (加粗、斜体、行内代码、图片)
- */
-function formatInlineMarkdown(text: string): string {
-  let res = escapeHtml(text)
-  // 加粗 **text**
-  res = res.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-  // 斜体 *text*
-  res = res.replace(/\*(.*?)\*/g, "<em>$1</em>")
-  // 行内代码 `code`
-  res = res.replace(/`([^`]+)`/g, "<code>$1</code>")
-  return res
-}
-
-/**
- * HTML 特殊字符转义
- */
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;")
-}
-
-/**
- * 渲染单个幻灯片页面的 HTML 内容
- */
-function renderSlideContent(slide: ISlidevVirtualPage): string {
-  const layout = slide.frontmatter.layout || "default"
-  const blocks = slide.blocks || []
-
-  if (layout === "two-cols") {
-    const hasRightSlot = blocks.some(b => b.slot === "right")
-    let leftBlocks: ISlidevBlock[] = []
-    let rightBlocks: ISlidevBlock[] = []
-
-    if (hasRightSlot) {
-      leftBlocks = blocks.filter(b => b.slot !== "right")
-      rightBlocks = blocks.filter(b => b.slot === "right")
-    } else {
-      const mid = Math.ceil(blocks.length / 2)
-      leftBlocks = blocks.slice(0, mid)
-      rightBlocks = blocks.slice(mid)
-    }
-
-    const leftHtml = leftBlocks.map(convertBlockToPrintHtml).join("\n")
-    const rightHtml = rightBlocks.map(convertBlockToPrintHtml).join("\n")
-
-    return `
-      <div class="pdf-two-cols-wrapper">
-        <div class="pdf-col pdf-col--left">${leftHtml}</div>
-        <div class="pdf-col pdf-col--right">${rightHtml}</div>
-      </div>
-    `
-  }
-
-  return blocks.map(convertBlockToPrintHtml).join("\n")
 }
 
 /**
@@ -162,7 +49,7 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
 
   const slidesHtml = doc.slides.map((slide, idx) => {
     const layout = slide.frontmatter.layout || "default"
-    const contentHtml = renderSlideContent(slide)
+    const contentHtml = renderSlideBlocksToHtml(slide)
     const pageNumText = `${idx + 1} / ${doc.slides.length}`
 
     return `
@@ -343,11 +230,47 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
  * 触发打印窗口或调用系统打印机导出为 PDF
  */
 export function triggerPdfExport(doc: ISlidevDocument, options?: IPdfExportOptions): boolean {
-  if (typeof window === "undefined") {
+  if (typeof window === "undefined" || typeof document === "undefined") {
     return false
   }
 
   const html = buildPrintableHtml(doc, options)
+
+  // 优先在当前页面创建隐藏 iframe 进行打印（在 Electron 桌面端和各主流浏览器中表现最稳定）
+  try {
+    const iframe = document.createElement("iframe")
+    iframe.style.position = "fixed"
+    iframe.style.right = "0"
+    iframe.style.bottom = "0"
+    iframe.style.width = "0"
+    iframe.style.height = "0"
+    iframe.style.border = "none"
+    iframe.style.visibility = "hidden"
+    document.body.appendChild(iframe)
+
+    const docObj = iframe.contentWindow?.document
+    if (docObj) {
+      docObj.open()
+      docObj.write(html)
+      docObj.close()
+
+      setTimeout(() => {
+        try {
+          iframe.contentWindow?.focus()
+          iframe.contentWindow?.print()
+        } finally {
+          setTimeout(() => {
+            iframe.remove()
+          }, 2000)
+        }
+      }, 350)
+      return true
+    }
+  } catch (e) {
+    console.warn("[pdf-exporter] iframe 打印模式异常，降级尝试 window.open:", e)
+  }
+
+  // 降级使用 window.open
   const printWindow = window.open("", "_blank")
   if (!printWindow) {
     return false

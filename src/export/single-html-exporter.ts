@@ -1,4 +1,5 @@
 import type { ISlidevDocument } from "../types/slidev-protocol"
+import { escapeHtml } from "./markdown-renderer"
 
 export interface IStandaloneHtmlOptions {
   title?: string
@@ -47,7 +48,7 @@ export function buildStandaloneHtml(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
+  <title>${escapeHtml(title)}</title>
   <style>
     :root {
       --slide-bg: #ffffff;

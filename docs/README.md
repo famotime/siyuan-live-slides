@@ -17,6 +17,7 @@
 | [7. User Guide (English)](file:///d:/MyCodingProjects/siyuan-slidev/docs/USER-GUIDE.md) | User Guide | English user guide for split-screen presentation preview, right inspector dock, and exports. |
 | [8. 演示能力差距分析与高频特性集成演进指南](file:///d:/MyCodingProjects/siyuan-slidev/docs/slidev-feature-gap-and-enhancement-plan.md) | 深度差距分析与演进规划 | 深度对比 Slidev 核心源码与 Slidev-Templates 生产级模版生态（Neko Style 等），全面剖析高频动效、版式、业务表达组件与播控差距，提供详细使用场景与工程级落地指南。 |
 | [9. Slidev 演示文稿运行与效果查看实战指南](file:///d:/MyCodingProjects/siyuan-slidev/docs/slidev-presentation-run-guide.md) | 运行调试与效果查看手册 | 以 `slidev-templates` 模板为例，系统详解本地热重载预览、演讲者视图、总览大纲、离线打包与 PDF/PPTX 导出全流程。 |
+| [10. 渲染引擎高保真重构与官方原版深度集成详细方案](file:///d:/MyCodingProjects/siyuan-slidev/docs/slidev-native-integration-and-rendering-upgrade-plan.md) | 核心渲染升级与全阶段计划 | 针对内置渲染效果不足与官方原版集成可行性，规划“内置高保真沙箱 (Markdown-it + Shiki) + 桌面端官方原版 Pro 进程托管”双轨架构、技术规范与 6.5 周实施排期。 |
 
 ---
 

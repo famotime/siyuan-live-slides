@@ -18,96 +18,7 @@ graph TD
 
 ---
 
-## 2. 插件代码架构与工程目录规划
-
-在现有的 `siyuan-slidev` 插件工程模板（Vite + TypeScript + Vue 3）基础上，规划如下模块化目录结构：
-
-```text
-d:/MyCodingProjects/siyuan-slidev/
-├── docs/                               # 详细方案与设计文档库
-├── public/                             # 静态资源与内置 Slidev Client 核心沙箱包
-│   └── slidev-client/                  # 预编译的 Slidev Client 独立静态运行时
-│       ├── index.html                  # 演示沙箱入口
-│       └── assets/                     # Vue3, UnoCSS, Shiki WebWorker 预编译包
-├── src/
-│   ├── api.ts                          # 思源官方 Kernel REST API 封装
-│   ├── index.ts                        # 插件入口类（生命周期、菜单注册、Dock 挂载）
-│   ├── compiler/                       # AST 编译与数据转换核心
-│   │   ├── ast-crawler.ts              # 思源块语法树遍历与抽取
-│   │   ├── scope-mapper.ts             # 三层作用域属性解析（文档/分割线/元素）
-│   │   ├── slidev-ast-builder.ts       # 构建 Slidev 虚拟 Slides AST
-│   │   └── assets-rewriter.ts          # 本地 assets/... 相对路径代理重写器
-│   ├── engine/                         # 演示渲染引擎控制器
-│   │   ├── engine-manager.ts           # 双模引擎调度器（Web 沙箱 / Pro CLI）
-│   │   ├── web-sandbox-bridge.ts       # postMessage 容器通信管道
-│   │   └── cli-devserver-bridge.ts     # 外部 Vite DevServer WebSocket 桥接
-│   ├── sync/                           # 实时联动与光标跟踪中枢
-│   │   ├── cursor-tracker.ts           # 编辑器光标监听与 Block ID 寻址
-│   │   ├── debounce-controller.ts      # ws-main 事务流 150ms 增量防抖控制
-│   │   └── selection-mirror.ts         # 幻灯片反向定位思源块
-│   ├── ui/                             # 专精演示交互 UI 组件库 (Vue 3)
-│   │   ├── components/
-│   │   │   ├── SlideInspector.vue      # 幻灯片大纲抽屉卡片检查器
-│   │   │   ├── LayoutPicker.vue        # 可视化版式九宫格选择器
-│   │   │   └── TransitionSelector.vue  # 悬停带 CSS 动效播放的转场选择器
-│   │   ├── dock/
-│   │   │   └── SlidevInspectorDockView.vue # 右侧演示配置面板（动态情境卡片与快捷操作）
-│   │   └── tab/
-│   │       └── SlidevPreviewTab.vue    # 下方独立分屏预览页签（宽屏沙箱与 Pin 锁定）
-│   ├── synergy/                        # 生态协同模块
-│   │   ├── property-manager-bridge.ts  # 属性管家（siyuan-property-manager）深度适配器
-│   │   └── preset-templates.ts         # 预设 Slidev 属性模板字典
-│   ├── ai/                             # 思源预置 AI Agent 协同
-│   │   ├── auto-splitter.ts            # 长笔记智能分析与自动插入分割线
-│   │   ├── auto-animator.ts            # 论点与列表项智能注入 v-click
-│   │   └── notes-generator.ts          # 演讲者口播提词卡提炼生成器
-│   ├── export/                         # 导出流水线
-│   │   ├── single-html-exporter.ts     # 单文件独立离线 HTML 打包器
-│   │   └── pdf-exporter.ts             # 高保真 PDF 讲义导出
-│   └── types/                          # 全局 TypeScript 类型定义
-│       ├── slidev-protocol.d.ts        # 块属性协议字典定义
-│       └── ipc-messages.d.ts           # 跨容器通讯消息契约
-```
-
----
-
 ## 3. 核心功能模块详细设计
-
-### 3.1 AST 编译与作用域映射管线（`src/compiler/`）
-
-```mermaid
-flowchart TD
-    Start[获取当前文档 DOM / AST] --> Crawl[深度优先遍历所有块节点]
-    
-    subgraph ScopeResolution[三层作用域抽取解析]
-        ExtractDoc[读取根节点 NodeDocument 属性] --> SetDocConf[注入全局 Theme/Ratio/Transition]
-        ExtractDivider["检测到水平分割线 --- (NodeThematicBreak)"] --> CreateSlidePage[新建 SlidePage 实例]
-        ExtractDividerAttrs[读取分割线 custom-slidev-* 属性] --> SetPageConf[设置该页 Layout/Bg/Transition/Notes]
-        ExtractLeaf[普通内容块] --> AttachToCurrentPage[追加到当前 SlidePage 容器]
-        ExtractLeafAttrs[读取内容块自身 custom-slidev-click 等] --> WrapDirectives[包装 v-click / motion / shiki]
-    end
-    
-    Crawl --> ScopeResolution
-    ScopeResolution --> AssetsRewrite[本地相对路径 assets/... 代理重写]
-    AssetsRewrite --> GenPayload[生成 Slidev 结构化 Payload 并触发渲染]
-```
-
-### 3.2 专精微交互 UI 设计（`src/ui/`）
-
-为降低用户配置门槛，避免手敲代码与枯燥的键值对，同时彻底杜绝正文悬浮遮挡与臃肿多级菜单，插件打造了清晰高效的双轨交互：
-
-1. **下方分屏独立预览页签（`SlidevPreviewTab.vue`）**：
-   - 交互触发：快捷键 `Alt+P` 或顶栏放映图标一键开启；
-   - 核心功能：
-     - **宽屏舒适视口**：位于主编辑区下方，高度自由拉伸；
-     - **📌 Pin 图钉锁定文档**：可自由选择自动跟随当前文档或锁定放映特定文档；
-     - **集成演示工具条**：翻页、页码徽章、📑 大纲缩略抽屉、🎤 双屏演讲者视图、HTML/PDF 导出及全屏放映。
-2. **右侧演示配置面板（`SlidevInspectorDockView.vue`）**：
-   - 随光标所在块实时自适应切换三套专属情境：
-     - **普通内容块**：配置✨逐步出现（`v-click` 开关与步长）、▥双栏插槽归属（`left` / `right`）、🔍代码逐行聚光（`Shiki Lines`）；提供在上方/下方插入分页符、一键双栏对比等快捷动作；
-     - **分页符（水平分割线 `---`）**：九宫格版式选择、转场动效、页面背景、演讲提词（Notes 与 🤖 AI 提炼），以及后插新页、删除分页动作；
-     - **全局文档**：主题（Theme）、画幅比例（16:9/4:3）、全局默认转场与全局操作。
-   - 所有属性变动即时保存并驱动下方预览沙箱无感热重载。
 
 ### 3.3 与「属性管家」（siyuan-property-manager）的协同实现（`src/synergy/`）
 
@@ -138,7 +49,7 @@ sequenceDiagram
 
 ---
 
-## 4. 详细开发实施计划与排期（8 周冲刺路线）
+## 4. 详细开发实施计划与排期
 
 整个项目划分为四个敏捷冲刺阶段（Sprints），共计 8 周完成商业级全功能交付。状态标识定义：
 - `[x]` **已完成并集成**：核心逻辑已实现且与思源插件主生命周期/UI/数据流完成集成打通；
@@ -173,14 +84,7 @@ gantt
 
 ### 4.1 各阶段交付清单真实进展评估
 
-#### Phase 1：内核筑基与 MVP 验证（第 1 ~ 2 周）
-- **核心目标**：跑通纯前端沙箱，实现“编辑笔记，右侧 Dock 毫秒级显示 Slidev 演示稿”。
-- **任务清单**：
-  - [x] **搭建 `public/slidev-client` 预编译静态沙箱**：使用独立轻量 Vue 3 沙箱页面，支持富文本 Markdown 解析、版式与块引用卡片渲染、键盘导航与全屏模式；
-  - [x] **实现 `src/compiler/scope-mapper.ts`**：已完整识别文档根块与 `---` 分割线，三层作用域解析与虚拟 SlideInfo 构建已跑通并有单元测试覆盖；
-  - [x] **实现本地图片 `assets/...` 的绝对代理路径重写**：`assets-rewriter.ts` 正则重写机制已实现并集成到 AST 构建流水线；
-  - [x] **完成思源右侧 Dock 栏的嵌入，基于 `postMessage` 建立单向增量同步**：Dock 面板注册、生命周期挂载及 150ms 增量防抖数据流已正常运作。
-- **阶段现状**：MVP 链路完全走通，思源内编辑正文可在右侧 Dock 实时看到轻量沙箱渲染出的幻灯片。
+
 
 #### Phase 2：专精微交互与动效全面增强（第 3 ~ 4 周）
 - **核心目标**：实现零手写配置的可视化微交互，实现正文零污染与双向光标联动。

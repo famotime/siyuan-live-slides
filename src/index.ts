@@ -12,8 +12,7 @@ import {
 import { getBlockAttrs, getChildBlocks, insertBlock, setBlockAttrs, sql, chatAI, putFile } from "@/api"
 import { analyzeSlideSplits } from "@/ai/auto-splitter"
 import { generateSpeakerNotesWithAI } from "@/ai/notes-generator"
-import { extractBlockRefs } from "@/compiler/block-ref-resolver"
-import { buildSlidevDocument } from "@/compiler/slidev-ast-builder"
+import { globalDocumentCompiler } from "@/compiler/document-compiler"
 import { CliDevServerBridge } from "@/engine/cli-devserver-bridge"
 import {
   globalSandboxBridge,
@@ -629,95 +628,11 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     }
 
     try {
-      // 1. 获取文档属性
-      const docAttrs = await getBlockAttrs(docId).catch(() => ({}))
-
-      // 2. 优先通过 getChildBlocks 获取按思源文档真实排版顺序排列的所有子块
-      let rawBlocks: any[] = await getChildBlocks(docId).catch(() => [])
-
-      // 3. 批量检索当前文档所有块的 IAL 属性字典
-      const ialQuery = `SELECT id, ial FROM blocks WHERE root_id = '${docId}'`
-      const ialRows = (await sql(ialQuery).catch(() => [])) || []
-      const ialMapById = new Map<string, Record<string, string>>()
-      for (const row of ialRows) {
-        if (row.id && row.ial) {
-          ialMapById.set(row.id, this.parseIALString(row.ial))
-        }
-      }
-
-      // 4. 容错降级：如果 getChildBlocks 为空，从 SQL 回退检索
-      if (!rawBlocks || rawBlocks.length === 0) {
-        const fallbackSql = `SELECT id, parent_id, root_id, type, sub_type as subType, content, markdown, ial FROM blocks WHERE root_id = '${docId}' AND id != '${docId}' ORDER BY created ASC`
-        rawBlocks = (await sql(fallbackSql).catch(() => [])) || []
-      }
-
-      // 5. 构造节点数组并反序列化 IAL
-      const blockNodes: ISiYuanBlockNode[] = rawBlocks.map((r: any) => {
-        const ialMap = ialMapById.get(r.id) || (r.ial ? this.parseIALString(r.ial) : {})
-        return {
-          id: r.id,
-          parent_id: r.parent_id,
-          root_id: r.root_id || docId,
-          type: r.type,
-          subType: r.subType,
-          content: r.content || "",
-          markdown: r.markdown || "",
-          ial: ialMap,
-        }
-      })
-
-      // 6. 批量检索并解析块引用 ((block-id))
-      const allRefIds = new Set<string>()
-      for (const node of blockNodes) {
-        const text = node.markdown || node.content || ""
-        if (text.includes("((")) {
-          const refs = extractBlockRefs(text)
-          for (const ref of refs) {
-            allRefIds.add(ref.blockId)
-          }
-        }
-      }
-
-      const refContentMap: Record<string, string> = {}
-      if (allRefIds.size > 0) {
-        const quotedIds = Array.from(allRefIds).map(id => `'${id}'`).join(",")
-        const refRows = (await sql(`SELECT id, content, markdown FROM blocks WHERE id IN (${quotedIds})`).catch(() => [])) || []
-        if (Array.isArray(refRows)) {
-          for (const row of refRows) {
-            if (row.id) {
-              refContentMap[row.id] = row.markdown || row.content || ""
-            }
-          }
-        }
-      }
-
-      // 7. 调用核心 AST 编译器
-      const baseUrl = typeof location !== "undefined" ? location.origin : ""
-      const slidevDoc = buildSlidevDocument(docId, docAttrs, blockNodes, { baseUrl, refContentMap })
-
-      // 8. 推送更新至沙箱与分屏预览
+      const slidevDoc = await globalDocumentCompiler.compile(docId)
       this.latestCompiledDoc = slidevDoc
       updateDockDocument(slidevDoc, docId)
     } catch (err) {
-
       console.error("[SiYuanSlidev] Failed to compile document:", err)
     }
-  }
-
-  /**
-   * 辅助解析数据库中的 IAL 字段文本
-   */
-  private parseIALString(ialStr: string): Record<string, string> {
-    const result: Record<string, string> = {}
-    const clean = ialStr.replace(/^\{:\s*/, "").replace(/\s*\}$/, "")
-    const regex = /([\w-]+)=(?:"([^"]*)"|'([^']*)'|(\S+))/g
-    let match: RegExpExecArray | null
-
-    while ((match = regex.exec(clean)) !== null) {
-      const key = match[1]
-      const val = match[2] ?? match[3] ?? match[4] ?? ""
-      result[key] = val
-    }
-    return result
   }
 }

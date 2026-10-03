@@ -124,9 +124,12 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, inject } from 'vue'
 import type { Plugin } from 'siyuan'
+import { showMessage } from 'siyuan'
 import { WebSandboxBridge } from '@/engine/web-sandbox-bridge'
 import SlideInspector from '@/ui/components/SlideInspector.vue'
 import { CursorTracker } from '@/sync/cursor-tracker'
+import { buildStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'
+import { triggerPdfExport } from '@/export/pdf-exporter'
 import type { ISlidevDocument, ISlidevVirtualPage } from '@/types/slidev-protocol'
 
 const plugin = inject<Plugin>('plugin')
@@ -220,18 +223,26 @@ function onOpenPresenter() {
 }
 
 function onExportHtml() {
-  if (!latestDoc) return
-  import('@/export/single-html-exporter').then(({ buildStandaloneHtml, downloadHtmlFile }) => {
-    const html = buildStandaloneHtml(latestDoc!)
-    downloadHtmlFile('presentation.html', html)
-  })
+  if (!latestDoc) {
+    showMessage('请先在主编辑区打开幻灯片文档')
+    return
+  }
+  const html = buildStandaloneHtml(latestDoc)
+  const ok = downloadHtmlFile('presentation.html', html)
+  if (ok) {
+    showMessage('已开始下载单文件离线 HTML 演示包')
+  }
 }
 
 function onExportPdf() {
-  if (!latestDoc) return
-  import('@/export/pdf-exporter').then(({ triggerPdfExport }) => {
-    triggerPdfExport(latestDoc!)
-  })
+  if (!latestDoc) {
+    showMessage('请先在主编辑区打开幻灯片文档')
+    return
+  }
+  const ok = triggerPdfExport(latestDoc)
+  if (ok) {
+    showMessage('已唤起打印视窗，请在打印选项中选择「另存为 PDF」')
+  }
 }
 
 defineExpose({

@@ -2,6 +2,10 @@ import fs from "fs"
 import { describe, expect, it } from "vitest"
 import {
   convertHtmlToCleanMarkdown,
+  protectVueDivContainers,
+  replaceDivContainer,
+} from "../src/compiler/html-cleaner"
+import {
   parseSlidevPresentation,
 } from "../src/compiler/slidev-importer"
 
@@ -93,4 +97,21 @@ describe("Clean Markdown Converter Tests (Terminal Ink & HTML Optimization)", ()
     // 代码块内部的 HTML 完整保留
     expect(cleaned).toContain("```html\n<div class=\"card\">\n  <p>Do not clean me</p>\n</div>\n```")
   })
+
+  it("replaceDivContainer 应正确处理嵌套 div 闭合与类名匹配", () => {
+    const html = `<div class="target-card"><span>Header</span><div>Inner Div</div><p>Footer</p></div>`
+    const replaced = replaceDivContainer(html, "target-card", (inner) => {
+      return `[REPLACED: ${inner.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()}]`
+    })
+    expect(replaced).toBe("[REPLACED: Header Inner Div Footer]")
+  })
+
+  it("protectVueDivContainers 应保护带有 v-click 或 @click 等指令的 div 元素", () => {
+    const html = `Before <div class="box" v-click><span>Click Me</span></div> After`
+    const { text, tokens } = protectVueDivContainers(html)
+    expect(tokens.length).toBe(1)
+    expect(tokens[0]).toContain("v-click")
+    expect(text).toContain("__VUE_DIV_TOKEN_0__")
+  })
 })
+

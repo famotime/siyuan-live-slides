@@ -43,311 +43,55 @@
 
     <div class="spm-inspector-body">
       <!-- 场景 A：分页符页面级配置 (水平分割线 ---) -->
-      <div v-if="isDivider" class="spm-section spm-section--page">
-        <div class="spm-section-header">
-          <span>幻灯片页面设置</span>
-          <span class="spm-section-sub">当前页 Frontmatter</span>
-        </div>
-
-        <!-- 版式选择 -->
-        <LayoutPicker
-          :model-value="pageLayout"
-          @change="onLayoutChange"
-        />
-
-        <!-- 转场动效选择 -->
-        <TransitionSelector
-          :model-value="pageTransition"
-          @change="onTransitionChange"
-        />
-
-        <!-- 页面背景 -->
-        <div class="spm-field-group">
-          <label class="spm-field-label">页面背景 (Background)</label>
-          <div class="spm-quick-chips">
-            <button
-              v-for="bg in presetBackgrounds"
-              :key="bg.value"
-              class="spm-chip"
-              :class="{ active: pageBackground === bg.value }"
-              @click="onBackgroundChange(bg.value)"
-            >
-              {{ bg.label }}
-            </button>
-          </div>
-          <input
-            v-model="pageBackground"
-            class="spm-input"
-            placeholder="自定义颜色 (#1e1e24) 或资源路径"
-            @change="onBackgroundChange(pageBackground)"
-          />
-        </div>
-
-        <!-- 演讲备忘提词 (Notes) -->
-        <div class="spm-field-group">
-          <div class="spm-field-label-row">
-            <label class="spm-field-label">演讲者提词 (Notes)</label>
-            <button
-              class="spm-btn-text"
-              title="使用思源 AI 自动提炼提词"
-              @click="onGenerateNotesWithAI"
-            >
-              🤖 AI 提词
-            </button>
-          </div>
-          <textarea
-            v-model="pageNotes"
-            class="spm-textarea"
-            rows="3"
-            placeholder="口播备忘录，仅演讲者视图可见..."
-            @change="onNotesChange"
-          ></textarea>
-        </div>
-
-        <!-- 分页符快捷操作 -->
-        <div class="spm-action-group">
-          <div class="spm-action-group-title">分页快捷操作</div>
-          <div class="spm-action-buttons">
-            <button class="spm-btn-action" @click="onInsertDividerAfter">
-              ➕ 在此后插入新页
-            </button>
-            <button class="spm-btn-action spm-btn-danger" @click="onDeleteCurrentBlock">
-              🗑️ 删除此分页符
-            </button>
-          </div>
-        </div>
-      </div>
+      <PageInspectorSection
+        v-if="isDivider"
+        :page-layout="pageLayout"
+        :page-transition="pageTransition"
+        :page-background="pageBackground"
+        :page-notes="pageNotes"
+        @update:page-layout="onLayoutChange"
+        @update:page-transition="onTransitionChange"
+        @update:page-background="onBackgroundChange"
+        @update:page-notes="onNotesChange"
+        @generate-notes="onGenerateNotesWithAI"
+        @insert-divider-after="onInsertDividerAfter"
+        @delete-divider="onDeleteCurrentBlock"
+      />
 
       <!-- 场景 B：普通内容块 (段落、标题、列表、表格、代码块等) -->
-      <div v-else-if="activeBlockId && !isDocRoot" class="spm-section spm-section--block">
-        <div class="spm-section-header">
-          <span>元素动效与排版</span>
-          <span class="spm-section-sub">{{ blockContentSnippet || '已聚焦块' }}</span>
-        </div>
-
-        <!-- 逐步出现 (v-click) -->
-        <div class="spm-card-control">
-          <div class="spm-control-row">
-            <div class="spm-control-title">
-              <span>✨ 逐步出现 (v-click)</span>
-              <span class="spm-control-desc">翻页时按步长逐个呈现</span>
-            </div>
-            <button
-              class="spm-toggle-btn"
-              :class="{ active: Boolean(elemClick) }"
-              @click="toggleElemClick"
-            >
-              {{ elemClick ? '已开启' : '关闭' }}
-            </button>
-          </div>
-
-          <div v-if="elemClick" class="spm-quick-chips spm-mt-2">
-            <button
-              v-for="step in ['+1', '1', '2', 'hide']"
-              :key="step"
-              class="spm-chip"
-              :class="{ active: elemClick === step }"
-              @click="onElemClickStepChange(step)"
-            >
-              {{ step === '+1' ? '顺延 (+1)' : step === 'hide' ? '隐藏 (hide)' : '第 ' + step + ' 步' }}
-            </button>
-          </div>
-        </div>
-
-        <!-- 多栏布局插槽 (Slot) -->
-        <div class="spm-card-control">
-          <div class="spm-control-title">
-            <span>▥ 双栏插槽 (Slot)</span>
-            <span class="spm-control-desc">在 two-cols 等分栏布局中的归属</span>
-          </div>
-          <div class="spm-segmented-group">
-            <button
-              class="spm-segmented-item"
-              :class="{ active: !elemSlot || elemSlot === 'default' }"
-              @click="onElemSlotChange('')"
-            >
-              默认
-            </button>
-            <button
-              class="spm-segmented-item"
-              :class="{ active: elemSlot === 'left' }"
-              @click="onElemSlotChange('left')"
-            >
-              左栏 (left)
-            </button>
-            <button
-              class="spm-segmented-item"
-              :class="{ active: elemSlot === 'right' }"
-              @click="onElemSlotChange('right')"
-            >
-              右栏 (right)
-            </button>
-          </div>
-        </div>
-
-        <!-- 代码逐行聚光高亮 (仅代码块) -->
-        <div v-if="isCodeBlock" class="spm-card-control">
-          <div class="spm-control-title">
-            <span>🔍 代码逐行聚光 (Shiki)</span>
-            <span class="spm-control-desc">翻页时动态聚光高亮特定行</span>
-          </div>
-          <div class="spm-quick-chips">
-            <button
-              v-for="shiki in ['1-3', 'all', '1|2|3', '2-5']"
-              :key="shiki"
-              class="spm-chip"
-              :class="{ active: elemShikiLines === shiki }"
-              @click="onElemShikiLinesChange(shiki)"
-            >
-              {{ shiki }}
-            </button>
-            <button
-              v-if="elemShikiLines"
-              class="spm-chip spm-chip-clear"
-              @click="onElemShikiLinesChange('')"
-            >
-              清空
-            </button>
-          </div>
-          <input
-            v-model="elemShikiLines"
-            class="spm-input spm-mt-2"
-            placeholder="自定义高亮区间，如 1-3|5|all"
-            @change="onElemShikiLinesChange(elemShikiLines)"
-          />
-        </div>
-
-        <!-- 内容块快捷操作 -->
-        <div class="spm-action-group">
-          <div class="spm-action-group-title">块快捷操作</div>
-          <div class="spm-action-buttons">
-            <button class="spm-btn-action" @click="onInsertDividerBefore">
-              ➕ 在上方插入分页符 (---)
-            </button>
-            <button class="spm-btn-action" @click="onInsertDividerAfter">
-              ➕ 在下方插入分页符 (---)
-            </button>
-            <button class="spm-btn-action" @click="onSetTwoColsContrast">
-              ▥ 设为双栏对比
-            </button>
-            <button
-              v-if="hasBlockAttrs"
-              class="spm-btn-action spm-btn-warn"
-              @click="onClearBlockAttrs"
-            >
-              🧹 清除本块演示属性
-            </button>
-          </div>
-        </div>
-      </div>
+      <BlockInspectorSection
+        v-else-if="activeBlockId && !isDocRoot"
+        :block-content-snippet="blockContentSnippet"
+        :elem-click="elemClick"
+        :elem-slot="elemSlot"
+        :elem-shiki-lines="elemShikiLines"
+        :is-code-block="isCodeBlock"
+        :has-block-attrs="hasBlockAttrs"
+        @toggle-elem-click="toggleElemClick"
+        @update:elem-click="onElemClickStepChange"
+        @update:elem-slot="onElemSlotChange"
+        @update:elem-shiki-lines="onElemShikiLinesChange"
+        @insert-divider-before="onInsertDividerBefore"
+        @insert-divider-after="onInsertDividerAfter"
+        @set-two-cols-contrast="onSetTwoColsContrast"
+        @clear-block-attrs="onClearBlockAttrs"
+      />
 
       <!-- 场景 C：全局文档演示配置 (未聚焦具体块或选中文档头) -->
-      <div v-else class="spm-section spm-section--doc">
-        <div class="spm-section-header">
-          <span>全局演示配置</span>
-          <span class="spm-section-sub">当前文档级 Slidev 参数</span>
-        </div>
-
-        <!-- 主题切换 -->
-        <div class="spm-card-control">
-          <div class="spm-control-title">
-            <span>🎨 幻灯片主题 (Theme)</span>
-          </div>
-          <div class="spm-segmented-group">
-            <button
-              class="spm-segmented-item"
-              :class="{ active: docTheme === 'default' }"
-              @click="onDocThemeChange('default')"
-            >
-              默认 default
-            </button>
-            <button
-              class="spm-segmented-item"
-              :class="{ active: docTheme === 'seriph' }"
-              @click="onDocThemeChange('seriph')"
-            >
-              优雅 seriph
-            </button>
-            <button
-              class="spm-segmented-item"
-              :class="{ active: docTheme === 'apple-basic' }"
-              @click="onDocThemeChange('apple-basic')"
-            >
-              极简 apple
-            </button>
-          </div>
-        </div>
-
-        <!-- 画幅比例 -->
-        <div class="spm-card-control">
-          <div class="spm-control-title">
-            <span>📐 画幅比例 (Aspect Ratio)</span>
-          </div>
-          <div class="spm-segmented-group">
-            <button
-              class="spm-segmented-item"
-              :class="{ active: docAspectRatio === '16/9' }"
-              @click="onDocAspectRatioChange('16/9')"
-            >
-              16 : 9 (宽屏)
-            </button>
-            <button
-              class="spm-segmented-item"
-              :class="{ active: docAspectRatio === '4/3' }"
-              @click="onDocAspectRatioChange('4/3')"
-            >
-              4 : 3 (标屏)
-            </button>
-            <button
-              class="spm-segmented-item"
-              :class="{ active: docAspectRatio === '16/10' }"
-              @click="onDocAspectRatioChange('16/10')"
-            >
-              16 : 10
-            </button>
-          </div>
-        </div>
-
-        <!-- 全局默认转场 -->
-        <div class="spm-card-control">
-          <div class="spm-control-title">
-            <span>↔ 全局默认转场</span>
-          </div>
-          <div class="spm-quick-chips">
-            <button
-              v-for="trans in ['slide-left', 'fade', 'zoom', 'slide-up']"
-              :key="trans"
-              class="spm-chip"
-              :class="{ active: docDefaultTransition === trans }"
-              @click="onDocTransitionChange(trans)"
-            >
-              {{ trans }}
-            </button>
-          </div>
-        </div>
-
-        <!-- 全局快捷操作 -->
-        <div class="spm-action-group">
-          <div class="spm-action-group-title">演示全局操作</div>
-          <div class="spm-action-buttons">
-            <button class="spm-btn-action spm-btn-primary" @click="onOpenBottomPreview">
-              🖥️ 在下方分屏打开预览 (Alt+P)
-            </button>
-            <button class="spm-btn-action" @click="onOpenPresenter">
-              🎤 打开双屏演讲者控制台 (Alt+M)
-            </button>
-            <button class="spm-btn-action" @click="onAiAutoSplit">
-              🤖 AI 智能大纲断页建议
-            </button>
-            <button class="spm-btn-action" @click="onExportHtml">
-              📥 导出单文件 HTML
-            </button>
-            <button class="spm-btn-action" @click="onExportPdf">
-              🖨️ 导出 PDF 讲义
-            </button>
-          </div>
-        </div>
-      </div>
+      <DocInspectorSection
+        v-else
+        :doc-theme="docTheme"
+        :doc-aspect-ratio="docAspectRatio"
+        :doc-default-transition="docDefaultTransition"
+        @update:doc-theme="onDocThemeChange"
+        @update:doc-aspect-ratio="onDocAspectRatioChange"
+        @update:doc-default-transition="onDocTransitionChange"
+        @open-bottom-preview="onOpenBottomPreview"
+        @open-presenter="onOpenPresenter"
+        @ai-auto-split="onAiAutoSplit"
+        @export-html="onExportHtml"
+        @export-pdf="onExportPdf"
+      />
     </div>
 
     <!-- 导入 Slidev 演示对话框 -->
@@ -364,10 +108,13 @@ import { ref, computed, inject } from 'vue'
 import type { Plugin } from 'siyuan'
 import { showMessage } from 'siyuan'
 import { setBlockAttrs, insertBlock, deleteBlock, chatAI } from '@/api'
-import LayoutPicker from '@/ui/components/LayoutPicker.vue'
-import TransitionSelector from '@/ui/components/TransitionSelector.vue'
+import PageInspectorSection from '@/ui/components/PageInspectorSection.vue'
+import BlockInspectorSection from '@/ui/components/BlockInspectorSection.vue'
+import DocInspectorSection from '@/ui/components/DocInspectorSection.vue'
 import SlidevImportDialog from '@/ui/components/SlidevImportDialog.vue'
 import { generateSpeakerNotesWithAI } from '@/ai/notes-generator'
+import { buildStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'
+import { triggerPdfExport } from '@/export/pdf-exporter'
 import type {
   IActiveBlockInfo,
   ISlidevDocument,
@@ -471,12 +218,6 @@ const hasBlockAttrs = computed(() => {
   )
 })
 
-const presetBackgrounds = [
-  { label: '默认', value: '' },
-  { label: '暗黑 #1e1e24', value: '#1e1e24' },
-  { label: '极夜 #0f172a', value: '#0f172a' },
-  { label: '极简白 #ffffff', value: '#ffffff' },
-]
 
 async function saveAttr(key: string, value: string) {
   const targetId = activeBlockId.value || currentDocId.value
@@ -524,7 +265,10 @@ function onBackgroundChange(val: string) {
   saveAttr(ATTR_PAGE_BACKGROUND, val)
 }
 
-function onNotesChange() {
+function onNotesChange(val?: string) {
+  if (val !== undefined) {
+    pageNotes.value = val
+  }
   saveAttr(ATTR_PAGE_NOTES, pageNotes.value)
 }
 
@@ -663,18 +407,26 @@ function onAiAutoSplit() {
 }
 
 function onExportHtml() {
-  if (!latestDoc.value) return
-  import('@/export/single-html-exporter').then(({ buildStandaloneHtml, downloadHtmlFile }) => {
-    const html = buildStandaloneHtml(latestDoc.value!)
-    downloadHtmlFile('presentation.html', html)
-  })
+  if (!latestDoc.value) {
+    showMessage('请先在主编辑区打开幻灯片文档')
+    return
+  }
+  const html = buildStandaloneHtml(latestDoc.value)
+  const ok = downloadHtmlFile('presentation.html', html)
+  if (ok) {
+    showMessage('已开始下载单文件离线 HTML 演示包')
+  }
 }
 
 function onExportPdf() {
-  if (!latestDoc.value) return
-  import('@/export/pdf-exporter').then(({ triggerPdfExport }) => {
-    triggerPdfExport(latestDoc.value!)
-  })
+  if (!latestDoc.value) {
+    showMessage('请先在主编辑区打开幻灯片文档')
+    return
+  }
+  const ok = triggerPdfExport(latestDoc.value)
+  if (ok) {
+    showMessage('已唤起打印视窗，请在打印选项中选择「另存为 PDF」')
+  }
 }
 
 // 暴露给外部调用的驱动方法

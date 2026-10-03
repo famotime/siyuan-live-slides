@@ -1,6 +1,6 @@
 # 思源笔记 Slidev 演示插件 (SiYuan Slidev)
 
-[English](./README_EN.md) | [简体中文](./README.md) | [📖 详细使用指南](./docs/USER-GUIDE.zh-CN.md) | [📖 User Guide](./docs/USER-GUIDE.md)
+[English](./README_EN.md) | [简体中文](./README.md) | [📖 详细使用指南](./docs/USER-GUIDE.zh-CN.md) | [📖 User Guide](./docs/USER-GUIDE.md) | [🏗️ 项目架构与结构](./docs/project-structure.md)
 
 
 > **“让笔记即是演示，让演讲回归内容；零污染元数据沉淀，现代前端级酷炫视觉呈现。”**
@@ -168,6 +168,28 @@
 <summary><b>Q4: 双屏演讲者视图如何使用？</b></summary>
 在全屏放映或 Dock 面板中按下键盘 <code>P</code> 键，系统会弹出演讲者控制台独立窗口。您可以将主幻灯片窗口拖至外接投影仪全屏，将演讲者控制台保留在笔记本屏幕上，两屏通过底层广播通道毫秒级双向同步翻页。
 </details>
+
+---
+
+## 🛠️ 开发者指南 (Developer Guide)
+
+如果您希望参与本插件的开发或在本地进行定制开发，请参考以下指南：
+
+```bash
+# 1. 安装项目依赖
+npm install
+
+# 2. 运行自动化单元测试 (14 个测试套件，覆盖编译器、解析器、渲染器与状态机)
+npm test
+
+# 3. 本地监听开发构建 (watch 模式)
+npm run dev
+
+# 4. 生产构建打包 (产出 dist 目录并打包生成 package.zip)
+npm run build
+```
+
+详细的模块职责分层、数据流图与目录说明请参阅 [🏗️ 项目架构与目录结构文档](./docs/project-structure.md)。
 
 ---
 
