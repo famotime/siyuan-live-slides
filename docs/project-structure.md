@@ -40,9 +40,13 @@ d:\MyCodingProjects\siyuan-slidev
 │   │   └── asset-importer.ts           # 外部导入 Slidev 演示时的资源解压与写入
 │   │
 │   ├── engine/                         # 双模渲染引擎
-│   │   ├── engine-manager.ts           # 双引擎切换控制器（Sandbox vs. CLI DevServer）
+│   │   ├── engine-manager.ts           # 双模引擎统一调度中枢（高保真沙箱 vs. 原生 Pro CLI）
+│   │   ├── env-detector.ts             # 跨平台环境探测器（检测 Node.js 与全局 Slidev CLI）
+│   │   ├── process-manager.ts          # 桌面端 Node 子进程生命周期守护、端口分配与健康探活
+│   │   ├── workspace-scaffolder.ts     # 官方 Slidev 临时工程脚手架自动编排器
+│   │   ├── native-slidev-bridge.ts     # 官方 Slidev 原生通信适配桥接器（基于 ?embedded=true 规范）
 │   │   ├── web-sandbox-bridge.ts       # 内置 Web 沙箱通信桥接器（postMessage 双向通信）
-│   │   └── cli-devserver-bridge.ts     # 本地 Slidev CLI 开发服务器桥接（默认端口 3030）
+│   │   └── cli-devserver-bridge.ts     # 本地 Slidev CLI 基础开发服务器桥接（默认端口 3030）
 │   │
 │   ├── export/                         # 导出与打印管线
 │   │   ├── markdown-renderer.ts        # [RF-004] 通用轻量级 Markdown 块级转 HTML 渲染器
@@ -97,7 +101,11 @@ d:\MyCodingProjects\siyuan-slidev
 │   ├── compiler-importer.test.ts       # Slidev Markdown 导入综合集成测试
 │   ├── asset-importer.test.ts          # 外部资源提取与解压测试
 │   ├── export.test.ts                  # 离线单文件与 PDF 导出测试
-│   ├── engine.test.ts                  # 双模渲染引擎切换与通信测试
+│   ├── engine.test.ts                  # 双模渲染引擎调度与模式切换测试
+│   ├── env-detector.test.ts            # Node.js 与 Slidev CLI 环境探测测试
+│   ├── process-manager.test.ts         # 官方 Slidev 子进程守护与端口分配测试
+│   ├── workspace-scaffolder.test.ts    # 官方 Pro 临时工程自动编排测试
+│   ├── native-slidev-bridge.test.ts    # 官方 Slidev 协议 postMessage 桥接测试
 │   ├── sync.test.ts                    # 光标联动与防抖控制测试
 │   ├── synergy.test.ts                 # 属性管家桥接测试
 │   ├── ai.test.ts                      # AI 分页与提词生成逻辑测试
