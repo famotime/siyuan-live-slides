@@ -202,14 +202,47 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
         const pmBridge = new PropertyManagerBridge()
         const statsSql = pmBridge.buildTransitionStatsSql()
         const rows = await sql(statsSql).catch(() => [])
-        if (!rows || rows.length === 0) {
-          showMessage("全库目前暂无已设置 Slidev 转场效果的块")
-          return
-        }
-        const summary = rows.map((r: any) => `${r.value}: ${r.count} 个`).join("，")
-        showMessage(`全库 Slidev 转场分布统计：${summary}`)
+        const summaryText = pmBridge.formatTransitionSummary(rows || [])
+        showMessage(summaryText)
       },
     })
+
+    this.addCommand({
+      langKey: "slidevExportTemplates",
+      langText: "Slidev 协同: 复制 Slidev 预设属性模板至剪贴板",
+      hotkey: "",
+      enabled: () => true,
+      execute: async () => {
+        const pmBridge = new PropertyManagerBridge()
+        const json = pmBridge.exportTemplatesJson()
+        if (typeof navigator !== "undefined" && navigator.clipboard) {
+          await navigator.clipboard.writeText(json)
+          showMessage("已将 Slidev 属性模板 JSON 复制至剪贴板，可直接导入属性管家")
+        } else {
+          showMessage("已生成模板数据（请在开发者控制台查看）：\n" + json)
+          console.log("[Slidev Presets JSON]:", json)
+        }
+      },
+    })
+
+    this.addCommand({
+      langKey: "slidevBatchReplaceTransition",
+      langText: "Slidev 协同: 批量替换全库淡入淡出转场为滑动 (fade -> slide-left)",
+      hotkey: "",
+      enabled: () => true,
+      execute: async () => {
+        const pmBridge = new PropertyManagerBridge()
+        const res = await pmBridge.batchUpdateTransitions(
+          "fade",
+          "slide-left",
+          (q: string) => sql(q).catch(() => []),
+          (id: string, attrs: Record<string, string>) => setBlockAttrs(id, attrs),
+        )
+        showMessage(`全库批量替换完成：已将 ${res.updatedCount} 处 fade 转场更新为 slide-left`)
+        this.compileCurrentDocument()
+      },
+    })
+
 
     // 4. 注册右侧 Dock 分屏预览面板
     const self = this

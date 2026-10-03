@@ -50,4 +50,49 @@ describe("PropertyManagerBridge (属性管家协同桥接)", () => {
       "custom-slidev-transition": "slide-left",
     })
   })
+
+  it("应支持导出符合属性管家标准规范的模板 JSON", () => {
+    const bridge = new PropertyManagerBridge()
+    const jsonStr = bridge.exportTemplatesJson()
+    expect(jsonStr).toContain('"templates"')
+    expect(jsonStr).toContain('"counter"')
+    const parsed = JSON.parse(jsonStr)
+    expect(Array.isArray(parsed.templates)).toBe(true)
+    expect(parsed.counter).toBe(parsed.templates.length)
+  })
+
+  it("应正确格式化转场统计简报文本", () => {
+    const bridge = new PropertyManagerBridge()
+    expect(bridge.formatTransitionSummary([])).toBe("全库目前暂无已设置 Slidev 转场效果的块")
+    const summary = bridge.formatTransitionSummary([
+      { value: "slide-left", count: 12 },
+      { value: "fade", count: 5 },
+    ])
+    expect(summary).toContain("slide-left: 12 个")
+    expect(summary).toContain("fade: 5 个")
+  })
+
+  it("应支持全库批量重构版式属性 (batchUpdateLayout)", async () => {
+    const bridge = new PropertyManagerBridge()
+    const mockSqlExecutor = vi.fn().mockResolvedValue([
+      { block_id: "divider-1" },
+      { block_id: "divider-2" },
+      { block_id: "divider-3" },
+    ])
+    const mockSetAttrs = vi.fn().mockResolvedValue(true)
+
+    const result = await bridge.batchUpdateLayout(
+      "cover",
+      "fact",
+      mockSqlExecutor,
+      mockSetAttrs,
+    )
+
+    expect(result.updatedCount).toBe(3)
+    expect(mockSetAttrs).toHaveBeenCalledTimes(3)
+    expect(mockSetAttrs).toHaveBeenCalledWith("divider-1", {
+      "custom-slidev-layout": "fact",
+    })
+  })
 })
+

@@ -51,4 +51,53 @@ export class PropertyManagerBridge {
 
     return { updatedCount }
   }
+
+  /**
+   * 批量将全库从旧版式替换为新版式
+   */
+  public async batchUpdateLayout(
+    fromLayout: string,
+    toLayout: string,
+    sqlExecutor: (sqlStr: string) => Promise<any[]>,
+    setAttrsFn: (blockId: string, attrs: Record<string, string>) => Promise<any>,
+  ): Promise<{ updatedCount: number }> {
+    const findSql = `SELECT block_id FROM attributes WHERE name = 'custom-slidev-layout' AND value = '${fromLayout}'`
+    const rows = await sqlExecutor(findSql)
+    let updatedCount = 0
+
+    if (Array.isArray(rows)) {
+      for (const row of rows) {
+        const blockId = row.block_id || row.blockId
+        if (blockId) {
+          await setAttrsFn(blockId, { "custom-slidev-layout": toLayout })
+          updatedCount++
+        }
+      }
+    }
+
+    return { updatedCount }
+  }
+
+  /**
+   * 导出可直接供属性管家导入的标准 templates.json 格式数据
+   */
+  public exportTemplatesJson(): string {
+    const templates = this.getPresetTemplates()
+    return JSON.stringify({
+      templates,
+      counter: templates.length,
+    }, null, 2)
+  }
+
+  /**
+   * 格式化转场统计数据为易读的简报文本
+   */
+  public formatTransitionSummary(statsRows: Array<{ value: string; count: number | string }>): string {
+    if (!statsRows || statsRows.length === 0) {
+      return "全库目前暂无已设置 Slidev 转场效果的块"
+    }
+    const items = statsRows.map(r => `${r.value}: ${r.count} 个`).join("，")
+    return `全库 Slidev 转场分布统计：${items}`
+  }
 }
+
