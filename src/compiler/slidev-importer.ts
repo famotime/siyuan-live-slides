@@ -44,6 +44,7 @@ export interface IImportOptions {
   cleanShikiLines?: boolean
   cleanSlots?: boolean
   isolateStyleTags?: boolean
+  cleanHtmlToMarkdown?: boolean
   virtualFiles?: Record<string, string>
 }
 
@@ -251,6 +252,338 @@ export function splitSlidevMarkdownChunks(markdown: string): string[] {
 }
 
 /**
+ * 递归/深度优先匹配并替换指定 class 的 <div> 容器，正确处理嵌套 <div> 标签闭合
+ */
+function replaceDivContainer(
+  html: string,
+  classQuery: string | RegExp,
+  replacer: (inner: string) => string
+): string {
+  let result = ""
+  let cursor = 0
+  const openTagRegex = /<div\b([^>]*)>/gi
+
+  while (cursor < html.length) {
+    openTagRegex.lastIndex = cursor
+    let match: RegExpExecArray | null
+    let foundOpenTag = false
+    let targetOpenIndex = -1
+    let openTagLength = 0
+
+    while ((match = openTagRegex.exec(html)) !== null) {
+      const attrs = match[1]
+      const classMatch = attrs.match(/\bclass=["']([^"']*)["']/i)
+      if (classMatch) {
+        const classNames = classMatch[1]
+        const isMatch =
+          typeof classQuery === "string"
+            ? classNames.split(/\s+/).includes(classQuery)
+            : classQuery.test(classNames)
+        if (isMatch) {
+          foundOpenTag = true
+          targetOpenIndex = match.index
+          openTagLength = match[0].length
+          break
+        }
+      }
+    }
+
+    if (!foundOpenTag) {
+      result += html.slice(cursor)
+      break
+    }
+
+    // 将匹配点之前的内容加入 result
+    result += html.slice(cursor, targetOpenIndex)
+
+    // 从 openTag 之后开始计算 depth
+    const bodyStart = targetOpenIndex + openTagLength
+    let depth = 1
+    let bodyEnd = -1
+    let closeTagEnd = -1
+
+    const tokenRegex = /<\/?div\b[^>]*>/gi
+    tokenRegex.lastIndex = bodyStart
+
+    let tokenMatch: RegExpExecArray | null
+    while ((tokenMatch = tokenRegex.exec(html)) !== null) {
+      if (tokenMatch[0].startsWith("</")) {
+        depth--
+        if (depth === 0) {
+          bodyEnd = tokenMatch.index
+          closeTagEnd = tokenMatch.index + tokenMatch[0].length
+          break
+        }
+      } else {
+        depth++
+      }
+    }
+
+    if (bodyEnd !== -1 && closeTagEnd !== -1) {
+      const inner = html.slice(bodyStart, bodyEnd)
+      result += replacer(inner)
+      cursor = closeTagEnd
+    } else {
+      // 容错: 未找到配对闭合标签
+      result += html.slice(targetOpenIndex, bodyStart)
+      cursor = bodyStart
+    }
+  }
+
+  return result
+}
+
+/**
+ * 将幻灯片中的展示性 HTML 容器与标签智能剥离并转换为纯净原生的 Markdown 内容
+ */
+export function convertHtmlToCleanMarkdown(html: string): string {
+  // 1. 保护现有 Markdown 代码块与行内代码 (避免误伤代码块内的示例 HTML)
+  const codeBlocks: string[] = []
+  let text = html.replace(/(```[\s\S]*?```|`[^`\n]+`)/g, (match) => {
+    const placeholder = `__CODE_TOKEN_${codeBlocks.length}__`
+    codeBlocks.push(match)
+    return placeholder
+  })
+
+  // 2. 剥离样式块与脚本块
+  text = text.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+  text = text.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+
+  // 3. 移除纯装饰型组件与元素
+  text = text.replace(/<div class="terminal-bar">[\s\S]*?<\/div>/gi, "")
+  text = text.replace(/<div class="cursor-line">[\s\S]*?<\/div>/gi, "")
+  text = text.replace(/<span class="cursor">[\s\S]*?<\/span>/gi, "")
+  text = text.replace(/<div class="stamp">\s*([\s\S]*?)\s*<\/div>/gi, "\n\n*[$1]*\n\n")
+  text = text.replace(/<div class="arrow">\s*([→\->]+)\s*<\/div>/gi, "\n\n$1\n\n")
+  text = text.replace(/<i>\s*[→\->]+\s*<\/i>/gi, "")
+
+  // 4. 命令行提示符
+  text = text.replace(/<div class="prompt">\s*([\s\S]*?)\s*<\/div>/gi, (_, cmd) => {
+    return `\n\`\`\`bash\n${cmd.trim()}\n\`\`\`\n`
+  })
+  text = text.replace(/<p>\s*<i>\$<\/i>\s*([\s\S]*?)<\/p>/gi, (_, cmd) => {
+    return `\n\`\`\`bash\n$ ${cmd.trim()}\n\`\`\`\n`
+  })
+
+  // 5. 状态栏 / 元信息条: <div class="statusline"><span>service=gateway</span>...</div>
+  text = text.replace(/<div class="statusline">\s*([\s\S]*?)\s*<\/div>/gi, (_, inner) => {
+    const tags = Array.from(inner.matchAll(/<span>([\s\S]*?)<\/span>/gi)).map((m: any) => `\`${m[1].trim()}\``)
+    return `\n> ${tags.join(" | ")}\n`
+  })
+
+  // 6. 日志面板与代码块: <div class="log-panel">\s*<pre>...</pre>\s*</div>
+  text = text.replace(/<div class="log-panel">\s*<pre>([\s\S]*?)<\/pre>\s*<\/div>/gi, (_, code) => {
+    const cleanCode = code.replace(/<span[^>]*>([\s\S]*?)<\/span>/gi, "$1").trim()
+    return `\n\`\`\`log\n${cleanCode}\n\`\`\`\n`
+  })
+
+  // 7. 对比网格 <div class="diff-grid">
+  text = replaceDivContainer(text, "diff-grid", (inner) => {
+    const items = Array.from(
+      inner.matchAll(/<div class="diff\s+([^"]*)">\s*<span>(.*?)<\/span>\s*<pre>([\s\S]*?)<\/pre>\s*<\/div>/gi)
+    )
+    if (items.length > 0) {
+      return (
+        "\n" +
+        items
+          .map((m: any) => {
+            const title = m[2].trim().toUpperCase()
+            const code = m[3].trim()
+            return `**${title}:**\n\`\`\`yaml\n${code}\n\`\`\``
+          })
+          .join("\n\n") +
+        "\n"
+      )
+    }
+    return inner
+  })
+
+  // 8. Before / After 对比卡片: <div class="before-after">
+  text = replaceDivContainer(text, "before-after", (inner) => {
+    const beforeMatch = inner.match(
+      /<div class="before">[\s\S]*?<small>(.*?)<\/small>[\s\S]*?<h2>(.*?)<\/h2>[\s\S]*?<p>(.*?)<\/p>\s*<\/div>/i
+    )
+    const afterMatch = inner.match(
+      /<div class="after">[\s\S]*?<small>(.*?)<\/small>[\s\S]*?<h2>(.*?)<\/h2>[\s\S]*?<p>(.*?)<\/p>\s*<\/div>/i
+    )
+    let res = "\n"
+    if (beforeMatch) {
+      res += `### ${beforeMatch[1]}\n## ${beforeMatch[2]}\n${beforeMatch[3]}\n\n`
+    }
+    if (afterMatch) {
+      res += `### ${afterMatch[1]}\n## ${afterMatch[2]}\n${afterMatch[3]}\n`
+    }
+    return res.trim() ? res : inner
+  })
+
+  // 9. 任务列表: <ul class="terminal-list"><li><em>[x]</em> ...</li></ul>
+  text = text.replace(/<ul\b[^>]*>([\s\S]*?)<\/ul>/gi, (_, list) => {
+    const items = Array.from(list.matchAll(/<li>\s*(?:<em>)?(\[[x ]\])(?:<\/em>)?\s*([\s\S]*?)<\/li>/gi))
+    if (items.length > 0) {
+      return "\n" + items.map((m: any) => `- ${m[1]} ${m[2].trim()}`).join("\n") + "\n"
+    }
+    return list
+  })
+
+  // 10. 时间线列表: <div class="timeline">
+  text = replaceDivContainer(text, "timeline", (inner) => {
+    const items = Array.from(
+      inner.matchAll(
+        /<div(?:\s+class="([^"]*)")?>\s*<time>([\s\S]*?)<\/time>\s*<b>([\s\S]*?)<\/b>\s*<span>([\s\S]*?)<\/span>\s*<\/div>/gi
+      )
+    )
+    if (items.length > 0) {
+      return (
+        "\n" +
+        items
+          .map((m: any) => {
+            const cls = m[1] || ""
+            let prefix = "-"
+            if (cls.includes("warn")) prefix = "- ⚠️"
+            else if (cls.includes("bad")) prefix = "- ❌"
+            else if (cls.includes("ok")) prefix = "- ✅"
+            return `${prefix} **${m[2].trim()}** **${m[3].trim()}** — ${m[4].trim()}`
+          })
+          .join("\n") +
+        "\n"
+      )
+    }
+    return inner
+  })
+
+  // 11. 流程管线: <div class="pipeline">
+  text = replaceDivContainer(text, "pipeline", (inner) => {
+    const items = Array.from(
+      inner.matchAll(
+        /<div(?:\s+class="([^"]*)")?>\s*<small>([\s\S]*?)<\/small>\s*<b>([\s\S]*?)<\/b>\s*<span>([\s\S]*?)<\/span>\s*<\/div>/gi
+      )
+    )
+    if (items.length > 0) {
+      return (
+        "\n" +
+        items
+          .map((m: any, idx: number) => {
+            const isHot = (m[1] || "").includes("hot")
+            const icon = isHot ? "⚠️ " : ""
+            return `${idx + 1}. ${icon}**${m[3].trim()}** (*${m[4].trim()}*)`
+          })
+          .join("\n") +
+        "\n"
+      )
+    }
+    return inner
+  })
+
+  // 12. 检查项卡片网格: <div class="check-grid">
+  text = replaceDivContainer(text, "check-grid", (inner) => {
+    const items = Array.from(
+      inner.matchAll(/<div>\s*<span class="([^"]*)"><\/span>\s*<b>([\s\S]*?)<\/b>\s*<p>([\s\S]*?)<\/p>\s*<\/div>/gi)
+    )
+    if (items.length > 0) {
+      return (
+        "\n" +
+        items
+          .map((m: any) => {
+            const isWarn = (m[1] || "").includes("warn")
+            const icon = isWarn ? "⚠️" : "✅"
+            return `- ${icon} **${m[2].trim()}**: ${m[3].trim()}`
+          })
+          .join("\n") +
+        "\n"
+      )
+    }
+    return inner
+  })
+
+  // 13. 宣言/特征网格: <div class="manifesto">
+  text = replaceDivContainer(text, "manifesto", (inner) => {
+    const items = Array.from(
+      inner.matchAll(/<div>\s*<span>([\s\S]*?)<\/span>\s*<h2>([\s\S]*?)<\/h2>\s*<p>([\s\S]*?)<\/p>\s*<\/div>/gi)
+    )
+    if (items.length > 0) {
+      return (
+        "\n" +
+        items
+          .map((m: any) => `## ${m[1].trim()} ${m[2].trim()}\n\n${m[3].trim()}`)
+          .join("\n\n") +
+        "\n"
+      )
+    }
+    return inner
+  })
+
+  // 14. 便签与机制引用: <div class="split-note"> / <div class="mechanism">
+  text = replaceDivContainer(text, "split-note", (inner) => {
+    const items = Array.from(inner.matchAll(/<div>\s*<b>([\s\S]*?)<\/b>\s*<p>([\s\S]*?)<\/p>\s*<\/div>/gi))
+    if (items.length > 0) {
+      return "\n" + items.map((m: any) => `> **${m[1].trim()}**: ${m[2].trim()}`).join("\n>\n") + "\n"
+    }
+    return inner
+  })
+
+  text = text.replace(/<div class="mechanism">\s*<b>([\s\S]*?)<\/b>\s*<p>([\s\S]*?)<\/p>\s*<\/div>/gi, (_, title, desc) => {
+    return `\n> **${title.trim()}**: ${desc.trim()}\n`
+  })
+
+  // 15. 独立 pre 代码块 (剥离内嵌 span 样式)
+  text = text.replace(/<pre>([\s\S]*?)<\/pre>/gi, (_, code) => {
+    const cleanCode = code.replace(/<span[^>]*>([\s\S]*?)<\/span>/gi, "$1").trim()
+    return `\n\`\`\`text\n${cleanCode}\n\`\`\`\n`
+  })
+
+  // 16. 页面头部标签: <div class="page-head"><span>THE PREMISE</span><b>02</b></div>
+  text = text.replace(/<div class="page-head">\s*<span>([\s\S]*?)<\/span>\s*<b>([\s\S]*?)<\/b>\s*<\/div>/gi, "\n### $1 ($2)\n")
+
+  // 17. 标题与段落
+  text = text.replace(/<h1\b[^>]*>([\s\S]*?)<\/h1>/gi, "\n# $1\n")
+  text = text.replace(/<h2\b[^>]*>([\s\S]*?)<\/h2>/gi, "\n## $1\n")
+  text = text.replace(/<h3\b[^>]*>([\s\S]*?)<\/h3>/gi, "\n### $1\n")
+  text = text.replace(/<h4\b[^>]*>([\s\S]*?)<\/h4>/gi, "\n#### $1\n")
+
+  text = text.replace(/<p\s+class="ok">\s*●\s*([\s\S]*?)<\/p>/gi, "\n✅ **$1**\n")
+  text = text.replace(/<p\s+class="caption">\s*([\s\S]*?)<\/p>/gi, "\n> *$1*\n")
+  text = text.replace(/<p\s+class="lead">\s*([\s\S]*?)<\/p>/gi, "\n*$1*\n")
+  text = text.replace(/<p\b[^>]*>([\s\S]*?)<\/p>/gi, "\n$1\n\n")
+
+  // 18. 换行与分割符
+  text = text.replace(/<br\s*\/?>/gi, "\n")
+  text = text.replace(/<hr\s*\/?>/gi, "\n---\n")
+
+  // 19. 行内样式标签
+  text = text.replace(/<b\b[^>]*>([\s\S]*?)<\/b>/gi, "**$1**")
+  text = text.replace(/<strong\b[^>]*>([\s\S]*?)<\/strong>/gi, "**$1**")
+  text = text.replace(/<i\b[^>]*>([\s\S]*?)<\/i>/gi, "*$1*")
+  text = text.replace(/<em\b[^>]*>([\s\S]*?)<\/em>/gi, "*$1*")
+  text = text.replace(/<code\b[^>]*>([\s\S]*?)<\/code>/gi, "`$1`")
+  text = text.replace(/<time\b[^>]*>([\s\S]*?)<\/time>/gi, "**$1**")
+  text = text.replace(/<small\b[^>]*>([\s\S]*?)<\/small>/gi, "*$1*")
+
+  // 20. 列表标签
+  text = text.replace(/<li\b[^>]*>([\s\S]*?)<\/li>/gi, "- $1\n")
+  text = text.replace(/<ul\b[^>]*>([\s\S]*?)<\/ul>/gi, "\n$1\n")
+  text = text.replace(/<ol\b[^>]*>([\s\S]*?)<\/ol>/gi, "\n$1\n")
+
+  // 21. 链接与引用
+  text = text.replace(/<a\b[^>]*href=["'](.*?)["'][^>]*>([\s\S]*?)<\/a>/gi, "[$2]($1)")
+  text = text.replace(/<blockquote\b[^>]*>([\s\S]*?)<\/blockquote>/gi, (_, q) => {
+    return "\n" + q.trim().split("\n").map((line: string) => `> ${line.trim()}`).join("\n") + "\n"
+  })
+
+  // 22. 解包剩余纯布局标签 (div, span, section, header, footer, etc.)
+  text = text.replace(/<\/?(?:div|span|section|header|footer|main|article|nav|aside)\b[^>]*>/gi, "")
+
+  // 23. 恢复受保护的代码块
+  for (let i = 0; i < codeBlocks.length; i++) {
+    text = text.replace(`__CODE_TOKEN_${i}__`, codeBlocks[i])
+  }
+
+  // 24. 规范化连续换行
+  text = text.replace(/\n{3,}/g, "\n\n").trim()
+
+  return text
+}
+
+/**
  * 核心解析入口：将 Slidev Markdown 完整解析为结构化思源演示包
  */
 export function parseSlidevPresentation(
@@ -263,6 +596,7 @@ export function parseSlidevPresentation(
     cleanShikiLines = true,
     cleanSlots = true,
     isolateStyleTags = true,
+    cleanHtmlToMarkdown = true,
     virtualFiles = {},
   } = options
 
@@ -438,6 +772,10 @@ export function parseSlidevPresentation(
 
     if (cleanSlots) {
       body = body.replace(/^::\w+::\s*$/gm, "")
+    }
+
+    if (cleanHtmlToMarkdown) {
+      body = convertHtmlToCleanMarkdown(body)
     }
 
     const assetRefs = extractAssetReferences(body)

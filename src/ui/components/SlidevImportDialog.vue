@@ -138,7 +138,11 @@
           <!-- 导入配置选项 -->
           <div class="spm-options-group">
             <label class="spm-checkbox-label">
-              <input v-model="optStripNotes" type="checkbox" />
+              <input v-model="optCleanHtml" type="checkbox" @change="reprocessCurrentInput" />
+              <span>智能剥离展示型 HTML 容器为干净原生的 Markdown 笔记块</span>
+            </label>
+            <label class="spm-checkbox-label">
+              <input v-model="optStripNotes" type="checkbox" @change="reprocessCurrentInput" />
               <span>提取演讲者提词到块属性并保持正文笔记清爽</span>
             </label>
             <label class="spm-checkbox-label">
@@ -212,9 +216,18 @@ const notebooks = ref<Array<{ id: string; name: string }>>([])
 const selectedNotebookId = ref('')
 
 // 选项开关
+const optCleanHtml = ref(true)
 const optStripNotes = ref(true)
 const optUploadAssets = ref(true)
 const optAutoPreview = ref(true)
+
+async function reprocessCurrentInput() {
+  if (selectedFile.value) {
+    await processFile(selectedFile.value)
+  } else if (rawMarkdownText.value) {
+    onTextChange()
+  }
+}
 
 const formattedFileSize = computed(() => {
   const bytes = selectedFileSize.value
@@ -300,6 +313,7 @@ async function processFile(file: File) {
       extractedAssets.value = zipRes.assets
       const parsed = parseSlidevPresentation(zipRes.entryMarkdown, {
         stripNotesFromMarkdown: optStripNotes.value,
+        cleanHtmlToMarkdown: optCleanHtml.value,
         virtualFiles: zipRes.virtualFiles,
       })
       parsedPresentation.value = parsed
@@ -310,6 +324,7 @@ async function processFile(file: File) {
       extractedAssets.value = []
       const parsed = parseSlidevPresentation(text, {
         stripNotesFromMarkdown: optStripNotes.value,
+        cleanHtmlToMarkdown: optCleanHtml.value,
       })
       parsedPresentation.value = parsed
       customDocTitle.value = parsed.docTitle || file.name.replace(/\.md$/i, '')
@@ -329,6 +344,7 @@ function onTextChange() {
   try {
     const parsed = parseSlidevPresentation(rawMarkdownText.value, {
       stripNotesFromMarkdown: optStripNotes.value,
+      cleanHtmlToMarkdown: optCleanHtml.value,
     })
     parsedPresentation.value = parsed
     customDocTitle.value = parsed.docTitle || 'Slidev 演示文稿'
