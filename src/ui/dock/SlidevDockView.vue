@@ -29,6 +29,14 @@
         </button>
         <button
           class="spm-btn-icon"
+          title="切换大纲缩略图"
+          :class="{ active: showOutline }"
+          @click="showOutline = !showOutline"
+        >
+          📑
+        </button>
+        <button
+          class="spm-btn-icon"
           title="重新编译并刷新"
           @click="onRefresh"
         >
@@ -54,21 +62,34 @@
         allow="fullscreen"
       ></iframe>
     </div>
+
+    <!-- 底部大纲检查器 -->
+    <SlideInspector
+      v-if="showOutline && currentSlides.length > 0"
+      :slides="currentSlides"
+      :current-active-page="currentPage"
+      @navigate="onNavigateOutline"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, inject, type Ref } from 'vue'
+import { ref, onMounted, onUnmounted, inject } from 'vue'
 import type { Plugin } from 'siyuan'
 import { WebSandboxBridge } from '@/engine/web-sandbox-bridge'
-import type { ISlidevDocument } from '@/types/slidev-protocol'
+import SlideInspector from '@/ui/components/SlideInspector.vue'
+import { CursorTracker } from '@/sync/cursor-tracker'
+import type { ISlidevDocument, ISlidevVirtualPage } from '@/types/slidev-protocol'
 
 const plugin = inject<Plugin>('plugin')
 const sandboxBridge = inject<WebSandboxBridge>('sandboxBridge', new WebSandboxBridge())
+const cursorTracker = new CursorTracker(sandboxBridge)
 
 const sandboxIframeRef = ref<HTMLIFrameElement | null>(null)
 const currentPage = ref(1)
 const totalPages = ref(1)
+const currentSlides = ref<ISlidevVirtualPage[]>([])
+const showOutline = ref(true)
 
 // 动态计算插件静态沙箱路径
 const iframeSrc = ref('/plugins/siyuan-slidev/slidev-client/index.html')
@@ -88,7 +109,7 @@ onMounted(() => {
 
   unbindBlockClicked = sandboxBridge.onBlockClicked((blockId, page) => {
     currentPage.value = page
-    // 触发思源光标定位 (通知主程序)
+    // 触发思源反向定位
     if (plugin) {
       plugin.eventBus.emit('slidev:block-clicked' as any, { blockId, page })
     }
@@ -99,6 +120,7 @@ onUnmounted(() => {
   if (unbindSlideChanged) unbindSlideChanged()
   if (unbindBlockClicked) unbindBlockClicked()
   sandboxBridge.detach()
+  cursorTracker.destroy()
 })
 
 function onPrevPage() {
@@ -111,6 +133,11 @@ function onNextPage() {
   if (currentPage.value < totalPages.value) {
     sandboxBridge.navigatePage(currentPage.value + 1)
   }
+}
+
+function onNavigateOutline(pageIndex: number) {
+  currentPage.value = pageIndex
+  sandboxBridge.navigatePage(pageIndex)
 }
 
 function onRefresh() {
@@ -130,11 +157,13 @@ function onFullscreen() {
 // 供父级调用的文档更新方法
 defineExpose({
   updateDocument(doc: ISlidevDocument) {
+    currentSlides.value = doc.slides
     totalPages.value = doc.slides.length
+    cursorTracker.updateSlidesIndex(doc.slides)
     sandboxBridge.updateSlides(doc.slides, doc.config, doc.fullMarkdown)
   },
   navigateToBlock(blockId: string) {
-    sandboxBridge.highlightElement(blockId)
+    cursorTracker.onCursorFocusBlock(blockId)
   }
 })
 </script>
@@ -197,6 +226,11 @@ defineExpose({
   background: var(--b3-theme-surface-hover, #e2e8f0);
 }
 
+.spm-btn-icon.active {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
 .spm-btn-icon:disabled {
   opacity: 0.35;
   cursor: not-allowed;
@@ -213,9 +247,9 @@ defineExpose({
 .spm-slidev-dock__viewport {
   flex: 1;
   width: 100%;
-  height: calc(100% - 38px);
   position: relative;
   background: #0f1115;
+  min-height: 120px;
 }
 
 .spm-slidev-dock__iframe {
