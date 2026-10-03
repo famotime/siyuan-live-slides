@@ -355,15 +355,20 @@
         }
 
         function syncToMain(page) {
-          if (broadcastChannel) {
-            broadcastChannel.postMessage({ type: "SYNC_PAGE", page })
-          }
-          if (window.opener) {
-            window.opener.postMessage({
-              source: "siyuan-slidev-presenter",
-              action: "NAVIGATE_PAGE",
-              payload: { pageIndex: page }
-            }, "*")
+          try {
+            const pageNum = Number(page) || 1
+            if (broadcastChannel) {
+              broadcastChannel.postMessage({ type: "SYNC_PAGE", page: pageNum })
+            }
+            if (window.opener) {
+              window.opener.postMessage({
+                source: "siyuan-slidev-presenter",
+                action: "NAVIGATE_PAGE",
+                payload: { pageIndex: pageNum }
+              }, "*")
+            }
+          } catch (e) {
+            console.warn("[Slidev Presenter] sync error:", e)
           }
         }
 

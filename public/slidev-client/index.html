@@ -596,15 +596,20 @@
         } catch (e) {}
 
         function broadcastSync() {
-          if (broadcastChannel) {
+          if (!broadcastChannel) return
+          try {
             broadcastChannel.postMessage({
               type: "SYNC_PAGE",
               page: currentPageIndex.value
             })
+            // 通过 JSON 序列化脱敏 Vue 响应式 Proxy 对象，防止 BroadcastChannel 抛出 DataCloneError
+            const plainSlides = JSON.parse(JSON.stringify(slides.value || []))
             broadcastChannel.postMessage({
               type: "SYNC_SLIDES",
-              slides: slides.value
+              slides: plainSlides
             })
+          } catch (err) {
+            console.warn("[Slidev] BroadcastChannel postMessage warning:", err)
           }
         }
 
