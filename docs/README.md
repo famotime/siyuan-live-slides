@@ -15,6 +15,7 @@
 | [5. 详细方案与开发实施计划](file:///d:/MyCodingProjects/siyuan-slidev/docs/implementation-plan-and-development-schedule.md) | 模块拆解与敏捷排期 | 详细规划代码工程目录结构、各模块实现细节、与「属性管家」协同落地机制、8 周甘特排期与质量风控策略。 |
 | [6. 用户使用指南 (中文)](file:///d:/MyCodingProjects/siyuan-slidev/docs/USER-GUIDE.zh-CN.md) | 终端用户操作手册 | 包含下方分屏预览页签、📌 Pin 图钉锁定、右侧动态配置面板、快捷键与离线导出全方位说明。 |
 | [7. User Guide (English)](file:///d:/MyCodingProjects/siyuan-slidev/docs/USER-GUIDE.md) | User Guide | English user guide for split-screen presentation preview, right inspector dock, and exports. |
+| [8. 演示能力差距分析与高频特性集成演进指南](file:///d:/MyCodingProjects/siyuan-slidev/docs/slidev-feature-gap-and-enhancement-plan.md) | 深度差距分析与演进规划 | 深度对比 Slidev 核心源码与 Slidev-Templates 生产级模版生态（Neko Style 等），全面剖析高频动效、版式、业务表达组件与播控差距，提供详细使用场景与工程级落地指南。 |
 
 ---
 
@@ -32,5 +33,7 @@
 ## 附录：相关项目源码
 
 Slidev: D:\MyCodingProjects\slidev
+
+Slidev Templates: D:\MyCodingProjects\slidev-templates
 
 siyuan-property-manager: D:\MyCodingProjects\siyuan-property-manager

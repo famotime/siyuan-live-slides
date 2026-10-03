@@ -2,15 +2,9 @@
   "name": "siyuan-slidev",
   "author": "Quincy Zou",
   "url": "https://github.com/famotime/siyuan-slidev",
-  "version": "0.0.1",
+  "version": "0.5.0",
   "minAppVersion": "3.8.5",
-  "disabledInPublish": false,
-  "publish": {
-    "resources": [],
-    "data": [
-      "sampleText"
-    ]
-  },
+  "disabledInPublish": true,
   "backends": [
     "windows",
     "linux",
@@ -26,14 +20,14 @@
     "browser-desktop"
   ],
   "displayName": {
-    "default": "SiYuan Slidev",
-    "en": "SiYuan Slidev",
-    "zh-CN": "思源 Slidev 演示"
+    "default": "SiyuanSlidev",
+    "en": "SiyuanSlidev",
+    "zh-CN": "即现"
   },
   "description": {
-    "default": "Integrate Slidev into SiYuan Note for modern, reactive and non-intrusive presentations",
-    "en": "Integrate Slidev into SiYuan Note for modern, reactive and non-intrusive presentations",
-    "zh-CN": "集成开源 Slidev 的思源笔记演示插件，零污染元数据沉淀与现代前端交互动效"
+    "default": "Ideas are content, notes are presentations.",
+    "en": "Ideas are content, notes are presentations.",
+    "zh-CN": "思想即内容，笔记即演示。"
   },
   "readme": {
     "default": "README.md",
@@ -42,13 +36,6 @@
   },
   "icon": "icon.webp",
   "preview": "preview.webp",
-  "funding": {
-    "openCollective": "",
-    "patreon": "",
-    "github": "",
-    "custom": [],
-    "links": []
-  },
   "keywords": [
     "siyuan",
     "slidev",

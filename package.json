@@ -1,8 +1,8 @@
 {
   "name": "siyuan-slidev",
-  "version": "0.0.1",
+  "version": "0.5.0",
   "type": "module",
-  "description": "An integrated Slidev presentation plugin for SiYuan Note (https://b3log.org/siyuan)",
+  "description": "Ideas are content, notes are presentations.",
   "author": "Quincy Zou",
   "license": "MIT",
   "homepage": "https://github.com/famotime/siyuan-slidev",

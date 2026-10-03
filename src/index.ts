@@ -79,7 +79,6 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
       langKey: "slidevPresentation",
       langText: "Slidev: 在文档下方开启分屏演示预览",
       hotkey: "⌥P",
-      hotkeys: ["⌥P", "Alt+P"],
       enabled: () => true,
       execute: () => {
         this.openBottomPreviewTab()
@@ -223,8 +222,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
           await navigator.clipboard.writeText(json)
           showMessage("已将 Slidev 属性模板 JSON 复制至剪贴板，可直接导入属性管家")
         } else {
-          showMessage("已生成模板数据（请在开发者控制台查看）：\n" + json)
-          console.log("[Slidev Presets JSON]:", json)
+          showMessage("已生成模板数据（请在控制台查看）：\n" + json)
         }
       },
     })
@@ -251,7 +249,6 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
       langKey: "slidevPresenterMode",
       langText: "Slidev: 打开双屏演讲者控制台 (Presenter Mode)",
       hotkey: "⌥M",
-      hotkeys: ["⌥M", "Alt+M"],
       enabled: () => true,
       execute: () => {
         if (typeof window !== "undefined") {
@@ -370,6 +367,13 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     if (typeof document !== "undefined") {
       document.addEventListener("click", this.onEditorClickBound, true)
       document.addEventListener("selectionchange", this.onSelectionChangeBound)
+    }
+  }
+
+  async onDataChanged(reason?: "sync" | "overwrite") {
+    // 跨端同步或外部文件覆写时轻量重新编译，避免宿主触发全量重载
+    if (this.currentDocId) {
+      await this.compileCurrentDocument(this.currentDocId)
     }
   }
 
