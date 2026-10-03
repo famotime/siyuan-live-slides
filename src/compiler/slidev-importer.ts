@@ -555,8 +555,11 @@ export function convertHtmlToCleanMarkdown(html: string): string {
   text = text.replace(/<i\b[^>]*>([\s\S]*?)<\/i>/gi, "*$1*")
   text = text.replace(/<em\b[^>]*>([\s\S]*?)<\/em>/gi, "*$1*")
   text = text.replace(/<code\b[^>]*>([\s\S]*?)<\/code>/gi, "`$1`")
-  text = text.replace(/<time\b[^>]*>([\s\S]*?)<\/time>/gi, "**$1**")
+  text = text.replace(/<time\b[^>]*>([\s\S]*?)<\/time>/gi, "**$1** ")
   text = text.replace(/<small\b[^>]*>([\s\S]*?)<\/small>/gi, "*$1*")
+
+  // 防御性处理: 修复直接相连的粗体标记闭合 (****)，补充空格避免 Markdown 粗体解析损坏
+  text = text.replace(/\*{4}/g, "** **")
 
   // 20. 列表标签
   text = text.replace(/<li\b[^>]*>([\s\S]*?)<\/li>/gi, "- $1\n")
@@ -577,7 +580,7 @@ export function convertHtmlToCleanMarkdown(html: string): string {
     text = text.replace(`__CODE_TOKEN_${i}__`, codeBlocks[i])
   }
 
-  // 24. 规范化连续换行
+  // 24. 规范化连续换行与行首尾空格
   text = text.replace(/\n{3,}/g, "\n\n").trim()
 
   return text

@@ -38,3 +38,5 @@ Slidev: D:\MyCodingProjects\slidev
 Slidev Templates: D:\MyCodingProjects\slidev-templates
 
 siyuan-property-manager: D:\MyCodingProjects\siyuan-property-manager
+
+siyuan-note: D:\MyCodingProjects\siyuan-note
