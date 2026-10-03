@@ -220,6 +220,153 @@
       cursor: pointer;
     }
 
+    /* Shiki Code Spotlight & Language Badge */
+    .slide-block pre.shiki-container {
+      position: relative;
+      background: var(--slide-code-bg);
+      padding: 18px 20px;
+      border-radius: 8px;
+      font-family: "JetBrains Mono", Consolas, monospace;
+      font-size: 0.95rem;
+      overflow-x: auto;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .slide-block pre.shiki-container .lang-badge {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      opacity: 0.5;
+      letter-spacing: 0.05em;
+    }
+    .slide-block .code-line {
+      display: block;
+      line-height: 1.6;
+      transition: opacity 0.25s ease, background 0.25s ease;
+    }
+    .slide-block .code-line.shiki-focus {
+      opacity: 1;
+      font-weight: 500;
+    }
+    .slide-block .code-line.shiki-dimmed {
+      opacity: 0.25;
+      filter: blur(0.3px);
+    }
+    .slide-block .line-no {
+      display: inline-block;
+      width: 2.2em;
+      text-align: right;
+      padding-right: 1em;
+      opacity: 0.35;
+      user-select: none;
+    }
+
+    /* Tables */
+    .slide-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 0.95rem;
+    }
+    .slide-table th, .slide-table td {
+      border: 1px solid rgba(125, 125, 125, 0.2);
+      padding: 8px 12px;
+    }
+    .slide-table th {
+      background: rgba(125, 125, 125, 0.1);
+      font-weight: 600;
+    }
+    .slide-table tr:nth-child(even) td {
+      background: rgba(125, 125, 125, 0.03);
+    }
+
+    /* Callout Boxes */
+    .slide-callout {
+      border-left: 4px solid var(--slide-accent);
+      background: rgba(59, 130, 246, 0.08);
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin: 10px 0;
+    }
+    .slide-callout-title {
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+      color: var(--slide-accent);
+    }
+    .slide-callout--warning {
+      border-left-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.08);
+    }
+    .slide-callout--warning .slide-callout-title { color: #f59e0b; }
+    .slide-callout--danger {
+      border-left-color: #ef4444;
+      background: rgba(239, 68, 68, 0.08);
+    }
+    .slide-callout--danger .slide-callout-title { color: #ef4444; }
+    .slide-callout--tip {
+      border-left-color: #10b981;
+      background: rgba(16, 185, 129, 0.08);
+    }
+    .slide-callout--tip .slide-callout-title { color: #10b981; }
+
+    /* Math KaTeX */
+    .katex-inline {
+      font-family: KaTeX_Math, "Times New Roman", serif;
+      padding: 0 4px;
+    }
+    .katex-display-container {
+      margin: 14px 0;
+      text-align: center;
+    }
+    .katex-display {
+      font-family: KaTeX_Math, "Times New Roman", serif;
+      font-size: 1.25rem;
+      padding: 8px 16px;
+      background: rgba(125, 125, 125, 0.05);
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    /* v-mark Rough Notation */
+    .v-mark {
+      background: transparent;
+      color: inherit;
+      position: relative;
+      display: inline;
+    }
+    .v-mark--underline {
+      text-decoration: underline 3px var(--slide-accent);
+      text-underline-offset: 4px;
+    }
+    .v-mark--circle {
+      border: 2px solid var(--slide-accent);
+      border-radius: 12px;
+      padding: 1px 6px;
+    }
+    .v-mark--box {
+      border: 2px solid var(--slide-accent);
+      padding: 1px 4px;
+    }
+
+    /* Ambient Glow (暗色极客环境光晕) */
+    .ambient-glow {
+      position: absolute;
+      top: -20%;
+      left: -20%;
+      width: 140%;
+      height: 140%;
+      background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.12) 0%, transparent 40%),
+                  radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.12) 0%, transparent 40%);
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(40px);
+    }
+
     /* v-click Progressive Animation */
     .v-click-hidden {
       opacity: 0 !important;
@@ -334,6 +481,7 @@
         :class="viewportRatioClass"
         :style="pageBackgroundStyle"
       >
+        <div class="ambient-glow" v-if="isDarkTheme"></div>
         <transition :name="transitionClass" mode="out-in">
           <div
             v-if="currentSlide"
@@ -341,8 +489,47 @@
             class="slide-content-wrapper"
             :class="['layout-' + (currentSlide.frontmatter.layout || 'default'), currentSlide.frontmatter.class]"
           >
+            <!-- 带表头的双栏布局 -->
+            <template v-if="currentSlide.frontmatter.layout === 'two-cols-header'">
+              <div class="two-cols-header-top" v-if="headerBlocks.length > 0">
+                <div
+                  v-for="block in headerBlocks"
+                  :key="block.id"
+                  class="slide-block"
+                  :class="[getBlockClickClass(block), { highlighted: block.id === highlightedBlockId }]"
+                  :data-block-id="block.id"
+                  @click="onBlockClick(block.id)"
+                  v-html="renderBlockHtml(block)"
+                ></div>
+              </div>
+              <div class="layout-two-cols" style="flex: 1;">
+                <div class="two-cols-left">
+                  <div
+                    v-for="block in leftBlocks"
+                    :key="block.id"
+                    class="slide-block"
+                    :class="[getBlockClickClass(block), { highlighted: block.id === highlightedBlockId }]"
+                    :data-block-id="block.id"
+                    @click="onBlockClick(block.id)"
+                    v-html="renderBlockHtml(block)"
+                  ></div>
+                </div>
+                <div class="two-cols-right">
+                  <div
+                    v-for="block in rightBlocks"
+                    :key="block.id"
+                    class="slide-block"
+                    :class="[getBlockClickClass(block), { highlighted: block.id === highlightedBlockId }]"
+                    :data-block-id="block.id"
+                    @click="onBlockClick(block.id)"
+                    v-html="renderBlockHtml(block)"
+                  ></div>
+                </div>
+              </div>
+            </template>
+
             <!-- 双栏布局 -->
-            <template v-if="currentSlide.frontmatter.layout === 'two-cols'">
+            <template v-else-if="currentSlide.frontmatter.layout === 'two-cols'">
               <div class="two-cols-left">
                 <div
                   v-for="block in leftBlocks"
@@ -460,15 +647,56 @@
         })
 
         // 分栏布局块过滤
+        const headerBlocks = computed(() => {
+          if (!currentSlide.value) return []
+          const blocks = currentSlide.value.blocks || []
+          const hasRightSlot = blocks.some(b => b.slot === "right")
+          if (hasRightSlot) {
+            const res = []
+            let isHeader = true
+            for (const b of blocks) {
+              if (b.slot === "right" || b.slot === "left") {
+                isHeader = false
+              } else if (isHeader && (b.type === "h" || res.length === 0)) {
+                res.push(b)
+              }
+            }
+            return res
+          }
+          return blocks.length > 0 ? [blocks[0]] : []
+        })
+
         const leftBlocks = computed(() => {
           if (!currentSlide.value) return []
-          const left = currentSlide.value.blocks.filter(b => b.slot === "left")
-          return left.length > 0 ? left : currentSlide.value.blocks.filter(b => b.slot !== "right")
+          const layout = currentSlide.value.frontmatter?.layout
+          const blocks = currentSlide.value.blocks || []
+          if (layout === "two-cols-header") {
+            const headers = headerBlocks.value
+            const rem = blocks.filter(b => !headers.includes(b))
+            const left = rem.filter(b => b.slot === "left")
+            if (left.length > 0) return left
+            const hasRight = rem.some(b => b.slot === "right")
+            if (hasRight) return rem.filter(b => b.slot !== "right")
+            const mid = Math.ceil(rem.length / 2)
+            return rem.slice(0, mid)
+          }
+          const left = blocks.filter(b => b.slot === "left")
+          return left.length > 0 ? left : blocks.filter(b => b.slot !== "right")
         })
 
         const rightBlocks = computed(() => {
           if (!currentSlide.value) return []
-          return currentSlide.value.blocks.filter(b => b.slot === "right")
+          const layout = currentSlide.value.frontmatter?.layout
+          const blocks = currentSlide.value.blocks || []
+          if (layout === "two-cols-header") {
+            const headers = headerBlocks.value
+            const rem = blocks.filter(b => !headers.includes(b))
+            const right = rem.filter(b => b.slot === "right")
+            if (right.length > 0) return right
+            const mid = Math.ceil(rem.length / 2)
+            return rem.slice(mid)
+          }
+          return blocks.filter(b => b.slot === "right")
         })
 
         // 获取当前页最大 v-click 步数
@@ -496,53 +724,198 @@
           return currentStep.value >= requiredStep ? "v-click-visible" : "v-click-hidden"
         }
 
-        // 简易 Markdown / HTML 渲染转换
-        function renderBlockHtml(block) {
-          if (!block) return ""
-          let md = block.rawMarkdown || block.content || ""
-
-          // 标题转换
-          if (md.startsWith("### ")) return `<h3>${escapeHtml(md.slice(4))}</h3>`
-          if (md.startsWith("## ")) return `<h2>${escapeHtml(md.slice(3))}</h2>`
-          if (md.startsWith("# ")) return `<h1>${escapeHtml(md.slice(2))}</h1>`
-
-          // 代码块转换
-          if (md.startsWith("```")) {
-            const lines = md.split("\n")
-            const code = lines.slice(1, lines[lines.length - 1] === "```" ? -1 : undefined).join("\n")
-            return `<pre><code>${escapeHtml(code)}</code></pre>`
-          }
-
-          // 引用转换
-          if (md.startsWith("> ")) {
-            return `<blockquote><p>${escapeHtml(md.slice(2))}</p></blockquote>`
-          }
-
-          // 图片语法 ![alt](src)
-          const imgMatch = md.match(/!\[(.*?)\]\((.*?)\)/)
-          if (imgMatch) {
-            return `<img alt="${escapeHtml(imgMatch[1])}" src="${escapeHtml(imgMatch[2])}" />`
-          }
-
-          // 支持已解析的块引用与内联 HTML 结构
-          if (md.includes('class="slidev-block-ref"') || md.includes('class="slidev-ref-tag"')) {
-            return md
-          }
-
-          // 普通段落支持简单行内加粗和行内代码
-          let html = escapeHtml(md)
-          html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-          html = html.replace(/`([^`]+)`/g, "<code>$1</code>")
-          return `<p>${html}</p>`
-        }
-
         function escapeHtml(str) {
-          return String(str)
+          return String(str || "")
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;")
+        }
+
+        function parseShikiRanges(shikiPattern) {
+          if (!shikiPattern || shikiPattern.trim() === "" || shikiPattern.trim() === "all") {
+            return "all"
+          }
+          const set = new Set()
+          const parts = shikiPattern.split("|")
+          for (const part of parts) {
+            const trimmed = part.trim()
+            if (trimmed === "all") return "all"
+            if (trimmed.includes("-")) {
+              const [startStr, endStr] = trimmed.split("-")
+              const start = parseInt(startStr, 10)
+              const end = parseInt(endStr, 10)
+              if (!isNaN(start) && !isNaN(end)) {
+                for (let i = Math.min(start, end); i <= Math.max(start, end); i++) {
+                  set.add(i)
+                }
+              }
+            } else {
+              const num = parseInt(trimmed, 10)
+              if (!isNaN(num)) set.add(num)
+            }
+          }
+          return set
+        }
+
+        function formatInlineMarkdown(text) {
+          if (!text) return ""
+          let res = escapeHtml(text)
+
+          // 1. 手绘标记 <v-mark type="circle">text</v-mark>
+          res = res.replace(/&lt;v-mark(?:\s+type=&quot;([a-zA-Z-]+)&quot;)?&gt;([\s\S]*?)&lt;\/v-mark&gt;/g, (_, type, content) => {
+            const markType = type || "circle"
+            return `<mark class="v-mark v-mark--${markType}">${content}</mark>`
+          })
+
+          // 2. 行内数学公式 $formula$
+          res = res.replace(/\$([^$\n]+)\$/g, '<span class="katex-inline font-math"><em>$1</em></span>')
+
+          // 3. 链接 [title](url)
+          res = res.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="slidev-link">$1</a>')
+
+          // 4. 加粗 **text**
+          res = res.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+
+          // 5. 斜体 *text*
+          res = res.replace(/\*(.*?)\*/g, "<em>$1</em>")
+
+          // 6. 删除线 ~~text~~
+          res = res.replace(/~~(.*?)~~/g, "<del>$1</del>")
+
+          // 7. 行内代码 `code`
+          res = res.replace(/`([^`]+)`/g, "<code>$1</code>")
+
+          return res
+        }
+
+        function renderMarkdownTable(tableLines) {
+          if (tableLines.length < 2) return ""
+          const cleanRows = tableLines.map(line =>
+            line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(c => c.trim())
+          )
+          const headerCells = cleanRows[0]
+          let alignDefs = []
+          let bodyStartIndex = 1
+
+          if (cleanRows.length >= 2 && cleanRows[1].every(c => /^:?-+:?$/.test(c))) {
+            alignDefs = cleanRows[1].map(c => {
+              if (c.startsWith(":") && c.endsWith(":")) return "center"
+              if (c.endsWith(":")) return "right"
+              return "left"
+            })
+            bodyStartIndex = 2
+          }
+
+          const theadHtml = `<thead><tr>${headerCells.map((h, i) => {
+            const align = alignDefs[i] ? ` style="text-align: ${alignDefs[i]}"` : ""
+            return `<th${align}>${formatInlineMarkdown(h)}</th>`
+          }).join("")}</tr></thead>`
+
+          const tbodyRows = cleanRows.slice(bodyStartIndex).map(row => {
+            return `<tr>${row.map((cell, i) => {
+              const align = alignDefs[i] ? ` style="text-align: ${alignDefs[i]}"` : ""
+              return `<td${align}>${formatInlineMarkdown(cell)}</td>`
+            }).join("")}</tr>`
+          }).join("")
+
+          return `<table class="slide-table">${theadHtml}<tbody>${tbodyRows}</tbody></table>`
+        }
+
+        // 高保真 Markdown / 块级转换
+        function renderBlockHtml(block) {
+          if (!block) return ""
+          const md = (block.rawMarkdown || block.content || "").trim()
+          if (!md) return ""
+
+          // 1. 已解析的思源引用与内联 HTML 结构直接原样保留
+          if (md.includes('class="slidev-block-ref"') || md.includes('class="slidev-ref-tag"')) {
+            return md
+          }
+
+          // 2. 独立公式块 $$...$$
+          if (md.startsWith("$$") && md.endsWith("$$")) {
+            const formula = md.slice(2, -2).trim()
+            return `<div class="katex-display-container"><div class="katex-display font-math"><em>${escapeHtml(formula)}</em></div></div>`
+          }
+
+          // 3. 标题 h1 ~ h6
+          const hMatch = md.match(/^(#{1,6})\s+(.*)$/)
+          if (hMatch) {
+            const level = hMatch[1].length
+            return `<h${level}>${formatInlineMarkdown(hMatch[2])}</h${level}>`
+          }
+
+          // 4. Callout 警示框 ::: info / tip / warning / danger
+          if (md.startsWith(":::")) {
+            const lines = md.split("\n")
+            const type = lines[0].replace(/^:::\s*/, "").trim() || "info"
+            const body = lines.slice(1, lines[lines.length - 1].startsWith(":::") ? -1 : undefined).join("\n")
+            return `<div class="slide-callout slide-callout--${type}"><div class="slide-callout-title">${type.toUpperCase()}</div><div>${formatInlineMarkdown(body)}</div></div>`
+          }
+
+          // 5. 代码块转换与 Shiki 聚光行号聚焦高亮
+          if (md.startsWith("```")) {
+            const lines = md.split("\n")
+            const headerLine = lines[0].slice(3).trim()
+            const langMatch = headerLine.match(/^([^\s{]+)/)
+            const lang = langMatch ? langMatch[1] : ""
+            const shikiPattern = block.shikiLines || (headerLine.match(/\{([^}]+)\}/)?.[1] || "")
+            const focusSet = parseShikiRanges(shikiPattern)
+
+            const rawCodeLines = lines.length > 2
+              ? (lines[lines.length - 1] === "```" ? lines.slice(1, -1) : lines.slice(1))
+              : [md.slice(3).replace(/```$/, "")]
+
+            const hasSpotlight = focusSet !== "all"
+            const formattedLines = rawCodeLines.map((line, idx) => {
+              const lineNo = idx + 1
+              const isFocused = focusSet === "all" || focusSet.has(lineNo)
+              const lineClass = isFocused ? "code-line shiki-focus" : (hasSpotlight ? "code-line shiki-dimmed" : "code-line")
+              return `<span class="${lineClass}"><span class="line-no">${lineNo}</span><span class="line-content">${escapeHtml(line)}</span></span>`
+            }).join("\n")
+
+            const langBadge = lang ? `<span class="lang-badge">${escapeHtml(lang)}</span>` : ""
+            return `<pre class="shiki-container">${langBadge}<code>${formattedLines}</code></pre>`
+          }
+
+          // 6. Markdown 表格
+          if (md.includes("|") && md.split("\n").filter(l => l.trim().startsWith("|")).length >= 2) {
+            const tableLines = md.split("\n").filter(l => l.trim().startsWith("|"))
+            return renderMarkdownTable(tableLines)
+          }
+
+          // 7. 任务列表项 - [ ] 或 - [x]
+          const taskMatch = md.match(/^[-*+]\s+\[([ xX])\]\s+(.*)$/)
+          if (taskMatch) {
+            const isChecked = taskMatch[1].toLowerCase() === "x"
+            const taskText = formatInlineMarkdown(taskMatch[2])
+            const checkedAttr = isChecked ? ' checked=""' : ""
+            return `<div class="slide-list-item slide-task-item"><label><input type="checkbox" disabled=""${checkedAttr}/> <span>${taskText}</span></label></div>`
+          }
+
+          // 8. 引用转换
+          if (md.startsWith("> ")) {
+            return `<blockquote><p>${formatInlineMarkdown(md.slice(2))}</p></blockquote>`
+          }
+
+          // 9. 图片语法 ![alt](src)
+          const imgMatch = md.match(/^!\[(.*?)\]\((.*?)\)$/)
+          if (imgMatch) {
+            return `<img alt="${escapeHtml(imgMatch[1])}" src="${imgMatch[2]}" />`
+          }
+
+          // 10. 列表项
+          if (/^[-*+]\s+/.test(md)) {
+            return `<li>${formatInlineMarkdown(md.replace(/^[-*+]\s+/, ""))}</li>`
+          }
+          if (/^\d+\.\s+/.test(md)) {
+            return `<li>${formatInlineMarkdown(md.replace(/^\d+\.\s+/, ""))}</li>`
+          }
+
+          // 11. 普通段落
+          return `<p>${formatInlineMarkdown(md)}</p>`
         }
 
         // 翻页与步进调度
@@ -735,8 +1108,10 @@
           currentThemeMode,
           pageBackgroundStyle,
           transitionClass,
+          headerBlocks,
           leftBlocks,
           rightBlocks,
+          isDarkTheme,
           isMaxStep,
           getBlockClickClass,
           renderBlockHtml,

@@ -3,23 +3,56 @@ import {
   convertBlockToHtml,
   escapeHtml,
   formatInlineMarkdown,
+  parseShikiRanges,
+  renderMarkdownTable,
   renderSlideBlocksToHtml,
 } from "../src/export/markdown-renderer"
 import type { ISlidevBlockItem, ISlidevVirtualPage } from "../src/types/slidev-protocol"
 
-describe("MarkdownRenderer (导出模块通用 Markdown 块级渲染引擎)", () => {
+describe("MarkdownRenderer (导出模块与沙箱通用高保真渲染引擎)", () => {
   it("escapeHtml 应正确转义 HTML 关键字符", () => {
     expect(escapeHtml("<script>alert('xss') & \"safe\"</script>")).toBe(
       "&lt;script&gt;alert(&#039;xss&#039;) &amp; &quot;safe&quot;&lt;/script&gt;",
     )
   })
 
-  it("formatInlineMarkdown 应支持加粗、斜体与行内代码", () => {
-    const raw = "这是 **粗体**，这是 *斜体*，这是 `const x = 1`"
+  it("parseShikiRanges 应准确解析聚光行号范围", () => {
+    expect(parseShikiRanges("all")).toBe("all")
+    expect(parseShikiRanges("")).toBe("all")
+    const rangeSet = parseShikiRanges("1-3|5|8") as Set<number>
+    expect(rangeSet.has(1)).toBe(true)
+    expect(rangeSet.has(2)).toBe(true)
+    expect(rangeSet.has(3)).toBe(true)
+    expect(rangeSet.has(4)).toBe(false)
+    expect(rangeSet.has(5)).toBe(true)
+    expect(rangeSet.has(8)).toBe(true)
+  })
+
+  it("formatInlineMarkdown 应支持加粗、斜体、删除线、行内代码、数学公式、链接与 v-mark", () => {
+    const raw = "这是 **粗体**，*斜体*，~~删除线~~，`code`，公式 $E = mc^2$，[链接](https://siyuan.io)，<v-mark type=\"underline\">重点</v-mark>"
     const formatted = formatInlineMarkdown(raw)
     expect(formatted).toContain("<strong>粗体</strong>")
     expect(formatted).toContain("<em>斜体</em>")
-    expect(formatted).toContain("<code>const x = 1</code>")
+    expect(formatted).toContain("<del>删除线</del>")
+    expect(formatted).toContain("<code>code</code>")
+    expect(formatted).toContain('class="katex-inline font-math"')
+    expect(formatted).toContain('href="https://siyuan.io"')
+    expect(formatted).toContain('<mark class="v-mark v-mark--underline">重点</mark>')
+  })
+
+  it("renderMarkdownTable 应将 Markdown 表格转换为带对齐样式的 HTML table", () => {
+    const tableMd = [
+      "| 功能 | 状态 | 评分 |",
+      "| :--- | :---: | ---: |",
+      "| 高保真沙箱 | 完成 | 100 |",
+      "| 官方 Pro 引擎 | 推进中 | 95 |",
+    ]
+    const html = renderMarkdownTable(tableMd)
+    expect(html).toContain("<table")
+    expect(html).toContain('style="text-align: left">功能</th>')
+    expect(html).toContain('style="text-align: center"')
+    expect(html).toContain('style="text-align: right"')
+    expect(html).toContain('style="text-align: left">高保真沙箱</td>')
   })
 
   it("convertBlockToHtml 应正确渲染各类型块级 Markdown 结构", () => {
@@ -28,14 +61,40 @@ describe("MarkdownRenderer (导出模块通用 Markdown 块级渲染引擎)", ()
     expect(convertBlockToHtml({ id: "b2", rawMarkdown: "## 标题 2" })).toContain("<h2>标题 2</h2>")
     expect(convertBlockToHtml({ id: "b3", rawMarkdown: "### 标题 3" })).toContain("<h3>标题 3</h3>")
 
-    // 代码块
+    // 代码块与 Shiki 聚光行号聚焦高亮
     const codeBlock: ISlidevBlockItem = {
       id: "b4",
-      rawMarkdown: "```ts\nconst a = 123\n```",
+      rawMarkdown: "```ts {1-2|4}\nconst a = 123\nconst b = 456\nconst c = 789\nconst d = 999\n```",
     }
     const codeHtml = convertBlockToHtml(codeBlock)
-    expect(codeHtml).toContain("<pre")
-    expect(codeHtml).toContain("<code>const a = 123</code>")
+    expect(codeHtml).toContain("<pre class=\"pdf-code shiki-container\"")
+    expect(codeHtml).toContain("<span class=\"lang-badge\">ts</span>")
+    expect(codeHtml).toContain("shiki-focus")
+    expect(codeHtml).toContain("shiki-dimmed")
+    expect(codeHtml).toContain("<span class=\"line-no\">1</span>")
+
+    // 独立 KaTeX 数学公式块
+    const mathBlock: ISlidevBlockItem = {
+      id: "b_math",
+      rawMarkdown: "$$\n\\int_{0}^{1} x^2 dx = \\frac{1}{3}\n$$",
+    }
+    expect(convertBlockToHtml(mathBlock)).toContain("katex-display")
+
+    // Callout 警示框
+    const calloutBlock: ISlidevBlockItem = {
+      id: "b_callout",
+      rawMarkdown: "::: warning\n请注意演示环境安全\n:::",
+    }
+    const calloutHtml = convertBlockToHtml(calloutBlock)
+    expect(calloutHtml).toContain("pdf-callout--warning")
+    expect(calloutHtml).toContain("请注意演示环境安全")
+
+    // 任务清单
+    const taskBlock: ISlidevBlockItem = {
+      id: "b_task",
+      rawMarkdown: "- [x] 已完成任务项",
+    }
+    expect(convertBlockToHtml(taskBlock)).toContain('type="checkbox" disabled="" checked=""')
 
     // 引用块
     const quoteBlock: ISlidevBlockItem = {
@@ -63,7 +122,8 @@ describe("MarkdownRenderer (导出模块通用 Markdown 块级渲染引擎)", ()
     expect(convertBlockToHtml(refBlock)).toContain('class="slidev-block-ref"')
   })
 
-  it("renderSlideBlocksToHtml 应正确支持 two-cols 双栏与单栏布局", () => {
+  it("renderSlideBlocksToHtml 应正确支持 two-cols, two-cols-header 与 fact 布局", () => {
+    // 1. two-cols
     const slideTwoCols: ISlidevVirtualPage = {
       pageIndex: 1,
       startBlockId: "p1",
@@ -75,10 +135,43 @@ describe("MarkdownRenderer (导出模块通用 Markdown 块级渲染引擎)", ()
         { id: "b2", rawMarkdown: "右侧内容", slot: "right" },
       ],
     }
+    const htmlTwoCols = renderSlideBlocksToHtml(slideTwoCols)
+    expect(htmlTwoCols).toContain("two-cols")
+    expect(htmlTwoCols).toContain("左侧内容")
+    expect(htmlTwoCols).toContain("右侧内容")
 
-    const html = renderSlideBlocksToHtml(slideTwoCols)
-    expect(html).toContain("two-cols")
-    expect(html).toContain("左侧内容")
-    expect(html).toContain("右侧内容")
+    // 2. two-cols-header
+    const slideHeaderCols: ISlidevVirtualPage = {
+      pageIndex: 2,
+      startBlockId: "p2",
+      frontmatter: { layout: "two-cols-header" },
+      notes: "",
+      rawMarkdown: "",
+      blocks: [
+        { id: "bh", rawMarkdown: "# 架构对比总览", type: "h" },
+        { id: "bl", rawMarkdown: "方案 A", slot: "left" },
+        { id: "br", rawMarkdown: "方案 B", slot: "right" },
+      ],
+    }
+    const htmlHeaderCols = renderSlideBlocksToHtml(slideHeaderCols)
+    expect(htmlHeaderCols).toContain("layout-two-cols-header-container")
+    expect(htmlHeaderCols).toContain("架构对比总览")
+    expect(htmlHeaderCols).toContain("方案 A")
+    expect(htmlHeaderCols).toContain("方案 B")
+
+    // 3. fact
+    const slideFact: ISlidevVirtualPage = {
+      pageIndex: 3,
+      startBlockId: "p3",
+      frontmatter: { layout: "fact" },
+      notes: "",
+      rawMarkdown: "",
+      blocks: [
+        { id: "bf", rawMarkdown: "# 99.99% 可用性" },
+      ],
+    }
+    const htmlFact = renderSlideBlocksToHtml(slideFact)
+    expect(htmlFact).toContain("layout-fact-container")
+    expect(htmlFact).toContain("99.99% 可用性")
   })
 })
