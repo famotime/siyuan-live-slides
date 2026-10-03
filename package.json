@@ -16,7 +16,10 @@
     "release:major": "node ./release.js --mode=major",
     "build": "vite build",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit -p tsconfig.json --noUnusedLocals false --noUnusedParameters false"
+    "typecheck": "tsc --noEmit -p tsconfig.json --noUnusedLocals false --noUnusedParameters false",
+    "worktree:add": "node ./scripts/worktree.mjs add",
+    "worktree:list": "node ./scripts/worktree.mjs list",
+    "worktree:remove": "node ./scripts/worktree.mjs remove"
   },
   "dependencies": {
     "vue": "^3.3.8"

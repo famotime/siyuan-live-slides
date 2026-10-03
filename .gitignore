@@ -9,3 +9,6 @@ build
 tmp
 .env
 developer_docs/
+# Git worktrees
+.worktrees/
+worktrees/
