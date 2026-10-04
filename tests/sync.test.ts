@@ -99,6 +99,11 @@ describe("CursorTracker (双向光标联动中枢)", () => {
     vi.advanceTimersByTime(150)
     expect(mockBridge.navigatePage).toHaveBeenCalledTimes(1)
 
+    // 测试 setActiveBlockId
+    tracker.setActiveBlockId("b-2")
+    expect(tracker.getActiveBlockId()).toBe("b-2")
+    expect(tracker.getActivePageIndex()).toBe(2)
+
     tracker.destroy()
     vi.useRealTimers()
   })
@@ -143,6 +148,19 @@ describe("Selection Mirror (反向定位)", () => {
 
     ;(globalThis as any).document = origDoc
     vi.useRealTimers()
+  })
+
+  it("当目标 DOM 元素不在视口中且提供了 app 实例时应降级通过 openTab 定位", () => {
+    const origDoc = (globalThis as any).document
+    ;(globalThis as any).document = {
+      querySelector: vi.fn(() => null),
+    }
+
+    const mockApp = { id: "test-app" }
+    const ok = mirrorBlockSelection("offscreen-block-id", mockApp)
+    expect(ok).toBe(true)
+
+    ;(globalThis as any).document = origDoc
   })
 })
 

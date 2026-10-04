@@ -27,8 +27,9 @@ export class NativeEnvDetector {
     try {
       // 动态导入 node:child_process，避免在纯浏览器移动端静态解析失败
       const { execFile } = await import("node:child_process")
+      const isWin = typeof process !== "undefined" && process.platform === "win32"
       return await new Promise((resolve) => {
-        execFile(command, args, { timeout: 3000 }, (error, stdout, stderr) => {
+        execFile(command, args, { timeout: 5000, shell: isWin }, (error, stdout, stderr) => {
           resolve({
             code: error ? (error as any).code || 1 : 0,
             stdout: stdout ? stdout.trim() : "",
@@ -74,13 +75,27 @@ export class NativeEnvDetector {
 
     // 2. 探测 Slidev CLI
     if (hasNode) {
+      // 优先探测全局安装的 slidev 命令（速度极快且稳定）
       try {
-        const slidevRes = await this.runner(platform === "win32" ? "npx.cmd" : "npx", ["@slidev/cli", "--version"])
-        if (slidevRes.code === 0 && slidevRes.stdout) {
+        const directCmd = platform === "win32" ? "slidev.cmd" : "slidev"
+        const slidevDirectRes = await this.runner(directCmd, ["--version"])
+        if (slidevDirectRes.code === 0 && slidevDirectRes.stdout) {
           hasSlidevCli = true
-          slidevVersion = slidevRes.stdout
+          slidevVersion = slidevDirectRes.stdout
         }
       } catch {}
+
+      // 若未检测到全局 slidev，降级探测 npx @slidev/cli
+      if (!hasSlidevCli) {
+        try {
+          const npxCmd = platform === "win32" ? "npx.cmd" : "npx"
+          const slidevRes = await this.runner(npxCmd, ["@slidev/cli", "--version"])
+          if (slidevRes.code === 0 && slidevRes.stdout) {
+            hasSlidevCli = true
+            slidevVersion = slidevRes.stdout
+          }
+        } catch {}
+      }
     }
 
     return {

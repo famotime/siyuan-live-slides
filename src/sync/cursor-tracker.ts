@@ -70,6 +70,17 @@ export class CursorTracker {
     return this.activeBlockId
   }
 
+  /**
+   * 外部同步当前激活块 ID（如反向定位时），避免触发多余的重复光标跟随
+   */
+  public setActiveBlockId(blockId: string): void {
+    this.activeBlockId = blockId
+    const page = this.getPageByBlockId(blockId)
+    if (page) {
+      this.activePageIndex = page
+    }
+  }
+
   public getActivePageIndex(): number {
     return this.activePageIndex
   }

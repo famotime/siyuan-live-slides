@@ -2,6 +2,7 @@ import type {
   ISiYuanBlockNode,
   ISlidevBlockItem,
   ISlidevDocument,
+  ISlidevMotionConfig,
   ISlidevVirtualPage,
 } from "../types/slidev-protocol"
 import type { IAssetRewriteOptions } from "./assets-rewriter"
@@ -81,6 +82,122 @@ export function wrapVClickDirective(markdown: string, clicks?: string): string {
   }
 
   return `<v-click at="${trimmed}">\n\n${markdown}\n\n</v-click>`
+}
+
+/**
+ * 转换预设动效名称与参数为 Slidev / VueUse Motion 的 initial 与 enter 配置
+ */
+export function getMotionDirectives(motion?: ISlidevMotionConfig): {
+  initial: Record<string, any>
+  enter: Record<string, any>
+} | null {
+  if (!motion || !motion.preset) {
+    return null
+  }
+
+  const preset = motion.preset.toLowerCase().trim()
+  if (!preset || preset === "none") {
+    return null
+  }
+
+  let initial: Record<string, any> = { opacity: 0 }
+  let enter: Record<string, any> = { opacity: 1 }
+
+  switch (preset) {
+    case "slide-up":
+      initial = { y: 40, opacity: 0 }
+      enter = { y: 0, opacity: 1 }
+      break
+    case "slide-down":
+      initial = { y: -40, opacity: 0 }
+      enter = { y: 0, opacity: 1 }
+      break
+    case "slide-left":
+      initial = { x: 40, opacity: 0 }
+      enter = { x: 0, opacity: 1 }
+      break
+    case "slide-right":
+      initial = { x: -40, opacity: 0 }
+      enter = { x: 0, opacity: 1 }
+      break
+    case "zoom-in":
+    case "pop":
+      initial = { scale: 0.8, opacity: 0 }
+      enter = { scale: 1, opacity: 1 }
+      break
+    case "bounce":
+      initial = { y: 40, opacity: 0 }
+      enter = { y: 0, opacity: 1, transition: { type: "spring", damping: 10, stiffness: 100 } }
+      break
+    case "fade-in":
+    default:
+      initial = { opacity: 0 }
+      enter = { opacity: 1 }
+      break
+  }
+
+  // 允许 motion 中自定义覆盖 initial / enter
+  if (motion.initial && typeof motion.initial === "object") {
+    initial = { ...initial, ...motion.initial }
+  }
+  if (motion.enter && typeof motion.enter === "object") {
+    enter = { ...enter, ...motion.enter }
+  }
+
+  // 注入 duration 与 delay
+  const transition: Record<string, any> = { ...(enter.transition || {}) }
+  if (typeof motion.duration === "number" && motion.duration > 0) {
+    transition.duration = motion.duration
+  }
+  if (typeof motion.delay === "number" && motion.delay > 0) {
+    transition.delay = motion.delay
+  }
+
+  if (Object.keys(transition).length > 0) {
+    enter.transition = transition
+  }
+
+  return { initial, enter }
+}
+
+/**
+ * 包装带有 v-click 与 custom-slidev-motion 的块
+ */
+export function wrapElementDirectives(
+  markdown: string,
+  clicks?: string,
+  motion?: ISlidevMotionConfig,
+): string {
+  const hasClicks = clicks !== undefined && clicks !== null && clicks.trim() !== ""
+  const motionConfig = getMotionDirectives(motion)
+
+  if (!hasClicks && !motionConfig) {
+    return markdown
+  }
+
+  if (hasClicks && !motionConfig) {
+    return wrapVClickDirective(markdown, clicks)
+  }
+
+  // 序列化 motion 对象的 initial 与 enter
+  const initialStr = JSON.stringify(motionConfig!.initial).replace(/"/g, "'")
+  const enterStr = JSON.stringify(motionConfig!.enter).replace(/"/g, "'")
+  const motionAttrs = `v-motion :initial="${initialStr}" :enter="${enterStr}"`
+
+  if (!hasClicks) {
+    return `<div ${motionAttrs}>\n\n${markdown}\n\n</div>`
+  }
+
+  // 同时具备 clicks 与 motion：生成复合容器
+  const trimmedClicks = clicks!.trim()
+  let clickAttr = "v-click"
+  if (trimmedClicks === "hide") {
+    clickAttr = "v-click.hide"
+  } else if (trimmedClicks !== "" && trimmedClicks !== "+1") {
+    clickAttr = `v-click="${trimmedClicks}"`
+  }
+
+  return `<div ${clickAttr} ${motionAttrs}>\n\n${markdown}\n\n</div>`
 }
 
 export interface IBuildSlidevDocOptions extends IAssetRewriteOptions {
@@ -219,7 +336,7 @@ export function buildSlidevDocument(
     if (page.frontmatter.layout === "two-cols" && (leftBlocks.length > 0 || rightBlocks.length > 0)) {
       // 双栏布局：分别输出默认/左栏与 ::right:: 右栏
       const renderBlocks = (list: ISlidevBlockItem[]) =>
-        list.map(b => wrapVClickDirective(b.rawMarkdown, b.clicks)).join("\n\n")
+        list.map(b => wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion)).join("\n\n")
 
       const leftContent = renderBlocks(leftBlocks.length > 0 ? leftBlocks : page.blocks.filter(b => b.slot !== "right"))
       const rightContent = renderBlocks(rightBlocks)
@@ -231,7 +348,7 @@ export function buildSlidevDocument(
     } else {
       // 常规单栏布局
       for (const block of page.blocks) {
-        parts.push(wrapVClickDirective(block.rawMarkdown, block.clicks))
+        parts.push(wrapElementDirectives(block.rawMarkdown, block.clicks, block.motion))
       }
     }
 

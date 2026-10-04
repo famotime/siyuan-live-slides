@@ -19,6 +19,7 @@
 | [9. Slidev 演示文稿运行与效果查看实战指南](file:///d:/MyCodingProjects/siyuan-slidev/docs/slidev-presentation-run-guide.md) | 运行调试与效果查看手册 | 以 `slidev-templates` 模板为例，系统详解本地热重载预览、演讲者视图、总览大纲、离线打包与 PDF/PPTX 导出全流程。 |
 | [10. 渲染引擎高保真重构与官方原版深度集成详细方案](file:///d:/MyCodingProjects/siyuan-slidev/docs/slidev-native-integration-and-rendering-upgrade-plan.md) | 核心渲染升级与全阶段计划 | 针对内置渲染效果不足与官方原版集成可行性，规划“内置高保真沙箱 (Markdown-it + Shiki) + 桌面端官方原版 Pro 进程托管”双轨架构、技术规范与 6.5 周实施排期。 |
 | [11. UI/UX 体验评审与现代化设计系统重构方案](file:///d:/MyCodingProjects/siyuan-slidev/docs/ui-ux-design-specification-and-modernization-plan.md) | 设计评审与现代重构规范 | 资深互联网 UX 设计师视角，穿透式诊断 AI Slop 与代码泄露缺陷，提出纯线框 SVG 防御系统、亮暗色代币体系、无冲突 Tooltip 与紧凑工作台重构方案。 |
+| [12. Pro 模式系统配置与环境搭建指导手册](file:///d:/MyCodingProjects/siyuan-slidev/docs/slidev-pro-mode-setup-guide.md) | 原生 Pro 极客引擎配置 | 详细指导本机本地环境（Node.js、Slidev CLI、全局依赖）快速配置与健康校验，剖析沙箱模式与 Pro 原生模式的无缝切换与高阶玩法。 |
 
 ---
 

@@ -55,6 +55,14 @@ export interface ISlidePageFrontmatter {
   [key: string]: any
 }
 
+/** 元素微动效配置结构 */
+export interface ISlidevMotionConfig {
+  preset: string
+  delay?: number
+  duration?: number
+  [key: string]: any
+}
+
 /** 单个元素块的数据项 */
 export interface ISlidevBlockItem {
   id: string
@@ -62,7 +70,7 @@ export interface ISlidevBlockItem {
   content: string
   rawMarkdown: string
   clicks?: string
-  motion?: Record<string, any>
+  motion?: ISlidevMotionConfig
   shikiLines?: string
   slot?: "left" | "right" | "default" | string
   attributes?: Record<string, string>

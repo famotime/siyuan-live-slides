@@ -1,6 +1,7 @@
 import type {
   ISiYuanBlockNode,
   ISlidePageFrontmatter,
+  ISlidevMotionConfig,
   ISlidevPluginConfig,
 } from "../types/slidev-protocol"
 import {
@@ -117,13 +118,13 @@ export function parseElementAttrs(
   attrs?: Record<string, string> | null,
 ): {
   clicks?: string
-  motion?: Record<string, any>
+  motion?: ISlidevMotionConfig
   shikiLines?: string
   slot?: "left" | "right" | "default" | string
 } {
   const result: {
     clicks?: string
-    motion?: Record<string, any>
+    motion?: ISlidevMotionConfig
     shikiLines?: string
     slot?: string
   } = {}
@@ -138,7 +139,15 @@ export function parseElementAttrs(
 
   if (attrs[ATTR_ELEM_MOTION]) {
     try {
-      result.motion = JSON.parse(attrs[ATTR_ELEM_MOTION])
+      const parsed = JSON.parse(attrs[ATTR_ELEM_MOTION])
+      if (typeof parsed === "object" && parsed !== null) {
+        result.motion = {
+          preset: parsed.preset || parsed.type || "fade-in",
+          ...parsed,
+        }
+      } else {
+        result.motion = { preset: String(parsed).trim() }
+      }
     } catch {
       // 容错处理：若非 JSON 则保留字符串预设
       result.motion = { preset: attrs[ATTR_ELEM_MOTION].trim() }

@@ -37,4 +37,13 @@ describe("NativeEnvDetector (本地环境探测器)", () => {
     expect(status.hasNode).toBe(true)
     expect(status.hasSlidevCli).toBe(false)
   })
+
+  it("在真实宿主环境下检测本地系统 Node 与 Slidev", async () => {
+    const detector = new NativeEnvDetector()
+    const status = await detector.detect()
+    console.log("Real host status:", status)
+    expect(status.hasNode).toBe(true)
+    expect(status.isDesktop).toBe(true)
+  })
 })
+

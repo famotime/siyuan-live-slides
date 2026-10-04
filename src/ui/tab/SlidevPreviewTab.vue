@@ -142,6 +142,7 @@ import { WebSandboxBridge } from '@/engine/web-sandbox-bridge'
 import SlideInspector from '@/ui/components/SlideInspector.vue'
 import SlidevIcon from '@/ui/components/SlidevIcon.vue'
 import { CursorTracker } from '@/sync/cursor-tracker'
+import { mirrorBlockSelection } from '@/sync/selection-mirror'
 import { buildStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'
 import { triggerPdfExport } from '@/export/pdf-exporter'
 import type { ISlidevDocument, ISlidevVirtualPage } from '@/types/slidev-protocol'
@@ -184,8 +185,11 @@ onMounted(() => {
 
   unbindBlockClicked = sandboxBridge.onBlockClicked((blockId, page) => {
     currentPage.value = page
-    if (plugin) {
-      plugin.eventBus.emit('slidev:block-clicked' as any, { blockId, page })
+    cursorTracker.setActiveBlockId(blockId)
+    if (plugin && typeof (plugin as any).handleBlockClickedFromSlide === 'function') {
+      ;(plugin as any).handleBlockClickedFromSlide(blockId, page)
+    } else {
+      mirrorBlockSelection(blockId, (plugin as any)?.app)
     }
   })
 
@@ -240,9 +244,7 @@ function togglePin() {
     pinnedDocId.value = latestDoc?.docId || ''
   } else {
     pinnedDocId.value = ''
-    if (plugin) {
-      plugin.eventBus.emit('slidev:request-compile' as any)
-    }
+    onRefresh()
   }
 }
 
@@ -276,8 +278,10 @@ function onNavigateOutline(pageIndex: number) {
 }
 
 function onRefresh() {
-  if (plugin) {
-    plugin.eventBus.emit('slidev:request-compile' as any)
+  if (plugin && typeof (plugin as any).compileCurrentDocument === 'function') {
+    ;(plugin as any).compileCurrentDocument()
+  } else if (plugin?.eventBus && typeof (plugin.eventBus as any).emit === 'function') {
+    ;(plugin.eventBus as any).emit('slidev:request-compile' as any)
   }
 }
 

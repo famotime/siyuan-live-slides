@@ -370,6 +370,15 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     })
 
     // 6. 监听思源内核与编辑器事件
+    if (this.eventBus && typeof (this.eventBus as any).emit !== "function") {
+      (this.eventBus as any).emit = (type: string, detail?: any) => {
+        try {
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent(`siyuan-event-${type}`, { detail }))
+          }
+        } catch {}
+      }
+    }
     this.eventBus.on("switch-protyle", this.onSwitchProtyleBound)
     this.eventBus.on("ws-main", this.onWsMainBound)
     this.eventBus.on("slidev:request-compile" as any, () => this.compileCurrentDocument())
@@ -535,11 +544,43 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
   }
 
   /**
-   * 幻灯片点击回传，定位到思源块
+   * 幻灯片点击回传，反向平滑定位到思源块并同步配置面板
    */
-  private onBlockClickedFromSlide(eventData: { blockId: string; page: number }) {
-    if (!eventData?.blockId) return
-    mirrorBlockSelection(eventData.blockId)
+  public handleBlockClickedFromSlide(blockId: string, _page?: number): boolean {
+    if (!blockId) return false
+    this.activeCursorBlockId = blockId
+
+    // 1. 反向平滑定位并高亮目标思源块（带 openTab 降级）
+    const located = mirrorBlockSelection(blockId, this.app)
+
+    // 2. 尝试从 DOM 或通过 API 获取块信息，同步右侧演示配置面板
+    const blockEl = (document.querySelector(`.protyle-wysiwyg [data-node-id="${blockId}"]`) ||
+      document.querySelector(`[data-node-id="${blockId}"]`)) as HTMLElement | null
+
+    const blockType = blockEl?.getAttribute("data-type") || ""
+    if (blockEl) {
+      this.syncInspectorBlock(blockEl, blockId, blockType)
+    } else {
+      getBlockAttrs(blockId).then(attrs => {
+        updateInspectorCurrentBlock({
+          id: blockId,
+          rootId: this.currentDocId,
+          type: blockType || "NodeParagraph",
+          attrs: attrs || {},
+        })
+      }).catch(() => {})
+    }
+
+    return located
+  }
+
+  /**
+   * 幻灯片点击事件监听适配器
+   */
+  private onBlockClickedFromSlide(eventData: any) {
+    const data = eventData?.detail || eventData
+    if (!data?.blockId) return
+    this.handleBlockClickedFromSlide(data.blockId, data.page)
   }
 
   /**
