@@ -695,8 +695,71 @@
     .py-1 { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
     .m-6 { margin: 1.5rem !important; }
     .text-xl { font-size: 1.25rem !important; }
+    .text-sm { font-size: 0.875rem !important; line-height: 1.45 !important; }
     .text-center { text-align: center !important; }
+    .gap-4 { gap: 1rem !important; }
+    .gap-6 { gap: 1.5rem !important; }
+    .gap-8 { gap: 2rem !important; }
+    .gap-10 { gap: 2.5rem !important; }
+    .gap-12 { gap: 3rem !important; }
+    .gap-16 { gap: 4rem !important; }
     .cursor-pointer, [data-clickable], [onClick], [onclick] { cursor: pointer; }
+
+    /* Slidev Built-in Toc Component */
+    .slidev-toc {
+      font-size: 1rem;
+      line-height: 1.6;
+      width: 100%;
+    }
+    .slidev-toc.text-sm,
+    .slidev-toc .text-sm {
+      font-size: 0.875rem !important;
+      line-height: 1.45 !important;
+    }
+    .slidev-toc-list {
+      list-style-type: decimal;
+      padding-left: 1.4rem;
+      margin: 0.25rem 0;
+    }
+    .slidev-toc-list-level-1 {
+      padding-left: 1.25rem;
+    }
+    .slidev-toc-list-level-2 {
+      padding-left: 1.4rem;
+      margin-top: 0.25rem;
+      margin-bottom: 0.25rem;
+      list-style-type: decimal;
+    }
+    .slidev-toc-item {
+      margin-bottom: 0.35rem;
+      line-height: 1.4;
+      font-family: var(--slide-font);
+    }
+    .slidev-toc-item a,
+    .slidev-toc-item .slidev-toc-link {
+      color: inherit;
+      text-decoration: none;
+      cursor: pointer;
+      display: inline;
+    }
+    .slidev-toc-item a:hover,
+    .slidev-toc-item .slidev-toc-link:hover {
+      color: var(--slide-accent, #3b82f6);
+    }
+    .slidev-toc-title {
+      border-bottom: 1px dashed rgba(150, 150, 150, 0.45);
+      padding-bottom: 1px;
+      transition: all 0.2s ease;
+    }
+    .slidev-toc-item:hover .slidev-toc-title {
+      border-bottom: 1px solid var(--slide-accent, #3b82f6);
+      color: var(--slide-accent, #3b82f6);
+    }
+    .slidev-toc-item-active > .slidev-toc-link .slidev-toc-title {
+      color: var(--slide-accent, #3b82f6);
+      font-weight: 600;
+      border-bottom: 1.5px solid var(--slide-accent, #3b82f6);
+    }
 
     /* Attributify fallbacks */
     [hover\:bg~="white"][hover\:bg~="op-10"]:hover,
@@ -722,7 +785,7 @@
             v-if="currentSlide"
             :key="currentSlide.pageIndex"
             class="slide-content-wrapper"
-            :class="['layout-' + (currentSlide.frontmatter.layout || 'default'), currentSlide.frontmatter.class]"
+            :class="['layout-' + (currentSlide.frontmatter.layout || 'default'), currentSlide.frontmatter.class, currentSlide.frontmatter.layoutClass]"
           >
             <!-- 带表头的双栏布局 -->
             <template v-if="currentSlide.frontmatter.layout === 'two-cols-header'">
@@ -740,7 +803,7 @@
                 </div>
               </div>
               <div class="layout-two-cols" style="flex: 1;">
-                <div class="two-cols-left">
+                <div class="two-cols-left" :class="currentSlide.frontmatter.class">
                   <div
                     v-for="block in leftBlocks"
                     :key="block.id"
@@ -753,7 +816,7 @@
                     <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
                   </div>
                 </div>
-                <div class="two-cols-right">
+                <div class="two-cols-right" :class="currentSlide.frontmatter.class">
                   <div
                     v-for="block in rightBlocks"
                     :key="block.id"
@@ -771,7 +834,7 @@
 
             <!-- 双栏布局 -->
             <template v-else-if="currentSlide.frontmatter.layout === 'two-cols'">
-              <div class="two-cols-left">
+              <div class="two-cols-left" :class="currentSlide.frontmatter.class">
                 <div
                   v-for="block in leftBlocks"
                   :key="block.id"
@@ -784,7 +847,7 @@
                   <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
                 </div>
               </div>
-              <div class="two-cols-right">
+              <div class="two-cols-right" :class="currentSlide.frontmatter.class">
                 <div
                   v-for="block in rightBlocks"
                   :key="block.id"
@@ -802,7 +865,7 @@
             <!-- 常规布局 -->
             <template v-else>
               <div
-                v-for="block in currentSlide.blocks"
+                v-for="block in normalBlocks"
                 :key="block.id"
                 class="slide-block"
                 :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
@@ -866,7 +929,7 @@
   </div>
 
   <script>
-    const { createApp, ref, reactive, computed, onMounted, onUnmounted, provide, getCurrentInstance, h } = Vue
+    const { createApp, ref, reactive, computed, onMounted, onUnmounted, provide, inject, nextTick, getCurrentInstance, h } = Vue
 
     const CARBON_ICONS = {
       'carbon:arrow-right': '<svg viewBox="0 0 32 32" width="1.2em" height="1.2em" fill="currentColor" style="display:inline-block;vertical-align:middle;"><path d="m18 6l-1.43 1.393L24.15 15H4v2h20.15l-7.58 7.573L18 26l10-10z"/></svg>',
@@ -883,6 +946,309 @@
       'carbon:code': '<svg viewBox="0 0 32 32" width="1.2em" height="1.2em" fill="currentColor" style="display:inline-block;vertical-align:middle;"><path d="m31 16l-7-7l-1.41 1.41L28.17 16l-5.58 5.59L24 23zm-22 7l1.41-1.41L4.83 16l5.58-5.59L9 9l-7 7zm10.74-17.86l-4 22l1.96.36l4-22z"/></svg>',
       'carbon:copy': '<svg viewBox="0 0 32 32" width="1.2em" height="1.2em" fill="currentColor" style="display:inline-block;vertical-align:middle;"><path d="M28 10v18H10V10h18m0-2H10a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2z"/><path d="M4 18H2V4a2 2 0 0 1 2-2h14v2H4z"/></svg>',
       'carbon:document': '<svg viewBox="0 0 32 32" width="1.2em" height="1.2em" fill="currentColor" style="display:inline-block;vertical-align:middle;"><path d="M25.7 9.3l-7-7c-.2-.2-.4-.3-.7-.3H8c-1.1 0-2 .9-2 2v24c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V10c0-.3-.1-.5-.3-.7zM18 4.4l5.6 5.6H18V4.4zM24 28H8V4h8v7c0 .6.4 1 1 1h7v16z"/></svg>'
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;")
+    }
+
+    const SAFE_INLINE_HTML_TAGS = new Set([
+      "kbd", "mark", "sub", "sup", "span", "br", "b", "i", "u", "s",
+      "del", "em", "strong", "code", "small", "abbr", "ruby", "rt", "rp", "v-mark"
+    ])
+
+    function formatInlineMarkdown(text) {
+      if (!text) return ""
+
+      // 1. 抽取并保护安全内联 HTML 标签（避免被全局 escapeHtml 误伤转义）
+      const tokens = []
+      const tokenized = text.replace(/<\/?([a-zA-Z0-9_-]+)(?:\s+[^<>]*)?\/?>/g, (tagMatch, tagName) => {
+        const lowerTag = tagName.toLowerCase()
+        if (!SAFE_INLINE_HTML_TAGS.has(lowerTag)) {
+          return tagMatch
+        }
+        // 过滤 XSS 危险事件属性
+        if (/on\w+\s*=|javascript:/i.test(tagMatch)) {
+          return tagMatch
+        }
+        // 特殊处理 <v-mark type="...">
+        if (lowerTag === "v-mark") {
+          const typeMatch = tagMatch.match(/type=["']?([a-zA-Z-]+)["']?/)
+          const markType = typeMatch ? typeMatch[1] : "circle"
+          if (tagMatch.startsWith("</")) {
+            tokens.push("</mark>")
+          } else {
+            tokens.push(`<mark class="v-mark v-mark--${markType}">`)
+          }
+          return `%%SAFE_HTML_${tokens.length - 1}%%`
+        }
+        tokens.push(tagMatch)
+        return `%%SAFE_HTML_${tokens.length - 1}%%`
+      })
+
+      // 2. 对其余文本执行标准 HTML 转义
+      let res = escapeHtml(tokenized)
+
+      // 3. 处理标准 Markdown 行内标记
+      // 3.1 行内数学公式 $formula$
+      res = res.replace(/\$([^$\n]+)\$/g, '<span class="katex-inline font-math"><em>$1</em></span>')
+
+      // 3.2 链接 [title](url)
+      res = res.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="slidev-link">$1</a>')
+
+      // 3.3 加粗 **text**
+      res = res.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+
+      // 3.4 斜体 *text*
+      res = res.replace(/\*(.*?)\*/g, "<em>$1</em>")
+
+      // 3.5 删除线 ~~text~~
+      res = res.replace(/~~(.*?)~~/g, "<del>$1</del>")
+
+      // 3.6 行内代码 `code`
+      res = res.replace(/`([^`]+)`/g, "<code>$1</code>")
+
+      // 4. 还原受保护的安全 HTML 标签
+      res = res.replace(/%%SAFE_HTML_(\d+)%%/g, (_, idxStr) => {
+        const idx = parseInt(idxStr, 10)
+        return tokens[idx] || ""
+      })
+
+      return res
+    }
+
+    function extractSlideTitleAndLevel(slide, fallbackIndex) {
+      if (!slide) return null
+      const fm = slide.frontmatter || {}
+      if (fm.hideInToc === true || fm.hideInToc === 'true') {
+        return null
+      }
+
+      let title = (fm.title || '').trim()
+      let level = fm.level ? parseInt(fm.level, 10) : 0
+
+      if (!title) {
+        const blocks = slide.blocks || []
+        for (const b of blocks) {
+          const raw = (b.rawMarkdown || b.content || '').trim()
+          const match = raw.match(/^(#{1,6})\s+(.*)$/)
+          if (match) {
+            if (!level) {
+              level = match[1].length
+            }
+            title = match[2].trim()
+            break
+          }
+        }
+      }
+
+      if (!title) {
+        return null
+      }
+
+      if (!level || isNaN(level)) {
+        level = 1
+      }
+
+      return {
+        pageIndex: slide.pageIndex || fallbackIndex,
+        title,
+        level
+      }
+    }
+
+    function buildTocTree(slides, currentSlideIndex, options = {}) {
+      const minDepth = options.minDepth !== undefined ? Number(options.minDepth) : 1
+      const maxDepth = options.maxDepth !== undefined ? Number(options.maxDepth) : Infinity
+
+      const rawItems = []
+      if (Array.isArray(slides)) {
+        slides.forEach((s, idx) => {
+          const item = extractSlideTitleAndLevel(s, idx + 1)
+          if (item) {
+            rawItems.push(item)
+          }
+        })
+      }
+
+      const tree = []
+      let currentParent = null
+
+      for (const item of rawItems) {
+        const node = {
+          ...item,
+          active: item.pageIndex === currentSlideIndex,
+          hasActiveChild: false,
+          children: []
+        }
+
+        if (item.level === 1 || tree.length === 0) {
+          tree.push(node)
+          currentParent = node
+        } else {
+          if (currentParent) {
+            if (node.active) {
+              currentParent.hasActiveChild = true
+            }
+            currentParent.children.push(node)
+          } else {
+            tree.push(node)
+          }
+        }
+      }
+
+      function filterDepth(nodes, currentDepth = 1) {
+        if (currentDepth > maxDepth) return []
+        const res = []
+        for (const n of nodes) {
+          const filteredChildren = filterDepth(n.children, currentDepth + 1)
+          if (currentDepth >= minDepth) {
+            res.push({
+              ...n,
+              children: filteredChildren
+            })
+          } else {
+            res.push(...filteredChildren)
+          }
+        }
+        return res
+      }
+
+      return filterDepth(tree, 1)
+    }
+
+    function renderTocListHtml(tree, level = 1, options = {}) {
+      if (!tree || tree.length === 0) return ''
+      const olClass = `slidev-toc-list slidev-toc-list-level-${level}`
+      const startAttr = (level === 1 && options.start) ? ` start="${options.start}"` : ''
+      const listItems = tree.map((item) => {
+        const activeClass = item.active ? ' slidev-toc-item-active' : (item.hasActiveChild ? ' slidev-toc-item-parent-active' : '')
+        const childrenHtml = item.children && item.children.length > 0
+          ? renderTocListHtml(item.children, level + 1, options)
+          : ''
+
+        let formattedTitle = formatInlineMarkdown(item.title)
+        if (formattedTitle.includes('LaTeX')) {
+          formattedTitle = formattedTitle.replace(/\$\\LaTeX\$/g, '<span class="font-math">L<sup>A</sup>T<sub>E</sub>X</span>')
+        }
+
+        return `
+          <li class="slidev-toc-item${activeClass}" data-page="${item.pageIndex}">
+            <a class="slidev-toc-link" href="javascript:void(0)" onclick="if(window.__slidevNavigateTo) window.__slidevNavigateTo(${item.pageIndex})">
+              <span class="slidev-toc-title">${formattedTitle}</span>
+            </a>
+            ${childrenHtml}
+          </li>
+        `
+      }).join('')
+
+      return `<ol class="${olClass}"${startAttr}>${listItems}</ol>`
+    }
+
+    function renderTocHtml(slides, currentSlideIndex, props = {}) {
+      const tree = buildTocTree(slides, currentSlideIndex, props)
+      const columns = props.columns ? Number(props.columns) : 1
+      const colStyle = columns > 1 ? ` style="column-count: ${columns};"` : ''
+      const extraClass = props.textSm ? ' text-sm' : ''
+      const listHtml = renderTocListHtml(tree, 1, props)
+      return `<div class="slidev-toc${extraClass}"${colStyle}>${listHtml}</div>`
+    }
+
+    const TocComponent = {
+      name: 'Toc',
+      props: {
+        columns: { type: [Number, String], default: 1 },
+        maxDepth: { type: [Number, String], default: Infinity },
+        minDepth: { type: [Number, String], default: 1 },
+        mode: { type: String, default: 'all' },
+        start: { type: [Number, String], default: 1 }
+      },
+      setup(props, { attrs }) {
+        const slidev = (typeof inject === 'function' ? inject('$slidev', null) : (Vue && Vue.inject ? Vue.inject('$slidev', null) : null))
+
+        const tocTree = computed(() => {
+          const allSlides = (window.__slidevSlides && window.__slidevSlides.value)
+            ? window.__slidevSlides.value
+            : (slidev?.slides?.value || [])
+          const currIdx = (window.__slidevCurrentPageIndex && window.__slidevCurrentPageIndex.value)
+            ? window.__slidevCurrentPageIndex.value
+            : (slidev?.nav?.currentSlideNo?.value || 1)
+          return buildTocTree(allSlides, currIdx, {
+            minDepth: props.minDepth,
+            maxDepth: props.maxDepth,
+            mode: props.mode
+          })
+        })
+
+        const hasTextSm = computed(() => {
+          return 'text-sm' in attrs || attrs['text-sm'] === '' || (attrs.class && attrs.class.includes('text-sm'))
+        })
+
+        const navigateTo = (page) => {
+          if (slidev?.nav?.go) {
+            slidev.nav.go(page)
+          } else if (window.__slidevNavigateTo) {
+            window.__slidevNavigateTo(page)
+          }
+        }
+
+        return () => {
+          const tree = tocTree.value
+          const columns = Number(props.columns) || 1
+          const style = columns > 1 ? { columnCount: columns } : {}
+          const classes = ['slidev-toc']
+          if (hasTextSm.value) classes.push('text-sm')
+          if (attrs.class) classes.push(attrs.class)
+
+          function renderList(nodes, level = 1) {
+            if (!nodes || nodes.length === 0) return null
+            return h('ol', {
+              class: `slidev-toc-list slidev-toc-list-level-${level}`,
+              start: level === 1 ? props.start : undefined
+            }, nodes.map((item) => {
+              const itemClasses = ['slidev-toc-item']
+              if (item.active) itemClasses.push('slidev-toc-item-active')
+              if (item.hasActiveChild) itemClasses.push('slidev-toc-item-parent-active')
+
+              let titleVNode = h('span', { class: 'slidev-toc-title' }, item.title)
+              if (item.title.includes('LaTeX')) {
+                titleVNode = h('span', {
+                  class: 'slidev-toc-title',
+                  innerHTML: formatInlineMarkdown(item.title).replace(/\$\\LaTeX\$/g, '<span class="font-math">L<sup>A</sup>T<sub>E</sub>X</span>')
+                })
+              }
+
+              const linkVNode = h('a', {
+                class: 'slidev-toc-link',
+                href: 'javascript:void(0)',
+                onClick: (e) => {
+                  e.preventDefault()
+                  navigateTo(item.pageIndex)
+                }
+              }, [titleVNode])
+
+              const childrenVNode = item.children && item.children.length > 0
+                ? renderList(item.children, level + 1)
+                : null
+
+              return h('li', {
+                class: itemClasses.join(' '),
+                key: item.pageIndex
+              }, [linkVNode, childrenVNode])
+            }))
+          }
+
+          return h('div', {
+            class: classes.join(' '),
+            style
+          }, [renderList(tree, 1)])
+        }
+      }
     }
 
     const SlideBlockRenderer = {
@@ -904,6 +1270,9 @@
           if (/@\w+=[`'"]|v-\w+|<button|<a\b|<(?:carbon|[a-z0-9_-]+):[a-z0-9_-]+/i.test(raw)) {
             return true
           }
+          if (/<(?:Toc|toc)\b/i.test(raw)) {
+            return true
+          }
           if (/^<[a-z0-9_-]+[\s>]/i.test(raw) && (raw.includes('class=') || raw.includes('hover:') || raw.includes('@'))) {
             return true
           }
@@ -914,7 +1283,8 @@
           if (!isInteractiveVue.value) return null
           const raw = rawContent.value
           try {
-            const processedTemplate = raw.replace(/<(carbon:[a-zA-Z0-9_-]+)\s*\/>/g, '<$1></$1>')
+            let processedTemplate = raw.replace(/<(carbon:[a-zA-Z0-9_-]+)\s*\/>/g, '<$1></$1>')
+            processedTemplate = processedTemplate.replace(/<((?:Toc|toc)\b[^>]*)\/>/g, '<$1></$1>')
             const renderFn = Vue.compile(processedTemplate)
             return {
               render: renderFn,
@@ -995,9 +1365,14 @@
         })
 
         // 分栏布局块过滤
+        const normalBlocks = computed(() => {
+          if (!currentSlide.value) return []
+          return (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right")
+        })
+
         const headerBlocks = computed(() => {
           if (!currentSlide.value) return []
-          const blocks = currentSlide.value.blocks || []
+          const blocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right")
           const hasRightSlot = blocks.some(b => b.slot === "right")
           if (hasRightSlot) {
             const res = []
@@ -1017,7 +1392,7 @@
         const leftBlocks = computed(() => {
           if (!currentSlide.value) return []
           const layout = currentSlide.value.frontmatter?.layout
-          const blocks = currentSlide.value.blocks || []
+          const blocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right")
           if (layout === "two-cols-header") {
             const headers = headerBlocks.value
             const rem = blocks.filter(b => !headers.includes(b))
@@ -1029,13 +1404,17 @@
             return rem.slice(0, mid)
           }
           const left = blocks.filter(b => b.slot === "left")
-          return left.length > 0 ? left : blocks.filter(b => b.slot !== "right")
+          if (left.length > 0) return left
+          const hasRight = blocks.some(b => b.slot === "right")
+          if (hasRight) return blocks.filter(b => b.slot !== "right")
+          const mid = Math.ceil(blocks.length / 2)
+          return blocks.slice(0, mid)
         })
 
         const rightBlocks = computed(() => {
           if (!currentSlide.value) return []
           const layout = currentSlide.value.frontmatter?.layout
-          const blocks = currentSlide.value.blocks || []
+          const blocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right")
           if (layout === "two-cols-header") {
             const headers = headerBlocks.value
             const rem = blocks.filter(b => !headers.includes(b))
@@ -1044,7 +1423,10 @@
             const mid = Math.ceil(rem.length / 2)
             return rem.slice(mid)
           }
-          return blocks.filter(b => b.slot === "right")
+          const right = blocks.filter(b => b.slot === "right")
+          if (right.length > 0) return right
+          const mid = Math.ceil(blocks.length / 2)
+          return blocks.slice(mid)
         })
 
         // 获取当前页最大 v-click 步数
@@ -1381,7 +1763,20 @@
             return listHtml
           }
 
-          // 10. 普通段落
+          // 10. Toc 目录组件
+          if (/<(?:Toc|toc)\b/i.test(md)) {
+            const minDepthMatch = md.match(/minDepth=["']?(\d+)["']?/i)
+            const maxDepthMatch = md.match(/maxDepth=["']?(\d+)["']?/i)
+            const colMatch = md.match(/columns=["']?(\d+)["']?/i)
+            return renderTocHtml(slides.value, currentPageIndex.value, {
+              minDepth: minDepthMatch ? parseInt(minDepthMatch[1], 10) : 1,
+              maxDepth: maxDepthMatch ? parseInt(maxDepthMatch[1], 10) : Infinity,
+              columns: colMatch ? parseInt(colMatch[1], 10) : 1,
+              textSm: md.includes('text-sm')
+            })
+          }
+
+          // 11. 普通段落
           return `<p>${formatInlineMarkdown(md)}</p>`
         }
 
@@ -1458,6 +1853,9 @@
           }, "*")
         }
 
+        window.__slidevSlides = slides
+        window.__slidevCurrentPageIndex = currentPageIndex
+
         const slidevContext = reactive({
           nav: {
             next: () => nextStepOrSlide(),
@@ -1496,11 +1894,18 @@
             },
             openInEditor: (id) => openInEditor(id),
             currentSlideNo: currentPageIndex,
-            total: totalPages
+            total: totalPages,
+            tocTree: computed(() => buildTocTree(slides.value, currentPageIndex.value))
           },
+          slides,
+          currentSlide,
           configs: config,
           theme: computed(() => config.value.theme || 'default')
         })
+
+        window.__slidevNavigateTo = (page) => {
+          slidevContext.nav.go(page)
+        }
 
         provide('$slidev', slidevContext)
         const instance = getCurrentInstance()
@@ -1650,6 +2055,7 @@
           headerBlocks,
           leftBlocks,
           rightBlocks,
+          normalBlocks,
           isDarkTheme,
           isMaxStep,
           slidevContext,
@@ -1669,6 +2075,8 @@
     })
 
     app.component('slide-block-renderer', SlideBlockRenderer)
+    app.component('Toc', TocComponent)
+    app.component('toc', TocComponent)
 
     // 批量注册 Carbon 常用图标组件与多种命名别名
     for (const [name, svg] of Object.entries(CARBON_ICONS)) {

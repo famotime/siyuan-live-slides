@@ -189,6 +189,7 @@ import { extractSlidevZip, rewritePresentationAssetPaths } from '@/compiler/asse
 import type { IParsedSlidevPresentation } from '@/compiler/slidev-importer'
 import { parseSlidevPresentation } from '@/compiler/slidev-importer'
 import type { IExtractedAssetItem } from '@/compiler/asset-importer'
+import { ATTR_ELEM_SLOT } from '@/types/slidev-protocol'
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -314,6 +315,7 @@ async function processFile(file: File) {
       const parsed = parseSlidevPresentation(zipRes.entryMarkdown, {
         stripNotesFromMarkdown: optStripNotes.value,
         cleanHtmlToMarkdown: optCleanHtml.value,
+        cleanSlots: false,
         virtualFiles: zipRes.virtualFiles,
       })
       parsedPresentation.value = parsed
@@ -327,6 +329,7 @@ async function processFile(file: File) {
       const parsed = parseSlidevPresentation(text, {
         stripNotesFromMarkdown: optStripNotes.value,
         cleanHtmlToMarkdown: optCleanHtml.value,
+        cleanSlots: false,
         baseDir: baseDir || undefined,
       })
       parsedPresentation.value = parsed
@@ -348,6 +351,7 @@ function onTextChange() {
     const parsed = parseSlidevPresentation(rawMarkdownText.value, {
       stripNotesFromMarkdown: optStripNotes.value,
       cleanHtmlToMarkdown: optCleanHtml.value,
+      cleanSlots: false,
     })
     parsedPresentation.value = parsed
     customDocTitle.value = parsed.docTitle || 'Slidev 演示文稿'
@@ -435,6 +439,23 @@ async function onConfirmImport() {
         if (tbBlock && tbBlock.id && Object.keys(slide.pageAttrs).length > 0) {
           await setBlockAttrs(tbBlock.id, slide.pageAttrs)
         }
+      }
+    }
+
+    // 5.1 扫描各块并将 ::right:: 插槽标记之后的块自动持久化打上 custom-slidev-slot="right" 块属性
+    let inRightSlot = false
+    for (const b of rawBlocks) {
+      if (b.type === 'tb' || b.markdown?.trim() === '---') {
+        inRightSlot = false
+        continue
+      }
+      const text = (b.markdown || b.content || '').trim()
+      if (text === '::right::' || text.startsWith('::right::')) {
+        inRightSlot = true
+        continue
+      }
+      if (inRightSlot && b.id) {
+        await setBlockAttrs(b.id, { [ATTR_ELEM_SLOT]: 'right' }).catch(() => {})
       }
     }
 

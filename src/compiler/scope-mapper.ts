@@ -108,6 +108,28 @@ export function parsePageAttrs(
     notes = attrs[ATTR_PAGE_NOTES].trim()
   }
 
+  // 保留所有其他扩展 custom-slidev-* 属性到 frontmatter (如 layoutClass, level, title, hideInToc 等)
+  for (const [k, v] of Object.entries(attrs)) {
+    if (
+      k.startsWith("custom-slidev-") &&
+      ![
+        ATTR_PAGE_LAYOUT,
+        ATTR_PAGE_TRANSITION,
+        ATTR_PAGE_BACKGROUND,
+        ATTR_PAGE_CLASS,
+        ATTR_PAGE_NOTES,
+        ATTR_PAGE_SLIDE,
+      ].includes(k)
+    ) {
+      const propKey = k.replace(/^custom-slidev-/, "")
+      try {
+        frontmatter[propKey] = JSON.parse(v)
+      } catch {
+        frontmatter[propKey] = v
+      }
+    }
+  }
+
   return { frontmatter, notes }
 }
 

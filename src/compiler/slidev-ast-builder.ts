@@ -296,7 +296,13 @@ export function buildSlidevDocument(
     }
 
     // 检查是否为双栏插槽分界标记块: ::right::
-    const isSlotDivider = rawMd.trim() === "::right::" || (node.content && node.content.trim() === "::right::")
+    const cleanRaw = rawMd.trim()
+    const cleanContent = (node.content || "").trim()
+    const isSlotDivider =
+      cleanRaw === "::right::" ||
+      cleanContent === "::right::" ||
+      /^<p>\s*::right::\s*<\/p>$/i.test(cleanRaw) ||
+      cleanRaw.startsWith("::right::")
     if (isSlotDivider) {
       currentPage.blocks.push({
         id: node.id,

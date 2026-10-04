@@ -165,6 +165,166 @@ export interface IBlockRenderOptions {
   tableClassName?: string
   calloutClassName?: string
   listClassName?: string
+  allSlides?: ISlidevVirtualPage[]
+  currentPageIndex?: number
+}
+
+/**
+ * 从页面提取用于目录显示的标题与层级
+ */
+export function extractSlideTitleAndLevel(slide: ISlidevVirtualPage, fallbackIndex: number) {
+  if (!slide) return null
+  const fm = slide.frontmatter || {}
+  if (fm.hideInToc === true || fm.hideInToc === "true") {
+    return null
+  }
+
+  let title = (fm.title || "").trim()
+  let level = fm.level ? parseInt(fm.level, 10) : 0
+
+  if (!title) {
+    const blocks = slide.blocks || []
+    for (const b of blocks) {
+      const raw = (b.rawMarkdown || b.content || "").trim()
+      const match = raw.match(/^(#{1,6})\s+(.*)$/)
+      if (match) {
+        if (!level) {
+          level = match[1].length
+        }
+        title = match[2].trim()
+        break
+      }
+    }
+  }
+
+  if (!title) {
+    return null
+  }
+
+  if (!level || isNaN(level)) {
+    level = 1
+  }
+
+  return {
+    pageIndex: slide.pageIndex || fallbackIndex,
+    title,
+    level,
+  }
+}
+
+/**
+ * 依据幻灯片集合组装多层级目录树结构
+ */
+export function buildTocTree(
+  slides: ISlidevVirtualPage[],
+  currentSlideIndex = 1,
+  options: { minDepth?: number; maxDepth?: number; mode?: string } = {},
+) {
+  const minDepth = options.minDepth !== undefined ? Number(options.minDepth) : 1
+  const maxDepth = options.maxDepth !== undefined ? Number(options.maxDepth) : Infinity
+
+  const rawItems: Array<{ pageIndex: number; title: string; level: number }> = []
+  if (Array.isArray(slides)) {
+    slides.forEach((s, idx) => {
+      const item = extractSlideTitleAndLevel(s, idx + 1)
+      if (item) {
+        rawItems.push(item)
+      }
+    })
+  }
+
+  interface ITocNode {
+    pageIndex: number
+    title: string
+    level: number
+    active: boolean
+    hasActiveChild?: boolean
+    children: ITocNode[]
+  }
+
+  const tree: ITocNode[] = []
+  let currentParent: ITocNode | null = null
+
+  for (const item of rawItems) {
+    const node: ITocNode = {
+      ...item,
+      active: item.pageIndex === currentSlideIndex,
+      hasActiveChild: false,
+      children: [],
+    }
+
+    if (item.level === 1 || tree.length === 0) {
+      tree.push(node)
+      currentParent = node
+    } else {
+      if (currentParent) {
+        if (node.active) {
+          currentParent.hasActiveChild = true
+        }
+        currentParent.children.push(node)
+      } else {
+        tree.push(node)
+      }
+    }
+  }
+
+  function filterDepth(nodes: ITocNode[], currentDepth = 1): ITocNode[] {
+    if (currentDepth > maxDepth) return []
+    const res: ITocNode[] = []
+    for (const n of nodes) {
+      const filteredChildren = filterDepth(n.children, currentDepth + 1)
+      if (currentDepth >= minDepth) {
+        res.push({
+          ...n,
+          children: filteredChildren,
+        })
+      } else {
+        res.push(...filteredChildren)
+      }
+    }
+    return res
+  }
+
+  return filterDepth(tree, 1)
+}
+
+/**
+ * 静态生成 Slidev Toc 目录组件的 HTML
+ */
+export function renderTocHtml(
+  slides: ISlidevVirtualPage[],
+  currentSlideIndex = 1,
+  props: { minDepth?: number; maxDepth?: number; columns?: number; textSm?: boolean } = {},
+): string {
+  const tree = buildTocTree(slides, currentSlideIndex, props)
+  const columns = props.columns ? Number(props.columns) : 1
+  const colStyle = columns > 1 ? ` style="column-count: ${columns};"` : ""
+  const extraClass = props.textSm ? " text-sm" : ""
+
+  function renderList(nodes: any[], level = 1): string {
+    if (!nodes || nodes.length === 0) return ""
+    const olClass = `slidev-toc-list slidev-toc-list-level-${level}`
+    const listItems = nodes.map((item) => {
+      const activeClass = item.active ? " slidev-toc-item-active" : (item.hasActiveChild ? " slidev-toc-item-parent-active" : "")
+      const childrenHtml = item.children && item.children.length > 0 ? renderList(item.children, level + 1) : ""
+      let formattedTitle = formatInlineMarkdown(item.title)
+      if (formattedTitle.includes("LaTeX")) {
+        formattedTitle = formattedTitle.replace(/\$\\LaTeX\$/g, '<span class="font-math">L<sup>A</sup>T<sub>E</sub>X</span>')
+      }
+      return `
+        <li class="slidev-toc-item${activeClass}" data-page="${item.pageIndex}">
+          <a class="slidev-toc-link" href="javascript:void(0)">
+            <span class="slidev-toc-title">${formattedTitle}</span>
+          </a>
+          ${childrenHtml}
+        </li>
+      `
+    }).join("")
+    return `<ol class="${olClass}">${listItems}</ol>`
+  }
+
+  const listHtml = renderList(tree, 1)
+  return `<div class="slidev-toc${extraClass}"${colStyle}>${listHtml}</div>`
 }
 
 /**
@@ -360,7 +520,21 @@ export function convertBlockToHtml(
     return `<div class="${containerClass} pdf-list-item"${motionStyle}>${listHtml}</div>`
   }
 
-  // 10. 普通段落
+  // 10. Toc 目录组件
+  if (/<(?:Toc|toc)\b/i.test(md) && !md.startsWith("```")) {
+    const minDepthMatch = md.match(/minDepth=["']?(\d+)["']?/i)
+    const maxDepthMatch = md.match(/maxDepth=["']?(\d+)["']?/i)
+    const colMatch = md.match(/columns=["']?(\d+)["']?/i)
+    const allSlides = options?.allSlides || []
+    return `<div class="${containerClass}"${motionStyle}>${renderTocHtml(allSlides, options?.currentPageIndex || 1, {
+      minDepth: minDepthMatch ? parseInt(minDepthMatch[1], 10) : 1,
+      maxDepth: maxDepthMatch ? parseInt(maxDepthMatch[1], 10) : Infinity,
+      columns: colMatch ? parseInt(colMatch[1], 10) : 1,
+      textSm: md.includes("text-sm"),
+    })}</div>`
+  }
+
+  // 11. 普通段落
   return `<div class="${containerClass}"${motionStyle}><p>${formatInlineMarkdown(md)}</p></div>`
 }
 
@@ -378,7 +552,8 @@ export function renderSlideBlocksToHtml(
   options?: IRenderSlideOptions,
 ): string {
   const layout = slide.frontmatter?.layout || "default"
-  const blocks = slide.blocks || []
+  const rawBlocks = slide.blocks || []
+  const blocks = rawBlocks.filter(b => b.slot !== "slot-divider-right")
 
   // 1. 双栏布局 (two-cols)
   if (layout === "two-cols") {
@@ -399,11 +574,12 @@ export function renderSlideBlocksToHtml(
     const rightHtml = rightBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
 
     const wrapperClass = options?.twoColsWrapperClass || "pdf-two-cols-wrapper layout-two-cols-grid"
+    const layoutClass = slide.frontmatter?.layoutClass ? ` ${slide.frontmatter.layoutClass}` : ""
     const leftClass = options?.leftColClass || "pdf-col pdf-col--left"
     const rightClass = options?.rightColClass || "pdf-col pdf-col--right"
 
     return `
-      <div class="${wrapperClass}">
+      <div class="${wrapperClass}${layoutClass}">
         <div class="${leftClass}">${leftHtml}</div>
         <div class="${rightClass}">${rightHtml}</div>
       </div>
