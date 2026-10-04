@@ -15,14 +15,16 @@ export const ATTR_PAGE_SLIDE = "custom-slidev-slide"
 export const ATTR_PAGE_LAYOUT = "custom-slidev-layout"
 export const ATTR_PAGE_TRANSITION = "custom-slidev-transition"
 export const ATTR_PAGE_BACKGROUND = "custom-slidev-background"
+export const ATTR_PAGE_IMAGE = "custom-slidev-image"
 export const ATTR_PAGE_NOTES = "custom-slidev-notes"
 export const ATTR_PAGE_CLASS = "custom-slidev-class"
 
-// 3. 元素动效级属性常量 (Element Scope)
+// 3. 元素动效级与内容属性常量 (Element Scope)
 export const ATTR_ELEM_CLICK = "custom-slidev-click"
 export const ATTR_ELEM_MOTION = "custom-slidev-motion"
 export const ATTR_ELEM_SHIKI_LINES = "custom-slidev-shiki-lines"
 export const ATTR_ELEM_SLOT = "custom-slidev-slot"
+export const ATTR_ELEM_NOTE = "custom-slidev-note"
 
 /** 全局演示文档配置 */
 export interface ISlidevPluginConfig {
@@ -38,6 +40,9 @@ export type TSlideLayout =
   | "default"
   | "cover"
   | "two-cols"
+  | "two-cols-header"
+  | "image-right"
+  | "image-left"
   | "center"
   | "fact"
   | "intro"
@@ -50,6 +55,7 @@ export interface ISlidePageFrontmatter {
   layout?: TSlideLayout
   transition?: string
   background?: string
+  image?: string
   class?: string
   clicks?: number
   [key: string]: any
@@ -73,6 +79,7 @@ export interface ISlidevBlockItem {
   motion?: ISlidevMotionConfig
   shikiLines?: string
   slot?: "left" | "right" | "default" | string
+  isNote?: boolean
   attributes?: Record<string, string>
 }
 
@@ -85,6 +92,7 @@ export interface ISlidevVirtualPage {
   startBlockId: string
   frontmatter: ISlidePageFrontmatter
   notes: string
+  noteBlocks?: ISlidevBlockItem[]
   blocks: ISlidevBlockItem[]
   rawMarkdown: string
 }

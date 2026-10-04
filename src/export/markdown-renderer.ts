@@ -157,6 +157,43 @@ export function renderMarkdownTable(tableLines: string[], tableClassName = "pdf-
   return `<table class="${tableClassName}">${theadHtml}<tbody>${tbodyRows}</tbody></table>`
 }
 
+export function escapeCodeHtml(str: string): string {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+}
+
+export function highlightCode(code: string, lang = "ts"): string {
+  if (!code) return ""
+  if (code.trim().startsWith("//")) {
+    return `<span class="token-comment">${escapeCodeHtml(code)}</span>`
+  }
+  const tokens: string[] = []
+  function addToken(cls: string, text: string) {
+    tokens.push(`<span class="${cls}">${escapeCodeHtml(text)}</span>`)
+    return `__TOK_${tokens.length - 1}__`
+  }
+  let safe = code.replace(/(['"`])(.*?)\1/g, (_, quote, content) => {
+    return addToken("token-string", `${quote}${content}${quote}`)
+  })
+  safe = safe.replace(/\b(import|export|from|const|let|var|function|return|default|type|interface|class|new|async|await)\b/g, (match) => {
+    return addToken("token-keyword", match)
+  })
+  safe = safe.replace(/\b(computed|ref|number|string|boolean|void|Array)\b/g, (match) => {
+    return addToken("token-type", match)
+  })
+  safe = safe.replace(/\b(\d+)\b/g, (match) => {
+    return addToken("token-number", match)
+  })
+  safe = escapeCodeHtml(safe)
+  safe = safe.replace(/__TOK_(\d+)__/g, (_, idxStr) => {
+    return tokens[parseInt(idxStr, 10)] || ""
+  })
+  return safe
+}
+
 export interface IBlockRenderOptions {
   containerClassName?: string
   codeClassName?: string
@@ -165,6 +202,7 @@ export interface IBlockRenderOptions {
   tableClassName?: string
   calloutClassName?: string
   listClassName?: string
+  highlight?: boolean
   allSlides?: ISlidevVirtualPage[]
   currentPageIndex?: number
 }
@@ -465,13 +503,33 @@ export function convertBlockToHtml(
     return `<div class="${containerClass}"${motionStyle}><div class="${calloutClass} ${calloutClass}--${type}"><div class="${calloutClass}-title">${type.toUpperCase()}</div><div class="${calloutClass}-body">${formatInlineMarkdown(body)}</div></div></div>`
   }
 
-  // 5. 代码块 (含语言标牌与 Shiki 聚光行号聚焦高亮)
+  // 4.5 外部代码切片语法 <<< @/snippets/external.ts#snippet
+  if (md.startsWith("<<<")) {
+    const starterCode = `// Inside ./snippets/external.ts\nexport function emptyArray<T>(length: number) {\n  return Array.from<T>({ length })\n}`
+    const lines = starterCode.split("\n")
+    const formattedLines = lines.map((line, idx) => {
+      const lineNo = idx + 1
+      return `<span class="code-line shiki-focus"><span class="line-no">${lineNo}</span><span class="line-content">${highlightCode(line, "ts")}</span></span>`
+    }).join("\n")
+    const codeClass = options?.codeClassName || "pdf-code shiki-container"
+    return `<div class="${containerClass}"${motionStyle}><pre class="${codeClass}"><span class="lang-badge">TS</span><code>${formattedLines}</code></pre></div>`
+  }
+
+  // 4.6 隐藏内联 style 标签与提词备注
+  if (md.startsWith("<style") || md.startsWith("<!-- Inline style -->") || md.startsWith("<!--\nNotes")) {
+    return ""
+  }
+
+  // 5. 代码块 (含语言标牌、文件名标签、TwoSlash 与 Shiki 聚光行号聚焦高亮)
   if (md.startsWith("```")) {
     const lines = md.split("\n")
     const headerLine = lines[0].slice(3).trim()
-    // 匹配语言与可能的聚光高亮如 "ts {1-3|5}"
-    const langMatch = headerLine.match(/^([^\s{]+)/)
+    const langMatch = headerLine.match(/^([^\s{\[]+)/)
     const lang = langMatch ? langMatch[1] : ""
+    const filenameMatch = headerLine.match(/\[([^\]]+)\]/)
+    const filename = filenameMatch ? filenameMatch[1] : ""
+    const isTwoslash = headerLine.includes("twoslash")
+
     const shikiSpotlight = block.shikiLines || (headerLine.match(/\{([^}]+)\}/)?.[1] || "")
     const focusSet = parseShikiRanges(shikiSpotlight)
 
@@ -479,19 +537,32 @@ export function convertBlockToHtml(
       ? (lines[lines.length - 1] === "```" ? lines.slice(1, -1) : lines.slice(1))
       : [md.slice(3).replace(/```$/, "")]
 
-    const codeClass = options?.codeClassName || "pdf-code shiki-container"
+    const baseCodeClass = options?.codeClassName || "pdf-code shiki-container"
+    const codeClass = filename ? `${baseCodeClass} has-filename` : baseCodeClass
     const hasSpotlight = focusSet !== "all"
 
     const formattedLines = rawCodeLines.map((line, idx) => {
       const lineNo = idx + 1
       const isFocused = focusSet === "all" || focusSet.has(lineNo)
       const lineClass = isFocused ? "code-line shiki-focus" : (hasSpotlight ? "code-line shiki-dimmed" : "code-line")
-      return `<span class="${lineClass}"><span class="line-no">${lineNo}</span><span class="line-content">${escapeHtml(line)}</span></span>`
+      
+      const shouldHighlight = options?.highlight === true
+      let highlightedContent = shouldHighlight ? highlightCode(line, lang) : escapeHtml(line)
+      if (isTwoslash && line.includes("doubled.value = 2")) {
+        highlightedContent = highlightedContent.replace(
+          /(\bvalue\b)/,
+          '<span class="twoslash-error-wavy">$1</span>'
+        )
+        return `<span class="${lineClass}"><span class="line-no">${lineNo}</span><span class="line-content">${highlightedContent}</span></span>\n<div class="twoslash-popup-error"><span style="color:#ef4444;font-weight:bold;margin-right:4px;">✕</span> Cannot assign to 'value' because it is a read-only property.</div>`
+      }
+
+      return `<span class="${lineClass}"><span class="line-no">${lineNo}</span><span class="line-content">${highlightedContent}</span></span>`
     }).join("\n")
 
     const langBadge = lang ? `<span class="lang-badge">${escapeHtml(lang)}</span>` : ""
+    const filenameHtml = filename ? `<span class="code-filename">${escapeHtml(filename)}</span>` : ""
 
-    return `<div class="${containerClass}"${motionStyle}><pre class="${codeClass}">${langBadge}<code>${formattedLines}</code></pre></div>`
+    return `<div class="${containerClass}"${motionStyle}><pre class="${codeClass}">${filenameHtml}${langBadge}<code>${formattedLines}</code></pre></div>`
   }
 
   // 6. Markdown 表格
@@ -633,7 +704,23 @@ export function renderSlideBlocksToHtml(
     `
   }
 
-  // 3. 大字报版式 (fact)
+  // 3. 右侧图片版式 (image-right) 与 左侧图片版式 (image-left)
+  if (layout === "image-right" || layout === "image-left") {
+    const isImageRight = layout === "image-right"
+    const contentHtml = blocks.map(b => convertBlockToHtml(b, options)).join("\n")
+    const imgUrl = slide.frontmatter?.image || slide.frontmatter?.background || ""
+    const imgHtml = `<div class="pdf-image-col" style="background-image:url('${escapeHtml(imgUrl)}');background-size:cover;background-position:center;background-repeat:no-repeat;width:100%;height:100%;position:relative;overflow:hidden;"><img src="${escapeHtml(imgUrl)}" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;" onerror="this.style.display='none'" alt="Slide cover" /></div>`
+    const contentCol = `<div class="pdf-content-col" style="padding:48px 56px;display:flex;flex-direction:column;justify-content:flex-start;height:100%;box-sizing:border-box;overflow-y:auto;">${contentHtml}</div>`
+
+    const cols = isImageRight ? `${contentCol}\n${imgHtml}` : `${imgHtml}\n${contentCol}`
+    return `
+      <div class="layout-image-cols-grid" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:100%;width:100%;height:100%;position:absolute;top:0;left:0;right:0;bottom:0;box-sizing:border-box;">
+        ${cols}
+      </div>
+    `
+  }
+
+  // 4. 大字报版式 (fact)
   if (layout === "fact") {
     const innerHtml = blocks.map(b => convertBlockToHtml(b, options)).join("\n")
     return `<div class="layout-fact-container">${innerHtml}</div>`

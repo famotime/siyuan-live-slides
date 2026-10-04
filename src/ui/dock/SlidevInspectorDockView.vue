@@ -66,11 +66,14 @@
         :page-layout="pageLayout"
         :page-transition="pageTransition"
         :page-background="pageBackground"
-        :page-notes="pageNotes"
+        :page-image="pageImage"
+        :page-notes="currentSlideNotes"
         @update:page-layout="onLayoutChange"
         @update:page-transition="onTransitionChange"
         @update:page-background="onBackgroundChange"
-        @update:page-notes="onNotesChange"
+        @update:page-image="onImageChange"
+        @add-note-block="onAddNoteBlock"
+        @locate-note-block="onLocateNoteBlock"
         @generate-notes="onGenerateNotesWithAI"
         @insert-divider-after="onInsertDividerAfter"
         @delete-divider="onDeleteCurrentBlock"
@@ -85,6 +88,8 @@
         :elem-shiki-lines="elemShikiLines"
         :is-code-block="isCodeBlock"
         :has-block-attrs="hasBlockAttrs"
+        :is-note="isNoteBlock"
+        @toggle-note="onToggleNoteBlock"
         @toggle-elem-click="toggleElemClick"
         @update:elem-click="onElemClickStepChange"
         @update:elem-motion="onElemMotionChange"
@@ -125,7 +130,8 @@
 <script setup lang="ts">
 import { ref, computed, inject } from 'vue'
 import { showMessage } from 'siyuan'
-import { setBlockAttrs, insertBlock, deleteBlock, chatAI } from '@/api'
+import { setBlockAttrs, insertBlock, appendBlock, updateBlock, deleteBlock, chatAI } from '@/api'
+import { mirrorBlockSelection } from '@/sync/selection-mirror'
 import PageInspectorSection from '@/ui/components/PageInspectorSection.vue'
 import BlockInspectorSection from '@/ui/components/BlockInspectorSection.vue'
 import DocInspectorSection from '@/ui/components/DocInspectorSection.vue'
@@ -146,11 +152,13 @@ import {
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_TRANSITION,
   ATTR_PAGE_BACKGROUND,
+  ATTR_PAGE_IMAGE,
   ATTR_PAGE_NOTES,
   ATTR_ELEM_CLICK,
   ATTR_ELEM_MOTION,
   ATTR_ELEM_SLOT,
   ATTR_ELEM_SHIKI_LINES,
+  ATTR_ELEM_NOTE,
 } from '@/types/slidev-protocol'
 
 const plugin = inject<any>('plugin')
@@ -246,7 +254,26 @@ const targetTagClass = computed(() => {
 const pageLayout = computed(() => activeBlockAttrs.value[ATTR_PAGE_LAYOUT] || 'default')
 const pageTransition = computed(() => activeBlockAttrs.value[ATTR_PAGE_TRANSITION] || 'slide-left')
 const pageBackground = ref('')
-const pageNotes = ref('')
+const pageImage = ref('')
+
+// 讲稿备注与当前页模型响应式绑定
+const targetSlide = computed(() => {
+  if (!latestDoc.value?.slides) return null
+  const aid = activeBlockId.value
+  if (aid) {
+    let s = latestDoc.value.slides.find(slide => slide.startBlockId === aid)
+    if (s) return s
+    s = latestDoc.value.slides.find(slide => slide.blocks?.some(b => b.id === aid))
+    if (s) return s
+    s = latestDoc.value.slides.find(slide => slide.noteBlocks?.some(b => b.id === aid))
+    if (s) return s
+  }
+  return latestDoc.value.slides[0] || null
+})
+
+const currentSlideNotes = computed(() => targetSlide.value?.notes || '')
+const currentSlideNoteBlockId = computed(() => targetSlide.value?.noteBlocks?.[0]?.id || '')
+const isNoteBlock = computed(() => Boolean(activeBlockAttrs.value[ATTR_ELEM_NOTE] || activeBlockAttrs.value['slidev-note']))
 
 // 内容块属性绑定
 const elemClick = computed(() => activeBlockAttrs.value[ATTR_ELEM_CLICK] || '')
@@ -265,6 +292,8 @@ const hasBlockAttrs = computed(() => {
     activeBlockAttrs.value[ATTR_ELEM_MOTION] ||
     activeBlockAttrs.value[ATTR_ELEM_SLOT] ||
     activeBlockAttrs.value[ATTR_ELEM_SHIKI_LINES] ||
+    activeBlockAttrs.value[ATTR_ELEM_NOTE] ||
+    activeBlockAttrs.value['slidev-note'] ||
     activeBlockAttrs.value[ATTR_PAGE_LAYOUT]
   )
 })
@@ -321,29 +350,87 @@ function onBackgroundChange(val: string) {
   saveAttr(ATTR_PAGE_BACKGROUND, val)
 }
 
-function onNotesChange(val?: string) {
-  if (val !== undefined) {
-    pageNotes.value = val
+function onImageChange(val: string) {
+  pageImage.value = val
+  saveAttr(ATTR_PAGE_IMAGE, val)
+}
+
+async function onToggleNoteBlock() {
+  const targetId = activeBlockId.value
+  if (!targetId) return
+  const nextVal = isNoteBlock.value ? '' : 'true'
+  await saveAttr(ATTR_ELEM_NOTE, nextVal)
+  if (nextVal) {
+    showMessage('已设为讲稿备注（不在幻灯片中渲染）')
+  } else {
+    showMessage('已取消讲稿备注')
   }
-  saveAttr(ATTR_PAGE_NOTES, pageNotes.value)
+}
+
+async function createNoteBlockOnCurrentSlide(noteContent?: string) {
+  const content = noteContent || '在此输入本页讲稿提词...'
+  const noteLines = content.split(/\r?\n/).map(l => `> ${l}`).join('\n')
+  const markdownPayload = `> 💡 **演讲备注**\n${noteLines}\n{: custom-slidev-note="true"}`
+
+  const slides = latestDoc.value?.slides || []
+  const curSlide = targetSlide.value
+  const curIdx = curSlide ? slides.findIndex(s => s === curSlide) : -1
+
+  let insertedRes: any = null
+  if (curIdx !== -1 && curIdx < slides.length - 1) {
+    const nextSlide = slides[curIdx + 1]
+    insertedRes = await insertBlock('markdown', markdownPayload, nextSlide.startBlockId)
+  } else {
+    const lastBlock = curSlide?.noteBlocks?.slice(-1)[0] || curSlide?.blocks?.slice(-1)[0]
+    if (lastBlock?.id) {
+      insertedRes = await insertBlock('markdown', markdownPayload, undefined, lastBlock.id)
+    } else {
+      insertedRes = await appendBlock('markdown', markdownPayload, currentDocId.value)
+    }
+  }
+
+  const newId = insertedRes?.[0]?.doOperations?.[0]?.id || insertedRes?.[0]?.id
+  if (newId) {
+    await setBlockAttrs(newId, { [ATTR_ELEM_NOTE]: 'true' })
+    mirrorBlockSelection(newId, plugin?.app)
+  }
+
+  if (plugin) {
+    plugin.compileCurrentDocument()
+  }
+  return newId
+}
+
+async function onAddNoteBlock() {
+  try {
+    await createNoteBlockOnCurrentSlide()
+    showMessage('已在正文末尾插入讲稿备注提示块')
+  } catch (err) {
+    showMessage('插入讲稿备注块失败')
+    console.error(err)
+  }
+}
+
+function onLocateNoteBlock() {
+  const blockId = currentSlideNoteBlockId.value
+  if (!blockId) {
+    showMessage('未找到本页关联的讲稿备注块')
+    return
+  }
+  const ok = mirrorBlockSelection(blockId, plugin?.app)
+  if (ok) {
+    showMessage('已在编辑区定位讲稿备注块')
+  } else {
+    showMessage('定位讲稿备注块失败')
+  }
 }
 
 async function onGenerateNotesWithAI() {
   if (!currentDocId.value) return
 
-  // 1. 获取当前页面完整的虚拟幻灯片模型
-  let targetSlide = latestDoc.value?.slides.find(s => s.startBlockId === activeBlockId.value)
-  if (!targetSlide && activeBlockId.value) {
-    targetSlide = latestDoc.value?.slides.find(s => s.blocks?.some(b => b.id === activeBlockId.value))
-  }
-  if (!targetSlide && (activeBlockId.value === currentDocId.value || !activeBlockId.value)) {
-    targetSlide = latestDoc.value?.slides?.[0]
-  }
-
-  // 若尚未编译过或没匹配到，构建兜底 slide 模型
-  const slideToUse: ISlidevVirtualPage = targetSlide || {
+  const slideToUse: ISlidevVirtualPage = targetSlide.value || {
     pageIndex: 1,
-    startBlockId: activeBlockId.value,
+    startBlockId: activeBlockId.value || currentDocId.value,
     frontmatter: {},
     notes: '',
     blocks: rawSnippet.value && rawSnippet.value !== '---'
@@ -355,12 +442,22 @@ async function onGenerateNotesWithAI() {
   showMessage('正在调用思源 AI 提炼本页讲稿提词...')
   const result = await generateSpeakerNotesWithAIDetailed(slideToUse, chatAI)
   if (result.notes) {
-    pageNotes.value = result.notes
-    await saveAttr(ATTR_PAGE_NOTES, result.notes)
+    const existingNoteBlockId = currentSlideNoteBlockId.value
+    if (existingNoteBlockId) {
+      const formattedNoteMd = `> 💡 **演讲备注**\n${result.notes.split(/\r?\n/).map(l => `> ${l}`).join('\n')}\n{: custom-slidev-note="true"}`
+      await updateBlock('markdown', formattedNoteMd, existingNoteBlockId)
+      await setBlockAttrs(existingNoteBlockId, { [ATTR_ELEM_NOTE]: 'true' })
+      mirrorBlockSelection(existingNoteBlockId, plugin?.app)
+    } else {
+      await createNoteBlockOnCurrentSlide(result.notes)
+    }
     if (result.isAiGenerated) {
       showMessage('思源 AI 演讲提词卡生成成功！')
     } else {
-      showMessage('未获取到思源 AI 响应（请在思源【设置 - AI】中配置 AI 服务商），已载入结构化预设提词模板', 6000)
+      showMessage('未获取到思源 AI 响应，已生成预设提词卡模板', 5000)
+    }
+    if (plugin) {
+      plugin.compileCurrentDocument()
     }
   }
 }
@@ -404,15 +501,17 @@ async function onClearBlockAttrs() {
     [ATTR_ELEM_MOTION]: '',
     [ATTR_ELEM_SLOT]: '',
     [ATTR_ELEM_SHIKI_LINES]: '',
+    [ATTR_ELEM_NOTE]: '',
+    'slidev-note': '',
     [ATTR_PAGE_LAYOUT]: '',
     [ATTR_PAGE_TRANSITION]: '',
     [ATTR_PAGE_BACKGROUND]: '',
-    [ATTR_PAGE_NOTES]: '',
+    [ATTR_PAGE_IMAGE]: '',
   })
   activeBlockAttrs.value = {}
   elemShikiLines.value = ''
   pageBackground.value = ''
-  pageNotes.value = ''
+  pageImage.value = ''
   showMessage('已清除本块演示属性')
   if (plugin) {
     plugin.compileCurrentDocument()
@@ -521,7 +620,7 @@ defineExpose({
       currentDocId.value = info.id
     }
     pageBackground.value = info.attrs[ATTR_PAGE_BACKGROUND] || ''
-    pageNotes.value = info.attrs[ATTR_PAGE_NOTES] || ''
+    pageImage.value = info.attrs[ATTR_PAGE_IMAGE] || ''
     elemShikiLines.value = info.attrs[ATTR_ELEM_SHIKI_LINES] || ''
   },
   updateDocument(doc: ISlidevDocument) {

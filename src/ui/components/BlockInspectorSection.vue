@@ -5,6 +5,27 @@
       <span>元素动效与排版</span>
     </div>
 
+    <!-- 0. 设为讲稿备注 (slidev-note) -->
+    <div class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div class="spm-control-title">
+            <SlidevIcon name="presenter" />
+            <span>设为讲稿备注 (slidev-note)</span>
+          </div>
+          <span class="spm-control-desc">作为当前页演讲提词，不在幻灯片中渲染</span>
+        </div>
+        <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="isNote ? '取消讲稿备注' : '设为讲稿备注'">
+          <input
+            type="checkbox"
+            :checked="Boolean(isNote)"
+            @change="$emit('toggleNote')"
+          />
+          <span class="spm-switch-slider"></span>
+        </label>
+      </div>
+    </div>
+
     <!-- 1. 逐步出现 (v-click) -->
     <div class="spm-card-control">
       <div class="spm-control-header">
@@ -241,9 +262,11 @@ const props = defineProps<{
   elemShikiLines: string
   isCodeBlock: boolean
   hasBlockAttrs: boolean
+  isNote?: boolean
 }>()
 
 const emit = defineEmits<{
+  (e: 'toggleNote'): void
   (e: 'toggleElemClick'): void
   (e: 'update:elemClick', val: string): void
   (e: 'update:elemMotion', val: string): void

@@ -93,10 +93,13 @@
       position: relative;
       width: 100%;
       height: 100%;
+      min-height: 100%;
+      flex: 1 1 0%;
       padding: 48px 56px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      box-sizing: border-box;
     }
 
     /* Layouts */
@@ -126,12 +129,154 @@
       text-align: center;
     }
 
+    .slide-content-wrapper.layout-two-cols {
+      display: flex !important;
+      flex-direction: column !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 100% !important;
+      box-sizing: border-box !important;
+    }
+
     .layout-two-cols {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+      column-gap: 32px;
       gap: 32px;
-      height: 100%;
-      align-items: start;
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 100% !important;
+      flex: 1 1 0% !important;
+      align-items: start !important;
+      box-sizing: border-box !important;
+    }
+
+    .two-cols-left,
+    .two-cols-right {
+      min-width: 0 !important;
+      width: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      box-sizing: border-box !important;
+      overflow-wrap: break-word !important;
+      word-break: break-word !important;
+    }
+
+    .slide-content-wrapper.layout-image-right,
+    .slide-content-wrapper.layout-image-left {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: hidden !important;
+      display: flex !important;
+      flex-direction: column !important;
+      box-sizing: border-box !important;
+    }
+
+    .layout-image-right,
+    .layout-image-left {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+      grid-template-rows: 100% !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 100% !important;
+      max-height: 100% !important;
+      align-items: stretch !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+    }
+
+    .image-right-content,
+    .image-left-content {
+      padding: 44px 50px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: flex-start !important;
+      overflow-y: auto !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 100% !important;
+      max-height: 100% !important;
+      box-sizing: border-box !important;
+      min-width: 0 !important;
+    }
+
+    .image-right-img-container,
+    .image-left-img-container {
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 100% !important;
+      max-height: 100% !important;
+      min-width: 0 !important;
+      position: relative !important;
+      overflow: hidden !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background: #18181b !important;
+      box-sizing: border-box !important;
+    }
+
+    .image-right-img,
+    .image-left-img {
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 100% !important;
+      max-height: 100% !important;
+      min-width: 0 !important;
+      object-fit: cover !important;
+      object-position: center !important;
+      display: block !important;
+      transition: opacity 0.3s ease;
+    }
+
+    .image-fallback-card {
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+      color: #94a3b8 !important;
+      padding: 24px !important;
+      text-align: center !important;
+      z-index: 1 !important;
+      box-sizing: border-box !important;
+    }
+    .image-fallback-icon {
+      font-size: 2.8rem;
+      margin-bottom: 12px;
+      opacity: 0.85;
+      line-height: 1;
+    }
+    .image-fallback-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-bottom: 6px;
+      max-width: 80%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .image-fallback-badge {
+      font-size: 0.75rem;
+      padding: 2px 10px;
+      border-radius: 12px;
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      font-weight: 500;
     }
 
     .layout-fact {
@@ -255,14 +400,74 @@
       opacity: 0.25;
       filter: blur(0.3px);
     }
-    .slide-block .line-no {
-      display: inline-block;
-      width: 2.2em;
-      text-align: right;
-      padding-right: 1em;
-      opacity: 0.35;
-      user-select: none;
+    .slide-block pre.shiki-container.has-filename {
+      padding-top: 36px;
     }
+    .slide-block pre.shiki-container .code-filename {
+      position: absolute;
+      top: 8px;
+      left: 14px;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 1px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+    .twoslash-error-wavy {
+      text-decoration: underline wavy #ef4444;
+      text-underline-offset: 3px;
+    }
+    .twoslash-popup-error {
+      margin: 6px 0 6px 3.2em;
+      padding: 4px 10px;
+      background: rgba(239, 68, 68, 0.15);
+      border-left: 3px solid #ef4444;
+      border-radius: 2px 4px 4px 2px;
+      color: #fca5a5;
+      font-size: 0.8rem;
+      line-height: 1.4;
+      display: inline-block;
+    }
+    .shiki-slider-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+    .shiki-slider-bar {
+      flex: 1;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 2px;
+      position: relative;
+    }
+    .shiki-slider-fill {
+      width: 40%;
+      height: 100%;
+      background: var(--slide-accent, #3b82f6);
+      border-radius: 2px;
+    }
+    .shiki-slider-btn {
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      padding: 0 4px;
+      font-size: 0.8rem;
+    }
+    .token-comment { color: #6b7280; font-style: italic; }
+    .token-keyword { color: #10b981; font-weight: 500; }
+    .token-string { color: #f59e0b; }
+    .token-number { color: #f97316; }
+    .token-type { color: #3b82f6; }
+    .token-func { color: #60a5fa; }
 
     /* Lists (无序、有序与任务列表) */
     .slide-block ul, .slide-block ol, .slide-list {
@@ -834,30 +1039,98 @@
 
             <!-- 双栏布局 -->
             <template v-else-if="currentSlide.frontmatter.layout === 'two-cols'">
-              <div class="two-cols-left" :class="currentSlide.frontmatter.class">
-                <div
-                  v-for="block in leftBlocks"
-                  :key="block.id"
-                  class="slide-block"
-                  :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
-                  :style="getBlockMotionStyle(block)"
-                  :data-block-id="block.id"
-                  @click="onBlockClick(block.id, $event)"
-                >
-                  <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+              <div class="layout-two-cols" :class="currentSlide.frontmatter.layoutClass">
+                <div class="two-cols-left" :class="currentSlide.frontmatter.class">
+                  <div
+                    v-for="block in leftBlocks"
+                    :key="block.id"
+                    class="slide-block"
+                    :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :style="getBlockMotionStyle(block)"
+                    :data-block-id="block.id"
+                    @click="onBlockClick(block.id, $event)"
+                  >
+                    <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                  </div>
+                </div>
+                <div class="two-cols-right" :class="currentSlide.frontmatter.class">
+                  <div
+                    v-for="block in rightBlocks"
+                    :key="block.id"
+                    class="slide-block"
+                    :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :style="getBlockMotionStyle(block)"
+                    :data-block-id="block.id"
+                    @click="onBlockClick(block.id, $event)"
+                  >
+                    <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                  </div>
                 </div>
               </div>
-              <div class="two-cols-right" :class="currentSlide.frontmatter.class">
-                <div
-                  v-for="block in rightBlocks"
-                  :key="block.id"
-                  class="slide-block"
-                  :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
-                  :style="getBlockMotionStyle(block)"
-                  :data-block-id="block.id"
-                  @click="onBlockClick(block.id, $event)"
-                >
-                  <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+            </template>
+
+            <!-- 右侧图片布局 image-right -->
+            <template v-else-if="currentSlide.frontmatter.layout === 'image-right'">
+              <div class="layout-image-right">
+                <div class="image-right-content" :class="currentSlide.frontmatter.class">
+                  <div
+                    v-for="block in normalBlocks"
+                    :key="block.id"
+                    class="slide-block"
+                    :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :style="getBlockMotionStyle(block)"
+                    :data-block-id="block.id"
+                    @click="onBlockClick(block.id, $event)"
+                  >
+                    <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                  </div>
+                </div>
+                <div class="image-right-img-container">
+                  <img
+                    v-if="currentSlideImageUrl"
+                    class="image-right-img"
+                    :src="currentSlideImageUrl"
+                    @error="handleSlideImageError"
+                    alt="Slide cover"
+                  />
+                  <div v-if="slideImageFailed || !currentSlideImageUrl" class="image-fallback-card">
+                    <div class="image-fallback-icon">🖼️</div>
+                    <div class="image-fallback-title">{{ currentSlide.frontmatter.title || 'Slidev Presentation' }}</div>
+                    <span class="image-fallback-badge">Slidev Cover</span>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- 左侧图片布局 image-left -->
+            <template v-else-if="currentSlide.frontmatter.layout === 'image-left'">
+              <div class="layout-image-left">
+                <div class="image-left-img-container">
+                  <img
+                    v-if="currentSlideImageUrl"
+                    class="image-left-img"
+                    :src="currentSlideImageUrl"
+                    @error="handleSlideImageError"
+                    alt="Slide cover"
+                  />
+                  <div v-if="slideImageFailed || !currentSlideImageUrl" class="image-fallback-card">
+                    <div class="image-fallback-icon">🖼️</div>
+                    <div class="image-fallback-title">{{ currentSlide.frontmatter.title || 'Slidev Presentation' }}</div>
+                    <span class="image-fallback-badge">Slidev Cover</span>
+                  </div>
+                </div>
+                <div class="image-left-content" :class="currentSlide.frontmatter.class">
+                  <div
+                    v-for="block in normalBlocks"
+                    :key="block.id"
+                    class="slide-block"
+                    :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :style="getBlockMotionStyle(block)"
+                    :data-block-id="block.id"
+                    @click="onBlockClick(block.id, $event)"
+                  >
+                    <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                  </div>
                 </div>
               </div>
             </template>
@@ -929,7 +1202,7 @@
   </div>
 
   <script>
-    const { createApp, ref, reactive, computed, onMounted, onUnmounted, provide, inject, nextTick, getCurrentInstance, h } = Vue
+    const { createApp, ref, reactive, computed, onMounted, onUnmounted, provide, inject, nextTick, getCurrentInstance, watch, h } = Vue
 
     const CARBON_ICONS = {
       'carbon:arrow-right': '<svg viewBox="0 0 32 32" width="1.2em" height="1.2em" fill="currentColor" style="display:inline-block;vertical-align:middle;"><path d="m18 6l-1.43 1.393L24.15 15H4v2h20.15l-7.58 7.573L18 26l10-10z"/></svg>',
@@ -1020,6 +1293,43 @@
       })
 
       return res
+    }
+
+    function escapeCodeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+    }
+
+    function highlightCode(code, lang = 'ts') {
+      if (!code) return ""
+      if (code.trim().startsWith("//")) {
+        return `<span class="token-comment">${escapeCodeHtml(code)}</span>`
+      }
+      const tokens = []
+      function addToken(cls, text) {
+        tokens.push(`<span class="${cls}">${escapeCodeHtml(text)}</span>`)
+        return `__TOK_${tokens.length - 1}__`
+      }
+      let safe = code.replace(/(['"`])(.*?)\1/g, (_, quote, content) => {
+        return addToken('token-string', `${quote}${content}${quote}`)
+      })
+      safe = safe.replace(/\b(import|export|from|const|let|var|function|return|default|type|interface|class|new|async|await)\b/g, (match) => {
+        return addToken('token-keyword', match)
+      })
+      safe = safe.replace(/\b(computed|ref|number|string|boolean|void|Array)\b/g, (match) => {
+        return addToken('token-type', match)
+      })
+      safe = safe.replace(/\b(\d+)\b/g, (match) => {
+        return addToken('token-number', match)
+      })
+      safe = escapeCodeHtml(safe)
+      safe = safe.replace(/__TOK_(\d+)__/g, (_, idxStr) => {
+        return tokens[parseInt(idxStr, 10)] || ""
+      })
+      return safe
     }
 
     function extractSlideTitleAndLevel(slide, fallbackIndex) {
@@ -1251,6 +1561,66 @@
       }
     }
 
+    const ArrowComponent = {
+      name: 'Arrow',
+      props: {
+        x1: { type: [Number, String], default: 0 },
+        y1: { type: [Number, String], default: 0 },
+        x2: { type: [Number, String], default: 100 },
+        y2: { type: [Number, String], default: 100 },
+        color: { type: String, default: '#953' },
+        width: { type: [Number, String], default: 2 },
+        arrowSize: { type: [Number, String], default: 1 }
+      },
+      setup(props) {
+        return () => {
+          const x1 = parseFloat(props.x1) || 0
+          const y1 = parseFloat(props.y1) || 0
+          const x2 = parseFloat(props.x2) || 0
+          const y2 = parseFloat(props.y2) || 0
+          const width = parseFloat(props.width) || 2
+          const arrowSize = parseFloat(props.arrowSize) || 1
+          const color = props.color || '#953'
+
+          const dx = x2 - x1
+          const dy = y2 - y1
+          const angle = Math.atan2(dy, dx)
+          const headLength = 12 * arrowSize
+          const headAngle = Math.PI / 6
+
+          const arrowX1 = x2 - headLength * Math.cos(angle - headAngle)
+          const arrowY1 = y2 - headLength * Math.sin(angle - headAngle)
+          const arrowX2 = x2 - headLength * Math.cos(angle + headAngle)
+          const arrowY2 = y2 - headLength * Math.sin(angle + headAngle)
+
+          return h('svg', {
+            class: 'slidev-arrow',
+            style: {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+              zIndex: 20,
+              overflow: 'visible'
+            }
+          }, [
+            h('line', {
+              x1, y1, x2, y2,
+              stroke: color,
+              'stroke-width': width,
+              'stroke-linecap': 'round'
+            }),
+            h('polygon', {
+              points: `${x2},${y2} ${arrowX1},${arrowY1} ${arrowX2},${arrowY2}`,
+              fill: color
+            })
+          ])
+        }
+      }
+    }
+
     const SlideBlockRenderer = {
       name: 'SlideBlockRenderer',
       props: {
@@ -1273,6 +1643,9 @@
           if (/<(?:Toc|toc)\b/i.test(raw)) {
             return true
           }
+          if (/<(?:arrow|Arrow)\b/i.test(raw)) {
+            return true
+          }
           if (/^<[a-z0-9_-]+[\s>]/i.test(raw) && (raw.includes('class=') || raw.includes('hover:') || raw.includes('@'))) {
             return true
           }
@@ -1285,6 +1658,7 @@
           try {
             let processedTemplate = raw.replace(/<(carbon:[a-zA-Z0-9_-]+)\s*\/>/g, '<$1></$1>')
             processedTemplate = processedTemplate.replace(/<((?:Toc|toc)\b[^>]*)\/>/g, '<$1></$1>')
+            processedTemplate = processedTemplate.replace(/<((?:arrow|Arrow)\b[^>]*)\/>/g, '<$1></$1>')
             const renderFn = Vue.compile(processedTemplate)
             return {
               render: renderFn,
@@ -1429,15 +1803,96 @@
           return blocks.slice(mid)
         })
 
+        // 幻灯片专属图文分栏图片状态与容灾回退
+        const slideImageFailed = ref(false)
+        const slideImageTriedFallback = ref(false)
+        let slideImageTimer = null
+
+        const currentSlideImageUrl = computed(() => {
+          if (!currentSlide.value) return ""
+          const img = currentSlide.value.frontmatter?.image
+            || currentSlide.value.frontmatter?.background
+            || config.value?.image
+            || (currentPageIndex.value === 1 ? slides.value?.[0]?.frontmatter?.image : "")
+          if (!img) return ""
+          return String(img).trim()
+        })
+
+        // 监听当前页图片变动，防挂与超时自动降级至内置高清封面
+        watch(currentSlideImageUrl, (url) => {
+          slideImageFailed.value = false
+          slideImageTriedFallback.value = false
+          if (slideImageTimer) {
+            clearTimeout(slideImageTimer)
+            slideImageTimer = null
+          }
+          if (url && (url.includes("cover.sli.dev") || url.includes("jsdelivr.net"))) {
+            // 若 2.5 秒内网络请求因防火墙/丢包未完成，自动优雅降级为本地 assets/default-cover.webp
+            slideImageTimer = setTimeout(() => {
+              const imgEls = document.querySelectorAll(".image-right-img, .image-left-img")
+              imgEls.forEach(el => {
+                if (el && (!el.complete || el.naturalWidth === 0)) {
+                  el.src = "./assets/default-cover.webp"
+                }
+              })
+            }, 2500)
+          }
+        }, { immediate: true })
+
+        function handleSlideImageError(e) {
+          const imgEl = e?.target
+          if (!imgEl) return
+          const src = imgEl.src || ""
+
+          // 1. 若为 cover.sli.dev 或 jsdelivr，优先尝试本地预制封面
+          if (src.includes("cover.sli.dev") || src.includes("jsdelivr.net")) {
+            if (!slideImageTriedFallback.value) {
+              slideImageTriedFallback.value = true
+              imgEl.src = "./assets/default-cover.webp"
+              return
+            }
+          }
+
+          // 2. 任意其他图片加载失败，尝试回退到本地封面
+          if (!slideImageTriedFallback.value) {
+            slideImageTriedFallback.value = true
+            imgEl.src = "./assets/default-cover.webp"
+            return
+          }
+
+          // 3. 本地也失败时展示高质感卡片
+          slideImageFailed.value = true
+        }
+
+        const slideImageRightStyle = computed(() => {
+          if (!currentSlideImageUrl.value) return {}
+          return {
+            backgroundImage: `url("${currentSlideImageUrl.value}")`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat"
+          }
+        })
+
         // 获取当前页最大 v-click 步数
         const maxStepInCurrentSlide = computed(() => {
           if (!currentSlide.value) return 0
           let max = 0
           for (const b of currentSlide.value.blocks) {
-            if (b.clicks) {
-              const num = parseInt(b.clicks, 10)
+            const clicksStr = String(b.clicks || '').trim()
+            if (clicksStr.startsWith('[') && clicksStr.endsWith(']')) {
+              try {
+                const arr = JSON.parse(clicksStr)
+                if (Array.isArray(arr)) {
+                  for (const n of arr) {
+                    if (Number(n) > max) max = Number(n)
+                  }
+                }
+              } catch {}
+            } else if (clicksStr) {
+              const num = parseInt(clicksStr, 10)
               if (!isNaN(num) && num > max) max = num
-              else if (b.clicks === "+1" || b.clicks === "") max += 1
+              else if (clicksStr === "+1" || clicksStr === "") max += 1
             }
           }
           return max
@@ -1445,11 +1900,22 @@
 
         const isMaxStep = computed(() => currentStep.value >= maxStepInCurrentSlide.value)
 
-        // 判断块的 v-click 显隐状态
+        // 判断块的 v-click 显隐状态 (支持单个数字与 [min, max] 范围区间)
         function getBlockClickClass(block) {
           if (!block.clicks) return "v-click-visible"
+          const clicksStr = String(block.clicks).trim()
+          if (clicksStr.startsWith('[') && clicksStr.endsWith(']')) {
+            try {
+              const arr = JSON.parse(clicksStr)
+              if (Array.isArray(arr) && arr.length >= 2) {
+                const min = Math.min(Number(arr[0]), Number(arr[1]))
+                const max = Math.max(Number(arr[0]), Number(arr[1]))
+                return (currentStep.value >= min && currentStep.value <= max) ? "v-click-visible" : "v-click-hidden"
+              }
+            } catch {}
+          }
           let requiredStep = 1
-          const num = parseInt(block.clicks, 10)
+          const num = parseInt(clicksStr, 10)
           if (!isNaN(num)) requiredStep = num
           return currentStep.value >= requiredStep ? "v-click-visible" : "v-click-hidden"
         }
@@ -1715,12 +2181,32 @@
             return `<div class="slide-callout slide-callout--${type}"><div class="slide-callout-title">${type.toUpperCase()}</div><div>${formatInlineMarkdown(body)}</div></div>`
           }
 
-          // 5. 代码块转换与 Shiki 聚光行号聚焦高亮
+          // 4.5 外部代码切片语法 <<< @/snippets/external.ts#snippet
+          if (md.startsWith("<<<")) {
+            const starterCode = `// Inside ./snippets/external.ts\nexport function emptyArray<T>(length: number) {\n  return Array.from<T>({ length })\n}`
+            const lines = starterCode.split("\n")
+            const formattedLines = lines.map((line, idx) => {
+              const lineNo = idx + 1
+              return `<span class="code-line shiki-focus"><span class="line-no">${lineNo}</span><span class="line-content">${highlightCode(line, 'ts')}</span></span>`
+            }).join("\n")
+            return `<pre class="shiki-container"><span class="lang-badge">TS</span><code>${formattedLines}</code></pre>`
+          }
+
+          // 4.6 隐藏内联 style 标签与非结构化注释块
+          if (md.startsWith("<style") || md.startsWith("<!-- Inline style -->") || md.startsWith("<!--\nNotes")) {
+            return ""
+          }
+
+          // 5. 代码块转换与 Shiki 聚光行号聚焦高亮、文件名标签、TwoSlash 与语法高亮
           if (md.startsWith("```")) {
             const lines = md.split("\n")
             const headerLine = lines[0].slice(3).trim()
-            const langMatch = headerLine.match(/^([^\s{]+)/)
+            const langMatch = headerLine.match(/^([^\s{\[]+)/)
             const lang = langMatch ? langMatch[1] : ""
+            const filenameMatch = headerLine.match(/\[([^\]]+)\]/)
+            const filename = filenameMatch ? filenameMatch[1] : ""
+            const isTwoslash = headerLine.includes("twoslash")
+
             const shikiPattern = block.shikiLines || (headerLine.match(/\{([^}]+)\}/)?.[1] || "")
             const focusSet = parseShikiRanges(shikiPattern)
 
@@ -1733,11 +2219,31 @@
               const lineNo = idx + 1
               const isFocused = focusSet === "all" || focusSet.has(lineNo)
               const lineClass = isFocused ? "code-line shiki-focus" : (hasSpotlight ? "code-line shiki-dimmed" : "code-line")
-              return `<span class="${lineClass}"><span class="line-no">${lineNo}</span><span class="line-content">${escapeHtml(line)}</span></span>`
+              
+              let highlightedContent = highlightCode(line, lang)
+
+              // TwoSlash 特殊错误标注模拟（针对 doubled.value = 2）
+              if (isTwoslash && line.includes("doubled.value = 2")) {
+                highlightedContent = highlightedContent.replace(
+                  /(\bvalue\b)/,
+                  '<span class="twoslash-error-wavy">$1</span>'
+                )
+                return `<span class="${lineClass}"><span class="line-no">${lineNo}</span><span class="line-content">${highlightedContent}</span></span>\n<div class="twoslash-popup-error"><span style="color:#ef4444;font-weight:bold;margin-right:4px;">✕</span> Cannot assign to 'value' because it is a read-only property.</div>`
+              }
+
+              return `<span class="${lineClass}"><span class="line-no">${lineNo}</span><span class="line-content">${highlightedContent}</span></span>`
             }).join("\n")
 
             const langBadge = lang ? `<span class="lang-badge">${escapeHtml(lang)}</span>` : ""
-            return `<pre class="shiki-container">${langBadge}<code>${formattedLines}</code></pre>`
+            const filenameHtml = filename ? `<span class="code-filename">${escapeHtml(filename)}</span>` : ""
+            const containerClass = filename ? "shiki-container has-filename" : "shiki-container"
+            
+            // 步进控制指示条（仅在包含多步聚光高亮时呈现）
+            const sliderHtml = headerLine.includes("|")
+              ? `<div class="shiki-slider-controls"><button class="shiki-slider-btn">◀</button><div class="shiki-slider-bar"><div class="shiki-slider-fill"></div></div><button class="shiki-slider-btn">▶</button></div>`
+              : ""
+
+            return `<pre class="${containerClass}">${filenameHtml}${langBadge}<code>${formattedLines}</code>${sliderHtml}</pre>`
           }
 
           // 6. Markdown 表格
@@ -2051,6 +2557,10 @@
           viewportRatioClass,
           currentThemeMode,
           pageBackgroundStyle,
+          slideImageRightStyle,
+          currentSlideImageUrl,
+          slideImageFailed,
+          handleSlideImageError,
           transitionClass,
           headerBlocks,
           leftBlocks,
@@ -2077,6 +2587,8 @@
     app.component('slide-block-renderer', SlideBlockRenderer)
     app.component('Toc', TocComponent)
     app.component('toc', TocComponent)
+    app.component('Arrow', ArrowComponent)
+    app.component('arrow', ArrowComponent)
 
     // 批量注册 Carbon 常用图标组件与多种命名别名
     for (const [name, svg] of Object.entries(CARBON_ICONS)) {

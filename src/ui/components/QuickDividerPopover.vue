@@ -28,18 +28,6 @@
       />
     </div>
 
-    <!-- 演讲备忘录 Notes -->
-    <div class="spm-form-item">
-      <label class="spm-form-label">演讲者备注 (Notes)</label>
-      <textarea
-        v-model="notes"
-        class="spm-textarea"
-        rows="3"
-        placeholder="口播提示词，仅讲师屏幕可见..."
-        @blur="saveNotes"
-      ></textarea>
-    </div>
-
     <div class="spm-popover-footer">
       <span class="spm-save-hint">{{ saveHint }}</span>
     </div>
@@ -55,7 +43,6 @@ import {
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_TRANSITION,
   ATTR_PAGE_BACKGROUND,
-  ATTR_PAGE_NOTES,
 } from '@/types/slidev-protocol'
 
 const props = defineProps<{
@@ -71,14 +58,12 @@ const emit = defineEmits<{
 const layout = ref(props.initialAttrs?.[ATTR_PAGE_LAYOUT] || 'default')
 const transition = ref(props.initialAttrs?.[ATTR_PAGE_TRANSITION] || 'slide-left')
 const background = ref(props.initialAttrs?.[ATTR_PAGE_BACKGROUND] || '')
-const notes = ref(props.initialAttrs?.[ATTR_PAGE_NOTES] || '')
 const saveHint = ref('')
 
 watch(() => props.initialAttrs, (newAttrs) => {
   layout.value = newAttrs?.[ATTR_PAGE_LAYOUT] || 'default'
   transition.value = newAttrs?.[ATTR_PAGE_TRANSITION] || 'slide-left'
   background.value = newAttrs?.[ATTR_PAGE_BACKGROUND] || ''
-  notes.value = newAttrs?.[ATTR_PAGE_NOTES] || ''
 }, { deep: true })
 
 async function updateAttr(key: string, value: string) {
@@ -106,10 +91,6 @@ function onTransitionChange(val: string) {
 
 function saveBackground() {
   updateAttr(ATTR_PAGE_BACKGROUND, background.value.trim())
-}
-
-function saveNotes() {
-  updateAttr(ATTR_PAGE_NOTES, notes.value.trim())
 }
 </script>
 

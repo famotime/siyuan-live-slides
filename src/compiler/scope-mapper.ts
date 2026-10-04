@@ -12,10 +12,12 @@ import {
   ATTR_DOC_THEME,
   ATTR_ELEM_CLICK,
   ATTR_ELEM_MOTION,
+  ATTR_ELEM_NOTE,
   ATTR_ELEM_SHIKI_LINES,
   ATTR_ELEM_SLOT,
   ATTR_PAGE_BACKGROUND,
   ATTR_PAGE_CLASS,
+  ATTR_PAGE_IMAGE,
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_NOTES,
   ATTR_PAGE_SLIDE,
@@ -100,6 +102,10 @@ export function parsePageAttrs(
     frontmatter.background = attrs[ATTR_PAGE_BACKGROUND].trim()
   }
 
+  if (attrs[ATTR_PAGE_IMAGE]) {
+    frontmatter.image = attrs[ATTR_PAGE_IMAGE].trim()
+  }
+
   if (attrs[ATTR_PAGE_CLASS]) {
     frontmatter.class = attrs[ATTR_PAGE_CLASS].trim()
   }
@@ -116,6 +122,7 @@ export function parsePageAttrs(
         ATTR_PAGE_LAYOUT,
         ATTR_PAGE_TRANSITION,
         ATTR_PAGE_BACKGROUND,
+        ATTR_PAGE_IMAGE,
         ATTR_PAGE_CLASS,
         ATTR_PAGE_NOTES,
         ATTR_PAGE_SLIDE,
@@ -143,16 +150,24 @@ export function parseElementAttrs(
   motion?: ISlidevMotionConfig
   shikiLines?: string
   slot?: "left" | "right" | "default" | string
+  isNote?: boolean
 } {
   const result: {
     clicks?: string
     motion?: ISlidevMotionConfig
     shikiLines?: string
     slot?: string
+    isNote?: boolean
   } = {}
 
   if (!attrs) {
     return result
+  }
+
+  // 讲稿备注块识别：命中 custom-slidev-note 或 slidev-note
+  const noteAttr = attrs[ATTR_ELEM_NOTE] ?? attrs["slidev-note"]
+  if (noteAttr !== undefined && noteAttr !== null && noteAttr !== "" && noteAttr !== "false" && noteAttr !== "0") {
+    result.isNote = true
   }
 
   if (attrs[ATTR_ELEM_CLICK] !== undefined && attrs[ATTR_ELEM_CLICK] !== null) {

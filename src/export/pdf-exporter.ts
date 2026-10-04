@@ -163,7 +163,7 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
     }
     .pdf-two-cols-wrapper {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 36px;
       width: 100%;
       height: 100%;
@@ -173,6 +173,8 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       display: flex;
       flex-direction: column;
       gap: 14px;
+      min-width: 0;
+      width: 100%;
     }
     .pdf-list-item {
       padding-left: 20px;

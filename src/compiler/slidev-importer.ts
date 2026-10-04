@@ -6,10 +6,12 @@ import {
   ATTR_DOC_THEME,
   ATTR_PAGE_BACKGROUND,
   ATTR_PAGE_CLASS,
+  ATTR_PAGE_IMAGE,
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_NOTES,
   ATTR_PAGE_TRANSITION,
 } from "../types/slidev-protocol"
+import { DEFAULT_STARTER_SNIPPETS } from "../engine/workspace-scaffolder"
 
 export interface IParsedSlideItem {
   pageIndex: number
@@ -123,6 +125,23 @@ export function resolveCodeSnippet(
     }
   }
 
+  // 尝试从内置 Slidev Starter 经典代码片段回退 (保证直接粘贴导入或离线时体验一致)
+  if (!codeContent) {
+    const starterSnippets = DEFAULT_STARTER_SNIPPETS || {}
+    codeContent = starterSnippets[targetPath]
+      || starterSnippets[cleanPath]
+      || starterSnippets[`snippets/${cleanPath}`]
+    if (!codeContent) {
+      const filename = cleanPath.split("/").pop()
+      for (const [k, v] of Object.entries(starterSnippets)) {
+        if (k.endsWith(`/${cleanPath}`) || (filename && k.endsWith(`/${filename}`))) {
+          codeContent = v
+          break
+        }
+      }
+    }
+  }
+
   if (!codeContent) {
     return null
   }
@@ -131,12 +150,14 @@ export function resolveCodeSnippet(
   let extractedCode = codeContent
   if (regionName) {
     const regionRegex = new RegExp(
-      `#(?:region|REGION)\\s+${regionName}\\r?\\n([\\s\\S]*?)#(?:endregion|ENDREGION)\\s+${regionName}`,
+      `(?:\\/\\/|\\/\\*|#)?\\s*#(?:region|REGION)\\s+${regionName}[^\\r\\n]*\\r?\\n([\\s\\S]*?)(?:\\/\\/|\\/\\*|#)?\\s*#(?:endregion|ENDREGION)\\s+${regionName}`,
       "i"
     )
     const rMatch = codeContent.match(regionRegex)
     if (rMatch) {
-      extractedCode = rMatch[1].trimEnd()
+      const leadingCommentMatch = codeContent.match(/^(\/\/\s*Inside[^\r\n]+\r?\n)/i)
+      const lead = leadingCommentMatch ? leadingCommentMatch[1] : ""
+      extractedCode = lead + rMatch[1].trimEnd()
     }
   }
 
@@ -493,6 +514,7 @@ export function parseSlidevPresentation(
 
     if (parsedHead.layout) docRootAttrs[ATTR_PAGE_LAYOUT] = String(parsedHead.layout)
     if (parsedHead.background) docRootAttrs[ATTR_PAGE_BACKGROUND] = String(parsedHead.background)
+    if (parsedHead.image) docRootAttrs[ATTR_PAGE_IMAGE] = String(parsedHead.image)
     if (parsedHead.class) docRootAttrs[ATTR_PAGE_CLASS] = String(parsedHead.class)
 
     for (const [k, v] of Object.entries(parsedHead)) {
@@ -506,6 +528,7 @@ export function parseSlidevPresentation(
           "title",
           "layout",
           "background",
+          "image",
           "class",
         ].includes(k)
       ) {
@@ -570,9 +593,10 @@ export function parseSlidevPresentation(
       if (frontmatter.layout) inheritedAttrs[ATTR_PAGE_LAYOUT] = String(frontmatter.layout)
       if (frontmatter.transition) inheritedAttrs[ATTR_PAGE_TRANSITION] = String(frontmatter.transition)
       if (frontmatter.background) inheritedAttrs[ATTR_PAGE_BACKGROUND] = String(frontmatter.background)
+      if (frontmatter.image) inheritedAttrs[ATTR_PAGE_IMAGE] = String(frontmatter.image)
       if (frontmatter.class) inheritedAttrs[ATTR_PAGE_CLASS] = String(frontmatter.class)
       for (const [k, v] of Object.entries(frontmatter)) {
-        if (!["src", "layout", "transition", "background", "class"].includes(k)) {
+        if (!["src", "layout", "transition", "background", "image", "class"].includes(k)) {
           inheritedAttrs[`custom-slidev-${k}`] = typeof v === "object" ? JSON.stringify(v) : String(v)
         }
       }
@@ -608,10 +632,11 @@ export function parseSlidevPresentation(
     if (frontmatter.layout) pageAttrs[ATTR_PAGE_LAYOUT] = String(frontmatter.layout)
     if (frontmatter.transition) pageAttrs[ATTR_PAGE_TRANSITION] = String(frontmatter.transition)
     if (frontmatter.background) pageAttrs[ATTR_PAGE_BACKGROUND] = String(frontmatter.background)
+    if (frontmatter.image) pageAttrs[ATTR_PAGE_IMAGE] = String(frontmatter.image)
     if (frontmatter.class) pageAttrs[ATTR_PAGE_CLASS] = String(frontmatter.class)
 
     for (const [k, v] of Object.entries(frontmatter)) {
-      if (!["layout", "transition", "background", "class"].includes(k)) {
+      if (!["layout", "transition", "background", "image", "class"].includes(k)) {
         pageAttrs[`custom-slidev-${k}`] = typeof v === "object" ? JSON.stringify(v) : String(v)
       }
     }
@@ -667,10 +692,10 @@ export function parseSlidevPresentation(
       for (let i = 0; i < codeTokens.length; i++) {
         pageNotes = pageNotes.replace(`__CODE_TOKEN_NOTE_${i}__`, codeTokens[i])
       }
-      pageAttrs[ATTR_PAGE_NOTES] = pageNotes
-      if (pageIndex === 1) {
-        docRootAttrs[ATTR_PAGE_NOTES] = pageNotes
-      }
+      // 转换为正文讲稿备注提示块，并绑定 custom-slidev-note="true"
+      const noteLines = pageNotes.split(/\r?\n/).map(l => `> ${l}`).join("\n")
+      const noteBlockMd = `> 💡 **演讲备注**\n${noteLines}\n{: custom-slidev-note="true"}`
+      body = body ? `${body}\n\n${noteBlockMd}` : noteBlockMd
     }
 
     // 隔离处理 <style> 标签 (Gap 2)
@@ -732,6 +757,9 @@ export function parseSlidevPresentation(
     const assetRefs = extractAssetReferences(body)
     if (pageAttrs[ATTR_PAGE_BACKGROUND]) {
       assetRefs.push(pageAttrs[ATTR_PAGE_BACKGROUND])
+    }
+    if (pageAttrs[ATTR_PAGE_IMAGE]) {
+      assetRefs.push(pageAttrs[ATTR_PAGE_IMAGE])
     }
     for (const ar of assetRefs) {
       discoveredAssetsSet.add(ar)

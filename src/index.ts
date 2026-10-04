@@ -9,7 +9,7 @@ import {
   Plugin as SyPlugin,
   showMessage,
 } from "siyuan"
-import { getBlockAttrs, getChildBlocks, insertBlock, setBlockAttrs, sql, chatAI, putFile } from "@/api"
+import { getBlockAttrs, getChildBlocks, insertBlock, appendBlock, setBlockAttrs, sql, chatAI, putFile } from "@/api"
 import { analyzeSlideSplits } from "@/ai/auto-splitter"
 import { generateSpeakerNotesWithAI } from "@/ai/notes-generator"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
@@ -204,8 +204,15 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
         }
 
         const notes = await generateSpeakerNotesWithAI(dummySlide, chatAI)
-        await setBlockAttrs(this.currentDocId, { "custom-slidev-notes": notes })
-        showMessage("已成功生成口播提词卡并保存至文档属性")
+        const noteLines = notes.split(/\r?\n/).map((l: string) => `> ${l}`).join("\n")
+        const noteMd = `> 💡 **演讲备注**\n${noteLines}\n{: custom-slidev-note="true"}`
+        const appendRes: any = await appendBlock("markdown", noteMd, this.currentDocId).catch(() => null)
+        const newBlockId = appendRes?.[0]?.doOperations?.[0]?.id || appendRes?.[0]?.id
+        if (newBlockId) {
+          await setBlockAttrs(newBlockId, { "custom-slidev-note": "true" })
+          mirrorBlockSelection(newBlockId, this.app)
+        }
+        showMessage("已成功生成口播提词卡并插入为正文讲稿备注块")
         this.compileCurrentDocument(this.currentDocId)
       },
     })

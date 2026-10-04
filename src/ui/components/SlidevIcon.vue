@@ -167,6 +167,13 @@
       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
     </g>
 
+    <!-- 图片 (Image) -->
+    <g v-else-if="name === 'image'">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <polyline points="21 15 16 10 5 21" />
+    </g>
+
     <!-- 默认兜底图标 (幻灯片画板) -->
     <g v-else>
       <rect x="2" y="3" width="20" height="14" rx="2" />

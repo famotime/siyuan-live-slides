@@ -200,6 +200,40 @@ export function wrapElementDirectives(
   return `<div ${clickAttr} ${motionAttrs}>\n\n${markdown}\n\n</div>`
 }
 
+/**
+ * 提取并清洗正文讲稿备注块的文本内容
+ * 自动剥离思源 IAL 属性、容器包装 (::: tip)、行首引述符 (>)、
+ * 以及常见备注标题前缀 (如 💡 **演讲备注**、Notes: 等) 和列表项符号
+ */
+export function extractCleanNoteText(rawMd: string): string {
+  if (!rawMd) return ""
+  let text = rawMd.trim()
+
+  // 1. 移除思源 Kramdown IAL 属性标记 {: ... }
+  text = text.replace(/\{:[^}]*\}/g, "").trim()
+
+  // 2. 移除容器语法标记 ::: tip / ::: info 等
+  text = text.replace(/^:::[a-zA-Z0-9_-]*\s*\r?\n?/g, "")
+  text = text.replace(/\r?\n?:::\s*$/g, "")
+
+  // 3. 逐行剥离行首引述前缀 >
+  const lines = text.split(/\r?\n/)
+  const strippedLines = lines.map(line => {
+    return line.trim().replace(/^>\s*/, "")
+  })
+
+  let cleaned = strippedLines.join("\n").trim()
+
+  // 4. 剥离提示块标题前缀，如 "💡 **演讲备注**"、"💡 演讲备注："、"**讲稿备注**："、"Notes:" 等
+  cleaned = cleaned.replace(/^(?:💡\s*)?(?:\*\*|__)?(?:演讲备注|演讲者提词|讲稿备注|演讲提词|备注|Notes?)(?:\*\*|__)?[:：]?\s*(?:\r?\n)?/i, "")
+
+  // 5. 若是列表项（- / * / + / 1.），剥离列表符号
+  cleaned = cleaned.replace(/^[-*+]\s+/, "")
+  cleaned = cleaned.replace(/^\d+\.\s+/, "")
+
+  return cleaned.trim()
+}
+
 export interface IBuildSlidevDocOptions extends IAssetRewriteOptions {
   refContentMap?: Record<string, string>
 }
@@ -225,9 +259,22 @@ export function buildSlidevDocument(
       layout: initialPageAttrs.frontmatter.layout || "cover",
       ...initialPageAttrs.frontmatter,
     },
-    notes: initialPageAttrs.notes,
+    notes: "",
+    noteBlocks: [],
     blocks: [],
     rawMarkdown: "",
+  }
+  if (currentPage.frontmatter.background) {
+    currentPage.frontmatter.background = rewriteSingleAssetUrl(
+      currentPage.frontmatter.background,
+      options,
+    )
+  }
+  if (currentPage.frontmatter.image) {
+    currentPage.frontmatter.image = rewriteSingleAssetUrl(
+      currentPage.frontmatter.image,
+      options,
+    )
   }
   slides.push(currentPage)
 
@@ -243,12 +290,22 @@ export function buildSlidevDocument(
           currentPage.frontmatter.layout = pageMeta.frontmatter.layout
         }
         Object.assign(currentPage.frontmatter, pageMeta.frontmatter)
-        if (pageMeta.notes) {
-          currentPage.notes = pageMeta.notes
+        // 防御：若分割线未单独声明 image/background，继承文档级头部配置
+        if (!pageMeta.frontmatter.image && initialPageAttrs.frontmatter.image) {
+          currentPage.frontmatter.image = initialPageAttrs.frontmatter.image
+        }
+        if (!pageMeta.frontmatter.background && initialPageAttrs.frontmatter.background) {
+          currentPage.frontmatter.background = initialPageAttrs.frontmatter.background
         }
         if (currentPage.frontmatter.background) {
           currentPage.frontmatter.background = rewriteSingleAssetUrl(
             currentPage.frontmatter.background,
+            options,
+          )
+        }
+        if (currentPage.frontmatter.image) {
+          currentPage.frontmatter.image = rewriteSingleAssetUrl(
+            currentPage.frontmatter.image,
             options,
           )
         }
@@ -263,7 +320,8 @@ export function buildSlidevDocument(
           layout: pageMeta.frontmatter.layout || "default",
           ...pageMeta.frontmatter,
         },
-        notes: pageMeta.notes,
+        notes: "",
+        noteBlocks: [],
         blocks: [],
         rawMarkdown: "",
       }
@@ -272,6 +330,12 @@ export function buildSlidevDocument(
       if (currentPage.frontmatter.background) {
         currentPage.frontmatter.background = rewriteSingleAssetUrl(
           currentPage.frontmatter.background,
+          options,
+        )
+      }
+      if (currentPage.frontmatter.image) {
+        currentPage.frontmatter.image = rewriteSingleAssetUrl(
+          currentPage.frontmatter.image,
           options,
         )
       }
@@ -289,6 +353,31 @@ export function buildSlidevDocument(
 
     // 动态展开思源块引用 ((block-id))
     rawMd = resolveBlockRefsSync(rawMd, options?.refContentMap)
+
+    // 讲稿备注块处理 (custom-slidev-note / slidev-note)
+    if (elemAttrs.isNote) {
+      const cleanNote = extractCleanNoteText(rawMd)
+      if (cleanNote) {
+        if (currentPage.notes) {
+          currentPage.notes += "\n\n" + cleanNote
+        } else {
+          currentPage.notes = cleanNote
+        }
+      }
+      if (!currentPage.noteBlocks) {
+        currentPage.noteBlocks = []
+      }
+      currentPage.noteBlocks.push({
+        id: node.id,
+        type: node.type,
+        content: cleanNote || node.content || "",
+        rawMarkdown: rawMd,
+        isNote: true,
+        attributes: node.ial,
+      })
+      // 讲稿备注块不在幻灯片内容中渲染
+      continue
+    }
 
     // 注入 Shiki 代码高亮行号
     if (elemAttrs.shikiLines) {

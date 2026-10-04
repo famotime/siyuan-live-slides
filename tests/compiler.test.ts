@@ -18,6 +18,7 @@ import {
 } from "../src/compiler/scope-mapper"
 import {
   buildSlidevDocument,
+  extractCleanNoteText,
   getMotionDirectives,
   injectShikiSpotlight,
   stringifyFrontmatter,
@@ -202,7 +203,6 @@ describe("Slidev AST Builder (核心虚拟文档构建器)", () => {
         markdown: "---",
         ial: {
           "custom-slidev-layout": "two-cols",
-          "custom-slidev-notes": "第二页讲师提示",
         },
       },
       {
@@ -211,6 +211,14 @@ describe("Slidev AST Builder (核心虚拟文档构建器)", () => {
         markdown: "第二页正文内容",
         ial: {
           "custom-slidev-click": "+1",
+        },
+      },
+      {
+        id: "note-block-2",
+        type: "b",
+        markdown: "> 💡 **演讲备注**\n> 第二页讲师提示",
+        ial: {
+          "custom-slidev-note": "true",
         },
       },
     ]
@@ -227,6 +235,7 @@ describe("Slidev AST Builder (核心虚拟文档构建器)", () => {
     expect(doc.slides[1].pageIndex).toBe(2)
     expect(doc.slides[1].frontmatter.layout).toBe("two-cols")
     expect(doc.slides[1].notes).toBe("第二页讲师提示")
+    expect(doc.slides[1].blocks.length).toBe(1) // 讲稿备注块被排除在幻灯片正文块之外
     expect(doc.slides[1].blocks[0].clicks).toBe("+1")
 
     // 验证 Markdown 生成完整性
@@ -295,5 +304,70 @@ describe("Slidev AST Builder (核心虚拟文档构建器)", () => {
     // 未提供的 target-block-2 降级为 tag 标签
     expect(slideContent).toContain('class="slidev-ref-tag"')
     expect(slideContent).toContain('data-ref-id="target-block-2"')
+  })
+
+  it("extractCleanNoteText 应准确剥离提示块、引述块、列表项的前缀修饰与 IAL 属性", () => {
+    // 提示块剥离
+    const calloutMd = "> 💡 **演讲备注**\n> 请引导大家回顾上一页的要点。\n{: custom-slidev-note=\"true\"}"
+    expect(extractCleanNoteText(calloutMd)).toBe("请引导大家回顾上一页的要点。")
+
+    // 带冒号的提示块前缀
+    const calloutColonMd = "> 💡 演讲备注：注意观察听众反应"
+    expect(extractCleanNoteText(calloutColonMd)).toBe("注意观察听众反应")
+
+    // 常规引述块
+    const quoteMd = "> 此处需做 30 秒停留"
+    expect(extractCleanNoteText(quoteMd)).toBe("此处需做 30 秒停留")
+
+    // 列表项剥离
+    const listMd = "* 重点强调开源社区的贡献"
+    expect(extractCleanNoteText(listMd)).toBe("重点强调开源社区的贡献")
+
+    // 有序列表项剥离
+    const orderedListMd = "1. 第一点核心结论"
+    expect(extractCleanNoteText(orderedListMd)).toBe("第一点核心结论")
+  })
+
+  it("buildSlidevDocument 应支持在同页内包含提示块、引用块及列表项多个备注块，并自动合并为讲稿且排除渲染", () => {
+    const blocks = [
+      { id: "h1", type: "h", content: "页标题", markdown: "# 页标题" },
+      { id: "p1", type: "p", content: "常规段落内容", markdown: "常规段落内容" },
+      {
+        id: "note-1",
+        type: "b",
+        markdown: "> 💡 **演讲备注**\n> 这是第一条提词要点\n{: custom-slidev-note=\"true\"}",
+        ial: { "custom-slidev-note": "true" },
+      },
+      {
+        id: "note-2",
+        type: "i",
+        markdown: "* 这是第二条列表形式的提词要点",
+        ial: { "slidev-note": "true" }, // 兼容 slidev-note
+      },
+      { id: "p2", type: "p", content: "末尾常规段落", markdown: "末尾常规段落" },
+    ]
+
+    const doc = buildSlidevDocument("doc-multi-notes", null, blocks)
+
+    expect(doc.slides.length).toBe(1)
+    const slide = doc.slides[0]
+
+    // 只有 3 个正文块（h1, p1, p2），note-1 和 note-2 被成功排除
+    expect(slide.blocks.length).toBe(3)
+    expect(slide.blocks.map(b => b.id)).toEqual(["h1", "p1", "p2"])
+
+    // noteBlocks 应记录这两个备注块
+    expect(slide.noteBlocks?.length).toBe(2)
+    expect(slide.noteBlocks?.[0].id).toBe("note-1")
+    expect(slide.noteBlocks?.[1].id).toBe("note-2")
+
+    // notes 应自动换行合并
+    expect(slide.notes).toBe("这是第一条提词要点\n\n这是第二条列表形式的提词要点")
+
+    // 最终生成的 Slidev Markdown 应注入讲稿注释，且正文中不含备注块内容
+    expect(slide.rawMarkdown).toContain("<!--\n这是第一条提词要点\n\n这是第二条列表形式的提词要点\n-->")
+    expect(slide.rawMarkdown).not.toContain("💡 **演讲备注**")
+    expect(slide.rawMarkdown).toContain("# 页标题")
+    expect(slide.rawMarkdown).toContain("末尾常规段落")
   })
 })

@@ -415,12 +415,28 @@ async function onConfirmImport() {
       throw new Error('思源内核创建文档失败，未返回有效 DocumentId')
     }
 
-    // 4. 设置文档根属性 (Doc Attrs)
-    await setBlockAttrs(newDocId, finalPresentation.docRootAttrs)
+    // 4. 设置文档根属性 (Doc Attrs 与第 1 页 Page Attrs 融合，确保第一页版式如 image-right、image 等完整持久化)
+    const firstSlideAttrs = finalPresentation.slides[0]?.pageAttrs || {}
+    await setBlockAttrs(newDocId, { ...firstSlideAttrs, ...finalPresentation.docRootAttrs })
 
     // 5. 设置各页分割线属性 (Page Attrs)
     const rawBlocks: any[] = await getChildBlocks(newDocId).catch(() => [])
-    const dividerBlocks = rawBlocks.filter(b => b.type === 'tb' || b.markdown?.trim() === '---')
+    const isDivider = (b: any) => {
+      if (!b) return false
+      const t = String(b.type || '').toLowerCase()
+      const md = String(b.markdown || '').trim()
+      const c = String(b.content || '').trim()
+      return (
+        t === 'tb' ||
+        t === 'thematic-break' ||
+        t === 'nodethematicbreak' ||
+        md === '---' ||
+        md === '***' ||
+        c === '---' ||
+        c === '***'
+      )
+    }
+    const dividerBlocks = rawBlocks.filter(isDivider)
 
     // 若第一段为分割线（dividerBlocks 与 slides 数量一致），各页分割线一一对应
     if (dividerBlocks.length >= finalPresentation.slides.length) {
@@ -445,7 +461,7 @@ async function onConfirmImport() {
     // 5.1 扫描各块并将 ::right:: 插槽标记之后的块自动持久化打上 custom-slidev-slot="right" 块属性
     let inRightSlot = false
     for (const b of rawBlocks) {
-      if (b.type === 'tb' || b.markdown?.trim() === '---') {
+      if (isDivider(b)) {
         inRightSlot = false
         continue
       }

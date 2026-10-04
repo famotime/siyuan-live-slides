@@ -74,10 +74,51 @@ export function buildStandaloneHtml(
       aspect-ratio: 16 / 9; width: min(96vw, calc(92vh * 16 / 9)); max-height: 92vh;
       display: flex; flex-direction: column;
     }
-    .slide-content { padding: 48px 56px; width: 100%; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+    .slide-content { padding: 48px 56px; width: 100%; height: 100%; min-height: 100%; flex: 1 1 0%; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box; }
     .layout-cover { justify-content: center; align-items: center; text-align: center; }
-    .layout-cover h1 { font-size: 3.2rem; font-weight: 800; color: var(--slide-accent); margin-bottom: 16px; }
-    .layout-two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; height: 100%; }
+    .layout-two-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; width: 100%; height: 100%; flex: 1; align-items: start; box-sizing: border-box; }
+    .two-cols-left, .two-cols-right { min-width: 0; width: 100%; display: flex; flex-direction: column; box-sizing: border-box; overflow-wrap: break-word; word-break: break-word; }
+    .slide-content.layout-image-right, .slide-content.layout-image-left {
+      padding: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-rows: 100%;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      box-sizing: border-box;
+    }
+    .image-right-content, .image-left-content {
+      padding: 44px 50px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      overflow-y: auto;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+    }
+    .image-right-img-container, .image-left-img-container {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+      background: #18181b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .image-right-img, .image-left-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
     .slide-block { margin-bottom: 14px; line-height: 1.6; }
     .slide-block h1 { font-size: 2.2rem; margin-bottom: 12px; }
     .slide-block h2 { font-size: 1.7rem; margin-bottom: 10px; }
@@ -341,6 +382,33 @@ export function buildStandaloneHtml(
           }
           container.appendChild(leftCol);
           container.appendChild(rightCol);
+        } else if (slide.frontmatter?.layout === "image-right" || slide.frontmatter?.layout === "image-left") {
+          const isImageRight = slide.frontmatter?.layout === "image-right";
+          const contentCol = document.createElement("div");
+          contentCol.className = isImageRight ? "image-right-content" : "image-left-content";
+
+          for (const block of (slide.blocks || [])) {
+            contentCol.appendChild(renderBlock(block));
+          }
+
+          const imgCol = document.createElement("div");
+          imgCol.className = isImageRight ? "image-right-img-container" : "image-left-img-container";
+          const img = document.createElement("img");
+          img.className = isImageRight ? "image-right-img" : "image-left-img";
+          img.src = slide.frontmatter?.image || slide.frontmatter?.background || "";
+          img.alt = "Slide cover";
+          img.onerror = function() {
+            this.src = "https://fastly.jsdelivr.net/gh/slidevjs/slidev-covers@main/static/2HmfbSpvcos.webp";
+          };
+          imgCol.appendChild(img);
+
+          if (isImageRight) {
+            container.appendChild(contentCol);
+            container.appendChild(imgCol);
+          } else {
+            container.appendChild(imgCol);
+            container.appendChild(contentCol);
+          }
         } else {
           for (const block of (slide.blocks || [])) {
             container.appendChild(renderBlock(block));
