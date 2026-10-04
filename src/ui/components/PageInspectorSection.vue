@@ -1,7 +1,7 @@
 <template>
   <div class="spm-section spm-section--page">
     <div class="spm-section-header">
-      <span>幻灯片页面设置</span>
+      <span>幻灯片页面设置{{ pageIndex ? ` (第 ${pageIndex} 页)` : '' }}</span>
     </div>
 
     <!-- 版式选择 -->
@@ -185,6 +185,7 @@ const props = defineProps<{
   pageBackground: string
   pageImage?: string
   pageNotes?: string
+  pageIndex?: number
 }>()
 
 const emit = defineEmits<{

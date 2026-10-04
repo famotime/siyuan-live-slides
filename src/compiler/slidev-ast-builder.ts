@@ -213,7 +213,7 @@ export function extractCleanNoteText(rawMd: string): string {
   text = text.replace(/\{:[^}]*\}/g, "").trim()
 
   // 2. 移除容器语法标记 ::: tip / ::: info 等
-  text = text.replace(/^:::[a-zA-Z0-9_-]*\s*\r?\n?/g, "")
+  text = text.replace(/^:::\s*[a-zA-Z0-9_-]*\s*\r?\n?/g, "")
   text = text.replace(/\r?\n?:::\s*$/g, "")
 
   // 3. 逐行剥离行首引述前缀 >
@@ -224,10 +224,13 @@ export function extractCleanNoteText(rawMd: string): string {
 
   let cleaned = strippedLines.join("\n").trim()
 
-  // 4. 剥离提示块标题前缀，如 "💡 **演讲备注**"、"💡 演讲备注："、"**讲稿备注**："、"Notes:" 等
-  cleaned = cleaned.replace(/^(?:💡\s*)?(?:\*\*|__)?(?:演讲备注|演讲者提词|讲稿备注|演讲提词|备注|Notes?)(?:\*\*|__)?[:：]?\s*(?:\r?\n)?/i, "")
+  // 4. 剥离思源/Obsidian/GFM 提示块标记，如 "[!NOTE] 💡 演讲备注"、"[!TIP]" 等
+  cleaned = cleaned.replace(/^\[!(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION|[A-Za-z_-]+)\][^\r\n]*(?:\r?\n)?/i, "").trim()
 
-  // 5. 若是列表项（- / * / + / 1.），剥离列表符号
+  // 5. 剥离提示块标题前缀，如 "💡 **演讲备注**"、"💡 演讲备注："、"**讲稿备注**："、"Notes:" 等
+  cleaned = cleaned.replace(/^(?:💡|✏️|❗|⚠️|🚨|\s*)*(?:\*\*|__)?(?:演讲备注|演讲者提词|讲稿备注|演讲提词|备注|Notes?)(?:\*\*|__)?[:：]?\s*(?:\r?\n)?/i, "").trim()
+
+  // 6. 若是列表项（- / * / + / 1.），剥离列表符号
   cleaned = cleaned.replace(/^[-*+]\s+/, "")
   cleaned = cleaned.replace(/^\d+\.\s+/, "")
 
@@ -446,14 +449,67 @@ export function buildSlidevDocument(
 
     // 组织多栏插槽或常规内容（排除纯分界占位块）
     const contentBlocks = page.blocks.filter(b => b.slot !== "slot-divider-right")
-    const leftBlocks = contentBlocks.filter(b => b.slot === "left")
-    const rightBlocks = contentBlocks.filter(b => b.slot === "right")
+    const renderBlocks = (list: ISlidevBlockItem[]) =>
+      list.map(b => wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion)).join("\n\n")
 
-    if (page.frontmatter.layout === "two-cols" && (leftBlocks.length > 0 || rightBlocks.length > 0)) {
-      // 双栏布局：分别输出默认/左栏与 ::right:: 右栏
-      const renderBlocks = (list: ISlidevBlockItem[]) =>
-        list.map(b => wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion)).join("\n\n")
+    const layout = page.frontmatter.layout || "default"
 
+    if (layout === "two-cols-header") {
+      let headerList: ISlidevBlockItem[] = []
+      const explicitHeader = contentBlocks.filter(b => b.slot === "header")
+      if (explicitHeader.length > 0) {
+        headerList = explicitHeader
+      } else if (contentBlocks.length > 0) {
+        const firstHIdx = contentBlocks.findIndex(b => b.type === "h")
+        if (firstHIdx !== -1) {
+          headerList = [contentBlocks[firstHIdx]]
+        } else {
+          headerList = [contentBlocks[0]]
+        }
+      }
+
+      const rem = contentBlocks.filter(b => !headerList.includes(b))
+      const rightList = rem.filter(b => b.slot === "right" || b.slot === "col-2")
+      const leftList = rem.filter(b => !rightList.includes(b))
+
+      const headerContent = renderBlocks(headerList)
+      const leftContent = renderBlocks(leftList)
+      const rightContent = renderBlocks(rightList)
+
+      if (headerContent) parts.push(headerContent)
+      if (leftContent) parts.push(`::left::\n\n${leftContent}`)
+      if (rightContent) parts.push(`::right::\n\n${rightContent}`)
+    } else if (layout === "three-cols-header") {
+      let headerList: ISlidevBlockItem[] = []
+      const explicitHeader = contentBlocks.filter(b => b.slot === "header")
+      if (explicitHeader.length > 0) {
+        headerList = explicitHeader
+      } else if (contentBlocks.length > 0) {
+        const firstHIdx = contentBlocks.findIndex(b => b.type === "h")
+        if (firstHIdx !== -1) {
+          headerList = [contentBlocks[firstHIdx]]
+        } else {
+          headerList = [contentBlocks[0]]
+        }
+      }
+
+      const rem = contentBlocks.filter(b => !headerList.includes(b))
+      const col2List = rem.filter(b => b.slot === "col-2" || b.slot === "center")
+      const col3List = rem.filter(b => b.slot === "col-3" || b.slot === "right")
+      const col1List = rem.filter(b => !col2List.includes(b) && !col3List.includes(b))
+
+      const headerContent = renderBlocks(headerList)
+      const col1Content = renderBlocks(col1List)
+      const col2Content = renderBlocks(col2List)
+      const col3Content = renderBlocks(col3List)
+
+      if (headerContent) parts.push(headerContent)
+      if (col1Content) parts.push(`::col-1::\n\n${col1Content}`)
+      if (col2Content) parts.push(`::col-2::\n\n${col2Content}`)
+      if (col3Content) parts.push(`::col-3::\n\n${col3Content}`)
+    } else if (layout === "two-cols") {
+      const leftBlocks = contentBlocks.filter(b => b.slot === "left")
+      const rightBlocks = contentBlocks.filter(b => b.slot === "right")
       const leftContent = renderBlocks(leftBlocks.length > 0 ? leftBlocks : contentBlocks.filter(b => b.slot !== "right"))
       const rightContent = renderBlocks(rightBlocks)
 

@@ -42,6 +42,7 @@ const defaultDeps: IDocumentCompilerDeps = {
  */
 export class DocumentCompilerService {
   private deps: IDocumentCompilerDeps
+  private attrOverrides = new Map<string, Record<string, string>>()
 
   constructor(deps?: Partial<IDocumentCompilerDeps>) {
     this.deps = {
@@ -50,10 +51,55 @@ export class DocumentCompilerService {
     }
   }
 
+  /**
+   * 写入块属性的即时覆盖缓存 (毫秒级解决思源后台 SQLite 异步落库延迟)
+   */
+  public setBlockAttrOverride(id: string, attrs: Record<string, string>): void {
+    if (!id) return
+    const existing = this.attrOverrides.get(id) || {}
+    this.attrOverrides.set(id, { ...existing, ...attrs })
+  }
+
+  /**
+   * 获取块属性的即时覆盖缓存
+   */
+  public getBlockAttrOverride(id: string): Record<string, string> | undefined {
+    return this.attrOverrides.get(id)
+  }
+
+  /**
+   * 清除特定块或属性的即时覆盖缓存
+   */
+  public clearBlockAttrOverride(id: string, key?: string): void {
+    if (!id) return
+    if (!key) {
+      this.attrOverrides.delete(id)
+      return
+    }
+    const existing = this.attrOverrides.get(id)
+    if (existing) {
+      delete existing[key]
+      if (Object.keys(existing).length === 0) {
+        this.attrOverrides.delete(id)
+      }
+    }
+  }
+
+  /**
+   * 清除所有即时覆盖缓存
+   */
+  public clearAllOverrides(): void {
+    this.attrOverrides.clear()
+  }
+
   public async compile(docId: string): Promise<ISlidevDocument> {
     try {
-      // 1. 获取文档属性
-      const docAttrs = await this.deps.getBlockAttrs(docId).catch(() => ({}))
+      // 1. 获取文档属性并注入即时覆盖缓存
+      const docAttrs = (await this.deps.getBlockAttrs(docId).catch(() => ({}))) || {}
+      const docOverride = this.attrOverrides.get(docId)
+      if (docOverride) {
+        Object.assign(docAttrs, docOverride)
+      }
 
       // 2. 优先通过 getChildBlocks 获取按思源文档真实排版顺序排列的所有子块
       let rawBlocks: any[] = await this.deps.getChildBlocks(docId).catch(() => [])
@@ -76,9 +122,13 @@ export class DocumentCompilerService {
         rawBlocks = (await this.deps.sql(fallbackSql).catch(() => [])) || []
       }
 
-      // 5. 将 IAL 挂载到对应块节点上
+      // 5. 将 IAL 挂载到对应块节点上 (优先应用即时覆盖层)
       const blockNodes: ISiYuanBlockNode[] = (rawBlocks || []).map((r: any) => {
         const ialMap = ialMapById.get(r.id) || (r.ial ? parseIALString(r.ial) : {})
+        const override = this.attrOverrides.get(r.id)
+        if (override) {
+          Object.assign(ialMap, override)
+        }
         return {
           id: r.id,
           parent_id: r.parent_id,

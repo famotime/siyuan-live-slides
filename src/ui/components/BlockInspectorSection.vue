@@ -129,37 +129,25 @@
     </div>
 
     <!-- 2. 多栏布局插槽 (Slot) -->
-    <div class="spm-card-control">
+    <div v-if="isMultiColsLayout || elemSlot" class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
           <div class="spm-control-title">
             <SlidevIcon name="columns" />
-            <span>双栏插槽归属 (Slot)</span>
+            <span>{{ slotControlTitle }}</span>
           </div>
-          <span class="spm-control-desc">在 two-cols 等分栏布局中的归属</span>
+          <span class="spm-control-desc">{{ slotControlDesc }}</span>
         </div>
       </div>
       <div class="spm-segmented-group">
         <button
+          v-for="item in availableSlots"
+          :key="item.value"
           class="spm-segmented-item"
-          :class="{ active: !elemSlot || elemSlot === 'default' }"
-          @click="$emit('update:elemSlot', '')"
+          :class="{ active: isSlotActive(item.value) }"
+          @click="$emit('update:elemSlot', item.value)"
         >
-          默认
-        </button>
-        <button
-          class="spm-segmented-item"
-          :class="{ active: elemSlot === 'left' }"
-          @click="$emit('update:elemSlot', 'left')"
-        >
-          左栏 (left)
-        </button>
-        <button
-          class="spm-segmented-item"
-          :class="{ active: elemSlot === 'right' }"
-          @click="$emit('update:elemSlot', 'right')"
-        >
-          右栏 (right)
+          {{ item.label }}
         </button>
       </div>
     </div>
@@ -263,7 +251,73 @@ const props = defineProps<{
   isCodeBlock: boolean
   hasBlockAttrs: boolean
   isNote?: boolean
+  currentSlideLayout?: string
 }>()
+
+const isMultiColsLayout = computed(() => {
+  const l = props.currentSlideLayout || ''
+  return ['two-cols', 'two-cols-header', 'three-cols-header'].includes(l)
+})
+
+const slotControlTitle = computed(() => {
+  const l = props.currentSlideLayout || ''
+  if (l === 'three-cols-header') return '三栏插槽归属 (Slot)'
+  if (l === 'two-cols-header') return '带表头双栏插槽 (Slot)'
+  return '多栏插槽归属 (Slot)'
+})
+
+const slotControlDesc = computed(() => {
+  const l = props.currentSlideLayout || ''
+  if (l === 'three-cols-header') return '在 three-cols-header 版式中的内容块位置'
+  if (l === 'two-cols-header') return '在 two-cols-header 版式中的内容块位置'
+  if (l === 'two-cols') return '在 two-cols 双栏版式中的归属'
+  return '在当前分栏版式中的内容块位置'
+})
+
+const availableSlots = computed(() => {
+  const l = props.currentSlideLayout || ''
+  if (l === 'three-cols-header') {
+    return [
+      { value: 'header', label: '表头' },
+      { value: 'col-1', label: '第 1 栏' },
+      { value: 'col-2', label: '第 2 栏' },
+      { value: 'col-3', label: '第 3 栏' },
+    ]
+  }
+  if (l === 'two-cols-header') {
+    return [
+      { value: 'header', label: '表头' },
+      { value: 'left', label: '左栏' },
+      { value: 'right', label: '右栏' },
+    ]
+  }
+  if (l === 'two-cols') {
+    return [
+      { value: '', label: '默认 (左)' },
+      { value: 'right', label: '右栏' },
+    ]
+  }
+  return [
+    { value: '', label: '默认' },
+    { value: 'header', label: '表头' },
+    { value: 'left', label: '左栏' },
+    { value: 'right', label: '右栏' },
+  ]
+})
+
+function isSlotActive(val: string): boolean {
+  const s = props.elemSlot || ''
+  if (!val) {
+    return !s || s === 'default'
+  }
+  if (s === val) return true
+  if (val === 'col-1' && s === 'left') return true
+  if (val === 'col-2' && s === 'center') return true
+  if (val === 'col-3' && s === 'right') return true
+  if (val === 'left' && s === 'col-1') return true
+  if (val === 'right' && s === 'col-2') return true
+  return false
+}
 
 const emit = defineEmits<{
   (e: 'toggleNote'): void

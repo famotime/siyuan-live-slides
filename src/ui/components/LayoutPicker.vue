@@ -32,9 +32,11 @@ const emit = defineEmits<{
 const layouts = [
   { name: 'cover', label: '封面', icon: '🎯', desc: '大标题与副标题封面页' },
   { name: 'default', label: '标准', icon: '📄', desc: '标题在上方，内容在下方' },
+  { name: 'two-cols', label: '双栏', icon: '▥', desc: '左右左右双栏对比展示' },
+  { name: 'two-cols-header', label: '表头双栏', icon: '☲', desc: '顶部通栏标题，下方左右双栏' },
+  { name: 'three-cols-header', label: '表头三栏', icon: '☰', desc: '顶部通栏标题，下方等宽三栏' },
   { name: 'image-right', label: '图右', icon: '🖼️', desc: '左侧为内容，右侧全屏背景图' },
   { name: 'image-left', label: '图左', icon: '🎨', desc: '左侧全屏背景图，右侧为内容' },
-  { name: 'two-cols', label: '双栏', icon: '▥', desc: '左右左右双栏对比展示' },
   { name: 'center', label: '居中', icon: '🀄', desc: '内容全屏垂直水平居中' },
   { name: 'fact', label: '大字报', icon: '🔢', desc: '核心数据或指标突出展示' },
   { name: 'intro', label: '介绍', icon: '👤', desc: '演讲者自我介绍或章节导览' },

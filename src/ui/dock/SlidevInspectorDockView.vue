@@ -68,6 +68,7 @@
         :page-background="pageBackground"
         :page-image="pageImage"
         :page-notes="currentSlideNotes"
+        :page-index="targetPageIndex"
         @update:page-layout="onLayoutChange"
         @update:page-transition="onTransitionChange"
         @update:page-background="onBackgroundChange"
@@ -89,6 +90,7 @@
         :is-code-block="isCodeBlock"
         :has-block-attrs="hasBlockAttrs"
         :is-note="isNoteBlock"
+        :current-slide-layout="currentSlideLayout"
         @toggle-note="onToggleNoteBlock"
         @toggle-elem-click="toggleElemClick"
         @update:elem-click="onElemClickStepChange"
@@ -130,13 +132,15 @@
 <script setup lang="ts">
 import { ref, computed, inject } from 'vue'
 import { showMessage } from 'siyuan'
-import { setBlockAttrs, insertBlock, appendBlock, updateBlock, deleteBlock, chatAI } from '@/api'
+import { setBlockAttrs, insertBlock, appendBlock, updateBlock, deleteBlock, getBlockKramdown, chatAI } from '@/api'
 import { mirrorBlockSelection } from '@/sync/selection-mirror'
 import PageInspectorSection from '@/ui/components/PageInspectorSection.vue'
 import BlockInspectorSection from '@/ui/components/BlockInspectorSection.vue'
 import DocInspectorSection from '@/ui/components/DocInspectorSection.vue'
 import SlidevImportDialog from '@/ui/components/SlidevImportDialog.vue'
 import SlidevIcon from '@/ui/components/SlidevIcon.vue'
+import { extractCleanNoteText } from '@/compiler/slidev-ast-builder'
+import { globalDocumentCompiler } from '@/compiler/document-compiler'
 import { generateSpeakerNotesWithAIDetailed } from '@/ai/notes-generator'
 import { buildStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'
 import { triggerPdfExport } from '@/export/pdf-exporter'
@@ -273,6 +277,8 @@ const targetSlide = computed(() => {
 
 const currentSlideNotes = computed(() => targetSlide.value?.notes || '')
 const currentSlideNoteBlockId = computed(() => targetSlide.value?.noteBlocks?.[0]?.id || '')
+const currentSlideLayout = computed(() => targetSlide.value?.frontmatter?.layout || 'default')
+const targetPageIndex = computed(() => targetSlide.value?.pageIndex || 1)
 const isNoteBlock = computed(() => Boolean(activeBlockAttrs.value[ATTR_ELEM_NOTE] || activeBlockAttrs.value['slidev-note']))
 
 // 内容块属性绑定
@@ -303,12 +309,13 @@ async function saveAttr(key: string, value: string) {
   if (!targetId) return
 
   activeBlockAttrs.value[key] = value
+  globalDocumentCompiler.setBlockAttrOverride(targetId, { [key]: value })
   triggerSaveNotice('保存中...')
   try {
     await setBlockAttrs(targetId, { [key]: value })
     triggerSaveNotice('已同步')
     if (plugin) {
-      plugin.compileCurrentDocument()
+      await plugin.compileCurrentDocument()
     }
   } catch (e) {
     triggerSaveNotice('同步失败')
@@ -319,6 +326,7 @@ async function saveDocAttr(key: string, value: string) {
   const docId = currentDocId.value || activeBlockId.value
   if (!docId) return
   activeBlockAttrs.value[key] = value
+  globalDocumentCompiler.setBlockAttrOverride(docId, { [key]: value })
   if (latestDoc.value?.config) {
     if (key === ATTR_DOC_THEME) latestDoc.value.config.theme = value
     if (key === ATTR_DOC_ASPECT_RATIO) latestDoc.value.config.aspectRatio = value
@@ -329,7 +337,7 @@ async function saveDocAttr(key: string, value: string) {
     await setBlockAttrs(docId, { [key]: value })
     triggerSaveNotice('已更新')
     if (plugin) {
-      plugin.compileCurrentDocument(docId)
+      await plugin.compileCurrentDocument(docId)
     }
   } catch (e) {
     triggerSaveNotice('更新失败')
@@ -358,19 +366,73 @@ function onImageChange(val: string) {
 async function onToggleNoteBlock() {
   const targetId = activeBlockId.value
   if (!targetId) return
-  const nextVal = isNoteBlock.value ? '' : 'true'
-  await saveAttr(ATTR_ELEM_NOTE, nextVal)
-  if (nextVal) {
-    showMessage('已设为讲稿备注（不在幻灯片中渲染）')
+
+  if (!isNoteBlock.value) {
+    // 开启讲稿备注：将当前块转为思源标准提示块 (NodeCallout)
+    triggerSaveNotice('转换中...')
+    try {
+      // 1. 获取目标块的原始内容
+      let sourceText = rawSnippet.value
+      try {
+        const kramdownRes = await getBlockKramdown(targetId)
+        if (kramdownRes?.kramdown) {
+          sourceText = kramdownRes.kramdown
+        }
+      } catch (_) {}
+
+      // 2. 清洗正文并构造思源标准提示块 Markdown (> [!NOTE] 💡 演讲备注)
+      const cleanContent = extractCleanNoteText(sourceText) || sourceText.replace(/<[^>]+>/g, '').trim() || '在此输入本页讲稿提词...'
+      const noteBody = cleanContent.split(/\r?\n/).map(line => `> ${line}`).join('\n')
+      const calloutMd = `> [!NOTE] 💡 演讲备注\n${noteBody}\n{: custom-slidev-note="true"}`
+
+      // 3. 将原块更新为标准提示块
+      await updateBlock('markdown', calloutMd, targetId)
+
+      // 4. 设置属性并覆盖缓存
+      await setBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: 'true' })
+      globalDocumentCompiler.setBlockAttrOverride(targetId, { [ATTR_ELEM_NOTE]: 'true' })
+      activeBlockAttrs.value[ATTR_ELEM_NOTE] = 'true'
+      activeBlockType.value = 'NodeCallout'
+
+      triggerSaveNotice('已设为讲稿备注')
+      showMessage('已转为讲稿备注提示块（不在幻灯片中渲染）')
+
+      // 5. 立即重新编译文档以更新 Dock 面板模型
+      if (plugin) {
+        await plugin.compileCurrentDocument()
+      }
+    } catch (err) {
+      console.error('[SiYuanSlidev] 转换讲稿备注提示块失败:', err)
+      triggerSaveNotice('设置失败')
+      showMessage('转为讲稿备注提示块失败')
+    }
   } else {
-    showMessage('已取消讲稿备注')
+    // 取消讲稿备注
+    triggerSaveNotice('取消中...')
+    try {
+      await setBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: '', 'slidev-note': '' })
+      globalDocumentCompiler.setBlockAttrOverride(targetId, { [ATTR_ELEM_NOTE]: '', 'slidev-note': '' })
+      delete activeBlockAttrs.value[ATTR_ELEM_NOTE]
+      delete activeBlockAttrs.value['slidev-note']
+
+      triggerSaveNotice('已取消备注')
+      showMessage('已取消讲稿备注')
+
+      if (plugin) {
+        await plugin.compileCurrentDocument()
+      }
+    } catch (err) {
+      console.error('[SiYuanSlidev] 取消讲稿备注失败:', err)
+      triggerSaveNotice('取消失败')
+      showMessage('取消讲稿备注失败')
+    }
   }
 }
 
 async function createNoteBlockOnCurrentSlide(noteContent?: string) {
   const content = noteContent || '在此输入本页讲稿提词...'
   const noteLines = content.split(/\r?\n/).map(l => `> ${l}`).join('\n')
-  const markdownPayload = `> 💡 **演讲备注**\n${noteLines}\n{: custom-slidev-note="true"}`
+  const markdownPayload = `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slidev-note="true"}`
 
   const slides = latestDoc.value?.slides || []
   const curSlide = targetSlide.value
@@ -392,11 +454,12 @@ async function createNoteBlockOnCurrentSlide(noteContent?: string) {
   const newId = insertedRes?.[0]?.doOperations?.[0]?.id || insertedRes?.[0]?.id
   if (newId) {
     await setBlockAttrs(newId, { [ATTR_ELEM_NOTE]: 'true' })
+    globalDocumentCompiler.setBlockAttrOverride(newId, { [ATTR_ELEM_NOTE]: 'true' })
     mirrorBlockSelection(newId, plugin?.app)
   }
 
   if (plugin) {
-    plugin.compileCurrentDocument()
+    await plugin.compileCurrentDocument()
   }
   return newId
 }
@@ -444,9 +507,10 @@ async function onGenerateNotesWithAI() {
   if (result.notes) {
     const existingNoteBlockId = currentSlideNoteBlockId.value
     if (existingNoteBlockId) {
-      const formattedNoteMd = `> 💡 **演讲备注**\n${result.notes.split(/\r?\n/).map(l => `> ${l}`).join('\n')}\n{: custom-slidev-note="true"}`
+      const formattedNoteMd = `> [!NOTE] 💡 演讲备注\n${result.notes.split(/\r?\n/).map(l => `> ${l}`).join('\n')}\n{: custom-slidev-note="true"}`
       await updateBlock('markdown', formattedNoteMd, existingNoteBlockId)
       await setBlockAttrs(existingNoteBlockId, { [ATTR_ELEM_NOTE]: 'true' })
+      globalDocumentCompiler.setBlockAttrOverride(existingNoteBlockId, { [ATTR_ELEM_NOTE]: 'true' })
       mirrorBlockSelection(existingNoteBlockId, plugin?.app)
     } else {
       await createNoteBlockOnCurrentSlide(result.notes)
@@ -457,7 +521,7 @@ async function onGenerateNotesWithAI() {
       showMessage('未获取到思源 AI 响应，已生成预设提词卡模板', 5000)
     }
     if (plugin) {
-      plugin.compileCurrentDocument()
+      await plugin.compileCurrentDocument()
     }
   }
 }
@@ -508,13 +572,14 @@ async function onClearBlockAttrs() {
     [ATTR_PAGE_BACKGROUND]: '',
     [ATTR_PAGE_IMAGE]: '',
   })
+  globalDocumentCompiler.clearBlockAttrOverride(targetId)
   activeBlockAttrs.value = {}
   elemShikiLines.value = ''
   pageBackground.value = ''
   pageImage.value = ''
   showMessage('已清除本块演示属性')
   if (plugin) {
-    plugin.compileCurrentDocument()
+    await plugin.compileCurrentDocument()
   }
 }
 

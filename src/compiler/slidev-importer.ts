@@ -692,9 +692,9 @@ export function parseSlidevPresentation(
       for (let i = 0; i < codeTokens.length; i++) {
         pageNotes = pageNotes.replace(`__CODE_TOKEN_NOTE_${i}__`, codeTokens[i])
       }
-      // 转换为正文讲稿备注提示块，并绑定 custom-slidev-note="true"
+      // 转换为正文讲稿备注提示块 (NodeCallout)，并绑定 custom-slidev-note="true"
       const noteLines = pageNotes.split(/\r?\n/).map(l => `> ${l}`).join("\n")
-      const noteBlockMd = `> 💡 **演讲备注**\n${noteLines}\n{: custom-slidev-note="true"}`
+      const noteBlockMd = `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slidev-note="true"}`
       body = body ? `${body}\n\n${noteBlockMd}` : noteBlockMd
     }
 

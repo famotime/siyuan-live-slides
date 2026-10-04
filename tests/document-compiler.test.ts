@@ -105,4 +105,52 @@ describe("DocumentCompilerService - compile (编排编译服务)", () => {
     expect(doc).toBeDefined()
     expect(doc.slides.length).toBe(1)
   })
+
+  it("应通过 setBlockAttrOverride 覆盖 SQLite 查询的旧 IAL，确保讲稿备注即时生效", async () => {
+    const mockGetBlockAttrs = vi.fn().mockResolvedValue({})
+    const mockGetChildBlocks = vi.fn().mockResolvedValue([
+      { id: "b1", type: "NodeHeading", content: "标题", markdown: "# 第一页" },
+      { id: "b2", type: "NodeThematicBreak", content: "", markdown: "---" },
+      { id: "b3", type: "NodeParagraph", content: "原本为正文", markdown: "> [!NOTE] 💡 演讲备注\n> 这是刚设为讲稿的提词内容" },
+    ])
+    // 模拟 SQLite 存在延迟，尚未同步 b3 的 custom-slidev-note 属性
+    const mockSql = vi.fn().mockImplementation((query: string) => {
+      if (query.includes("root_id = 'doc-delay'")) {
+        return Promise.resolve([
+          { id: "b1", ial: "{: }" },
+          { id: "b2", ial: "{: custom-slidev-layout=\"default\" }" },
+          { id: "b3", ial: "{: }" }, // 数据库中依然是空的！
+        ])
+      }
+      return Promise.resolve([])
+    })
+
+    const compiler = new DocumentCompilerService({
+      getBlockAttrs: mockGetBlockAttrs,
+      getChildBlocks: mockGetChildBlocks,
+      sql: mockSql,
+    })
+
+    // 1. 在未设置 override 时，b3 被当成普通内容块
+    const docBefore = await compiler.compile("doc-delay")
+    expect(docBefore.slides.length).toBe(2)
+    expect(docBefore.slides[1].notes).toBe("")
+    expect(docBefore.slides[1].blocks.some(b => b.id === "b3")).toBe(true)
+
+    // 2. 注入即时覆盖缓存 (模拟用户在 Dock 中点击设为讲稿备注)
+    compiler.setBlockAttrOverride("b3", { "custom-slidev-note": "true" })
+
+    // 3. 再次编译，即便 SQLite 依然返回空 IAL，b3 也应立即被识别为讲稿备注块
+    const docAfter = await compiler.compile("doc-delay")
+    expect(docAfter.slides.length).toBe(2)
+    expect(docAfter.slides[1].notes).toBe("这是刚设为讲稿的提词内容")
+    expect(docAfter.slides[1].noteBlocks?.length).toBe(1)
+    expect(docAfter.slides[1].noteBlocks?.[0].id).toBe("b3")
+    expect(docAfter.slides[1].blocks.some(b => b.id === "b3")).toBe(false) // 幻灯片正文中排除
+
+    // 4. 清除覆盖
+    compiler.clearBlockAttrOverride("b3")
+    const docReset = await compiler.compile("doc-delay")
+    expect(docReset.slides[1].notes).toBe("")
+  })
 })

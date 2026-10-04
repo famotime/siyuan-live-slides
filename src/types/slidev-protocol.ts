@@ -41,6 +41,7 @@ export type TSlideLayout =
   | "cover"
   | "two-cols"
   | "two-cols-header"
+  | "three-cols-header"
   | "image-right"
   | "image-left"
   | "center"
@@ -78,7 +79,7 @@ export interface ISlidevBlockItem {
   clicks?: string
   motion?: ISlidevMotionConfig
   shikiLines?: string
-  slot?: "left" | "right" | "default" | string
+  slot?: "header" | "left" | "right" | "col-1" | "col-2" | "col-3" | "default" | string
   isNote?: boolean
   attributes?: Record<string, string>
 }

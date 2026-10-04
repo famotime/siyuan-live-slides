@@ -28,6 +28,7 @@ import {
 import { mirrorBlockSelection } from "@/sync/selection-mirror"
 import { PropertyManagerBridge } from "@/synergy/property-manager-bridge"
 import type { ISlidevDocument, ISiYuanBlockNode } from "@/types/slidev-protocol"
+import { ATTR_ELEM_NOTE } from "@/types/slidev-protocol"
 import "@/index.scss"
 
 // 专属 SVG 幻灯片放映图标
@@ -205,11 +206,12 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
 
         const notes = await generateSpeakerNotesWithAI(dummySlide, chatAI)
         const noteLines = notes.split(/\r?\n/).map((l: string) => `> ${l}`).join("\n")
-        const noteMd = `> 💡 **演讲备注**\n${noteLines}\n{: custom-slidev-note="true"}`
+        const noteMd = `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slidev-note="true"}`
         const appendRes: any = await appendBlock("markdown", noteMd, this.currentDocId).catch(() => null)
         const newBlockId = appendRes?.[0]?.doOperations?.[0]?.id || appendRes?.[0]?.id
         if (newBlockId) {
           await setBlockAttrs(newBlockId, { "custom-slidev-note": "true" })
+          globalDocumentCompiler.setBlockAttrOverride(newBlockId, { "custom-slidev-note": "true" })
           mirrorBlockSelection(newBlockId, this.app)
         }
         showMessage("已成功生成口播提词卡并插入为正文讲稿备注块")
@@ -770,16 +772,39 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
    * 同步当前激活块元信息至右侧演示配置面板
    */
   private async syncInspectorBlock(blockEl: HTMLElement, blockId: string, blockType: string) {
-    const isDivider = blockType === "NodeThematicBreak"
-    const isCode = blockType === "NodeCodeBlock"
-    const contentText = blockEl.innerText?.trim() || ""
-    const attrs = await getBlockAttrs(blockId).catch(() => ({}))
+    let effectiveEl = blockEl
+    let effectiveId = blockId
+    let effectiveType = blockType
+
+    // 智能识别 Callout 提示块容器：若当前选中的是提示块内部的段落等子元素，检查外层 Callout 是否属于讲稿备注
+    const calloutEl = blockEl.closest('[data-type="NodeCallout"]') as HTMLElement | null
+    if (calloutEl && calloutEl !== blockEl) {
+      const calloutId = calloutEl.getAttribute("data-node-id")
+      if (calloutId) {
+        const calloutAttrs = (await getBlockAttrs(calloutId).catch(() => ({}))) || {}
+        const override = globalDocumentCompiler.getBlockAttrOverride(calloutId) || {}
+        const mergedAttrs = { ...calloutAttrs, ...override }
+        if (mergedAttrs[ATTR_ELEM_NOTE] || mergedAttrs["slidev-note"]) {
+          effectiveEl = calloutEl
+          effectiveId = calloutId
+          effectiveType = "NodeCallout"
+        }
+      }
+    }
+
+    const isDivider = effectiveType === "NodeThematicBreak"
+    const isCode = effectiveType === "NodeCodeBlock"
+    const contentText = effectiveEl.innerText?.trim() || ""
+    const attrs = (await getBlockAttrs(effectiveId).catch(() => ({}))) || {}
+    const override = globalDocumentCompiler.getBlockAttrOverride(effectiveId) || {}
+    const finalAttrs = { ...attrs, ...override }
+
     updateInspectorCurrentBlock({
-      id: blockId,
+      id: effectiveId,
       rootId: this.currentDocId,
-      type: blockType,
+      type: effectiveType,
       content: contentText,
-      attrs,
+      attrs: finalAttrs,
       isDivider,
       isCode,
     })

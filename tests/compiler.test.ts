@@ -370,4 +370,22 @@ describe("Slidev AST Builder (核心虚拟文档构建器)", () => {
     expect(slide.rawMarkdown).toContain("# 页标题")
     expect(slide.rawMarkdown).toContain("末尾常规段落")
   })
+
+  it("extractCleanNoteText 应准确剥离思源原生 Callout 提示块 ([!NOTE] / [!TIP]) 及各种前缀", () => {
+    // 1. 标准 Callout 提示块带标题
+    const callout1 = `> [!NOTE] 💡 演讲备注\n> 这里是纯净的提词内容第一行\n> 这里是第二行\n{: custom-slidev-note="true"}`
+    expect(extractCleanNoteText(callout1)).toBe("这里是纯净的提词内容第一行\n这里是第二行")
+
+    // 2. 带 Tip 提示块及 Obsidian 风格
+    const callout2 = `> [!TIP]\n> 💡 **演讲备注**：\n> 重点讲解核心设计原则`
+    expect(extractCleanNoteText(callout2)).toBe("重点讲解核心设计原则")
+
+    // 3. 普通引述块与容器语法
+    const callout3 = `::: tip\n> 讲稿备注：引导观众关注右侧图表\n:::`
+    expect(extractCleanNoteText(callout3)).toBe("引导观众关注右侧图表")
+
+    // 4. 英文 Notes: 格式
+    const callout4 = `> Notes: Remember to switch the camera`
+    expect(extractCleanNoteText(callout4)).toBe("Remember to switch the camera")
+  })
 })
