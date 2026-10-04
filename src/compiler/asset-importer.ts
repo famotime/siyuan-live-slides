@@ -2,6 +2,7 @@ import JSZip from "jszip"
 import type { IParsedSlidevPresentation } from "./slidev-importer"
 
 export const MEDIA_EXTENSIONS = /\.(?:png|jpe?g|gif|svg|webp|avif|ico|bmp|tiff?|mp4|webm|mp3|wav|ogg)$/i
+export const CODE_EXTENSIONS = /\.(?:ts|js|mjs|cjs|jsx|tsx|vue|json|css|scss|less|html|py|rs|go|java|c|cpp|h|sh|bash|yaml|yml|toml)$/i
 
 export interface IExtractedAssetItem {
   zipPath: string
@@ -57,7 +58,7 @@ export async function extractSlidevZip(
   // 3. 读取子页面与其他 Markdown 文本以及媒体资产
   for (const entry of fileEntries) {
     const p = entry.path
-    if (p.toLowerCase().endsWith(".md")) {
+    if (p.toLowerCase().endsWith(".md") || CODE_EXTENSIONS.test(p) || p.includes("snippets/")) {
       const text = await entry.file.async("string")
       virtualFiles[p] = text
       // 同时记录去除根目录前缀的相对路径 (如 starter/pages/01.md -> pages/01.md)

@@ -295,6 +295,26 @@ export function buildSlidevDocument(
       rawMd = injectShikiSpotlight(rawMd, elemAttrs.shikiLines)
     }
 
+    // 检查是否为双栏插槽分界标记块: ::right::
+    const isSlotDivider = rawMd.trim() === "::right::" || (node.content && node.content.trim() === "::right::")
+    if (isSlotDivider) {
+      currentPage.blocks.push({
+        id: node.id,
+        type: node.type,
+        content: "::right::",
+        rawMarkdown: "::right::",
+        slot: "slot-divider-right",
+        attributes: node.ial,
+      })
+      continue
+    }
+
+    // 若当前页前面存在 ::right:: 分界标记且当前块未显式声明 slot，自动归属右栏
+    let effectiveSlot = elemAttrs.slot
+    if (!effectiveSlot && currentPage.blocks.some(b => b.slot === "slot-divider-right")) {
+      effectiveSlot = "right"
+    }
+
     const blockItem: ISlidevBlockItem = {
       id: node.id,
       type: node.type,
@@ -303,7 +323,7 @@ export function buildSlidevDocument(
       clicks: elemAttrs.clicks,
       motion: elemAttrs.motion,
       shikiLines: elemAttrs.shikiLines,
-      slot: elemAttrs.slot,
+      slot: effectiveSlot,
       attributes: node.ial,
     }
 
@@ -329,16 +349,17 @@ export function buildSlidevDocument(
       parts.push(fmYaml)
     }
 
-    // 组织多栏插槽或常规内容
-    const leftBlocks = page.blocks.filter(b => b.slot === "left")
-    const rightBlocks = page.blocks.filter(b => b.slot === "right")
+    // 组织多栏插槽或常规内容（排除纯分界占位块）
+    const contentBlocks = page.blocks.filter(b => b.slot !== "slot-divider-right")
+    const leftBlocks = contentBlocks.filter(b => b.slot === "left")
+    const rightBlocks = contentBlocks.filter(b => b.slot === "right")
 
     if (page.frontmatter.layout === "two-cols" && (leftBlocks.length > 0 || rightBlocks.length > 0)) {
       // 双栏布局：分别输出默认/左栏与 ::right:: 右栏
       const renderBlocks = (list: ISlidevBlockItem[]) =>
         list.map(b => wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion)).join("\n\n")
 
-      const leftContent = renderBlocks(leftBlocks.length > 0 ? leftBlocks : page.blocks.filter(b => b.slot !== "right"))
+      const leftContent = renderBlocks(leftBlocks.length > 0 ? leftBlocks : contentBlocks.filter(b => b.slot !== "right"))
       const rightContent = renderBlocks(rightBlocks)
 
       parts.push(leftContent)
@@ -347,7 +368,7 @@ export function buildSlidevDocument(
       }
     } else {
       // 常规单栏布局
-      for (const block of page.blocks) {
+      for (const block of contentBlocks) {
         parts.push(wrapElementDirectives(block.rawMarkdown, block.clicks, block.motion))
       }
     }

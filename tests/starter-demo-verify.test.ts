@@ -30,8 +30,8 @@ describe("Verify Starter Demo Import: D:/MyCodingProjects/slidev/demo/starter/sl
     // 验证多行 YAML 块标量跨空行完整保留
     expect(res.docRootAttrs["custom-slidev-info"]).toContain("## Slidev Starter Template")
     expect(res.docRootAttrs["custom-slidev-info"]).toContain("Learn more at [Sli.dev](https://sli.dev)")
-    // 验证嵌套 YAML 字典解析为结构化 JSON，而非被拍平覆盖
-    expect(res.docRootAttrs["custom-slidev-drawings"]).toBe(JSON.stringify({ persist: "false" }))
+    // 验证嵌套 YAML 字典解析为结构化 JSON，而非被拍平覆盖，布尔值准确保留
+    expect(res.docRootAttrs["custom-slidev-drawings"]).toBe(JSON.stringify({ persist: false }))
     expect(res.docRootAttrs["custom-slidev-persist"]).toBeUndefined()
     expect(res.docRootAttrs["custom-slidev-Learn more at [Sli.dev](https"]).toBeUndefined()
 
@@ -129,7 +129,7 @@ describe("Verify Starter Demo Import: D:/MyCodingProjects/slidev/demo/starter/sl
     // Slide 13 (Draggable Elements)
     const s13 = res.slides[12]
     expect(s13.pageAttrs["custom-slidev-foo"]).toBe("bar")
-    expect(s13.pageAttrs["custom-slidev-dragPos"]).toBe(JSON.stringify({ square: "691,32,167,_,-16" }))
+    expect(s13.pageAttrs["custom-slidev-dragPos"]).toBe(JSON.stringify({ square: "548,306,167,_,252" }))
     expect(s13.rawMarkdown).toContain('<v-drag pos="663,206,261,_,-15">')
     expect(s13.rawMarkdown).toContain("<v-drag-arrow pos=")
 

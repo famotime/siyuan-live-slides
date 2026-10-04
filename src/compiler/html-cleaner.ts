@@ -157,9 +157,14 @@ export function protectVueDivContainers(html: string): { text: string; tokens: s
  * 将幻灯片中的展示性 HTML 容器与标签智能剥离并转换为纯净原生的 Markdown 内容
  */
 export function convertHtmlToCleanMarkdown(html: string): string {
-  // 1. 保护现有 Markdown 代码块与行内代码 (避免误伤代码块内的示例 HTML)
+  // 1. 保护现有 Markdown 多行围栏代码块 (必须以行首开门并独占一行闭合) 与单行行内代码
   const codeBlocks: string[] = []
-  let text = html.replace(/(````[\s\S]*?````|```[\s\S]*?```|`[^`\n]+`)/g, (match) => {
+  let text = html.replace(/(?:^[ \t]*(`{3,}|~{3,})[^\n\r]*\r?\n[\s\S]*?\r?\n[ \t]*\1(?=[ \t]*(?:\r?\n|$)))/gm, (match) => {
+    const placeholder = `__CODE_TOKEN_${codeBlocks.length}__`
+    codeBlocks.push(match)
+    return placeholder
+  })
+  text = text.replace(/(`+)(?:[^\n\r`]|(?!\1)`)+?\1/g, (match) => {
     const placeholder = `__CODE_TOKEN_${codeBlocks.length}__`
     codeBlocks.push(match)
     return placeholder
@@ -417,9 +422,15 @@ export function convertHtmlToCleanMarkdown(html: string): string {
   text = text.replace(/<b\b[^>]*>([\s\S]*?)<\/b>/gi, "**$1**")
   text = text.replace(/<strong\b[^>]*>([\s\S]*?)<\/strong>/gi, "**$1**")
   text = text.replace(/<i\b[^>]*>([\s\S]*?)<\/i>/gi, "*$1*")
-  text = text.replace(/<em\b[^>]*>([\s\S]*?)<\/em>/gi, "*$1*")
-  text = text.replace(/<code\b[^>]*>([\s\S]*?)<\/code>/gi, "`$1`")
-  text = text.replace(/<time\b[^>]*>([\s\S]*?)<\/time>/gi, "**$1** ")
+  text = text.replace(/<code\b[^>]*>([\s\S]*?)<\/code>/gi, (_, inner) => {
+    if (inner.startsWith("`") && inner.endsWith("`")) return inner
+    if (inner.includes("`")) {
+      const maxTicks = (inner.match(/`+/g) || []).reduce((max: number, m: string) => Math.max(max, m.length), 0)
+      const fence = "`".repeat(maxTicks + 1)
+      return `${fence} ${inner} ${fence}`
+    }
+    return `\`${inner}\``
+  })
   text = text.replace(/<small\b[^>]*>([\s\S]*?)<\/small>/gi, "*$1*")
 
   // 防御性处理: 修复直接相连的粗体标记闭合 (****)，补充空格避免 Markdown 粗体解析损坏

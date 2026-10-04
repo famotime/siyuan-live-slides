@@ -46,6 +46,105 @@ export interface IImportOptions {
   isolateStyleTags?: boolean
   cleanHtmlToMarkdown?: boolean
   virtualFiles?: Record<string, string>
+  baseDir?: string
+}
+
+/**
+ * 跨环境（Node/Electron 桌面宿主）安全尝试读取本地磁盘文件
+ */
+export function tryReadFsFile(targetPath: string): string | null {
+  try {
+    if (typeof process !== "undefined" && typeof require !== "undefined") {
+      const fs = require("fs")
+      if (fs.existsSync(targetPath)) {
+        return fs.readFileSync(targetPath, "utf-8")
+      }
+    }
+  } catch {
+    // 浏览器沙箱环境安全跳过
+  }
+  return null
+}
+
+/**
+ * 解析并展开 Slidev 外部代码切片语法: <<< @/snippets/external.ts#snippet 或 <<< ./snippets/foo.ts
+ */
+export function resolveCodeSnippet(
+  rawSnippetDirective: string,
+  options?: IImportOptions,
+): string | null {
+  const match = rawSnippetDirective.match(/^[ \t]*<<<[ \t]+([^\s]+)/)
+  if (!match) return null
+
+  const targetExpr = match[1].trim()
+  const hashIdx = targetExpr.indexOf("#")
+  const targetPath = hashIdx !== -1 ? targetExpr.slice(0, hashIdx) : targetExpr
+  const regionName = hashIdx !== -1 ? targetExpr.slice(hashIdx + 1) : ""
+
+  const cleanPath = targetPath.replace(/^@\//, "").replace(/^\.\//, "")
+  const virtualFiles = options?.virtualFiles || {}
+
+  let codeContent = virtualFiles[targetPath]
+    || virtualFiles[cleanPath]
+    || virtualFiles[`./${cleanPath}`]
+    || virtualFiles[`@/${cleanPath}`]
+
+  if (!codeContent && Object.keys(virtualFiles).length > 0) {
+    const filename = cleanPath.split("/").pop()
+    for (const [k, v] of Object.entries(virtualFiles)) {
+      if (k.endsWith(`/${cleanPath}`) || (filename && k.endsWith(`/${filename}`))) {
+        codeContent = v
+        break
+      }
+    }
+  }
+
+  // 尝试从磁盘读取
+  if (!codeContent) {
+    const candidatePaths: string[] = []
+    if (options?.baseDir) {
+      try {
+        const path = require("path")
+        candidatePaths.push(path.resolve(options.baseDir, cleanPath))
+        candidatePaths.push(path.resolve(options.baseDir, targetPath))
+      } catch {}
+    }
+    try {
+      const path = require("path")
+      candidatePaths.push(path.resolve(process.cwd(), cleanPath))
+    } catch {}
+
+    for (const cp of candidatePaths) {
+      const diskContent = tryReadFsFile(cp)
+      if (diskContent !== null) {
+        codeContent = diskContent
+        break
+      }
+    }
+  }
+
+  if (!codeContent) {
+    return null
+  }
+
+  // 提取 region 区域代码
+  let extractedCode = codeContent
+  if (regionName) {
+    const regionRegex = new RegExp(
+      `#(?:region|REGION)\\s+${regionName}\\r?\\n([\\s\\S]*?)#(?:endregion|ENDREGION)\\s+${regionName}`,
+      "i"
+    )
+    const rMatch = codeContent.match(regionRegex)
+    if (rMatch) {
+      extractedCode = rMatch[1].trimEnd()
+    }
+  }
+
+  // 推导代码块语言后缀
+  const extMatch = cleanPath.match(/\.([a-zA-Z0-9]+)$/)
+  const lang = extMatch ? extMatch[1] : ""
+
+  return `\`\`\`${lang}\n${extractedCode}\n\`\`\``
 }
 
 /**
@@ -88,7 +187,7 @@ export function parseYamlFrontmatter(yamlStr: string): Record<string, any> {
     const colonIdx = rawLine.indexOf(":")
     if (colonIdx > 0) {
       const key = rawLine.slice(0, colonIdx).trim()
-      let val = rawLine.slice(colonIdx + 1).trim()
+      let val: any = rawLine.slice(colonIdx + 1).trim()
 
       // 1. 多行标量 (| 逐行保留, > 折叠为空格)
       if (val === "|" || val === ">") {
@@ -179,6 +278,11 @@ export function parseYamlFrontmatter(yamlStr: string): Record<string, any> {
       // 3. 常规标量值
       if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
         val = val.slice(1, -1)
+      } else {
+        if (val === "true") val = true
+        else if (val === "false") val = false
+        else if (val === "null") val = null
+        else if (/^-?\d+(?:\.\d+)?$/.test(val)) val = Number(val)
       }
 
       result[key] = val
@@ -202,12 +306,25 @@ function extractSlideMatter(raw: string): IRawSlideData {
   let frontmatter: Record<string, any> = {}
   let content = raw.trim()
 
-  const fmMatch = content.match(RE_FRONTMATTER)
-  if (fmMatch) {
-    frontmatter = parseYamlFrontmatter(fmMatch[1])
-    content = content.slice(fmMatch[0].length).trim()
-  } else {
-    const ymlMatch = content.match(RE_YAML_BLOCK)
+  const fmMatch = content.match(/^---[^\n\r]*\r?\n([\s\S]*?)\r?\n---(?=[ \t]*(?:\r?\n|$))/)
+  if (fmMatch && !fmMatch[1].includes("```")) {
+    const parsed = parseYamlFrontmatter(fmMatch[1])
+    if (Object.keys(parsed).length > 0 || !fmMatch[1].trim()) {
+      frontmatter = parsed
+      content = content.slice(fmMatch[0].length).trim()
+      return { frontmatter, content }
+    }
+  }
+
+  // 若开头只是一行单独的 ---（段落分割线），剥离前导 --- 保持后续正文完好
+  if (content.startsWith("---")) {
+    const singleDividerMatch = content.match(/^---[^\n\r]*(?:\r?\n|$)/)
+    if (singleDividerMatch) {
+      content = content.slice(singleDividerMatch[0].length).trim()
+    }
+  }
+
+  const ymlMatch = content.match(RE_YAML_BLOCK)
     if (ymlMatch) {
       frontmatter = parseYamlFrontmatter(ymlMatch[1])
       content = content.slice(ymlMatch[0].length).trim()
@@ -237,7 +354,6 @@ function extractSlideMatter(raw: string): IRawSlideData {
         content = lines.slice(bodyStart).join("\n").trim()
       }
     }
-  }
 
   return { frontmatter, content }
 }
@@ -335,7 +451,13 @@ export function parseSlidevPresentation(
     virtualFiles = {},
   } = options
 
-  const rawSlides = splitSlidevMarkdownChunks(content)
+  // 导入时如果不以 --- 开头，自动在第一段添加 --- 段落
+  let normalizedContent = content
+  if (normalizedContent && !normalizedContent.trimStart().startsWith("---")) {
+    normalizedContent = `---\n\n${normalizedContent.trimStart()}`
+  }
+
+  const rawSlides = splitSlidevMarkdownChunks(normalizedContent)
 
   const docRootAttrs: Record<string, string> = {}
   let docTitle = ""
@@ -414,23 +536,48 @@ export function parseSlidevPresentation(
 
     if (srcVal) {
       const subPath = String(srcVal).trim().replace(/^['"]|['"]$/g, "")
-      const subContent = virtualFiles[subPath]
+      let subContent = virtualFiles[subPath]
         || virtualFiles[subPath.replace(/^\.\//, "")]
         || virtualFiles[`pages/${subPath.replace(/^.*pages\//, "")}`]
 
-      if (subContent) {
-        // 构建除 src 外继承给子页面的 frontmatter 控制属性 (如 hide: false 等)
-        const inheritedAttrs: Record<string, string> = {}
-        if (frontmatter.layout) inheritedAttrs[ATTR_PAGE_LAYOUT] = String(frontmatter.layout)
-        if (frontmatter.transition) inheritedAttrs[ATTR_PAGE_TRANSITION] = String(frontmatter.transition)
-        if (frontmatter.background) inheritedAttrs[ATTR_PAGE_BACKGROUND] = String(frontmatter.background)
-        if (frontmatter.class) inheritedAttrs[ATTR_PAGE_CLASS] = String(frontmatter.class)
-        for (const [k, v] of Object.entries(frontmatter)) {
-          if (!["src", "layout", "transition", "background", "class"].includes(k)) {
-            inheritedAttrs[`custom-slidev-${k}`] = typeof v === "object" ? JSON.stringify(v) : String(v)
+      if (!subContent) {
+        const cleanSub = subPath.replace(/^\.\//, "")
+        const candidatePaths: string[] = []
+        if (options.baseDir) {
+          try {
+            const path = require("path")
+            candidatePaths.push(path.resolve(options.baseDir, cleanSub))
+            candidatePaths.push(path.resolve(options.baseDir, subPath))
+          } catch {}
+        }
+        try {
+          const path = require("path")
+          candidatePaths.push(path.resolve(process.cwd(), cleanSub))
+          candidatePaths.push(path.resolve(process.cwd(), subPath))
+        } catch {}
+
+        for (const cp of candidatePaths) {
+          const diskText = tryReadFsFile(cp)
+          if (diskText !== null) {
+            subContent = diskText
+            break
           }
         }
+      }
 
+      // 构建除 src 外继承给子页面的 frontmatter 控制属性 (如 hide: false 等)
+      const inheritedAttrs: Record<string, string> = {}
+      if (frontmatter.layout) inheritedAttrs[ATTR_PAGE_LAYOUT] = String(frontmatter.layout)
+      if (frontmatter.transition) inheritedAttrs[ATTR_PAGE_TRANSITION] = String(frontmatter.transition)
+      if (frontmatter.background) inheritedAttrs[ATTR_PAGE_BACKGROUND] = String(frontmatter.background)
+      if (frontmatter.class) inheritedAttrs[ATTR_PAGE_CLASS] = String(frontmatter.class)
+      for (const [k, v] of Object.entries(frontmatter)) {
+        if (!["src", "layout", "transition", "background", "class"].includes(k)) {
+          inheritedAttrs[`custom-slidev-${k}`] = typeof v === "object" ? JSON.stringify(v) : String(v)
+        }
+      }
+
+      if (subContent) {
         const subParsed = parseSlidevPresentation(subContent, { ...options, virtualFiles })
         for (const subSlide of subParsed.slides) {
           subSlide.pageIndex = pageIndex++
@@ -439,6 +586,20 @@ export function parseSlidevPresentation(
           const l = subSlide.pageAttrs[ATTR_PAGE_LAYOUT] || "default"
           layoutDistribution[l] = (layoutDistribution[l] || 0) + 1
         }
+        continue
+      } else {
+        // 未提供子页面实体时，生成规范提示占位，防止出现空白黑洞页
+        slides.push({
+          pageIndex: pageIndex++,
+          pageAttrs: { ...inheritedAttrs, "custom-slidev-src": subPath },
+          notes: "",
+          rawMarkdown: `> 📄 **引入外部幻灯片页面**: \`${subPath}\`\n>\n> *提示：如需展示该页面完整内容，请将关联子页面一同打包为 .zip 或通过本地工程导入。*`,
+          hasVueComponent: false,
+          hasStyleTag: false,
+          assetReferences: [],
+        })
+        const l = inheritedAttrs[ATTR_PAGE_LAYOUT] || "default"
+        layoutDistribution[l] = (layoutDistribution[l] || 0) + 1
         continue
       }
     }
@@ -457,9 +618,14 @@ export function parseSlidevPresentation(
 
     let body = slideBody
 
-    // 保护正文中的所有代码块（包含 3 或 4 反引号，以及行内代码），防止代码块内部的注释被误识别为 slide notes
+    // 保护正文中的所有代码块（包含多行围栏代码块与单行行内代码），防止代码块内部的注释被误识别为 slide notes
     const codeTokens: string[] = []
-    let protectedBody = body.replace(/(````[\s\S]*?````|```[\s\S]*?```|`[^`\n]+`)/g, (match) => {
+    let protectedBody = body.replace(/(?:^[ \t]*(`{3,}|~{3,})[^\n\r]*\r?\n[\s\S]*?\r?\n[ \t]*\1(?=[ \t]*(?:\r?\n|$)))/gm, (match) => {
+      const token = `__CODE_TOKEN_NOTE_${codeTokens.length}__`
+      codeTokens.push(match)
+      return token
+    })
+    protectedBody = protectedBody.replace(/(`+)(?:[^\n\r`]|(?!\1)`)+?\1/g, (match) => {
       const token = `__CODE_TOKEN_NOTE_${codeTokens.length}__`
       codeTokens.push(match)
       return token
@@ -539,12 +705,18 @@ export function parseSlidevPresentation(
       totalSlots += slotMatches.length
     }
 
+    // 展开外部代码切片语法: <<< @/snippets/external.ts#snippet
+    body = body.replace(/^[ \t]*<<<[ \t]+([^\n\r]+)/gm, (match) => {
+      const resolved = resolveCodeSnippet(match, { ...options, virtualFiles })
+      return resolved || match
+    })
+
     if (cleanVClicks) {
       body = body.replace(/<v-click(?:\s+at="[^"]*")?(?:\s+hide)?>\s*([\s\S]*?)\s*<\/v-click>/gi, "$1")
     }
 
     if (cleanShikiLines) {
-      body = body.replace(/(```\w+)\s+\{[^}]+\}/g, "$1")
+      body = body.replace(/(^```\w+(?:[ \t]+\[[^\]]*\])?)[ \t]+\{[^}]+\}(?:[ \t]+\w+)?/gm, "$1")
       // 清理数学公式块中的 Slidev 渐进展示修饰符: $$ {1|3|all} -> $$
       body = body.replace(/^\$\$\s+\{[^}]+\}/gm, () => "$$")
     }
@@ -592,12 +764,13 @@ export function parseSlidevPresentation(
     docRootAttrs["custom-slidev-custom-css"] = customCssCollected
   }
 
-  const flattenedMarkdown = slides.map((s, idx) => {
-    if (idx === 0) {
-      return s.rawMarkdown
-    }
+  let flattenedMarkdown = slides.map((s) => {
     return `---\n\n${s.rawMarkdown}`
   }).join("\n\n")
+
+  if (!flattenedMarkdown.trimStart().startsWith("---")) {
+    flattenedMarkdown = `---\n\n${flattenedMarkdown.trimStart()}`
+  }
 
   return {
     docTitle: docTitle || "Slidev 演示文稿",

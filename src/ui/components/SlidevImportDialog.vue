@@ -322,9 +322,12 @@ async function processFile(file: File) {
       // .md 文件
       const text = await file.text()
       extractedAssets.value = []
+      const filePath = (file as any).path || ''
+      const baseDir = filePath ? filePath.replace(/[\\/][^\\/]+$/, '') : ''
       const parsed = parseSlidevPresentation(text, {
         stripNotesFromMarkdown: optStripNotes.value,
         cleanHtmlToMarkdown: optCleanHtml.value,
+        baseDir: baseDir || undefined,
       })
       parsedPresentation.value = parsed
       customDocTitle.value = parsed.docTitle || file.name.replace(/\.md$/i, '')
@@ -415,12 +418,23 @@ async function onConfirmImport() {
     const rawBlocks: any[] = await getChildBlocks(newDocId).catch(() => [])
     const dividerBlocks = rawBlocks.filter(b => b.type === 'tb' || b.markdown?.trim() === '---')
 
-    // 第 1 页属性已保存在根节点，第 2 页及后续页绑定在对应的水平分割线上
-    for (let i = 1; i < finalPresentation.slides.length; i++) {
-      const slide = finalPresentation.slides[i]
-      const tbBlock = dividerBlocks[i - 1]
-      if (tbBlock && tbBlock.id) {
-        await setBlockAttrs(tbBlock.id, slide.pageAttrs)
+    // 若第一段为分割线（dividerBlocks 与 slides 数量一致），各页分割线一一对应
+    if (dividerBlocks.length >= finalPresentation.slides.length) {
+      for (let i = 0; i < finalPresentation.slides.length; i++) {
+        const slide = finalPresentation.slides[i]
+        const tbBlock = dividerBlocks[i]
+        if (tbBlock && tbBlock.id && Object.keys(slide.pageAttrs).length > 0) {
+          await setBlockAttrs(tbBlock.id, slide.pageAttrs)
+        }
+      }
+    } else {
+      // 容错降级：第 1 页属性保存在根节点，第 2 页及后续页绑定在对应的水平分割线上
+      for (let i = 1; i < finalPresentation.slides.length; i++) {
+        const slide = finalPresentation.slides[i]
+        const tbBlock = dividerBlocks[i - 1]
+        if (tbBlock && tbBlock.id && Object.keys(slide.pageAttrs).length > 0) {
+          await setBlockAttrs(tbBlock.id, slide.pageAttrs)
+        }
       }
     }
 
