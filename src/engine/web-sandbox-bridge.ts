@@ -100,6 +100,20 @@ export class WebSandboxBridge {
     this.postMessage("HIGHLIGHT_ELEMENT", { targetBlockId })
   }
 
+  /**
+   * 请求下一步进或下一页 (v-click Step / Slide)
+   */
+  public nextStep(): void {
+    this.postMessage("NEXT_STEP", {})
+  }
+
+  /**
+   * 请求上一步进或上一页 (v-click Step / Slide)
+   */
+  public prevStep(): void {
+    this.postMessage("PREV_STEP", {})
+  }
+
   public onSlideChanged(handler: TSlideChangedHandler): () => void {
     this.slideChangedHandlers.push(handler)
     return () => {

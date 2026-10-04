@@ -11,7 +11,7 @@ import {
   ATTR_ELEM_SLOT,
 } from "../types/slidev-protocol"
 import type { IAssetRewriteOptions } from "./assets-rewriter"
-import { extractBlockMarkdown } from "./ast-crawler"
+import { extractBlockMarkdown, parseKramdownIAL } from "./ast-crawler"
 import { rewriteAssetPaths, rewriteSingleAssetUrl } from "./assets-rewriter"
 import { resolveBlockRefsSync } from "./block-ref-resolver"
 import {
@@ -20,6 +20,7 @@ import {
   parseElementAttrs,
   parsePageAttrs,
 } from "./scope-mapper"
+import { detectSuperBlockImageLayout, extractImageUrl } from "./superblock-scanner"
 
 /**
  * 序列化 Frontmatter 对象为 YAML 字符串
@@ -391,165 +392,231 @@ export function buildSlidevDocument(
       continue
     }
 
-    // 普通内容块处理
-    const elemAttrs = parseElementAttrs(node.ial)
-    let rawMd = extractBlockMarkdown(node)
+    // 普通内容块处理逻辑（支持递归处理超级块子内容）
+    const processBlockNode = (itemNode: ISiYuanBlockNode) => {
+      let rawMd = extractBlockMarkdown(itemNode)
 
-    // 重写本地资源路径
-    rawMd = rewriteAssetPaths(rawMd, options)
+      // 解析并剥离 Kramdown 尾部 IAL 属性标记 {: ... }
+      let combinedIal = itemNode.ial ? { ...itemNode.ial } : {}
+      const inlineIalMatch = rawMd.match(/\{:\s*([^}]+)\s*\}\s*$/)
+      if (inlineIalMatch) {
+        const parsedInline = parseKramdownIAL(inlineIalMatch[0])
+        combinedIal = { ...parsedInline, ...combinedIal }
+        rawMd = rawMd.slice(0, inlineIalMatch.index).trim()
+      }
 
-    // 动态展开思源块引用 ((block-id))
-    rawMd = resolveBlockRefsSync(rawMd, options?.refContentMap)
+      // 容错剥离单独成块的思源超级块标记行 ({{{row 或 }}})
+      let cleanRaw = rawMd.trim()
+      if (/^\{\{\{(?:row|col)?\s*$/i.test(cleanRaw) || cleanRaw === "}}}") {
+        return
+      }
 
-    // 讲稿备注块处理 (custom-slidev-note / slidev-note)
-    if (elemAttrs.isNote) {
-      const cleanNote = extractCleanNoteText(rawMd)
-      if (cleanNote) {
-        if (currentPage.notes) {
-          currentPage.notes += "\n\n" + cleanNote
-        } else {
-          currentPage.notes = cleanNote
+      const elemAttrs = parseElementAttrs(combinedIal)
+
+      // 重写本地资源路径
+      rawMd = rewriteAssetPaths(rawMd, options)
+
+      // 动态展开思源块引用 ((block-id))
+      rawMd = resolveBlockRefsSync(rawMd, options?.refContentMap)
+
+      // 页面背景图块处理 (custom-slidev-role="background" 或 custom-slidev-background="true")
+      if (elemAttrs.isBackground) {
+        const imgUrl = extractImageUrl(rawMd, itemNode.content)
+        if (imgUrl) {
+          currentPage.frontmatter.background = rewriteSingleAssetUrl(imgUrl, options)
+          // 背景图不在正文内容流中渲染
+          return
         }
       }
-      if (!currentPage.noteBlocks) {
-        currentPage.noteBlocks = []
-      }
-      currentPage.noteBlocks.push({
-        id: node.id,
-        type: node.type,
-        content: cleanNote || node.content || "",
-        rawMarkdown: rawMd,
-        isNote: true,
-        attributes: node.ial,
-      })
-      // 讲稿备注块不在幻灯片内容中渲染
-      continue
-    }
 
-    // 注入 Shiki 代码高亮行号
-    if (elemAttrs.shikiLines) {
-      rawMd = injectShikiSpotlight(rawMd, elemAttrs.shikiLines)
-    }
+      // 检查超级块图文分栏 (layout: image-left / image-right)
+      const sbLayout = detectSuperBlockImageLayout(itemNode)
+      if (sbLayout) {
+        currentPage.frontmatter.layout = sbLayout.layout
+        currentPage.frontmatter.image = rewriteSingleAssetUrl(sbLayout.imageUrl, options)
 
-    // 检查是否为双栏插槽分界标记块: ::right::
-    const cleanRaw = rawMd.trim()
-    const cleanContent = (node.content || "").trim()
-    const isSlotDivider =
-      cleanRaw === "::right::" ||
-      cleanContent === "::right::" ||
-      /^<p>\s*::right::\s*<\/p>$/i.test(cleanRaw) ||
-      cleanRaw.startsWith("::right::")
-    if (isSlotDivider) {
-      currentPage.blocks.push({
-        id: node.id,
-        type: node.type,
-        content: "::right::",
-        rawMarkdown: "::right::",
-        slot: "slot-divider-right",
-        attributes: node.ial,
-      })
-      continue
-    }
-
-    // 判断是否为标题块以维护大纲属性继承作用域栈
-    const headingLevel = getBlockHeadingLevel(node)
-
-    let effectiveSlot: string | undefined = elemAttrs.slot
-    let effectiveClicks: string | undefined = elemAttrs.clicks
-    let effectiveMotion: ISlidevMotionConfig | undefined = elemAttrs.motion
-    let effectiveAttrs: Record<string, string> = { ...(node.ial || {}) }
-
-    if (headingLevel !== null) {
-      // 遇到同级或更高级标题行时，栈中同级或低级标题退出作用域 (直到遇到另一个同级或高一级标题行)
-      while (headingStack.length > 0 && headingStack[headingStack.length - 1].level >= headingLevel) {
-        headingStack.pop()
+        // 将超级块内的非图片内容子块平铺为幻灯片普通内容块
+        for (const childNode of sbLayout.contentNodes) {
+          processBlockNode(childNode)
+        }
+        return
       }
 
-      // 获取当前标题的父级标题作用域 (若有)
-      const parentScope = headingStack.length > 0 ? headingStack[headingStack.length - 1] : undefined
-
-      // 未显式指定的属性向父级继承
-      if (!effectiveSlot && parentScope?.slot) {
-        effectiveSlot = parentScope.slot
-      }
-      if (!effectiveClicks && parentScope?.clicks) {
-        effectiveClicks = parentScope.clicks
-      }
-      if (!effectiveMotion && parentScope?.motion) {
-        effectiveMotion = parentScope.motion
+      // 独立标记了图左/图右的图片块处理
+      if (elemAttrs.imageLayout === "image-left" || elemAttrs.imageLayout === "image-right") {
+        const imgUrl = extractImageUrl(rawMd, itemNode.content)
+        if (imgUrl) {
+          currentPage.frontmatter.layout = elemAttrs.imageLayout
+          currentPage.frontmatter.image = rewriteSingleAssetUrl(imgUrl, options)
+          // 幻灯片内容流中排除该配图
+          return
+        }
       }
 
-      // 合并自定义扩展属性 (custom-slidev-*)
-      const headingCustomAttrs: Record<string, string> = {
-        ...(parentScope?.customAttrs || {}),
+      // 常规未匹配图文版式的超级块：展开其子内容
+      if (
+        (itemNode.type === "sb" || itemNode.type === "NodeSuperBlock") &&
+        itemNode.children &&
+        itemNode.children.length > 0
+      ) {
+        for (const childNode of itemNode.children) {
+          processBlockNode(childNode)
+        }
+        return
       }
-      if (node.ial) {
-        for (const [k, v] of Object.entries(node.ial)) {
-          if (k.startsWith("custom-slidev-") && !k.startsWith("custom-slidev-slide")) {
-            headingCustomAttrs[k] = v
+
+      // 讲稿备注块处理 (custom-slidev-note / slidev-note)
+      if (elemAttrs.isNote) {
+        const cleanNote = extractCleanNoteText(rawMd)
+        if (cleanNote) {
+          if (currentPage.notes) {
+            currentPage.notes += "\n\n" + cleanNote
+          } else {
+            currentPage.notes = cleanNote
+          }
+        }
+        if (!currentPage.noteBlocks) {
+          currentPage.noteBlocks = []
+        }
+        currentPage.noteBlocks.push({
+          id: itemNode.id,
+          type: itemNode.type,
+          content: cleanNote || itemNode.content || "",
+          rawMarkdown: rawMd,
+          isNote: true,
+          attributes: itemNode.ial,
+        })
+        // 讲稿备注块不在幻灯片内容中渲染
+        return
+      }
+
+      // 注入 Shiki 代码高亮行号
+      if (elemAttrs.shikiLines) {
+        rawMd = injectShikiSpotlight(rawMd, elemAttrs.shikiLines)
+      }
+
+      // 检查是否为双栏插槽分界标记块: ::right::
+      cleanRaw = rawMd.trim()
+      const cleanContent = (itemNode.content || "").trim()
+      const isSlotDivider =
+        cleanRaw === "::right::" ||
+        cleanContent === "::right::" ||
+        /^<p>\s*::right::\s*<\/p>$/i.test(cleanRaw) ||
+        cleanRaw.startsWith("::right::")
+      if (isSlotDivider) {
+        currentPage.blocks.push({
+          id: itemNode.id,
+          type: itemNode.type,
+          content: "::right::",
+          rawMarkdown: "::right::",
+          slot: "slot-divider-right",
+          attributes: itemNode.ial,
+        })
+        return
+      }
+
+      // 判断是否为标题块以维护大纲属性继承作用域栈
+      const headingLevel = getBlockHeadingLevel(itemNode)
+
+      let effectiveSlot: string | undefined = elemAttrs.slot
+      let effectiveClicks: string | undefined = elemAttrs.clicks
+      let effectiveMotion: ISlidevMotionConfig | undefined = elemAttrs.motion
+      let effectiveAttrs: Record<string, string> = { ...(itemNode.ial || {}) }
+
+      if (headingLevel !== null) {
+        // 遇到同级或更高级标题行时，栈中同级或低级标题退出作用域 (直到遇到另一个同级或高一级标题行)
+        while (headingStack.length > 0 && headingStack[headingStack.length - 1].level >= headingLevel) {
+          headingStack.pop()
+        }
+
+        // 获取当前标题的父级标题作用域 (若有)
+        const parentScope = headingStack.length > 0 ? headingStack[headingStack.length - 1] : undefined
+
+        // 未显式指定的属性向父级继承
+        if (!effectiveSlot && parentScope?.slot) {
+          effectiveSlot = parentScope.slot
+        }
+        if (!effectiveClicks && parentScope?.clicks) {
+          effectiveClicks = parentScope.clicks
+        }
+        if (!effectiveMotion && parentScope?.motion) {
+          effectiveMotion = parentScope.motion
+        }
+
+        // 合并自定义扩展属性 (custom-slidev-*)
+        const headingCustomAttrs: Record<string, string> = {
+          ...(parentScope?.customAttrs || {}),
+        }
+        if (itemNode.ial) {
+          for (const [k, v] of Object.entries(itemNode.ial)) {
+            if (k.startsWith("custom-slidev-") && !k.startsWith("custom-slidev-slide")) {
+              headingCustomAttrs[k] = v
+            }
+          }
+        }
+
+        // 压入当前标题作用域
+        headingStack.push({
+          level: headingLevel,
+          slot: effectiveSlot,
+          clicks: effectiveClicks,
+          motion: effectiveMotion,
+          customAttrs: headingCustomAttrs,
+        })
+      } else {
+        // 普通非标题内容块：若自身未显式指定，自动继承最近标题行的属性
+        const currentScope = headingStack.length > 0 ? headingStack[headingStack.length - 1] : undefined
+        if (currentScope) {
+          if (!effectiveSlot && currentScope.slot) {
+            effectiveSlot = currentScope.slot
+          }
+          if (!effectiveClicks && currentScope.clicks) {
+            effectiveClicks = currentScope.clicks
+          }
+          if (!effectiveMotion && currentScope.motion) {
+            effectiveMotion = currentScope.motion
+          }
+          // 合并来自标题的扩展属性
+          if (currentScope.customAttrs) {
+            effectiveAttrs = {
+              ...currentScope.customAttrs,
+              ...effectiveAttrs,
+            }
           }
         }
       }
 
-      // 压入当前标题作用域
-      headingStack.push({
-        level: headingLevel,
-        slot: effectiveSlot,
+      // 若当前页前面存在 ::right:: 分界标记且当前块未显式声明 slot，自动归属右栏
+      if (!effectiveSlot && currentPage.blocks.some(b => b.slot === "slot-divider-right")) {
+        effectiveSlot = "right"
+      }
+
+      if (effectiveSlot) {
+        effectiveAttrs[ATTR_ELEM_SLOT] = effectiveSlot
+      }
+      if (effectiveClicks && !effectiveAttrs[ATTR_ELEM_CLICK]) {
+        effectiveAttrs[ATTR_ELEM_CLICK] = effectiveClicks
+      }
+      if (effectiveMotion && !effectiveAttrs[ATTR_ELEM_MOTION]) {
+        effectiveAttrs[ATTR_ELEM_MOTION] = JSON.stringify(effectiveMotion)
+      }
+
+      const blockItem: ISlidevBlockItem = {
+        id: itemNode.id,
+        type: itemNode.type,
+        content: itemNode.content || "",
+        rawMarkdown: rawMd,
         clicks: effectiveClicks,
         motion: effectiveMotion,
-        customAttrs: headingCustomAttrs,
-      })
-    } else {
-      // 普通非标题内容块：若自身未显式指定，自动继承最近标题行的属性
-      const currentScope = headingStack.length > 0 ? headingStack[headingStack.length - 1] : undefined
-      if (currentScope) {
-        if (!effectiveSlot && currentScope.slot) {
-          effectiveSlot = currentScope.slot
-        }
-        if (!effectiveClicks && currentScope.clicks) {
-          effectiveClicks = currentScope.clicks
-        }
-        if (!effectiveMotion && currentScope.motion) {
-          effectiveMotion = currentScope.motion
-        }
-        // 合并来自标题的扩展属性
-        if (currentScope.customAttrs) {
-          effectiveAttrs = {
-            ...currentScope.customAttrs,
-            ...effectiveAttrs,
-          }
-        }
+        shikiLines: elemAttrs.shikiLines,
+        slot: effectiveSlot,
+        attributes: effectiveAttrs,
       }
+
+      currentPage.blocks.push(blockItem)
     }
 
-    // 若当前页前面存在 ::right:: 分界标记且当前块未显式声明 slot，自动归属右栏
-    if (!effectiveSlot && currentPage.blocks.some(b => b.slot === "slot-divider-right")) {
-      effectiveSlot = "right"
-    }
-
-    if (effectiveSlot) {
-      effectiveAttrs[ATTR_ELEM_SLOT] = effectiveSlot
-    }
-    if (effectiveClicks && !effectiveAttrs[ATTR_ELEM_CLICK]) {
-      effectiveAttrs[ATTR_ELEM_CLICK] = effectiveClicks
-    }
-    if (effectiveMotion && !effectiveAttrs[ATTR_ELEM_MOTION]) {
-      effectiveAttrs[ATTR_ELEM_MOTION] = JSON.stringify(effectiveMotion)
-    }
-
-    const blockItem: ISlidevBlockItem = {
-      id: node.id,
-      type: node.type,
-      content: node.content || "",
-      rawMarkdown: rawMd,
-      clicks: effectiveClicks,
-      motion: effectiveMotion,
-      shikiLines: elemAttrs.shikiLines,
-      slot: effectiveSlot,
-      attributes: effectiveAttrs,
-    }
-
-    currentPage.blocks.push(blockItem)
+    processBlockNode(node)
   }
 
   // 3. 为每一页组装 Slidev 规范 Markdown 片段

@@ -1245,7 +1245,7 @@
 
       <!-- 悬浮播放控制条 -->
       <div class="controls-bar">
-        <button :disabled="currentPageIndex <= 1" @click="prevStepOrSlide" title="上一动作 / 上一页 (Left Arrow)">
+        <button :disabled="currentPageIndex <= 1 && currentStep <= 0" @click="prevStepOrSlide" title="上一动作 / 上一页 (Left Arrow)">
           <svg viewBox="0 0 24 24" width="1.15em" height="1.15em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
@@ -1967,50 +1967,155 @@
           }
         })
 
-        // 获取当前页最大 v-click 步数
-        const maxStepInCurrentSlide = computed(() => {
-          if (!currentSlide.value) return 0
-          let max = 0
-          for (const b of currentSlide.value.blocks) {
-            const clicksStr = String(b.clicks || '').trim()
-            if (clicksStr.startsWith('[') && clicksStr.endsWith(']')) {
+        // 解析当前页内所有块的 v-click 调度计划 (Single Source of Truth)
+        const slideClicksPlan = computed(() => {
+          if (!currentSlide.value || !currentSlide.value.blocks) {
+            return { maxStep: 0, blockMap: new Map(), idMap: new Map() }
+          }
+
+          const blockMap = new Map()
+          const idMap = new Map()
+          let stepCounter = 0
+
+          // 按页面内块的顺序遍历 (排除纯插槽分界块)
+          const validBlocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right")
+
+          for (const b of validBlocks) {
+            if (!b.clicks) {
+              // 未配置 clicks 的块：始终可见，不占用步进计数
+              const rule = { type: "always" }
+              blockMap.set(b, rule)
+              if (b.id) idMap.set(b.id, rule)
+              continue
+            }
+
+            const rawStr = String(b.clicks).trim()
+            if (!rawStr) {
+              // 空字符串但配置了 clicks 属性：等同于顺延 +1
+              stepCounter += 1
+              const rule = { type: "step", step: stepCounter }
+              blockMap.set(b, rule)
+              if (b.id) idMap.set(b.id, rule)
+              continue
+            }
+
+            // 1. 区间定义 [min, max]
+            if (rawStr.startsWith("[") && rawStr.endsWith("]")) {
               try {
-                const arr = JSON.parse(clicksStr)
-                if (Array.isArray(arr)) {
-                  for (const n of arr) {
-                    if (Number(n) > max) max = Number(n)
+                const arr = JSON.parse(rawStr)
+                if (Array.isArray(arr) && arr.length >= 2) {
+                  const min = Math.min(Number(arr[0]), Number(arr[1]))
+                  const max = Math.max(Number(arr[0]), Number(arr[1]))
+                  if (!isNaN(min) && !isNaN(max)) {
+                    stepCounter = Math.max(stepCounter, max)
+                    const rule = { type: "range", min, max }
+                    blockMap.set(b, rule)
+                    if (b.id) idMap.set(b.id, rule)
+                    continue
                   }
                 }
               } catch {}
-            } else if (clicksStr) {
-              const num = parseInt(clicksStr, 10)
-              if (!isNaN(num) && num > max) max = num
-              else if (clicksStr === "+1" || clicksStr === "") max += 1
+            }
+
+            // 2. 隐藏指令 hide
+            if (rawStr.toLowerCase() === "hide") {
+              stepCounter += 1
+              const rule = { type: "hide", step: stepCounter }
+              blockMap.set(b, rule)
+              if (b.id) idMap.set(b.id, rule)
+              continue
+            }
+
+            // 3. 相对步进 +N (如 "+1", "+2") 或布尔值 "true"
+            if (/^\+\d+$/.test(rawStr) || rawStr === "true") {
+              const delta = rawStr === "true" ? 1 : (parseInt(rawStr.slice(1), 10) || 1)
+              stepCounter += delta
+              const rule = { type: "step", step: stepCounter }
+              blockMap.set(b, rule)
+              if (b.id) idMap.set(b.id, rule)
+              continue
+            }
+
+            // 4. 相对回退 -N (如 "-1")
+            if (/^-\d+$/.test(rawStr)) {
+              const delta = parseInt(rawStr.slice(1), 10) || 1
+              stepCounter = Math.max(1, stepCounter - delta)
+              const rule = { type: "step", step: stepCounter }
+              blockMap.set(b, rule)
+              if (b.id) idMap.set(b.id, rule)
+              continue
+            }
+
+            // 5. 绝对步数 N (如 "1", "2", "3")
+            if (/^\d+$/.test(rawStr)) {
+              const target = parseInt(rawStr, 10)
+              if (!isNaN(target)) {
+                stepCounter = Math.max(stepCounter, target)
+                const rule = { type: "step", step: target }
+                blockMap.set(b, rule)
+                if (b.id) idMap.set(b.id, rule)
+                continue
+              }
+            }
+
+            // 6. 其他兜底解析
+            const parsedNum = parseInt(rawStr, 10)
+            if (!isNaN(parsedNum) && parsedNum > 0) {
+              stepCounter = Math.max(stepCounter, parsedNum)
+              const rule = { type: "step", step: parsedNum }
+              blockMap.set(b, rule)
+              if (b.id) idMap.set(b.id, rule)
+            } else {
+              // 无法解析的非空字符，默认作为顺延一步处理
+              stepCounter += 1
+              const rule = { type: "step", step: stepCounter }
+              blockMap.set(b, rule)
+              if (b.id) idMap.set(b.id, rule)
             }
           }
-          return max
+
+          return {
+            maxStep: stepCounter,
+            blockMap,
+            idMap
+          }
+        })
+
+        // 获取当前页最大 v-click 步数
+        const maxStepInCurrentSlide = computed(() => {
+          return slideClicksPlan.value.maxStep || 0
         })
 
         const isMaxStep = computed(() => currentStep.value >= maxStepInCurrentSlide.value)
 
-        // 判断块的 v-click 显隐状态 (支持单个数字与 [min, max] 范围区间)
+        // 判断块的 v-click 显隐状态 (支持单个数字、顺延 +1 与 [min, max] 范围区间)
         function getBlockClickClass(block) {
-          if (!block.clicks) return "v-click-visible"
-          const clicksStr = String(block.clicks).trim()
-          if (clicksStr.startsWith('[') && clicksStr.endsWith(']')) {
-            try {
-              const arr = JSON.parse(clicksStr)
-              if (Array.isArray(arr) && arr.length >= 2) {
-                const min = Math.min(Number(arr[0]), Number(arr[1]))
-                const max = Math.max(Number(arr[0]), Number(arr[1]))
-                return (currentStep.value >= min && currentStep.value <= max) ? "v-click-visible" : "v-click-hidden"
-              }
-            } catch {}
+          if (!block || !block.clicks) return "v-click-visible"
+          const plan = slideClicksPlan.value
+          const rule = plan.blockMap.get(block) || (block.id ? plan.idMap.get(block.id) : null)
+          if (!rule || rule.type === "always") {
+            return "v-click-visible"
           }
-          let requiredStep = 1
-          const num = parseInt(clicksStr, 10)
-          if (!isNaN(num)) requiredStep = num
-          return currentStep.value >= requiredStep ? "v-click-visible" : "v-click-hidden"
+
+          if (rule.type === "range") {
+            return (currentStep.value >= rule.min && currentStep.value <= rule.max)
+              ? "v-click-visible"
+              : "v-click-hidden"
+          }
+
+          if (rule.type === "hide") {
+            return currentStep.value < rule.step
+              ? "v-click-visible"
+              : "v-click-hidden"
+          }
+
+          if (rule.type === "step") {
+            return currentStep.value >= rule.step
+              ? "v-click-visible"
+              : "v-click-hidden"
+          }
+
+          return "v-click-visible"
         }
 
         // 获取块的微动效类
@@ -2614,11 +2719,26 @@
                 // 如果该块在其他页，自动跳到该页
                 for (let i = 0; i < slides.value.length; i++) {
                   if (slides.value[i].blocks.some(b => b.id === data.payload.targetBlockId)) {
-                    currentPageIndex.value = i + 1
+                    if (currentPageIndex.value !== i + 1) {
+                      currentPageIndex.value = i + 1
+                    }
                     break
                   }
                 }
+                // 确保被聚焦选中的块在沙箱中可见（若需要特定步长才能看到）
+                const rule = slideClicksPlan.value.idMap.get(data.payload.targetBlockId)
+                if (rule && rule.type === "step" && currentStep.value < rule.step) {
+                  currentStep.value = rule.step
+                }
               }
+              break
+
+            case "NEXT_STEP":
+              nextStepOrSlide()
+              break
+
+            case "PREV_STEP":
+              prevStepOrSlide()
               break
           }
         }
@@ -2667,6 +2787,8 @@
           slidevContext,
           isAbsoluteBlock,
           openInEditor,
+          slideClicksPlan,
+          maxStepInCurrentSlide,
           getBlockClickClass,
           getBlockMotionClass,
           getBlockMotionStyle,

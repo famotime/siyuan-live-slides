@@ -26,6 +26,49 @@
       </div>
     </div>
 
+    <!-- 0.5 演示图片角色与排版 (Role & Layout) -->
+    <div class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div class="spm-control-title">
+            <SlidevIcon name="image" />
+            <span>图片角色与分栏 (Image & Layout)</span>
+          </div>
+          <span class="spm-control-desc">设为幻灯片背景图或图文分栏配图</span>
+        </div>
+      </div>
+      <div class="spm-quick-chips">
+        <button
+          class="spm-chip"
+          :class="{ active: !imageRole }"
+          @click="$emit('update:imageRole', '')"
+        >
+          普通内容
+        </button>
+        <button
+          class="spm-chip"
+          :class="{ active: imageRole === 'background' }"
+          @click="$emit('update:imageRole', 'background')"
+        >
+          🖼️ 背景图
+        </button>
+        <button
+          class="spm-chip"
+          :class="{ active: imageRole === 'image-left' }"
+          @click="$emit('update:imageRole', 'image-left')"
+        >
+          🎨 图左
+        </button>
+        <button
+          class="spm-chip"
+          :class="{ active: imageRole === 'image-right' }"
+          @click="$emit('update:imageRole', 'image-right')"
+        >
+          🖼️ 图右
+        </button>
+      </div>
+    </div>
+
     <!-- 1. 逐步出现 (v-click) -->
     <div class="spm-card-control">
       <div class="spm-control-header">
@@ -251,6 +294,7 @@ const props = defineProps<{
   isCodeBlock: boolean
   hasBlockAttrs: boolean
   isNote?: boolean
+  imageRole?: string
   currentSlideLayout?: string
 }>()
 
@@ -330,6 +374,7 @@ const emit = defineEmits<{
   (e: 'insertDividerAfter'): void
   (e: 'setTwoColsContrast'): void
   (e: 'clearBlockAttrs'): void
+  (e: 'update:imageRole', val: string): void
 }>()
 
 const motionPresets = [

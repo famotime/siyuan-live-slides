@@ -11,6 +11,8 @@ export type THostToSlidevAction =
   | "NAVIGATE_PAGE"
   | "HIGHLIGHT_ELEMENT"
   | "CONFIG_UPDATE"
+  | "NEXT_STEP"
+  | "PREV_STEP"
 
 export interface IHostToSlidevMessage {
   source: "siyuan-slidev-host"

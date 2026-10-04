@@ -1,7 +1,9 @@
-import { getBlockAttrs, getChildBlocks, sql } from "../api"
+import { getBlockAttrs, getChildBlocks, setBlockAttrs, sql } from "../api"
 import { extractBlockRefs } from "./block-ref-resolver"
 import { buildSlidevDocument } from "./slidev-ast-builder"
+import { scanAndTagSuperBlocks } from "./superblock-scanner"
 import type { ISiYuanBlockNode, ISlidevDocument } from "../types/slidev-protocol"
+import { ATTR_PAGE_LAYOUT } from "../types/slidev-protocol"
 
 /**
  * 辅助解析思源数据库中的 IAL 字段文本为键值对字典
@@ -26,6 +28,7 @@ export function parseIALString(ialStr: string): Record<string, string> {
 export interface IDocumentCompilerDeps {
   getBlockAttrs: (id: string) => Promise<Record<string, string>>
   getChildBlocks: (id: string) => Promise<any[]>
+  setBlockAttrs?: (id: string, attrs: Record<string, string>) => Promise<any>
   sql: (query: string) => Promise<any[]>
   getBaseUrl?: () => string
 }
@@ -33,6 +36,7 @@ export interface IDocumentCompilerDeps {
 const defaultDeps: IDocumentCompilerDeps = {
   getBlockAttrs,
   getChildBlocks,
+  setBlockAttrs,
   sql,
   getBaseUrl: () => (typeof location !== "undefined" ? location.origin : ""),
 }
@@ -138,7 +142,46 @@ export class DocumentCompilerService {
           content: r.content || "",
           markdown: r.markdown || "",
           ial: ialMap,
+          children: r.children,
         }
+      })
+
+      // 5.5 补全超级块的子节点并进行图文超级块自动扫描打标
+      for (const node of blockNodes) {
+        if (
+          (node.type === "sb" || node.type === "NodeSuperBlock") &&
+          (!node.children || node.children.length === 0)
+        ) {
+          const rawChildren = await this.deps.getChildBlocks(node.id).catch(() => [])
+          if (Array.isArray(rawChildren) && rawChildren.length > 0) {
+            node.children = rawChildren.map((c: any) => {
+              const cIalMap = ialMapById.get(c.id) || (c.ial ? parseIALString(c.ial) : {})
+              const cOverride = this.attrOverrides.get(c.id)
+              if (cOverride) {
+                Object.assign(cIalMap, cOverride)
+              }
+              return {
+                id: c.id,
+                parent_id: c.parent_id || node.id,
+                root_id: c.root_id || docId,
+                type: c.type,
+                subType: c.subType,
+                content: c.content || "",
+                markdown: c.markdown || "",
+                ial: cIalMap,
+              }
+            })
+          }
+        }
+      }
+
+      // 执行超级块自动检测与打标，自动写入即时覆盖层与持久化
+      scanAndTagSuperBlocks(blockNodes, (record) => {
+        this.setBlockAttrOverride(record.blockId, { [ATTR_PAGE_LAYOUT]: record.layout })
+        const saveFn = this.deps.setBlockAttrs || setBlockAttrs
+        saveFn(record.blockId, { [ATTR_PAGE_LAYOUT]: record.layout }).catch((err) => {
+          console.warn("[DocumentCompiler] Failed to auto-tag superblock image layout:", err)
+        })
       })
 
       // 6. 扫描所有块中的思源块引用 ((block-id))

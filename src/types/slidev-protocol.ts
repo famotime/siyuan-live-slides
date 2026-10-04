@@ -25,6 +25,10 @@ export const ATTR_ELEM_MOTION = "custom-slidev-motion"
 export const ATTR_ELEM_SHIKI_LINES = "custom-slidev-shiki-lines"
 export const ATTR_ELEM_SLOT = "custom-slidev-slot"
 export const ATTR_ELEM_NOTE = "custom-slidev-note"
+export const ATTR_ELEM_ROLE = "custom-slidev-role"
+export const ROLE_BACKGROUND = "background"
+export const ROLE_IMAGE_LEFT = "image-left"
+export const ROLE_IMAGE_RIGHT = "image-right"
 
 /** 全局演示文档配置 */
 export interface ISlidevPluginConfig {

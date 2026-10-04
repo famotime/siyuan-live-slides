@@ -47,6 +47,7 @@ export interface IImportOptions {
   cleanSlots?: boolean
   isolateStyleTags?: boolean
   cleanHtmlToMarkdown?: boolean
+  wrapSuperBlocks?: boolean
   virtualFiles?: Record<string, string>
   baseDir?: string
 }
@@ -469,6 +470,7 @@ export function parseSlidevPresentation(
     cleanSlots = true,
     isolateStyleTags = true,
     cleanHtmlToMarkdown = true,
+    wrapSuperBlocks = true,
     virtualFiles = {},
   } = options
 
@@ -752,6 +754,39 @@ export function parseSlidevPresentation(
 
     if (cleanHtmlToMarkdown) {
       body = convertHtmlToCleanMarkdown(body)
+    }
+
+    // 组织图文分栏超级块与正文背景图
+    if (wrapSuperBlocks) {
+      let contentBody = body.trim()
+      let noteSuffix = ""
+      const noteCalloutIndex = contentBody.lastIndexOf("> [!NOTE] 💡 演讲备注")
+      if (noteCalloutIndex !== -1) {
+        noteSuffix = contentBody.slice(noteCalloutIndex)
+        contentBody = contentBody.slice(0, noteCalloutIndex).trim()
+      }
+
+      if (
+        (frontmatter.layout === "image-left" || frontmatter.layout === "image-right") &&
+        frontmatter.image
+      ) {
+        const imgUrl = String(frontmatter.image).trim()
+        const layoutAttr = frontmatter.layout === "image-left" ? "image-left" : "image-right"
+        const imgBlockMd = `![配图](${imgUrl})\n{: custom-slidev-layout="${layoutAttr}" }`
+        if (frontmatter.layout === "image-left") {
+          contentBody = `{{{row\n${imgBlockMd}\n\n${contentBody}\n}}}`
+        } else {
+          contentBody = `{{{row\n${contentBody}\n\n${imgBlockMd}\n}}}`
+        }
+      }
+
+      if (frontmatter.background) {
+        const bgImg = String(frontmatter.background).trim()
+        const bgBlockMd = `![背景图](${bgImg})\n{: custom-slidev-role="background" }`
+        contentBody = contentBody ? `${bgBlockMd}\n\n${contentBody}` : bgBlockMd
+      }
+
+      body = noteSuffix ? `${contentBody}\n\n${noteSuffix}` : contentBody
     }
 
     const assetRefs = extractAssetReferences(body)

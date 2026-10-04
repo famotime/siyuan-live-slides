@@ -13,6 +13,10 @@ import {
   ATTR_ELEM_CLICK,
   ATTR_ELEM_MOTION,
   ATTR_ELEM_NOTE,
+  ATTR_ELEM_ROLE,
+  ROLE_BACKGROUND,
+  ROLE_IMAGE_LEFT,
+  ROLE_IMAGE_RIGHT,
   ATTR_ELEM_SHIKI_LINES,
   ATTR_ELEM_SLOT,
   ATTR_PAGE_BACKGROUND,
@@ -151,6 +155,8 @@ export function parseElementAttrs(
   shikiLines?: string
   slot?: "left" | "right" | "default" | string
   isNote?: boolean
+  isBackground?: boolean
+  imageLayout?: "image-left" | "image-right" | string
 } {
   const result: {
     clicks?: string
@@ -158,6 +164,8 @@ export function parseElementAttrs(
     shikiLines?: string
     slot?: string
     isNote?: boolean
+    isBackground?: boolean
+    imageLayout?: string
   } = {}
 
   if (!attrs) {
@@ -168,6 +176,21 @@ export function parseElementAttrs(
   const noteAttr = attrs[ATTR_ELEM_NOTE] ?? attrs["slidev-note"]
   if (noteAttr !== undefined && noteAttr !== null && noteAttr !== "" && noteAttr !== "false" && noteAttr !== "0") {
     result.isNote = true
+  }
+
+  // 页面背景图识别：命中 custom-slidev-role="background" 或 custom-slidev-background="true"
+  const roleAttr = attrs[ATTR_ELEM_ROLE] ?? attrs["slidev-role"]
+  const bgAttr = attrs[ATTR_PAGE_BACKGROUND] ?? attrs["slidev-background"]
+  if (roleAttr === ROLE_BACKGROUND || bgAttr === "true" || bgAttr === "1") {
+    result.isBackground = true
+  }
+
+  // 图左 / 图右图片排版识别：命中 custom-slidev-layout="image-left" | "image-right" 或 custom-slidev-role
+  const layoutAttr = attrs[ATTR_PAGE_LAYOUT] ?? attrs["slidev-layout"]
+  if (layoutAttr === ROLE_IMAGE_LEFT || layoutAttr === ROLE_IMAGE_RIGHT) {
+    result.imageLayout = layoutAttr
+  } else if (roleAttr === ROLE_IMAGE_LEFT || roleAttr === ROLE_IMAGE_RIGHT) {
+    result.imageLayout = roleAttr
   }
 
   const clickAttr = attrs[ATTR_ELEM_CLICK] ?? attrs["custom-slidev-clicks"] ?? attrs["slidev-click"] ?? attrs["slidev-clicks"]
