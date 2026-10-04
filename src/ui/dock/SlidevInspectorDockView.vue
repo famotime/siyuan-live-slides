@@ -281,10 +281,42 @@ const currentSlideLayout = computed(() => targetSlide.value?.frontmatter?.layout
 const targetPageIndex = computed(() => targetSlide.value?.pageIndex || 1)
 const isNoteBlock = computed(() => Boolean(activeBlockAttrs.value[ATTR_ELEM_NOTE] || activeBlockAttrs.value['slidev-note']))
 
-// 内容块属性绑定
-const elemClick = computed(() => activeBlockAttrs.value[ATTR_ELEM_CLICK] || '')
-const elemMotion = computed(() => activeBlockAttrs.value[ATTR_ELEM_MOTION] || '')
-const elemSlot = computed(() => activeBlockAttrs.value[ATTR_ELEM_SLOT] || '')
+// 内容块属性绑定 (支持继承属性反射)
+const elemClick = computed(() => {
+  if (activeBlockAttrs.value[ATTR_ELEM_CLICK]) {
+    return activeBlockAttrs.value[ATTR_ELEM_CLICK]
+  }
+  const aid = activeBlockId.value
+  if (aid && targetSlide.value?.blocks) {
+    const matched = targetSlide.value.blocks.find(b => b.id === aid)
+    if (matched?.clicks) return matched.clicks
+  }
+  return ''
+})
+
+const elemMotion = computed(() => {
+  if (activeBlockAttrs.value[ATTR_ELEM_MOTION]) {
+    return activeBlockAttrs.value[ATTR_ELEM_MOTION]
+  }
+  const aid = activeBlockId.value
+  if (aid && targetSlide.value?.blocks) {
+    const matched = targetSlide.value.blocks.find(b => b.id === aid)
+    if (matched?.motion) return typeof matched.motion === 'string' ? matched.motion : JSON.stringify(matched.motion)
+  }
+  return ''
+})
+
+const elemSlot = computed(() => {
+  if (activeBlockAttrs.value[ATTR_ELEM_SLOT]) {
+    return activeBlockAttrs.value[ATTR_ELEM_SLOT]
+  }
+  const aid = activeBlockId.value
+  if (aid && targetSlide.value?.blocks) {
+    const matched = targetSlide.value.blocks.find(b => b.id === aid)
+    if (matched?.slot) return matched.slot
+  }
+  return ''
+})
 const elemShikiLines = ref('')
 
 // 文档全局属性绑定

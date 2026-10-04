@@ -5,6 +5,11 @@ import type {
   ISlidevMotionConfig,
   ISlidevVirtualPage,
 } from "../types/slidev-protocol"
+import {
+  ATTR_ELEM_CLICK,
+  ATTR_ELEM_MOTION,
+  ATTR_ELEM_SLOT,
+} from "../types/slidev-protocol"
 import type { IAssetRewriteOptions } from "./assets-rewriter"
 import { extractBlockMarkdown } from "./ast-crawler"
 import { rewriteAssetPaths, rewriteSingleAssetUrl } from "./assets-rewriter"
@@ -237,6 +242,41 @@ export function extractCleanNoteText(rawMd: string): string {
   return cleaned.trim()
 }
 
+/**
+ * 获取思源块节点的标题层级 (1 - 6)，若非标题则返回 null
+ */
+export function getBlockHeadingLevel(node: ISiYuanBlockNode): number | null {
+  // 1. 根据 subType 判断 (如 "h1", "h2", "h3", "h4", "h5", "h6")
+  if (node.subType && /^h([1-6])$/i.test(node.subType)) {
+    return parseInt(node.subType.slice(1), 10)
+  }
+
+  // 2. 根据 markdown 或 content 前缀判定 (如 "### Builder")
+  const text = (node.markdown || node.content || "").trim()
+  const headingMatch = text.match(/^(#{1,6})\s+/)
+  if (headingMatch) {
+    return headingMatch[1].length
+  }
+
+  // 3. 原生思源标题块 (type === "h")
+  if (node.type === "h") {
+    if (node.ial?.subType && /^h([1-6])$/i.test(node.ial.subType)) {
+      return parseInt(node.ial.subType.slice(1), 10)
+    }
+    return 1
+  }
+
+  return null
+}
+
+interface IHeadingScope {
+  level: number
+  slot?: string
+  clicks?: string
+  motion?: ISlidevMotionConfig
+  customAttrs?: Record<string, string>
+}
+
 export interface IBuildSlidevDocOptions extends IAssetRewriteOptions {
   refContentMap?: Record<string, string>
 }
@@ -282,8 +322,12 @@ export function buildSlidevDocument(
   slides.push(currentPage)
 
   // 2. 遍历所有块节点进行三层作用域归类
+  let headingStack: IHeadingScope[] = []
+
   for (const node of blocks) {
     if (isPageBreak(node)) {
+      // 开启新页时重置标题层级栈
+      headingStack = []
       const pageMeta = parsePageAttrs(node.ial)
 
       // 如果当前是第一页且尚未添加任何正文内容块，说明用户在文档开头放置了分割线来显式定义第一页配置
@@ -407,10 +451,90 @@ export function buildSlidevDocument(
       continue
     }
 
+    // 判断是否为标题块以维护大纲属性继承作用域栈
+    const headingLevel = getBlockHeadingLevel(node)
+
+    let effectiveSlot: string | undefined = elemAttrs.slot
+    let effectiveClicks: string | undefined = elemAttrs.clicks
+    let effectiveMotion: ISlidevMotionConfig | undefined = elemAttrs.motion
+    let effectiveAttrs: Record<string, string> = { ...(node.ial || {}) }
+
+    if (headingLevel !== null) {
+      // 遇到同级或更高级标题行时，栈中同级或低级标题退出作用域 (直到遇到另一个同级或高一级标题行)
+      while (headingStack.length > 0 && headingStack[headingStack.length - 1].level >= headingLevel) {
+        headingStack.pop()
+      }
+
+      // 获取当前标题的父级标题作用域 (若有)
+      const parentScope = headingStack.length > 0 ? headingStack[headingStack.length - 1] : undefined
+
+      // 未显式指定的属性向父级继承
+      if (!effectiveSlot && parentScope?.slot) {
+        effectiveSlot = parentScope.slot
+      }
+      if (!effectiveClicks && parentScope?.clicks) {
+        effectiveClicks = parentScope.clicks
+      }
+      if (!effectiveMotion && parentScope?.motion) {
+        effectiveMotion = parentScope.motion
+      }
+
+      // 合并自定义扩展属性 (custom-slidev-*)
+      const headingCustomAttrs: Record<string, string> = {
+        ...(parentScope?.customAttrs || {}),
+      }
+      if (node.ial) {
+        for (const [k, v] of Object.entries(node.ial)) {
+          if (k.startsWith("custom-slidev-") && !k.startsWith("custom-slidev-slide")) {
+            headingCustomAttrs[k] = v
+          }
+        }
+      }
+
+      // 压入当前标题作用域
+      headingStack.push({
+        level: headingLevel,
+        slot: effectiveSlot,
+        clicks: effectiveClicks,
+        motion: effectiveMotion,
+        customAttrs: headingCustomAttrs,
+      })
+    } else {
+      // 普通非标题内容块：若自身未显式指定，自动继承最近标题行的属性
+      const currentScope = headingStack.length > 0 ? headingStack[headingStack.length - 1] : undefined
+      if (currentScope) {
+        if (!effectiveSlot && currentScope.slot) {
+          effectiveSlot = currentScope.slot
+        }
+        if (!effectiveClicks && currentScope.clicks) {
+          effectiveClicks = currentScope.clicks
+        }
+        if (!effectiveMotion && currentScope.motion) {
+          effectiveMotion = currentScope.motion
+        }
+        // 合并来自标题的扩展属性
+        if (currentScope.customAttrs) {
+          effectiveAttrs = {
+            ...currentScope.customAttrs,
+            ...effectiveAttrs,
+          }
+        }
+      }
+    }
+
     // 若当前页前面存在 ::right:: 分界标记且当前块未显式声明 slot，自动归属右栏
-    let effectiveSlot = elemAttrs.slot
     if (!effectiveSlot && currentPage.blocks.some(b => b.slot === "slot-divider-right")) {
       effectiveSlot = "right"
+    }
+
+    if (effectiveSlot) {
+      effectiveAttrs[ATTR_ELEM_SLOT] = effectiveSlot
+    }
+    if (effectiveClicks && !effectiveAttrs[ATTR_ELEM_CLICK]) {
+      effectiveAttrs[ATTR_ELEM_CLICK] = effectiveClicks
+    }
+    if (effectiveMotion && !effectiveAttrs[ATTR_ELEM_MOTION]) {
+      effectiveAttrs[ATTR_ELEM_MOTION] = JSON.stringify(effectiveMotion)
     }
 
     const blockItem: ISlidevBlockItem = {
@@ -418,11 +542,11 @@ export function buildSlidevDocument(
       type: node.type,
       content: node.content || "",
       rawMarkdown: rawMd,
-      clicks: elemAttrs.clicks,
-      motion: elemAttrs.motion,
+      clicks: effectiveClicks,
+      motion: effectiveMotion,
       shikiLines: elemAttrs.shikiLines,
       slot: effectiveSlot,
-      attributes: node.ial,
+      attributes: effectiveAttrs,
     }
 
     currentPage.blocks.push(blockItem)
@@ -460,11 +584,9 @@ export function buildSlidevDocument(
       if (explicitHeader.length > 0) {
         headerList = explicitHeader
       } else if (contentBlocks.length > 0) {
-        const firstHIdx = contentBlocks.findIndex(b => b.type === "h")
-        if (firstHIdx !== -1) {
-          headerList = [contentBlocks[firstHIdx]]
-        } else {
-          headerList = [contentBlocks[0]]
+        const candidateH = contentBlocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"))
+        if (candidateH) {
+          headerList = [candidateH]
         }
       }
 
@@ -485,11 +607,9 @@ export function buildSlidevDocument(
       if (explicitHeader.length > 0) {
         headerList = explicitHeader
       } else if (contentBlocks.length > 0) {
-        const firstHIdx = contentBlocks.findIndex(b => b.type === "h")
-        if (firstHIdx !== -1) {
-          headerList = [contentBlocks[firstHIdx]]
-        } else {
-          headerList = [contentBlocks[0]]
+        const candidateH = contentBlocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"))
+        if (candidateH) {
+          headerList = [candidateH]
         }
       }
 

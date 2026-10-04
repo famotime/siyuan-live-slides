@@ -78,6 +78,47 @@ export function buildStandaloneHtml(
     .layout-cover { justify-content: center; align-items: center; text-align: center; }
     .layout-two-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; width: 100%; height: 100%; flex: 1; align-items: start; box-sizing: border-box; }
     .two-cols-left, .two-cols-right { min-width: 0; width: 100%; display: flex; flex-direction: column; box-sizing: border-box; overflow-wrap: break-word; word-break: break-word; }
+    .pdf-two-cols-wrapper,
+    .layout-two-cols-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 32px;
+      width: 100%;
+      height: 100%;
+      flex: 1 1 0%;
+      align-items: start;
+    }
+    .layout-two-cols-header-container,
+    .layout-three-cols-header-container {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+    }
+    .layout-header-section {
+      width: 100%;
+      margin-bottom: 24px;
+      flex-shrink: 0;
+    }
+    .pdf-three-cols-wrapper,
+    .layout-three-cols-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+      gap: 24px;
+      width: 100%;
+      height: 100%;
+      flex: 1 1 0%;
+      align-items: start;
+    }
+    .pdf-col {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 0;
+      width: 100%;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
     .slide-content.layout-image-right, .slide-content.layout-image-left {
       padding: 0;
       display: grid;

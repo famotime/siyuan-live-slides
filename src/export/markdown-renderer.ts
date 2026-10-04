@@ -659,35 +659,20 @@ export function renderSlideBlocksToHtml(
 
   // 2. 带表头的双栏布局 (two-cols-header)
   if (layout === "two-cols-header") {
-    const hasRightSlot = blocks.some(b => b.slot === "right")
-    const headerBlocks: ISlidevBlockItem[] = []
-    const leftBlocks: ISlidevBlockItem[] = []
-    const rightBlocks: ISlidevBlockItem[] = []
-
-    if (hasRightSlot) {
-      let isHeader = true
-      for (const b of blocks) {
-        if (b.slot === "right") {
-          isHeader = false
-          rightBlocks.push(b)
-        } else if (b.slot === "left") {
-          isHeader = false
-          leftBlocks.push(b)
-        } else if (isHeader && (b.type === "h" || headerBlocks.length === 0)) {
-          headerBlocks.push(b)
-        } else {
-          leftBlocks.push(b)
-        }
-      }
-    } else {
-      if (blocks.length > 0) {
-        headerBlocks.push(blocks[0])
-        const rem = blocks.slice(1)
-        const mid = Math.ceil(rem.length / 2)
-        leftBlocks.push(...rem.slice(0, mid))
-        rightBlocks.push(...rem.slice(mid))
+    let headerBlocks: ISlidevBlockItem[] = []
+    const explicitHeader = blocks.filter(b => b.slot === "header")
+    if (explicitHeader.length > 0) {
+      headerBlocks = explicitHeader
+    } else if (blocks.length > 0) {
+      const candidateH = blocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"))
+      if (candidateH) {
+        headerBlocks = [candidateH]
       }
     }
+
+    const rem = blocks.filter(b => !headerBlocks.includes(b))
+    const rightBlocks = rem.filter(b => b.slot === "right" || b.slot === "col-2")
+    const leftBlocks = rem.filter(b => !rightBlocks.includes(b))
 
     const headerHtml = headerBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
     const leftHtml = leftBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
@@ -699,6 +684,41 @@ export function renderSlideBlocksToHtml(
         <div class="pdf-two-cols-wrapper layout-two-cols-grid">
           <div class="pdf-col pdf-col--left">${leftHtml}</div>
           <div class="pdf-col pdf-col--right">${rightHtml}</div>
+        </div>
+      </div>
+    `
+  }
+
+  // 2.5 带表头的三栏布局 (three-cols-header)
+  if (layout === "three-cols-header") {
+    let headerBlocks: ISlidevBlockItem[] = []
+    const explicitHeader = blocks.filter(b => b.slot === "header")
+    if (explicitHeader.length > 0) {
+      headerBlocks = explicitHeader
+    } else if (blocks.length > 0) {
+      const candidateH = blocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"))
+      if (candidateH) {
+        headerBlocks = [candidateH]
+      }
+    }
+
+    const rem = blocks.filter(b => !headerBlocks.includes(b))
+    const col2Blocks = rem.filter(b => b.slot === "col-2" || b.slot === "center")
+    const col3Blocks = rem.filter(b => b.slot === "col-3" || b.slot === "right")
+    const col1Blocks = rem.filter(b => !col2Blocks.includes(b) && !col3Blocks.includes(b))
+
+    const headerHtml = headerBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
+    const col1Html = col1Blocks.map(b => convertBlockToHtml(b, options)).join("\n")
+    const col2Html = col2Blocks.map(b => convertBlockToHtml(b, options)).join("\n")
+    const col3Html = col3Blocks.map(b => convertBlockToHtml(b, options)).join("\n")
+
+    return `
+      <div class="layout-three-cols-header-container">
+        <div class="layout-header-section">${headerHtml}</div>
+        <div class="pdf-three-cols-wrapper layout-three-cols-grid">
+          <div class="pdf-col pdf-col--1">${col1Html}</div>
+          <div class="pdf-col pdf-col--2">${col2Html}</div>
+          <div class="pdf-col pdf-col--3">${col3Html}</div>
         </div>
       </div>
     `

@@ -29,6 +29,26 @@ export function sayHello() {
 `,
 }
 
+export const THREE_COLS_HEADER_LAYOUT_VUE = `<template>
+  <div class="slidev-layout three-cols-header w-full h-full flex flex-col">
+    <div class="header-section mb-4 w-full">
+      <slot />
+    </div>
+    <div class="grid grid-cols-3 gap-6 flex-1 items-start">
+      <div class="col-1 min-w-0">
+        <slot name="col-1" />
+      </div>
+      <div class="col-2 min-w-0">
+        <slot name="col-2" />
+      </div>
+      <div class="col-3 min-w-0">
+        <slot name="col-3" />
+      </div>
+    </div>
+  </div>
+</template>
+`
+
 /**
  * 从 Markdown 中提取所有引用的代码切片文件相对路径
  * 匹配格式: <<< @/snippets/external.ts#snippet 或 <<< ./snippets/foo.ts 或 <<< snippets/bar.js
@@ -128,6 +148,12 @@ export class WorkspaceScaffolder {
     for (const snippetRel of referencedSnippets) {
       const content = DEFAULT_STARTER_SNIPPETS[snippetRel] || `// Auto-generated snippet placeholder for SiYuan Slidev\n// #region snippet\n// ${snippetRel}\n// #endregion snippet\n`
       snippetsMap.set(snippetRel, content)
+    }
+
+    // 若幻灯片包含 three-cols-header 布局，自动注入官方 Slidev 自定义布局文件 layouts/three-cols-header.vue
+    const hasThreeColsHeader = doc.slides.some(s => s.frontmatter?.layout === "three-cols-header")
+    if (hasThreeColsHeader) {
+      snippetsMap.set("layouts/three-cols-header.vue", THREE_COLS_HEADER_LAYOUT_VUE)
     }
 
     // 物理文件系统落盘增强（确保 Node 子进程立即感知，并彻底避免思源内核文件写锁冲突）

@@ -129,13 +129,22 @@
       text-align: center;
     }
 
-    .slide-content-wrapper.layout-two-cols {
+    .slide-content-wrapper.layout-two-cols,
+    .slide-content-wrapper.layout-two-cols-header,
+    .slide-content-wrapper.layout-three-cols-header {
       display: flex !important;
       flex-direction: column !important;
       width: 100% !important;
       height: 100% !important;
       min-height: 100% !important;
       box-sizing: border-box !important;
+    }
+
+    .two-cols-header-top,
+    .three-cols-header-top {
+      width: 100% !important;
+      margin-bottom: 20px !important;
+      flex-shrink: 0 !important;
     }
 
     .layout-two-cols {
@@ -151,8 +160,22 @@
       box-sizing: border-box !important;
     }
 
+    .layout-three-cols {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) !important;
+      column-gap: 24px;
+      gap: 24px;
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 100% !important;
+      flex: 1 1 0% !important;
+      align-items: start !important;
+      box-sizing: border-box !important;
+    }
+
     .two-cols-left,
-    .two-cols-right {
+    .two-cols-right,
+    .three-cols-col {
       min-width: 0 !important;
       width: 100% !important;
       display: flex !important;
@@ -1037,6 +1060,64 @@
               </div>
             </template>
 
+            <!-- 带表头的三栏布局 -->
+            <template v-else-if="currentSlide.frontmatter.layout === 'three-cols-header'">
+              <div class="three-cols-header-top" v-if="headerBlocks.length > 0">
+                <div
+                  v-for="block in headerBlocks"
+                  :key="block.id"
+                  class="slide-block"
+                  :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                  :style="getBlockMotionStyle(block)"
+                  :data-block-id="block.id"
+                  @click="onBlockClick(block.id, $event)"
+                >
+                  <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                </div>
+              </div>
+              <div class="layout-three-cols" style="flex: 1;">
+                <div class="three-cols-col three-cols-col--1" :class="currentSlide.frontmatter.class">
+                  <div
+                    v-for="block in col1Blocks"
+                    :key="block.id"
+                    class="slide-block"
+                    :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :style="getBlockMotionStyle(block)"
+                    :data-block-id="block.id"
+                    @click="onBlockClick(block.id, $event)"
+                  >
+                    <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                  </div>
+                </div>
+                <div class="three-cols-col three-cols-col--2" :class="currentSlide.frontmatter.class">
+                  <div
+                    v-for="block in col2Blocks"
+                    :key="block.id"
+                    class="slide-block"
+                    :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :style="getBlockMotionStyle(block)"
+                    :data-block-id="block.id"
+                    @click="onBlockClick(block.id, $event)"
+                  >
+                    <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                  </div>
+                </div>
+                <div class="three-cols-col three-cols-col--3" :class="currentSlide.frontmatter.class">
+                  <div
+                    v-for="block in col3Blocks"
+                    :key="block.id"
+                    class="slide-block"
+                    :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :style="getBlockMotionStyle(block)"
+                    :data-block-id="block.id"
+                    @click="onBlockClick(block.id, $event)"
+                  >
+                    <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                  </div>
+                </div>
+              </div>
+            </template>
+
             <!-- 双栏布局 -->
             <template v-else-if="currentSlide.frontmatter.layout === 'two-cols'">
               <div class="layout-two-cols" :class="currentSlide.frontmatter.layoutClass">
@@ -1747,20 +1828,13 @@
         const headerBlocks = computed(() => {
           if (!currentSlide.value) return []
           const blocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right")
-          const hasRightSlot = blocks.some(b => b.slot === "right")
-          if (hasRightSlot) {
-            const res = []
-            let isHeader = true
-            for (const b of blocks) {
-              if (b.slot === "right" || b.slot === "left") {
-                isHeader = false
-              } else if (isHeader && (b.type === "h" || res.length === 0)) {
-                res.push(b)
-              }
-            }
-            return res
+          const explicit = blocks.filter(b => b.slot === "header")
+          if (explicit.length > 0) return explicit
+          if (blocks.length > 0) {
+            const candidateH = blocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"))
+            if (candidateH) return [candidateH]
           }
-          return blocks.length > 0 ? [blocks[0]] : []
+          return []
         })
 
         const leftBlocks = computed(() => {
@@ -1770,12 +1844,8 @@
           if (layout === "two-cols-header") {
             const headers = headerBlocks.value
             const rem = blocks.filter(b => !headers.includes(b))
-            const left = rem.filter(b => b.slot === "left")
-            if (left.length > 0) return left
-            const hasRight = rem.some(b => b.slot === "right")
-            if (hasRight) return rem.filter(b => b.slot !== "right")
-            const mid = Math.ceil(rem.length / 2)
-            return rem.slice(0, mid)
+            const right = rem.filter(b => b.slot === "right" || b.slot === "col-2")
+            return rem.filter(b => !right.includes(b))
           }
           const left = blocks.filter(b => b.slot === "left")
           if (left.length > 0) return left
@@ -1792,15 +1862,38 @@
           if (layout === "two-cols-header") {
             const headers = headerBlocks.value
             const rem = blocks.filter(b => !headers.includes(b))
-            const right = rem.filter(b => b.slot === "right")
-            if (right.length > 0) return right
-            const mid = Math.ceil(rem.length / 2)
-            return rem.slice(mid)
+            return rem.filter(b => b.slot === "right" || b.slot === "col-2")
           }
           const right = blocks.filter(b => b.slot === "right")
           if (right.length > 0) return right
           const mid = Math.ceil(blocks.length / 2)
           return blocks.slice(mid)
+        })
+
+        const col1Blocks = computed(() => {
+          if (!currentSlide.value) return []
+          const blocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right")
+          const headers = headerBlocks.value
+          const rem = blocks.filter(b => !headers.includes(b))
+          const col2 = rem.filter(b => b.slot === "col-2" || b.slot === "center")
+          const col3 = rem.filter(b => b.slot === "col-3" || b.slot === "right")
+          return rem.filter(b => !col2.includes(b) && !col3.includes(b))
+        })
+
+        const col2Blocks = computed(() => {
+          if (!currentSlide.value) return []
+          const blocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right")
+          const headers = headerBlocks.value
+          const rem = blocks.filter(b => !headers.includes(b))
+          return rem.filter(b => b.slot === "col-2" || b.slot === "center")
+        })
+
+        const col3Blocks = computed(() => {
+          if (!currentSlide.value) return []
+          const blocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right")
+          const headers = headerBlocks.value
+          const rem = blocks.filter(b => !headers.includes(b))
+          return rem.filter(b => b.slot === "col-3" || b.slot === "right")
         })
 
         // 幻灯片专属图文分栏图片状态与容灾回退
@@ -2565,6 +2658,9 @@
           headerBlocks,
           leftBlocks,
           rightBlocks,
+          col1Blocks,
+          col2Blocks,
+          col3Blocks,
           normalBlocks,
           isDarkTheme,
           isMaxStep,

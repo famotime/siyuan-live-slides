@@ -170,8 +170,9 @@ export function parseElementAttrs(
     result.isNote = true
   }
 
-  if (attrs[ATTR_ELEM_CLICK] !== undefined && attrs[ATTR_ELEM_CLICK] !== null) {
-    result.clicks = attrs[ATTR_ELEM_CLICK].trim()
+  const clickAttr = attrs[ATTR_ELEM_CLICK] ?? attrs["custom-slidev-clicks"] ?? attrs["slidev-click"] ?? attrs["slidev-clicks"]
+  if (clickAttr !== undefined && clickAttr !== null) {
+    result.clicks = clickAttr.trim()
   }
 
   if (attrs[ATTR_ELEM_MOTION]) {

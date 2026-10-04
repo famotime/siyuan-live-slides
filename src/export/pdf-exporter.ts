@@ -161,12 +161,36 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       object-fit: contain;
       border-radius: 6px;
     }
-    .pdf-two-cols-wrapper {
+    .pdf-two-cols-wrapper,
+    .layout-two-cols-grid {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 36px;
       width: 100%;
       height: 100%;
+      flex: 1 1 0%;
+      align-items: start;
+    }
+    .layout-two-cols-header-container,
+    .layout-three-cols-header-container {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+    }
+    .layout-header-section {
+      width: 100%;
+      margin-bottom: 24px;
+      flex-shrink: 0;
+    }
+    .pdf-three-cols-wrapper,
+    .layout-three-cols-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+      gap: 24px;
+      width: 100%;
+      height: 100%;
+      flex: 1 1 0%;
       align-items: start;
     }
     .pdf-col {
