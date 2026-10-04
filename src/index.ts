@@ -799,6 +799,21 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     const override = globalDocumentCompiler.getBlockAttrOverride(effectiveId) || {}
     const finalAttrs = { ...attrs, ...override }
 
+    // 解析当前块所属顶层块 ID 以及其所归属的前置分页符 ID
+    const topBlockEl = (effectiveEl.closest(".protyle-wysiwyg > [data-node-id]") || effectiveEl) as HTMLElement
+    const topBlockId = topBlockEl?.getAttribute("data-node-id") || effectiveId
+
+    let pageDividerId = ""
+    let prev = topBlockEl.previousElementSibling
+    while (prev) {
+      const pType = prev.getAttribute("data-type")
+      if (pType === "NodeThematicBreak" || pType === "tb" || prev.classList?.contains("hr")) {
+        pageDividerId = prev.getAttribute("data-node-id") || ""
+        break
+      }
+      prev = prev.previousElementSibling
+    }
+
     updateInspectorCurrentBlock({
       id: effectiveId,
       rootId: this.currentDocId,
@@ -807,6 +822,8 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
       attrs: finalAttrs,
       isDivider,
       isCode,
+      topBlockId,
+      pageDividerId,
     })
   }
 

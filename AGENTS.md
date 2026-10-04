@@ -55,3 +55,18 @@ Stack: Vue 3, TypeScript, Vite, Vitest, Sass, SiYuan Plugin API.
 2. **Testing First**: Before and after modifying compiler, renderer, or state logic, run `npm test` to ensure 0 regressions.
 3. **Build Validation**: Always run `npm run build` after changes to verify that Vite bundle and `package.zip` build cleanly.
 4. **Style**: Use 2-space indentation, semicolons as configured, and Chinese comments for internal business logic.
+
+## Reference Projects
+
+重要：在涉及解析思源笔记文档块结构和内容、确认API时，务必查看developer_docs目录下开发者文档 和 siyuan-note 项目源码确认，不要凭猜测开发和测试。
+
+siyuan-note（思源笔记本体项目源码）: D:\MyCodingProjects\siyuan-note
+
+/developer_docs：思源笔记插件开发者文档
+
+Slidev: D:\MyCodingProjects\slidev
+
+Slidev Templates: D:\MyCodingProjects\slidev-templates
+
+siyuan-property-manager: D:\MyCodingProjects\siyuan-property-manager
+

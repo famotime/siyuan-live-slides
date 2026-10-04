@@ -188,6 +188,8 @@ const activeBlockType = ref('')
 const activeBlockAttrs = ref<Record<string, string>>({})
 const rawSnippet = ref('')
 const currentDocId = ref('')
+const currentTopBlockId = ref('')
+const currentPageDividerId = ref('')
 const latestDoc = ref<ISlidevDocument | null>(null)
 const saveStatus = ref('')
 const copyNotice = ref('')
@@ -250,6 +252,9 @@ const targetTagLabel = computed(() => {
     case 'NodeListItem': return '列表项'
     case 'NodeBlockquote': return '引述块'
     case 'NodeTable': return '表格块'
+    case 'NodeSuperBlock':
+    case 's':
+    case 'sb': return '超级块'
     default: return '内容块'
   }
 })
@@ -268,22 +273,74 @@ const pageImage = ref('')
 
 // 讲稿备注与当前页模型响应式绑定
 const targetSlide = computed(() => {
-  if (!latestDoc.value?.slides) return null
+  if (!latestDoc.value?.slides || latestDoc.value.slides.length === 0) return null
   const aid = activeBlockId.value
+  const topId = currentTopBlockId.value
+  const divId = currentPageDividerId.value
+
+  // 1. 若解析到了所属的前置分页符 ID，优先精准匹配对应幻灯片
+  if (divId) {
+    const s = latestDoc.value.slides.find(slide => slide.startBlockId === divId)
+    if (s) return s
+  }
+
+  // 2. 当前激活块本身就是分页符或幻灯片起始块
   if (aid) {
     let s = latestDoc.value.slides.find(slide => slide.startBlockId === aid)
     if (s) return s
+
+    // 3. 匹配 aid 是否在正文内容块列表中
     s = latestDoc.value.slides.find(slide => slide.blocks?.some(b => b.id === aid))
     if (s) return s
-    s = latestDoc.value.slides.find(slide => slide.noteBlocks?.some(b => b.id === aid))
+
+    // 4. 匹配 topBlockId 是否在正文内容块列表中 (解决列表项、表格、引述块、超级块等深层嵌套子块的识别)
+    if (topId && topId !== aid) {
+      s = latestDoc.value.slides.find(slide => slide.blocks?.some(b => b.id === topId))
+      if (s) return s
+    }
+
+    // 5. 匹配备注块
+    s = latestDoc.value.slides.find(slide => slide.noteBlocks?.some(b => b.id === aid || b.id === topId))
     if (s) return s
   }
+
+  // 6. 首选降级：若在第一个分页符前或单页演示，归属第一页
   return latestDoc.value.slides[0] || null
 })
 
 const currentSlideNotes = computed(() => targetSlide.value?.notes || '')
 const currentSlideNoteBlockId = computed(() => targetSlide.value?.noteBlocks?.[0]?.id || '')
-const currentSlideLayout = computed(() => targetSlide.value?.frontmatter?.layout || 'default')
+
+const currentSlideLayout = computed(() => {
+  // 1. 若当前激活块就是分页符，优先以当前分页符实时属性为准
+  if (isDivider.value) {
+    const directLayout = activeBlockAttrs.value[ATTR_PAGE_LAYOUT] || activeBlockAttrs.value['custom-slidev-layout']
+    if (directLayout) return directLayout
+  }
+
+  // 2. 检查当前页前置分页符或当前块是否存在即时覆盖层属性 (毫秒级穿透，解决异步落库重编译前的竞态时序)
+  const divId = currentPageDividerId.value || (isDivider.value ? activeBlockId.value : '')
+  if (divId) {
+    const override = globalDocumentCompiler.getBlockAttrOverride(divId)
+    if (override?.[ATTR_PAGE_LAYOUT]) {
+      return override[ATTR_PAGE_LAYOUT]
+    }
+  }
+
+  // 3. 从精确匹配的目标 slide 中获取 layout
+  if (targetSlide.value?.frontmatter?.layout) {
+    return targetSlide.value.frontmatter.layout
+  }
+
+  // 4. 文档级覆盖层兜底
+  const docOverride = globalDocumentCompiler.getBlockAttrOverride(currentDocId.value)
+  if (docOverride?.[ATTR_PAGE_LAYOUT]) {
+    return docOverride[ATTR_PAGE_LAYOUT]
+  }
+
+  return 'default'
+})
+
 const targetPageIndex = computed(() => targetSlide.value?.pageIndex || 1)
 const isNoteBlock = computed(() => Boolean(activeBlockAttrs.value[ATTR_ELEM_NOTE] || activeBlockAttrs.value['slidev-note']))
 
@@ -380,6 +437,15 @@ async function saveAttr(key: string, value: string) {
 
   activeBlockAttrs.value[key] = value
   globalDocumentCompiler.setBlockAttrOverride(targetId, { [key]: value })
+
+  // 若修改的是版式，立即同步当前内存中 targetSlide 的 layout，避免点击内容块时异步重编译未完成读取到旧数据
+  if (key === ATTR_PAGE_LAYOUT && targetSlide.value) {
+    if (!targetSlide.value.frontmatter) {
+      targetSlide.value.frontmatter = {}
+    }
+    targetSlide.value.frontmatter.layout = value as any
+  }
+
   triggerSaveNotice('保存中...')
   try {
     await setBlockAttrs(targetId, { [key]: value })
@@ -623,8 +689,10 @@ function onElemShikiLinesChange(val: string) {
 }
 
 async function onSetTwoColsContrast() {
-  await saveAttr(ATTR_ELEM_SLOT, 'left')
-  showMessage('已将当前块设置为双栏左栏 (left)')
+  const isThreeCols = currentSlideLayout.value === 'three-cols-header'
+  const slotVal = isThreeCols ? 'col-1' : 'left'
+  await saveAttr(ATTR_ELEM_SLOT, slotVal)
+  showMessage(isThreeCols ? '已将当前块设置为第 1 栏 (col-1)' : '已将当前块设置为双栏左栏 (left)')
 }
 
 async function onClearBlockAttrs() {
@@ -749,6 +817,8 @@ defineExpose({
     activeBlockType.value = info.type
     activeBlockAttrs.value = { ...info.attrs }
     rawSnippet.value = info.content || info.markdown || ''
+    currentTopBlockId.value = info.topBlockId || info.id
+    currentPageDividerId.value = info.pageDividerId || ''
     if (info.rootId) {
       currentDocId.value = info.rootId
     } else if ((info.type === 'doc' || info.type === 'NodeDocument') && info.id) {

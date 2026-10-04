@@ -261,11 +261,11 @@
 
         <button
           class="spm-btn-action b3-tooltips b3-tooltips__s"
-          aria-label="将当前块属性设为双栏左侧归属 (slot: left)"
+          :aria-label="currentSlideLayout === 'three-cols-header' ? '将当前块属性设为三栏第1栏归属 (slot: col-1)' : '将当前块属性设为双栏左侧归属 (slot: left)'"
           @click="$emit('setTwoColsContrast')"
         >
           <SlidevIcon name="columns" />
-          <span>设为双栏</span>
+          <span>{{ currentSlideLayout === 'three-cols-header' ? '设为第1栏' : '设为双栏' }}</span>
         </button>
 
         <button

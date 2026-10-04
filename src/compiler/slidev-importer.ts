@@ -774,9 +774,9 @@ export function parseSlidevPresentation(
         const layoutAttr = frontmatter.layout === "image-left" ? "image-left" : "image-right"
         const imgBlockMd = `![配图](${imgUrl})\n{: custom-slidev-layout="${layoutAttr}" }`
         if (frontmatter.layout === "image-left") {
-          contentBody = `{{{row\n${imgBlockMd}\n\n${contentBody}\n}}}`
+          contentBody = `{{{col\n\n${imgBlockMd}\n\n${contentBody}\n\n}}}`
         } else {
-          contentBody = `{{{row\n${contentBody}\n\n${imgBlockMd}\n}}}`
+          contentBody = `{{{col\n\n${contentBody}\n\n${imgBlockMd}\n\n}}}`
         }
       }
 

@@ -20,7 +20,7 @@ import {
   parseElementAttrs,
   parsePageAttrs,
 } from "./scope-mapper"
-import { detectSuperBlockImageLayout, extractImageUrl } from "./superblock-scanner"
+import { detectSuperBlockImageLayout, extractImageUrl, isSuperBlock } from "./superblock-scanner"
 
 /**
  * 序列化 Frontmatter 对象为 YAML 字符串
@@ -405,10 +405,14 @@ export function buildSlidevDocument(
         rawMd = rawMd.slice(0, inlineIalMatch.index).trim()
       }
 
-      // 容错剥离单独成块的思源超级块标记行 ({{{row 或 }}})
+      // 容错剥离单独成块的思源超级块标记行 ({{{row, {{{col 或 }}})
       let cleanRaw = rawMd.trim()
       if (/^\{\{\{(?:row|col)?\s*$/i.test(cleanRaw) || cleanRaw === "}}}") {
         return
+      }
+      if (/^\{\{\{(?:row|col)?\s*\r?\n/i.test(cleanRaw) && /\r?\n\}\}\}$/.test(cleanRaw)) {
+        rawMd = cleanRaw.replace(/^\{\{\{(?:row|col)?\s*\r?\n/i, "").replace(/\r?\n\}\}\}$/, "").trim()
+        cleanRaw = rawMd.trim()
       }
 
       const elemAttrs = parseElementAttrs(combinedIal)
@@ -453,9 +457,9 @@ export function buildSlidevDocument(
         }
       }
 
-      // 常规未匹配图文版式的超级块：展开其子内容
+      // 常规未匹配图文版式的超级块：展开其子内容 (兼容思源官方缩写 's'、'sb' 与 'NodeSuperBlock')
       if (
-        (itemNode.type === "sb" || itemNode.type === "NodeSuperBlock") &&
+        isSuperBlock(itemNode) &&
         itemNode.children &&
         itemNode.children.length > 0
       ) {

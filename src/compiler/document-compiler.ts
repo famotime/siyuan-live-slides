@@ -1,7 +1,7 @@
 import { getBlockAttrs, getChildBlocks, setBlockAttrs, sql } from "../api"
 import { extractBlockRefs } from "./block-ref-resolver"
 import { buildSlidevDocument } from "./slidev-ast-builder"
-import { scanAndTagSuperBlocks } from "./superblock-scanner"
+import { isSuperBlock, scanAndTagSuperBlocks } from "./superblock-scanner"
 import type { ISiYuanBlockNode, ISlidevDocument } from "../types/slidev-protocol"
 import { ATTR_PAGE_LAYOUT } from "../types/slidev-protocol"
 
@@ -146,13 +146,17 @@ export class DocumentCompilerService {
         }
       })
 
-      // 5.5 补全超级块的子节点并进行图文超级块自动扫描打标
+      // 5.5 补全超级块的子节点并进行图文超级块自动扫描打标 (支持官方缩写 's' 与降级 SQL 查询)
       for (const node of blockNodes) {
         if (
-          (node.type === "sb" || node.type === "NodeSuperBlock") &&
+          isSuperBlock(node) &&
           (!node.children || node.children.length === 0)
         ) {
-          const rawChildren = await this.deps.getChildBlocks(node.id).catch(() => [])
+          let rawChildren = await this.deps.getChildBlocks(node.id).catch(() => [])
+          if (!rawChildren || rawChildren.length === 0) {
+            const childSql = `SELECT id, parent_id, root_id, type, sub_type as subType, content, markdown, ial FROM blocks WHERE parent_id = '${node.id}' ORDER BY sort ASC, created ASC`
+            rawChildren = (await this.deps.sql(childSql).catch(() => [])) || []
+          }
           if (Array.isArray(rawChildren) && rawChildren.length > 0) {
             node.children = rawChildren.map((c: any) => {
               const cIalMap = ialMapById.get(c.id) || (c.ial ? parseIALString(c.ial) : {})

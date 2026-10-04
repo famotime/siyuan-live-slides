@@ -37,6 +37,7 @@
 <script setup lang="ts">
 import { ref, watch, defineProps, defineEmits } from 'vue'
 import { setBlockAttrs } from '@/api'
+import { globalDocumentCompiler } from '@/compiler/document-compiler'
 import LayoutPicker from './LayoutPicker.vue'
 import TransitionSelector from './TransitionSelector.vue'
 import {
@@ -69,6 +70,7 @@ watch(() => props.initialAttrs, (newAttrs) => {
 async function updateAttr(key: string, value: string) {
   if (!props.blockId) return
   saveHint.value = '正在同步...'
+  globalDocumentCompiler.setBlockAttrOverride(props.blockId, { [key]: value })
   try {
     await setBlockAttrs(props.blockId, { [key]: value })
     saveHint.value = '已同步至块属性'
