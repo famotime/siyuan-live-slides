@@ -8,6 +8,7 @@ import type { ISlidevPluginConfig, ISlidevVirtualPage } from "../types/slidev-pr
 
 export type TSlideChangedHandler = (currentPage: number, totalPages: number, currentBlockId: string) => void
 export type TBlockClickedHandler = (clickedBlockId: string, currentPage: number) => void
+export type TOpenInEditorHandler = (blockId: string, currentPage: number) => void
 export type TClientReadyHandler = () => void
 
 export class WebSandboxBridge {
@@ -17,6 +18,7 @@ export class WebSandboxBridge {
 
   private slideChangedHandlers: TSlideChangedHandler[] = []
   private blockClickedHandlers: TBlockClickedHandler[] = []
+  private openInEditorHandlers: TOpenInEditorHandler[] = []
   private clientReadyHandlers: TClientReadyHandler[] = []
 
   constructor() {
@@ -112,6 +114,13 @@ export class WebSandboxBridge {
     }
   }
 
+  public onOpenInEditor(handler: TOpenInEditorHandler): () => void {
+    this.openInEditorHandlers.push(handler)
+    return () => {
+      this.openInEditorHandlers = this.openInEditorHandlers.filter(h => h !== handler)
+    }
+  }
+
   public onClientReady(handler: TClientReadyHandler): () => void {
     this.clientReadyHandlers.push(handler)
     return () => {
@@ -159,6 +168,15 @@ export class WebSandboxBridge {
         if (data.payload.clickedBlockId) {
           for (const handler of this.blockClickedHandlers) {
             handler(data.payload.clickedBlockId, data.payload.currentPage || 1)
+          }
+        }
+        break
+
+      case "OPEN_IN_EDITOR":
+        if (data.payload.blockId || data.payload.clickedBlockId) {
+          const targetBlockId = data.payload.blockId || data.payload.clickedBlockId || ""
+          for (const handler of this.openInEditorHandlers) {
+            handler(targetBlockId, data.payload.currentPage || 1)
           }
         }
         break

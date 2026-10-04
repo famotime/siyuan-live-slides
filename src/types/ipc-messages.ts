@@ -35,6 +35,7 @@ export interface IHostToSlidevMessage {
 export type TSlidevToHostAction =
   | "SLIDE_CHANGED"
   | "BLOCK_CLICKED"
+  | "OPEN_IN_EDITOR"
   | "REQUEST_SAVE_ATTRS"
   | "EXPORT_TRIGGER"
   | "CLIENT_READY"
@@ -51,6 +52,8 @@ export interface ISlidevToHostMessage {
     currentBlockId?: string
     // 用户在演示中点击的特定 Block ID (用于编辑器精准对齐)
     clickedBlockId?: string
+    // 打开在编辑器中的 Block ID
+    blockId?: string
     // 快捷修改属性请求 (如演示中修改了备注)
     updatedAttrs?: Record<string, string>
     // 导出类型

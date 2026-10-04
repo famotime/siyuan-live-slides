@@ -169,6 +169,7 @@ const iframeSrc = ref('/plugins/siyuan-slidev/slidev-client/index.html')
 
 let unbindSlideChanged: (() => void) | null = null
 let unbindBlockClicked: (() => void) | null = null
+let unbindOpenInEditor: (() => void) | null = null
 let unbindNativePageChanged: (() => void) | null = null
 let latestDoc: ISlidevDocument | null = null
 
@@ -193,6 +194,12 @@ onMounted(() => {
     }
   })
 
+  unbindOpenInEditor = sandboxBridge.onOpenInEditor((blockId, page) => {
+    currentPage.value = page
+    cursorTracker.setActiveBlockId(blockId)
+    mirrorBlockSelection(blockId, (plugin as any)?.app)
+  })
+
   unbindNativePageChanged = engineManager.nativeBridge.onPageChanged((page, total) => {
     currentPage.value = page
     totalPages.value = total
@@ -202,6 +209,7 @@ onMounted(() => {
 onUnmounted(() => {
   if (unbindSlideChanged) unbindSlideChanged()
   if (unbindBlockClicked) unbindBlockClicked()
+  if (unbindOpenInEditor) unbindOpenInEditor()
   if (unbindNativePageChanged) unbindNativePageChanged()
   sandboxBridge.detach()
   cursorTracker.destroy()

@@ -59,7 +59,7 @@
         </div>
         <button
           class="spm-btn-text b3-tooltips b3-tooltips__w"
-          aria-label="调用思源 AI 根据本页内容自动提炼口播讲稿"
+          aria-label="AI 根据本页内容自动提炼口播讲稿"
           @click="$emit('generateNotes')"
         >
           <SlidevIcon name="sparkles" />

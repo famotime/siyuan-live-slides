@@ -109,6 +109,56 @@ export function buildStandaloneHtml(
       padding: 6px 18px; border-radius: 20px; color: #fff; font-size: 13px; z-index: 10;
     }
     .controls button { background: transparent; border: none; color: inherit; cursor: pointer; padding: 2px 6px; }
+
+    /* Slidev Native Icons & Interactive Buttons */
+    .slidev-icon-btn {
+      display: inline-flex !important; flex-direction: row !important; align-items: center !important; justify-content: center !important;
+      padding: 0.35rem 0.5rem; border-radius: 0.375rem; background: transparent;
+      border: 1px solid transparent; color: inherit; font-size: inherit; line-height: 1;
+      cursor: pointer; opacity: 0.8; transition: all 0.2s ease; text-decoration: none;
+      vertical-align: middle; user-select: none; margin: 0 4px;
+    }
+    .slidev-icon-btn:hover { opacity: 1; background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.15); }
+
+    /* 组件从上到下按顺序流式渲染，避免相互重叠 */
+    .slide-block > div + div { margin-top: 14px; }
+
+    /* 同一个 div 内的按钮/链接从左到右水平渲染 */
+    .slide-block div:has(> .slidev-icon-btn),
+    .slide-block div:has(> button),
+    .slide-block [class*="abs-"],
+    .slidev-btn-row {
+      display: inline-flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      justify-content: center !important;
+      flex-wrap: wrap !important;
+      gap: 8px !important;
+    }
+
+    /* Position Shortcuts 适配：在组件流中保持从上到下排列，不脱离流产生重叠 */
+    .slide-block .abs-br,
+    .slide-block .abs-bl,
+    .slide-block .abs-tr,
+    .slide-block .abs-tl,
+    .slide-block [class*="abs-"] {
+      position: relative !important;
+      bottom: auto !important;
+      right: auto !important;
+      top: auto !important;
+      left: auto !important;
+      margin: 0.75rem auto !important;
+    }
+
+    .slide-block--absolute { position: relative !important; margin-bottom: 14px !important; padding: 0 !important; background: transparent !important; }
+    .slide-block--absolute:hover { background: transparent !important; }
+    .mt-12 { margin-top: 3rem !important; }
+    .py-1 { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
+    .m-6 { margin: 1.5rem !important; }
+    .text-xl { font-size: 1.25rem !important; }
+    [hover\\:bg~="white"][hover\\:bg~="op-10"]:hover,
+    [hover\\:bg="white op-10"]:hover { background: rgba(255, 255, 255, 0.1) !important; border-radius: 4px; }
+    .cursor-pointer, [data-clickable] { cursor: pointer; }
   </style>
   <script>
     // 注入演示数据载荷
@@ -160,6 +210,48 @@ export function buildStandaloneHtml(
 
         if (md.includes('class="slidev-block-ref"') || md.includes('class="slidev-ref-tag"')) {
           div.innerHTML = md;
+          return div;
+        }
+
+        const CARBON_MAP = {
+          'carbon:arrow-right': '<svg viewBox="0 0 32 32" width="1.2em" height="1.2em" fill="currentColor" style="display:inline-block;vertical-align:middle;"><path d="m18 6l-1.43 1.393L24.15 15H4v2h20.15l-7.58 7.573L18 26l10-10z"/></svg>',
+          'carbon:arrow-left': '<svg viewBox="0 0 32 32" width="1.2em" height="1.2em" fill="currentColor" style="display:inline-block;vertical-align:middle;"><path d="m14 26l1.43-1.393L7.85 17H28v-2H7.85l7.58-7.573L14 6L4 16z"/></svg>',
+          'carbon:edit': '<svg viewBox="0 0 32 32" width="1.2em" height="1.2em" fill="currentColor" style="display:inline-block;vertical-align:middle;"><path d="M2 26h28v2H2zM25.4 9c.8-.8.8-2 0-2.8l-3.6-3.6c-.8-.8-2-.8-2.8 0l-15 15V24h6.4l15-15zM20.4 4L24 7.6l-2.4 2.4l-3.6-3.6L20.4 4zM6 22v-3.6l11-11l3.6 3.6l-11 11H6z"/></svg>',
+          'carbon:logo-github': '<svg viewBox="0 0 32 32" width="1.2em" height="1.2em" fill="currentColor" style="display:inline-block;vertical-align:middle;"><path fill-rule="evenodd" d="M16 2a14 14 0 0 0-4.43 27.28c.7.13 1-.3 1-.67v-2.38c-3.89.84-4.71-1.88-4.71-1.88a3.7 3.7 0 0 0-1.56-2.05c-1.27-.86.1-.85.1-.85a2.94 2.94 0 0 1 2.14 1.44a3 3 0 0 0 4.08 1.16a2.93 2.93 0 0 1 .89-1.87c-3.1-.35-6.36-1.55-6.36-6.9a5.4 5.4 0 0 1 1.44-3.75a5 5 0 0 1 .14-3.71s1.17-.38 3.85 1.43a13.3 13.3 0 0 1 7 0c2.67-1.81 3.84-1.43 3.84-1.43a5 5 0 0 1 .14 3.71a5.4 5.4 0 0 1 1.44 3.75c0 5.37-3.27 6.54-6.38 6.89a3.35 3.35 0 0 1 1.26 2.61v3.87c0 .38.26.81 1 .67A14 14 0 0 0 16 2"/></svg>'
+        };
+
+        if (/@\\w+=['"]|v-\\w+|<button|<a\\b|<carbon:|^<div/i.test(md)) {
+          if (md.includes('abs-br') || md.includes('abs-bl') || md.includes('abs-tr') || md.includes('abs-tl') || md.includes('absolute')) {
+            div.classList.add("slide-block--absolute");
+          }
+          let renderedHtml = md;
+          for (const [tag, svg] of Object.entries(CARBON_MAP)) {
+            const regex = new RegExp("<" + tag + "\\\\s*\\\\/?>", "gi");
+            renderedHtml = renderedHtml.replace(regex, svg);
+            const regexDash = new RegExp("<" + tag.replace(":", "-") + "\\\\s*\\\\/?>", "gi");
+            renderedHtml = renderedHtml.replace(regexDash, svg);
+          }
+          div.innerHTML = renderedHtml;
+
+          // 挂载交互事件监听
+          const nextBtns = div.querySelectorAll('[\\\\@click*="nav.next"], [\\\\@click*="next"]');
+          nextBtns.forEach(btn => {
+            btn.style.cursor = "pointer";
+            btn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              renderSlide(currentIndex + 1);
+            });
+          });
+
+          const prevBtns = div.querySelectorAll('[\\\\@click*="nav.prev"], [\\\\@click*="prev"]');
+          prevBtns.forEach(btn => {
+            btn.style.cursor = "pointer";
+            btn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              renderSlide(currentIndex - 1);
+            });
+          });
+
           return div;
         }
 
