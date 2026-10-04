@@ -178,10 +178,49 @@
     .three-cols-col {
       min-width: 0 !important;
       width: 100% !important;
+      max-width: 100% !important;
       display: flex !important;
       flex-direction: column !important;
       box-sizing: border-box !important;
       overflow-wrap: break-word !important;
+      word-break: break-word !important;
+      white-space: normal !important;
+    }
+
+    .three-cols-col .slide-block,
+    .three-cols-col .slide-block *,
+    .three-cols-col p,
+    .three-cols-col h1,
+    .three-cols-col h2,
+    .three-cols-col h3,
+    .three-cols-col h4,
+    .three-cols-col h5,
+    .three-cols-col h6,
+    .three-cols-col li,
+    .three-cols-col blockquote,
+    .three-cols-col span,
+    .three-cols-col div {
+      overflow-wrap: break-word !important;
+      word-break: break-word !important;
+      white-space: normal !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    .three-cols-col pre,
+    .three-cols-col pre.shiki-container {
+      overflow-x: auto !important;
+      white-space: pre-wrap !important;
+      word-break: break-word !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    .three-cols-col table {
+      table-layout: fixed !important;
+      width: 100% !important;
+      max-width: 100% !important;
       word-break: break-word !important;
     }
 
@@ -1773,6 +1812,7 @@
         const currentPageIndex = ref(1) // 1-based
         const currentStep = ref(0) // 当前页内 v-click 步进计数
         const highlightedBlockId = ref("")
+        const isKeyboardFrozen = ref(false)
         const config = ref({
           theme: "default",
           aspectRatio: "16/9",
@@ -1870,31 +1910,57 @@
           return blocks.slice(mid)
         })
 
-        const col1Blocks = computed(() => {
-          if (!currentSlide.value) return []
+        const threeColsDistribution = computed(() => {
+          if (!currentSlide.value) return { col1: [], col2: [], col3: [] }
           const blocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right")
           const headers = headerBlocks.value
           const rem = blocks.filter(b => !headers.includes(b))
-          const col2 = rem.filter(b => b.slot === "col-2" || b.slot === "center")
-          const col3 = rem.filter(b => b.slot === "col-3" || b.slot === "right")
-          return rem.filter(b => !col2.includes(b) && !col3.includes(b))
+
+          const hasExplicitCols = rem.some(b => b.slot === "col-1" || b.slot === "col-2" || b.slot === "col-3" || b.slot === "center" || b.slot === "left" || b.slot === "right")
+          if (hasExplicitCols) {
+            const col2 = rem.filter(b => b.slot === "col-2" || b.slot === "center")
+            const col3 = rem.filter(b => b.slot === "col-3" || b.slot === "right")
+            const col1 = rem.filter(b => !col2.includes(b) && !col3.includes(b))
+            return { col1, col2, col3 }
+          }
+          if (rem.length >= 3) {
+            const c1Count = Math.ceil(rem.length / 3)
+            const c2Count = Math.ceil((rem.length - c1Count) / 2)
+            return {
+              col1: rem.slice(0, c1Count),
+              col2: rem.slice(c1Count, c1Count + c2Count),
+              col3: rem.slice(c1Count + c2Count),
+            }
+          }
+          if (rem.length === 2) {
+            return {
+              col1: [rem[0]],
+              col2: [rem[1]],
+              col3: [],
+            }
+          }
+          if (rem.length === 1) {
+            const lines = (rem[0].rawMarkdown || rem[0].content || "").trim().split(/\r?\n/)
+            const itemLines = lines.filter(l => /^[ \t]*[-*+]\s+|^[ \t]*\d+\.\s+/.test(l))
+            if (itemLines.length >= 3) {
+              const c1Count = Math.ceil(itemLines.length / 3)
+              const c2Count = Math.ceil((itemLines.length - c1Count) / 2)
+              const items1 = itemLines.slice(0, c1Count).join("\n")
+              const items2 = itemLines.slice(c1Count, c1Count + c2Count).join("\n")
+              const items3 = itemLines.slice(c1Count + c2Count).join("\n")
+              return {
+                col1: [{ ...rem[0], rawMarkdown: items1, content: items1 }],
+                col2: [{ ...rem[0], id: `${rem[0].id}-col2`, rawMarkdown: items2, content: items2 }],
+                col3: [{ ...rem[0], id: `${rem[0].id}-col3`, rawMarkdown: items3, content: items3 }],
+              }
+            }
+          }
+          return { col1: rem, col2: [], col3: [] }
         })
 
-        const col2Blocks = computed(() => {
-          if (!currentSlide.value) return []
-          const blocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right")
-          const headers = headerBlocks.value
-          const rem = blocks.filter(b => !headers.includes(b))
-          return rem.filter(b => b.slot === "col-2" || b.slot === "center")
-        })
-
-        const col3Blocks = computed(() => {
-          if (!currentSlide.value) return []
-          const blocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right")
-          const headers = headerBlocks.value
-          const rem = blocks.filter(b => !headers.includes(b))
-          return rem.filter(b => b.slot === "col-3" || b.slot === "right")
-        })
+        const col1Blocks = computed(() => threeColsDistribution.value.col1)
+        const col2Blocks = computed(() => threeColsDistribution.value.col2)
+        const col3Blocks = computed(() => threeColsDistribution.value.col3)
 
         // 幻灯片专属图文分栏图片状态与容灾回退
         const slideImageFailed = ref(false)
@@ -2516,6 +2582,14 @@
         }
 
         function toggleFullScreen() {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+              source: "siyuan-slidev-client",
+              action: "REQUEST_TOGGLE_FULLSCREEN",
+              payload: {}
+            }, "*")
+            return
+          }
           if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen().catch(() => {})
           } else {
@@ -2670,6 +2744,9 @@
 
         // 监听键盘快捷键
         function onKeyDown(e) {
+          if (isKeyboardFrozen.value) {
+            return
+          }
           if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") {
             e.preventDefault()
             nextStepOrSlide()
@@ -2682,6 +2759,59 @@
           } else if (e.key === "p" || e.key === "P") {
             e.preventDefault()
             openPresenter()
+          }
+        }
+
+        // 全局拦截思源块引用与网页链接点击，转由宿主原位浮层呈现
+        function onDocumentClick(e) {
+          const refEl = e.target && e.target.closest ? e.target.closest('[data-ref-id]') : null
+          if (refEl) {
+            const blockId = refEl.getAttribute('data-ref-id')
+            if (blockId) {
+              e.preventDefault()
+              e.stopPropagation()
+              window.parent.postMessage({
+                source: "siyuan-slidev-client",
+                action: "OPEN_PEEK_DRAWER",
+                payload: {
+                  peekType: "siyuan",
+                  blockId: blockId
+                }
+              }, "*")
+              return
+            }
+          }
+
+          const linkEl = e.target && e.target.closest ? e.target.closest('a') : null
+          if (linkEl) {
+            const href = linkEl.getAttribute('href') || ''
+            if (href.startsWith('siyuan://blocks/')) {
+              e.preventDefault()
+              e.stopPropagation()
+              const cleanBlockId = href.replace('siyuan://blocks/', '').split('?')[0]
+              window.parent.postMessage({
+                source: "siyuan-slidev-client",
+                action: "OPEN_PEEK_DRAWER",
+                payload: {
+                  peekType: "siyuan",
+                  blockId: cleanBlockId
+                }
+              }, "*")
+              return
+            } else if (/^https?:\/\//i.test(href)) {
+              e.preventDefault()
+              e.stopPropagation()
+              window.parent.postMessage({
+                source: "siyuan-slidev-client",
+                action: "OPEN_PEEK_DRAWER",
+                payload: {
+                  peekType: "web",
+                  url: href,
+                  title: (linkEl.innerText || linkEl.title || '').trim()
+                }
+              }, "*")
+              return
+            }
           }
         }
 
@@ -2740,12 +2870,17 @@
             case "PREV_STEP":
               prevStepOrSlide()
               break
+
+            case "FREEZE_KEYBOARD_NAV":
+              isKeyboardFrozen.value = !!data.payload?.frozen
+              break
           }
         }
 
         onMounted(() => {
           window.addEventListener("keydown", onKeyDown)
           window.addEventListener("message", onHostMessage)
+          document.addEventListener("click", onDocumentClick, true)
 
           // 告知宿主客户端沙箱已准备就绪
           window.parent.postMessage({
@@ -2758,6 +2893,7 @@
         onUnmounted(() => {
           window.removeEventListener("keydown", onKeyDown)
           window.removeEventListener("message", onHostMessage)
+          document.removeEventListener("click", onDocumentClick, true)
         })
 
         return {

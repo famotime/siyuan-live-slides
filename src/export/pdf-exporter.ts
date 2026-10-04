@@ -192,6 +192,7 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       height: 100%;
       flex: 1 1 0%;
       align-items: start;
+      box-sizing: border-box;
     }
     .pdf-col {
       display: flex;
@@ -199,6 +200,21 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       gap: 14px;
       min-width: 0;
       width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      white-space: normal;
+    }
+    .pdf-col * {
+      overflow-wrap: break-word;
+      word-break: break-word;
+      box-sizing: border-box;
+    }
+    .pdf-col pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-width: 100%;
     }
     .pdf-list-item {
       padding-left: 20px;

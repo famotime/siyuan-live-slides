@@ -109,6 +109,7 @@ export function buildStandaloneHtml(
       height: 100%;
       flex: 1 1 0%;
       align-items: start;
+      box-sizing: border-box;
     }
     .pdf-col {
       display: flex;
@@ -116,8 +117,21 @@ export function buildStandaloneHtml(
       gap: 14px;
       min-width: 0;
       width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
       overflow-wrap: break-word;
       word-break: break-word;
+      white-space: normal;
+    }
+    .pdf-col * {
+      overflow-wrap: break-word;
+      word-break: break-word;
+      box-sizing: border-box;
+    }
+    .pdf-col pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-width: 100%;
     }
     .slide-content.layout-image-right, .slide-content.layout-image-left {
       padding: 0;
@@ -422,7 +436,100 @@ export function buildStandaloneHtml(
             else leftCol.appendChild(el);
           }
           container.appendChild(leftCol);
-          container.appendChild(rightCol);
+        } else if (slide.frontmatter?.layout === "two-cols-header") {
+          const containerDiv = document.createElement("div");
+          containerDiv.className = "layout-two-cols-header-container";
+          const headerDiv = document.createElement("div");
+          headerDiv.className = "layout-header-section";
+          const gridDiv = document.createElement("div");
+          gridDiv.className = "pdf-two-cols-wrapper layout-two-cols-grid";
+          const leftCol = document.createElement("div");
+          leftCol.className = "pdf-col pdf-col--left";
+          const rightCol = document.createElement("div");
+          rightCol.className = "pdf-col pdf-col--right";
+
+          const blocks = (slide.blocks || []).filter(b => b.slot !== "slot-divider-right");
+          let headerBlocks = blocks.filter(b => b.slot === "header");
+          if (headerBlocks.length === 0 && blocks.length > 0) {
+            const candidate = blocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"));
+            if (candidate) headerBlocks = [candidate];
+          }
+          const rem = blocks.filter(b => !headerBlocks.includes(b));
+          for (const b of headerBlocks) headerDiv.appendChild(renderBlock(b));
+          for (const b of rem) {
+            if (b.slot === "right" || b.slot === "col-2") rightCol.appendChild(renderBlock(b));
+            else leftCol.appendChild(renderBlock(b));
+          }
+          gridDiv.appendChild(leftCol);
+          gridDiv.appendChild(rightCol);
+          containerDiv.appendChild(headerDiv);
+          containerDiv.appendChild(gridDiv);
+          container.appendChild(containerDiv);
+        } else if (slide.frontmatter?.layout === "three-cols-header") {
+          const containerDiv = document.createElement("div");
+          containerDiv.className = "layout-three-cols-header-container";
+          const headerDiv = document.createElement("div");
+          headerDiv.className = "layout-header-section";
+          const gridDiv = document.createElement("div");
+          gridDiv.className = "pdf-three-cols-wrapper layout-three-cols-grid";
+          const col1 = document.createElement("div");
+          col1.className = "pdf-col pdf-col--1";
+          const col2 = document.createElement("div");
+          col2.className = "pdf-col pdf-col--2";
+          const col3 = document.createElement("div");
+          col3.className = "pdf-col pdf-col--3";
+
+          const blocks = (slide.blocks || []).filter(b => b.slot !== "slot-divider-right");
+          let headerBlocks = blocks.filter(b => b.slot === "header");
+          if (headerBlocks.length === 0 && blocks.length > 0) {
+            const candidate = blocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"));
+            if (candidate) headerBlocks = [candidate];
+          }
+          const rem = blocks.filter(b => !headerBlocks.includes(b));
+          let c1 = [], c2 = [], c3 = [];
+          const hasExplicitCols = rem.some(b => b.slot === "col-1" || b.slot === "col-2" || b.slot === "col-3" || b.slot === "center" || b.slot === "left" || b.slot === "right");
+          if (hasExplicitCols) {
+            c2 = rem.filter(b => b.slot === "col-2" || b.slot === "center");
+            c3 = rem.filter(b => b.slot === "col-3" || b.slot === "right");
+            c1 = rem.filter(b => !c2.includes(b) && !c3.includes(b));
+          } else if (rem.length >= 3) {
+            const count1 = Math.ceil(rem.length / 3);
+            const count2 = Math.ceil((rem.length - count1) / 2);
+            c1 = rem.slice(0, count1);
+            c2 = rem.slice(count1, count1 + count2);
+            c3 = rem.slice(count1 + count2);
+          } else if (rem.length === 2) {
+            c1 = [rem[0]];
+            c2 = [rem[1]];
+            c3 = [];
+          } else if (rem.length === 1) {
+            const lines = (rem[0].rawMarkdown || rem[0].content || "").trim().split(/\r?\n/);
+            const itemLines = lines.filter(l => /^[ \t]*[-*+]\s+|^[ \t]*\d+\.\s+/.test(l));
+            if (itemLines.length >= 3) {
+              const count1 = Math.ceil(itemLines.length / 3);
+              const count2 = Math.ceil((itemLines.length - count1) / 2);
+              const items1 = itemLines.slice(0, count1).join("\n");
+              const items2 = itemLines.slice(count1, count1 + count2).join("\n");
+              const items3 = itemLines.slice(count1 + count2).join("\n");
+              c1 = [{ ...rem[0], rawMarkdown: items1, content: items1 }];
+              c2 = [{ ...rem[0], id: rem[0].id + "-col2", rawMarkdown: items2, content: items2 }];
+              c3 = [{ ...rem[0], id: rem[0].id + "-col3", rawMarkdown: items3, content: items3 }];
+            } else {
+              c1 = rem;
+            }
+          } else {
+            c1 = rem;
+          }
+          for (const b of headerBlocks) headerDiv.appendChild(renderBlock(b));
+          for (const b of c1) col1.appendChild(renderBlock(b));
+          for (const b of c2) col2.appendChild(renderBlock(b));
+          for (const b of c3) col3.appendChild(renderBlock(b));
+          gridDiv.appendChild(col1);
+          gridDiv.appendChild(col2);
+          gridDiv.appendChild(col3);
+          containerDiv.appendChild(headerDiv);
+          containerDiv.appendChild(gridDiv);
+          container.appendChild(containerDiv);
         } else if (slide.frontmatter?.layout === "image-right" || slide.frontmatter?.layout === "image-left") {
           const isImageRight = slide.frontmatter?.layout === "image-right";
           const contentCol = document.createElement("div");

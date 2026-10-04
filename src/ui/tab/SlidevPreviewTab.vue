@@ -110,8 +110,11 @@
       </div>
     </div>
 
-    <!-- 演示沙箱容器与主视口 -->
-    <div class="spm-slidev-tab__viewport">
+    <!-- 演示沙箱容器与主视口（一体化全屏容器，沙箱与抽屉浮层同级挂载） -->
+    <div
+      ref="fullscreenContainerRef"
+      class="spm-slidev-tab__viewport spm-slidev-fullscreen-container"
+    >
       <iframe
         ref="sandboxIframeRef"
         class="spm-slidev-tab__iframe"
@@ -119,6 +122,43 @@
         frameborder="0"
         allow="fullscreen"
       ></iframe>
+
+      <!-- 沉浸式浮层抽屉 -->
+      <ImmersionDrawerContainer
+        v-model:visible="isDrawerOpen"
+        v-model:is-maximized="isDrawerMaximized"
+        :title="drawerTitle"
+        @close="onDrawerClose"
+      >
+        <!-- 思源 Protyle 速览轨 -->
+        <ProtylePeekDrawer
+          v-if="peekType === 'siyuan' && peekBlockId"
+          :block-id="peekBlockId"
+          :title="drawerTitle"
+          :plugin="plugin!"
+        />
+
+        <!-- Web 外部链接速览轨 (阶段二完善，阶段一支持基础外跳) -->
+        <div
+          v-else-if="peekType === 'web'"
+          class="spm-web-placeholder"
+        >
+          <div class="spm-web-placeholder__box">
+            <p>外部网页链接速览：</p>
+            <a :href="peekUrl" target="_blank" rel="noopener noreferrer">{{ peekUrl }}</a>
+            <div style="margin-top: 14px;">
+              <a
+                class="spm-icon-btn is-primary"
+                :href="peekUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                在系统浏览器中打开 ↗
+              </a>
+            </div>
+          </div>
+        </div>
+      </ImmersionDrawerContainer>
     </div>
 
     <!-- 底部大纲检查器 -->
@@ -139,8 +179,11 @@ import { showMessage } from 'siyuan'
 import { putFile } from '@/api'
 import { EngineManager } from '@/engine/engine-manager'
 import { WebSandboxBridge } from '@/engine/web-sandbox-bridge'
+import type { IOpenPeekDrawerDetail } from '@/engine/web-sandbox-bridge'
 import SlideInspector from '@/ui/components/SlideInspector.vue'
 import SlidevIcon from '@/ui/components/SlidevIcon.vue'
+import ImmersionDrawerContainer from '@/ui/components/peek/ImmersionDrawerContainer.vue'
+import ProtylePeekDrawer from '@/ui/components/peek/ProtylePeekDrawer.vue'
 import { CursorTracker } from '@/sync/cursor-tracker'
 import { mirrorBlockSelection } from '@/sync/selection-mirror'
 import { buildStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'
@@ -155,11 +198,21 @@ const engineManager = new EngineManager()
 const engineMode = ref<'web-sandbox' | 'pro-cli'>('web-sandbox')
 const activeProPort = ref(3030)
 
+const fullscreenContainerRef = ref<HTMLElement | null>(null)
+const isFullscreen = ref(false)
 const sandboxIframeRef = ref<HTMLIFrameElement | null>(null)
 const currentPage = ref(1)
 const totalPages = ref(1)
 const currentSlides = ref<ISlidevVirtualPage[]>([])
 const showOutline = ref(false)
+
+// 沉浸式速览抽屉状态
+const isDrawerOpen = ref(false)
+const isDrawerMaximized = ref(false)
+const peekType = ref<'siyuan' | 'web'>('siyuan')
+const peekBlockId = ref('')
+const peekUrl = ref('')
+const drawerTitle = ref('')
 
 // Pin 图钉锁定状态
 const isPinned = ref(false)
@@ -171,6 +224,8 @@ let unbindSlideChanged: (() => void) | null = null
 let unbindBlockClicked: (() => void) | null = null
 let unbindOpenInEditor: (() => void) | null = null
 let unbindNativePageChanged: (() => void) | null = null
+let unbindOpenPeekDrawer: (() => void) | null = null
+let unbindToggleFullscreen: (() => void) | null = null
 let latestDoc: ISlidevDocument | null = null
 
 onMounted(() => {
@@ -204,9 +259,35 @@ onMounted(() => {
     currentPage.value = page
     totalPages.value = total
   })
+
+  unbindOpenPeekDrawer = sandboxBridge.onOpenPeekDrawer((detail: IOpenPeekDrawerDetail) => {
+    peekType.value = detail.peekType
+    if (detail.peekType === 'siyuan') {
+      peekBlockId.value = detail.target
+      drawerTitle.value = detail.title || `块速览: ${detail.target.slice(0, 8)}`
+    } else {
+      peekUrl.value = detail.target
+      drawerTitle.value = detail.title || detail.target
+    }
+    isDrawerOpen.value = true
+    sandboxBridge.freezeKeyboardNav(true)
+  })
+
+  unbindToggleFullscreen = sandboxBridge.onRequestToggleFullscreen(() => {
+    onFullscreen()
+  })
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('fullscreenchange', onFullscreenChange)
+  }
 })
 
 onUnmounted(() => {
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('fullscreenchange', onFullscreenChange)
+  }
+  if (unbindOpenPeekDrawer) unbindOpenPeekDrawer()
+  if (unbindToggleFullscreen) unbindToggleFullscreen()
   if (unbindSlideChanged) unbindSlideChanged()
   if (unbindBlockClicked) unbindBlockClicked()
   if (unbindOpenInEditor) unbindOpenInEditor()
@@ -293,9 +374,25 @@ function onRefresh() {
   }
 }
 
+function onDrawerClose() {
+  isDrawerOpen.value = false
+  sandboxBridge.freezeKeyboardNav(false)
+}
+
+function onFullscreenChange() {
+  if (typeof document !== 'undefined') {
+    isFullscreen.value = !!document.fullscreenElement
+  }
+}
+
 function onFullscreen() {
-  if (sandboxIframeRef.value && sandboxIframeRef.value.requestFullscreen) {
-    sandboxIframeRef.value.requestFullscreen().catch(() => {})
+  const target = fullscreenContainerRef.value || sandboxIframeRef.value
+  if (target) {
+    if (!document.fullscreenElement) {
+      target.requestFullscreen().catch(() => {})
+    } else {
+      document.exitFullscreen().catch(() => {})
+    }
   }
 }
 
@@ -358,7 +455,7 @@ defineExpose({
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .spm-slidev-preview-tab {
   display: flex;
   flex-direction: column;
@@ -497,5 +594,35 @@ defineExpose({
   height: 100%;
   border: none;
   display: block;
+}
+
+.spm-web-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: var(--b3-theme-background, #ffffff);
+
+  &__box {
+    text-align: center;
+    max-width: 480px;
+    padding: 24px;
+    border-radius: 8px;
+    border: 1px dashed var(--b3-border-color, #e2e8f0);
+    background: var(--b3-theme-surface, #f8fafc);
+
+    p {
+      font-size: 13px;
+      color: var(--b3-theme-on-surface, #64748b);
+      margin-bottom: 8px;
+    }
+
+    a {
+      color: var(--b3-theme-primary, #3b82f6);
+      word-break: break-all;
+      text-decoration: underline;
+    }
+  }
 }
 </style>

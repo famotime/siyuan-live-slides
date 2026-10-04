@@ -12,3 +12,10 @@ export class Plugin {
   addDock = () => {}
 }
 export const showMessage = (_msg: string) => {}
+export const openWindow = (_options?: any) => {}
+export class Protyle {
+  destroy = () => {}
+  disable = () => {}
+  enable = () => {}
+  resize = () => {}
+}

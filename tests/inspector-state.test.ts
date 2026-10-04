@@ -96,4 +96,118 @@ describe("Inspector State Machine (演示配置面板状态推断)", () => {
     const empty = resolveInspectorTarget("", "", "")
     expect(empty.displayShortId).toBe("无")
   })
+
+  describe("Block Slot & Layout Inference (多栏与三栏插槽状态推断及恢复)", () => {
+    it("当 currentSlideLayout 为 three-cols-header 时展示三栏插槽选项", () => {
+      const state = resolveBlockSlotState("three-cols-header", "")
+      expect(state.effectiveLayout).toBe("three-cols-header")
+      expect(state.isMultiColsLayout).toBe(true)
+      expect(state.slotControlTitle).toBe("三栏插槽归属 (Slot)")
+      expect(state.actionButtonText).toBe("设为第1栏")
+      expect(state.availableSlots).toEqual([
+        { value: "header", label: "表头" },
+        { value: "col-1", label: "第 1 栏" },
+        { value: "col-2", label: "第 2 栏" },
+        { value: "col-3", label: "第 3 栏" },
+      ])
+    })
+
+    it("当切换操作返回该页面且 currentSlideLayout 降级为 default，但块自身保留 col-1 插槽时，应智能推断恢复为 three-cols-header 并呈现三栏选项而非双栏", () => {
+      const state = resolveBlockSlotState("default", "col-1")
+      expect(state.effectiveLayout).toBe("three-cols-header")
+      expect(state.isMultiColsLayout).toBe(true)
+      expect(state.slotControlTitle).toBe("三栏插槽归属 (Slot)")
+      expect(state.actionButtonText).toBe("设为第1栏")
+      expect(state.availableSlots.map(s => s.value)).toEqual(["header", "col-1", "col-2", "col-3"])
+      expect(state.isSlotActive("col-1")).toBe(true)
+      expect(state.isSlotActive("header")).toBe(false)
+      // 在三栏模式下严禁错误激活 left
+      expect(state.isSlotActive("left")).toBe(false)
+    })
+
+    it("当块为 col-2 或 col-3 时同样正确锁定为 three-cols-header", () => {
+      const stateCol2 = resolveBlockSlotState("", "col-2")
+      expect(stateCol2.effectiveLayout).toBe("three-cols-header")
+      expect(stateCol2.isSlotActive("col-2")).toBe(true)
+
+      const stateCol3 = resolveBlockSlotState("two-cols", "col-3")
+      expect(stateCol3.effectiveLayout).toBe("three-cols-header")
+      expect(stateCol3.isSlotActive("col-3")).toBe(true)
+    })
+
+    it("双栏布局依然正常保持双栏选项", () => {
+      const stateTwoCols = resolveBlockSlotState("two-cols", "right")
+      expect(stateTwoCols.effectiveLayout).toBe("two-cols")
+      expect(stateTwoCols.actionButtonText).toBe("设为双栏")
+      expect(stateTwoCols.isSlotActive("right")).toBe(true)
+    })
+  })
 })
+
+/**
+ * 块检查器（BlockInspectorSection）的分栏与插槽推断模型
+ */
+export function resolveBlockSlotState(currentSlideLayout: string, elemSlot: string) {
+  const effectiveLayout = ['col-1', 'col-2', 'col-3'].includes(elemSlot)
+    ? 'three-cols-header'
+    : (currentSlideLayout || '')
+
+  const isMultiColsLayout = ['two-cols', 'two-cols-header', 'three-cols-header'].includes(effectiveLayout)
+
+  const slotControlTitle = effectiveLayout === 'three-cols-header'
+    ? '三栏插槽归属 (Slot)'
+    : effectiveLayout === 'two-cols-header'
+    ? '带表头双栏插槽 (Slot)'
+    : '多栏插槽归属 (Slot)'
+
+  let availableSlots: Array<{ value: string; label: string }> = []
+  if (effectiveLayout === 'three-cols-header') {
+    availableSlots = [
+      { value: 'header', label: '表头' },
+      { value: 'col-1', label: '第 1 栏' },
+      { value: 'col-2', label: '第 2 栏' },
+      { value: 'col-3', label: '第 3 栏' },
+    ]
+  } else if (effectiveLayout === 'two-cols-header') {
+    availableSlots = [
+      { value: 'header', label: '表头' },
+      { value: 'left', label: '左栏' },
+      { value: 'right', label: '右栏' },
+    ]
+  } else if (effectiveLayout === 'two-cols') {
+    availableSlots = [
+      { value: '', label: '默认 (左)' },
+      { value: 'right', label: '右栏' },
+    ]
+  } else {
+    availableSlots = [
+      { value: '', label: '默认' },
+      { value: 'header', label: '表头' },
+      { value: 'left', label: '左栏' },
+      { value: 'right', label: '右栏' },
+    ]
+  }
+
+  const isSlotActive = (val: string) => {
+    if (!val) return !elemSlot || elemSlot === 'default'
+    if (elemSlot === val) return true
+    if (effectiveLayout === 'three-cols-header') return false
+    if (val === 'col-1' && elemSlot === 'left') return true
+    if (val === 'col-2' && elemSlot === 'center') return true
+    if (val === 'col-3' && elemSlot === 'right') return true
+    if (val === 'left' && elemSlot === 'col-1') return true
+    if (val === 'right' && elemSlot === 'col-2') return true
+    return false
+  }
+
+  const actionButtonText = effectiveLayout === 'three-cols-header' ? '设为第1栏' : '设为双栏'
+
+  return {
+    effectiveLayout,
+    isMultiColsLayout,
+    slotControlTitle,
+    availableSlots,
+    isSlotActive,
+    actionButtonText,
+  }
+}

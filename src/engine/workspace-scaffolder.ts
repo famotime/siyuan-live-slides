@@ -35,13 +35,13 @@ export const THREE_COLS_HEADER_LAYOUT_VUE = `<template>
       <slot />
     </div>
     <div class="grid grid-cols-3 gap-6 flex-1 items-start">
-      <div class="col-1 min-w-0">
+      <div class="col-1 min-w-0 break-words [overflow-wrap:break-word] [word-break:break-word]">
         <slot name="col-1" />
       </div>
-      <div class="col-2 min-w-0">
+      <div class="col-2 min-w-0 break-words [overflow-wrap:break-word] [word-break:break-word]">
         <slot name="col-2" />
       </div>
-      <div class="col-3 min-w-0">
+      <div class="col-3 min-w-0 break-words [overflow-wrap:break-word] [word-break:break-word]">
         <slot name="col-3" />
       </div>
     </div>

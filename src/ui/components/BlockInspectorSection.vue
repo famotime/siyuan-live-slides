@@ -261,11 +261,11 @@
 
         <button
           class="spm-btn-action b3-tooltips b3-tooltips__s"
-          :aria-label="currentSlideLayout === 'three-cols-header' ? '将当前块属性设为三栏第1栏归属 (slot: col-1)' : '将当前块属性设为双栏左侧归属 (slot: left)'"
+          :aria-label="effectiveLayout === 'three-cols-header' ? '将当前块属性设为三栏第1栏归属 (slot: col-1)' : '将当前块属性设为双栏左侧归属 (slot: left)'"
           @click="$emit('setTwoColsContrast')"
         >
           <SlidevIcon name="columns" />
-          <span>{{ currentSlideLayout === 'three-cols-header' ? '设为第1栏' : '设为双栏' }}</span>
+          <span>{{ effectiveLayout === 'three-cols-header' ? '设为第1栏' : '设为双栏' }}</span>
         </button>
 
         <button
@@ -298,20 +298,29 @@ const props = defineProps<{
   currentSlideLayout?: string
 }>()
 
-const isMultiColsLayout = computed(() => {
+const effectiveLayout = computed(() => {
   const l = props.currentSlideLayout || ''
+  // 智能推断：如果当前块已经分配了 col-1 / col-2 / col-3 插槽，无论上层传入什么，它必然属于 three-cols-header
+  if (['col-1', 'col-2', 'col-3'].includes(props.elemSlot)) {
+    return 'three-cols-header'
+  }
+  return l
+})
+
+const isMultiColsLayout = computed(() => {
+  const l = effectiveLayout.value
   return ['two-cols', 'two-cols-header', 'three-cols-header'].includes(l)
 })
 
 const slotControlTitle = computed(() => {
-  const l = props.currentSlideLayout || ''
+  const l = effectiveLayout.value
   if (l === 'three-cols-header') return '三栏插槽归属 (Slot)'
   if (l === 'two-cols-header') return '带表头双栏插槽 (Slot)'
   return '多栏插槽归属 (Slot)'
 })
 
 const slotControlDesc = computed(() => {
-  const l = props.currentSlideLayout || ''
+  const l = effectiveLayout.value
   if (l === 'three-cols-header') return '在 three-cols-header 版式中的内容块位置'
   if (l === 'two-cols-header') return '在 two-cols-header 版式中的内容块位置'
   if (l === 'two-cols') return '在 two-cols 双栏版式中的归属'
@@ -319,7 +328,7 @@ const slotControlDesc = computed(() => {
 })
 
 const availableSlots = computed(() => {
-  const l = props.currentSlideLayout || ''
+  const l = effectiveLayout.value
   if (l === 'three-cols-header') {
     return [
       { value: 'header', label: '表头' },
@@ -355,6 +364,9 @@ function isSlotActive(val: string): boolean {
     return !s || s === 'default'
   }
   if (s === val) return true
+  if (effectiveLayout.value === 'three-cols-header') {
+    return false
+  }
   if (val === 'col-1' && s === 'left') return true
   if (val === 'col-2' && s === 'center') return true
   if (val === 'col-3' && s === 'right') return true

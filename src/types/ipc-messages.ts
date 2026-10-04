@@ -13,6 +13,7 @@ export type THostToSlidevAction =
   | "CONFIG_UPDATE"
   | "NEXT_STEP"
   | "PREV_STEP"
+  | "FREEZE_KEYBOARD_NAV"
 
 export interface IHostToSlidevMessage {
   source: "siyuan-slidev-host"
@@ -28,6 +29,8 @@ export interface IHostToSlidevMessage {
     config?: ISlidevPluginConfig
     // 完整 Slidev Markdown (用于 Pro 模式或源码预览)
     fullMarkdown?: string
+    // 是否冻结幻灯片沙箱键盘翻页
+    frozen?: boolean
   }
 }
 
@@ -41,6 +44,8 @@ export type TSlidevToHostAction =
   | "REQUEST_SAVE_ATTRS"
   | "EXPORT_TRIGGER"
   | "CLIENT_READY"
+  | "OPEN_PEEK_DRAWER"
+  | "REQUEST_TOGGLE_FULLSCREEN"
 
 export interface ISlidevToHostMessage {
   source: "siyuan-slidev-client"
@@ -60,5 +65,9 @@ export interface ISlidevToHostMessage {
     updatedAttrs?: Record<string, string>
     // 导出类型
     exportType?: "html" | "pdf" | "pptx"
+    // 原位沉浸式速览请求参数
+    peekType?: "siyuan" | "web"
+    url?: string
+    title?: string
   }
 }

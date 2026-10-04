@@ -11,6 +11,14 @@ export type TBlockClickedHandler = (clickedBlockId: string, currentPage: number)
 export type TOpenInEditorHandler = (blockId: string, currentPage: number) => void
 export type TClientReadyHandler = () => void
 
+export interface IOpenPeekDrawerDetail {
+  peekType: "siyuan" | "web"
+  target: string
+  title?: string
+}
+
+export type TOpenPeekDrawerHandler = (detail: IOpenPeekDrawerDetail) => void
+
 export class WebSandboxBridge {
   private iframe: HTMLIFrameElement | null = null
   private isReady = false
@@ -20,6 +28,8 @@ export class WebSandboxBridge {
   private blockClickedHandlers: TBlockClickedHandler[] = []
   private openInEditorHandlers: TOpenInEditorHandler[] = []
   private clientReadyHandlers: TClientReadyHandler[] = []
+  private openPeekDrawerHandlers: TOpenPeekDrawerHandler[] = []
+  private toggleFullscreenHandlers: (() => void)[] = []
 
   constructor() {
     this.handleWindowMessage = this.handleWindowMessage.bind(this)
@@ -114,6 +124,13 @@ export class WebSandboxBridge {
     this.postMessage("PREV_STEP", {})
   }
 
+  /**
+   * 冻结或解冻幻灯片沙箱键盘翻页导航
+   */
+  public freezeKeyboardNav(frozen: boolean): void {
+    this.postMessage("FREEZE_KEYBOARD_NAV", { frozen })
+  }
+
   public onSlideChanged(handler: TSlideChangedHandler): () => void {
     this.slideChangedHandlers.push(handler)
     return () => {
@@ -132,6 +149,20 @@ export class WebSandboxBridge {
     this.openInEditorHandlers.push(handler)
     return () => {
       this.openInEditorHandlers = this.openInEditorHandlers.filter(h => h !== handler)
+    }
+  }
+
+  public onOpenPeekDrawer(handler: TOpenPeekDrawerHandler): () => void {
+    this.openPeekDrawerHandlers.push(handler)
+    return () => {
+      this.openPeekDrawerHandlers = this.openPeekDrawerHandlers.filter(h => h !== handler)
+    }
+  }
+
+  public onRequestToggleFullscreen(handler: () => void): () => void {
+    this.toggleFullscreenHandlers.push(handler)
+    return () => {
+      this.toggleFullscreenHandlers = this.toggleFullscreenHandlers.filter(h => h !== handler)
     }
   }
 
@@ -192,6 +223,26 @@ export class WebSandboxBridge {
           for (const handler of this.openInEditorHandlers) {
             handler(targetBlockId, data.payload.currentPage || 1)
           }
+        }
+        break
+
+      case "OPEN_PEEK_DRAWER":
+        if (data.payload.peekType) {
+          const target = data.payload.blockId || data.payload.url || ""
+          const detail: IOpenPeekDrawerDetail = {
+            peekType: data.payload.peekType,
+            target,
+            title: data.payload.title,
+          }
+          for (const handler of this.openPeekDrawerHandlers) {
+            handler(detail)
+          }
+        }
+        break
+
+      case "REQUEST_TOGGLE_FULLSCREEN":
+        for (const handler of this.toggleFullscreenHandlers) {
+          handler()
         }
         break
     }

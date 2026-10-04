@@ -307,6 +307,7 @@ export function buildSlidevDocument(
     noteBlocks: [],
     blocks: [],
     rawMarkdown: "",
+    allBlockIds: [docId],
   }
   if (currentPage.frontmatter.background) {
     currentPage.frontmatter.background = rewriteSingleAssetUrl(
@@ -334,6 +335,8 @@ export function buildSlidevDocument(
       // 如果当前是第一页且尚未添加任何正文内容块，说明用户在文档开头放置了分割线来显式定义第一页配置
       if (slides.length === 1 && currentPage.blocks.length === 0) {
         currentPage.startBlockId = node.id
+        if (!currentPage.allBlockIds) currentPage.allBlockIds = []
+        if (!currentPage.allBlockIds.includes(node.id)) currentPage.allBlockIds.push(node.id)
         if (pageMeta.frontmatter.layout) {
           currentPage.frontmatter.layout = pageMeta.frontmatter.layout
         }
@@ -372,6 +375,7 @@ export function buildSlidevDocument(
         noteBlocks: [],
         blocks: [],
         rawMarkdown: "",
+        allBlockIds: [node.id],
       }
 
       // 如果背景路径是本地 assets，予以重写
@@ -394,6 +398,26 @@ export function buildSlidevDocument(
 
     // 普通内容块处理逻辑（支持递归处理超级块子内容）
     const processBlockNode = (itemNode: ISiYuanBlockNode) => {
+      if (!currentPage.allBlockIds) {
+        currentPage.allBlockIds = []
+      }
+      if (itemNode.id && !currentPage.allBlockIds.includes(itemNode.id)) {
+        currentPage.allBlockIds.push(itemNode.id)
+      }
+      if (itemNode.children && itemNode.children.length > 0) {
+        const collectIds = (children: ISiYuanBlockNode[]) => {
+          for (const c of children) {
+            if (c.id && !currentPage.allBlockIds!.includes(c.id)) {
+              currentPage.allBlockIds!.push(c.id)
+            }
+            if (c.children && c.children.length > 0) {
+              collectIds(c.children)
+            }
+          }
+        }
+        collectIds(itemNode.children)
+      }
+
       let rawMd = extractBlockMarkdown(itemNode)
 
       // 解析并剥离 Kramdown 尾部 IAL 属性标记 {: ... }
@@ -685,9 +709,43 @@ export function buildSlidevDocument(
       }
 
       const rem = contentBlocks.filter(b => !headerList.includes(b))
-      const col2List = rem.filter(b => b.slot === "col-2" || b.slot === "center")
-      const col3List = rem.filter(b => b.slot === "col-3" || b.slot === "right")
-      const col1List = rem.filter(b => !col2List.includes(b) && !col3List.includes(b))
+      let col1List: ISlidevBlockItem[] = []
+      let col2List: ISlidevBlockItem[] = []
+      let col3List: ISlidevBlockItem[] = []
+
+      const hasExplicitCols = rem.some(b => b.slot === "col-1" || b.slot === "col-2" || b.slot === "col-3" || b.slot === "center" || b.slot === "left" || b.slot === "right")
+      if (hasExplicitCols) {
+        col2List = rem.filter(b => b.slot === "col-2" || b.slot === "center")
+        col3List = rem.filter(b => b.slot === "col-3" || b.slot === "right")
+        col1List = rem.filter(b => !col2List.includes(b) && !col3List.includes(b))
+      } else if (rem.length >= 3) {
+        const c1 = Math.ceil(rem.length / 3)
+        const c2 = Math.ceil((rem.length - c1) / 2)
+        col1List = rem.slice(0, c1)
+        col2List = rem.slice(c1, c1 + c2)
+        col3List = rem.slice(c1 + c2)
+      } else if (rem.length === 2) {
+        col1List = [rem[0]]
+        col2List = [rem[1]]
+        col3List = []
+      } else if (rem.length === 1) {
+        const lines = (rem[0].rawMarkdown || rem[0].content || "").trim().split(/\r?\n/)
+        const itemLines = lines.filter(l => /^[ \t]*[-*+]\s+|^[ \t]*\d+\.\s+/.test(l))
+        if (itemLines.length >= 3) {
+          const c1 = Math.ceil(itemLines.length / 3)
+          const c2 = Math.ceil((itemLines.length - c1) / 2)
+          const items1 = itemLines.slice(0, c1).join("\n")
+          const items2 = itemLines.slice(c1, c1 + c2).join("\n")
+          const items3 = itemLines.slice(c1 + c2).join("\n")
+          col1List = [{ ...rem[0], rawMarkdown: items1, content: items1 }]
+          col2List = [{ ...rem[0], id: `${rem[0].id}-col2`, rawMarkdown: items2, content: items2 }]
+          col3List = [{ ...rem[0], id: `${rem[0].id}-col3`, rawMarkdown: items3, content: items3 }]
+        } else {
+          col1List = rem
+        }
+      } else {
+        col1List = rem
+      }
 
       const headerContent = renderBlocks(headerList)
       const col1Content = renderBlocks(col1List)

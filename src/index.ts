@@ -653,12 +653,25 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     if (blockEl) {
       this.syncInspectorBlock(blockEl, blockId, blockType)
     } else {
+      let pageDividerId = ""
+      if (this.latestCompiledDoc?.slides) {
+        const matched = this.latestCompiledDoc.slides.find(s =>
+          s.startBlockId === blockId ||
+          s.blocks?.some(b => b.id === blockId) ||
+          s.allBlockIds?.includes(blockId) ||
+          s.noteBlocks?.some(b => b.id === blockId)
+        )
+        if (matched?.startBlockId) {
+          pageDividerId = matched.startBlockId
+        }
+      }
       getBlockAttrs(blockId).then(attrs => {
         updateInspectorCurrentBlock({
           id: blockId,
           rootId: this.currentDocId,
           type: blockType || "NodeParagraph",
           attrs: attrs || {},
+          pageDividerId,
         })
       }).catch(() => {})
     }
@@ -812,6 +825,30 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
         break
       }
       prev = prev.previousElementSibling
+    }
+
+    // 容错降级：若 Protyle 虚拟滚动导致前置分页符已从 DOM 中卸载，
+    // 则直接从最新编译的虚拟演示文档 (latestCompiledDoc) 中精准反查归属幻灯片及其 startBlockId (即分页符 ID)
+    if (!pageDividerId && this.latestCompiledDoc?.slides) {
+      const candidateIds = [effectiveId, topBlockId]
+      let parentEl = effectiveEl.parentElement
+      while (parentEl && !parentEl.classList.contains("protyle-wysiwyg")) {
+        const nid = parentEl.getAttribute("data-node-id")
+        if (nid && !candidateIds.includes(nid)) {
+          candidateIds.push(nid)
+        }
+        parentEl = parentEl.parentElement
+      }
+
+      const matchedSlide = this.latestCompiledDoc.slides.find(s =>
+        candidateIds.includes(s.startBlockId) ||
+        s.blocks?.some(b => candidateIds.includes(b.id)) ||
+        s.allBlockIds?.some(id => candidateIds.includes(id)) ||
+        s.noteBlocks?.some(b => candidateIds.includes(b.id))
+      )
+      if (matchedSlide?.startBlockId) {
+        pageDividerId = matchedSlide.startBlockId
+      }
     }
 
     updateInspectorCurrentBlock({

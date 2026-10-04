@@ -311,6 +311,54 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
       expect(html).toContain("栏二：开发")
       expect(html).toContain("栏三：上线")
     })
+
+    it("three-cols-header: 无显式插槽标注时，多个段落块应自动均分至三栏", () => {
+      const slide: ISlidevVirtualPage = {
+        pageIndex: 1,
+        startBlockId: "p1",
+        frontmatter: { layout: "three-cols-header" },
+        notes: "",
+        blocks: [
+          { id: "h1", type: "h", rawMarkdown: "# 总体规划" },
+          { id: "p1", type: "p", rawMarkdown: "步骤一内容" },
+          { id: "p2", type: "p", rawMarkdown: "步骤二内容" },
+          { id: "p3", type: "p", rawMarkdown: "步骤三内容" },
+        ],
+        rawMarkdown: "",
+      }
+
+      const html = renderSlideBlocksToHtml(slide)
+      expect(html).toContain("layout-three-cols-header-container")
+      expect(html).toContain("pdf-col pdf-col--1")
+      expect(html).toContain("pdf-col pdf-col--2")
+      expect(html).toContain("pdf-col pdf-col--3")
+      // 验证各栏内容分布
+      expect(html).toMatch(/pdf-col--1[\s\S]*步骤一内容[\s\S]*pdf-col--2/)
+      expect(html).toMatch(/pdf-col--2[\s\S]*步骤二内容[\s\S]*pdf-col--3/)
+      expect(html).toMatch(/pdf-col--3[\s\S]*步骤三内容/)
+    })
+
+    it("three-cols-header: 仅单个三项列表块时，应智能拆分为三栏", () => {
+      const slide: ISlidevVirtualPage = {
+        pageIndex: 1,
+        startBlockId: "p1",
+        frontmatter: { layout: "three-cols-header" },
+        notes: "",
+        blocks: [
+          { id: "h1", type: "h", rawMarkdown: "# 核心架构" },
+          { id: "l1", type: "l", rawMarkdown: "- 模块 A\n- 模块 B\n- 模块 C" },
+        ],
+        rawMarkdown: "",
+      }
+
+      const html = renderSlideBlocksToHtml(slide)
+      expect(html).toContain("pdf-col pdf-col--1")
+      expect(html).toContain("pdf-col pdf-col--2")
+      expect(html).toContain("pdf-col pdf-col--3")
+      expect(html).toMatch(/pdf-col--1[\s\S]*模块 A[\s\S]*pdf-col--2/)
+      expect(html).toMatch(/pdf-col--2[\s\S]*模块 B[\s\S]*pdf-col--3/)
+      expect(html).toMatch(/pdf-col--3[\s\S]*模块 C/)
+    })
   })
 
   describe("3. WorkspaceScaffolder 官方 Slidev Pro 模式自定义布局自动注入", () => {
@@ -342,6 +390,66 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
         false,
         expect.anything(),
       )
+    })
+  })
+
+  describe("4. 页面设置表头三栏与右侧块配置联动测试", () => {
+    it("当分页符设置为 three-cols-header 后，选择所属页面的正文或嵌套子块时，应正确识别为 three-cols-header 版式", () => {
+      const docId = "doc-test"
+      const blocks: ISiYuanBlockNode[] = [
+        { id: "b1", type: "h", markdown: "# 封面", ial: { id: "b1" } },
+        { id: "div1", type: "tb", markdown: "---", ial: { id: "div1", "custom-slidev-layout": "three-cols-header" } },
+        { id: "b2", type: "h", markdown: "# 表头", ial: { id: "b2" } },
+        { id: "b3", type: "l", markdown: "- 项目 A\n- 项目 B", ial: { id: "b3" } },
+      ]
+      const doc = buildSlidevDocument(docId, {}, blocks)
+      expect(doc.slides.length).toBe(2)
+      expect(doc.slides[1].frontmatter.layout).toBe("three-cols-header")
+      expect(doc.slides[1].startBlockId).toBe("div1")
+
+      // 模拟子块（如列表项或段落）通过 topBlockId 或 pageDividerId 寻址所属 slide
+      const topBlockId = "b3"
+      const pageDividerId = "div1"
+
+      // 1. 通过 pageDividerId 准确定位
+      let targetSlide = doc.slides.find(s => s.startBlockId === pageDividerId)
+      expect(targetSlide?.frontmatter.layout).toBe("three-cols-header")
+
+      // 2. 通过 topBlockId 准确定位
+      targetSlide = doc.slides.find(s => s.blocks.some(b => b.id === topBlockId))
+      expect(targetSlide?.frontmatter.layout).toBe("three-cols-header")
+    })
+
+    it("three-cols-header 布局下的可用插槽列表应提供表头与三栏选项，而非左右两栏", () => {
+      function getAvailableSlots(layout: string) {
+        if (layout === "three-cols-header") {
+          return [
+            { value: "header", label: "表头" },
+            { value: "col-1", label: "第 1 栏" },
+            { value: "col-2", label: "第 2 栏" },
+            { value: "col-3", label: "第 3 栏" },
+          ]
+        }
+        if (layout === "two-cols-header") {
+          return [
+            { value: "header", label: "表头" },
+            { value: "left", label: "左栏" },
+            { value: "right", label: "右栏" },
+          ]
+        }
+        return [
+          { value: "", label: "默认" },
+          { value: "header", label: "表头" },
+          { value: "left", label: "左栏" },
+          { value: "right", label: "右栏" },
+        ]
+      }
+
+      const slots = getAvailableSlots("three-cols-header")
+      expect(slots.map(s => s.value)).toEqual(["header", "col-1", "col-2", "col-3"])
+      expect(slots.map(s => s.label)).toEqual(["表头", "第 1 栏", "第 2 栏", "第 3 栏"])
+      expect(slots.some(s => s.value === "left")).toBe(false)
+      expect(slots.some(s => s.value === "right")).toBe(false)
     })
   })
 })

@@ -100,6 +100,7 @@ export interface ISlidevVirtualPage {
   noteBlocks?: ISlidevBlockItem[]
   blocks: ISlidevBlockItem[]
   rawMarkdown: string
+  allBlockIds?: string[]
 }
 
 /** 整个文档解析后生成的虚拟 Slidev 文档模型 */
