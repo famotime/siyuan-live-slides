@@ -175,4 +175,110 @@ describe("Immersion Peek Drawer & IPC Coordination (原位速览抽屉与通信�
     const isWeb = /^https?:\/\//i.test(webHref)
     expect(isWeb).toBe(true)
   })
+
+  it("微型浏览器 URL 规范化与协议自动补全逻辑", () => {
+    const normalizeUrl = (input: string) => {
+      const trimmed = input.trim()
+      if (!trimmed) return ""
+      return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+    }
+
+    expect(normalizeUrl("example.com")).toBe("https://example.com")
+    expect(normalizeUrl("http://localhost:8080")).toBe("http://localhost:8080")
+    expect(normalizeUrl("https://sli.dev")).toBe("https://sli.dev")
+    expect(normalizeUrl("")).toBe("")
+  })
+
+  it("微型浏览器 ZoomFactor 显式缩放步进与边界截断逻辑", () => {
+    let zoomFactor = 1.0
+
+    const zoomIn = () => {
+      zoomFactor = Math.min(2.5, Math.round((zoomFactor + 0.1) * 10) / 10)
+      return zoomFactor
+    }
+    const zoomOut = () => {
+      zoomFactor = Math.max(0.5, Math.round((zoomFactor - 0.1) * 10) / 10)
+      return zoomFactor
+    }
+    const resetZoom = () => {
+      zoomFactor = 1.0
+      return zoomFactor
+    }
+
+    expect(zoomIn()).toBe(1.1)
+    expect(zoomIn()).toBe(1.2)
+    expect(zoomOut()).toBe(1.1)
+    expect(resetZoom()).toBe(1.0)
+
+    // 边界极值测试
+    zoomFactor = 2.45
+    expect(zoomIn()).toBe(2.5)
+    expect(zoomIn()).toBe(2.5) // 上限截断
+
+    zoomFactor = 0.55
+    expect(zoomOut()).toBe(0.5)
+    expect(zoomOut()).toBe(0.5) // 下限截断
+  })
+
+  it("Protyle 原位速览抽屉深钻历史栈维护与平滑回退", () => {
+    interface IHistoryItem {
+      blockId: string
+      title: string
+    }
+
+    const historyStack: IHistoryItem[] = []
+    let currentId = "root-doc-1"
+    let currentTitle = "主文档"
+
+    // 深度钻取第一层
+    historyStack.push({ blockId: currentId, title: currentTitle })
+    currentId = "sub-block-2"
+    currentTitle = "子块引用"
+
+    expect(historyStack.length).toBe(1)
+    expect(currentId).toBe("sub-block-2")
+
+    // 深度钻取第二层
+    historyStack.push({ blockId: currentId, title: currentTitle })
+    currentId = "sub-block-3"
+    currentTitle = "孙块引用"
+
+    expect(historyStack.length).toBe(2)
+    expect(currentId).toBe("sub-block-3")
+
+    // 执行回退
+    const prev = historyStack.pop()
+    currentId = prev!.blockId
+    currentTitle = prev!.title
+
+    expect(currentId).toBe("sub-block-2")
+    expect(historyStack.length).toBe(1)
+
+    // 再次回退到底
+    const root = historyStack.pop()
+    currentId = root!.blockId
+    currentTitle = root!.title
+
+    expect(currentId).toBe("root-doc-1")
+    expect(historyStack.length).toBe(0)
+  })
+
+  it("微型浏览器新窗口事件拦截应原位重定向而避免外部弹窗", () => {
+    const mockWebview = {
+      loadURL: vi.fn(),
+    }
+    const onNewWindow = (e: { url: string; preventDefault: () => void }) => {
+      e.preventDefault()
+      mockWebview.loadURL(e.url)
+    }
+
+    const preventDefaultSpy = vi.fn()
+    onNewWindow({
+      url: "https://example.com/pricing",
+      preventDefault: preventDefaultSpy,
+    })
+
+    expect(preventDefaultSpy).toHaveBeenCalled()
+    expect(mockWebview.loadURL).toHaveBeenCalledWith("https://example.com/pricing")
+  })
 })

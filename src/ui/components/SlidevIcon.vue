@@ -56,6 +56,23 @@
       <polyline points="12 19 5 12 12 5" />
     </g>
 
+    <!-- 前进 (Arrow Right) -->
+    <g v-else-if="name === 'arrow-right'">
+      <line x1="5" y1="12" x2="19" y2="12" />
+      <polyline points="12 5 19 12 12 19" />
+    </g>
+
+    <!-- 放大 / 增加 (Plus) -->
+    <g v-else-if="name === 'plus'">
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </g>
+
+    <!-- 缩小 / 减少 (Minus) -->
+    <g v-else-if="name === 'minus'">
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </g>
+
     <!-- 分屏预览 -->
     <g v-else-if="name === 'split-preview'">
       <rect x="3" y="3" width="18" height="18" rx="2" />

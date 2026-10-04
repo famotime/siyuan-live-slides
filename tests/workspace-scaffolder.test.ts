@@ -70,7 +70,8 @@ describe("WorkspaceScaffolder (官方 Pro 临时工程自动编排器)", () => {
     expect(mockPutFile).toHaveBeenCalledWith("/test/pro-workspace/package.json", false, expect.anything())
     expect(mockPutFile).toHaveBeenCalledWith("/test/pro-workspace/slides.md", false, expect.anything())
     expect(mockPutFile).toHaveBeenCalledWith("/test/pro-workspace/snippets/external.ts", false, expect.anything())
-    expect(mockPutFile).toHaveBeenCalledTimes(3)
+    expect(mockPutFile).toHaveBeenCalledWith("/test/pro-workspace/setup/root.ts", false, expect.anything())
+    expect(mockPutFile).toHaveBeenCalledTimes(4)
   })
 
   it("默认构造函数应将工作目录设置在系统临时目录下，且能自动将旧版 /data/ 路径重定向至安全独立目录", () => {

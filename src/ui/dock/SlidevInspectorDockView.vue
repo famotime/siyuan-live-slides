@@ -190,6 +190,7 @@ const rawSnippet = ref('')
 const currentDocId = ref('')
 const currentTopBlockId = ref('')
 const currentPageDividerId = ref('')
+const currentPageDividerLayout = ref('')
 const latestDoc = ref<ISlidevDocument | null>(null)
 const saveStatus = ref('')
 const copyNotice = ref('')
@@ -342,6 +343,11 @@ const currentSlideLayout = computed(() => {
     return 'three-cols-header'
   }
 
+  // 1.8 前置分页符直传的持久化版式（毫秒级穿透，解决重编译前的竞态或初次加载）
+  if (currentPageDividerLayout.value) {
+    return currentPageDividerLayout.value
+  }
+
   // 2. 检查当前页前置分页符或当前块是否存在即时覆盖层属性 (毫秒级穿透，解决异步落库重编译前的竞态时序)
   const divId = currentPageDividerId.value || (isDivider.value ? activeBlockId.value : '')
   if (divId) {
@@ -475,12 +481,15 @@ async function saveAttr(key: string, value: string) {
   activeBlockAttrs.value[key] = value
   globalDocumentCompiler.setBlockAttrOverride(targetId, { [key]: value })
 
-  // 若修改的是版式，立即同步当前内存中 targetSlide 的 layout，避免点击内容块时异步重编译未完成读取到旧数据
-  if (key === ATTR_PAGE_LAYOUT && targetSlide.value) {
-    if (!targetSlide.value.frontmatter) {
-      targetSlide.value.frontmatter = {}
+  // 若修改的是版式，立即同步当前内存中 targetSlide 的 layout 与 currentPageDividerLayout，避免点击内容块时异步重编译未完成读取到旧数据
+  if (key === ATTR_PAGE_LAYOUT) {
+    currentPageDividerLayout.value = value
+    if (targetSlide.value) {
+      if (!targetSlide.value.frontmatter) {
+        targetSlide.value.frontmatter = {}
+      }
+      targetSlide.value.frontmatter.layout = value as any
     }
-    targetSlide.value.frontmatter.layout = value as any
   }
 
   triggerSaveNotice('保存中...')
@@ -856,6 +865,7 @@ defineExpose({
     rawSnippet.value = info.content || info.markdown || ''
     currentTopBlockId.value = info.topBlockId || info.id
     currentPageDividerId.value = info.pageDividerId || ''
+    currentPageDividerLayout.value = info.pageDividerLayout || ''
     if (info.rootId) {
       currentDocId.value = info.rootId
     } else if ((info.type === 'doc' || info.type === 'NodeDocument') && info.id) {

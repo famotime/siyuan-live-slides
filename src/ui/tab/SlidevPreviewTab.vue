@@ -138,26 +138,12 @@
           :plugin="plugin!"
         />
 
-        <!-- Web 外部链接速览轨 (阶段二完善，阶段一支持基础外跳) -->
-        <div
-          v-else-if="peekType === 'web'"
-          class="spm-web-placeholder"
-        >
-          <div class="spm-web-placeholder__box">
-            <p>外部网页链接速览：</p>
-            <a :href="peekUrl" target="_blank" rel="noopener noreferrer">{{ peekUrl }}</a>
-            <div style="margin-top: 14px;">
-              <a
-                class="spm-icon-btn is-primary"
-                :href="peekUrl"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                在系统浏览器中打开 ↗
-              </a>
-            </div>
-          </div>
-        </div>
+        <!-- Web 外部链接速览轨 (受控微型浏览器) -->
+        <WebviewPeekDrawer
+          v-else-if="peekType === 'web' && peekUrl"
+          :url="peekUrl"
+          :title="drawerTitle"
+        />
       </ImmersionDrawerContainer>
     </div>
 
@@ -184,6 +170,7 @@ import SlideInspector from '@/ui/components/SlideInspector.vue'
 import SlidevIcon from '@/ui/components/SlidevIcon.vue'
 import ImmersionDrawerContainer from '@/ui/components/peek/ImmersionDrawerContainer.vue'
 import ProtylePeekDrawer from '@/ui/components/peek/ProtylePeekDrawer.vue'
+import WebviewPeekDrawer from '@/ui/components/peek/WebviewPeekDrawer.vue'
 import { CursorTracker } from '@/sync/cursor-tracker'
 import { mirrorBlockSelection } from '@/sync/selection-mirror'
 import { buildStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'

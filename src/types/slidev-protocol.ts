@@ -137,4 +137,5 @@ export interface IActiveBlockInfo {
   isCode?: boolean
   topBlockId?: string
   pageDividerId?: string
+  pageDividerLayout?: string
 }
