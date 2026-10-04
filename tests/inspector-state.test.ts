@@ -9,7 +9,7 @@ export function resolveInspectorTarget(
   currentDocId: string,
 ) {
   const isDivider = activeBlockType === "NodeThematicBreak"
-  const isDocRoot = !activeBlockId || activeBlockId === currentDocId
+  const isDocRoot = !activeBlockId || activeBlockId === currentDocId || activeBlockType === "doc" || activeBlockType === "NodeDocument"
   const isCodeBlock = activeBlockType === "NodeCodeBlock"
 
   const id = activeBlockId || currentDocId || ""
@@ -67,6 +67,13 @@ describe("Inspector State Machine (演示配置面板状态推断)", () => {
     const state2 = resolveInspectorTarget("doc-root-12345678", "NodeDocument", "doc-root-12345678")
     expect(state2.isDocRoot).toBe(true)
     expect(state2.targetTagLabel).toBe("全局文档")
+
+    // 光标在文档标题时派发的 doc 类型
+    const stateTitle = resolveInspectorTarget("doc-root-12345678", "doc", "doc-root-12345678")
+    expect(stateTitle.isDocRoot).toBe(true)
+    expect(stateTitle.isDivider).toBe(false)
+    expect(stateTitle.targetTagLabel).toBe("全局文档")
+    expect(stateTitle.targetTagClass).toBe("tag-doc")
   })
 
   it("当聚焦普通内容块时应根据具体 blockType 返回对应标签与短 ID", () => {

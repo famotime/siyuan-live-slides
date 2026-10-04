@@ -34,6 +34,14 @@
       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
     </g>
 
+    <!-- 入场微动效 (v-motion) -->
+    <g v-else-if="name === 'motion'">
+      <path d="M5 12h14" />
+      <path d="m12 5 7 7-7 7" />
+      <path d="M5 6h4" />
+      <path d="M5 18h4" />
+    </g>
+
     <!-- 双栏 / 分栏布局 (Slot / Columns) -->
     <g v-else-if="name === 'columns'">
       <rect x="3" y="3" width="7" height="18" rx="1" />

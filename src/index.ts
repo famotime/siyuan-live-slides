@@ -55,6 +55,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
   private onClickEditorTitleIconBound = this.onClickEditorTitleIcon.bind(this)
   private onEditorClickBound = this.onEditorClick.bind(this)
   private onSelectionChangeBound = this.onSelectionChange.bind(this)
+  private onClickEditorContentBound = this.onClickEditorContent.bind(this)
 
   async onload() {
     const frontEnd = getFrontend()
@@ -384,6 +385,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     this.eventBus.on("slidev:request-compile" as any, () => this.compileCurrentDocument())
     this.eventBus.on("slidev:block-clicked" as any, this.onBlockClickedBound)
     this.eventBus.on("click-editortitleicon", this.onClickEditorTitleIconBound)
+    this.eventBus.on("click-editorcontent" as any, this.onClickEditorContentBound)
 
     // 7. 监听编辑器选区变动与点击（双向光标联动中枢）
     if (typeof document !== "undefined") {
@@ -407,6 +409,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     this.eventBus.off("switch-protyle", this.onSwitchProtyleBound)
     this.eventBus.off("ws-main", this.onWsMainBound)
     this.eventBus.off("click-editortitleicon", this.onClickEditorTitleIconBound)
+    this.eventBus.off("click-editorcontent" as any, this.onClickEditorContentBound)
     if (typeof document !== "undefined") {
       document.removeEventListener("click", this.onEditorClickBound, true)
       document.removeEventListener("selectionchange", this.onSelectionChangeBound)
@@ -511,20 +514,100 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
   /**
    * 文档切换钩子
    */
-  private onSwitchProtyle(event: CustomEvent<{ protyle: Protyle }>) {
+  private async onSwitchProtyle(event: CustomEvent<{ protyle: Protyle }>) {
     const protyle = event.detail?.protyle
     const docId = (protyle as any)?.block?.rootID
     if (docId && docId !== this.currentDocId) {
       this.currentDocId = docId
-      this.activeCursorBlockId = ""
+      this.activeCursorBlockId = docId
+      const attrs = await getBlockAttrs(docId).catch(() => ({}))
       updateInspectorCurrentBlock({
-        id: "",
+        id: docId,
         rootId: docId,
         type: "doc",
-        attrs: {},
+        attrs,
       })
       this.compileCurrentDocument(docId)
     }
+  }
+
+  /**
+   * 监听思源原生 click-editorcontent 事件
+   */
+  private onClickEditorContent(event: CustomEvent<any>) {
+    const detail = event?.detail
+    if (!detail) return
+    const rootId = detail.protyle?.block?.rootID
+    if (rootId && (!this.currentDocId || this.currentDocId !== rootId)) {
+      this.currentDocId = rootId
+    }
+    if (detail.event) {
+      this.onEditorClick(detail.event)
+    }
+  }
+
+  /**
+   * 从 DOM 元素解析所属文档的 rootId
+   */
+  public resolveDocIdFromElement(el: HTMLElement): string {
+    // 1. 尝试从文档标题容器提取其挂载的块 ID
+    const titleEl = el.closest(".protyle-title") as HTMLElement | null
+    const titleDocId = titleEl?.getAttribute("data-node-id")
+    if (titleDocId) return titleDocId
+
+    // 2. 尝试从 .protyle 编辑器容器提取 data-doc-id
+    const protyle = el.closest(".protyle") as HTMLElement | null
+    const protyleDocId = protyle?.getAttribute("data-doc-id")
+    if (protyleDocId) return protyleDocId
+
+    // 3. 尝试从子级 .protyle-title 提取
+    const innerTitle = protyle?.querySelector(".protyle-title") as HTMLElement | null
+    const innerTitleId = innerTitle?.getAttribute("data-node-id")
+    if (innerTitleId) return innerTitleId
+
+    // 4. 尝试从正文区 .protyle-wysiwyg 提取
+    const wysiwyg = protyle?.querySelector(".protyle-wysiwyg") as HTMLElement | null
+    const wysiwygDocId = wysiwyg?.getAttribute("data-doc-id")
+    if (wysiwygDocId) return wysiwygDocId
+
+    // 5. 查找最近包含 data-doc-id 的祖先
+    const docEl = el.closest("[data-doc-id]") as HTMLElement | null
+    const anyDocId = docEl?.getAttribute("data-doc-id")
+    if (anyDocId) return anyDocId
+
+    return this.currentDocId
+  }
+
+  /**
+   * 切换右侧配置面板为全局文档演示配置模式
+   */
+  public async switchToDocGlobalInspector(docId: string, titleText?: string): Promise<void> {
+    if (!docId) return
+    this.activeCursorBlockId = docId
+    this.currentDocId = docId
+
+    let content = titleText || ""
+    if (!content && typeof document !== "undefined") {
+      const titleInput = (
+        document.querySelector(`.protyle-title[data-node-id="${docId}"] .protyle-title__input`) ||
+        document.querySelector(`.protyle[data-doc-id="${docId}"] .protyle-title__input`) ||
+        document.querySelector(".protyle-title__input")
+      ) as HTMLElement | null
+      content = titleInput?.innerText?.trim() || ""
+    }
+
+    const attrs = await getBlockAttrs(docId).catch(() => ({}))
+    updateInspectorCurrentBlock({
+      id: docId,
+      rootId: docId,
+      type: "doc",
+      content,
+      attrs,
+      isDivider: false,
+      isCode: false,
+    })
+
+    navigateDockToBlock(docId)
   }
 
   /**
@@ -590,7 +673,27 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     const target = e.target as HTMLElement | null
     if (!target) return
 
-    // 仅在思源正文编辑区有效
+    // 1. 检查是否点击在文档大标题、题头图或文档属性等头部区域 (.protyle-title, .protyle-background)
+    const titleEl = (target.closest(".protyle-title") || target.closest(".protyle-background")) as HTMLElement | null
+    const isDocHeader = Boolean(
+      titleEl ||
+      (target.closest(".protyle-content") && !target.closest(".protyle-wysiwyg") && !target.closest(".protyle-breadcrumb") && !target.closest(".protyle-gutters"))
+    )
+
+    if (isDocHeader) {
+      const docId = this.resolveDocIdFromElement(target)
+      if (docId) {
+        if (this.activeCursorBlockId !== docId) {
+          const actualTitleEl = (titleEl || document.querySelector(`.protyle-title[data-node-id="${docId}"]`) || document.querySelector(`.protyle[data-doc-id="${docId}"] .protyle-title`)) as HTMLElement | null
+          const titleInput = actualTitleEl?.querySelector(".protyle-title__input") as HTMLElement | null
+          const titleText = (titleInput?.innerText || actualTitleEl?.innerText || "").trim()
+          this.switchToDocGlobalInspector(docId, titleText)
+        }
+      }
+      return
+    }
+
+    // 2. 仅在思源正文编辑区有效
     const protyle = target.closest(".protyle-wysiwyg")
     if (!protyle) return
 
@@ -618,8 +721,31 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     const anchor = sel.anchorNode
     if (!anchor) return
 
-    const el = anchor.nodeType === Node.ELEMENT_NODE ? (anchor as Element) : anchor.parentElement
-    if (!el || !el.closest(".protyle-wysiwyg")) return
+    const el = (anchor.nodeType === Node.ELEMENT_NODE ? (anchor as Element) : anchor.parentElement) as HTMLElement | null
+    if (!el) return
+
+    // 1. 检查选区是否位于文档大标题区域 (.protyle-title)
+    const titleEl = el.closest(".protyle-title") as HTMLElement | null
+    const isDocHeader = Boolean(
+      titleEl ||
+      (el.closest(".protyle-content") && !el.closest(".protyle-wysiwyg"))
+    )
+
+    if (isDocHeader) {
+      const docId = this.resolveDocIdFromElement(el as HTMLElement)
+      if (docId) {
+        if (this.activeCursorBlockId !== docId) {
+          const actualTitleEl = (titleEl || document.querySelector(`.protyle-title[data-node-id="${docId}"]`) || document.querySelector(`.protyle[data-doc-id="${docId}"] .protyle-title`)) as HTMLElement | null
+          const titleInput = actualTitleEl?.querySelector(".protyle-title__input") as HTMLElement | null
+          const titleText = (titleInput?.innerText || actualTitleEl?.innerText || "").trim()
+          this.switchToDocGlobalInspector(docId, titleText)
+        }
+      }
+      return
+    }
+
+    // 2. 仅在思源正文编辑区有效
+    if (!el.closest(".protyle-wysiwyg")) return
 
     const blockEl = el.closest("[data-node-id]") as HTMLElement | null
     const blockId = blockEl?.getAttribute("data-node-id")

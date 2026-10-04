@@ -24,6 +24,15 @@
   "slidevSyncToCliWorkspace": "Slidev Pro: 同步 slides.md 至思源工作空间存储目录",
   "openPopover": "打开幻灯片页面设置气泡",
   "openAnimBar": "打开动效与排版浮动条",
-  "globalConfig": "Slidev 全局演示配置"
+  "globalConfig": "Slidev 全局演示配置",
+  "elemMotion": "入场微动效 (v-motion)",
+  "elemMotionDesc": "为当前块添加平滑位移与渐入动画",
+  "motionSlideUp": "上浮 (slide-up)",
+  "motionFadeIn": "淡入 (fade-in)",
+  "motionSlideDown": "下沉 (slide-down)",
+  "motionSlideLeft": "左滑 (slide-left)",
+  "motionSlideRight": "右滑 (slide-right)",
+  "motionZoomIn": "缩放 (zoom-in)",
+  "motionBounce": "弹性 (bounce)"
 }
 

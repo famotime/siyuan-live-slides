@@ -1,5 +1,6 @@
 import type { ISlidevDocument } from "../types/slidev-protocol"
 import { CliDevServerBridge } from "./cli-devserver-bridge"
+import { getRuntimeModule, resolvePhysicalPath } from "./runtime-node"
 
 export interface IWorkspaceConfig {
   workspacePath: string
@@ -9,6 +10,7 @@ export interface IWorkspaceConfig {
 export interface IScaffoldResult {
   success: boolean
   slidesPath: string
+  physicalSlidesPath?: string
   packageJsonPath: string
   error?: string
 }
@@ -76,6 +78,23 @@ export class WorkspaceScaffolder {
     const slidesPath = this.getSlidesPath()
     const pkgPath = `${this.workspacePath}/package.json`
 
+    const physicalSlidesPath = resolvePhysicalPath(slidesPath)
+    const physicalPkgPath = resolvePhysicalPath(pkgPath)
+
+    // 物理文件系统落盘增强（确保 Node 子进程立即感知）
+    const fsMod = getRuntimeModule("fs")
+    const pathMod = getRuntimeModule("path")
+    if (fsMod && pathMod && physicalSlidesPath !== slidesPath) {
+      try {
+        const dir = pathMod.dirname(physicalSlidesPath)
+        if (!fsMod.existsSync(dir)) {
+          fsMod.mkdirSync(dir, { recursive: true })
+        }
+        fsMod.writeFileSync(physicalPkgPath, pkgJson, "utf-8")
+        fsMod.writeFileSync(physicalSlidesPath, slidesMd, "utf-8")
+      } catch {}
+    }
+
     if (putFileFn) {
       try {
         const slidesBlob = typeof Blob !== "undefined"
@@ -91,12 +110,14 @@ export class WorkspaceScaffolder {
         return {
           success: true,
           slidesPath,
+          physicalSlidesPath,
           packageJsonPath: pkgPath,
         }
       } catch (err: any) {
         return {
           success: false,
           slidesPath,
+          physicalSlidesPath,
           packageJsonPath: pkgPath,
           error: String(err),
         }
@@ -106,6 +127,7 @@ export class WorkspaceScaffolder {
     return {
       success: true,
       slidesPath,
+      physicalSlidesPath,
       packageJsonPath: pkgPath,
     }
   }

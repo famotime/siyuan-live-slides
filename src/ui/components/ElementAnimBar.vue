@@ -11,6 +11,16 @@
       <span v-if="currentClick" class="spm-badge">{{ currentClick }}</span>
     </button>
 
+    <!-- 入场微动效 v-motion -->
+    <button
+      class="spm-bar-btn"
+      :class="{ active: Boolean(currentMotion) }"
+      title="切换当前块入场微动效 (v-motion)"
+      @click="cycleMotion"
+    >
+      <span>🌊 动效: {{ motionLabel }}</span>
+    </button>
+
     <!-- 分栏插槽 -->
     <button
       class="spm-bar-btn"
@@ -40,6 +50,7 @@ import { ref, computed, defineProps, defineEmits } from 'vue'
 import { setBlockAttrs } from '@/api'
 import {
   ATTR_ELEM_CLICK,
+  ATTR_ELEM_MOTION,
   ATTR_ELEM_SHIKI_LINES,
   ATTR_ELEM_SLOT,
 } from '@/types/slidev-protocol'
@@ -55,8 +66,19 @@ const emit = defineEmits<{
 }>()
 
 const currentClick = ref(props.initialAttrs?.[ATTR_ELEM_CLICK] || '')
+const currentMotion = ref(props.initialAttrs?.[ATTR_ELEM_MOTION] || '')
 const currentSlot = ref(props.initialAttrs?.[ATTR_ELEM_SLOT] || '')
 const currentShiki = ref(props.initialAttrs?.[ATTR_ELEM_SHIKI_LINES] || '')
+
+const motionLabel = computed(() => {
+  if (!currentMotion.value) return '无'
+  try {
+    const obj = JSON.parse(currentMotion.value)
+    return obj.preset || obj.type || '开启'
+  } catch {
+    return currentMotion.value
+  }
+})
 
 const slotLabel = computed(() => {
   if (currentSlot.value === 'left') return '左栏'
@@ -77,6 +99,21 @@ function toggleClick() {
     currentClick.value = ''
   }
   saveAttr(ATTR_ELEM_CLICK, currentClick.value)
+}
+
+function cycleMotion() {
+  const presets = ['', 'slide-up', 'fade-in', 'zoom-in', 'bounce']
+  let currentKey = ''
+  try {
+    const obj = JSON.parse(currentMotion.value)
+    currentKey = obj.preset || ''
+  } catch {
+    currentKey = currentMotion.value
+  }
+  const idx = presets.indexOf(currentKey)
+  const next = presets[(idx + 1) % presets.length]
+  currentMotion.value = next
+  saveAttr(ATTR_ELEM_MOTION, next)
 }
 
 function cycleSlot() {

@@ -73,7 +73,8 @@ export class EngineManager {
     }
 
     // 3. 启动进程
-    const startRes = await this.processManager.startServer(scaffoldRes.slidesPath)
+    const targetSlidesPath = scaffoldRes.physicalSlidesPath || scaffoldRes.slidesPath
+    const startRes = await this.processManager.startServer(targetSlidesPath)
     if (!startRes.success) {
       return {
         success: false,

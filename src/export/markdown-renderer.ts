@@ -135,22 +135,39 @@ export function convertBlockToHtml(
   block: ISlidevBlockItem,
   options?: IBlockRenderOptions,
 ): string {
-  const containerClass = options?.containerClassName || "pdf-block"
+  let motionClass = ""
+  let motionStyle = ""
+  if (block.motion?.preset && block.motion.preset !== "none") {
+    motionClass = ` slidev-motion-${block.motion.preset.toLowerCase()}`
+    const styleParts: string[] = []
+    if (typeof block.motion.duration === "number" && block.motion.duration > 0) {
+      styleParts.push(`--motion-duration:${block.motion.duration}ms`)
+    }
+    if (typeof block.motion.delay === "number" && block.motion.delay > 0) {
+      styleParts.push(`--motion-delay:${block.motion.delay}ms`)
+    }
+    if (styleParts.length > 0) {
+      motionStyle = ` style="${styleParts.join(";")}"`
+    }
+  }
+
+  const baseContainerClass = options?.containerClassName || "pdf-block"
+  const containerClass = `${baseContainerClass}${motionClass}`
   const md = (block.rawMarkdown || block.content || "").trim()
 
   if (!md) {
-    return `<div class="${containerClass}"></div>`
+    return `<div class="${containerClass}"${motionStyle}></div>`
   }
 
   // 1. 若已经是渲染好的思源引用或标签，直接内联
   if (md.includes('class="slidev-block-ref"') || md.includes('class="slidev-ref-tag"')) {
-    return `<div class="${containerClass}">${md}</div>`
+    return `<div class="${containerClass}"${motionStyle}>${md}</div>`
   }
 
   // 2. 独立公式块 $$...$$
   if (md.startsWith("$$") && md.endsWith("$$")) {
     const formula = md.slice(2, -2).trim()
-    return `<div class="${containerClass} katex-display-container"><div class="katex-display font-math"><em>${escapeHtml(formula)}</em></div></div>`
+    return `<div class="${containerClass} katex-display-container"${motionStyle}><div class="katex-display font-math"><em>${escapeHtml(formula)}</em></div></div>`
   }
 
   // 3. 标题 h1 ~ h6
@@ -158,7 +175,7 @@ export function convertBlockToHtml(
   if (hMatch) {
     const level = hMatch[1].length
     const titleText = formatInlineMarkdown(hMatch[2])
-    return `<div class="${containerClass}"><h${level}>${titleText}</h${level}></div>`
+    return `<div class="${containerClass}"${motionStyle}><h${level}>${titleText}</h${level}></div>`
   }
 
   // 4. Callout 警示框 / 容器 ::: info / ::: tip / ::: warning / ::: danger
@@ -168,7 +185,7 @@ export function convertBlockToHtml(
     const type = firstLine || "info"
     const body = lines.slice(1, lines[lines.length - 1].startsWith(":::") ? -1 : undefined).join("\n")
     const calloutClass = options?.calloutClassName || "pdf-callout"
-    return `<div class="${containerClass}"><div class="${calloutClass} ${calloutClass}--${type}"><div class="${calloutClass}-title">${type.toUpperCase()}</div><div class="${calloutClass}-body">${formatInlineMarkdown(body)}</div></div></div>`
+    return `<div class="${containerClass}"${motionStyle}><div class="${calloutClass} ${calloutClass}--${type}"><div class="${calloutClass}-title">${type.toUpperCase()}</div><div class="${calloutClass}-body">${formatInlineMarkdown(body)}</div></div></div>`
   }
 
   // 5. 代码块 (含语言标牌与 Shiki 聚光行号聚焦高亮)
@@ -197,27 +214,27 @@ export function convertBlockToHtml(
 
     const langBadge = lang ? `<span class="lang-badge">${escapeHtml(lang)}</span>` : ""
 
-    return `<div class="${containerClass}"><pre class="${codeClass}">${langBadge}<code>${formattedLines}</code></pre></div>`
+    return `<div class="${containerClass}"${motionStyle}><pre class="${codeClass}">${langBadge}<code>${formattedLines}</code></pre></div>`
   }
 
   // 6. Markdown 表格
   if (md.includes("|") && md.split("\n").filter(l => l.trim().startsWith("|")).length >= 2) {
     const tableLines = md.split("\n").filter(l => l.trim().startsWith("|"))
     const tableHtml = renderMarkdownTable(tableLines, options?.tableClassName)
-    return `<div class="${containerClass}">${tableHtml}</div>`
+    return `<div class="${containerClass}"${motionStyle}>${tableHtml}</div>`
   }
 
   // 7. 引用块
   if (md.startsWith("> ")) {
     const quoteClass = options?.quoteClassName || "pdf-quote"
-    return `<div class="${containerClass}"><blockquote class="${quoteClass}"><p>${formatInlineMarkdown(md.slice(2))}</p></blockquote></div>`
+    return `<div class="${containerClass}"${motionStyle}><blockquote class="${quoteClass}"><p>${formatInlineMarkdown(md.slice(2))}</p></blockquote></div>`
   }
 
   // 8. 图片
   const imgMatch = md.match(/^!\[(.*?)\]\((.*?)\)$/)
   if (imgMatch) {
     const imgClass = options?.imageClassName || "pdf-image"
-    return `<div class="${containerClass} ${containerClass}--image"><img alt="${escapeHtml(imgMatch[1])}" src="${imgMatch[2]}" class="${imgClass}" /></div>`
+    return `<div class="${containerClass} ${containerClass}--image"${motionStyle}><img alt="${escapeHtml(imgMatch[1])}" src="${imgMatch[2]}" class="${imgClass}" /></div>`
   }
 
   // 9. 任务列表项 - [ ] 或 - [x]
@@ -226,23 +243,23 @@ export function convertBlockToHtml(
     const isChecked = taskMatch[1].toLowerCase() === "x"
     const taskText = formatInlineMarkdown(taskMatch[2])
     const checkedAttr = isChecked ? ' checked=""' : ""
-    return `<div class="${containerClass} pdf-list-item pdf-task-item"><label><input type="checkbox" disabled=""${checkedAttr}/> <span>${taskText}</span></label></div>`
+    return `<div class="${containerClass} pdf-list-item pdf-task-item"${motionStyle}><label><input type="checkbox" disabled=""${checkedAttr}/> <span>${taskText}</span></label></div>`
   }
 
   // 10. 无序列表项
   if (/^[-*+]\s+/.test(md)) {
     const listText = md.replace(/^[-*+]\s+/, "")
-    return `<div class="${containerClass} pdf-list-item"><li>${formatInlineMarkdown(listText)}</li></div>`
+    return `<div class="${containerClass} pdf-list-item"${motionStyle}><li>${formatInlineMarkdown(listText)}</li></div>`
   }
 
   // 11. 有序列表项
   if (/^\d+\.\s+/.test(md)) {
     const listText = md.replace(/^\d+\.\s+/, "")
-    return `<div class="${containerClass} pdf-list-item pdf-list-item--ordered"><li>${formatInlineMarkdown(listText)}</li></div>`
+    return `<div class="${containerClass} pdf-list-item pdf-list-item--ordered"${motionStyle}><li>${formatInlineMarkdown(listText)}</li></div>`
   }
 
   // 12. 普通段落
-  return `<div class="${containerClass}"><p>${formatInlineMarkdown(md)}</p></div>`
+  return `<div class="${containerClass}"${motionStyle}><p>${formatInlineMarkdown(md)}</p></div>`
 }
 
 export interface IRenderSlideOptions extends IBlockRenderOptions {

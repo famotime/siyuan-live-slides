@@ -83,6 +83,26 @@ export function buildStandaloneHtml(
     .slide-block h2 { font-size: 1.7rem; margin-bottom: 10px; }
     .slide-block p { font-size: 1.15rem; }
     .slide-block pre { background: rgba(0,0,0,0.1); padding: 12px; border-radius: 6px; font-family: monospace; }
+    /* Slidev Micro-motion Keyframes & Presets */
+    @keyframes slidevMotionFadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slidevMotionSlideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slidevMotionSlideDown { from { opacity: 0; transform: translateY(-40px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slidevMotionSlideLeft { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes slidevMotionSlideRight { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes slidevMotionZoomIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+    @keyframes slidevMotionBounce {
+      0% { opacity: 0; transform: translateY(40px); }
+      60% { opacity: 1; transform: translateY(-8px); }
+      80% { transform: translateY(4px); }
+      100% { transform: translateY(0); }
+    }
+    .slidev-motion-fade-in { animation: slidevMotionFadeIn var(--motion-duration, 0.4s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both; }
+    .slidev-motion-slide-up { animation: slidevMotionSlideUp var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both; }
+    .slidev-motion-slide-down { animation: slidevMotionSlideDown var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both; }
+    .slidev-motion-slide-left { animation: slidevMotionSlideLeft var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both; }
+    .slidev-motion-slide-right { animation: slidevMotionSlideRight var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both; }
+    .slidev-motion-zoom-in, .slidev-motion-pop { animation: slidevMotionZoomIn var(--motion-duration, 0.4s) cubic-bezier(0.34, 1.56, 0.64, 1) var(--motion-delay, 0s) both; }
+    .slidev-motion-bounce { animation: slidevMotionBounce var(--motion-duration, 0.6s) cubic-bezier(0.34, 1.56, 0.64, 1) var(--motion-delay, 0s) both; }
     .controls {
       position: absolute; bottom: 16px; display: flex; gap: 12px; align-items: center;
       background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(8px);
@@ -127,6 +147,15 @@ export function buildStandaloneHtml(
       function renderBlock(block) {
         const div = document.createElement("div");
         div.className = "slide-block";
+        if (block && block.motion && block.motion.preset && block.motion.preset !== "none") {
+          div.classList.add("slidev-motion-" + block.motion.preset.toLowerCase());
+          if (typeof block.motion.duration === "number" && block.motion.duration > 0) {
+            div.style.setProperty("--motion-duration", block.motion.duration + "ms");
+          }
+          if (typeof block.motion.delay === "number" && block.motion.delay > 0) {
+            div.style.setProperty("--motion-delay", block.motion.delay + "ms");
+          }
+        }
         const md = block.rawMarkdown || block.content || "";
 
         if (md.includes('class="slidev-block-ref"') || md.includes('class="slidev-ref-tag"')) {

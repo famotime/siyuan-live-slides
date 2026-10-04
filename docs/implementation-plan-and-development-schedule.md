@@ -83,8 +83,8 @@ sequenceDiagram
   - [x] **双向光标毫秒级联动跟踪器 (`cursor-tracker.ts` / `selection-mirror.ts`)**：
     - 正向跟随：100ms 防抖监听 Protyle 编辑区选区与按键，光标落在某块时下方预览自动翻页并高亮该块，右侧面板同步刷新属性；
     - 反向定位：点击预览沙箱中的任意块，主编辑区平滑滚动居中并高亮目标思源块；
-  - [-] **微动效与位移参数 (`custom-slidev-motion`)**：协议已解析，但在 UI 界面中缺少配置入口，且沙箱端尚未接入 `@vueuse/motion` 运行时。
-- **阶段结论**：**90% 完成**，主要微交互与光标跟踪已闭环，微动效运行时待补齐。
+  - [x] **微动效与位移参数 (`custom-slidev-motion`)**：落地 Inspector 配置入口与预设微调面板，沙箱端与单 HTML 导出端接入 GPU 加速动效运行时，Slidev CLI 导出端支持标准 `v-motion` 复合转译。
+- **阶段结论**：**100% 完成**，微交互、光标跟踪与元素微动效运行时已全部闭环交付。
 
 #### Phase 3：生态协同、块引用与 AI 智能赋能
 - **核心目标**：打通与属性管家的生态协同，接入思源块引用与内置 AI 能力，交付双屏演讲者控制台。
@@ -149,10 +149,11 @@ sequenceDiagram
 
 ### Sprint 6：高级动效与深层数据融合（P1 级，2 ~ 3 周）
 
-- [ ] **Task 6.1：落地 `custom-slidev-motion` 进入微动效**
-  - 在 `BlockInspectorSection.vue` 增加预设微动效选择器（`淡入 (fade-in)`、`滑入 (slide-up)`、`放大 (zoom-in)`、`弹性 (bounce)`）；
-  - 在内置沙箱中注入对应的 CSS Keyframes 动效类，实现无需重型依赖的流畅进入动画；
-  - 导出单文件 HTML 时保留该动效支持。
+- [x] **Task 6.1：落地 `custom-slidev-motion` 进入微动效**
+  - 在 `BlockInspectorSection.vue` 增加预设微动效选择器（`淡入 (fade-in)`、`滑入 (slide-up)`、`下沉 (slide-down)`、`左滑 (slide-left)`、`右滑 (slide-right)`、`放大 (zoom-in)`、`弹性 (bounce)`）与时长延迟微调；
+  - 在内置沙箱中注入对应的 CSS Keyframes 动效类与 CSS 变量，实现无需重型依赖的流畅进入动画；
+  - 导出单文件 HTML 与 PDF 打印端同步支持与重置；
+  - 在 Slidev AST 导出构建器中优雅复合生成标准 `v-motion` 与 `v-click` 指令容器。
 - [ ] **Task 6.2：支持块嵌入与递归块引用展开**
   - 在 `block-ref-resolver.ts` 中增加对 `{{select ...}}` 嵌入块语法的识别；
   - 接入思源内核 API `/api/block/getBlockKramdown`，对深层复杂块结构进行递归无损展开；

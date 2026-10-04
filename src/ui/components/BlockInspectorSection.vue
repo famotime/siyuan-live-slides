@@ -40,6 +40,73 @@
       </div>
     </div>
 
+    <!-- 2. 入场微动效 (v-motion) -->
+    <div class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div class="spm-control-title">
+            <SlidevIcon name="motion" />
+            <span>入场微动效 (v-motion)</span>
+          </div>
+          <span class="spm-control-desc">为当前块添加平滑位移与渐入动画</span>
+        </div>
+        <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="hasMotion ? '关闭微动效' : '开启微动效 (slide-up)'">
+          <input
+            type="checkbox"
+            :checked="hasMotion"
+            @change="toggleMotion"
+          />
+          <span class="spm-switch-slider"></span>
+        </label>
+      </div>
+
+      <!-- 预设微动效选择器 Chips -->
+      <div v-if="hasMotion" class="spm-quick-chips">
+        <button
+          v-for="item in motionPresets"
+          :key="item.value"
+          class="spm-chip"
+          :class="{ active: currentPreset === item.value }"
+          @click="selectPreset(item.value)"
+        >
+          {{ item.label }}
+        </button>
+      </div>
+
+      <!-- 折叠高级参数调节 (时长 / 延迟) -->
+      <div v-if="hasMotion" class="spm-motion-details" style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+        <div style="display: flex; gap: 8px; justify-content: space-between; font-size: 11px; opacity: 0.8;">
+          <span>时长: {{ currentDuration ? currentDuration + 'ms' : '默认 (450ms)' }}</span>
+          <span>延迟: {{ currentDelay ? currentDelay + 'ms' : '0ms' }}</span>
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <select
+            class="spm-select"
+            style="flex: 1;"
+            :value="currentDuration"
+            @change="updateDuration(Number(($event.target as HTMLSelectElement).value))"
+          >
+            <option :value="0">默认耗时</option>
+            <option :value="200">极速 (200ms)</option>
+            <option :value="350">较快 (350ms)</option>
+            <option :value="500">平滑 (500ms)</option>
+            <option :value="800">缓慢 (800ms)</option>
+          </select>
+          <select
+            class="spm-select"
+            style="flex: 1;"
+            :value="currentDelay"
+            @change="updateDelay(Number(($event.target as HTMLSelectElement).value))"
+          >
+            <option :value="0">无延迟</option>
+            <option :value="150">延迟 150ms</option>
+            <option :value="300">延迟 300ms</option>
+            <option :value="500">延迟 500ms</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
     <!-- 2. 多栏布局插槽 (Slot) -->
     <div class="spm-card-control">
       <div class="spm-control-header">
@@ -164,19 +231,22 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import SlidevIcon from '@/ui/components/SlidevIcon.vue'
 
-defineProps<{
+const props = defineProps<{
   elemClick: string
+  elemMotion: string
   elemSlot: string
   elemShikiLines: string
   isCodeBlock: boolean
   hasBlockAttrs: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'toggleElemClick'): void
   (e: 'update:elemClick', val: string): void
+  (e: 'update:elemMotion', val: string): void
   (e: 'update:elemSlot', val: string): void
   (e: 'update:elemShikiLines', val: string): void
   (e: 'insertDividerBefore'): void
@@ -184,4 +254,77 @@ defineEmits<{
   (e: 'setTwoColsContrast'): void
   (e: 'clearBlockAttrs'): void
 }>()
+
+const motionPresets = [
+  { label: '上浮 (slide-up)', value: 'slide-up' },
+  { label: '淡入 (fade-in)', value: 'fade-in' },
+  { label: '下沉 (slide-down)', value: 'slide-down' },
+  { label: '左滑 (slide-left)', value: 'slide-left' },
+  { label: '右滑 (slide-right)', value: 'slide-right' },
+  { label: '缩放 (zoom-in)', value: 'zoom-in' },
+  { label: '弹性 (bounce)', value: 'bounce' },
+]
+
+const parsedMotion = computed(() => {
+  if (!props.elemMotion || props.elemMotion.trim() === '' || props.elemMotion.trim() === 'none') {
+    return null
+  }
+  try {
+    const obj = JSON.parse(props.elemMotion)
+    if (typeof obj === 'object' && obj !== null) {
+      return {
+        preset: obj.preset || obj.type || 'slide-up',
+        duration: typeof obj.duration === 'number' ? obj.duration : 0,
+        delay: typeof obj.delay === 'number' ? obj.delay : 0,
+      }
+    }
+  } catch {
+    // 字符串预设
+  }
+  return {
+    preset: props.elemMotion.trim(),
+    duration: 0,
+    delay: 0,
+  }
+})
+
+const hasMotion = computed(() => Boolean(parsedMotion.value))
+const currentPreset = computed(() => parsedMotion.value?.preset || 'slide-up')
+const currentDuration = computed(() => parsedMotion.value?.duration || 0)
+const currentDelay = computed(() => parsedMotion.value?.delay || 0)
+
+function toggleMotion() {
+  if (hasMotion.value) {
+    emit('update:elemMotion', '')
+  } else {
+    emit('update:elemMotion', 'slide-up')
+  }
+}
+
+function selectPreset(preset: string) {
+  emitMotionChange(preset, currentDuration.value, currentDelay.value)
+}
+
+function updateDuration(duration: number) {
+  emitMotionChange(currentPreset.value, duration, currentDelay.value)
+}
+
+function updateDelay(delay: number) {
+  emitMotionChange(currentPreset.value, currentDuration.value, delay)
+}
+
+function emitMotionChange(preset: string, duration: number, delay: number) {
+  if (!preset || preset === 'none') {
+    emit('update:elemMotion', '')
+    return
+  }
+  if (!duration && !delay) {
+    emit('update:elemMotion', preset)
+    return
+  }
+  const payload: Record<string, any> = { preset }
+  if (duration > 0) payload.duration = duration
+  if (delay > 0) payload.delay = delay
+  emit('update:elemMotion', JSON.stringify(payload))
+}
 </script>

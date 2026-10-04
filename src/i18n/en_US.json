@@ -24,6 +24,15 @@
   "slidevSyncToCliWorkspace": "Slidev Pro: Sync slides.md to Workspace Storage",
   "openPopover": "Open Slide Settings Popover",
   "openAnimBar": "Open Animation Floating Bar",
-  "globalConfig": "Slidev Global Presentation Config"
+  "globalConfig": "Slidev Global Presentation Config",
+  "elemMotion": "Entry Micro-motion (v-motion)",
+  "elemMotionDesc": "Add smooth displacement & fade-in entrance motion to current block",
+  "motionSlideUp": "Slide Up (slide-up)",
+  "motionFadeIn": "Fade In (fade-in)",
+  "motionSlideDown": "Slide Down (slide-down)",
+  "motionSlideLeft": "Slide Left (slide-left)",
+  "motionSlideRight": "Slide Right (slide-right)",
+  "motionZoomIn": "Zoom In (zoom-in)",
+  "motionBounce": "Bounce (bounce)"
 }
 

@@ -470,7 +470,7 @@ svg.slidev-icon,
   }
 }
 
-.spm-input, .spm-textarea {
+.spm-input, .spm-textarea, .spm-select {
   width: 100%;
   box-sizing: border-box;
   padding: 6px 8px;
@@ -490,6 +490,12 @@ svg.slidev-icon,
   &::placeholder {
     color: var(--b3-theme-on-surface-light, #94a3b8);
   }
+}
+
+.spm-select {
+  height: 26px;
+  padding: 2px 6px;
+  cursor: pointer;
 }
 
 .spm-textarea {

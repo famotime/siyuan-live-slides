@@ -218,6 +218,20 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       font-size: 4.5rem;
       color: #ef4444;
     }
+    @media print {
+      .slidev-motion-fade-in,
+      .slidev-motion-slide-up,
+      .slidev-motion-slide-down,
+      .slidev-motion-slide-left,
+      .slidev-motion-slide-right,
+      .slidev-motion-zoom-in,
+      .slidev-motion-pop,
+      .slidev-motion-bounce {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    }
   </style>
 </head>
 <body>

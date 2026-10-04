@@ -80,12 +80,14 @@
       <BlockInspectorSection
         v-else-if="activeBlockId && !isDocRoot"
         :elem-click="elemClick"
+        :elem-motion="elemMotion"
         :elem-slot="elemSlot"
         :elem-shiki-lines="elemShikiLines"
         :is-code-block="isCodeBlock"
         :has-block-attrs="hasBlockAttrs"
         @toggle-elem-click="toggleElemClick"
         @update:elem-click="onElemClickStepChange"
+        @update:elem-motion="onElemMotionChange"
         @update:elem-slot="onElemSlotChange"
         @update:elem-shiki-lines="onElemShikiLinesChange"
         @insert-divider-before="onInsertDividerBefore"
@@ -129,12 +131,13 @@ import BlockInspectorSection from '@/ui/components/BlockInspectorSection.vue'
 import DocInspectorSection from '@/ui/components/DocInspectorSection.vue'
 import SlidevImportDialog from '@/ui/components/SlidevImportDialog.vue'
 import SlidevIcon from '@/ui/components/SlidevIcon.vue'
-import { generateSpeakerNotesWithAI } from '@/ai/notes-generator'
+import { generateSpeakerNotesWithAIDetailed } from '@/ai/notes-generator'
 import { buildStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'
 import { triggerPdfExport } from '@/export/pdf-exporter'
 import type {
   IActiveBlockInfo,
   ISlidevDocument,
+  ISlidevVirtualPage,
 } from '@/types/slidev-protocol'
 import {
   ATTR_DOC_THEME,
@@ -145,6 +148,7 @@ import {
   ATTR_PAGE_BACKGROUND,
   ATTR_PAGE_NOTES,
   ATTR_ELEM_CLICK,
+  ATTR_ELEM_MOTION,
   ATTR_ELEM_SLOT,
   ATTR_ELEM_SHIKI_LINES,
 } from '@/types/slidev-protocol'
@@ -196,7 +200,12 @@ function onCopyBlockId() {
 // 目标标签计算
 const isDivider = computed(() => activeBlockType.value === 'NodeThematicBreak')
 const isCodeBlock = computed(() => activeBlockType.value === 'NodeCodeBlock')
-const isDocRoot = computed(() => !activeBlockId.value || activeBlockId.value === currentDocId.value)
+const isDocRoot = computed(() => 
+  !activeBlockId.value || 
+  activeBlockId.value === currentDocId.value || 
+  activeBlockType.value === 'doc' || 
+  activeBlockType.value === 'NodeDocument'
+)
 
 const displayShortId = computed(() => {
   const id = activeBlockId.value || currentDocId.value || ''
@@ -241,17 +250,19 @@ const pageNotes = ref('')
 
 // 内容块属性绑定
 const elemClick = computed(() => activeBlockAttrs.value[ATTR_ELEM_CLICK] || '')
+const elemMotion = computed(() => activeBlockAttrs.value[ATTR_ELEM_MOTION] || '')
 const elemSlot = computed(() => activeBlockAttrs.value[ATTR_ELEM_SLOT] || '')
 const elemShikiLines = ref('')
 
 // 文档全局属性绑定
-const docTheme = computed(() => latestDoc.value?.config?.theme || 'default')
-const docAspectRatio = computed(() => latestDoc.value?.config?.aspectRatio || '16/9')
-const docDefaultTransition = computed(() => latestDoc.value?.config?.defaultTransition || 'slide-left')
+const docTheme = computed(() => latestDoc.value?.config?.theme || activeBlockAttrs.value[ATTR_DOC_THEME] || 'default')
+const docAspectRatio = computed(() => latestDoc.value?.config?.aspectRatio || activeBlockAttrs.value[ATTR_DOC_ASPECT_RATIO] || '16/9')
+const docDefaultTransition = computed(() => latestDoc.value?.config?.defaultTransition || activeBlockAttrs.value[ATTR_DOC_DEFAULT_TRANSITION] || 'slide-left')
 
 const hasBlockAttrs = computed(() => {
   return Boolean(
     activeBlockAttrs.value[ATTR_ELEM_CLICK] ||
+    activeBlockAttrs.value[ATTR_ELEM_MOTION] ||
     activeBlockAttrs.value[ATTR_ELEM_SLOT] ||
     activeBlockAttrs.value[ATTR_ELEM_SHIKI_LINES] ||
     activeBlockAttrs.value[ATTR_PAGE_LAYOUT]
@@ -276,8 +287,14 @@ async function saveAttr(key: string, value: string) {
 }
 
 async function saveDocAttr(key: string, value: string) {
-  const docId = currentDocId.value
+  const docId = currentDocId.value || activeBlockId.value
   if (!docId) return
+  activeBlockAttrs.value[key] = value
+  if (latestDoc.value?.config) {
+    if (key === ATTR_DOC_THEME) latestDoc.value.config.theme = value
+    if (key === ATTR_DOC_ASPECT_RATIO) latestDoc.value.config.aspectRatio = value
+    if (key === ATTR_DOC_DEFAULT_TRANSITION) latestDoc.value.config.defaultTransition = value
+  }
   triggerSaveNotice('更新中...')
   try {
     await setBlockAttrs(docId, { [key]: value })
@@ -313,20 +330,38 @@ function onNotesChange(val?: string) {
 
 async function onGenerateNotesWithAI() {
   if (!currentDocId.value) return
-  showMessage('正在调用思源 AI 提炼本页讲稿提词...')
-  const dummySlide = {
+
+  // 1. 获取当前页面完整的虚拟幻灯片模型
+  let targetSlide = latestDoc.value?.slides.find(s => s.startBlockId === activeBlockId.value)
+  if (!targetSlide && activeBlockId.value) {
+    targetSlide = latestDoc.value?.slides.find(s => s.blocks?.some(b => b.id === activeBlockId.value))
+  }
+  if (!targetSlide && (activeBlockId.value === currentDocId.value || !activeBlockId.value)) {
+    targetSlide = latestDoc.value?.slides?.[0]
+  }
+
+  // 若尚未编译过或没匹配到，构建兜底 slide 模型
+  const slideToUse: ISlidevVirtualPage = targetSlide || {
     pageIndex: 1,
     startBlockId: activeBlockId.value,
     frontmatter: {},
     notes: '',
-    blocks: [{ id: activeBlockId.value, type: activeBlockType.value, content: rawSnippet.value, rawMarkdown: '' }],
-    rawMarkdown: '',
+    blocks: rawSnippet.value && rawSnippet.value !== '---'
+      ? [{ id: activeBlockId.value, type: activeBlockType.value, content: rawSnippet.value, rawMarkdown: '' }]
+      : [],
+    rawMarkdown: rawSnippet.value && rawSnippet.value !== '---' ? rawSnippet.value : '',
   }
-  const generated = await generateSpeakerNotesWithAI(dummySlide as any, chatAI)
-  if (generated) {
-    pageNotes.value = generated
-    saveAttr(ATTR_PAGE_NOTES, generated)
-    showMessage('已成功生成口播提词！')
+
+  showMessage('正在调用思源 AI 提炼本页讲稿提词...')
+  const result = await generateSpeakerNotesWithAIDetailed(slideToUse, chatAI)
+  if (result.notes) {
+    pageNotes.value = result.notes
+    await saveAttr(ATTR_PAGE_NOTES, result.notes)
+    if (result.isAiGenerated) {
+      showMessage('思源 AI 演讲提词卡生成成功！')
+    } else {
+      showMessage('未获取到思源 AI 响应（请在思源【设置 - AI】中配置 AI 服务商），已载入结构化预设提词模板', 6000)
+    }
   }
 }
 
@@ -341,6 +376,10 @@ function toggleElemClick() {
 
 function onElemClickStepChange(step: string) {
   saveAttr(ATTR_ELEM_CLICK, step)
+}
+
+function onElemMotionChange(val: string) {
+  saveAttr(ATTR_ELEM_MOTION, val)
 }
 
 function onElemSlotChange(slot: string) {
@@ -362,6 +401,7 @@ async function onClearBlockAttrs() {
   if (!targetId) return
   await setBlockAttrs(targetId, {
     [ATTR_ELEM_CLICK]: '',
+    [ATTR_ELEM_MOTION]: '',
     [ATTR_ELEM_SLOT]: '',
     [ATTR_ELEM_SHIKI_LINES]: '',
     [ATTR_PAGE_LAYOUT]: '',
@@ -475,6 +515,11 @@ defineExpose({
     activeBlockType.value = info.type
     activeBlockAttrs.value = { ...info.attrs }
     rawSnippet.value = info.content || info.markdown || ''
+    if (info.rootId) {
+      currentDocId.value = info.rootId
+    } else if ((info.type === 'doc' || info.type === 'NodeDocument') && info.id) {
+      currentDocId.value = info.id
+    }
     pageBackground.value = info.attrs[ATTR_PAGE_BACKGROUND] || ''
     pageNotes.value = info.attrs[ATTR_PAGE_NOTES] || ''
     elemShikiLines.value = info.attrs[ATTR_ELEM_SHIKI_LINES] || ''

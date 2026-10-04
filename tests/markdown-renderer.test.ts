@@ -120,6 +120,17 @@ describe("MarkdownRenderer (导出模块与沙箱通用高保真渲染引擎)", 
       rawMarkdown: '<span class="slidev-block-ref">引用内容</span>',
     }
     expect(convertBlockToHtml(refBlock)).toContain('class="slidev-block-ref"')
+
+    // 带微动效与时长延迟参数的段落
+    const motionBlock: ISlidevBlockItem = {
+      id: "b10",
+      rawMarkdown: "微动效段落内容",
+      motion: { preset: "slide-up", duration: 400, delay: 100 },
+    }
+    const motionHtml = convertBlockToHtml(motionBlock)
+    expect(motionHtml).toContain("slidev-motion-slide-up")
+    expect(motionHtml).toContain("--motion-duration:400ms")
+    expect(motionHtml).toContain("--motion-delay:100ms")
   })
 
   it("renderSlideBlocksToHtml 应正确支持 two-cols, two-cols-header 与 fact 布局", () => {

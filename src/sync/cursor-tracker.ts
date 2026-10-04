@@ -7,6 +7,7 @@ export class CursorTracker {
   private debounceCtrl = new DebounceController()
   private activeBlockId = ""
   private activePageIndex = 1
+  private currentDocId = ""
   private bridge: WebSandboxBridge | null = null
 
   constructor(bridge?: WebSandboxBridge) {
@@ -17,6 +18,10 @@ export class CursorTracker {
 
   public setBridge(bridge: WebSandboxBridge): void {
     this.bridge = bridge
+  }
+
+  public setDocId(docId: string): void {
+    this.currentDocId = docId
   }
 
   /**
@@ -52,7 +57,11 @@ export class CursorTracker {
     }
 
     this.activeBlockId = blockId
-    const targetPage = this.getPageByBlockId(blockId)
+    let targetPage = this.getPageByBlockId(blockId)
+    // 若光标在文档根/标题且未被包含在块映射中，默认平滑定位至第一页
+    if (!targetPage && (blockId === this.currentDocId || !this.currentDocId && this.blockToPageMap.size > 0)) {
+      targetPage = 1
+    }
     if (!targetPage) {
       return
     }

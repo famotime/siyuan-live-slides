@@ -1,3 +1,10 @@
+import {
+  getMergedSystemEnv,
+  getPlatform,
+  getRuntimeModule,
+  resolvePhysicalPath,
+} from "./runtime-node"
+
 export interface IProcessManagerOptions {
   defaultPort?: number
   maxPortRetries?: number
@@ -49,9 +56,15 @@ export class NativeSlidevProcessManager {
     }
 
     try {
-      const net = await import("node:net")
+      let netMod: any = getRuntimeModule("net")
+      if (!netMod) {
+        netMod = await import("node:net").catch(() => ({}))
+      }
+      if (!netMod?.createServer) {
+        return true
+      }
       return await new Promise((resolve) => {
-        const server = net.createServer()
+        const server = netMod.createServer()
         server.once("error", () => resolve(false))
         server.once("listening", () => {
           server.close(() => resolve(true))
@@ -120,19 +133,29 @@ export class NativeSlidevProcessManager {
     const port = await this.allocPort(targetPort)
     this.activePort = port
 
-    const isWin = typeof process !== "undefined" && process.platform === "win32"
+    const isWin = getPlatform() === "win32"
     const cmd = isWin ? "npx.cmd" : "npx"
-    const args = ["@slidev/cli", slidesFilePath, "--port", String(port), "--no-open"]
+    const resolvedPath = resolvePhysicalPath(slidesFilePath)
+    const args = ["@slidev/cli", resolvedPath, "--port", String(port), "--no-open"]
 
     try {
       if (this.customSpawner) {
         this.childProcess = this.customSpawner(cmd, args, { detached: false })
       } else {
-        const { spawn } = await import("node:child_process")
-        this.childProcess = spawn(cmd, args, {
+        let spawnFn: any = getRuntimeModule("child_process")?.spawn
+        if (!spawnFn) {
+          const cp = await import("node:child_process").catch(() => ({})) as any
+          spawnFn = cp?.spawn
+        }
+        if (!spawnFn) {
+          throw new Error("child_process spawn not available in current runtime")
+        }
+
+        const env = getMergedSystemEnv()
+        this.childProcess = spawnFn(cmd, args, {
           detached: false,
           shell: true,
-          env: { ...(typeof process !== "undefined" ? process.env : {}), FORCE_COLOR: "1" },
+          env: { ...env, FORCE_COLOR: "1" },
         })
       }
 
@@ -185,10 +208,16 @@ export class NativeSlidevProcessManager {
     if (this.childProcess) {
       try {
         this.childProcess.kill("SIGTERM")
-        if (typeof process !== "undefined" && process.platform === "win32" && this.childProcess.pid && !this.customSpawner) {
-          import("node:child_process").then(({ exec }) => {
-            exec(`taskkill /pid ${this.childProcess?.pid} /T /F`, () => {})
-          }).catch(() => {})
+        const isWin = getPlatform() === "win32"
+        if (isWin && this.childProcess.pid && !this.customSpawner) {
+          const execFn = getRuntimeModule("child_process")?.exec
+          if (execFn) {
+            execFn(`taskkill /pid ${this.childProcess.pid} /T /F`, () => {})
+          } else {
+            import("node:child_process").then(({ exec }) => {
+              exec(`taskkill /pid ${this.childProcess?.pid} /T /F`, () => {})
+            }).catch(() => {})
+          }
         }
       } catch {}
       this.childProcess = null

@@ -332,6 +332,7 @@ defineExpose({
 
     currentSlides.value = doc.slides
     totalPages.value = doc.slides.length
+    cursorTracker.setDocId(doc.docId)
     cursorTracker.updateSlidesIndex(doc.slides)
     if (engineMode.value === 'pro-cli') {
       engineManager.scaffolder.scaffold(doc, putFile).catch(() => {})

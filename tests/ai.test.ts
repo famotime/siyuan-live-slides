@@ -100,4 +100,58 @@ describe("AI Modules (智能断页、动效注入与提词卡)", () => {
     const res2 = await generateSpeakerNotesWithAI(slide, mockAiFail)
     expect(res2).toContain("【核心重点】：微服务架构演进")
   })
+
+  it("generateSpeakerNotesWithAIDetailed 应明确区分 AI 生成与模板降级", async () => {
+    const { generateSpeakerNotesWithAIDetailed } = await import("../src/ai/notes-generator")
+    const slide: ISlidevVirtualPage = {
+      pageIndex: 1,
+      startBlockId: "start-1",
+      frontmatter: { layout: "default" },
+      notes: "",
+      blocks: [
+        { id: "divider", type: "d", content: "---", rawMarkdown: "---" },
+        { id: "h1", type: "h", content: "AI 时代的前端演进", rawMarkdown: "# AI 时代的前端演进" },
+      ],
+      rawMarkdown: "",
+    }
+
+    // 1. AI 成功返回
+    const mockAi = vi.fn().mockResolvedValue("这是 AI 分析提炼的提词卡")
+    const r1 = await generateSpeakerNotesWithAIDetailed(slide, mockAi)
+    expect(r1.isAiGenerated).toBe(true)
+    expect(r1.notes).toBe("这是 AI 分析提炼的提词卡")
+    // prompt 中应包含标题，且不应包含单纯的分页符 ---
+    expect(mockAi.mock.calls[0][0]).toContain("AI 时代的前端演进")
+
+    // 2. AI 返回空或失败降级
+    const mockEmpty = vi.fn().mockResolvedValue(null)
+    const r2 = await generateSpeakerNotesWithAIDetailed(slide, mockEmpty)
+    expect(r2.isAiGenerated).toBe(false)
+    expect(r2.notes).toContain("【核心重点】：AI 时代的前端演进")
+  })
+
+  it("chatAI 应向思源内核 /api/ai/chatGPT 传递 msg 参数并正确返回结果", async () => {
+    const siyuanMock = await import("siyuan")
+    const spy = vi.spyOn(siyuanMock, "fetchSyncPost").mockResolvedValueOnce({
+      code: 0,
+      msg: "",
+      data: "思源内核 AI 模型的回答",
+    })
+
+    const { chatAI } = await import("../src/api")
+    const answer = await chatAI("帮我生成演讲提词")
+    expect(spy).toHaveBeenCalledWith("/api/ai/chatGPT", { msg: "帮我生成演讲提词" })
+    expect(answer).toBe("思源内核 AI 模型的回答")
+
+    // 内核未配置 AI 返回空字符串时应处理为 null
+    spy.mockResolvedValueOnce({
+      code: 0,
+      msg: "",
+      data: "",
+    })
+    const emptyAnswer = await chatAI("测试未配置")
+    expect(emptyAnswer).toBeNull()
+
+    spy.mockRestore()
+  })
 })

@@ -380,6 +380,71 @@
       transition: opacity 0.35s ease, transform 0.35s ease;
     }
 
+    /* Slidev Micro-motion Keyframes & Presets */
+    @keyframes slidevMotionFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slidevMotionSlideUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slidevMotionSlideDown {
+      from { opacity: 0; transform: translateY(-40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slidevMotionSlideLeft {
+      from { opacity: 0; transform: translateX(40px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slidevMotionSlideRight {
+      from { opacity: 0; transform: translateX(-40px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slidevMotionZoomIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes slidevMotionBounce {
+      0% { opacity: 0; transform: translateY(40px); }
+      60% { opacity: 1; transform: translateY(-8px); }
+      80% { transform: translateY(4px); }
+      100% { transform: translateY(0); }
+    }
+
+    .slidev-motion-fade-in {
+      animation: slidevMotionFadeIn var(--motion-duration, 0.4s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both;
+    }
+    .slidev-motion-slide-up {
+      animation: slidevMotionSlideUp var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both;
+    }
+    .slidev-motion-slide-down {
+      animation: slidevMotionSlideDown var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both;
+    }
+    .slidev-motion-slide-left {
+      animation: slidevMotionSlideLeft var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both;
+    }
+    .slidev-motion-slide-right {
+      animation: slidevMotionSlideRight var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both;
+    }
+    .slidev-motion-zoom-in, .slidev-motion-pop {
+      animation: slidevMotionZoomIn var(--motion-duration, 0.4s) cubic-bezier(0.34, 1.56, 0.64, 1) var(--motion-delay, 0s) both;
+    }
+    .slidev-motion-bounce {
+      animation: slidevMotionBounce var(--motion-duration, 0.6s) cubic-bezier(0.34, 1.56, 0.64, 1) var(--motion-delay, 0s) both;
+    }
+
+    .v-click-hidden.slidev-motion-fade-in,
+    .v-click-hidden.slidev-motion-slide-up,
+    .v-click-hidden.slidev-motion-slide-down,
+    .v-click-hidden.slidev-motion-slide-left,
+    .v-click-hidden.slidev-motion-slide-right,
+    .v-click-hidden.slidev-motion-zoom-in,
+    .v-click-hidden.slidev-motion-pop,
+    .v-click-hidden.slidev-motion-bounce {
+      animation: none !important;
+    }
+
     /* Transitions */
     .transition-fade-enter-active,
     .transition-fade-leave-active {
@@ -496,7 +561,8 @@
                   v-for="block in headerBlocks"
                   :key="block.id"
                   class="slide-block"
-                  :class="[getBlockClickClass(block), { highlighted: block.id === highlightedBlockId }]"
+                  :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId }]"
+                  :style="getBlockMotionStyle(block)"
                   :data-block-id="block.id"
                   @click="onBlockClick(block.id)"
                   v-html="renderBlockHtml(block)"
@@ -508,7 +574,8 @@
                     v-for="block in leftBlocks"
                     :key="block.id"
                     class="slide-block"
-                    :class="[getBlockClickClass(block), { highlighted: block.id === highlightedBlockId }]"
+                    :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId }]"
+                    :style="getBlockMotionStyle(block)"
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id)"
                     v-html="renderBlockHtml(block)"
@@ -519,7 +586,8 @@
                     v-for="block in rightBlocks"
                     :key="block.id"
                     class="slide-block"
-                    :class="[getBlockClickClass(block), { highlighted: block.id === highlightedBlockId }]"
+                    :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId }]"
+                    :style="getBlockMotionStyle(block)"
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id)"
                     v-html="renderBlockHtml(block)"
@@ -535,7 +603,8 @@
                   v-for="block in leftBlocks"
                   :key="block.id"
                   class="slide-block"
-                  :class="[getBlockClickClass(block), { highlighted: block.id === highlightedBlockId }]"
+                  :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId }]"
+                  :style="getBlockMotionStyle(block)"
                   :data-block-id="block.id"
                   @click="onBlockClick(block.id)"
                   v-html="renderBlockHtml(block)"
@@ -546,7 +615,8 @@
                   v-for="block in rightBlocks"
                   :key="block.id"
                   class="slide-block"
-                  :class="[getBlockClickClass(block), { highlighted: block.id === highlightedBlockId }]"
+                  :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId }]"
+                  :style="getBlockMotionStyle(block)"
                   :data-block-id="block.id"
                   @click="onBlockClick(block.id)"
                   v-html="renderBlockHtml(block)"
@@ -560,7 +630,8 @@
                 v-for="block in currentSlide.blocks"
                 :key="block.id"
                 class="slide-block"
-                :class="[getBlockClickClass(block), { highlighted: block.id === highlightedBlockId }]"
+                :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId }]"
+                :style="getBlockMotionStyle(block)"
                 :data-block-id="block.id"
                 @click="onBlockClick(block.id)"
                 v-html="renderBlockHtml(block)"
@@ -722,6 +793,33 @@
           const num = parseInt(block.clicks, 10)
           if (!isNaN(num)) requiredStep = num
           return currentStep.value >= requiredStep ? "v-click-visible" : "v-click-hidden"
+        }
+
+        // 获取块的微动效类
+        function getBlockMotionClass(block) {
+          if (!block || !block.motion || !block.motion.preset || block.motion.preset === "none") {
+            return ""
+          }
+          // 若设置了 v-click 逐步呈现，仅在元素可见时触发动效
+          if (block.clicks) {
+            const isVisible = getBlockClickClass(block) === "v-click-visible"
+            if (!isVisible) return ""
+          }
+          const preset = String(block.motion.preset).toLowerCase().trim()
+          return "slidev-motion-" + preset
+        }
+
+        // 获取块的微动效内联样式（时长与延迟 CSS 变量）
+        function getBlockMotionStyle(block) {
+          if (!block || !block.motion) return {}
+          const style = {}
+          if (typeof block.motion.duration === "number" && block.motion.duration > 0) {
+            style["--motion-duration"] = block.motion.duration + "ms"
+          }
+          if (typeof block.motion.delay === "number" && block.motion.delay > 0) {
+            style["--motion-delay"] = block.motion.delay + "ms"
+          }
+          return style
         }
 
         function escapeHtml(str) {
@@ -1114,6 +1212,8 @@
           isDarkTheme,
           isMaxStep,
           getBlockClickClass,
+          getBlockMotionClass,
+          getBlockMotionStyle,
           renderBlockHtml,
           nextStepOrSlide,
           prevStepOrSlide,

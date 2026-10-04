@@ -1,3 +1,10 @@
+import {
+  getMergedSystemEnv,
+  getPlatform,
+  getRuntimeModule,
+  isDesktopEnvironment,
+} from "./runtime-node"
+
 export interface INativeEnvStatus {
   hasNode: boolean
   nodeVersion?: string
@@ -21,19 +28,29 @@ export class NativeEnvDetector {
   }
 
   /**
-   * 默认通过 Node.js child_process 执行（在 Electron 环境或 Node 单元测试环境有效）
+   * 默认通过 Node.js child_process 执行（兼容 Electron 渲染进程与纯 Node 环境）
    */
   private static async defaultRunner(command: string, args: string[]): Promise<{ code: number; stdout: string; stderr: string }> {
     try {
-      // 动态导入 node:child_process，避免在纯浏览器移动端静态解析失败
-      const { execFile } = await import("node:child_process")
-      const isWin = typeof process !== "undefined" && process.platform === "win32"
+      let execFileFn: any = getRuntimeModule("child_process")?.execFile
+      if (!execFileFn) {
+        const cp = await import("node:child_process").catch(() => ({})) as any
+        execFileFn = cp?.execFile
+      }
+      if (!execFileFn) {
+        return { code: -1, stdout: "", stderr: "child_process execFile not available" }
+      }
+
+      const platform = getPlatform()
+      const isWin = platform === "win32"
+      const env = getMergedSystemEnv()
+
       return await new Promise((resolve) => {
-        execFile(command, args, { timeout: 5000, shell: isWin }, (error, stdout, stderr) => {
+        execFileFn(command, args, { timeout: 5000, shell: isWin, env }, (error: any, stdout: any, stderr: any) => {
           resolve({
             code: error ? (error as any).code || 1 : 0,
-            stdout: stdout ? stdout.trim() : "",
-            stderr: stderr ? stderr.trim() : "",
+            stdout: stdout ? String(stdout).trim() : "",
+            stderr: stderr ? String(stderr).trim() : "",
           })
         })
       })
@@ -46,8 +63,8 @@ export class NativeEnvDetector {
    * 检测宿主系统环境是否支持官方 Slidev Pro 模式
    */
   public async detect(): Promise<INativeEnvStatus> {
-    const isDesktop = typeof process !== "undefined" && Boolean(process.versions?.node)
-    const platform = typeof process !== "undefined" ? process.platform : "web"
+    const isDesktop = isDesktopEnvironment()
+    const platform = getPlatform()
 
     if (!isDesktop) {
       return {

@@ -18,8 +18,10 @@ import {
 } from "../src/compiler/scope-mapper"
 import {
   buildSlidevDocument,
+  getMotionDirectives,
   injectShikiSpotlight,
   stringifyFrontmatter,
+  wrapElementDirectives,
   wrapVClickDirective,
 } from "../src/compiler/slidev-ast-builder"
 
@@ -144,6 +146,47 @@ describe("Slidev AST Builder (核心虚拟文档构建器)", () => {
 
     const code = "```ts\nconst a = 1\n```"
     expect(injectShikiSpotlight(code, "1-2|4")).toBe("```ts {1-2|4}\nconst a = 1\n```")
+  })
+
+  it("应该正确映射预设微动效并生成 Slidev v-motion 配置", () => {
+    // 基础 slide-up 预设
+    const m1 = getMotionDirectives({ preset: "slide-up" })
+    expect(m1).not.toBeNull()
+    expect(m1?.initial).toEqual({ y: 40, opacity: 0 })
+    expect(m1?.enter).toEqual({ y: 0, opacity: 1 })
+
+    // 带 duration 与 delay 的自定义预设
+    const m2 = getMotionDirectives({ preset: "fade-in", duration: 500, delay: 200 })
+    expect(m2).not.toBeNull()
+    expect(m2?.initial).toEqual({ opacity: 0 })
+    expect(m2?.enter.transition).toEqual({ duration: 500, delay: 200 })
+
+    // bounce 弹性预设
+    const m3 = getMotionDirectives({ preset: "bounce" })
+    expect(m3?.enter.transition.type).toBe("spring")
+  })
+
+  it("应该通过 wrapElementDirectives 复合生成 v-click 与 v-motion 容器", () => {
+    // 纯 motion
+    const onlyMotion = wrapElementDirectives("段落内容", undefined, { preset: "slide-up" })
+    expect(onlyMotion).toContain("v-motion")
+    expect(onlyMotion).toContain(":initial=\"{'y':40,'opacity':0}\"")
+    expect(onlyMotion).toContain(":enter=\"{'y':0,'opacity':1}\"")
+    expect(onlyMotion).not.toContain("v-click")
+
+    // 纯 v-click
+    const onlyClick = wrapElementDirectives("段落内容", "+1", undefined)
+    expect(onlyClick).toBe("<v-click>\n\n段落内容\n\n</v-click>")
+
+    // 复合 v-click + motion
+    const composite = wrapElementDirectives("重点结论", "+1", { preset: "fade-in" })
+    expect(composite).toContain("<div v-click v-motion")
+    expect(composite).toContain("重点结论")
+
+    // 指定步长复合
+    const compositeStep = wrapElementDirectives("第二步弹出", "2", { preset: "zoom-in" })
+    expect(compositeStep).toContain("<div v-click=\"2\" v-motion")
+    expect(compositeStep).toContain("第二步弹出")
   })
 
   it("应该将两段文字经由 --- 分割线准确拆分为两页幻灯片", () => {

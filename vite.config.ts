@@ -18,35 +18,38 @@ function syncToSiyuanPlugin(targetDir: string) {
   return {
     name: "sync-to-siyuan",
     closeBundle() {
-      if (!targetDir || !fs.existsSync(path.dirname(targetDir))) {
-        return
-      }
-      try {
-        if (!fs.existsSync(targetDir)) {
-          fs.mkdirSync(targetDir, { recursive: true })
+      const targetDirs = [targetDir, "D:/SiYuan_data/data/plugins/siyuan-slidev"].filter(Boolean)
+      for (const tDir of targetDirs) {
+        if (!fs.existsSync(path.dirname(tDir))) {
+          continue
         }
-        // 清理目标目录中的所有遗留 .cjs 文件
-        const files = fs.readdirSync(targetDir)
-        for (const file of files) {
-          if (file.endsWith(".cjs")) {
-            fs.unlinkSync(path.join(targetDir, file))
+        try {
+          if (!fs.existsSync(tDir)) {
+            fs.mkdirSync(tDir, { recursive: true })
           }
-        }
-        // 复制 dist 下所有最新产物至思源工作空间插件目录
-        if (fs.existsSync("./dist")) {
-          const distFiles = fs.readdirSync("./dist")
-          for (const file of distFiles) {
-            const srcPath = path.join("./dist", file)
-            const destPath = path.join(targetDir, file)
-            fs.cpSync(srcPath, destPath, {
-              recursive: true,
-              force: true,
-            })
+          // 清理目标目录中的所有遗留 .cjs 文件
+          const files = fs.readdirSync(tDir)
+          for (const file of files) {
+            if (file.endsWith(".cjs")) {
+              fs.unlinkSync(path.join(tDir, file))
+            }
           }
-          console.log(`\n[Sync] 成功将最新单文件插件同步至思源插件目录:\n${targetDir}`)
+          // 复制 dist 下所有最新产物至思源工作空间插件目录
+          if (fs.existsSync("./dist")) {
+            const distFiles = fs.readdirSync("./dist")
+            for (const file of distFiles) {
+              const srcPath = path.join("./dist", file)
+              const destPath = path.join(tDir, file)
+              fs.cpSync(srcPath, destPath, {
+                recursive: true,
+                force: true,
+              })
+            }
+            console.log(`\n[Sync] 成功将最新单文件插件同步至思源插件目录:\n${tDir}`)
+          }
+        } catch (err) {
+          console.warn(`\n[Sync] 同步插件至 ${tDir} 时出现警告:`, err)
         }
-      } catch (err) {
-        console.warn("\n[Sync] 同步插件至思源目录时出现警告:", err)
       }
     },
   }
@@ -183,8 +186,20 @@ export default defineConfig(({
         ],
 
         // make sure to externalize deps that shouldn't be bundled
-        // into your library
-        external: ["siyuan", "process"],
+        external: [
+          "siyuan",
+          "process",
+          "child_process",
+          "node:child_process",
+          "net",
+          "node:net",
+          "os",
+          "node:os",
+          "path",
+          "node:path",
+          "fs",
+          "node:fs",
+        ],
 
         output: {
           entryFileNames: "[name].js",

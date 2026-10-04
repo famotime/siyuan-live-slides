@@ -589,11 +589,13 @@ export async function loadPluginPublishData(packageName: string): Promise<Record
 // **************************************** AI (v3.8+) ****************************************
 
 export async function chatAI(prompt: string): Promise<string | null> {
-  const url = "/api/ai/chat"
+  const url = "/api/ai/chatGPT"
   try {
-    const res = await request(url, { prompt })
-    if (typeof res === "string") return res
-    if (res && typeof (res as any).content === "string") return (res as any).content
+    const res = await request(url, { msg: prompt })
+    if (typeof res === "string" && res.trim().length > 0) return res.trim()
+    if (res && typeof (res as any).content === "string" && (res as any).content.trim().length > 0) {
+      return (res as any).content.trim()
+    }
     return null
   } catch {
     return null
