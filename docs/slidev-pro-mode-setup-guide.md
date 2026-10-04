@@ -194,6 +194,19 @@ slidev test.md --port 3030 --no-open
   ```
   *(注：插件在关闭预览标签页或点击切回沙箱时，均会自动触发 `processManager.stopServer()` 级联杀死进程树，通常无需手动清理)*。
 
+### Q4: 启动 Pro 模式后思源笔记提示“实例异常退出 / File system access failed”？
+- **原因剖析**：
+  1. Slidev CLI (Vite DevServer) 运行期间，其文件监听器（Chokidar）会持续持有 `slides.md` 的读句柄；
+  2. 若将工作空间存放在思源数据目录（`/data/...`）并通过思源内核 API 写入，思源 Golang 内核在原子替换文件时（写 `.tmp` 后执行 `os.Rename`）会因 Windows 系统的只读锁限制抛出 `Access is denied`，触发内核致命错误退出。
+- **全新安全隔离设计**：
+  - 插件已重构编排机制：Pro 模式临时工作空间默认重定向至系统独立临时目录（`%TEMP%/siyuan-slidev-pro`），完全脱离思源笔记的数据监视范围；
+  - 采用直接物理文件系统（`fs.writeFileSync`）写入，完全不调用思源内核文件写入接口，从底层根源彻底杜绝文件锁冲突与思源内核异常退出隐患。
+
+### Q5: 演示第 5 页提示 `Code snippet path not found: snippets/external.ts`？
+- **原因与机制**：
+  - Slidev 支持代码切片语法（如 `<<< @/snippets/external.ts#snippet`），Slidev 官方 Starter 示例的第 5 页便使用了该切片语法；
+  - 插件在 [`WorkspaceScaffolder`](file:///d:/MyCodingProjects/siyuan-slidev/src/engine/workspace-scaffolder.ts) 中内置了 AST 切片路径嗅探与自动占位生成机制，在启动与更新 Pro 模式时会自动在临时目录的 `snippets/` 下生成所需的示例代码切片，确保官方 Vite Markdown 插件编译平滑通过。
+
 ---
 
 ## 7. 相关代码与核心模块索引

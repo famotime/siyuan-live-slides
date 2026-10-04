@@ -28,7 +28,6 @@ export const SLIDEV_PRESET_TEMPLATES: ISlidevPresetTemplate[] = [
       { key: ATTR_PAGE_SLIDE, value: "true" },
       { key: ATTR_PAGE_LAYOUT, value: "cover" },
       { key: ATTR_PAGE_TRANSITION, value: "fade" },
-      { key: ATTR_PAGE_BACKGROUND, value: "" },
     ],
   },
   {

@@ -63,29 +63,6 @@ sequenceDiagram
 
 ### 3.1 各阶段交付清单进展核查
 
-#### Phase 1：MVP 原型（核心可行性验证）
-- **核心目标**：完成内置轻量沙箱搭建，实现基础断页编译，下方分屏预览，本地资产代理。
-- **任务清单**：
-  - [x] **内置轻量 Vue 3 + Slidev Client 沙箱搭建**：`public/slidev-client/index.html` + `vue.global.prod.js` 实现零外部外部服务依赖秒启，支持双栏、Callout、代码块、表格、图片、全屏等放映；
-  - [x] **AST 编译管道与基础块属性解析**：`DocumentCompilerService`、`slidev-ast-builder.ts`、`scope-mapper.ts` 完成文档树抽取与 Frontmatter 序列化；
-  - [x] **下方分屏预览页签 (`SlidevPreviewTab`)**：通过思源 `addTab` + `openTab({ position: "bottom" })` 实现宽屏分屏，支持 📌 Pin 图钉锁定当前文档、缩略大纲抽屉（`SlideInspector.vue`）；
-  - [x] **本地图片资源代理重写**：`assets-rewriter.ts` 实现了 `assets/...` 路径自动转换为思源静态服务代理 URL 或内联 Base64；
-  - [x] **分割线断页与智能大纲断页**：支持原生 `---` 水平分割线断页；通过 `auto-splitter.ts` 提供 AI/规则大纲断页建议并自动插入分割线。
-- **阶段结论**：**100% 完成**，核心可行性已全部闭环。
-
-#### Phase 2：专精微交互与动效全面增强
-- **核心目标**：实现零手写配置的可视化微交互，实现正文零污染与双向光标联动。
-- **任务清单**：
-  - [x] **右侧 Dock 演示配置面板 (`SlidevInspectorDockView`)**：动态识别当前聚焦块类型，自适应切换普通内容块（`BlockInspectorSection`）、分页符（`PageInspectorSection`）、全局文档（`DocInspectorSection`），彻底清理多级块菜单侵入；
-  - [x] **逐步出现 (`v-click`) 深度适配**：支持步长切换（`+1`, `1`, `2`, `hide`），沙箱按方向键/空格逐帧调度；
-  - [x] **Shiki 代码逐行聚光高亮 (`shiki-lines`)**：支持行区间芯片选择与自定义输入，沙箱渲染带行号聚焦与背景变暗的高保真聚光；
-  - [x] **多栏布局插槽 (`slot`) 可视化配置**：支持在分栏版式中一键设置当前块为左栏/右栏；
-  - [x] **双向光标毫秒级联动跟踪器 (`cursor-tracker.ts` / `selection-mirror.ts`)**：
-    - 正向跟随：100ms 防抖监听 Protyle 编辑区选区与按键，光标落在某块时下方预览自动翻页并高亮该块，右侧面板同步刷新属性；
-    - 反向定位：点击预览沙箱中的任意块，主编辑区平滑滚动居中并高亮目标思源块；
-  - [x] **微动效与位移参数 (`custom-slidev-motion`)**：落地 Inspector 配置入口与预设微调面板，沙箱端与单 HTML 导出端接入 GPU 加速动效运行时，Slidev CLI 导出端支持标准 `v-motion` 复合转译。
-- **阶段结论**：**100% 完成**，微交互、光标跟踪与元素微动效运行时已全部闭环交付。
-
 #### Phase 3：生态协同、块引用与 AI 智能赋能
 - **核心目标**：打通与属性管家的生态协同，接入思源块引用与内置 AI 能力，交付双屏演讲者控制台。
 - **任务清单**：

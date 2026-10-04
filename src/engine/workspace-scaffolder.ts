@@ -1,6 +1,6 @@
 import type { ISlidevDocument } from "../types/slidev-protocol"
 import { CliDevServerBridge } from "./cli-devserver-bridge"
-import { getRuntimeModule, resolvePhysicalPath } from "./runtime-node"
+import { getDefaultProWorkspaceDir, getRuntimeModule, resolvePhysicalPath } from "./runtime-node"
 
 export interface IWorkspaceConfig {
   workspacePath: string
@@ -15,6 +15,37 @@ export interface IScaffoldResult {
   error?: string
 }
 
+export const DEFAULT_STARTER_SNIPPETS: Record<string, string> = {
+  "snippets/external.ts": `// Inside ./snippets/external.ts
+// #region snippet
+export function emptyArray<T>(length: number) {
+  return Array.from<T>({ length })
+}
+// #endregion snippet
+
+export function sayHello() {
+  console.log('Hello from snippets/external.ts')
+}
+`,
+}
+
+/**
+ * 从 Markdown 中提取所有引用的代码切片文件相对路径
+ * 匹配格式: <<< @/snippets/external.ts#snippet 或 <<< ./snippets/foo.ts 或 <<< snippets/bar.js
+ */
+export function extractSnippetPaths(markdown: string): string[] {
+  const paths: string[] = []
+  const regex = /^[ \t]*<<<[ \t]+(?:@\/|\.\/|)([^\s#]+)(?:#[^\s]+)?/gm
+  let match: RegExpExecArray | null
+  while ((match = regex.exec(markdown)) !== null) {
+    const rawPath = match[1]?.trim()
+    if (rawPath && !paths.includes(rawPath)) {
+      paths.push(rawPath)
+    }
+  }
+  return paths
+}
+
 /**
  * 官方 Slidev Pro 模式零配置临时工程自动编排器
  */
@@ -24,7 +55,13 @@ export class WorkspaceScaffolder {
   private cliBridge = new CliDevServerBridge()
 
   constructor(config?: IWorkspaceConfig) {
-    this.workspacePath = config?.workspacePath || "/data/storage/petal/siyuan-slidev/pro-workspace"
+    const defaultDir = getDefaultProWorkspaceDir()
+    // 若未指定或传入了旧版的 /data/ 内部路径，一律迁移到安全的系统独立目录
+    if (!config?.workspacePath || config.workspacePath.includes("/data/storage/petal/siyuan-slidev/pro-workspace")) {
+      this.workspacePath = defaultDir
+    } else {
+      this.workspacePath = config.workspacePath
+    }
     this.slidesFileName = config?.slidesFileName || "slides.md"
   }
 
@@ -81,21 +118,52 @@ export class WorkspaceScaffolder {
     const physicalSlidesPath = resolvePhysicalPath(slidesPath)
     const physicalPkgPath = resolvePhysicalPath(pkgPath)
 
-    // 物理文件系统落盘增强（确保 Node 子进程立即感知）
+    // 编排 snippets 切片文件集合（防止 Slidev 官方 unplugin-vue-markdown 编译切片时报错路径不存在）
+    const referencedSnippets = extractSnippetPaths(slidesMd)
+    if (!referencedSnippets.includes("snippets/external.ts")) {
+      referencedSnippets.push("snippets/external.ts")
+    }
+
+    const snippetsMap = new Map<string, string>()
+    for (const snippetRel of referencedSnippets) {
+      const content = DEFAULT_STARTER_SNIPPETS[snippetRel] || `// Auto-generated snippet placeholder for SiYuan Slidev\n// #region snippet\n// ${snippetRel}\n// #endregion snippet\n`
+      snippetsMap.set(snippetRel, content)
+    }
+
+    // 物理文件系统落盘增强（确保 Node 子进程立即感知，并彻底避免思源内核文件写锁冲突）
     const fsMod = getRuntimeModule("fs")
     const pathMod = getRuntimeModule("path")
-    if (fsMod && pathMod && physicalSlidesPath !== slidesPath) {
+    let physicalWriteSuccess = false
+
+    const targetPhysicalDir = pathMod?.dirname ? pathMod.dirname(physicalSlidesPath) : ""
+    const isPhysicalCandidate = /^[a-zA-Z]:[/\\]/.test(physicalSlidesPath) || physicalSlidesPath.includes("siyuan-slidev-pro")
+
+    if (fsMod && pathMod && isPhysicalCandidate) {
       try {
-        const dir = pathMod.dirname(physicalSlidesPath)
-        if (!fsMod.existsSync(dir)) {
-          fsMod.mkdirSync(dir, { recursive: true })
+        if (!fsMod.existsSync(targetPhysicalDir)) {
+          fsMod.mkdirSync(targetPhysicalDir, { recursive: true })
         }
         fsMod.writeFileSync(physicalPkgPath, pkgJson, "utf-8")
         fsMod.writeFileSync(physicalSlidesPath, slidesMd, "utf-8")
-      } catch {}
+
+        for (const [snippetRel, content] of snippetsMap.entries()) {
+          const physicalSnippetPath = pathMod.join(targetPhysicalDir, snippetRel)
+          const snippetDir = pathMod.dirname(physicalSnippetPath)
+          if (!fsMod.existsSync(snippetDir)) {
+            fsMod.mkdirSync(snippetDir, { recursive: true })
+          }
+          if (!fsMod.existsSync(physicalSnippetPath)) {
+            fsMod.writeFileSync(physicalSnippetPath, content, "utf-8")
+          }
+        }
+        physicalWriteSuccess = true
+      } catch {
+        // 物理写入失败时将回退到 putFileFn
+      }
     }
 
-    if (putFileFn) {
+    // 仅当未进行物理文件写入（例如无真实文件系统访问权限的纯 Web 客户端）且提供了 putFileFn 时，才通过思源内核 API 写入
+    if (!physicalWriteSuccess && putFileFn) {
       try {
         const slidesBlob = typeof Blob !== "undefined"
           ? new Blob([slidesMd], { type: "text/markdown;charset=utf-8" })
@@ -106,6 +174,14 @@ export class WorkspaceScaffolder {
 
         await putFileFn(pkgPath, false, pkgBlob)
         await putFileFn(slidesPath, false, slidesBlob)
+
+        for (const [snippetRel, content] of snippetsMap.entries()) {
+          const snippetPath = `${this.workspacePath}/${snippetRel}`
+          const snippetBlob = typeof Blob !== "undefined"
+            ? new Blob([content], { type: "text/plain;charset=utf-8" })
+            : Buffer.from(content, "utf-8")
+          await putFileFn(snippetPath, false, snippetBlob).catch(() => {})
+        }
 
         return {
           success: true,

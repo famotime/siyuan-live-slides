@@ -151,8 +151,13 @@ export class NativeSlidevProcessManager {
           throw new Error("child_process spawn not available in current runtime")
         }
 
+        const cwd = resolvedPath.includes("/") || resolvedPath.includes("\\")
+          ? resolvedPath.replace(/[/\\][^/\\]+$/, "")
+          : undefined
+
         const env = getMergedSystemEnv()
         this.childProcess = spawnFn(cmd, args, {
+          cwd,
           detached: false,
           shell: true,
           env: { ...env, FORCE_COLOR: "1" },

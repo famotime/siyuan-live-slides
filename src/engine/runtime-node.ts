@@ -164,3 +164,20 @@ export function resolvePhysicalPath(virtualPath: string): string {
 
   return virtualPath
 }
+
+/**
+ * 获取官方 Slidev Pro 模式的安全独立编译临时工作区物理目录
+ * 避免将临时目录置于思源笔记 /data/ 目录下，彻底杜绝 Windows 下 Vite 进程监听与思源内核 putFile 重命名写锁冲突 (filelock.go Access is denied)
+ */
+export function getDefaultProWorkspaceDir(): string {
+  const os = getRuntimeModule("os")
+  const path = getRuntimeModule("path")
+  if (os && typeof os.tmpdir === "function") {
+    const tmp = os.tmpdir()
+    if (path && typeof path.join === "function") {
+      return path.join(tmp, "siyuan-slidev-pro").replace(/\\/g, "/")
+    }
+    return `${tmp}/siyuan-slidev-pro`.replace(/\\/g, "/")
+  }
+  return "/data/storage/petal/siyuan-slidev/pro-workspace"
+}
