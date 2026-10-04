@@ -7,13 +7,21 @@ describe("PropertyManagerBridge (属性管家协同桥接)", () => {
     const bridge = new PropertyManagerBridge()
     const templates = bridge.getPresetTemplates()
 
-    expect(templates.length).toBeGreaterThanOrEqual(4)
+    expect(templates.length).toBeGreaterThanOrEqual(9)
     const coverTpl = templates.find(t => t.id === "slidev-cover")
     expect(coverTpl).toBeDefined()
     expect(coverTpl?.attrs.some(a => a.key === "custom-slidev-layout" && a.value === "cover")).toBe(true)
 
     const twoColsTpl = templates.find(t => t.id === "slidev-two-cols")
     expect(twoColsTpl?.attrs.some(a => a.value === "two-cols")).toBe(true)
+
+    const clickTpl = templates.find(t => t.id === "slidev-elem-click")
+    expect(clickTpl).toBeDefined()
+    expect(clickTpl?.attrs.some(a => a.key === "custom-slidev-click" && a.value === "+1")).toBe(true)
+
+    const shikiTpl = templates.find(t => t.id === "slidev-shiki-lines")
+    expect(shikiTpl).toBeDefined()
+    expect(shikiTpl?.attrs.some(a => a.key === "custom-slidev-shiki-lines" && a.value === "1-3")).toBe(true)
   })
 
   it("应生成正确的全库属性检索与转场统计 SQL", () => {

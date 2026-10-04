@@ -1,10 +1,11 @@
 import {
   ATTR_PAGE_BACKGROUND,
-  ATTR_PAGE_CLASS,
   ATTR_PAGE_LAYOUT,
-  ATTR_PAGE_NOTES,
   ATTR_PAGE_SLIDE,
   ATTR_PAGE_TRANSITION,
+  ATTR_ELEM_CLICK,
+  ATTR_ELEM_SLOT,
+  ATTR_ELEM_SHIKI_LINES,
 } from "../types/slidev-protocol"
 
 export interface ISlidevPresetTemplate {
@@ -18,6 +19,7 @@ export interface ISlidevPresetTemplate {
  * 为「属性管家」定制的开箱即用 Slidev 演示属性预设字典
  */
 export const SLIDEV_PRESET_TEMPLATES: ISlidevPresetTemplate[] = [
+  // 1. 页面级版式预设
   {
     id: "slidev-cover",
     name: "幻灯片 - 封面页 (Cover)",
@@ -67,6 +69,39 @@ export const SLIDEV_PRESET_TEMPLATES: ISlidevPresetTemplate[] = [
       { key: ATTR_PAGE_SLIDE, value: "true" },
       { key: ATTR_PAGE_LAYOUT, value: "quote" },
       { key: ATTR_PAGE_TRANSITION, value: "fade" },
+    ],
+  },
+  // 2. 元素级动效与排版预设
+  {
+    id: "slidev-elem-click",
+    name: "元素 - 顺延逐步呈现 (v-click)",
+    open: true,
+    attrs: [
+      { key: ATTR_ELEM_CLICK, value: "+1" },
+    ],
+  },
+  {
+    id: "slidev-elem-click-hide",
+    name: "元素 - 隐藏直到激活 (v-click:hide)",
+    open: true,
+    attrs: [
+      { key: ATTR_ELEM_CLICK, value: "hide" },
+    ],
+  },
+  {
+    id: "slidev-elem-slot-right",
+    name: "元素 - 双栏右栏归属 (Slot: Right)",
+    open: true,
+    attrs: [
+      { key: ATTR_ELEM_SLOT, value: "right" },
+    ],
+  },
+  {
+    id: "slidev-shiki-lines",
+    name: "代码 - 逐行聚光高亮 (Shiki)",
+    open: true,
+    attrs: [
+      { key: ATTR_ELEM_SHIKI_LINES, value: "1-3" },
     ],
   },
 ]
