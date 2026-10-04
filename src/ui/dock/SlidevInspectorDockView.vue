@@ -90,9 +90,11 @@
         :is-code-block="isCodeBlock"
         :has-block-attrs="hasBlockAttrs"
         :is-note="isNoteBlock"
+        :image-role="imageRole"
         :current-slide-layout="currentSlideLayout"
         @toggle-note="onToggleNoteBlock"
         @toggle-elem-click="toggleElemClick"
+        @update:image-role="onImageRoleChange"
         @update:elem-click="onElemClickStepChange"
         @update:elem-motion="onElemMotionChange"
         @update:elem-slot="onElemSlotChange"
@@ -163,6 +165,10 @@ import {
   ATTR_ELEM_SLOT,
   ATTR_ELEM_SHIKI_LINES,
   ATTR_ELEM_NOTE,
+  ATTR_ELEM_ROLE,
+  ROLE_BACKGROUND,
+  ROLE_IMAGE_LEFT,
+  ROLE_IMAGE_RIGHT,
 } from '@/types/slidev-protocol'
 
 const plugin = inject<any>('plugin')
@@ -324,6 +330,37 @@ const docTheme = computed(() => latestDoc.value?.config?.theme || activeBlockAtt
 const docAspectRatio = computed(() => latestDoc.value?.config?.aspectRatio || activeBlockAttrs.value[ATTR_DOC_ASPECT_RATIO] || '16/9')
 const docDefaultTransition = computed(() => latestDoc.value?.config?.defaultTransition || activeBlockAttrs.value[ATTR_DOC_DEFAULT_TRANSITION] || 'slide-left')
 
+const imageRole = computed(() => {
+  const role = activeBlockAttrs.value[ATTR_ELEM_ROLE] || activeBlockAttrs.value['slidev-role']
+  if (role === ROLE_BACKGROUND || activeBlockAttrs.value[ATTR_PAGE_BACKGROUND] === 'true') {
+    return 'background'
+  }
+  const layout = activeBlockAttrs.value[ATTR_PAGE_LAYOUT] || activeBlockAttrs.value['slidev-layout']
+  if (layout === 'image-left' || layout === 'image-right') {
+    return layout
+  }
+  return ''
+})
+
+async function onImageRoleChange(role: string) {
+  const targetId = activeBlockId.value
+  if (!targetId) return
+
+  if (!role) {
+    await saveAttr(ATTR_ELEM_ROLE, '')
+    await saveAttr(ATTR_PAGE_LAYOUT, '')
+    if (activeBlockAttrs.value[ATTR_PAGE_BACKGROUND] === 'true') {
+      await saveAttr(ATTR_PAGE_BACKGROUND, '')
+    }
+  } else if (role === 'background') {
+    await saveAttr(ATTR_ELEM_ROLE, 'background')
+    await saveAttr(ATTR_PAGE_LAYOUT, '')
+  } else if (role === 'image-left' || role === 'image-right') {
+    await saveAttr(ATTR_PAGE_LAYOUT, role)
+    await saveAttr(ATTR_ELEM_ROLE, '')
+  }
+}
+
 const hasBlockAttrs = computed(() => {
   return Boolean(
     activeBlockAttrs.value[ATTR_ELEM_CLICK] ||
@@ -332,6 +369,7 @@ const hasBlockAttrs = computed(() => {
     activeBlockAttrs.value[ATTR_ELEM_SHIKI_LINES] ||
     activeBlockAttrs.value[ATTR_ELEM_NOTE] ||
     activeBlockAttrs.value['slidev-note'] ||
+    activeBlockAttrs.value[ATTR_ELEM_ROLE] ||
     activeBlockAttrs.value[ATTR_PAGE_LAYOUT]
   )
 })

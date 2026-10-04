@@ -20,14 +20,15 @@
             title="配置此页版式与属性"
             @click.stop="openEditSlide(slide)"
           >
-            ⚙️
+            <SlidevIcon name="settings" />
           </button>
         </div>
         <div class="spm-card-preview">
           {{ getSlideSummary(slide) }}
         </div>
         <div v-if="slide.notes" class="spm-card-notes" title="演讲备忘录">
-          📝 {{ slide.notes }}
+          <SlidevIcon name="notes" style="font-size: 11px; margin-right: 3px;" />
+          <span>{{ slide.notes }}</span>
         </div>
       </div>
     </div>
@@ -53,6 +54,7 @@
 <script setup lang="ts">
 import { ref, defineProps, defineEmits } from 'vue'
 import type { ISlidevVirtualPage } from '@/types/slidev-protocol'
+import SlidevIcon from './SlidevIcon.vue'
 import QuickDividerPopover from './QuickDividerPopover.vue'
 import {
   ATTR_PAGE_LAYOUT,
@@ -196,15 +198,20 @@ function getSlideSummary(slide: ISlidevVirtualPage): string {
   border: none;
   background: transparent;
   cursor: pointer;
-  padding: 1px 3px;
+  padding: 2px 3px;
   border-radius: 3px;
-  font-size: 10px;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--b3-theme-on-surface, #64748b);
   opacity: 0.6;
-  transition: opacity 0.15s ease;
+  transition: all 0.15s ease;
 }
 
 .spm-card-btn-edit:hover {
   opacity: 1;
+  color: var(--b3-theme-primary, #3b82f6);
   background: rgba(0, 0, 0, 0.05);
 }
 
@@ -215,6 +222,8 @@ function getSlideSummary(slide: ISlidevVirtualPage): string {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
 }
 
 .spm-inspector-modal-mask {
