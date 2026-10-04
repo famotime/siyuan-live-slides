@@ -3,8 +3,10 @@
     <!-- 面板顶栏 -->
     <div class="spm-inspector-topbar">
       <div class="spm-inspector-title">
-        <svg class="spm-inspector-icon" aria-hidden="true">
-          <use xlink:href="#iconSlidev"></use>
+        <svg class="slidev-icon" style="fill: none !important" aria-hidden="true" viewBox="0 0 24 24">
+          <rect x="2" y="3" width="20" height="14" rx="2" />
+          <line x1="8" y1="21" x2="16" y2="21" />
+          <line x1="12" y1="17" x2="12" y2="21" />
         </svg>
         <span>演示配置</span>
       </div>
@@ -12,20 +14,22 @@
       <div class="spm-inspector-topbar-actions">
         <!-- 导入 Slidev 演示文档 -->
         <button
-          class="spm-btn-pill spm-btn-secondary"
-          title="导入 Slidev 演示文档 (.md / .zip)"
+          class="spm-icon-btn b3-tooltips b3-tooltips__s"
+          aria-label="导入 Slidev 演示文档 (.md / .zip)"
           @click="showImportDialog = true"
         >
-          📥 导入
+          <SlidevIcon name="import" />
+          <span>导入</span>
         </button>
 
         <!-- 快捷打开下方分屏预览 -->
         <button
-          class="spm-btn-pill spm-btn-primary"
-          title="在当前文档下方开启分屏预览 (Alt+P)"
+          class="spm-icon-btn is-primary b3-tooltips b3-tooltips__s"
+          aria-label="在下方分屏开启幻灯片预览 (Alt+P)"
           @click="onOpenBottomPreview"
         >
-          🖥️ 分屏预览
+          <SlidevIcon name="split-preview" />
+          <span>分屏预览</span>
         </button>
       </div>
     </div>
@@ -34,11 +38,25 @@
     <div class="spm-target-banner">
       <div class="spm-target-info">
         <span class="spm-target-tag" :class="targetTagClass">{{ targetTagLabel }}</span>
-        <span class="spm-target-id" :title="activeBlockId || currentDocId">
-          ID: {{ displayShortId }}
+        <span
+          class="spm-target-id b3-tooltips b3-tooltips__s"
+          :aria-label="copyNotice || '点击复制 ID: ' + (activeBlockId || currentDocId)"
+          @click="onCopyBlockId"
+        >
+          <SlidevIcon name="copy" />
+          <span>#{{ displayShortId }}</span>
         </span>
       </div>
-      <span v-if="saveStatus" class="spm-save-status">{{ saveStatus }}</span>
+      <span v-if="saveStatus" class="spm-save-status">● {{ saveStatus }}</span>
+    </div>
+
+    <!-- 安全净化后的单行代码/文字预览条 (防 HTML 模板破损泄露) -->
+    <div
+      v-if="sanitizedSnippet"
+      class="spm-context-quote"
+      :title="rawSnippet"
+    >
+      {{ sanitizedSnippet }}
     </div>
 
     <div class="spm-inspector-body">
@@ -61,7 +79,6 @@
       <!-- 场景 B：普通内容块 (段落、标题、列表、表格、代码块等) -->
       <BlockInspectorSection
         v-else-if="activeBlockId && !isDocRoot"
-        :block-content-snippet="blockContentSnippet"
         :elem-click="elemClick"
         :elem-slot="elemSlot"
         :elem-shiki-lines="elemShikiLines"
@@ -105,13 +122,13 @@
 
 <script setup lang="ts">
 import { ref, computed, inject } from 'vue'
-import type { Plugin } from 'siyuan'
 import { showMessage } from 'siyuan'
 import { setBlockAttrs, insertBlock, deleteBlock, chatAI } from '@/api'
 import PageInspectorSection from '@/ui/components/PageInspectorSection.vue'
 import BlockInspectorSection from '@/ui/components/BlockInspectorSection.vue'
 import DocInspectorSection from '@/ui/components/DocInspectorSection.vue'
 import SlidevImportDialog from '@/ui/components/SlidevImportDialog.vue'
+import SlidevIcon from '@/ui/components/SlidevIcon.vue'
 import { generateSpeakerNotesWithAI } from '@/ai/notes-generator'
 import { buildStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'
 import { triggerPdfExport } from '@/export/pdf-exporter'
@@ -147,10 +164,11 @@ function onImportSuccess(data: { docId: string }) {
 const activeBlockId = ref('')
 const activeBlockType = ref('')
 const activeBlockAttrs = ref<Record<string, string>>({})
-const blockContentSnippet = ref('')
+const rawSnippet = ref('')
 const currentDocId = ref('')
 const latestDoc = ref<ISlidevDocument | null>(null)
 const saveStatus = ref('')
+const copyNotice = ref('')
 
 let saveTimer: number | null = null
 
@@ -162,7 +180,20 @@ function triggerSaveNotice(msg = '已同步') {
   }, 1200)
 }
 
-// 目标标签
+function onCopyBlockId() {
+  const id = activeBlockId.value || currentDocId.value
+  if (!id) return
+  if (navigator?.clipboard?.writeText) {
+    navigator.clipboard.writeText(id).then(() => {
+      copyNotice.value = '已复制！'
+      setTimeout(() => {
+        copyNotice.value = ''
+      }, 1500)
+    }).catch(() => {})
+  }
+}
+
+// 目标标签计算
 const isDivider = computed(() => activeBlockType.value === 'NodeThematicBreak')
 const isCodeBlock = computed(() => activeBlockType.value === 'NodeCodeBlock')
 const isDocRoot = computed(() => !activeBlockId.value || activeBlockId.value === currentDocId.value)
@@ -170,6 +201,15 @@ const isDocRoot = computed(() => !activeBlockId.value || activeBlockId.value ===
 const displayShortId = computed(() => {
   const id = activeBlockId.value || currentDocId.value || ''
   return id.length > 8 ? id.slice(-8) : id || '无'
+})
+
+const sanitizedSnippet = computed(() => {
+  if (!rawSnippet.value) return ''
+  return rawSnippet.value
+    .replace(/<[^>]+>/g, '')
+    .replace(/[\r\n]+/g, ' ')
+    .trim()
+    .slice(0, 45)
 })
 
 const targetTagLabel = computed(() => {
@@ -218,7 +258,6 @@ const hasBlockAttrs = computed(() => {
   )
 })
 
-
 async function saveAttr(key: string, value: string) {
   const targetId = activeBlockId.value || currentDocId.value
   if (!targetId) return
@@ -227,7 +266,7 @@ async function saveAttr(key: string, value: string) {
   triggerSaveNotice('保存中...')
   try {
     await setBlockAttrs(targetId, { [key]: value })
-    triggerSaveNotice('已同步至属性')
+    triggerSaveNotice('已同步')
     if (plugin) {
       plugin.compileCurrentDocument()
     }
@@ -239,7 +278,7 @@ async function saveAttr(key: string, value: string) {
 async function saveDocAttr(key: string, value: string) {
   const docId = currentDocId.value
   if (!docId) return
-  triggerSaveNotice('更新全局配置...')
+  triggerSaveNotice('更新中...')
   try {
     await setBlockAttrs(docId, { [key]: value })
     triggerSaveNotice('已更新')
@@ -280,7 +319,7 @@ async function onGenerateNotesWithAI() {
     startBlockId: activeBlockId.value,
     frontmatter: {},
     notes: '',
-    blocks: [{ id: activeBlockId.value, type: activeBlockType.value, content: blockContentSnippet.value, rawMarkdown: '' }],
+    blocks: [{ id: activeBlockId.value, type: activeBlockType.value, content: rawSnippet.value, rawMarkdown: '' }],
     rawMarkdown: '',
   }
   const generated = await generateSpeakerNotesWithAI(dummySlide as any, chatAI)
@@ -435,7 +474,7 @@ defineExpose({
     activeBlockId.value = info.id
     activeBlockType.value = info.type
     activeBlockAttrs.value = { ...info.attrs }
-    blockContentSnippet.value = (info.content || info.markdown || '').slice(0, 50)
+    rawSnippet.value = info.content || info.markdown || ''
     pageBackground.value = info.attrs[ATTR_PAGE_BACKGROUND] || ''
     pageNotes.value = info.attrs[ATTR_PAGE_NOTES] || ''
     elemShikiLines.value = info.attrs[ATTR_ELEM_SHIKI_LINES] || ''
@@ -452,368 +491,3 @@ defineExpose({
   },
 })
 </script>
-
-<style scoped>
-.spm-slidev-inspector {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
-  background: var(--b3-theme-background, #ffffff);
-  color: var(--b3-theme-on-background, #2c3e50);
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-.spm-inspector-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  background: var(--b3-theme-surface, #f8fafc);
-  border-bottom: 1px solid var(--b3-border-color, #e2e8f0);
-  flex-shrink: 0;
-}
-
-.spm-inspector-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--b3-theme-on-surface, #1e293b);
-}
-
-.spm-inspector-icon {
-  width: 16px;
-  height: 16px;
-}
-
-.spm-target-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 12px;
-  background: var(--b3-theme-surface-hover, #f1f5f9);
-  border-bottom: 1px solid var(--b3-border-color, #e2e8f0);
-  font-size: 11px;
-  flex-shrink: 0;
-}
-
-.spm-target-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  overflow: hidden;
-}
-
-.spm-target-tag {
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.tag-divider {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.tag-block {
-  background: #e0e7ff;
-  color: #4f46e5;
-}
-
-.tag-doc {
-  background: #e2e8f0;
-  color: #475569;
-}
-
-.spm-target-id {
-  color: var(--b3-theme-on-surface, #64748b);
-  font-family: monospace;
-}
-
-.spm-save-status {
-  color: #10b981;
-  font-weight: 500;
-}
-
-.spm-inspector-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.spm-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.spm-section-header {
-  display: flex;
-  flex-direction: column;
-  border-left: 3px solid #3b82f6;
-  padding-left: 8px;
-  font-weight: 600;
-  font-size: 13px;
-}
-
-.spm-section-sub {
-  font-weight: normal;
-  font-size: 11px;
-  color: var(--b3-theme-on-surface, #64748b);
-  margin-top: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.spm-card-control {
-  padding: 10px;
-  background: var(--b3-theme-surface, #f8fafc);
-  border: 1px solid var(--b3-border-color, #e2e8f0);
-  border-radius: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.spm-control-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.spm-control-title {
-  display: flex;
-  flex-direction: column;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.spm-control-desc {
-  font-size: 11px;
-  font-weight: normal;
-  color: var(--b3-theme-on-surface, #64748b);
-}
-
-.spm-toggle-btn {
-  padding: 3px 10px;
-  border-radius: 12px;
-  border: 1px solid var(--b3-border-color, #cbd5e1);
-  background: var(--b3-theme-background, #ffffff);
-  cursor: pointer;
-  font-size: 11px;
-  transition: all 0.15s ease;
-}
-
-.spm-toggle-btn.active {
-  background: #3b82f6;
-  border-color: #3b82f6;
-  color: #ffffff;
-  font-weight: 600;
-}
-
-.spm-segmented-group {
-  display: flex;
-  background: var(--b3-theme-background, #ffffff);
-  border: 1px solid var(--b3-border-color, #e2e8f0);
-  border-radius: 6px;
-  padding: 2px;
-  gap: 2px;
-}
-
-.spm-segmented-item {
-  flex: 1;
-  padding: 4px 6px;
-  font-size: 11px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  border-radius: 4px;
-  color: var(--b3-theme-on-surface, #64748b);
-  transition: all 0.15s ease;
-  text-align: center;
-}
-
-.spm-segmented-item.active {
-  background: #3b82f6;
-  color: #ffffff;
-  font-weight: 600;
-}
-
-.spm-quick-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.spm-chip {
-  padding: 2px 8px;
-  border-radius: 12px;
-  border: 1px solid var(--b3-border-color, #e2e8f0);
-  background: var(--b3-theme-background, #ffffff);
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  color: var(--b3-theme-on-surface, #475569);
-}
-
-.spm-chip:hover {
-  border-color: #3b82f6;
-}
-
-.spm-chip.active {
-  border-color: #3b82f6;
-  background: rgba(59, 130, 246, 0.12);
-  color: #3b82f6;
-  font-weight: 600;
-}
-
-.spm-chip-clear {
-  color: #ef4444;
-}
-
-.spm-field-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.spm-field-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.spm-field-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface, #475569);
-}
-
-.spm-input, .spm-textarea {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 6px 8px;
-  font-size: 12px;
-  border: 1px solid var(--b3-border-color, #e2e8f0);
-  border-radius: 4px;
-  background: var(--b3-theme-background, #ffffff);
-  color: var(--b3-theme-on-background, #1e293b);
-  outline: none;
-}
-
-.spm-input:focus, .spm-textarea:focus {
-  border-color: #3b82f6;
-}
-
-.spm-action-group {
-  margin-top: 6px;
-  padding: 10px;
-  border-radius: 6px;
-  background: var(--b3-theme-surface, #f8fafc);
-  border: 1px solid var(--b3-border-color, #e2e8f0);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.spm-action-group-title {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface, #64748b);
-}
-
-.spm-action-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.spm-btn-action {
-  padding: 6px 10px;
-  font-size: 12px;
-  border-radius: 4px;
-  border: 1px solid var(--b3-border-color, #cbd5e1);
-  background: var(--b3-theme-background, #ffffff);
-  color: var(--b3-theme-on-surface, #334155);
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.15s ease;
-}
-
-.spm-btn-action:hover {
-  background: var(--b3-theme-surface-hover, #e2e8f0);
-  border-color: #3b82f6;
-}
-
-.spm-btn-action.spm-btn-primary {
-  background: #3b82f6;
-  border-color: #3b82f6;
-  color: #ffffff;
-  font-weight: 600;
-  text-align: center;
-}
-
-.spm-btn-action.spm-btn-danger {
-  color: #ef4444;
-  border-color: #fca5a5;
-}
-
-.spm-btn-action.spm-btn-danger:hover {
-  background: #fee2e2;
-}
-
-.spm-btn-action.spm-btn-warn {
-  color: #d97706;
-}
-
-.spm-btn-pill {
-  padding: 3px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  border: none;
-  cursor: pointer;
-  background: #3b82f6;
-  color: #ffffff;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  transition: all 0.2s;
-}
-
-.spm-btn-pill.spm-btn-secondary {
-  background: var(--b3-theme-surface, #ffffff);
-  border: 1px solid var(--b3-border-color, #cbd5e1);
-  color: var(--b3-theme-on-surface, #1e293b);
-  &:hover {
-    background: var(--b3-theme-surface-hover, #f1f5f9);
-    border-color: #94a3b8;
-  }
-}
-
-.spm-inspector-topbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.spm-btn-text {
-  background: none;
-  border: none;
-  font-size: 11px;
-  color: #3b82f6;
-  cursor: pointer;
-}
-
-.spm-mt-2 {
-  margin-top: 6px;
-}
-</style>

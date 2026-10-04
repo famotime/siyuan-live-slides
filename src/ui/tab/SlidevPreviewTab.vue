@@ -12,100 +12,100 @@
       <div class="spm-slidev-tab__actions">
         <!-- 翻页控制 -->
         <button
-          class="spm-btn-icon"
+          class="spm-icon-btn b3-tooltips b3-tooltips__s"
           :disabled="currentPage <= 1"
-          title="上一页"
+          aria-label="上一页"
           @click="onPrevPage"
         >
-          ◀
+          <SlidevIcon name="chevron-left" />
         </button>
         <span class="spm-page-badge">{{ currentPage }} / {{ totalPages || 1 }}</span>
         <button
-          class="spm-btn-icon"
+          class="spm-icon-btn b3-tooltips b3-tooltips__s"
           :disabled="currentPage >= totalPages"
-          title="下一页"
+          aria-label="下一页"
           @click="onNextPage"
         >
-          ▶
+          <SlidevIcon name="chevron-right" />
         </button>
 
         <!-- 📌 Pin 图钉锁定文档 -->
         <button
-          class="spm-btn-icon spm-pin-btn"
-          :class="{ active: isPinned }"
-          :title="isPinned ? '已锁定当前文档（切换笔记不跟随）：' + pinnedDocId : '未锁定：切换笔记自动跟随主编辑区'"
+          class="spm-icon-btn b3-tooltips b3-tooltips__s"
+          :class="{ 'is-primary': isPinned }"
+          :aria-label="isPinned ? '已锁定当前文档（点击解除）：' + pinnedDocId : '点击锁定当前文档（不随主编辑区切换）'"
           @click="togglePin"
         >
-          <span v-if="isPinned">📌 已锁定</span>
-          <span v-else>📍 跟随</span>
+          <SlidevIcon name="pin" />
+          <span>{{ isPinned ? '已锁定' : '跟随' }}</span>
         </button>
 
         <!-- 🚀 双轨引擎切换徽章 -->
         <button
-          class="spm-btn-icon spm-engine-badge"
-          :class="{ 'is-pro': engineMode === 'pro-cli' }"
-          :title="engineMode === 'pro-cli' ? '当前：官方原生 Pro 模式 (localhost:' + activeProPort + ')，点击切回内置高保真沙箱' : '当前：内置高保真沙箱 (0依赖)，点击切换至官方原生 Pro 模式'"
+          class="spm-icon-btn b3-tooltips b3-tooltips__s"
+          :class="{ 'is-primary': engineMode === 'pro-cli' }"
+          :aria-label="engineMode === 'pro-cli' ? '当前：官方原生 Pro 模式 (localhost:' + activeProPort + ')，点击切回沙箱' : '当前：内置高保真沙箱，点击切换官方原生 Pro 模式'"
           @click="toggleEngineMode"
         >
-          <span v-if="engineMode === 'pro-cli'">🚀 Pro ({{ activeProPort }})</span>
-          <span v-else>🟢 高保真沙箱</span>
+          <SlidevIcon name="step" />
+          <span>{{ engineMode === 'pro-cli' ? 'Pro (' + activeProPort + ')' : '沙箱' }}</span>
         </button>
 
         <span class="spm-toolbar-divider"></span>
 
         <!-- 大纲缩略图 -->
         <button
-          class="spm-btn-icon"
-          title="切换幻灯片大纲抽屉"
-          :class="{ active: showOutline }"
+          class="spm-icon-btn b3-tooltips b3-tooltips__s"
+          aria-label="切换幻灯片大纲抽屉"
+          :class="{ 'is-primary': showOutline }"
           @click="showOutline = !showOutline"
         >
-          📑
+          <SlidevIcon name="outline" />
         </button>
 
         <!-- 双屏演讲者视图 -->
         <button
-          class="spm-btn-icon"
-          title="双屏演讲者视图 (Presenter Mode ⌥M)"
+          class="spm-icon-btn b3-tooltips b3-tooltips__s"
+          aria-label="双屏演讲者视图 (Presenter Mode ⌥M)"
           @click="onOpenPresenter"
         >
-          🎤
+          <SlidevIcon name="presenter" />
         </button>
 
         <!-- 导出离线单文件 HTML -->
         <button
-          class="spm-btn-icon"
-          title="导出单文件 HTML"
+          class="spm-icon-btn b3-tooltips b3-tooltips__s"
+          aria-label="导出单文件 HTML 演示包"
           @click="onExportHtml"
         >
-          📥
+          <SlidevIcon name="export-html" />
         </button>
 
         <!-- 导出 PDF -->
         <button
-          class="spm-btn-icon"
-          title="导出 PDF 讲义"
+          class="spm-icon-btn b3-tooltips b3-tooltips__s"
+          aria-label="导出 16:9 PDF 演示讲义"
           @click="onExportPdf"
         >
-          🖨️
+          <SlidevIcon name="export-pdf" />
         </button>
 
         <!-- 重新编译 -->
         <button
-          class="spm-btn-icon"
-          title="重新编译并刷新"
+          class="spm-icon-btn b3-tooltips b3-tooltips__s"
+          aria-label="重新编译并刷新"
           @click="onRefresh"
         >
-          🔄
+          <SlidevIcon name="refresh" />
         </button>
 
         <!-- 全屏放映 -->
         <button
-          class="spm-btn-icon"
-          title="全屏放映"
+          class="spm-icon-btn b3-tooltips b3-tooltips__s"
+          aria-label="全屏放映"
           @click="onFullscreen"
         >
-          ⛶
+          <SlidevIcon name="split-preview" />
         </button>
       </div>
     </div>
@@ -140,6 +140,7 @@ import { putFile } from '@/api'
 import { EngineManager } from '@/engine/engine-manager'
 import { WebSandboxBridge } from '@/engine/web-sandbox-bridge'
 import SlideInspector from '@/ui/components/SlideInspector.vue'
+import SlidevIcon from '@/ui/components/SlidevIcon.vue'
 import { CursorTracker } from '@/sync/cursor-tracker'
 import { buildStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'
 import { triggerPdfExport } from '@/export/pdf-exporter'

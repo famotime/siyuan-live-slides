@@ -1,4 +1,4 @@
-# 思源笔记 Slidev 演示插件详细方案与开发实施计划
+# 思源笔记 Slidev 演示插件详细方案、实施进展与下一步研发计划
 
 ---
 
@@ -18,9 +18,14 @@ graph TD
 
 ---
 
-## 3. 核心功能模块详细设计
+## 2. 块属性协议字典与架构设计
 
-### 3.3 与「属性管家」（siyuan-property-manager）的协同实现（`src/synergy/`）
+插件统一采用具有命名空间隔离的 `custom-slidev-*` 块属性字典，按作用域划分为：
+1. **文档全局级（Document Scope）**：挂载于文档根块，包含 `custom-slidev-theme`、`custom-slidev-aspect-ratio`、`custom-slidev-default-transition`、`custom-slidev-highlighter`、`custom-slidev-color-schema`；
+2. **幻灯片页面级（Page Scope）**：挂载于水平分割线（`---`），包含 `custom-slidev-slide`、`custom-slidev-layout`、`custom-slidev-transition`、`custom-slidev-background`、`custom-slidev-notes`、`custom-slidev-class`；
+3. **元素动效级（Element Scope）**：挂载于具体叶子内容块，包含 `custom-slidev-click`、`custom-slidev-slot`、`custom-slidev-shiki-lines`、`custom-slidev-motion`。
+
+### 与「属性管家」（siyuan-property-manager）的协同架构（`src/synergy/`）
 
 ```mermaid
 sequenceDiagram
@@ -39,105 +44,138 @@ sequenceDiagram
 
     Note over PM,Slidev: 2. 全库批量治理
     User->>PM: 在属性管家统计面板检索 custom-slidev-transition
-    PM-->>User: 展示全库 120 个幻灯片块的转场分布
+    PM-->>User: 展示全库幻灯片块的转场分布
     User->>PM: 批量将 "fade" 替换为 "slide-left"
     PM->>Kernel: 批量更新全库对应分割线块属性
 ```
 
 - **松耦合契约**：双方完全依托思源原生块属性 `custom-slidev-*`，即使属性管家未安装或版本更新，Slidev 插件功能不受任何影响；
-- **生态共赢**：为同时安装两款插件的用户提供“全库幻灯片全景资产盘点”与“一键批量重构”的超级能力。
+- **生态共赢**：为同时安装两款插件的用户提供“全库幻灯片全景资产盘点”与“一键批量重构”的能力。
 
 ---
 
-## 4. 详细开发实施计划与排期
+## 3. 四阶段实施进展真实评估（基于代码库现状实测）
 
-整个项目划分为四个敏捷冲刺阶段（Sprints），共计 8 周完成商业级全功能交付。状态标识定义：
-- `[x]` **已完成并集成**：核心逻辑已实现且与思源插件主生命周期/UI/数据流完成集成打通；
-- `[-]` **部分实现 / 原型验证中**：算法原型或独立组件已实现，但尚未挂载到编辑器交互或功能为简易模拟；
-- `[ ]` **未实施 / 待开发**：代码仅为占位类、函数未被主流程调用、未接入思源真实 API 或尚未开始。
+状态标识定义：
+- `[x]` **已完成并集成**：核心逻辑已实现且与思源插件主生命周期/UI/数据流完成集成打通并通过测试验证；
+- `[-]` **部分实现 / 残缺项**：已有基础逻辑或静态代码，但缺少核心渲染运行时或缺少配置 UI；
+- `[ ]` **未实施 / 待开发**：代码仅为类型占位、未被主流程调用、未接入真实能力。
 
-```mermaid
-gantt
-    title SiYuan Slidev 插件研发进展与甘特图（全功能实施完成）
-    dateFormat  YYYY-MM-DD
-    section Phase 1: 内核筑基与 MVP
-    内置轻量 Web 沙箱打包与加载机制       :done, p1_1, 2026-10-06, 4d
-    AST 遍历抽取与三层作用域解析管线     :done, p1_2, after p1_1, 4d
-    本地资产 assets 代理与静态映射       :done, p1_3, after p1_2, 3d
-    右侧 Dock 实时分屏与基础热重载       :done, p1_4, after p1_3, 3d
-    section Phase 2: 专精交互与动效
-    水平分割线快捷气泡面板开发           :done, p2_1, 2026-10-20, 4d
-    版式九宫格与转场动效可视化选择器     :done, p2_2, after p2_1, 3d
-    元素级 v-click 与代码分步高亮适配    :done, p2_3, after p2_2, 4d
-    双向光标毫秒级联动跟踪控制器         :done, p2_4, after p2_3, 3d
-    section Phase 3: 生态协同与 AI
-    属性管家（PM）模板预设与协同适配器   :done, p3_1, 2026-11-03, 3d
-    思源块引用/块嵌入动态展开渲染        :done, p3_2, after p3_1, 4d
-    思源 AI Agent 智能断页与提词生成     :done, p3_3, after p3_2, 4d
-    双屏演讲者模式 (Presenter Mode)      :done, p3_4, after p3_3, 3d
-    section Phase 4: 离线导出与发布
-    单文件 HTML 离线演示包独立打包器     :done, p4_1, 2026-11-17, 4d
-    高保真 PDF 讲义与幻灯片导出          :done, p4_2, after p4_1, 3d
-    Pro 模式本地 Slidev CLI DevServer 桥接:done, p4_3, after p4_2, 4d
-    多端兼容测试、文档完善与集市发布     :done, p4_4, after p4_3, 3d
-```
+### 3.1 各阶段交付清单进展核查
 
-### 4.1 各阶段交付清单真实进展评估
+#### Phase 1：MVP 原型（核心可行性验证）
+- **核心目标**：完成内置轻量沙箱搭建，实现基础断页编译，下方分屏预览，本地资产代理。
+- **任务清单**：
+  - [x] **内置轻量 Vue 3 + Slidev Client 沙箱搭建**：`public/slidev-client/index.html` + `vue.global.prod.js` 实现零外部外部服务依赖秒启，支持双栏、Callout、代码块、表格、图片、全屏等放映；
+  - [x] **AST 编译管道与基础块属性解析**：`DocumentCompilerService`、`slidev-ast-builder.ts`、`scope-mapper.ts` 完成文档树抽取与 Frontmatter 序列化；
+  - [x] **下方分屏预览页签 (`SlidevPreviewTab`)**：通过思源 `addTab` + `openTab({ position: "bottom" })` 实现宽屏分屏，支持 📌 Pin 图钉锁定当前文档、缩略大纲抽屉（`SlideInspector.vue`）；
+  - [x] **本地图片资源代理重写**：`assets-rewriter.ts` 实现了 `assets/...` 路径自动转换为思源静态服务代理 URL 或内联 Base64；
+  - [x] **分割线断页与智能大纲断页**：支持原生 `---` 水平分割线断页；通过 `auto-splitter.ts` 提供 AI/规则大纲断页建议并自动插入分割线。
+- **阶段结论**：**100% 完成**，核心可行性已全部闭环。
 
-
-
-#### Phase 2：专精微交互与动效全面增强（第 3 ~ 4 周）
+#### Phase 2：专精微交互与动效全面增强
 - **核心目标**：实现零手写配置的可视化微交互，实现正文零污染与双向光标联动。
 - **任务清单**：
-  - [x] **交付下方独立分屏预览页签（`SlidevPreviewTab.vue`）**：基于思源原生 `addTab` + `openTab({ position: "bottom" })` 挂载宽屏实时分屏预览，支持 📌 Pin 图钉锁定当前文档、翻页大纲抽屉与全套放映/导出控制栏；
-  - [x] **交付右侧演示配置面板（`SlidevInspectorDockView.vue`）**：随光标自动切换普通内容块、分页符、文档根卡片，直接在面板中配置版式九宫格、转场动效、页面背景、逐步出现（`v-click`）、双栏插槽及代码逐行聚光高亮（`shiki-lines`）；
-  - [x] **交互极简化与冗余清理**：彻底移除了侵入思源原生块菜单的多级子菜单，停用正文悬浮遮挡气泡，所有设置集中在右侧面板一键即时生效；
-  - [x] **开发 `cursor-tracker.ts` 实现双向联动**：已打通双向光标联动（**正向跟随**：监听 Protyle 编辑区选区变动与按键，光标落在某块时下方预览毫秒级翻页高亮定位，右侧面板同步刷新该块属性；**反向定位**：点击预览沙箱块调用 `mirrorBlockSelection` 平滑滚动并高亮思源块）。
-- **阶段现状**：下方宽屏分屏与右侧专职配置面板双轨交互全面打通落地，全部通过单元测试覆盖。
+  - [x] **右侧 Dock 演示配置面板 (`SlidevInspectorDockView`)**：动态识别当前聚焦块类型，自适应切换普通内容块（`BlockInspectorSection`）、分页符（`PageInspectorSection`）、全局文档（`DocInspectorSection`），彻底清理多级块菜单侵入；
+  - [x] **逐步出现 (`v-click`) 深度适配**：支持步长切换（`+1`, `1`, `2`, `hide`），沙箱按方向键/空格逐帧调度；
+  - [x] **Shiki 代码逐行聚光高亮 (`shiki-lines`)**：支持行区间芯片选择与自定义输入，沙箱渲染带行号聚焦与背景变暗的高保真聚光；
+  - [x] **多栏布局插槽 (`slot`) 可视化配置**：支持在分栏版式中一键设置当前块为左栏/右栏；
+  - [x] **双向光标毫秒级联动跟踪器 (`cursor-tracker.ts` / `selection-mirror.ts`)**：
+    - 正向跟随：100ms 防抖监听 Protyle 编辑区选区与按键，光标落在某块时下方预览自动翻页并高亮该块，右侧面板同步刷新属性；
+    - 反向定位：点击预览沙箱中的任意块，主编辑区平滑滚动居中并高亮目标思源块；
+  - [-] **微动效与位移参数 (`custom-slidev-motion`)**：协议已解析，但在 UI 界面中缺少配置入口，且沙箱端尚未接入 `@vueuse/motion` 运行时。
+- **阶段结论**：**90% 完成**，主要微交互与光标跟踪已闭环，微动效运行时待补齐。
 
-#### Phase 3：生态协同、块引用与 AI 智能赋能（第 5 ~ 6 周）
-- **核心目标**：打通与属性管家的生态协同，接入思源块引用与内置 AI 能力。
+#### Phase 3：生态协同、块引用与 AI 智能赋能
+- **核心目标**：打通与属性管家的生态协同，接入思源块引用与内置 AI 能力，交付双屏演讲者控制台。
 - **任务清单**：
-  - [x] **编写 `property-manager-bridge.ts`，为属性管家输出标准 Slidev 属性模板**：已编写独立模板定义与辅助类，支持导出标准模板 JSON，提供全库转场分布统计与版式/转场批量治理能力；
-  - [x] **在属性管家面板中支持检索全库幻灯片属性并支持一键批量重构转场**：插件内已提供 `slidevBatchTransitions`（统计）、`slidevExportTemplates`（导出模板）与 `slidevBatchReplaceTransition`（批量重构）命令；
-  - [x] **递归解析思源块引用 `((block-id))` 与嵌入块，在幻灯片中动态呈现关联笔记**：在 `compileCurrentDocument` 中批量通过 SQL 检索关联块内容，在 `buildSlidevDocument` 中调用 `resolveBlockRefsSync` 展开块引用为内联卡片，沙箱与单文件导出均支持富文本与引用卡片样式；
-  - [x] **接入思源 AI 接口，开发“AI 一键大纲断页”、“AI 自动生成口播提词卡”功能**：在 `src/api.ts` 封装 `chatAI`，在 `notes-generator.ts` 中实现 `generateSpeakerNotesWithAI`（优先调用 AI，失败平滑降级到启发式规则），并在思源中注册 `slidevAiSplit` 与 `slidevAiNotes` 命令；
-  - [x] **交付专业双屏演讲者视图 (Presenter Mode)**：已完成独立 `presenter.html` 页面与 BroadcastChannel 双向翻页同步，支持双向 REQUEST_SYNC 握手、计时器、提词卡字号缩放 (A-/A+)、放映进度指示与下一页预告。
-- **阶段现状**：块引用动态内联展开与思源 AI 接口全面贯通集成；双屏演讲者模式及属性管家双向协同全面落地并通过测试。
+  - [x] **与「属性管家」协同桥接 (`property-manager-bridge.ts`)**：
+    - 预设属性模板字典 (`preset-templates.ts`) 支持一键复制导入；
+    - 支持全库转场分布统计与批量重构命令（`slidevBatchTransitions` / `slidevBatchReplaceTransition`）；
+  - [x] **块引用 (`((block-id))`) 动态展开**：`block-ref-resolver.ts` 批量通过 SQL 检索被引用块内容，并动态展开为内联带样式卡片，在沙箱及导出端保留引用标识；
+  - [-] **块嵌入与递归块引用展开**：目前尚未支持嵌入块 `NodeBlockQueryEmbed`（`{{select ...}}`），且块引用未调用 `/api/block/getBlockKramdown` 进行深度递归展开；
+  - [x] **思源内核 AI 赋能**：
+    - `notes-generator.ts` 接入 `chatAI`，自动为幻灯片提炼口播提词卡（Notes），失败自动平滑降级到启发式规则；
+    - `auto-splitter.ts` 分析 H1/H2 章节及页面容量阈值，提供智能大纲断页建议；
+  - [x] **专业双屏演讲者视图 (Presenter Mode)**：独立 `presenter.html` 视窗，支持快捷键 `⌥M` 呼出，具备双向 BroadcastChannel 实时翻页同步、演讲计时器、字号增减、双栏对比与提词卡。
+- **阶段结论**：**85% 完成**，AI 赋能、演讲者视图与属性管家协同均已交付；块嵌入与递归块展开仍需完善。
 
-#### Phase 4：离线导出、Pro 极客模式与发布（第 7 ~ 8 周）
-- **核心目标**：全渠道交付能力与生态发布闭环。
+#### Phase 4：离线导出、Pro 极客模式与发布
+- **核心目标**：全渠道交付能力与生态闭环。
 - **任务清单**：
-  - [x] **实现离线单文件 HTML 打包器**：`single-html-exporter.ts` 支持 Base64 本地图片内联替换、双栏布局渲染、块引用卡片与全键盘离线放映；
-  - [x] **支持调用内置打印/导出为高分辨率 PDF 讲义**：`pdf-exporter.ts` 实现了富文本 Markdown 解析、双栏分栏布局、16:9/4:3/A4 多画幅纸张适配与 `@page` 色彩保真打印样式；
-  - [x] **实现可选的 Pro 模式：检测并桥接用户本地运行的 `slidev` CLI 端口**：`CliDevServerBridge` 实现了标准 Slidev Markdown（含 Frontmatter、插槽与演讲备注）的转换与构建，支持写入工作空间存储与一键下载；
-  - [x] **编写用户帮助手册，完善 i18n 国际化，打包提交思源官方社区集市**：完善中英文国际化字典，编写中英文用户指南文档（`docs/USER-GUIDE.zh-CN.md`、`docs/USER-GUIDE.md`）。
-- **阶段现状**：单文件 HTML 与高保真 PDF 讲义导出、Pro CLI 桥接、用户指南与国际化多语言全量交付完成，单元测试全绿。
+  - [x] **离线单文件独立 HTML 打包器 (`single-html-exporter.ts`)**：一键导出无外部依赖的单文件 `.html`，内置 Base64 资产、全套版式与键盘翻页；
+  - [x] **高保真 PDF 讲义导出 (`pdf-exporter.ts`)**：支持 16:9 / 4:3 / A4 纸张规范，精确控制 `@page` 打印样式，富文本排版保真；
+  - [x] **Pro 模式本地 Slidev CLI 桥接框架**：
+    - 支持一键导出/下载标准 `slides.md` 并在本地直接通过 `npx @slidev/cli` 运行；
+    - 支持一键同步 `slides.md` 至思源工作空间存储目录；
+    - 提供了本地 DevServer 状态探测命令（检测 3030 端口）；
+  - [-] **Pro 模式内置子进程自动拉起**：由于思源插件运行于客户端沙箱环境，在纯浏览器/移动端无法直接执行 `node:child_process`（已具备检测与降级提醒）；
+  - [x] **用户手册与国际化**：完善中英文国际化字典（`en_US.json` / `zh_CN.json`），提供完整命令与使用文档。
+- **阶段结论**：**80% 完成**，单文件 HTML 与 PDF 导出完整交付，Pro 极客模式已有文件导出与端口探测支撑。
 
 ---
 
-### 4.2 代码库实际落地评估与差距分析（Gap Analysis）
+## 4. 真实差距与未完成项剖析（Gap Analysis）
 
-| 核心领域 | 设计规划与宣称能力 | 代码库实际现状 | 真实差距（Gap）与评估结论 |
-| :--- | :--- | :--- | :--- |
-| **渲染沙箱** | 轻量 Vue 3 沙箱页面，支持富文本 Markdown、多版式与双屏广播 | 完整实现 `public/slidev-client/index.html`，支持版式、双栏、代码块、块引用卡片与 BroadcastChannel 同步 | **已达标**：完全契合无 Node 依赖的轻量即用定位。 |
-| **编辑器交互** | 下方独立分屏预览；右侧动态演示配置面板，无需多级菜单与悬浮气泡 | **已实现集成**：基于原生 `addTab` 挂载下方预览，右侧 Dock 随光标自适应切换内容块/分页符/全局卡片，彻底清理多级块菜单与悬浮气泡 | **已达标**：端到端编辑交互体验顺畅。 |
-| **光标同步** | 毫秒级双向光标跟随：正文光标移动 -> 幻灯片翻页高亮；幻灯片点击 -> 思源块高亮 | **已实现集成**：正向监听 Protyle 编辑区选区变动并驱动翻页与高亮，反向点击平滑滚动高亮 | **已达标**：双向毫秒级联动已落地并通过单元测试。 |
-| **块引用展开** | 递归解析 `((block-id))` 与嵌入块，在幻灯片动态内联展示 | **已实现集成**：编译器批量 SQL 检索被引用块内容，并动态展开为内联带样式卡片 | **已达标**：单层与多层块引用已完整展开并有高保真渲染。 |
-| **属性管家协同** | 与 `siyuan-property-manager` 双向互通，共享模板、批量治理属性 | 插件提供全库转场分布统计、预设模板 JSON 导出及全库转场批量更新重构命令 | **已达标**：支持一键导出标准模板并治理全库属性。 |
-| **AI 智能赋能** | 接入思源 AI Agent，一键大纲断页、自动生成口播提词卡 | **已实现集成**：封装 `chatAI`，提供一键断页插入分割线与 AI 生成提词卡命令 | **已达标**：实现了 AI 响应与本地规则启发式的优雅降级。 |
-| **双屏演讲者** | 独立演讲者控制台，支持大屏联动、提词卡、计时器 | **已实现集成**：`presenter.html` 支持 REQUEST_SYNC 握手、字号缩放、进度条与计时控制 | **已达标**：双向广播联动顺畅。 |
-| **Pro CLI 模式** | 自动向本地写入 `.md`，双向桥接 Vite DevServer WebSocket | 实现了标准 Slidev Markdown 生成器，支持导出/下载 slides.md、写入工作空间及探测 3030 端口 | **已达标**：提供极客开发者本地无缝运行基础。 |
-| **离线导出** | 单文件独立离线 HTML（内联 Base64 资产与全动效）、高保真 PDF 讲义 | **已实现集成**：HTML 支持 Base64 资产内联；PDF 支持富文本、双栏、多画幅与打印样式优化 | **已达标**：全渠道交付能力完整闭环。 |
+严格按现状审查，当前代码库存在以下 5 项具体差距：
 
+| 序号 | 差距领域 | 规格书要求 | 代码库实际现状 | 影响面与严重度 |
+| :---: | :--- | :--- | :--- | :--- |
+| **1** | **KaTeX 公式与 Mermaid 图表真实渲染** | 规格书 Transform 阶段要求对 KaTeX 公式与 Mermaid 图表进行预处理与呈现 | 仅将 `$formula$` 包装为 `<em>` 斜体文本，**未引入 KaTeX JS 排版**；**Mermaid 完全未做识别与渲染** | **中高**：包含复杂数学公式或流程图的文档无法正常展示图形。 |
+| **2** | **`custom-slidev-motion` 动效闭环** | 映射为 `@vueuse/motion` 驱动的进入动画 | 协议已定义并在 scope 中解析，但 **UI 缺少配置输入，沙箱未接入动效运行时** | **中**：元素无法配置平滑位移与渐入微动效。 |
+| **3** | **块嵌入 (`{{select}}`) 与递归展开** | 遇到 `NodeBlockQueryEmbed` 展开，并递归获取复杂子块树 | 仅通过 SQL 检索了 `((id))` 块引用第一层文本，**未处理嵌入块，且未递归展开** | **中**：嵌入查询块和复杂多层嵌套块内容缺失。 |
+| **4** | **部分辅助属性缺少 Inspector 配置 UI** | 支持配置代码高亮引擎、明暗偏好、UnoCSS 样式类 | `custom-slidev-class`、`highlighter`、`color-schema` 在 Inspector 面板缺少可视化输入组件 | **低**：高级样式与偏好需手动在思源原生属性面板填写。 |
+| **5** | **Pro 模式本地 DevServer 的纯前端环境限制** | 双轨切换，一键在下方拉起官方 DevServer | 在纯浏览器/移动端环境无法 spawn 子进程，需依赖用户本地预先启动 Slidev CLI | **低**：已具备端口探测与文件导出，但尚需更友好的引导 UI。 |
 
 ---
 
-## 5. 质量保障与风险防控策略
+## 5. 下一步开发实施计划与排期（Sprints & Milestones）
 
-| 潜在风险点 | 严重程度 | 应对与防控预案 |
-| :--- | :--- | :--- |
-| **打字高频触发导致的渲染性能卡顿** | 高 | 引入 **150ms 弹性防抖（Debounce）**，并在编译层维护块哈希缓存（Block Hash Cache），仅对内容发生变化的 Slide 页面派发 Virtual DOM 增量补丁，杜绝整屏重新挂载。 |
-| **用户误删水平分割线导致页面属性丢失** | 中 | 插件在删除分割线时提供防误触撤销（Undo）恢复机制，或在右侧 Dock 面板中提供“页面回收站/历史快照”，可一键将丢失的版式恢复。 |
-| **复杂第三方 Vue 组件在沙箱中无法运行** | 中 | 默认轻量 Web 沙箱预置最通用的交互组件库（图表、计数器、时间线、图标集）；对极高阶自定义组件引导用户开启“Pro DevServer 模式”由真实 Vite 环境编译。 |
-| **思源不同版本内核 API 变动** | 低 | 严密基于思源稳定公开内核 API（`/api/block/*`, `/api/attr/*`），将底层请求收敛在 `src/api.ts` 与 `src/sy-bridge/` 适配层中，隔离核心业务逻辑。 |
+结合上述差距，规划后续迭代冲刺，重点完成核心渲染补齐与高级特性闭环：
+
+### Sprint 5：核心渲染与排版闭环（P0 级，1 ~ 2 周）
+
+- [ ] **Task 5.1：集成 KaTeX 轻量公式渲染引擎**
+  - 在内置沙箱 `index.html` 与导出渲染器 `markdown-renderer.ts` 中引入轻量 KaTeX（或 KaTeX min 预编译 bundle）；
+  - 解析行内 `$formula$` 与独立块 `$$formula$$`，生成高保真数学矢量排版；
+  - 导出单文件 HTML 与 PDF 时同步内联 KaTeX 样式与字体。
+- [ ] **Task 5.2：集成 Mermaid 流程图与时序图渲染**
+  - 在编译器中识别 ```` ```mermaid ```` 代码块，并将其标记为图表渲染节点；
+  - 内置沙箱加载 Mermaid.js，实现流程图、序列图、架构图在幻灯片上的即时矢量渲染。
+- [ ] **Task 5.3：补齐 Inspector Dock 缺失的属性配置项**
+  - 在 `PageInspectorSection.vue` 增加“页面样式类 (`custom-slidev-class`)”输入框；
+  - 在 `DocInspectorSection.vue` 增加“明暗模式偏好 (`custom-slidev-color-schema`)”三态切换器；
+  - 在 `DocInspectorSection.vue` 增加“代码高亮引擎 (`custom-slidev-highlighter`)”选择器。
+
+### Sprint 6：高级动效与深层数据融合（P1 级，2 ~ 3 周）
+
+- [ ] **Task 6.1：落地 `custom-slidev-motion` 进入微动效**
+  - 在 `BlockInspectorSection.vue` 增加预设微动效选择器（`淡入 (fade-in)`、`滑入 (slide-up)`、`放大 (zoom-in)`、`弹性 (bounce)`）；
+  - 在内置沙箱中注入对应的 CSS Keyframes 动效类，实现无需重型依赖的流畅进入动画；
+  - 导出单文件 HTML 时保留该动效支持。
+- [ ] **Task 6.2：支持块嵌入与递归块引用展开**
+  - 在 `block-ref-resolver.ts` 中增加对 `{{select ...}}` 嵌入块语法的识别；
+  - 接入思源内核 API `/api/block/getBlockKramdown`，对深层复杂块结构进行递归无损展开；
+  - 增加嵌入块数据溯源与刷新监听机制。
+
+### Sprint 7：生态交付与极客 Pro 体验强化（P2 级，1 ~ 2 周）
+
+- [ ] **Task 7.1：PPTX 可编辑幻灯片导出**
+  - 调研并接入 `pptxgenjs`，基于现有的 `ISlidevVirtualPage` 虚拟页面模型，实现一键生成可编辑的 `.pptx` 文档，彻底打通与 Office 生态互通。
+- [ ] **Task 7.2：优化 Pro 模式本地 DevServer 引导向导**
+  - 在 `SlidevPreviewTab.vue` 中增强 Pro 模式的向导界面；
+  - 提供“一键复制终端运行命令（`npx @slidev/cli ...`）”和“实时探测端口并自动连入”的友好交互，消除非 Node 环境下的错误迷惑。
+- [ ] **Task 7.3：社区精选主题预置与集市上架**
+  - 增加对热门开源 Slidev 主题样式的预置与内嵌支持；
+  - 更新版本号至 v1.0.0 正式版，打包提交思源官方集市。
+
+---
+
+## 6. 质量保障与测试验证策略
+
+1. **持续测试自动化**：
+   - 维持当前 18 个测试套件（覆盖编译器、解析器、AI、导出、协同等）的 100% 通过率；
+   - 针对 KaTeX、Mermaid 及块嵌入新增对应的单元测试（`tests/math-mermaid.test.ts`、`tests/embed-block.test.ts`）。
+2. **构建与打包校验**：
+   - 每次提交前严格执行 `npm run typecheck`、`npm test` 与 `npm run build`；
+   - 保证输出的 `dist/index.js`、`dist/kernel.js` 与 `package.zip` 无依赖泄露与路径解析异常。

@@ -2,7 +2,6 @@
   <div class="spm-section spm-section--page">
     <div class="spm-section-header">
       <span>幻灯片页面设置</span>
-      <span class="spm-section-sub">当前页 Frontmatter</span>
     </div>
 
     <!-- 版式选择 -->
@@ -18,8 +17,16 @@
     />
 
     <!-- 页面背景 -->
-    <div class="spm-field-group">
-      <label class="spm-field-label">页面背景 (Background)</label>
+    <div class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div class="spm-control-title">
+            <SlidevIcon name="palette" />
+            <span>页面背景 (Background)</span>
+          </div>
+          <span class="spm-control-desc">设置当前页特定底色或壁纸</span>
+        </div>
+      </div>
       <div class="spm-quick-chips">
         <button
           v-for="bg in presetBackgrounds"
@@ -34,22 +41,29 @@
       <input
         :value="pageBackground"
         class="spm-input"
-        placeholder="自定义颜色 (#1e1e24) 或资源路径"
+        placeholder="自定义颜色代码或资源路径"
         @input="$emit('update:pageBackground', ($event.target as HTMLInputElement).value)"
         @change="$emit('update:pageBackground', ($event.target as HTMLInputElement).value)"
       />
     </div>
 
     <!-- 演讲备忘提词 (Notes) -->
-    <div class="spm-field-group">
-      <div class="spm-field-label-row">
-        <label class="spm-field-label">演讲者提词 (Notes)</label>
+    <div class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div class="spm-control-title">
+            <SlidevIcon name="presenter" />
+            <span>演讲者提词 (Notes)</span>
+          </div>
+          <span class="spm-control-desc">仅在双屏演讲者视图可见</span>
+        </div>
         <button
-          class="spm-btn-text"
-          title="使用思源 AI 自动提炼提词"
+          class="spm-btn-text b3-tooltips b3-tooltips__w"
+          aria-label="调用思源 AI 根据本页内容自动提炼口播讲稿"
           @click="$emit('generateNotes')"
         >
-          🤖 AI 提词
+          <SlidevIcon name="sparkles" />
+          <span>AI 提词</span>
         </button>
       </div>
       <textarea
@@ -62,15 +76,29 @@
       ></textarea>
     </div>
 
-    <!-- 分页符快捷操作 -->
-    <div class="spm-action-group">
-      <div class="spm-action-group-title">分页快捷操作</div>
-      <div class="spm-action-buttons">
-        <button class="spm-btn-action" @click="$emit('insertDividerAfter')">
-          ➕ 在此后插入新页
+    <!-- 分页符快捷操作 (紧凑 2 列网格) -->
+    <div class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <span class="spm-control-title">分页快捷操作</span>
+        </div>
+      </div>
+      <div class="spm-action-grid">
+        <button
+          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          aria-label="在此分页符之后插入新的空白分页"
+          @click="$emit('insertDividerAfter')"
+        >
+          <SlidevIcon name="insert-below" />
+          <span>插入新页</span>
         </button>
-        <button class="spm-btn-action spm-btn-danger" @click="$emit('deleteDivider')">
-          🗑️ 删除此分页符
+        <button
+          class="spm-btn-action spm-btn-danger b3-tooltips b3-tooltips__s"
+          aria-label="彻底删除当前分页符（合并前后页面）"
+          @click="$emit('deleteDivider')"
+        >
+          <SlidevIcon name="trash" />
+          <span>删除此页</span>
         </button>
       </div>
     </div>
@@ -80,6 +108,7 @@
 <script setup lang="ts">
 import LayoutPicker from '@/ui/components/LayoutPicker.vue'
 import TransitionSelector from '@/ui/components/TransitionSelector.vue'
+import SlidevIcon from '@/ui/components/SlidevIcon.vue'
 
 defineProps<{
   pageLayout: string

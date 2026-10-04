@@ -2,13 +2,18 @@
   <div class="spm-section spm-section--doc">
     <div class="spm-section-header">
       <span>全局演示配置</span>
-      <span class="spm-section-sub">当前文档级 Slidev 参数</span>
     </div>
 
     <!-- 主题切换 -->
     <div class="spm-card-control">
-      <div class="spm-control-title">
-        <span>🎨 幻灯片主题 (Theme)</span>
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div class="spm-control-title">
+            <SlidevIcon name="palette" />
+            <span>幻灯片主题 (Theme)</span>
+          </div>
+          <span class="spm-control-desc">全局 Slidev 视觉设计范式</span>
+        </div>
       </div>
       <div class="spm-segmented-group">
         <button
@@ -37,8 +42,14 @@
 
     <!-- 画幅比例 -->
     <div class="spm-card-control">
-      <div class="spm-control-title">
-        <span>📐 画幅比例 (Aspect Ratio)</span>
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div class="spm-control-title">
+            <SlidevIcon name="ratio" />
+            <span>画幅比例 (Aspect Ratio)</span>
+          </div>
+          <span class="spm-control-desc">演讲屏幕投影宽高比</span>
+        </div>
       </div>
       <div class="spm-segmented-group">
         <button
@@ -67,8 +78,14 @@
 
     <!-- 全局默认转场 -->
     <div class="spm-card-control">
-      <div class="spm-control-title">
-        <span>↔ 全局默认转场</span>
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div class="spm-control-title">
+            <SlidevIcon name="transition" />
+            <span>全局默认转场</span>
+          </div>
+          <span class="spm-control-desc">页面切换过渡动效</span>
+        </div>
       </div>
       <div class="spm-quick-chips">
         <button
@@ -83,24 +100,57 @@
       </div>
     </div>
 
-    <!-- 全局快捷操作 -->
-    <div class="spm-action-group">
-      <div class="spm-action-group-title">演示全局操作</div>
-      <div class="spm-action-buttons">
-        <button class="spm-btn-action spm-btn-primary" @click="$emit('openBottomPreview')">
-          🖥️ 在下方分屏打开预览 (Alt+P)
+    <!-- 演示全局核心动作组 -->
+    <div class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <span class="spm-control-title">演示全局操作</span>
+        </div>
+      </div>
+      <div class="spm-action-grid">
+        <button
+          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          aria-label="在当前文档下方开启分屏同步预览 (Alt+P)"
+          @click="$emit('openBottomPreview')"
+        >
+          <SlidevIcon name="split-preview" />
+          <span>分屏预览</span>
         </button>
-        <button class="spm-btn-action" @click="$emit('openPresenter')">
-          🎤 打开双屏演讲者控制台 (Alt+M)
+
+        <button
+          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          aria-label="打开双屏演讲者控制台视窗 (Alt+M)"
+          @click="$emit('openPresenter')"
+        >
+          <SlidevIcon name="presenter" />
+          <span>演讲者视图</span>
         </button>
-        <button class="spm-btn-action" @click="$emit('aiAutoSplit')">
-          🤖 AI 智能大纲断页建议
+
+        <button
+          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          aria-label="智能分析长文本结构并给出大纲分页插入建议"
+          @click="$emit('aiAutoSplit')"
+        >
+          <SlidevIcon name="sparkles" />
+          <span>AI 智能分页</span>
         </button>
-        <button class="spm-btn-action" @click="$emit('exportHtml')">
-          📥 导出单文件 HTML
+
+        <button
+          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          aria-label="打包导出离线单文件 HTML 幻灯片"
+          @click="$emit('exportHtml')"
+        >
+          <SlidevIcon name="export-html" />
+          <span>导出 HTML</span>
         </button>
-        <button class="spm-btn-action" @click="$emit('exportPdf')">
-          🖨️ 导出 PDF 讲义
+
+        <button
+          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          aria-label="打印生成 16:9 高清演示 PDF 讲义"
+          @click="$emit('exportPdf')"
+        >
+          <SlidevIcon name="export-pdf" />
+          <span>导出 PDF</span>
         </button>
       </div>
     </div>
@@ -108,6 +158,8 @@
 </template>
 
 <script setup lang="ts">
+import SlidevIcon from '@/ui/components/SlidevIcon.vue'
+
 defineProps<{
   docTheme: string
   docAspectRatio: string
