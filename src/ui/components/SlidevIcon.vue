@@ -9,8 +9,16 @@
     stroke-linejoin="round"
     aria-hidden="true"
   >
+    <!-- 全屏放映 (Fullscreen) -->
+    <g v-if="name === 'fullscreen' || name === 'maximize'">
+      <polyline points="15 3 21 3 21 9" />
+      <polyline points="9 21 3 21 3 15" />
+      <polyline points="21 15 21 21 15 21" />
+      <polyline points="3 9 3 3 9 3" />
+    </g>
+
     <!-- 分屏预览 -->
-    <g v-if="name === 'split-preview'">
+    <g v-else-if="name === 'split-preview'">
       <rect x="3" y="3" width="18" height="18" rx="2" />
       <path d="M12 3v18" />
     </g>

@@ -264,6 +264,32 @@
       user-select: none;
     }
 
+    /* Lists (无序、有序与任务列表) */
+    .slide-block ul, .slide-block ol, .slide-list {
+      padding-left: 28px;
+      margin: 8px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .slide-block li, .slide-list-item {
+      font-size: 1.15rem;
+      line-height: 1.6;
+    }
+    .slide-task-item {
+      list-style: none;
+      margin-left: -20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .slide-task-item input[type="checkbox"] {
+      width: 1.15em;
+      height: 1.15em;
+      accent-color: var(--slide-accent);
+      cursor: pointer;
+    }
+
     /* Tables */
     .slide-table {
       width: 100%;
@@ -351,6 +377,32 @@
     .v-mark--box {
       border: 2px solid var(--slide-accent);
       padding: 1px 4px;
+    }
+
+    /* Keyboard Shortcuts <kbd> (拟物键帽质感) */
+    kbd {
+      display: inline-block;
+      padding: 2px 7px;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 0.85em;
+      font-weight: 600;
+      line-height: 1.25;
+      color: inherit;
+      background: rgba(125, 125, 125, 0.12);
+      border: 1px solid rgba(125, 125, 125, 0.3);
+      border-bottom-width: 2px;
+      border-radius: 5px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+      margin: 0 2px;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    [data-theme="dark"] kbd {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.22);
+      border-bottom-color: rgba(255, 255, 255, 0.38);
+      color: #f1f5f9;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
     }
 
     /* Ambient Glow (暗色极客环境光晕) */
@@ -481,27 +533,30 @@
       transform: translateY(-40px);
     }
 
-    /* Bottom Control Bar */
+    /* Bottom Control Bar (悬浮播放控制条) */
     .controls-bar {
       position: absolute;
-      bottom: 8px;
+      bottom: 12px;
       display: flex;
       align-items: center;
-      gap: 12px;
-      background: rgba(24, 24, 27, 0.75);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 6px 16px;
-      border-radius: 20px;
+      gap: 6px;
+      background: rgba(24, 24, 27, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 5px 12px;
+      border-radius: 24px;
       color: #f4f4f5;
       font-size: 0.85rem;
       z-index: 100;
-      opacity: 0.2;
-      transition: opacity 0.2s ease;
+      opacity: 0.25;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     }
 
     .controls-bar:hover {
       opacity: 1;
+      transform: translateY(-2px);
     }
 
     .controls-bar button {
@@ -509,20 +564,43 @@
       border: none;
       color: inherit;
       cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 0.85rem;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      transition: all 0.15s ease;
+      opacity: 0.85;
+      padding: 0;
     }
 
     .controls-bar button:hover {
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.16);
+      opacity: 1;
     }
 
     .controls-bar button:disabled {
-      opacity: 0.3;
+      opacity: 0.25;
       cursor: not-allowed;
+      background: transparent;
+    }
+
+    .controls-bar .controls-page-badge {
+      font-variant-numeric: tabular-nums;
+      padding: 0 6px;
+      font-size: 0.82rem;
+      opacity: 0.75;
+      font-weight: 500;
+      user-select: none;
+    }
+
+    .controls-bar .controls-divider {
+      width: 1px;
+      height: 14px;
+      background: rgba(255, 255, 255, 0.2);
+      margin: 0 4px;
     }
 
     /* Empty state */
@@ -750,12 +828,39 @@
 
       <!-- 悬浮播放控制条 -->
       <div class="controls-bar">
-        <button :disabled="currentPageIndex <= 1" @click="prevStepOrSlide" title="上一动作 / 上一页 (Left Arrow)">◀</button>
-        <span>{{ currentPageIndex }} / {{ totalPages || 1 }}</span>
-        <button :disabled="currentPageIndex >= totalPages && isMaxStep" @click="nextStepOrSlide" title="下一动作 / 下一页 (Right Arrow / Space)">▶</button>
-        <button @click="toggleTheme" title="切换明暗主题">🌓</button>
-        <button @click="openPresenter" title="打开双屏演讲者控制台 (P)">🎤</button>
-        <button @click="toggleFullScreen" title="全屏演示 (F)">⛶</button>
+        <button :disabled="currentPageIndex <= 1" @click="prevStepOrSlide" title="上一动作 / 上一页 (Left Arrow)">
+          <svg viewBox="0 0 24 24" width="1.15em" height="1.15em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <span class="controls-page-badge">{{ currentPageIndex }} / {{ totalPages || 1 }}</span>
+        <button :disabled="currentPageIndex >= totalPages && isMaxStep" @click="nextStepOrSlide" title="下一动作 / 下一页 (Right Arrow / Space)">
+          <svg viewBox="0 0 24 24" width="1.15em" height="1.15em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+        <span class="controls-divider"></span>
+        <button @click="toggleTheme" title="切换明暗主题">
+          <svg viewBox="0 0 24 24" width="1.15em" height="1.15em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"></path>
+          </svg>
+        </button>
+        <button @click="openPresenter" title="打开双屏演讲者控制台 (P)">
+          <svg viewBox="0 0 24 24" width="1.15em" height="1.15em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 3h20"></path>
+            <path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"></path>
+            <path d="m7 21 5-5 5 5"></path>
+          </svg>
+        </button>
+        <button @click="toggleFullScreen" title="全屏演示 (F)">
+          <svg viewBox="0 0 24 24" width="1.15em" height="1.15em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <polyline points="9 21 3 21 3 15"></polyline>
+            <polyline points="21 15 21 21 15 21"></polyline>
+            <polyline points="3 9 3 3 9 3"></polyline>
+          </svg>
+        </button>
       </div>
     </div>
   </div>
@@ -1029,33 +1134,67 @@
           return set
         }
 
+        const SAFE_INLINE_HTML_TAGS = new Set([
+          "kbd", "mark", "sub", "sup", "span", "br", "b", "i", "u", "s",
+          "del", "em", "strong", "code", "small", "abbr", "ruby", "rt", "rp", "v-mark"
+        ])
+
         function formatInlineMarkdown(text) {
           if (!text) return ""
-          let res = escapeHtml(text)
 
-          // 1. 手绘标记 <v-mark type="circle">text</v-mark>
-          res = res.replace(/&lt;v-mark(?:\s+type=&quot;([a-zA-Z-]+)&quot;)?&gt;([\s\S]*?)&lt;\/v-mark&gt;/g, (_, type, content) => {
-            const markType = type || "circle"
-            return `<mark class="v-mark v-mark--${markType}">${content}</mark>`
+          // 1. 抽取并保护安全内联 HTML 标签（避免被全局 escapeHtml 误伤转义）
+          const tokens = []
+          const tokenized = text.replace(/<\/?([a-zA-Z0-9_-]+)(?:\s+[^<>]*)?\/?>/g, (tagMatch, tagName) => {
+            const lowerTag = tagName.toLowerCase()
+            if (!SAFE_INLINE_HTML_TAGS.has(lowerTag)) {
+              return tagMatch
+            }
+            // 过滤 XSS 危险事件属性
+            if (/on\w+\s*=|javascript:/i.test(tagMatch)) {
+              return tagMatch
+            }
+            // 特殊处理 <v-mark type="...">
+            if (lowerTag === "v-mark") {
+              const typeMatch = tagMatch.match(/type=["']?([a-zA-Z-]+)["']?/)
+              const markType = typeMatch ? typeMatch[1] : "circle"
+              if (tagMatch.startsWith("</")) {
+                tokens.push("</mark>")
+              } else {
+                tokens.push(`<mark class="v-mark v-mark--${markType}">`)
+              }
+              return `%%SAFE_HTML_${tokens.length - 1}%%`
+            }
+            tokens.push(tagMatch)
+            return `%%SAFE_HTML_${tokens.length - 1}%%`
           })
 
-          // 2. 行内数学公式 $formula$
+          // 2. 对其余文本执行标准 HTML 转义
+          let res = escapeHtml(tokenized)
+
+          // 3. 处理标准 Markdown 行内标记
+          // 3.1 行内数学公式 $formula$
           res = res.replace(/\$([^$\n]+)\$/g, '<span class="katex-inline font-math"><em>$1</em></span>')
 
-          // 3. 链接 [title](url)
+          // 3.2 链接 [title](url)
           res = res.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="slidev-link">$1</a>')
 
-          // 4. 加粗 **text**
+          // 3.3 加粗 **text**
           res = res.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
 
-          // 5. 斜体 *text*
+          // 3.4 斜体 *text*
           res = res.replace(/\*(.*?)\*/g, "<em>$1</em>")
 
-          // 6. 删除线 ~~text~~
+          // 3.5 删除线 ~~text~~
           res = res.replace(/~~(.*?)~~/g, "<del>$1</del>")
 
-          // 7. 行内代码 `code`
+          // 3.6 行内代码 `code`
           res = res.replace(/`([^`]+)`/g, "<code>$1</code>")
+
+          // 4. 还原受保护的安全 HTML 标签
+          res = res.replace(/%%SAFE_HTML_(\d+)%%/g, (_, idxStr) => {
+            const idx = parseInt(idxStr, 10)
+            return tokens[idx] || ""
+          })
 
           return res
         }
@@ -1091,6 +1230,75 @@
           }).join("")
 
           return `<table class="slide-table">${theadHtml}<tbody>${tbodyRows}</tbody></table>`
+        }
+
+        // 渲染 Markdown 列表（支持单项、多项、有序/无序、任务清单及带有前导说明段落的混合结构）
+        function renderMarkdownList(md) {
+          const lines = md.split("\n")
+          const hasListItems = lines.some(line => /^(\s*)([-*+]|\d+\.)\s+/.test(line))
+          if (!hasListItems) return null
+
+          const leadLines = []
+          const items = []
+          let isOrdered = false
+
+          for (const line of lines) {
+            if (!line.trim()) continue
+
+            const taskMatch = line.match(/^(\s*)[-*+]\s+\[([ xX])\]\s+(.*)$/)
+            if (taskMatch) {
+              items.push({
+                type: 'task',
+                checked: taskMatch[2].toLowerCase() === 'x',
+                text: taskMatch[3]
+              })
+              continue
+            }
+
+            const unorderedMatch = line.match(/^(\s*)[-*+]\s+(.*)$/)
+            if (unorderedMatch) {
+              items.push({
+                type: 'unordered',
+                text: unorderedMatch[2]
+              })
+              continue
+            }
+
+            const orderedMatch = line.match(/^(\s*)\d+\.\s+(.*)$/)
+            if (orderedMatch) {
+              if (items.length === 0) isOrdered = true
+              items.push({
+                type: 'ordered',
+                text: orderedMatch[2]
+              })
+              continue
+            }
+
+            if (items.length > 0) {
+              items[items.length - 1].text += ' ' + line.trim()
+            } else {
+              leadLines.push(line.trim())
+            }
+          }
+
+          if (items.length === 0) return null
+
+          const listTag = isOrdered ? 'ol' : 'ul'
+          const listClass = isOrdered ? 'slide-list slide-list--ordered' : 'slide-list slide-list--unordered'
+          const itemsHtml = items.map(item => {
+            const formatted = formatInlineMarkdown(item.text)
+            if (item.type === 'task') {
+              const checkedAttr = item.checked ? ' checked=""' : ''
+              return `<li class="slide-list-item slide-task-item"><label><input type="checkbox" disabled=""${checkedAttr}/> <span>${formatted}</span></label></li>`
+            }
+            return `<li class="slide-list-item">${formatted}</li>`
+          }).join('\n')
+
+          const leadHtml = leadLines.length > 0
+            ? `<p>${formatInlineMarkdown(leadLines.join(' '))}</p>\n`
+            : ''
+
+          return `${leadHtml}<${listTag} class="${listClass}">\n${itemsHtml}\n</${listTag}>`
         }
 
         // 高保真 Markdown / 块级转换
@@ -1156,35 +1364,24 @@
             return renderMarkdownTable(tableLines)
           }
 
-          // 7. 任务列表项 - [ ] 或 - [x]
-          const taskMatch = md.match(/^[-*+]\s+\[([ xX])\]\s+(.*)$/)
-          if (taskMatch) {
-            const isChecked = taskMatch[1].toLowerCase() === "x"
-            const taskText = formatInlineMarkdown(taskMatch[2])
-            const checkedAttr = isChecked ? ' checked=""' : ""
-            return `<div class="slide-list-item slide-task-item"><label><input type="checkbox" disabled=""${checkedAttr}/> <span>${taskText}</span></label></div>`
-          }
-
-          // 8. 引用转换
+          // 7. 引用转换
           if (md.startsWith("> ")) {
             return `<blockquote><p>${formatInlineMarkdown(md.slice(2))}</p></blockquote>`
           }
 
-          // 9. 图片语法 ![alt](src)
+          // 8. 图片语法 ![alt](src)
           const imgMatch = md.match(/^!\[(.*?)\]\((.*?)\)$/)
           if (imgMatch) {
             return `<img alt="${escapeHtml(imgMatch[1])}" src="${imgMatch[2]}" />`
           }
 
-          // 10. 列表项
-          if (/^[-*+]\s+/.test(md)) {
-            return `<li>${formatInlineMarkdown(md.replace(/^[-*+]\s+/, ""))}</li>`
-          }
-          if (/^\d+\.\s+/.test(md)) {
-            return `<li>${formatInlineMarkdown(md.replace(/^\d+\.\s+/, ""))}</li>`
+          // 9. 任务列表与有序/无序列表（支持单项、多项完整渲染）
+          const listHtml = renderMarkdownList(md)
+          if (listHtml) {
+            return listHtml
           }
 
-          // 11. 普通段落
+          // 10. 普通段落
           return `<p>${formatInlineMarkdown(md)}</p>`
         }
 

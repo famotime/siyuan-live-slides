@@ -28,8 +28,8 @@ describe("MarkdownRenderer (导出模块与沙箱通用高保真渲染引擎)", 
     expect(rangeSet.has(8)).toBe(true)
   })
 
-  it("formatInlineMarkdown 应支持加粗、斜体、删除线、行内代码、数学公式、链接与 v-mark", () => {
-    const raw = "这是 **粗体**，*斜体*，~~删除线~~，`code`，公式 $E = mc^2$，[链接](https://siyuan.io)，<v-mark type=\"underline\">重点</v-mark>"
+  it("formatInlineMarkdown 应支持加粗、斜体、删除线、行内代码、数学公式、链接、v-mark 以及通用安全 HTML 标签 (如 kbd、sub、sup)", () => {
+    const raw = "这是 **粗体**，*斜体*，~~删除线~~，`code`，公式 $E = mc^2$，[链接](https://siyuan.io)，<v-mark type=\"underline\">重点</v-mark>，快捷键 <kbd>right</kbd> / <kbd>space</kbd>，化学式 H<sub>2</sub>O"
     const formatted = formatInlineMarkdown(raw)
     expect(formatted).toContain("<strong>粗体</strong>")
     expect(formatted).toContain("<em>斜体</em>")
@@ -38,6 +38,9 @@ describe("MarkdownRenderer (导出模块与沙箱通用高保真渲染引擎)", 
     expect(formatted).toContain('class="katex-inline font-math"')
     expect(formatted).toContain('href="https://siyuan.io"')
     expect(formatted).toContain('<mark class="v-mark v-mark--underline">重点</mark>')
+    expect(formatted).toContain("<kbd>right</kbd>")
+    expect(formatted).toContain("<kbd>space</kbd>")
+    expect(formatted).toContain("H<sub>2</sub>O")
   })
 
   it("renderMarkdownTable 应将 Markdown 表格转换为带对齐样式的 HTML table", () => {
@@ -110,9 +113,19 @@ describe("MarkdownRenderer (导出模块与沙箱通用高保真渲染引擎)", 
     }
     expect(convertBlockToHtml(imgBlock)).toContain('<img alt="架构图" src="assets/arch.png"')
 
-    // 无序列表与有序列表
+    // 无序列表与有序列表（单项与多行列表）
     expect(convertBlockToHtml({ id: "b7", rawMarkdown: "- 列表项 1" })).toContain("<li>列表项 1</li>")
     expect(convertBlockToHtml({ id: "b8", rawMarkdown: "1. 排序项 1" })).toContain("<li>排序项 1</li>")
+
+    const multiListBlock: ISlidevBlockItem = {
+      id: "b_multi",
+      rawMarkdown: "- 📝 **Text-based** - Markdown\n- 🎨 **Themable** - Themes\n- 🧑‍💻 **Developer Friendly** - Code",
+    }
+    const multiHtml = convertBlockToHtml(multiListBlock)
+    expect(multiHtml).toContain("<strong>Text-based</strong>")
+    expect(multiHtml).toContain("<strong>Themable</strong>")
+    expect(multiHtml).toContain("<strong>Developer Friendly</strong>")
+    expect(multiHtml).toContain("<ul class=\"pdf-list pdf-list--unordered\">")
 
     // 已解析的思源引用 HTML 直接保留
     const refBlock: ISlidevBlockItem = {

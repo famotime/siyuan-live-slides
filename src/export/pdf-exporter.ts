@@ -177,6 +177,53 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
     .pdf-list-item {
       padding-left: 20px;
     }
+    .pdf-list {
+      padding-left: 24px;
+      margin: 8px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .pdf-list li {
+      font-size: 1.15rem;
+      line-height: 1.6;
+    }
+    .pdf-task-item {
+      list-style: none;
+      margin-left: -20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pdf-task-item input[type="checkbox"] {
+      width: 1.15em;
+      height: 1.15em;
+      cursor: pointer;
+    }
+    kbd {
+      display: inline-block;
+      padding: 2px 7px;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 0.85em;
+      font-weight: 600;
+      line-height: 1.25;
+      color: inherit;
+      background: rgba(125, 125, 125, 0.12);
+      border: 1px solid rgba(125, 125, 125, 0.35);
+      border-bottom-width: 2px;
+      border-radius: 5px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+      margin: 0 2px;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    .theme-dark kbd {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.25);
+      border-bottom-color: rgba(255, 255, 255, 0.4);
+      color: #f1f5f9;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
     .pdf-block--ref {
       background: #f8fafc;
       border: 1px solid #cbd5e1;

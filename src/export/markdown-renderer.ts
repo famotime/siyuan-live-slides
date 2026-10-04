@@ -47,35 +47,73 @@ export function parseShikiRanges(shikiPattern?: string): Set<number> | "all" {
 }
 
 /**
- * 行内 Markdown 转义与渲染 (加粗、斜体、删除线、行内代码、数学公式、链接、v-mark手绘圈选)
+/**
+ * 允许在 Markdown 行内安全放行的通用语义 HTML 标签白名单
+ */
+export const SAFE_INLINE_HTML_TAGS = new Set([
+  "kbd", "mark", "sub", "sup", "span", "br", "b", "i", "u", "s",
+  "del", "em", "strong", "code", "small", "abbr", "ruby", "rt", "rp", "v-mark",
+])
+
+/**
+ * 行内 Markdown 转义与渲染 (支持加粗、斜体、删除线、行内代码、数学公式、链接、v-mark 以及安全语义 HTML 标签如 kbd/sub/sup 等)
  */
 export function formatInlineMarkdown(text: string): string {
   if (!text) return ""
-  let res = escapeHtml(text)
 
-  // 1. 手绘标记 <v-mark type="circle">text</v-mark> 或 <v-mark>text</v-mark>
-  res = res.replace(/&lt;v-mark(?:\s+type=&quot;([a-zA-Z-]+)&quot;)?&gt;([\s\S]*?)&lt;\/v-mark&gt;/g, (_, type, content) => {
-    const markType = type || "circle"
-    return `<mark class="v-mark v-mark--${markType}">${content}</mark>`
+  // 1. 抽取并保护安全内联 HTML 标签（避免被全局 escapeHtml 误伤转义）
+  const tokens: string[] = []
+  const tokenized = text.replace(/<\/?([a-zA-Z0-9_-]+)(?:\s+[^<>]*)?\/?>/g, (tagMatch, tagName) => {
+    const lowerTag = tagName.toLowerCase()
+    if (!SAFE_INLINE_HTML_TAGS.has(lowerTag)) {
+      return tagMatch
+    }
+    // 过滤 XSS 危险事件属性
+    if (/on\w+\s*=|javascript:/i.test(tagMatch)) {
+      return tagMatch
+    }
+    // 特殊处理 <v-mark type="...">
+    if (lowerTag === "v-mark") {
+      const typeMatch = tagMatch.match(/type=["']?([a-zA-Z-]+)["']?/)
+      const markType = typeMatch ? typeMatch[1] : "circle"
+      if (tagMatch.startsWith("</")) {
+        tokens.push("</mark>")
+      } else {
+        tokens.push(`<mark class="v-mark v-mark--${markType}">`)
+      }
+      return `%%SAFE_HTML_${tokens.length - 1}%%`
+    }
+    tokens.push(tagMatch)
+    return `%%SAFE_HTML_${tokens.length - 1}%%`
   })
 
-  // 2. 行内数学公式 $formula$
+  // 2. 对其余文本执行标准 HTML 转义
+  let res = escapeHtml(tokenized)
+
+  // 3. 处理标准 Markdown 行内语法
+  // 3.1 行内数学公式 $formula$
   res = res.replace(/\$([^$\n]+)\$/g, '<span class="katex-inline font-math"><em>$1</em></span>')
 
-  // 3. 链接 [title](url)
+  // 3.2 链接 [title](url)
   res = res.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="slidev-link">$1</a>')
 
-  // 4. 加粗 **text**
+  // 3.3 加粗 **text**
   res = res.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
 
-  // 5. 斜体 *text*
+  // 3.4 斜体 *text*
   res = res.replace(/\*(.*?)\*/g, "<em>$1</em>")
 
-  // 6. 删除线 ~~text~~
+  // 3.5 删除线 ~~text~~
   res = res.replace(/~~(.*?)~~/g, "<del>$1</del>")
 
-  // 7. 行内代码 `code`
+  // 3.6 行内代码 `code`
   res = res.replace(/`([^`]+)`/g, "<code>$1</code>")
+
+  // 4. 还原受保护的安全 HTML 标签
+  res = res.replace(/%%SAFE_HTML_(\d+)%%/g, (_, idxStr) => {
+    const idx = parseInt(idxStr, 10)
+    return tokens[idx] || ""
+  })
 
   return res
 }
@@ -126,6 +164,85 @@ export interface IBlockRenderOptions {
   imageClassName?: string
   tableClassName?: string
   calloutClassName?: string
+  listClassName?: string
+}
+
+/**
+ * 渲染 Markdown 列表（支持单项、多项、有序/无序、任务清单及带有前导说明段落的混合结构）
+ */
+export function renderMarkdownList(
+  md: string,
+  options?: IBlockRenderOptions,
+): string | null {
+  const lines = md.split("\n")
+  const hasListItems = lines.some(line => /^(\s*)([-*+]|\d+\.)\s+/.test(line))
+  if (!hasListItems) return null
+
+  const leadLines: string[] = []
+  const items: Array<{
+    type: "unordered" | "ordered" | "task"
+    checked?: boolean
+    text: string
+  }> = []
+  let isOrdered = false
+
+  for (const line of lines) {
+    if (!line.trim()) continue
+
+    const taskMatch = line.match(/^(\s*)[-*+]\s+\[([ xX])\]\s+(.*)$/)
+    if (taskMatch) {
+      items.push({
+        type: "task",
+        checked: taskMatch[2].toLowerCase() === "x",
+        text: taskMatch[3],
+      })
+      continue
+    }
+
+    const unorderedMatch = line.match(/^(\s*)[-*+]\s+(.*)$/)
+    if (unorderedMatch) {
+      items.push({
+        type: "unordered",
+        text: unorderedMatch[2],
+      })
+      continue
+    }
+
+    const orderedMatch = line.match(/^(\s*)\d+\.\s+(.*)$/)
+    if (orderedMatch) {
+      if (items.length === 0) isOrdered = true
+      items.push({
+        type: "ordered",
+        text: orderedMatch[2],
+      })
+      continue
+    }
+
+    if (items.length > 0) {
+      items[items.length - 1].text += " " + line.trim()
+    } else {
+      leadLines.push(line.trim())
+    }
+  }
+
+  if (items.length === 0) return null
+
+  const listTag = isOrdered ? "ol" : "ul"
+  const baseListClass = options?.listClassName || (isOrdered ? "pdf-list pdf-list--ordered" : "pdf-list pdf-list--unordered")
+  const itemsHtml = items.map(item => {
+    const formatted = formatInlineMarkdown(item.text)
+    if (item.type === "task") {
+      const checkedAttr = item.checked ? ' checked=""' : ""
+      return `<li class="pdf-task-item"><label><input type="checkbox" disabled=""${checkedAttr}/> <span>${formatted}</span></label></li>`
+    }
+    return `<li>${formatted}</li>`
+  }).join("\n")
+
+  const leadHtml = leadLines.length > 0
+    ? `<p>${formatInlineMarkdown(leadLines.join(" "))}</p>\n`
+    : ""
+
+  return `${leadHtml}<${listTag} class="${baseListClass}">\n${itemsHtml}\n</${listTag}>`
 }
 
 /**
@@ -237,28 +354,13 @@ export function convertBlockToHtml(
     return `<div class="${containerClass} ${containerClass}--image"${motionStyle}><img alt="${escapeHtml(imgMatch[1])}" src="${imgMatch[2]}" class="${imgClass}" /></div>`
   }
 
-  // 9. 任务列表项 - [ ] 或 - [x]
-  const taskMatch = md.match(/^[-*+]\s+\[([ xX])\]\s+(.*)$/)
-  if (taskMatch) {
-    const isChecked = taskMatch[1].toLowerCase() === "x"
-    const taskText = formatInlineMarkdown(taskMatch[2])
-    const checkedAttr = isChecked ? ' checked=""' : ""
-    return `<div class="${containerClass} pdf-list-item pdf-task-item"${motionStyle}><label><input type="checkbox" disabled=""${checkedAttr}/> <span>${taskText}</span></label></div>`
+  // 9. 任务列表与有序/无序列表（支持单项、多项及带导语的列表）
+  const listHtml = renderMarkdownList(md, options)
+  if (listHtml) {
+    return `<div class="${containerClass} pdf-list-item"${motionStyle}>${listHtml}</div>`
   }
 
-  // 10. 无序列表项
-  if (/^[-*+]\s+/.test(md)) {
-    const listText = md.replace(/^[-*+]\s+/, "")
-    return `<div class="${containerClass} pdf-list-item"${motionStyle}><li>${formatInlineMarkdown(listText)}</li></div>`
-  }
-
-  // 11. 有序列表项
-  if (/^\d+\.\s+/.test(md)) {
-    const listText = md.replace(/^\d+\.\s+/, "")
-    return `<div class="${containerClass} pdf-list-item pdf-list-item--ordered"${motionStyle}><li>${formatInlineMarkdown(listText)}</li></div>`
-  }
-
-  // 12. 普通段落
+  // 10. 普通段落
   return `<div class="${containerClass}"${motionStyle}><p>${formatInlineMarkdown(md)}</p></div>`
 }
 

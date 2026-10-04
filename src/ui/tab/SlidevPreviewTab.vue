@@ -105,7 +105,7 @@
           aria-label="全屏放映"
           @click="onFullscreen"
         >
-          <SlidevIcon name="split-preview" />
+          <SlidevIcon name="fullscreen" />
         </button>
       </div>
     </div>
