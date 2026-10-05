@@ -17,25 +17,15 @@
       </div>
       <div class="spm-segmented-group">
         <button
-          class="spm-segmented-item"
-          :class="{ active: docTheme === 'default' }"
-          @click="$emit('update:docTheme', 'default')"
+          v-for="item in themeOptions"
+          :key="item.value"
+          class="spm-segmented-item b3-tooltips b3-tooltips__s"
+          :class="{ active: docTheme === item.value }"
+          :aria-label="item.desc"
+          :title="item.desc"
+          @click="$emit('update:docTheme', item.value)"
         >
-          默认 default
-        </button>
-        <button
-          class="spm-segmented-item"
-          :class="{ active: docTheme === 'seriph' }"
-          @click="$emit('update:docTheme', 'seriph')"
-        >
-          优雅 seriph
-        </button>
-        <button
-          class="spm-segmented-item"
-          :class="{ active: docTheme === 'apple-basic' }"
-          @click="$emit('update:docTheme', 'apple-basic')"
-        >
-          极简 apple
+          {{ item.label }}
         </button>
       </div>
     </div>
@@ -84,20 +74,14 @@
             <SlidevIcon name="transition" />
             <span>全局默认转场</span>
           </div>
-          <span class="spm-control-desc">页面切换过渡动效</span>
+          <span class="spm-control-desc">页面切换过渡动效（未单设转场的页面将继承此动效）</span>
         </div>
       </div>
-      <div class="spm-quick-chips">
-        <button
-          v-for="trans in ['slide-left', 'fade', 'zoom', 'slide-up']"
-          :key="trans"
-          class="spm-chip"
-          :class="{ active: docDefaultTransition === trans }"
-          @click="$emit('update:docDefaultTransition', trans)"
-        >
-          {{ trans }}
-        </button>
-      </div>
+      <TransitionSelector
+        :model-value="docDefaultTransition"
+        :hide-header="true"
+        @change="$emit('update:docDefaultTransition', $event)"
+      />
     </div>
 
     <!-- 本地网络伺服预览 (Web Serve) -->
@@ -199,10 +183,29 @@
 <script setup lang="ts">
 import { inject } from 'vue'
 import SlidevIcon from '@/ui/components/SlidevIcon.vue'
+import TransitionSelector from '@/ui/components/TransitionSelector.vue'
 import { globalSettingsState, setRuntimeSettings } from '@/settings'
 
 const plugin = inject<any>('plugin')
 const globalSettings = globalSettingsState
+
+const themeOptions = [
+  {
+    value: 'default',
+    label: '默认 default',
+    desc: '官方默认科技风：现代无衬线排版与清新代码语法高亮，通用汇报与技术分享首选',
+  },
+  {
+    value: 'seriph',
+    label: '优雅 seriph',
+    desc: '典雅学术衬线风：书卷学术质感、衬线字体典雅庄重，适合学术论文、人文讲座与深度阅读',
+  },
+  {
+    value: 'apple-basic',
+    label: '极简 apple',
+    desc: '苹果发布会极简风：大字号、高对比度与极致留白，适合产品发布、方案演讲与纯粹视觉呈现',
+  },
+]
 
 function onToggleWebServe(enabled: boolean) {
   setRuntimeSettings({ enableWebServeJump: enabled })

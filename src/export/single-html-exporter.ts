@@ -61,6 +61,114 @@ export function buildStandaloneHtml(
       --slide-text: #e2e8f0;
       --slide-accent: #60a5fa;
     }
+
+    /* 1. 默认科技主题 Default */
+    [data-slidev-theme="default"],
+    .slidev-theme-default {
+      --slide-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+      --slide-accent: #10b981;
+    }
+    [data-theme="light"][data-slidev-theme="default"],
+    [data-theme="light"] .slidev-theme-default {
+      --slide-bg: #ffffff;
+      --slide-text: #1e293b;
+      --slide-accent: #059669;
+    }
+    [data-theme="dark"][data-slidev-theme="default"],
+    [data-theme="dark"] .slidev-theme-default {
+      --slide-bg: #121214;
+      --slide-text: #e2e8f0;
+      --slide-accent: #34d399;
+    }
+    .slidev-theme-default .layout-cover h1 {
+      background: linear-gradient(135deg, #10b981, #06b6d4) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+    }
+
+    /* 2. 优雅衬线主题 Seriph */
+    [data-slidev-theme="seriph"],
+    .slidev-theme-seriph {
+      --slide-font: "PT Serif", "Charter", "Georgia", "Cambria", "Times New Roman", "Source Han Serif SC", "Noto Serif SC", "Songti SC", "SimSun", serif;
+      --slide-accent: #b45309;
+      letter-spacing: 0.015em;
+    }
+    [data-theme="light"][data-slidev-theme="seriph"],
+    [data-theme="light"] .slidev-theme-seriph {
+      --slide-bg: #fdfbf7;
+      --slide-text: #2a2521;
+      --slide-accent: #b45309;
+    }
+    [data-theme="dark"][data-slidev-theme="seriph"],
+    [data-theme="dark"] .slidev-theme-seriph {
+      --slide-bg: #1c1a17;
+      --slide-text: #e8e3d9;
+      --slide-accent: #f59e0b;
+    }
+    .slidev-theme-seriph,
+    .slidev-theme-seriph .slide-content {
+      font-family: var(--slide-font) !important;
+      line-height: 1.72;
+    }
+    .slidev-theme-seriph h1,
+    .slidev-theme-seriph h2,
+    .slidev-theme-seriph h3 {
+      font-family: var(--slide-font) !important;
+      letter-spacing: 0.025em;
+      font-weight: 700;
+    }
+    .slidev-theme-seriph .layout-cover h1 {
+      background: none !important;
+      -webkit-background-clip: initial !important;
+      -webkit-text-fill-color: initial !important;
+      color: var(--slide-accent) !important;
+      font-size: 3.4rem !important;
+      border-bottom: 2px solid var(--slide-accent);
+      display: inline-block;
+      padding-bottom: 10px;
+    }
+
+    /* 3. 极简发布会主题 Apple Basic */
+    [data-slidev-theme="apple-basic"],
+    .slidev-theme-apple-basic {
+      --slide-font: -apple-system, "SF Pro Display", "SF Pro Text", BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+      --slide-accent: #0071e3;
+    }
+    [data-theme="light"][data-slidev-theme="apple-basic"],
+    [data-theme="light"] .slidev-theme-apple-basic {
+      --slide-bg: #ffffff;
+      --slide-text: #1d1d1f;
+      --slide-accent: #0071e3;
+    }
+    [data-theme="dark"][data-slidev-theme="apple-basic"],
+    [data-theme="dark"] .slidev-theme-apple-basic {
+      --slide-bg: #000000;
+      --slide-text: #f5f5f7;
+      --slide-accent: #2997ff;
+    }
+    .slidev-theme-apple-basic,
+    .slidev-theme-apple-basic .slide-content {
+      font-family: var(--slide-font) !important;
+    }
+    .slidev-theme-apple-basic h1,
+    .slidev-theme-apple-basic h2,
+    .slidev-theme-apple-basic h3 {
+      letter-spacing: -0.035em;
+      font-weight: 800;
+    }
+    .slidev-theme-apple-basic .layout-cover h1 {
+      background: none !important;
+      -webkit-background-clip: initial !important;
+      -webkit-text-fill-color: initial !important;
+      color: var(--slide-text) !important;
+      font-size: 3.8rem !important;
+      letter-spacing: -0.04em !important;
+    }
+    .slidev-theme-apple-basic .layout-cover p {
+      color: #86868b !important;
+      font-size: 1.35rem !important;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       width: 100%; height: 100%; overflow: hidden;
@@ -343,7 +451,7 @@ export function buildStandaloneHtml(
 </head>
 <body>
   <div id="app">
-    <div class="slide-viewport" id="viewport">
+    <div class="slide-viewport slidev-theme-${doc.config.theme || 'default'}" id="viewport" data-slidev-theme="${doc.config.theme || 'default'}">
       <div class="slide-content" id="slide-container"></div>
     </div>
     <div class="controls">

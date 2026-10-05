@@ -1,12 +1,14 @@
 <template>
-  <div class="spm-transition-selector">
-    <div class="spm-transition-selector__header">转场动效</div>
+  <div class="spm-transition-selector" :class="{ 'spm-transition-selector--no-header': hideHeader }">
+    <div v-if="!hideHeader" class="spm-transition-selector__header">{{ title || '转场动效' }}</div>
     <div class="spm-transition-list">
       <div
         v-for="trans in transitions"
         :key="trans.name"
-        class="spm-transition-item"
+        class="spm-transition-item b3-tooltips b3-tooltips__s"
         :class="{ active: modelValue === trans.name }"
+        :aria-label="trans.desc"
+        :title="trans.desc"
         @click="selectTransition(trans.name)"
       >
         <div class="spm-transition-meta">
@@ -23,10 +25,10 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue'
-
 const props = defineProps<{
   modelValue?: string
+  hideHeader?: boolean
+  title?: string
 }>()
 
 const emit = defineEmits<{
@@ -35,11 +37,11 @@ const emit = defineEmits<{
 }>()
 
 const transitions = [
-  { name: 'slide-left', label: '向左滑入' },
-  { name: 'slide-right', label: '向右滑入' },
-  { name: 'slide-up', label: '向上推入' },
-  { name: 'fade', label: '淡入淡出' },
-  { name: 'zoom', label: '缩放进入' },
+  { name: 'slide-left', label: '向左滑入', desc: '向左滑入 (slide-left)：页面从右侧向左平滑推入，最通用标准的横向幻灯片动效' },
+  { name: 'slide-right', label: '向右滑入', desc: '向右滑入 (slide-right)：页面从左侧向右平滑推入，适合倒序回退或逆向章节叙述' },
+  { name: 'slide-up', label: '向上推入', desc: '向上推入 (slide-up)：页面从底部向上平滑推入，适合纵向展开或纵深层级展示' },
+  { name: 'fade', label: '淡入淡出', desc: '淡入淡出 (fade)：透明度平滑渐变过度，典雅柔和，适合学术长篇与沉浸叙事' },
+  { name: 'zoom', label: '缩放进入', desc: '缩放进入 (zoom)：页面由中心向外平滑放大，富有动感冲击力，适合聚焦重点' },
 ]
 
 function selectTransition(name: string) {
@@ -51,6 +53,10 @@ function selectTransition(name: string) {
 <style scoped>
 .spm-transition-selector {
   padding: 8px;
+}
+
+.spm-transition-selector.spm-transition-selector--no-header {
+  padding: 0;
 }
 
 .spm-transition-selector__header {
@@ -73,8 +79,8 @@ function selectTransition(name: string) {
   padding: 6px 8px;
   border-radius: 4px;
   cursor: pointer;
-  border: 1px solid transparent;
-  background: var(--b3-theme-surface, #f8fafc);
+  border: 1px solid var(--b3-border-color, #e2e8f0);
+  background: var(--b3-theme-background, #ffffff);
   transition: all 0.15s ease;
 }
 
@@ -84,7 +90,7 @@ function selectTransition(name: string) {
 }
 
 .spm-transition-item.active {
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(59, 130, 246, 0.08);
   border-color: #3b82f6;
   color: #3b82f6;
   font-weight: 600;
@@ -105,7 +111,7 @@ function selectTransition(name: string) {
 .spm-transition-preview-box {
   width: 24px;
   height: 18px;
-  background: #e2e8f0;
+  background: var(--b3-border-color, #e2e8f0);
   border-radius: 2px;
   overflow: hidden;
   position: relative;
