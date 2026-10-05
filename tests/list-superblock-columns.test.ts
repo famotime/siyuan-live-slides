@@ -11,7 +11,10 @@ import {
 } from "../src/compiler/superblock-scanner"
 import { DocumentCompilerService } from "../src/compiler/document-compiler"
 import { buildSlidevDocument } from "../src/compiler/slidev-ast-builder"
-import { renderSlideBlocksToHtml } from "../src/export/markdown-renderer"
+import {
+  renderMarkdownList,
+  renderSlideBlocksToHtml,
+} from "../src/export/markdown-renderer"
 import type { ISiYuanBlockNode } from "../src/types/slidev-protocol"
 import { ATTR_PAGE_LAYOUT, ATTR_ELEM_SLOT } from "../src/types/slidev-protocol"
 
@@ -953,5 +956,79 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       expect(mockSetAttrs).toHaveBeenCalledWith("sub-it-3", { [ATTR_ELEM_SLOT]: "col-3" })
     })
   })
+
+  describe("6. 超级块分栏去除圆点与列表项标题 (###) 渲染支持", () => {
+    it("列表项包含 ### 三级标题时，应正确渲染为 h3 标签，不残留 ### 字面量，并格式化后续正文", () => {
+      const md = `* ### 核心架构
+  基于分布式微服务设计，解耦业务逻辑。
+* ### 性能指标
+  P99 耗时低于 15ms。`
+
+      const html = renderMarkdownList(md)
+      expect(html).not.toBeNull()
+      expect(html).toContain('<h3 class="slide-list-item-title">核心架构</h3>')
+      expect(html).toContain('<p class="slide-list-item-desc">基于分布式微服务设计，解耦业务逻辑。</p>')
+      expect(html).toContain('<h3 class="slide-list-item-title">性能指标</h3>')
+      expect(html).toContain('<p class="slide-list-item-desc">P99 耗时低于 15ms。</p>')
+      expect(html).not.toContain("###")
+    })
+
+    it("单行列表项 `- ### 三级标题` 应正确渲染为 h3 标题", () => {
+      const md = `- ### 极简微服务
+- ### 响应式前端`
+
+      const html = renderMarkdownList(md)
+      expect(html).not.toBeNull()
+      expect(html).toContain('<h3 class="slide-list-item-title">极简微服务</h3>')
+      expect(html).toContain('<h3 class="slide-list-item-title">响应式前端</h3>')
+      expect(html).not.toContain("###")
+    })
+
+    it("有序列表包含不同级别标题时，应分别渲染为对应级别的 h 标签", () => {
+      const md = `1. ## 一级规划：系统拓扑
+   第一阶段部署
+2. #### 四级细化：具体参数
+   超时时间设置为 3000ms`
+
+      const html = renderMarkdownList(md)
+      expect(html).not.toBeNull()
+      expect(html).toContain('<h2 class="slide-list-item-title">一级规划：系统拓扑</h2>')
+      expect(html).toContain('<h4 class="slide-list-item-title">四级细化：具体参数</h4>')
+      expect(html).not.toContain("##")
+      expect(html).not.toContain("####")
+    })
+
+    it("单文件 HTML 导出中应包含分栏布局去除列表圆点与列表标题排版样式", async () => {
+      const { buildStandaloneHtml } = await import("../src/export/single-html-exporter")
+      const testDoc = {
+        docId: "doc-no-bullets-test",
+        title: "No Bullets Test",
+        config: { theme: "default", aspectRatio: "16/9", highlighter: "shiki" as const, defaultTransition: "slide-left", colorSchema: "dark" as const },
+        slides: [
+          {
+            pageIndex: 1,
+            startBlockId: "p1",
+            frontmatter: { layout: "three-cols-header" },
+            notes: "",
+            blocks: [
+              { id: "h1", type: "h", content: "## 分栏卡片", rawMarkdown: "## 分栏卡片", slot: "header" },
+              { id: "c1", type: "i", content: "* ### 第一栏\n  说明", rawMarkdown: "* ### 第一栏\n  说明", slot: "col-1" },
+            ],
+            rawMarkdown: "## 分栏卡片",
+          },
+        ],
+        fullMarkdown: "",
+        assetMap: {},
+      }
+
+      const html = await buildStandaloneHtml(testDoc)
+      expect(html).toContain(".layout-three-cols ul")
+      expect(html).toContain(".three-cols-col ul")
+      expect(html).toContain("list-style: none !important")
+      expect(html).toContain("padding-left: 0 !important")
+      expect(html).toContain(".slide-list-item-title")
+    })
+  })
 })
+
 

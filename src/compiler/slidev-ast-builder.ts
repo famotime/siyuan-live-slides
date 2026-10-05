@@ -437,13 +437,16 @@ export function distributeThreeColumns<
 
     // 6.1 Markdown 列表项 (- item / 1. item)
     const lines = text.split(/\r?\n/)
-    const itemLines = lines.filter(l => /^[ \t]*[-*+]\s+|^[ \t]*\d+\.\s+/.test(l))
-    if (itemLines.length >= 3) {
-      const c1 = Math.ceil(itemLines.length / 3)
-      const c2 = Math.ceil((itemLines.length - c1) / 2)
-      const items1 = itemLines.slice(0, c1).join("\n")
-      const items2 = itemLines.slice(c1, c1 + c2).join("\n")
-      const items3 = itemLines.slice(c1 + c2).join("\n")
+    const itemStartIndices: number[] = []
+    for (let i = 0; i < lines.length; i++) {
+      if (/^[ \t]*[-*+]\s+|^[ \t]*\d+\.\s+/.test(lines[i])) itemStartIndices.push(i)
+    }
+    if (itemStartIndices.length >= 3) {
+      const c1 = Math.ceil(itemStartIndices.length / 3)
+      const c2 = Math.ceil((itemStartIndices.length - c1) / 2)
+      const items1 = lines.slice(itemStartIndices[0], itemStartIndices[c1]).join("\n")
+      const items2 = lines.slice(itemStartIndices[c1], itemStartIndices[c1 + c2]).join("\n")
+      const items3 = lines.slice(itemStartIndices[c1 + c2]).join("\n")
       return {
         col1: [{ ...single, rawMarkdown: items1, content: items1 }],
         col2: [{ ...single, id: `${single.id}-col2`, rawMarkdown: items2, content: items2 }],
@@ -647,14 +650,35 @@ export function buildSlidevDocument(
       // 动态展开思源块引用 ((block-id))
       rawMd = resolveBlockRefsSync(rawMd, options?.refContentMap)
 
+      // 若当前容器节点自身未设置视频属性，递归检索子节点中的视频块属性并向上合并
+      if (itemNode.children && itemNode.children.length > 0) {
+        const collectAttrsFromTree = (nodes: ISiYuanBlockNode[]) => {
+          for (const n of nodes) {
+            if (n.ial) {
+              for (const [k, v] of Object.entries(n.ial)) {
+                if (k.startsWith("custom-slidev-") && !combinedIal[k]) {
+                  combinedIal[k] = v
+                }
+              }
+            }
+            if (n.children && n.children.length > 0) {
+              collectAttrsFromTree(n.children)
+            }
+          }
+        }
+        collectAttrsFromTree(itemNode.children)
+      }
+
+      const isVideoBlock = itemNode.type === "video" || itemNode.type === "NodeVideo" || /<video\b/i.test(rawMd)
+
       // 视频块属性同步与增强 (autoplay, loop, muted, controls)
-      if (itemNode.type === "video" || /<video\b/i.test(rawMd)) {
+      if (isVideoBlock) {
         const isAutoplay = combinedIal["custom-slidev-autoplay"] === "true"
         const isLoop = combinedIal["custom-slidev-loop"] === "true"
         const isMuted = combinedIal["custom-slidev-muted"] === "true" || isAutoplay
         const hideControls = combinedIal["custom-slidev-controls"] === "false"
 
-        rawMd = rawMd.replace(/<video\b([^>]*)>/i, (_, existingAttrs) => {
+        rawMd = rawMd.replace(/<video\b([^>]*)>/gi, (_, existingAttrs) => {
           let attrs = existingAttrs
           if (hideControls) {
             attrs = attrs.replace(/\bcontrols(?:="[^"]*")?/gi, "").trim()
@@ -663,12 +687,18 @@ export function buildSlidevDocument(
           }
           if (isAutoplay && !/autoplay/i.test(attrs)) {
             attrs += " autoplay playsinline"
+          } else if (!isAutoplay && combinedIal["custom-slidev-autoplay"] === "false") {
+            attrs = attrs.replace(/\bautoplay\b/gi, "").replace(/\bplaysinline\b/gi, "").trim()
           }
           if (isLoop && !/loop/i.test(attrs)) {
             attrs += " loop"
+          } else if (!isLoop && combinedIal["custom-slidev-loop"] === "false") {
+            attrs = attrs.replace(/\bloop\b/gi, "").trim()
           }
           if (isMuted && !/muted/i.test(attrs)) {
             attrs += " muted"
+          } else if (!isMuted && combinedIal["custom-slidev-muted"] === "false") {
+            attrs = attrs.replace(/\bmuted\b/gi, "").trim()
           }
           return `<video ${attrs.trim()}>`
         })
@@ -871,6 +901,18 @@ export function buildSlidevDocument(
       }
       if (effectiveMotion && !effectiveAttrs[ATTR_ELEM_MOTION]) {
         effectiveAttrs[ATTR_ELEM_MOTION] = JSON.stringify(effectiveMotion)
+      }
+
+      if (isVideoBlock || combinedIal["custom-slidev-autoplay"] || combinedIal["custom-slidev-muted"]) {
+        if (combinedIal["custom-slidev-autoplay"]) {
+          effectiveAttrs["custom-slidev-autoplay"] = combinedIal["custom-slidev-autoplay"]
+          if (combinedIal["custom-slidev-autoplay"] === "true" && !combinedIal["custom-slidev-muted"]) {
+            effectiveAttrs["custom-slidev-muted"] = "true"
+          }
+        }
+        if (combinedIal["custom-slidev-loop"]) effectiveAttrs["custom-slidev-loop"] = combinedIal["custom-slidev-loop"]
+        if (combinedIal["custom-slidev-muted"]) effectiveAttrs["custom-slidev-muted"] = combinedIal["custom-slidev-muted"]
+        if (combinedIal["custom-slidev-controls"]) effectiveAttrs["custom-slidev-controls"] = combinedIal["custom-slidev-controls"]
       }
 
       const blockItem: ISlidevBlockItem = {

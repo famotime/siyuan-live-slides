@@ -195,11 +195,18 @@ export class DocumentCompilerService {
         }
       })
 
-      // 5.5 递归补全超级块与列表容器的子节点 (支持官方缩写 's'、'sb'、'l' 与降级 SQL 查询)
+      // 5.5 递归补全超级块与列表容器/列表项的子节点 (支持官方缩写 's'、'sb'、'l'、'i' 与降级 SQL 查询)
       const populateChildrenRecursively = async (nodes: ISiYuanBlockNode[], depth = 0) => {
         if (!nodes || nodes.length === 0 || depth > 8) return
         for (const node of nodes) {
-          const isContainer = isSuperBlock(node) || node.type === "l" || node.type === "NodeList"
+          const isContainer =
+            isSuperBlock(node) ||
+            node.type === "l" ||
+            node.type === "NodeList" ||
+            node.type === "i" ||
+            node.type === "NodeListItem" ||
+            node.type === "b" ||
+            node.type === "NodeBlockquote"
           if (isContainer && (!node.children || node.children.length === 0)) {
             let rawChildren = await this.deps.getChildBlocks(node.id).catch(() => [])
             if (!rawChildren || rawChildren.length === 0) {
@@ -233,6 +240,42 @@ export class DocumentCompilerService {
       }
 
       await populateChildrenRecursively(blockNodes)
+
+      // 5.6 递归冒泡与双向同步多媒体播放控制属性 (custom-slidev-autoplay, custom-slidev-muted 等)
+      const syncMediaAttrsInTree = (nodes: ISiYuanBlockNode[]) => {
+        for (const node of nodes) {
+          if (node.children && node.children.length > 0) {
+            syncMediaAttrsInTree(node.children)
+            // 向上合并子节点中视频块的属性到父块
+            for (const child of node.children) {
+              if (child.ial) {
+                for (const [k, v] of Object.entries(child.ial)) {
+                  if (k.startsWith("custom-slidev-") && !node.ial?.[k]) {
+                    if (!node.ial) node.ial = {}
+                    node.ial[k] = v
+                  }
+                }
+              }
+            }
+            // 向下传递父容器设置的视频属性给包含视频的子块
+            if (node.ial) {
+              for (const [k, v] of Object.entries(node.ial)) {
+                if (k.startsWith("custom-slidev-")) {
+                  for (const child of node.children) {
+                    const isVid = child.type === "video" || child.type === "NodeVideo" || /<video\b/i.test(child.markdown || child.content || "")
+                    if (isVid && !child.ial?.[k]) {
+                      if (!child.ial) child.ial = {}
+                      child.ial[k] = v
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      syncMediaAttrsInTree(blockNodes)
 
       // 执行超级块自动检测与打标，自动写入即时覆盖层与持久化
       scanAndTagSuperBlocks(blockNodes, (record) => {

@@ -252,7 +252,7 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       width: 100%;
       height: 100%;
       flex: 1 1 0%;
-      align-items: start;
+      align-items: stretch;
     }
     .layout-two-cols-header-container,
     .layout-three-cols-header-container {
@@ -274,7 +274,7 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       width: 100%;
       height: 100%;
       flex: 1 1 0%;
-      align-items: start;
+      align-items: stretch;
       box-sizing: border-box;
     }
     .pdf-col {
@@ -284,10 +284,24 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       min-width: 0;
       width: 100%;
       max-width: 100%;
+      height: 100%;
+      max-height: 100%;
+      min-height: 0;
+      overflow: hidden;
       box-sizing: border-box;
       overflow-wrap: break-word;
       word-break: break-word;
       white-space: normal;
+    }
+    .pdf-col video,
+    .layout-three-cols-grid video,
+    .layout-two-cols-grid video {
+      max-height: min(100%, 340px, 44vh) !important;
+      width: auto !important;
+      max-width: 100% !important;
+      object-fit: contain !important;
+      display: block !important;
+      margin: auto !important;
     }
     .pdf-col * {
       overflow-wrap: break-word;
@@ -326,6 +340,76 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       width: 1.15em;
       height: 1.15em;
       cursor: pointer;
+    }
+    /* 两栏与三栏（超级块分栏）布局：去除列表圆点标记与缩进 */
+    .layout-two-cols ul,
+    .layout-two-cols ol,
+    .layout-two-cols-header ul,
+    .layout-two-cols-header ol,
+    .layout-three-cols ul,
+    .layout-three-cols ol,
+    .layout-three-cols-header ul,
+    .layout-three-cols-header ol,
+    .pdf-two-cols-wrapper ul,
+    .pdf-two-cols-wrapper ol,
+    .pdf-three-cols-wrapper ul,
+    .pdf-three-cols-wrapper ol,
+    .pdf-col ul,
+    .pdf-col ol,
+    .pdf-col .pdf-list,
+    .layout-two-cols-grid .pdf-list,
+    .layout-three-cols-grid .pdf-list {
+      list-style: none !important;
+      list-style-type: none !important;
+      padding-left: 0 !important;
+      margin-left: 0 !important;
+    }
+    .layout-two-cols li,
+    .layout-two-cols-header li,
+    .layout-three-cols li,
+    .layout-three-cols-header li,
+    .pdf-col li,
+    .pdf-col .pdf-list-item {
+      list-style: none !important;
+      list-style-type: none !important;
+      padding-left: 0 !important;
+      margin-left: 0 !important;
+    }
+    .layout-two-cols li::marker,
+    .layout-two-cols-header li::marker,
+    .layout-three-cols li::marker,
+    .layout-three-cols-header li::marker,
+    .pdf-col li::marker {
+      content: none !important;
+    }
+    /* 列表项内嵌标题与说明排版 */
+    .slide-list-item-title,
+    .pdf-list li > h1,
+    .pdf-list li > h2,
+    .pdf-list li > h3,
+    .pdf-list li > h4,
+    .pdf-list li > h5,
+    .pdf-list li > h6,
+    li > h1.slide-list-item-title,
+    li > h2.slide-list-item-title,
+    li > h3.slide-list-item-title,
+    li > h4.slide-list-item-title {
+      margin-top: 2px !important;
+      margin-bottom: 6px !important;
+      line-height: 1.35 !important;
+      font-weight: 700 !important;
+    }
+    .pdf-list li > h1, li > h1.slide-list-item-title { font-size: 1.6rem !important; }
+    .pdf-list li > h2, li > h2.slide-list-item-title { font-size: 1.4rem !important; }
+    .pdf-list li > h3, li > h3.slide-list-item-title { font-size: 1.22rem !important; }
+    .pdf-list li > h4, li > h4.slide-list-item-title { font-size: 1.1rem !important; }
+    .slide-list-item-desc,
+    .pdf-list li > p {
+      margin-top: 4px !important;
+      margin-bottom: 6px !important;
+      font-size: 1.05rem;
+      line-height: 1.55;
+      opacity: 0.92;
     }
     kbd {
       display: inline-block;

@@ -93,6 +93,7 @@ export interface ISlidevBlockItem {
   isNote?: boolean
   attributes?: Record<string, string>
   attrs?: Record<string, string>
+  ial?: Record<string, string>
 }
 
 export type ISlidevBlock = ISlidevBlockItem

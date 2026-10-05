@@ -94,6 +94,16 @@ describe("Single-File HTML Exporter (单文件离线 HTML 导出)", () => {
     expect(html).toContain(".slidev-ref-tag, a.slidev-ref-tag")
     expect(html).toContain("var(--slide-accent)")
   })
+
+  it("导出的独立 HTML 应包含鼠标左键空白处左右翻页调度与页面组件排除逻辑", () => {
+    const html = buildStandaloneHtml(dummyDoc)
+    expect(html).toContain("if (e.button !== 0) return;")
+    expect(html).toContain("const isComponent = targetEl.closest(")
+    expect(html).toContain(".slide-block, .controls-bar")
+    expect(html).toContain("const isLeft = e.clientX < window.innerWidth / 2;")
+    expect(html).toContain("renderSlide(currentIndex - 1);")
+    expect(html).toContain("renderSlide(currentIndex + 1);")
+  })
 })
 
 describe("PDF Exporter (高保真 PDF 讲义导出)", () => {

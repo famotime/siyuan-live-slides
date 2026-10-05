@@ -34,14 +34,14 @@ export const THREE_COLS_HEADER_LAYOUT_VUE = `<template>
     <div class="header-section mb-4 w-full">
       <slot />
     </div>
-    <div class="grid grid-cols-3 gap-6 flex-1 items-start">
-      <div class="col-1 min-w-0 break-words [overflow-wrap:break-word] [word-break:break-word]">
+    <div class="grid grid-cols-3 gap-6 flex-1 items-stretch">
+      <div class="col-1 min-w-0 h-full max-h-full overflow-hidden break-words [overflow-wrap:break-word] [word-break:break-word]">
         <slot name="col-1" />
       </div>
-      <div class="col-2 min-w-0 break-words [overflow-wrap:break-word] [word-break:break-word]">
+      <div class="col-2 min-w-0 h-full max-h-full overflow-hidden break-words [overflow-wrap:break-word] [word-break:break-word]">
         <slot name="col-2" />
       </div>
-      <div class="col-3 min-w-0 break-words [overflow-wrap:break-word] [word-break:break-word]">
+      <div class="col-3 min-w-0 h-full max-h-full overflow-hidden break-words [overflow-wrap:break-word] [word-break:break-word]">
         <slot name="col-3" />
       </div>
     </div>
@@ -193,6 +193,16 @@ html.dark *::-webkit-scrollbar-thumb:hover {
   height: auto;
   object-fit: contain !important;
 }
+.three-cols-header video,
+.two-cols-header video,
+.grid-cols-3 video,
+.grid-cols-2 video,
+.col-1 video,
+.col-2 video,
+.col-3 video {
+  max-height: min(100%, 340px, 44vh) !important;
+  object-fit: contain !important;
+}
 .slide-list-media {
   display: flex !important;
   align-items: center !important;
@@ -222,6 +232,76 @@ html.dark *::-webkit-scrollbar-thumb:hover {
   max-height: 100% !important;
   object-fit: contain !important;
   border-radius: 8px !important;
+}
+
+/* 两栏与三栏（超级块分栏）布局：去除列表圆点标记与缩进 */
+.three-cols-header ul,
+.three-cols-header ol,
+.two-cols-header ul,
+.two-cols-header ol,
+.two-cols ul,
+.two-cols ol,
+.col-1 ul,
+.col-1 ol,
+.col-2 ul,
+.col-2 ol,
+.col-3 ul,
+.col-3 ol,
+.grid-cols-2 ul,
+.grid-cols-2 ol,
+.grid-cols-3 ul,
+.grid-cols-3 ol {
+  list-style: none !important;
+  list-style-type: none !important;
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+.three-cols-header li,
+.two-cols-header li,
+.two-cols li,
+.col-1 li,
+.col-2 li,
+.col-3 li,
+.grid-cols-2 li,
+.grid-cols-3 li {
+  list-style: none !important;
+  list-style-type: none !important;
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+.three-cols-header li::marker,
+.two-cols-header li::marker,
+.two-cols li::marker,
+.col-1 li::marker,
+.col-2 li::marker,
+.col-3 li::marker {
+  content: none !important;
+}
+
+/* 列表项内嵌标题与说明排版 */
+.slide-list-item-title,
+li > h1,
+li > h2,
+li > h3,
+li > h4,
+li > h5,
+li > h6 {
+  margin-top: 2px !important;
+  margin-bottom: 6px !important;
+  line-height: 1.35 !important;
+  font-weight: 700 !important;
+}
+li > h1 { font-size: 1.6rem !important; }
+li > h2 { font-size: 1.4rem !important; }
+li > h3 { font-size: 1.22rem !important; }
+li > h4 { font-size: 1.1rem !important; }
+.slide-list-item-desc,
+li > p {
+  margin-top: 4px !important;
+  margin-bottom: 6px !important;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  opacity: 0.92;
 }
 `
 

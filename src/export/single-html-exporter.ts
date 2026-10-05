@@ -220,7 +220,7 @@ export function buildStandaloneHtml(
       width: 100%;
       height: 100%;
       flex: 1 1 0%;
-      align-items: start;
+      align-items: stretch;
     }
     .layout-two-cols-header-container,
     .layout-three-cols-header-container {
@@ -242,7 +242,7 @@ export function buildStandaloneHtml(
       width: 100%;
       height: 100%;
       flex: 1 1 0%;
-      align-items: start;
+      align-items: stretch;
       box-sizing: border-box;
     }
     .pdf-col {
@@ -252,7 +252,12 @@ export function buildStandaloneHtml(
       min-width: 0;
       width: 100%;
       max-width: 100%;
+      height: 100%;
+      max-height: 100%;
+      min-height: 0;
+      justify-content: flex-start;
       box-sizing: border-box;
+      overflow: hidden;
       overflow-wrap: break-word;
       word-break: break-word;
       white-space: normal;
@@ -343,6 +348,88 @@ export function buildStandaloneHtml(
       height: 1.15em;
       cursor: pointer;
     }
+
+    /* 两栏与三栏（超级块分栏）布局：去除列表圆点标记与缩进 */
+    .layout-two-cols ul,
+    .layout-two-cols ol,
+    .layout-two-cols-header ul,
+    .layout-two-cols-header ol,
+    .layout-three-cols ul,
+    .layout-three-cols ol,
+    .layout-three-cols-header ul,
+    .layout-three-cols-header ol,
+    .two-cols-left ul,
+    .two-cols-left ol,
+    .two-cols-right ul,
+    .two-cols-right ol,
+    .three-cols-col ul,
+    .three-cols-col ol,
+    .pdf-col ul,
+    .pdf-col ol,
+    .pdf-col .pdf-list,
+    .layout-two-cols-grid .pdf-list,
+    .layout-three-cols-grid .pdf-list {
+      list-style: none !important;
+      list-style-type: none !important;
+      padding-left: 0 !important;
+      margin-left: 0 !important;
+    }
+
+    .layout-two-cols li,
+    .layout-two-cols-header li,
+    .layout-three-cols li,
+    .layout-three-cols-header li,
+    .two-cols-left li,
+    .two-cols-right li,
+    .three-cols-col li,
+    .pdf-col li,
+    .pdf-col .pdf-list-item {
+      list-style: none !important;
+      list-style-type: none !important;
+      padding-left: 0 !important;
+      margin-left: 0 !important;
+    }
+
+    .layout-two-cols li::marker,
+    .layout-two-cols-header li::marker,
+    .layout-three-cols li::marker,
+    .layout-three-cols-header li::marker,
+    .two-cols-left li::marker,
+    .two-cols-right li::marker,
+    .pdf-col li::marker {
+      content: none !important;
+    }
+
+    /* 列表项内嵌标题与说明排版 */
+    .slide-list-item-title,
+    .pdf-list li > h1,
+    .pdf-list li > h2,
+    .pdf-list li > h3,
+    .pdf-list li > h4,
+    .pdf-list li > h5,
+    .pdf-list li > h6,
+    li > h1.slide-list-item-title,
+    li > h2.slide-list-item-title,
+    li > h3.slide-list-item-title,
+    li > h4.slide-list-item-title {
+      margin-top: 2px !important;
+      margin-bottom: 6px !important;
+      line-height: 1.35 !important;
+      font-weight: 700 !important;
+    }
+    .pdf-list li > h1, li > h1.slide-list-item-title { font-size: 1.6rem !important; }
+    .pdf-list li > h2, li > h2.slide-list-item-title { font-size: 1.4rem !important; }
+    .pdf-list li > h3, li > h3.slide-list-item-title { font-size: 1.22rem !important; }
+    .pdf-list li > h4, li > h4.slide-list-item-title { font-size: 1.1rem !important; }
+    .slide-list-item-desc,
+    .pdf-list li > p {
+      margin-top: 4px !important;
+      margin-bottom: 6px !important;
+      font-size: 1.05rem;
+      line-height: 1.55;
+      opacity: 0.92;
+    }
+
     /* 多媒体（GIF动图、静态图片、MP4视频）全视口最大化自适应且不超出视口 */
     .slide-media-block,
     .slide-media-container,
@@ -440,9 +527,12 @@ export function buildStandaloneHtml(
     .two-cols-left img,
     .two-cols-right img,
     .two-cols-left video,
-    .two-cols-right video {
+    .two-cols-right video,
+    .three-cols-col video,
+    .pdf-col video,
+    .layout-three-cols-grid video {
       max-width: 100% !important;
-      max-height: 100% !important;
+      max-height: min(100%, 340px, 44vh) !important;
       width: auto !important;
       height: auto !important;
       object-fit: contain !important;
@@ -811,19 +901,20 @@ export function buildStandaloneHtml(
           div.innerHTML = "<pre" + heightStyle + "><code>" + md.slice(3, -3) + "</code></pre>";
         }
         else if (md.startsWith("> ")) div.innerHTML = "<blockquote><p>" + md.slice(2) + "</p></blockquote>";
-        else if (md.startsWith("<video") || (block && block.type === "video")) {
+        else if ((/<video\b/i.test(md) || (block && (block.type === "video" || block.type === "NodeVideo"))) && !/^(\s*)([-*+]|\d+\.)\s+/m.test(md)) {
           div.classList.add("slide-video-container", "slide-media-container", "slide-media-block");
           const isAutoplay = block && block.attributes && block.attributes["custom-slidev-autoplay"] === "true";
           const isLoop = block && block.attributes && block.attributes["custom-slidev-loop"] === "true";
           const isMuted = block && block.attributes && (block.attributes["custom-slidev-muted"] === "true" || isAutoplay);
           const hideControls = block && block.attributes && block.attributes["custom-slidev-controls"] === "false";
           let videoHtml = md;
-          if (hideControls) videoHtml = videoHtml.replace(/\bcontrols\b/gi, "");
+          if (hideControls) videoHtml = videoHtml.replace(/\bcontrols(?:="[^"]*")?/gi, "").trim();
           else if (!videoHtml.includes("controls")) videoHtml = videoHtml.replace("<video", "<video controls");
           if (isAutoplay && !videoHtml.includes("autoplay")) videoHtml = videoHtml.replace("<video", "<video autoplay playsinline");
           if (isLoop && !videoHtml.includes("loop")) videoHtml = videoHtml.replace("<video", "<video loop");
           if (isMuted && !videoHtml.includes("muted")) videoHtml = videoHtml.replace("<video", "<video muted");
           videoHtml = videoHtml.replace("<video", '<video class="slide-video-player"');
+          div.setAttribute("data-autoplay", isAutoplay ? "true" : "false");
           div.innerHTML = videoHtml;
         }
         else if (/^(\s*)([-*+]|\d+\.)\s+/m.test(md)) {
@@ -831,7 +922,8 @@ export function buildStandaloneHtml(
           const lines = md.split("\n");
           let isOrdered = false;
           const items = [];
-          for (const line of lines) {
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
             const tr = line.trim();
             if (!tr) continue;
             const um = line.match(/^(\s*)[-*+]\s+(.*)$/);
@@ -850,19 +942,61 @@ export function buildStandaloneHtml(
                 items[items.length - 1].media.push('<div class="slide-list-media">' + tr + '</div>');
                 continue;
               }
-              const vm = tr.match(/^<video\b[\s\S]*?<\/video>$/i);
-              if (vm) {
-                items[items.length - 1].media.push('<div class="slide-list-media">' + tr + '</div>');
+              if (/<video\b/i.test(tr)) {
+                let vHtml = tr;
+                if (!/<\/video>/i.test(vHtml)) {
+                  while (i + 1 < lines.length && !/<\/video>/i.test(vHtml)) {
+                    i++;
+                    vHtml += " " + lines[i].trim();
+                  }
+                }
+                const isAutoplay = block && block.attributes && block.attributes["custom-slidev-autoplay"] === "true";
+                const isLoop = block && block.attributes && block.attributes["custom-slidev-loop"] === "true";
+                const isMuted = block && block.attributes && (block.attributes["custom-slidev-muted"] === "true" || isAutoplay);
+                const hideControls = block && block.attributes && block.attributes["custom-slidev-controls"] === "false";
+                if (hideControls) vHtml = vHtml.replace(/\bcontrols(?:="[^"]*")?/gi, "").trim();
+                else if (!vHtml.includes("controls")) vHtml = vHtml.replace("<video", "<video controls");
+                if (isAutoplay && !vHtml.includes("autoplay")) vHtml = vHtml.replace("<video", "<video autoplay playsinline");
+                if (isLoop && !vHtml.includes("loop")) vHtml = vHtml.replace("<video", "<video loop");
+                if (isMuted && !vHtml.includes("muted")) vHtml = vHtml.replace("<video", "<video muted");
+                vHtml = vHtml.replace("<video", '<video class="slide-video-player"');
+                items[items.length - 1].media.push('<div class="slide-list-media slide-video-container slide-media-container" data-autoplay="' + (isAutoplay ? 'true' : 'false') + '">' + vHtml + '</div>');
                 continue;
               }
-              items[items.length - 1].text += " " + tr;
+              items[items.length - 1].text += "\n" + tr;
             }
           }
           const tag = isOrdered ? "ol" : "ul";
           const liHtml = items.map(it => {
-            let h = it.text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
             const med = it.media && it.media.length ? "\n" + it.media.join("\n") : "";
-            return "<li>" + h + med + "</li>";
+            const lines = (it.text || "").split("\n").map(l => l.trim()).filter(Boolean);
+            const hasHeading = lines.some(l => /^#{1,6}\s+/.test(l));
+            if (!hasHeading) {
+              let h = it.text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+              return "<li>" + h + med + "</li>";
+            }
+            const parts = [];
+            let pLines = [];
+            const flushP = () => {
+              if (pLines.length > 0) {
+                let ph = pLines.join(" ").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+                parts.push('<p class="slide-list-item-desc">' + ph + '</p>');
+                pLines = [];
+              }
+            };
+            for (const l of lines) {
+              const hm = l.match(/^(#{1,6})\s+(.*)$/);
+              if (hm) {
+                flushP();
+                const lvl = hm[1].length;
+                let th = hm[2].trim().replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+                parts.push('<h' + lvl + ' class="slide-list-item-title">' + th + '</h' + lvl + '>');
+              } else {
+                pLines.push(l);
+              }
+            }
+            flushP();
+            return "<li>" + parts.join("\n") + med + "</li>";
           }).join("\n");
           div.innerHTML = "<" + tag + " class=\"pdf-list\">\n" + liHtml + "\n</" + tag + ">";
         }
@@ -980,13 +1114,16 @@ export function buildStandaloneHtml(
             c3 = [];
           } else if (rem.length === 1) {
             const lines = (rem[0].rawMarkdown || rem[0].content || "").trim().split(/\r?\n/);
-            const itemLines = lines.filter(l => /^[ \t]*[-*+]\s+|^[ \t]*\d+\.\s+/.test(l));
-            if (itemLines.length >= 3) {
-              const count1 = Math.ceil(itemLines.length / 3);
-              const count2 = Math.ceil((itemLines.length - count1) / 2);
-              const items1 = itemLines.slice(0, count1).join("\n");
-              const items2 = itemLines.slice(count1, count1 + count2).join("\n");
-              const items3 = itemLines.slice(count1 + count2).join("\n");
+            const itemStartIndices = [];
+            for (let i = 0; i < lines.length; i++) {
+              if (/^[ \t]*[-*+]\s+|^[ \t]*\d+\.\s+/.test(lines[i])) itemStartIndices.push(i);
+            }
+            if (itemStartIndices.length >= 3) {
+              const count1 = Math.ceil(itemStartIndices.length / 3);
+              const count2 = Math.ceil((itemStartIndices.length - count1) / 2);
+              const items1 = lines.slice(itemStartIndices[0], itemStartIndices[count1]).join("\n");
+              const items2 = lines.slice(itemStartIndices[count1], itemStartIndices[count1 + count2]).join("\n");
+              const items3 = lines.slice(itemStartIndices[count1 + count2]).join("\n");
               c1 = [{ ...rem[0], rawMarkdown: items1, content: items1 }];
               c2 = [{ ...rem[0], id: rem[0].id + "-col2", rawMarkdown: items2, content: items2 }];
               c3 = [{ ...rem[0], id: rem[0].id + "-col3", rawMarkdown: items3, content: items3 }];
@@ -1038,6 +1175,24 @@ export function buildStandaloneHtml(
             container.appendChild(renderBlock(block));
           }
         }
+
+        function syncAutoplayVideos() {
+          setTimeout(() => {
+            const videos = container.querySelectorAll("video");
+            videos.forEach((v) => {
+              const box = v.closest("[data-autoplay]");
+              const isAuto = v.hasAttribute("autoplay") || v.autoplay || (box && box.getAttribute("data-autoplay") === "true");
+              if (isAuto) {
+                v.muted = true;
+                v.defaultMuted = true;
+                v.playsInline = true;
+                const p = v.play();
+                if (p !== undefined) p.catch(() => {});
+              }
+            });
+          }, 60);
+        }
+        syncAutoplayVideos();
       }
 
       btnPrev.addEventListener("click", () => renderSlide(currentIndex - 1));
@@ -1057,12 +1212,32 @@ export function buildStandaloneHtml(
       });
 
       document.addEventListener("click", (e) => {
-        const refEl = e.target && e.target.closest ? e.target.closest("[data-ref-id]") : null;
+        if (e.button !== 0) return;
+        const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+        if (!targetEl || !targetEl.closest) return;
+
+        const refEl = targetEl.closest("[data-ref-id]");
         if (refEl) {
           const id = refEl.getAttribute("data-ref-id");
           if (id) {
             window.open("siyuan://blocks/" + id, "_blank");
+            return;
           }
+        }
+
+        const selection = window.getSelection ? window.getSelection().toString().trim() : "";
+        if (selection.length > 0) return;
+
+        const isComponent = targetEl.closest(
+          ".slide-block, .controls-bar, .image-right-img-container, .image-left-img-container, img, video, audio, button, a, input, textarea, select, [data-clickable], [data-ref-id], .slidev-toc, .empty-state"
+        );
+        if (isComponent) return;
+
+        const isLeft = e.clientX < window.innerWidth / 2;
+        if (isLeft) {
+          renderSlide(currentIndex - 1);
+        } else {
+          renderSlide(currentIndex + 1);
         }
       });
 

@@ -398,6 +398,7 @@ export function renderTocHtml(
 export function renderMarkdownList(
   md: string,
   options?: IBlockRenderOptions,
+  block?: ISlidevBlockItem,
 ): string | null {
   const lines = md.split("\n")
   const hasListItems = lines.some(line => /^(\s*)([-*+]|\d+\.)\s+/.test(line))
@@ -412,7 +413,8 @@ export function renderMarkdownList(
   }> = []
   let isOrdered = false
 
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
     if (!line.trim()) continue
 
     const taskMatch = line.match(/^(\s*)[-*+]\s+\[([ xX])\]\s+(.*)$/)
@@ -471,16 +473,47 @@ export function renderMarkdownList(
         continue
       }
 
-      const videoMatch = trimmed.match(/^<video\b[\s\S]*?<\/video>$/i)
-      if (videoMatch) {
+      if (/<video\b/i.test(trimmed)) {
+        let videoRaw = trimmed
+        if (!/<\/video>/i.test(videoRaw)) {
+          while (i + 1 < lines.length && !/<\/video>/i.test(videoRaw)) {
+            i++
+            videoRaw += " " + lines[i].trim()
+          }
+        }
+        const isAutoplay = block?.attributes?.["custom-slidev-autoplay"] === "true" || /autoplay/i.test(videoRaw)
+        const isLoop = block?.attributes?.["custom-slidev-loop"] === "true" || /loop/i.test(videoRaw)
+        const isMuted = block?.attributes?.["custom-slidev-muted"] === "true" || isAutoplay || /muted/i.test(videoRaw)
+        const hideControls = block?.attributes?.["custom-slidev-controls"] === "false"
+
+        const srcMatch = videoRaw.match(/\bsrc=["']([^"']+)["']/i)
+        const src = srcMatch ? srcMatch[1] : ""
+
+        const attrParts: string[] = ['class="slide-video-player"']
+        if (!hideControls) attrParts.push("controls")
+        if (isAutoplay) {
+          attrParts.push("autoplay")
+          attrParts.push("playsinline")
+        }
+        if (isLoop) attrParts.push("loop")
+        if (isMuted) attrParts.push("muted")
+        attrParts.push('preload="metadata"')
+        if (src) attrParts.push(`src="${src}"`)
+
+        const innerContentMatch = videoRaw.match(/<video[^>]*>([\s\S]*?)<\/video>/i)
+        let innerContent = innerContentMatch ? innerContentMatch[1].trim() : ""
+        if (!innerContent && src) {
+          innerContent = `<source src="${src}" type="video/mp4" />您的浏览器不支持视频播放。`
+        }
+
         if (!items[items.length - 1].media) items[items.length - 1].media = []
         items[items.length - 1].media!.push(
-          `<div class="slide-list-media">${trimmed}</div>`
+          `<div class="slide-list-media slide-video-container slide-media-container" data-autoplay="${isAutoplay ? 'true' : 'false'}" data-muted="${isMuted ? 'true' : 'false'}"><video ${attrParts.join(" ")}>${innerContent}</video></div>`
         )
         continue
       }
 
-      items[items.length - 1].text += " " + trimmed
+      items[items.length - 1].text += "\n" + trimmed
     } else {
       leadLines.push(trimmed)
     }
@@ -488,10 +521,47 @@ export function renderMarkdownList(
 
   if (items.length === 0) return null
 
+  function formatListItemContent(rawText: string): string {
+    if (!rawText) return ""
+    const lines = rawText.split("\n").map(l => l.trim()).filter(Boolean)
+    if (lines.length === 0) return ""
+
+    const hasHeading = lines.some(line => /^#{1,6}\s+/.test(line))
+    if (!hasHeading) {
+      return formatInlineMarkdown(lines.join(" "))
+    }
+
+    const resultParts: string[] = []
+    let pendingParaLines: string[] = []
+
+    const flushParagraph = () => {
+      if (pendingParaLines.length > 0) {
+        const pText = pendingParaLines.join(" ")
+        resultParts.push(`<p class="slide-list-item-desc">${formatInlineMarkdown(pText)}</p>`)
+        pendingParaLines = []
+      }
+    }
+
+    for (const line of lines) {
+      const headingMatch = line.match(/^(#{1,6})\s+(.*)$/)
+      if (headingMatch) {
+        flushParagraph()
+        const level = headingMatch[1].length
+        const headingText = headingMatch[2].trim()
+        resultParts.push(`<h${level} class="slide-list-item-title">${formatInlineMarkdown(headingText)}</h${level}>`)
+      } else {
+        pendingParaLines.push(line)
+      }
+    }
+    flushParagraph()
+
+    return resultParts.join("\n")
+  }
+
   const listTag = isOrdered ? "ol" : "ul"
   const baseListClass = options?.listClassName || (isOrdered ? "pdf-list pdf-list--ordered" : "pdf-list pdf-list--unordered")
   const itemsHtml = items.map(item => {
-    const formatted = formatInlineMarkdown(item.text)
+    const formatted = formatListItemContent(item.text)
     const mediaHtml = (item.media && item.media.length > 0)
       ? `\n${item.media.join("\n")}`
       : ""
@@ -650,8 +720,9 @@ export function convertBlockToHtml(
   }
 
   // 7.5 MP4 视频与多媒体播放块
-  const isVideoTag = md.startsWith("<video") || (block.type === "video" && md.includes("<video"))
-  if (isVideoTag) {
+  const isVideoTag = /<video\b/i.test(md) || block.type === "video" || block.type === "NodeVideo"
+  const hasListPrefix = /^(\s*)([-*+]|\d+\.)\s+/m.test(md)
+  if (isVideoTag && !hasListPrefix) {
     const isAutoplay = block.attributes?.["custom-slidev-autoplay"] === "true" || /autoplay/i.test(md)
     const isLoop = block.attributes?.["custom-slidev-loop"] === "true" || /loop/i.test(md)
     const isMuted = block.attributes?.["custom-slidev-muted"] === "true" || isAutoplay || /muted/i.test(md)
@@ -679,7 +750,7 @@ export function convertBlockToHtml(
       innerContent = `<source src="${src}" type="video/mp4" />您的浏览器不支持视频播放。`
     }
 
-    return `<div class="${containerClass} ${containerClass}--video slide-media-block slide-video-container slide-media-container"${motionStyle}><video ${attrParts.join(" ")}>${innerContent}</video></div>`
+    return `<div class="${containerClass} ${containerClass}--video slide-media-block slide-video-container slide-media-container" data-autoplay="${isAutoplay ? 'true' : 'false'}" data-muted="${isMuted ? 'true' : 'false'}"${motionStyle}><video ${attrParts.join(" ")}>${innerContent}</video></div>`
   }
 
   // 8. 图片
@@ -690,7 +761,7 @@ export function convertBlockToHtml(
   }
 
   // 9. 任务列表与有序/无序列表（支持单项、多项及带导语的列表）
-  const listHtml = renderMarkdownList(md, options)
+  const listHtml = renderMarkdownList(md, options, block)
   if (listHtml) {
     return `<div class="${containerClass} pdf-list-item"${motionStyle}>${listHtml}</div>`
   }

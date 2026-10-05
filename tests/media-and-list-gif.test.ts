@@ -250,4 +250,108 @@ describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", ()
       expect(html).toContain("max-height: min(340px, 42vh)")
     })
   })
+
+  describe("超级块与列表嵌套视频属性继承与三栏布局自适应", () => {
+    it("父列表项或超级块应继承子节点中视频块的 custom-slidev-autoplay 等播放属性", () => {
+      const docId = "doc-video-inheritance"
+      const blocks: ISiYuanBlockNode[] = [
+        {
+          id: "h-title",
+          type: "h",
+          markdown: "## 三栏视频演示",
+          ial: {},
+        },
+        {
+          id: "sb-cols",
+          type: "sb",
+          markdown: "",
+          ial: {
+            "custom-slidev-layout": "three-cols-header",
+          },
+          children: [
+            {
+              id: "col-1",
+              type: "p",
+              markdown: "第一栏说明文本",
+              ial: { "custom-slidev-slot": "col-1" },
+            },
+            {
+              id: "col-2",
+              type: "p",
+              markdown: "第二栏说明文本",
+              ial: { "custom-slidev-slot": "col-2" },
+            },
+            {
+              id: "col-3",
+              type: "p",
+              markdown: '<video src="assets/sample.mp4"></video>',
+              ial: { "custom-slidev-slot": "col-3" },
+              children: [
+                {
+                  id: "vid-nested",
+                  type: "video",
+                  markdown: '<video src="assets/sample.mp4"></video>',
+                  ial: {
+                    "custom-slidev-autoplay": "true",
+                    "custom-slidev-muted": "true",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ]
+
+      const doc = buildSlidevDocument(docId, {}, blocks, {})
+      expect(doc.slides).toHaveLength(1)
+      const slide = doc.slides[0]
+
+      const col3Block = slide.blocks.find(b => b.id === "col-3")
+      expect(col3Block).toBeDefined()
+      expect(col3Block!.attributes?.["custom-slidev-autoplay"]).toBe("true")
+      expect(col3Block!.attributes?.["custom-slidev-muted"]).toBe("true")
+      expect(col3Block!.rawMarkdown).toContain("autoplay")
+      expect(col3Block!.rawMarkdown).toContain("muted")
+    })
+
+    it("单文件 HTML 导出中应包含针对分栏视频的 max-height: min(100%, 340px, 44vh) 约束与 stretch 对齐", async () => {
+      const { buildStandaloneHtml } = await import("../src/export/single-html-exporter")
+      const testDoc = {
+        docId: "doc-three-cols-export",
+        title: "Three Cols Presentation",
+        config: { theme: "default", aspectRatio: "16/9", highlighter: "shiki" as const, defaultTransition: "slide-left", colorSchema: "dark" as const },
+        slides: [
+          {
+            pageIndex: 1,
+            startBlockId: "p1",
+            frontmatter: { layout: "three-cols-header" },
+            notes: "",
+            blocks: [
+              { id: "h1", type: "h", content: "## 三栏头部", rawMarkdown: "## 三栏头部", slot: "header" },
+              { id: "c1", type: "p", content: "第一栏", rawMarkdown: "第一栏", slot: "col-1" },
+              { id: "c2", type: "p", content: "第二栏", rawMarkdown: "第二栏", slot: "col-2" },
+              {
+                id: "c3",
+                type: "p",
+                content: '<video src="assets/vertical.mp4"></video>',
+                rawMarkdown: '<video src="assets/vertical.mp4"></video>',
+                slot: "col-3",
+                attributes: { "custom-slidev-autoplay": "true" },
+              },
+            ],
+            rawMarkdown: "## 三栏头部\n::col-1::\n第一栏\n::col-2::\n第二栏\n::col-3::\n<video src=\"assets/vertical.mp4\"></video>",
+          },
+        ],
+        fullMarkdown: "",
+        assetMap: {},
+      }
+
+      const html = await buildStandaloneHtml(testDoc)
+      expect(html).toContain("layout-three-cols-grid video")
+      expect(html).toContain("max-height: min(100%, 340px, 44vh)")
+      expect(html).toContain(".pdf-col video")
+      expect(html).toContain("align-items: stretch")
+      expect(html).toContain("syncAutoplayVideos")
+    })
+  })
 })

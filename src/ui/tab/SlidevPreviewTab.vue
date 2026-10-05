@@ -120,7 +120,7 @@
         class="spm-slidev-tab__iframe"
         :src="iframeSrc"
         frameborder="0"
-        allow="fullscreen"
+        allow="fullscreen; autoplay"
       ></iframe>
 
       <!-- 沉浸式浮层抽屉 -->
