@@ -175,12 +175,18 @@ export function buildStandaloneHtml(
       background: #0f1115; font-family: var(--slide-font);
       display: flex; justify-content: center; align-items: center;
     }
-    #app { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative; }
+    #app { width: 100%; height: 100%; position: relative; overflow: hidden; }
     .slide-viewport {
-      position: relative; background: var(--slide-bg); color: var(--slide-text);
+      position: absolute; left: 50%; top: 50%;
+      background: var(--slide-bg); color: var(--slide-text);
       box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-radius: 8px; overflow: hidden;
-      aspect-ratio: 16 / 9; width: min(96vw, calc(92vh * 16 / 9)); max-height: 92vh;
-      display: flex; flex-direction: column;
+      display: flex; flex-direction: column; flex-shrink: 0;
+      transform: translate(-50%, -50%) scale(var(--slidev-slide-scale, 1));
+      transform-origin: center center; will-change: transform;
+      transition: background 0.3s ease, color 0.3s ease, border-radius 0.2s ease, box-shadow 0.2s ease;
+    }
+    :fullscreen .slide-viewport, .is-fullscreen .slide-viewport {
+      border-radius: 0 !important; box-shadow: none !important;
     }
     .slide-content { padding: 48px 56px; width: 100%; height: 100%; min-height: 100%; flex: 1 1 0%; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box; }
     .layout-cover { justify-content: center; align-items: center; text-align: center; }
@@ -474,6 +480,37 @@ export function buildStandaloneHtml(
       const btnNext = document.getElementById("btn-next");
       const btnFullscreen = document.getElementById("btn-fullscreen");
 
+      const baseWidth = 980;
+      const aspectStr = (data.config && data.config.aspectRatio) || "16/9";
+      let ratioNum = 16 / 9;
+      if (aspectStr === "4/3") ratioNum = 4 / 3;
+      else if (aspectStr === "16/10") ratioNum = 16 / 10;
+      else if (typeof aspectStr === "string" && aspectStr.includes("/")) {
+        const parts = aspectStr.split("/").map(Number);
+        if (parts[0] && parts[1]) ratioNum = parts[0] / parts[1];
+      }
+      const baseHeight = Math.ceil(baseWidth / ratioNum);
+      const viewport = document.getElementById("viewport");
+
+      function updateScale() {
+        if (!viewport) return;
+        const isFull = !!document.fullscreenElement;
+        const padX = isFull ? 0 : 20;
+        const padY = isFull ? 0 : 32;
+        const availW = Math.max(100, window.innerWidth - padX);
+        const availH = Math.max(100, window.innerHeight - padY);
+        const scale = Math.min(availW / baseWidth, availH / baseHeight);
+        viewport.style.width = baseWidth + "px";
+        viewport.style.height = baseHeight + "px";
+        viewport.style.transform = "translate(-50%, -50%) scale(" + scale + ")";
+        viewport.style.setProperty("--slidev-slide-scale", scale);
+        if (isFull) document.body.classList.add("is-fullscreen");
+        else document.body.classList.remove("is-fullscreen");
+      }
+
+      window.addEventListener("resize", updateScale);
+      document.addEventListener("fullscreenchange", updateScale);
+
       function renderBlock(block) {
         const div = document.createElement("div");
         div.className = "slide-block";
@@ -560,6 +597,18 @@ export function buildStandaloneHtml(
 
         container.className = "slide-content layout-" + (slide.frontmatter?.layout || "default");
         container.innerHTML = "";
+
+        const z = typeof slide.frontmatter?.zoom === "number" && slide.frontmatter.zoom > 0 ? slide.frontmatter.zoom : 1;
+        if (z !== 1) {
+          container.style.width = (100 / z) + "%";
+          container.style.height = (100 / z) + "%";
+          container.style.transformOrigin = "top left";
+          container.style.transform = "scale(" + z + ")";
+        } else {
+          container.style.width = "100%";
+          container.style.height = "100%";
+          container.style.transform = "none";
+        }
 
         if (slide.frontmatter?.layout === "two-cols") {
           const leftCol = document.createElement("div");
@@ -704,8 +753,11 @@ export function buildStandaloneHtml(
       btnPrev.addEventListener("click", () => renderSlide(currentIndex - 1));
       btnNext.addEventListener("click", () => renderSlide(currentIndex + 1));
       btnFullscreen.addEventListener("click", () => {
-        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-        else document.exitFullscreen();
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().then(() => updateScale()).catch(() => {});
+        } else {
+          document.exitFullscreen().then(() => updateScale()).catch(() => {});
+        }
       });
 
       window.addEventListener("keydown", (e) => {
@@ -725,6 +777,7 @@ export function buildStandaloneHtml(
       });
 
       renderSlide(0);
+      updateScale();
     })();
   </script>
 </body>

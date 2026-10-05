@@ -410,6 +410,7 @@ function onExternalJump() {
 function onFullscreenChange() {
   if (typeof document !== 'undefined') {
     isFullscreen.value = !!document.fullscreenElement
+    sandboxBridge.postMessage('FULLSCREEN_CHANGED', { isFullscreen: isFullscreen.value })
   }
 }
 
@@ -417,9 +418,13 @@ function onFullscreen() {
   const target = fullscreenContainerRef.value || sandboxIframeRef.value
   if (target) {
     if (!document.fullscreenElement) {
-      target.requestFullscreen().catch(() => {})
+      target.requestFullscreen().then(() => {
+        sandboxBridge.postMessage('FULLSCREEN_CHANGED', { isFullscreen: true })
+      }).catch(() => {})
     } else {
-      document.exitFullscreen().catch(() => {})
+      document.exitFullscreen().then(() => {
+        sandboxBridge.postMessage('FULLSCREEN_CHANGED', { isFullscreen: false })
+      }).catch(() => {})
     }
   }
 }

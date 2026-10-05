@@ -204,11 +204,14 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      padding: 12px;
+      padding: 0;
+      box-sizing: border-box;
     }
 
     .slide-viewport {
-      position: relative;
+      position: absolute;
+      left: 50%;
+      top: 50%;
       background: var(--slide-bg);
       color: var(--slide-text);
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
@@ -216,25 +219,17 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      transition: background 0.3s ease, color 0.3s ease;
+      flex-shrink: 0;
+      transform: translate(-50%, -50%) scale(var(--slidev-slide-scale, 1));
+      transform-origin: center center;
+      will-change: transform;
+      transition: background 0.3s ease, color 0.3s ease, border-radius 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .slide-viewport.ratio-16-9 {
-      aspect-ratio: 16 / 9;
-      width: min(100%, calc((100vh - 48px) * 16 / 9));
-      max-height: calc(100vh - 48px);
-    }
-
-    .slide-viewport.ratio-4-3 {
-      aspect-ratio: 4 / 3;
-      width: min(100%, calc((100vh - 48px) * 4 / 3));
-      max-height: calc(100vh - 48px);
-    }
-
-    .slide-viewport.ratio-16-10 {
-      aspect-ratio: 16 / 10;
-      width: min(100%, calc((100vh - 48px) * 16 / 10));
-      max-height: calc(100vh - 48px);
+    :fullscreen .slide-viewport,
+    .is-fullscreen .slide-viewport {
+      border-radius: 0 !important;
+      box-shadow: none !important;
     }
 
     .slide-content-wrapper {
@@ -549,7 +544,7 @@
 
     .slide-block img {
       max-width: 100%;
-      max-height: 45vh;
+      max-height: 280px;
       border-radius: 6px;
       object-fit: contain;
     }
@@ -1243,11 +1238,17 @@
 </head>
 <body>
   <div id="app">
-    <div class="slide-stage-container" :data-theme="currentThemeMode" :data-slidev-theme="currentSlidevTheme">
+    <div
+      ref="stageContainerRef"
+      class="slide-stage-container"
+      :class="{ 'is-fullscreen': isFullscreenMode }"
+      :data-theme="currentThemeMode"
+      :data-slidev-theme="currentSlidevTheme"
+    >
       <div
         class="slide-viewport"
-        :class="[viewportRatioClass, 'slidev-theme-' + currentSlidevTheme]"
-        :style="pageBackgroundStyle"
+        :class="['slidev-theme-' + currentSlidevTheme]"
+        :style="viewportStyle"
       >
         <div class="ambient-glow" v-if="isDarkTheme"></div>
         <transition :name="transitionClass" mode="out-in">
@@ -1256,6 +1257,7 @@
             :key="currentSlide.pageIndex"
             class="slide-content-wrapper"
             :class="['layout-' + (currentSlide.frontmatter.layout || 'default'), currentSlide.frontmatter.class, currentSlide.frontmatter.layoutClass]"
+            :style="contentWrapperStyle"
           >
             <!-- 带表头的双栏布局 -->
             <template v-if="currentSlide.frontmatter.layout === 'two-cols-header'">
@@ -2049,12 +2051,80 @@
           return slides.value[idx - 1]
         })
 
+        const stageContainerRef = ref(null)
+        const slideScale = ref(1)
+        const isFullscreenMode = ref(false)
+        const baseWidth = 980
+        const baseHeight = computed(() => {
+          const r = config.value.aspectRatio || "16/9"
+          let ratioNum = 16 / 9
+          if (r === "4/3") ratioNum = 4 / 3
+          else if (r === "16/10") ratioNum = 16 / 10
+          else if (typeof r === "string" && r.includes("/")) {
+            const [w, h] = r.split("/").map(Number)
+            if (w && h && h > 0) ratioNum = w / h
+          }
+          return Math.ceil(baseWidth / ratioNum)
+        })
+
+        function checkFullscreen() {
+          const docFull = !!document.fullscreenElement
+          const winFull = window.innerWidth >= (screen.width - 5) && window.innerHeight >= (screen.height - 40)
+          isFullscreenMode.value = docFull || winFull
+          return isFullscreenMode.value
+        }
+
+        function updateScale() {
+          if (!stageContainerRef.value) return
+          const isFull = checkFullscreen()
+          const rect = stageContainerRef.value.getBoundingClientRect()
+          const padX = isFull ? 0 : 20
+          const padY = isFull ? 0 : 28
+          const availW = Math.max(100, rect.width - padX)
+          const availH = Math.max(100, rect.height - padY)
+          const scaleX = availW / baseWidth
+          const scaleY = availH / baseHeight.value
+          slideScale.value = Math.min(scaleX, scaleY)
+        }
+
         // 宽高比适配类
         const viewportRatioClass = computed(() => {
           const r = config.value.aspectRatio || "16/9"
           if (r === "4/3") return "ratio-4-3"
           if (r === "16/10") return "ratio-16-10"
           return "ratio-16-9"
+        })
+
+        const viewportStyle = computed(() => {
+          return {
+            width: `${baseWidth}px`,
+            height: `${baseHeight.value}px`,
+            transform: `translate(-50%, -50%) scale(${slideScale.value})`,
+            '--slidev-slide-scale': slideScale.value,
+            ...pageBackgroundStyle.value
+          }
+        })
+
+        // 单页 Zoom 支持
+        const currentSlideZoom = computed(() => {
+          const z = currentSlide.value?.frontmatter?.zoom
+          if (typeof z === "number" && z > 0) return z
+          if (typeof z === "string") {
+            const parsed = parseFloat(z)
+            if (!isNaN(parsed) && parsed > 0) return parsed
+          }
+          return 1
+        })
+
+        const contentWrapperStyle = computed(() => {
+          if (currentSlideZoom.value === 1) return {}
+          const z = currentSlideZoom.value
+          return {
+            width: `${100 / z}%`,
+            height: `${100 / z}%`,
+            transformOrigin: "top left",
+            transform: `scale(${z})`
+          }
         })
 
         const currentThemeMode = computed(() => isDarkTheme.value ? "dark" : "light")
@@ -2954,12 +3024,20 @@
               action: "REQUEST_TOGGLE_FULLSCREEN",
               payload: {}
             }, "*")
+            setTimeout(updateScale, 80)
+            setTimeout(updateScale, 260)
             return
           }
           if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(() => {})
+            document.documentElement.requestFullscreen().then(() => {
+              checkFullscreen()
+              updateScale()
+            }).catch(() => {})
           } else {
-            document.exitFullscreen().catch(() => {})
+            document.exitFullscreen().then(() => {
+              checkFullscreen()
+              updateScale()
+            }).catch(() => {})
           }
         }
 
@@ -3244,13 +3322,31 @@
             case "FREEZE_KEYBOARD_NAV":
               isKeyboardFrozen.value = !!data.payload?.frozen
               break
+
+            case "FULLSCREEN_CHANGED":
+              isFullscreenMode.value = !!data.payload?.isFullscreen
+              nextTick(() => updateScale())
+              break
           }
         }
 
+        let resizeObserver = null
         onMounted(() => {
           window.addEventListener("keydown", onKeyDown)
           window.addEventListener("message", onHostMessage)
           document.addEventListener("click", onDocumentClick, true)
+          window.addEventListener("resize", updateScale)
+          document.addEventListener("fullscreenchange", updateScale)
+
+          if (window.ResizeObserver && stageContainerRef.value) {
+            resizeObserver = new ResizeObserver(() => {
+              updateScale()
+            })
+            resizeObserver.observe(stageContainerRef.value)
+          }
+          nextTick(() => {
+            updateScale()
+          })
 
           // 告知宿主客户端沙箱已准备就绪
           window.parent.postMessage({
@@ -3264,6 +3360,12 @@
           window.removeEventListener("keydown", onKeyDown)
           window.removeEventListener("message", onHostMessage)
           document.removeEventListener("click", onDocumentClick, true)
+          window.removeEventListener("resize", updateScale)
+          document.removeEventListener("fullscreenchange", updateScale)
+          if (resizeObserver) {
+            resizeObserver.disconnect()
+            resizeObserver = null
+          }
         })
 
         return {
@@ -3273,7 +3375,14 @@
           currentSlide,
           currentStep,
           highlightedBlockId,
+          stageContainerRef,
+          slideScale,
+          isFullscreenMode,
           viewportRatioClass,
+          viewportStyle,
+          currentSlideZoom,
+          contentWrapperStyle,
+          updateScale,
           currentThemeMode,
           currentSlidevTheme,
           pageBackgroundStyle,

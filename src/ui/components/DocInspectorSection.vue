@@ -22,7 +22,6 @@
           class="spm-segmented-item b3-tooltips b3-tooltips__s"
           :class="{ active: docTheme === item.value }"
           :aria-label="item.desc"
-          :title="item.desc"
           @click="$emit('update:docTheme', item.value)"
         >
           {{ item.label }}

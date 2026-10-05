@@ -14,6 +14,7 @@ export type THostToSlidevAction =
   | "NEXT_STEP"
   | "PREV_STEP"
   | "FREEZE_KEYBOARD_NAV"
+  | "FULLSCREEN_CHANGED"
 
 export interface IHostToSlidevMessage {
   source: "siyuan-slidev-host"
@@ -31,6 +32,8 @@ export interface IHostToSlidevMessage {
     fullMarkdown?: string
     // 是否冻结幻灯片沙箱键盘翻页
     frozen?: boolean
+    // 是否全屏状态变更通知
+    isFullscreen?: boolean
   }
 }
 

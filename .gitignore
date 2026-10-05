@@ -12,3 +12,10 @@ developer_docs/
 # Git worktrees
 .worktrees/
 worktrees/
+
+# Root build artifacts
+/index.js
+/index.css
+/kernel.js
+/slidev-client/
+/i18n/

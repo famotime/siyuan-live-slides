@@ -5,10 +5,8 @@
       <div
         v-for="trans in transitions"
         :key="trans.name"
-        class="spm-transition-item b3-tooltips b3-tooltips__s"
+        class="spm-transition-item"
         :class="{ active: modelValue === trans.name }"
-        :aria-label="trans.desc"
-        :title="trans.desc"
         @click="selectTransition(trans.name)"
       >
         <div class="spm-transition-meta">

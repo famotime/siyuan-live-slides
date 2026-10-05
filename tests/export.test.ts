@@ -49,6 +49,14 @@ describe("Single-File HTML Exporter (单文件离线 HTML 导出)", () => {
     expect(html).toContain("layout-cover")
   })
 
+  it("导出的独立 HTML 应包含 980px 基础画布尺寸与动态自适应缩放 updateScale 逻辑", () => {
+    const html = buildStandaloneHtml(dummyDoc)
+    expect(html).toContain("const baseWidth = 980")
+    expect(html).toContain("function updateScale()")
+    expect(html).toContain("--slidev-slide-scale")
+    expect(html).toContain("translate(-50%, -50%) scale(")
+  })
+
   it("应支持将本地资产路径内联替换为 Base64 data URL", () => {
     const docWithImage: ISlidevDocument = {
       ...dummyDoc,
