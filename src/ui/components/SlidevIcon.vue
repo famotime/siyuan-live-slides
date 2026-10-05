@@ -395,6 +395,19 @@
       <line x1="12.5" y1="16.5" x2="17.5" y2="16.5" />
     </g>
 
+    <!-- 桌面端视图 (Desktop / Monitor) -->
+    <g v-else-if="name === 'desktop' || name === 'monitor'">
+      <rect x="2" y="3" width="20" height="14" rx="2" />
+      <line x1="8" y1="21" x2="16" y2="21" />
+      <line x1="12" y1="17" x2="12" y2="21" />
+    </g>
+
+    <!-- 移动端视图 (Mobile / Smartphone) -->
+    <g v-else-if="name === 'mobile' || name === 'smartphone' || name === 'phone'">
+      <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+      <line x1="12" y1="18" x2="12.01" y2="18" stroke-width="2" stroke-linecap="round" />
+    </g>
+
     <!-- 默认兜底图标 (幻灯片画板) -->
     <g v-else>
       <rect x="2" y="3" width="20" height="14" rx="2" />

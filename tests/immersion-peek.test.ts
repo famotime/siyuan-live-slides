@@ -386,5 +386,64 @@ describe("Immersion Peek Drawer & IPC Coordination (原位速览抽屉与通信�
     // 4. 验证具备模式切换图标与按钮
     expect(content).toContain("name=\"isFocusMode ? 'focus' : 'file-text'\"")
   })
+
+  it("WebviewPeekDrawer 应支持桌面/移动端模式切换开关、390px 居中手机视口与移动端 User-Agent 仿真", async () => {
+    const fs = await import("fs")
+    const path = await import("path")
+
+    const drawerPath = path.resolve(__dirname, "../src/ui/components/peek/WebviewPeekDrawer.vue")
+    const content = fs.readFileSync(drawerPath, "utf-8")
+
+    // 1. 验证具备桌面/移动端切换按钮与响应式状态
+    expect(content).toContain("spm-mode-toggle")
+    expect(content).toContain("toggleViewMode")
+    expect(content).toContain("viewMode")
+    expect(content).toContain(":name=\"viewMode === 'mobile' ? 'mobile' : 'desktop'\"")
+
+    // 2. 验证具备主流移动端 User-Agent 常量与注入机制
+    expect(content).toContain("MOBILE_USER_AGENT")
+    expect(content).toContain("iPhone OS")
+    expect(content).toContain("setUserAgent")
+    expect(content).toContain(":useragent=\"currentUserAgent\"")
+
+    // 3. 验证具备 390px 居中手机视口及样式规则
+    expect(content).toContain("spm-webview-viewport")
+    expect(content).toContain("is-mobile")
+    expect(content).toMatch(/width:\s*390px/)
+    expect(content).toMatch(/border-radius:\s*12px/)
+
+    // 4. 验证具备本地存储持久化机制
+    expect(content).toContain("STORAGE_KEY_VIEW_MODE")
+    expect(content).toContain("getInitialViewMode")
+    expect(content).toContain("saveViewMode")
+  })
+
+  it("WebviewPeekDrawer 模块持久化方法应正确记忆与恢复用户视图偏好", async () => {
+    const { getInitialViewMode, saveViewMode, STORAGE_KEY_VIEW_MODE } = await import(
+      "../src/ui/components/peek/WebviewPeekDrawer.vue"
+    )
+
+    // 模拟 localStorage
+    const storage: Record<string, string> = {}
+    ;(globalThis as any).window.localStorage = {
+      getItem: (key: string) => storage[key] || null,
+      setItem: (key: string, val: string) => {
+        storage[key] = val
+      },
+      removeItem: (key: string) => {
+        delete storage[key]
+      },
+    }
+
+    // 1. 切换并保存为移动端模式
+    saveViewMode("mobile")
+    expect(storage[STORAGE_KEY_VIEW_MODE]).toBe("mobile")
+    expect(getInitialViewMode()).toBe("mobile")
+
+    // 2. 切换回桌面端模式
+    saveViewMode("desktop")
+    expect(storage[STORAGE_KEY_VIEW_MODE]).toBe("desktop")
+    expect(getInitialViewMode()).toBe("desktop")
+  })
 })
 

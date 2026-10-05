@@ -48,4 +48,9 @@ describe("LayoutPicker & SlidevIcon 版式线框图标体系测试", () => {
     expect(slidevIconContent).toContain("name === 'settings'")
     expect(slidevIconContent).toContain("name === 'notes'")
   })
+
+  it("SlidevIcon 应包含抽屉浏览器双端切换所需的 desktop 与 mobile 矢量图标", () => {
+    expect(slidevIconContent).toContain("name === 'desktop'")
+    expect(slidevIconContent).toContain("name === 'mobile'")
+  })
 })

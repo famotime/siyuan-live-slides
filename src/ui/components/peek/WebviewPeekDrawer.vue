@@ -53,6 +53,16 @@
       </div>
 
       <div class="spm-webview-toolbar__actions">
+        <!-- 桌面端 / 移动端视图切换开关 -->
+        <button
+          class="spm-icon-btn spm-mode-toggle b3-tooltips b3-tooltips__s"
+          :class="{ 'is-active': viewMode === 'mobile' }"
+          :aria-label="viewMode === 'mobile' ? '当前为手机视图，点击切换为桌面视图' : '当前为桌面视图，点击切换为手机视图'"
+          @click="toggleViewMode"
+        >
+          <SlidevIcon :name="viewMode === 'mobile' ? 'mobile' : 'desktop'" />
+        </button>
+
         <!-- 显式缩放控制器 -->
         <div class="spm-zoom-controller">
           <button
@@ -96,46 +106,86 @@
     <div
       ref="containerEl"
       class="spm-webview-body"
+      :class="{ 'is-mobile': viewMode === 'mobile' }"
       @wheel.ctrl="onCtrlWheel"
     >
-      <!-- 桌面端 (Electron 原生 webview) -->
-      <webview
-        v-if="isDesktop"
-        ref="webviewRef"
-        class="spm-webview-frame"
-        :src="currentUrl"
-        allowpopups="true"
-        partition="persist:slidev-peek"
-        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: inline-flex;"
-      ></webview>
-
-      <!-- Web / Docker 纯前端环境降级 (iframe + 友好引导卡片) -->
       <div
-        v-else
-        class="spm-webview-fallback"
+        class="spm-webview-viewport"
+        :class="{ 'is-mobile': viewMode === 'mobile' }"
       >
-        <iframe
-          class="spm-webview-fallback-frame"
+        <!-- 桌面端 (Electron 原生 webview) -->
+        <webview
+          v-if="isDesktop"
+          ref="webviewRef"
+          class="spm-webview-frame"
           :src="currentUrl"
-          frameborder="0"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-        ></iframe>
-        <div class="spm-fallback-bar">
-          <span>如页面受同源策略 (X-Frame-Options) 拦截无法显示，请</span>
-          <button
-            class="spm-icon-btn is-primary"
-            @click="openInSystemBrowser"
-          >
-            在新标签页中打开 ↗
-          </button>
+          :useragent="currentUserAgent"
+          allowpopups="true"
+          partition="persist:slidev-peek"
+          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: inline-flex;"
+        ></webview>
+
+        <!-- Web / Docker 纯前端环境降级 (iframe + 友好引导卡片) -->
+        <div
+          v-else
+          class="spm-webview-fallback"
+        >
+          <iframe
+            class="spm-webview-fallback-frame"
+            :src="currentUrl"
+            frameborder="0"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+          ></iframe>
+          <div class="spm-fallback-bar">
+            <span>如页面受同源策略 (X-Frame-Options) 拦截无法显示，请</span>
+            <button
+              class="spm-icon-btn is-primary"
+              @click="openInSystemBrowser"
+            >
+              在新标签页中打开 ↗
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
 
+<script lang="ts">
+export type TViewMode = 'desktop' | 'mobile'
+
+// 现代主流移动端 UA (iOS 17 Safari 兼容度高，能完美唤起移动端页面)
+export const MOBILE_USER_AGENT =
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1'
+
+export const STORAGE_KEY_VIEW_MODE = 'siyuan-slidev-peek-view-mode'
+
+let cachedViewMode: TViewMode = 'desktop'
+
+export function getInitialViewMode(): TViewMode {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const saved = window.localStorage.getItem(STORAGE_KEY_VIEW_MODE)
+      if (saved === 'mobile' || saved === 'desktop') {
+        return saved
+      }
+    } catch {}
+  }
+  return cachedViewMode
+}
+
+export function saveViewMode(mode: TViewMode) {
+  cachedViewMode = mode
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY_VIEW_MODE, mode)
+    } catch {}
+  }
+}
+</script>
+
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import SlidevIcon from '@/ui/components/SlidevIcon.vue'
 import { isDesktopEnvironment, getRuntimeModule } from '@/engine/runtime-node'
 
@@ -162,6 +212,16 @@ const canGoBack = ref(false)
 const canGoForward = ref(false)
 const zoomFactor = ref(1.0)
 const isCopied = ref(false)
+const viewMode = ref<TViewMode>(getInitialViewMode())
+
+let defaultDesktopUserAgent =
+  typeof navigator !== 'undefined' && !navigator.userAgent.includes('iPhone')
+    ? navigator.userAgent
+    : ''
+
+const currentUserAgent = computed(() => {
+  return viewMode.value === 'mobile' ? MOBILE_USER_AGENT : (defaultDesktopUserAgent || undefined)
+})
 
 const webviewRef = ref<any>(null)
 const containerEl = ref<HTMLElement | null>(null)
@@ -175,6 +235,9 @@ watch(
     if (newUrl && newUrl !== currentUrl.value) {
       currentUrl.value = newUrl
       urlInputValue.value = newUrl
+      if (viewMode.value === 'mobile') {
+        applyViewMode(false)
+      }
       if (webviewRef.value && typeof webviewRef.value.loadURL === 'function') {
         webviewRef.value.loadURL(newUrl)
       }
@@ -197,8 +260,11 @@ watch(
         }
       }
     } else {
-      // 抽屉重新显示时重置缩放
+      // 抽屉重新显示时重置缩放与视图模式
       applyZoomFactor()
+      if (viewMode.value === 'mobile') {
+        applyViewMode(false)
+      }
     }
   }
 )
@@ -297,8 +363,49 @@ function cleanupWebviewListeners() {
 }
 
 function onDomReady() {
+  const wv = webviewRef.value
+  if (wv && typeof wv.getUserAgent === 'function' && !defaultDesktopUserAgent) {
+    try {
+      const ua = wv.getUserAgent()
+      if (ua && !ua.includes('iPhone')) {
+        defaultDesktopUserAgent = ua
+      }
+    } catch {}
+  }
+  if (viewMode.value === 'mobile') {
+    applyViewMode(false)
+  }
   applyZoomFactor()
   updateNavState()
+}
+
+function toggleViewMode() {
+  const nextMode: TViewMode = viewMode.value === 'mobile' ? 'desktop' : 'mobile'
+  viewMode.value = nextMode
+  saveViewMode(nextMode)
+  applyViewMode(true)
+}
+
+function applyViewMode(forceReload = false) {
+  const wv = webviewRef.value
+  if (!wv) return
+
+  const targetUA = viewMode.value === 'mobile' ? MOBILE_USER_AGENT : defaultDesktopUserAgent
+  if (typeof wv.setUserAgent === 'function' && targetUA) {
+    try {
+      wv.setUserAgent(targetUA)
+    } catch (e) {
+      console.warn('[WebviewPeekDrawer] setUserAgent error:', e)
+    }
+  }
+
+  if (forceReload && typeof wv.reload === 'function') {
+    try {
+      wv.reload()
+    } catch (e) {
+      console.warn('[WebviewPeekDrawer] reload error:', e)
+    }
+  }
 }
 
 function onDidStartLoading() {
@@ -540,6 +647,18 @@ function openInSystemBrowser() {
   }
 }
 
+.spm-mode-toggle {
+  &.is-active {
+    background: var(--b3-theme-primary-light, rgba(59, 130, 246, 0.12));
+    border-color: var(--b3-theme-primary, #3b82f6);
+    color: var(--b3-theme-primary, #3b82f6);
+
+    &:hover {
+      background: var(--b3-theme-primary-light, rgba(59, 130, 246, 0.2));
+    }
+  }
+}
+
 .spm-webview-body {
   flex: 1 1 0%;
   width: 100%;
@@ -548,6 +667,40 @@ function openInSystemBrowser() {
   position: relative;
   overflow: hidden;
   background: var(--b3-theme-background, #ffffff);
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+
+  &.is-mobile {
+    background: var(--b3-theme-surface, #f1f5f9);
+    padding: 12px 0;
+  }
+}
+
+.spm-webview-viewport {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+
+  &.is-mobile {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    width: 390px;
+    max-width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--b3-theme-background, #ffffff);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px var(--b3-border-color, #e2e8f0);
+  }
 }
 
 .spm-webview-frame,
