@@ -5,7 +5,8 @@ import {
   generateCompleteSiYuanThemeCss,
   type ISiYuanInlineStylesPayload,
 } from "../src/compiler/theme-styles-generator"
-import { wrapElementDirectives } from "../src/compiler/slidev-ast-builder"
+import { wrapElementDirectives, buildSlidevDocument } from "../src/compiler/slidev-ast-builder"
+import { cleanAndTransformInlineKramdown } from "../src/compiler/html-cleaner"
 import { convertBlockToHtml } from "../src/export/markdown-renderer"
 import { buildStandaloneHtml } from "../src/export/single-html-exporter"
 import { buildPrintableHtml } from "../src/export/pdf-exporter"
@@ -193,4 +194,60 @@ describe("Theme Styles Generator (思源笔记调色板与字体样式生成器)
     expect(html).toContain("--b3-font-background1:")
     expect(html).toContain(".slide-styled-block")
   })
+
+  it("cleanAndTransformInlineKramdown 能彻底清除行内冗余 Kramdown Span IAL 并正确转换样式", () => {
+    // 真实思源格式：已有 span 标签，紧随冗余 Span IAL
+    const siyuanRaw = '### 聚焦笔记<span data-type="text" style="color: var(--b3-font-color8); font-size: 31px;">领域</span>{: style="color: var(--b3-font-color8); font-size: 31px;"}：从为知笔记到思源笔记'
+    const cleaned = cleanAndTransformInlineKramdown(siyuanRaw)
+    expect(cleaned).toBe('### 聚焦笔记<span data-type="text" style="color: var(--b3-font-color8); font-size: 31px;">领域</span>：从为知笔记到思源笔记')
+    expect(cleaned).not.toContain("{: style=")
+
+    // Markdown 加粗后带 style IAL
+    const boldWithIal = '**重点词**{: style="color: var(--b3-font-color1);"}'
+    expect(cleanAndTransformInlineKramdown(boldWithIal)).toBe('<span style="color: var(--b3-font-color1);">**重点词**</span>')
+
+    // 纯中文词汇后带 style IAL
+    const plainWordWithIal = '聚焦领域{: style="color: red;"}'
+    expect(cleanAndTransformInlineKramdown(plainWordWithIal)).toBe('<span style="color: red;">聚焦领域</span>')
+
+    // 清除元数据 IAL
+    const metaIal = '正文{: custom-id="12345" updated="2026"}'
+    expect(cleanAndTransformInlineKramdown(metaIal)).toBe("正文")
+  })
+
+  it("buildSlidevDocument 编译带行内样式的思源标题块时，不泄漏 IAL 且不篡改块级样式", () => {
+    const rawHeading = '### 聚焦笔记<span data-type="text" style="color: var(--b3-font-color8); font-size: 31px;">领域</span>{: style="color: var(--b3-font-color8); font-size: 31px;"}：从为知笔记到思源笔记'
+    const blockNode = {
+      id: "heading-1",
+      root_id: "doc-1",
+      type: "h",
+      subType: "h3",
+      content: "聚焦笔记领域：从为知笔记到思源笔记",
+      markdown: rawHeading,
+      ial: {
+        id: "heading-1",
+      },
+    }
+
+    const doc = buildSlidevDocument("doc-1", {}, [blockNode])
+    const slideBlock = doc.slides[0].blocks[0]
+
+    // 1. 块的 rawMarkdown 中不包含未转义的 {: style=...}
+    expect(slideBlock.rawMarkdown).not.toContain("{: style=")
+    expect(slideBlock.rawMarkdown).toContain('<span data-type="text" style="color: var(--b3-font-color8); font-size: 31px;">领域</span>')
+
+    // 2. 块本身没有块级 style 属性（不能污染整行标题变成红色或缩小）
+    expect(slideBlock.attributes?.style).toBeUndefined()
+
+    // 3. fullMarkdown 也不含有泄漏代码
+    expect(doc.fullMarkdown).not.toContain("{: style=")
+
+    // 4. 导出渲染器 convertBlockToHtml 渲染出的 HTML 正确保留 h3 和 span
+    const html = convertBlockToHtml(slideBlock)
+    expect(html).toContain("<h3>聚焦笔记<span")
+    expect(html).toContain('style="color: var(--b3-font-color8); font-size: 31px;"')
+    expect(html).toContain("领域</span>：从为知笔记到思源笔记</h3>")
+    expect(html).not.toContain("{: style=")
+  })
 })
+

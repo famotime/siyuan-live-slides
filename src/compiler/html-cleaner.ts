@@ -487,3 +487,41 @@ export function convertHtmlToCleanMarkdown(html: string): string {
 
   return text
 }
+
+/**
+ * 清洗并转换思源笔记独有的 Kramdown 行内 IAL 属性标记
+ * 1. 剔除紧跟在 HTML 行内标签 (如 </span>) 后的冗余 Kramdown Span IAL ({: style="..."})
+ * 2. 将紧随行内 Markdown 语法 (**加粗**、*斜体*、~~删除线~~、[链接](url)) 后的 {: style="..."} 转换为 <span style="..."> 包裹
+ * 3. 将紧随文本单词/中文词组后的 {: style="..."} 转换为 <span style="..."> 包裹
+ * 4. 彻底剥离任何残留的思源行内元数据 IAL ({: custom-xxx="..."} 等)，防止在演示中泄漏代码
+ */
+export function cleanAndTransformInlineKramdown(text: string): string {
+  if (!text || typeof text !== "string") return ""
+
+  // 1. 保护行内代码 `...`，避免误伤代码内的文字
+  const codeTokens: string[] = []
+  let safeText = text.replace(/`([^`]+)`/g, (match) => {
+    codeTokens.push(match)
+    return `%%INLINE_CODE_${codeTokens.length - 1}%%`
+  })
+
+  // 2. 移除紧跟在 HTML 闭合标签后的冗余 Kramdown Span IAL（如 </span>{: style="..."}）
+  safeText = safeText.replace(/(<\/[a-zA-Z0-9_-]+>)\s*\{:[^}]*\}/g, "$1")
+
+  // 3. 处理 Markdown 行内加粗/斜体/删除线/链接后的 {: style="..."}
+  safeText = safeText.replace(/(\[[^\]]+\]\([^)]+\))\s*\{:\s*style=["']([^"']*)["'][^}]*\}/g, '<span style="$2">$1</span>')
+  safeText = safeText.replace(/(\*\*[^*]+\*\*)\s*\{:\s*style=["']([^"']*)["'][^}]*\}/g, '<span style="$2">$1</span>')
+  safeText = safeText.replace(/(\*[^*]+\*)\s*\{:\s*style=["']([^"']*)["'][^}]*\}/g, '<span style="$2">$1</span>')
+  safeText = safeText.replace(/(~~[^~]+~~)\s*\{:\s*style=["']([^"']*)["'][^}]*\}/g, '<span style="$2">$1</span>')
+
+  // 4. 处理纯词组/中文字符后的 {: style="..."} (例如: 领域{: style="color: red;"})
+  safeText = safeText.replace(/([\p{L}\p{N}_\-]+)\s*\{:\s*style=["']([^"']*)["'][^}]*\}/gu, '<span style="$2">$1</span>')
+
+  // 5. 移除任何剩余的行内 Kramdown 属性标记 {: ... }（如 {: custom-id="..."}、{: id="..."} 等思源元数据）
+  safeText = safeText.replace(/\{:[^}]*\}/g, "")
+
+  // 6. 还原行内代码
+  safeText = safeText.replace(/%%INLINE_CODE_(\d+)%%/g, (_, idx) => codeTokens[parseInt(idx, 10)] || "")
+
+  return safeText
+}

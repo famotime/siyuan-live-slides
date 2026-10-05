@@ -27,6 +27,7 @@ import {
   isListItemNode,
   isSuperBlock,
 } from "./superblock-scanner"
+import { cleanAndTransformInlineKramdown } from "./html-cleaner"
 
 /**
  * 序列化 Frontmatter 对象为 YAML 字符串
@@ -648,6 +649,11 @@ export function buildSlidevDocument(
         const parsedInline = parseKramdownIAL(inlineIalMatch[0])
         combinedIal = { ...parsedInline, ...combinedIal }
         rawMd = rawMd.slice(0, inlineIalMatch.index).trim()
+      }
+
+      // 清洗并保真转换思源笔记行内 Kramdown Span IAL（如 </span>{: style="..."} 或 **加粗**{: style="..."}）
+      if (itemNode.type !== "c" && !rawMd.startsWith("```")) {
+        rawMd = cleanAndTransformInlineKramdown(rawMd)
       }
 
       // 容错剥离单独成块的思源超级块标记行 ({{{row, {{{col 或 }}})

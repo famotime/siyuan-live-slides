@@ -1,6 +1,7 @@
 import type { ISlidevBlockItem, ISlidevVirtualPage } from "../types/slidev-protocol"
 import { distributeThreeColumns } from "../compiler/slidev-ast-builder"
 import { cleanCardListItemMarkdown, isListItemNode } from "../compiler/superblock-scanner"
+import { cleanAndTransformInlineKramdown } from "../compiler/html-cleaner"
 
 /**
  * HTML 特殊字符转义
@@ -63,9 +64,12 @@ export const SAFE_INLINE_HTML_TAGS = new Set([
 export function formatInlineMarkdown(text: string): string {
   if (!text) return ""
 
+  // 0. 清洗并保真转换思源笔记行内 Kramdown Span IAL（如 </span>{: style="..."} 或 **加粗**{: style="..."}）
+  const preprocessed = cleanAndTransformInlineKramdown(text)
+
   // 1. 抽取并保护安全内联 HTML 标签（避免被全局 escapeHtml 误伤转义）
   const tokens: string[] = []
-  const tokenized = text.replace(/<\/?([a-zA-Z0-9_-]+)(?:\s+[^<>]*)?\/?>/g, (tagMatch, tagName) => {
+  const tokenized = preprocessed.replace(/<\/?([a-zA-Z0-9_-]+)(?:\s+[^<>]*)?\/?>/g, (tagMatch, tagName) => {
     const lowerTag = tagName.toLowerCase()
     if (!SAFE_INLINE_HTML_TAGS.has(lowerTag)) {
       return tagMatch

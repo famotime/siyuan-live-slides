@@ -3515,12 +3515,47 @@
           "img", "video", "source", "picture"
         ])
 
+        // 清洗并转换思源笔记独有的 Kramdown 行内 IAL 属性标记
+        function cleanAndTransformInlineKramdown(text) {
+          if (!text || typeof text !== "string") return ""
+
+          // 1. 保护行内代码 `...`，避免误伤代码内的文字
+          const codeTokens = []
+          let safeText = text.replace(/`([^`]+)`/g, (match) => {
+            codeTokens.push(match)
+            return `%%INLINE_CODE_${codeTokens.length - 1}%%`
+          })
+
+          // 2. 移除紧跟在 HTML 闭合标签后的冗余 Kramdown Span IAL（如 </span>{: style="..."}）
+          safeText = safeText.replace(/(<\/[a-zA-Z0-9_-]+>)\s*\{:[^}]*\}/g, "$1")
+
+          // 3. 处理 Markdown 行内加粗/斜体/删除线/链接后的 {: style="..."}
+          safeText = safeText.replace(/(\[[^\]]+\]\([^)]+\))\s*\{:\s*style=["']([^"']*)["'][^}]*\}/g, '<span style="$2">$1</span>')
+          safeText = safeText.replace(/(\*\*[^*]+\*\*)\s*\{:\s*style=["']([^"']*)["'][^}]*\}/g, '<span style="$2">$1</span>')
+          safeText = safeText.replace(/(\*[^*]+\*)\s*\{:\s*style=["']([^"']*)["'][^}]*\}/g, '<span style="$2">$1</span>')
+          safeText = safeText.replace(/(~~[^~]+~~)\s*\{:\s*style=["']([^"']*)["'][^}]*\}/g, '<span style="$2">$1</span>')
+
+          // 4. 处理纯词组/中文字符后的 {: style="..."} (例如: 领域{: style="color: red;"})
+          safeText = safeText.replace(/([\p{L}\p{N}_\-]+)\s*\{:\s*style=["']([^"']*)["'][^}]*\}/gu, '<span style="$2">$1</span>')
+
+          // 5. 移除任何剩余的行内 Kramdown 属性标记 {: ... }（如 {: custom-id="..."}、{: id="..."} 等思源元数据）
+          safeText = safeText.replace(/\{:[^}]*\}/g, "")
+
+          // 6. 还原行内代码
+          safeText = safeText.replace(/%%INLINE_CODE_(\d+)%%/g, (_, idx) => codeTokens[parseInt(idx, 10)] || "")
+
+          return safeText
+        }
+
         function formatInlineMarkdown(text) {
           if (!text) return ""
 
+          // 0. 清洗并保真转换思源笔记行内 Kramdown Span IAL
+          const preprocessed = cleanAndTransformInlineKramdown(text)
+
           // 1. 抽取并保护安全内联 HTML 标签（避免被全局 escapeHtml 误伤转义）
           const tokens = []
-          const tokenized = text.replace(/<\/?([a-zA-Z0-9_-]+)(?:\s+[^<>]*)?\/?>/g, (tagMatch, tagName) => {
+          const tokenized = preprocessed.replace(/<\/?([a-zA-Z0-9_-]+)(?:\s+[^<>]*)?\/?>/g, (tagMatch, tagName) => {
             const lowerTag = tagName.toLowerCase()
             if (!SAFE_INLINE_HTML_TAGS.has(lowerTag)) {
               return tagMatch

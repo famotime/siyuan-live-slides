@@ -156,8 +156,8 @@ export class DocumentCompilerService {
         }
       }
 
-      // 3.1 联合查询 attributes 表：思源官方结构化自定义属性键值对，补充合并到 ialMapById
-      const attrQuery = `SELECT block_id, name, value FROM attributes WHERE root_id = '${docId}' LIMIT 99999`
+      // 3.1 联合查询 attributes 表：仅检索块级自定义属性 (type = 'b')，严禁混入行内标记属性 (type = 's')
+      const attrQuery = `SELECT block_id, name, value FROM attributes WHERE root_id = '${docId}' AND type = 'b' LIMIT 99999`
       const attrRows = (await this.deps.sql(attrQuery).catch(() => [])) || []
       if (Array.isArray(attrRows)) {
         for (const row of attrRows) {
