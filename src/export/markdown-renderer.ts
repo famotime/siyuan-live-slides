@@ -1,4 +1,5 @@
 import type { ISlidevBlockItem, ISlidevVirtualPage } from "../types/slidev-protocol"
+import { distributeThreeColumns } from "../compiler/slidev-ast-builder"
 
 /**
  * HTML 特殊字符转义
@@ -703,43 +704,7 @@ export function renderSlideBlocksToHtml(
     }
 
     const rem = blocks.filter(b => !headerBlocks.includes(b))
-    let col1Blocks: ISlidevBlockItem[] = []
-    let col2Blocks: ISlidevBlockItem[] = []
-    let col3Blocks: ISlidevBlockItem[] = []
-
-    const hasExplicitCols = rem.some(b => b.slot === "col-1" || b.slot === "col-2" || b.slot === "col-3" || b.slot === "center" || b.slot === "left" || b.slot === "right")
-    if (hasExplicitCols) {
-      col2Blocks = rem.filter(b => b.slot === "col-2" || b.slot === "center")
-      col3Blocks = rem.filter(b => b.slot === "col-3" || b.slot === "right")
-      col1Blocks = rem.filter(b => !col2Blocks.includes(b) && !col3Blocks.includes(b))
-    } else if (rem.length >= 3) {
-      const c1 = Math.ceil(rem.length / 3)
-      const c2 = Math.ceil((rem.length - c1) / 2)
-      col1Blocks = rem.slice(0, c1)
-      col2Blocks = rem.slice(c1, c1 + c2)
-      col3Blocks = rem.slice(c1 + c2)
-    } else if (rem.length === 2) {
-      col1Blocks = [rem[0]]
-      col2Blocks = [rem[1]]
-      col3Blocks = []
-    } else if (rem.length === 1) {
-      const lines = (rem[0].rawMarkdown || rem[0].content || "").trim().split(/\r?\n/)
-      const itemLines = lines.filter(l => /^[ \t]*[-*+]\s+|^[ \t]*\d+\.\s+/.test(l))
-      if (itemLines.length >= 3) {
-        const c1 = Math.ceil(itemLines.length / 3)
-        const c2 = Math.ceil((itemLines.length - c1) / 2)
-        const items1 = itemLines.slice(0, c1).join("\n")
-        const items2 = itemLines.slice(c1, c1 + c2).join("\n")
-        const items3 = itemLines.slice(c1 + c2).join("\n")
-        col1Blocks = [{ ...rem[0], rawMarkdown: items1, content: items1 }]
-        col2Blocks = [{ ...rem[0], id: `${rem[0].id}-col2`, rawMarkdown: items2, content: items2 }]
-        col3Blocks = [{ ...rem[0], id: `${rem[0].id}-col3`, rawMarkdown: items3, content: items3 }]
-      } else {
-        col1Blocks = rem
-      }
-    } else {
-      col1Blocks = rem
-    }
+    const { col1: col1Blocks, col2: col2Blocks, col3: col3Blocks } = distributeThreeColumns(rem)
 
     const headerHtml = headerBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
     const col1Html = col1Blocks.map(b => convertBlockToHtml(b, options)).join("\n")

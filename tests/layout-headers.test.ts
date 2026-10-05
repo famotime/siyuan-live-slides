@@ -451,5 +451,60 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
       expect(slots.some(s => s.value === "left")).toBe(false)
       expect(slots.some(s => s.value === "right")).toBe(false)
     })
+
+    it("仅首块指定 col-1 (如点击设为第1栏) 时，剩余未标记块自动均分至第 2 栏与第 3 栏，防止单栏堆叠", () => {
+      const docId = "doc-col1-only"
+      const docAttrs = { "custom-slidev-layout": "three-cols-header" }
+      const blocks: ISiYuanBlockNode[] = [
+        { id: "h1", type: "h", markdown: "# 总体架构", ial: { id: "h1" } },
+        { id: "b1", type: "p", markdown: "第一栏重点", ial: { id: "b1", "custom-slidev-slot": "col-1" } },
+        { id: "b2", type: "p", markdown: "第二栏内容", ial: { id: "b2" } },
+        { id: "b3", type: "p", markdown: "第三栏内容", ial: { id: "b3" } },
+      ]
+      const doc = buildSlidevDocument(docId, docAttrs, blocks)
+      const page = doc.slides[0]
+      expect(page.rawMarkdown).toContain("::col-1::\n\n第一栏重点")
+      expect(page.rawMarkdown).toContain("::col-2::\n\n第二栏内容")
+      expect(page.rawMarkdown).toContain("::col-3::\n\n第三栏内容")
+    })
+
+    it("未标注任何插槽但包含 3 个大纲子标题时，自动按标题将各段内容归属至对应三栏", () => {
+      const docId = "doc-3headings"
+      const docAttrs = { "custom-slidev-layout": "three-cols-header" }
+      const blocks: ISiYuanBlockNode[] = [
+        { id: "h-main", type: "h", markdown: "# 顶层主标题", ial: { id: "h-main" } },
+        { id: "h-sub1", type: "h", subType: "h3", markdown: "### 前端工程", ial: { id: "h-sub1" } },
+        { id: "p1", type: "p", markdown: "Vue3 与 Vite", ial: { id: "p1" } },
+        { id: "h-sub2", type: "h", subType: "h3", markdown: "### 后端服务", ial: { id: "h-sub2" } },
+        { id: "p2", type: "p", markdown: "Golang 与 SQLite", ial: { id: "p2" } },
+        { id: "h-sub3", type: "h", subType: "h3", markdown: "### 基础设施", ial: { id: "h-sub3" } },
+        { id: "p3", type: "p", markdown: "Docker 与 CI", ial: { id: "p3" } },
+      ]
+      const doc = buildSlidevDocument(docId, docAttrs, blocks)
+      const page = doc.slides[0]
+      expect(page.rawMarkdown).toContain("::col-1::\n\n### 前端工程\n\nVue3 与 Vite")
+      expect(page.rawMarkdown).toContain("::col-2::\n\n### 后端服务\n\nGolang 与 SQLite")
+      expect(page.rawMarkdown).toContain("::col-3::\n\n### 基础设施\n\nDocker 与 CI")
+    })
+
+    it("BlockInspectorSection isSlotActive 在 three-cols-header 下兼容映射 left/center/right 历史标记", () => {
+      function isSlotActive(val: string, s: string): boolean {
+        if (!val) return !s || s === "default"
+        if (s === val) return true
+        if (val === "col-1" && s === "left") return true
+        if (val === "col-2" && s === "center") return true
+        if (val === "col-3" && s === "right") return true
+        if (val === "left" && s === "col-1") return true
+        if (val === "right" && (s === "col-2" || s === "col-3")) return true
+        return false
+      }
+
+      expect(isSlotActive("col-1", "left")).toBe(true)
+      expect(isSlotActive("col-2", "center")).toBe(true)
+      expect(isSlotActive("col-3", "right")).toBe(true)
+      expect(isSlotActive("col-1", "col-1")).toBe(true)
+      expect(isSlotActive("col-2", "col-2")).toBe(true)
+      expect(isSlotActive("col-3", "col-3")).toBe(true)
+    })
   })
 })

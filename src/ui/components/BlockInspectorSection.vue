@@ -367,14 +367,11 @@ function isSlotActive(val: string): boolean {
     return !s || s === 'default'
   }
   if (s === val) return true
-  if (effectiveLayout.value === 'three-cols-header') {
-    return false
-  }
   if (val === 'col-1' && s === 'left') return true
   if (val === 'col-2' && s === 'center') return true
   if (val === 'col-3' && s === 'right') return true
   if (val === 'left' && s === 'col-1') return true
-  if (val === 'right' && s === 'col-2') return true
+  if (val === 'right' && (s === 'col-2' || s === 'col-3')) return true
   return false
 }
 

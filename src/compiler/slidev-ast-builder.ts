@@ -283,6 +283,200 @@ export interface IBuildSlidevDocOptions extends IAssetRewriteOptions {
 }
 
 /**
+ * 三栏内容分配结果接口
+ */
+export interface IThreeColsDistribution<T = any> {
+  col1: T[]
+  col2: T[]
+  col3: T[]
+}
+
+/**
+ * 健壮的多模式三栏内容分配器
+ * 支持：
+ * 1. 显式 slot (col-1/left, col-2/center, col-3/right) 流式继承与单栏标记自动均分剩余块
+ * 2. 章节大纲标题 (>=3 个标题) 自动分组
+ * 3. 超级块子块展开、Markdown 列表项、HTML <li>、多段落自动拆分为三栏
+ * 4. 多普通内容块均分
+ */
+export function distributeThreeColumns<
+  T extends {
+    slot?: string
+    type?: string
+    subType?: string
+    content?: string
+    rawMarkdown?: string
+    id?: string
+    children?: any[]
+  }
+>(rem: T[]): IThreeColsDistribution<T> {
+  if (!rem || rem.length === 0) {
+    return { col1: [], col2: [], col3: [] }
+  }
+
+  // 1. 检查是否存在超级块且具有子块 (在单块包裹场景下自动解包)
+  if (rem.length === 1 && rem[0].children && rem[0].children.length >= 2) {
+    const ch = rem[0].children as T[]
+    if (ch.length >= 3) {
+      const c1 = Math.ceil(ch.length / 3)
+      const c2 = Math.ceil((ch.length - c1) / 2)
+      return {
+        col1: ch.slice(0, c1),
+        col2: ch.slice(c1, c1 + c2),
+        col3: ch.slice(c1 + c2),
+      }
+    } else {
+      return { col1: [ch[0]], col2: [ch[1]], col3: [] }
+    }
+  }
+
+  const getColNum = (b: T): 1 | 2 | 3 | null => {
+    const s = b.slot || ""
+    if (s === "col-1" || s === "left") return 1
+    if (s === "col-2" || s === "center") return 2
+    if (s === "col-3" || s === "right") return 3
+    return null
+  }
+
+  const explicitCols = rem.map(getColNum)
+  const hasExplicitCols = explicitCols.some(c => c !== null)
+
+  // 2. 显式插槽分配
+  if (hasExplicitCols) {
+    const hasCol2 = explicitCols.includes(2)
+    const hasCol3 = explicitCols.includes(3)
+
+    // 场景 2A: 显式标记了第 2 栏或第 3 栏 -> 流式继承模式
+    // （在标记前未指定的属于第 1 栏；遇到标记后，后续未指定块沿用该栏，直到下一栏目标记）
+    if (hasCol2 || hasCol3) {
+      const col1: T[] = []
+      const col2: T[] = []
+      const col3: T[] = []
+      let currentCol: 1 | 2 | 3 = 1
+
+      for (const b of rem) {
+        const directCol = getColNum(b)
+        if (directCol !== null) {
+          currentCol = directCol
+        }
+        if (currentCol === 1) col1.push(b)
+        else if (currentCol === 2) col2.push(b)
+        else col3.push(b)
+      }
+      return { col1, col2, col3 }
+    }
+
+    // 场景 2B: 仅显式标记了第 1 栏 (例如点击了“设为第1栏”)，未显式标记第 2、3 栏
+    // 标记为第 1 栏的归入 col1；剩余未标记块自动均分至 col2 与 col3
+    const col1 = rem.filter(b => getColNum(b) === 1)
+    const untagged = rem.filter(b => getColNum(b) === null)
+    if (untagged.length >= 2) {
+      const mid = Math.ceil(untagged.length / 2)
+      return {
+        col1,
+        col2: untagged.slice(0, mid),
+        col3: untagged.slice(mid),
+      }
+    } else if (untagged.length === 1) {
+      return {
+        col1,
+        col2: untagged,
+        col3: [],
+      }
+    } else {
+      return { col1, col2: [], col3: [] }
+    }
+  }
+
+  // 3. 检查大纲标题自动分组 (若存在 >= 3 个标题行，按标题分组)
+  const isHeading = (b: T) => {
+    if (b.type === "h") return true
+    if (b.subType && /^h[1-6]$/i.test(b.subType)) return true
+    const md = (b.rawMarkdown || b.content || "").trim()
+    return /^#{1,6}\s+/.test(md)
+  }
+  const headingIndices = rem.map((b, idx) => (isHeading(b) ? idx : -1)).filter(idx => idx !== -1)
+  if (headingIndices.length >= 3) {
+    return {
+      col1: rem.slice(0, headingIndices[1]),
+      col2: rem.slice(headingIndices[1], headingIndices[2]),
+      col3: rem.slice(headingIndices[2]),
+    }
+  }
+
+  // 4. 多块列表/段落均分 (rem.length >= 3)
+  if (rem.length >= 3) {
+    const c1Count = Math.ceil(rem.length / 3)
+    const c2Count = Math.ceil((rem.length - c1Count) / 2)
+    return {
+      col1: rem.slice(0, c1Count),
+      col2: rem.slice(c1Count, c1Count + c2Count),
+      col3: rem.slice(c1Count + c2Count),
+    }
+  }
+
+  // 5. 2 个内容块分配
+  if (rem.length === 2) {
+    return {
+      col1: [rem[0]],
+      col2: [rem[1]],
+      col3: [],
+    }
+  }
+
+  // 6. 仅 1 个内容块时的细粒度拆分 (列表项、HTML <li>、多段落)
+  if (rem.length === 1) {
+    const single = rem[0]
+    const text = (single.rawMarkdown || single.content || "").trim()
+
+    // 6.1 Markdown 列表项 (- item / 1. item)
+    const lines = text.split(/\r?\n/)
+    const itemLines = lines.filter(l => /^[ \t]*[-*+]\s+|^[ \t]*\d+\.\s+/.test(l))
+    if (itemLines.length >= 3) {
+      const c1 = Math.ceil(itemLines.length / 3)
+      const c2 = Math.ceil((itemLines.length - c1) / 2)
+      const items1 = itemLines.slice(0, c1).join("\n")
+      const items2 = itemLines.slice(c1, c1 + c2).join("\n")
+      const items3 = itemLines.slice(c1 + c2).join("\n")
+      return {
+        col1: [{ ...single, rawMarkdown: items1, content: items1 }],
+        col2: [{ ...single, id: `${single.id}-col2`, rawMarkdown: items2, content: items2 }],
+        col3: [{ ...single, id: `${single.id}-col3`, rawMarkdown: items3, content: items3 }],
+      }
+    }
+
+    // 6.2 HTML 列表项 (<li>...</li>)
+    const liMatches = text.match(/<li[\s\S]*?<\/li>/gi)
+    if (liMatches && liMatches.length >= 3) {
+      const c1 = Math.ceil(liMatches.length / 3)
+      const c2 = Math.ceil((liMatches.length - c1) / 2)
+      const ul1 = `<ul>\n${liMatches.slice(0, c1).join("\n")}\n</ul>`
+      const ul2 = `<ul>\n${liMatches.slice(c1, c1 + c2).join("\n")}\n</ul>`
+      const ul3 = `<ul>\n${liMatches.slice(c1 + c2).join("\n")}\n</ul>`
+      return {
+        col1: [{ ...single, rawMarkdown: ul1, content: ul1 }],
+        col2: [{ ...single, id: `${single.id}-col2`, rawMarkdown: ul2, content: ul2 }],
+        col3: [{ ...single, id: `${single.id}-col3`, rawMarkdown: ul3, content: ul3 }],
+      }
+    }
+
+    // 6.3 纯文本多段落 (空行分隔)
+    const paras = text.split(/\r?\n\s*\r?\n/).filter(p => p.trim() !== "")
+    if (paras.length >= 3) {
+      const c1 = Math.ceil(paras.length / 3)
+      const c2 = Math.ceil((paras.length - c1) / 2)
+      return {
+        col1: [{ ...single, rawMarkdown: paras.slice(0, c1).join("\n\n"), content: paras.slice(0, c1).join("\n\n") }],
+        col2: [{ ...single, id: `${single.id}-col2`, rawMarkdown: paras.slice(c1, c1 + c2).join("\n\n"), content: paras.slice(c1, c1 + c2).join("\n\n") }],
+        col3: [{ ...single, id: `${single.id}-col3`, rawMarkdown: paras.slice(c1 + c2).join("\n\n"), content: paras.slice(c1 + c2).join("\n\n") }],
+      }
+    }
+  }
+
+  return { col1: rem, col2: [], col3: [] }
+}
+
+/**
  * 构建完整的 Slidev 虚拟文档与 Markdown 载荷
  */
 export function buildSlidevDocument(
@@ -709,42 +903,28 @@ export function buildSlidevDocument(
       }
 
       const rem = contentBlocks.filter(b => !headerList.includes(b))
-      let col1List: ISlidevBlockItem[] = []
-      let col2List: ISlidevBlockItem[] = []
-      let col3List: ISlidevBlockItem[] = []
+      const distribution = distributeThreeColumns(rem)
+      const col1List = distribution.col1
+      const col2List = distribution.col2
+      const col3List = distribution.col3
 
-      const hasExplicitCols = rem.some(b => b.slot === "col-1" || b.slot === "col-2" || b.slot === "col-3" || b.slot === "center" || b.slot === "left" || b.slot === "right")
-      if (hasExplicitCols) {
-        col2List = rem.filter(b => b.slot === "col-2" || b.slot === "center")
-        col3List = rem.filter(b => b.slot === "col-3" || b.slot === "right")
-        col1List = rem.filter(b => !col2List.includes(b) && !col3List.includes(b))
-      } else if (rem.length >= 3) {
-        const c1 = Math.ceil(rem.length / 3)
-        const c2 = Math.ceil((rem.length - c1) / 2)
-        col1List = rem.slice(0, c1)
-        col2List = rem.slice(c1, c1 + c2)
-        col3List = rem.slice(c1 + c2)
-      } else if (rem.length === 2) {
-        col1List = [rem[0]]
-        col2List = [rem[1]]
-        col3List = []
-      } else if (rem.length === 1) {
-        const lines = (rem[0].rawMarkdown || rem[0].content || "").trim().split(/\r?\n/)
-        const itemLines = lines.filter(l => /^[ \t]*[-*+]\s+|^[ \t]*\d+\.\s+/.test(l))
-        if (itemLines.length >= 3) {
-          const c1 = Math.ceil(itemLines.length / 3)
-          const c2 = Math.ceil((itemLines.length - c1) / 2)
-          const items1 = itemLines.slice(0, c1).join("\n")
-          const items2 = itemLines.slice(c1, c1 + c2).join("\n")
-          const items3 = itemLines.slice(c1 + c2).join("\n")
-          col1List = [{ ...rem[0], rawMarkdown: items1, content: items1 }]
-          col2List = [{ ...rem[0], id: `${rem[0].id}-col2`, rawMarkdown: items2, content: items2 }]
-          col3List = [{ ...rem[0], id: `${rem[0].id}-col3`, rawMarkdown: items3, content: items3 }]
-        } else {
-          col1List = rem
+      // 为虚拟 AST 模型上的块补全 slot，确保 Web 沙箱接收到 slides 时 slot 与渲染对齐
+      for (const b of col1List) {
+        if (!b.slot) b.slot = "col-1"
+      }
+      for (const b of col2List) {
+        if (!b.slot) b.slot = "col-2"
+      }
+      for (const b of col3List) {
+        if (!b.slot) b.slot = "col-3"
+      }
+
+      // 若 rem 原本只有 1 个单块且被成功解构为 3 个虚拟块，更新 page.blocks
+      if (rem.length === 1 && (col2List.length > 0 || col3List.length > 0)) {
+        const origIdx = page.blocks.findIndex(b => b.id === rem[0].id)
+        if (origIdx !== -1) {
+          page.blocks.splice(origIdx, 1, ...col1List, ...col2List, ...col3List)
         }
-      } else {
-        col1List = rem
       }
 
       const headerContent = renderBlocks(headerList)
