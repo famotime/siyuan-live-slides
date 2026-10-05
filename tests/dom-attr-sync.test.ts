@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest"
-import { syncDomBlockAttrs, syncBatchDomBlockAttrs } from "../src/sync/dom-attr-sync"
-import { ATTR_PAGE_LAYOUT, ATTR_PAGE_TRANSITION, ATTR_ELEM_CLICK } from "../src/types/slidev-protocol"
+import { syncDomBlockAttrs, syncBatchDomBlockAttrs, purgeStaleDomSlidevAttrs } from "../src/sync/dom-attr-sync"
+import { ATTR_PAGE_LAYOUT, ATTR_PAGE_TRANSITION, ATTR_ELEM_CLICK, ATTR_ELEM_ROLE } from "../src/types/slidev-protocol"
 
 interface IMockElement {
   nodeId: string
@@ -25,6 +25,8 @@ function createMockElement(id: string, type = "NodeThematicBreak", initialAttrs:
     className: type === "NodeThematicBreak" ? "hr" : "",
     attrs,
     getAttribute(name: string) {
+      if (name === "data-node-id") return this.nodeId
+      if (name === "data-type") return this.type
       return this.attrs[name] ?? null
     },
     setAttribute(name: string, val: string) {
@@ -53,6 +55,12 @@ describe("DOM Attribute Synchronizer (思源编辑区 DOM 属性实时同步器)
         if (match) {
           const targetId = match[1]
           return mockElements.filter(el => el.nodeId === targetId)
+        }
+        if (sel.includes("custom-slidev-layout") || sel.includes("custom-slidev-role")) {
+          return mockElements.filter(el =>
+            el.hasAttribute("custom-slidev-layout") ||
+            el.hasAttribute("custom-slidev-role")
+          )
         }
         return []
       }),
@@ -159,6 +167,82 @@ describe("DOM Attribute Synchronizer (思源编辑区 DOM 属性实时同步器)
     expect(() => {
       syncDomBlockAttrs("some-block-id", { "custom-slidev-layout": "default" })
       syncBatchDomBlockAttrs([{ id: "some-block-id", attrs: { "custom-slidev-layout": "default" } }])
+      purgeStaleDomSlidevAttrs(new Map())
     }).not.toThrow()
+  })
+
+  it("当分隔行 (NodeThematicBreak) 去除 image-right 自定义属性时，DOM 属性应被彻底移除 (removeAttribute)", () => {
+    const dividerId = "20261005110000-divider"
+    const dividerEl = createMockElement(dividerId, "NodeThematicBreak", {
+      "custom-slidev-layout": "image-right",
+    })
+    mockElements.push(dividerEl)
+
+    expect(dividerEl.hasAttribute("custom-slidev-layout")).toBe(true)
+    expect(dividerEl.getAttribute("custom-slidev-layout")).toBe("image-right")
+
+    // 模拟属性置空/去除
+    syncDomBlockAttrs(dividerId, { [ATTR_PAGE_LAYOUT]: "" })
+
+    expect(dividerEl.hasAttribute("custom-slidev-layout")).toBe(false)
+    expect(dividerEl.getAttribute("custom-slidev-layout")).toBeNull()
+  })
+
+  it("当列表项 (NodeListItem) 及其子段落去除 image-right 时，DOM 属性应被彻底清除", () => {
+    const liId = "20261005110001-li"
+    const paraId = "20261005110002-para"
+
+    const liEl = createMockElement(liId, "NodeListItem", {
+      "custom-slidev-layout": "image-right",
+    })
+    const paraEl = createMockElement(paraId, "NodeParagraph", {
+      "custom-slidev-layout": "image-right",
+    })
+    mockElements.push(liEl, paraEl)
+
+    // 验证初始状态均带有 image-right
+    expect(liEl.getAttribute("custom-slidev-layout")).toBe("image-right")
+    expect(paraEl.getAttribute("custom-slidev-layout")).toBe("image-right")
+
+    // 模拟列表项及内部段落去除版式属性
+    syncDomBlockAttrs(liId, { [ATTR_PAGE_LAYOUT]: "", [ATTR_ELEM_ROLE]: "" })
+    syncDomBlockAttrs(paraId, { [ATTR_PAGE_LAYOUT]: "", [ATTR_ELEM_ROLE]: "" })
+
+    expect(liEl.hasAttribute("custom-slidev-layout")).toBe(false)
+    expect(paraEl.hasAttribute("custom-slidev-layout")).toBe(false)
+  })
+
+  it("purgeStaleDomSlidevAttrs 应全量巡检并自愈清理已不在有效集合中的孤立 DOM 属性与角标", () => {
+    const staleDividerId = "stale-divider"
+    const staleLiId = "stale-li"
+    const validBlockId = "valid-block"
+
+    // 创建残存旧属性的 DOM 元素
+    const staleDividerEl = createMockElement(staleDividerId, "NodeThematicBreak", {
+      "custom-slidev-layout": "image-right",
+    })
+    const staleLiEl = createMockElement(staleLiId, "NodeListItem", {
+      "custom-slidev-layout": "image-right",
+      "custom-slidev-role": "background",
+    })
+    const validEl = createMockElement(validBlockId, "NodeParagraph", {
+      "custom-slidev-layout": "image-left",
+    })
+    mockElements.push(staleDividerEl, staleLiEl, validEl)
+
+    // 有效映射中仅保留 validBlockId 为 image-left，staleDividerId 与 staleLiId 均无属性
+    const validMap = new Map<string, Record<string, string>>()
+    validMap.set(validBlockId, { [ATTR_PAGE_LAYOUT]: "image-left" })
+
+    // 执行全量自愈巡检清理
+    purgeStaleDomSlidevAttrs(validMap)
+
+    // 验证：残存的分隔行和列表项属性被彻底清理
+    expect(staleDividerEl.hasAttribute("custom-slidev-layout")).toBe(false)
+    expect(staleLiEl.hasAttribute("custom-slidev-layout")).toBe(false)
+    expect(staleLiEl.hasAttribute("custom-slidev-role")).toBe(false)
+
+    // 验证：合法的块保留属性
+    expect(validEl.getAttribute("custom-slidev-layout")).toBe("image-left")
   })
 })

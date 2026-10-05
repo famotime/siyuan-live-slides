@@ -64,10 +64,22 @@ export class DocumentCompilerService {
   /**
    * 写入块属性的即时覆盖缓存 (毫秒级解决思源后台 SQLite 异步落库延迟)
    */
-  public setBlockAttrOverride(id: string, attrs: Record<string, string>): void {
-    if (!id) return
+  public setBlockAttrOverride(id: string, attrs: Record<string, string | null | undefined>): void {
+    if (!id || !attrs) return
     const existing = this.attrOverrides.get(id) || {}
-    this.attrOverrides.set(id, { ...existing, ...attrs })
+    const updated = { ...existing }
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v === "" || v === null || v === undefined) {
+        delete updated[k]
+      } else {
+        updated[k] = String(v)
+      }
+    }
+    if (Object.keys(updated).length === 0) {
+      this.attrOverrides.delete(id)
+    } else {
+      this.attrOverrides.set(id, updated)
+    }
   }
 
   /**
@@ -75,6 +87,13 @@ export class DocumentCompilerService {
    */
   public getBlockAttrOverride(id: string): Record<string, string> | undefined {
     return this.attrOverrides.get(id)
+  }
+
+  /**
+   * 获取所有即时覆盖层缓存快照
+   */
+  public getAllAttrOverrides(): Map<string, Record<string, string>> {
+    return new Map(this.attrOverrides)
   }
 
   /**

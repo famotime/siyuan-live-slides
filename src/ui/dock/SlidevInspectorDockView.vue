@@ -540,6 +540,19 @@ async function onImageRoleChange(role: string) {
       }
     }
     await saveAttrs(updates)
+
+    // 若当前激活块位于列表项内部（如列表段落），联动清除外层 NodeListItem 上的演示属性
+    if (typeof document !== 'undefined') {
+      const activeEl = document.querySelector(`.protyle-wysiwyg [data-node-id="${targetId}"]`) as HTMLElement | null
+      const parentLi = activeEl?.closest('[data-type="NodeListItem"]') as HTMLElement | null
+      const parentLiId = parentLi?.getAttribute('data-node-id')
+      if (parentLiId && parentLiId !== targetId) {
+        const liUpdates = { [ATTR_PAGE_LAYOUT]: '', [ATTR_ELEM_ROLE]: '' }
+        syncDomBlockAttrs(parentLiId, liUpdates)
+        globalDocumentCompiler.setBlockAttrOverride(parentLiId, liUpdates)
+        await setBlockAttrs(parentLiId, liUpdates).catch(() => {})
+      }
+    }
   } else if (role === 'background') {
     const updates: Record<string, string> = {
       [ATTR_ELEM_ROLE]: 'background',
@@ -909,6 +922,7 @@ async function onClearBlockAttrs() {
     [ATTR_ELEM_NOTE]: '',
     'slidev-note': '',
     [ATTR_PAGE_LAYOUT]: '',
+    [ATTR_ELEM_ROLE]: '',
     [ATTR_PAGE_TRANSITION]: '',
     [ATTR_PAGE_BACKGROUND]: '',
     [ATTR_PAGE_IMAGE]: '',
@@ -920,6 +934,19 @@ async function onClearBlockAttrs() {
   syncDomBlockAttrs(targetId, clearMap)
   await setBlockAttrs(targetId, clearMap)
   globalDocumentCompiler.clearBlockAttrOverride(targetId)
+
+  // 若当前激活块位于列表项内部（如列表段落），联动清除外层 NodeListItem 上的演示属性
+  if (typeof document !== 'undefined') {
+    const activeEl = document.querySelector(`.protyle-wysiwyg [data-node-id="${targetId}"]`) as HTMLElement | null
+    const parentLi = activeEl?.closest('[data-type="NodeListItem"]') as HTMLElement | null
+    const parentLiId = parentLi?.getAttribute('data-node-id')
+    if (parentLiId && parentLiId !== targetId) {
+      syncDomBlockAttrs(parentLiId, clearMap)
+      await setBlockAttrs(parentLiId, clearMap).catch(() => {})
+      globalDocumentCompiler.clearBlockAttrOverride(parentLiId)
+    }
+  }
+
   activeBlockAttrs.value = {}
   elemShikiLines.value = ''
   elemMaxHeight.value = ''

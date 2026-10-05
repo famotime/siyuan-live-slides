@@ -26,10 +26,10 @@ import {
   openDockImportDialog,
 } from "@/main"
 import { mirrorBlockSelection } from "@/sync/selection-mirror"
-import { syncDomBlockAttrs } from "@/sync/dom-attr-sync"
+import { syncDomBlockAttrs, purgeStaleDomSlidevAttrs } from "@/sync/dom-attr-sync"
 import { PropertyManagerBridge } from "@/synergy/property-manager-bridge"
 import type { ISlidevDocument, ISiYuanBlockNode } from "@/types/slidev-protocol"
-import { ATTR_ELEM_NOTE, ATTR_PAGE_LAYOUT } from "@/types/slidev-protocol"
+import { ATTR_ELEM_NOTE, ATTR_PAGE_LAYOUT, ATTR_ELEM_ROLE } from "@/types/slidev-protocol"
 import "@/index.scss"
 
 // 专属 SVG 幻灯片放映图标
@@ -721,6 +721,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
                 diff[k] = String(v ?? "")
               }
               syncDomBlockAttrs(op.id, diff)
+              globalDocumentCompiler.setBlockAttrOverride(op.id, diff)
             }
           }
         }
@@ -953,11 +954,8 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
       const pType = prev.getAttribute("data-type")
       if (pType === "NodeThematicBreak" || pType === "tb" || prev.classList?.contains("hr")) {
         pageDividerId = prev.getAttribute("data-node-id") || ""
-        pageDividerLayout =
-          prev.getAttribute(ATTR_PAGE_LAYOUT) ||
-          prev.getAttribute("custom-slidev-layout") ||
-          prev.getAttribute("data-custom-slidev-layout") ||
-          ""
+        // 注意：绝不能直接盲目信任并读取 DOM 上可能残留的 custom-slidev-layout
+        // 权威事实来源必须是缓存、编译模型与内核真实属性
         break
       }
       prev = prev.previousElementSibling
@@ -992,11 +990,17 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
       }
     }
 
-    // 深度持久化回溯：若确定了前置分页符但其版式尚未获取到，查缓存并直接调用思源内核 API 获取持久化属性
+    // 深度持久化回溯：若确定了前置分页符，查缓存、编译模型并直接调用思源内核 API 获取持久化属性
     if (pageDividerId) {
       const cachedOverride = globalDocumentCompiler.getBlockAttrOverride(pageDividerId)
-      if (cachedOverride?.[ATTR_PAGE_LAYOUT] || cachedOverride?.["custom-slidev-layout"]) {
+      if (cachedOverride && (ATTR_PAGE_LAYOUT in cachedOverride || "custom-slidev-layout" in cachedOverride)) {
         pageDividerLayout = cachedOverride[ATTR_PAGE_LAYOUT] || cachedOverride["custom-slidev-layout"] || ""
+      }
+      if (!pageDividerLayout && this.latestCompiledDoc?.slides) {
+        const matched = this.latestCompiledDoc.slides.find(s => s.startBlockId === pageDividerId)
+        if (matched?.frontmatter?.layout) {
+          pageDividerLayout = matched.frontmatter.layout
+        }
       }
       if (!pageDividerLayout) {
         const dividerAttrs = (await getBlockAttrs(pageDividerId).catch(() => ({}))) || {}
@@ -1005,16 +1009,49 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
           globalDocumentCompiler.setBlockAttrOverride(pageDividerId, dividerAttrs)
         }
       }
-      if (pageDividerLayout) {
-        syncDomBlockAttrs(pageDividerId, { [ATTR_PAGE_LAYOUT]: pageDividerLayout })
-      }
+      // 无论 pageDividerLayout 是否为空，均无条件调用 syncDomBlockAttrs 同步 DOM
+      // 若 pageDividerLayout 为空，syncDomBlockAttrs 会执行 removeAttribute 彻底清除残余角标
+      syncDomBlockAttrs(pageDividerId, { [ATTR_PAGE_LAYOUT]: pageDividerLayout || "" })
     } else if (this.currentDocId) {
       // 若当前块位于首个分页符之前（即第 1 页），页面版式源自文档根属性
       const docOverride = globalDocumentCompiler.getBlockAttrOverride(this.currentDocId)
-      if (docOverride?.[ATTR_PAGE_LAYOUT] || docOverride?.["custom-slidev-layout"]) {
+      if (docOverride && (ATTR_PAGE_LAYOUT in docOverride || "custom-slidev-layout" in docOverride)) {
         pageDividerLayout = docOverride[ATTR_PAGE_LAYOUT] || docOverride["custom-slidev-layout"] || ""
       } else if (!pageDividerLayout && this.latestCompiledDoc?.slides?.[0]?.frontmatter?.layout) {
         pageDividerLayout = this.latestCompiledDoc.slides[0].frontmatter.layout
+      }
+    }
+
+    // 对齐当前激活块 DOM 属性与真实属性：若 DOM 上有残留属性但真实已无，立即清除
+    const currentDomLayout = effectiveEl.getAttribute(ATTR_PAGE_LAYOUT) || effectiveEl.getAttribute("custom-slidev-layout")
+    const expectedLayout = finalAttrs[ATTR_PAGE_LAYOUT] || finalAttrs["custom-slidev-layout"] || ""
+    if (currentDomLayout && currentDomLayout !== expectedLayout) {
+      syncDomBlockAttrs(effectiveId, { [ATTR_PAGE_LAYOUT]: expectedLayout })
+    }
+    const currentDomRole = effectiveEl.getAttribute(ATTR_ELEM_ROLE) || effectiveEl.getAttribute("custom-slidev-role")
+    const expectedRole = finalAttrs[ATTR_ELEM_ROLE] || finalAttrs["custom-slidev-role"] || ""
+    if (currentDomRole && currentDomRole !== expectedRole) {
+      syncDomBlockAttrs(effectiveId, { [ATTR_ELEM_ROLE]: expectedRole })
+    }
+
+    // 针对列表项结构：若当前激活块位于列表项内部（如列表段落），检查并自愈外层 NodeListItem 容器的 DOM 属性
+    const parentLiEl = effectiveEl.closest('[data-type="NodeListItem"]') as HTMLElement | null
+    if (parentLiEl && parentLiEl !== effectiveEl) {
+      const parentLiId = parentLiEl.getAttribute("data-node-id")
+      if (parentLiId) {
+        const parentAttrs = (await getBlockAttrs(parentLiId).catch(() => ({}))) || {}
+        const parentOverride = globalDocumentCompiler.getBlockAttrOverride(parentLiId) || {}
+        const parentFinalAttrs = { ...parentAttrs, ...parentOverride }
+        const parentExpectedLayout = parentFinalAttrs[ATTR_PAGE_LAYOUT] || parentFinalAttrs["custom-slidev-layout"] || ""
+        const parentDomLayout = parentLiEl.getAttribute(ATTR_PAGE_LAYOUT) || parentLiEl.getAttribute("custom-slidev-layout")
+        if (parentDomLayout && parentDomLayout !== parentExpectedLayout) {
+          syncDomBlockAttrs(parentLiId, { [ATTR_PAGE_LAYOUT]: parentExpectedLayout })
+        }
+        const parentExpectedRole = parentFinalAttrs[ATTR_ELEM_ROLE] || parentFinalAttrs["custom-slidev-role"] || ""
+        const parentDomRole = parentLiEl.getAttribute(ATTR_ELEM_ROLE) || parentLiEl.getAttribute("custom-slidev-role")
+        if (parentDomRole && parentDomRole !== parentExpectedRole) {
+          syncDomBlockAttrs(parentLiId, { [ATTR_ELEM_ROLE]: parentExpectedRole })
+        }
       }
     }
 
@@ -1063,8 +1100,65 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
       const slidevDoc = await globalDocumentCompiler.compile(docId)
       this.latestCompiledDoc = slidevDoc
       updateDockDocument(slidevDoc, docId)
+
+      // 全量巡检并清除 Protyle 编辑区中的陈旧/残留 Slidev DOM 属性与角标
+      this.purgeStaleDomSlidevAttrs(slidevDoc)
     } catch (err) {
       console.error("[SiYuanSlidev] Failed to compile document:", err)
     }
+  }
+
+  /**
+   * 收集编译模型与内存覆盖层中的所有合法版式与角色，巡检并清理 Protyle 编辑区中残留的幽灵 DOM 属性与角标
+   */
+  public purgeStaleDomSlidevAttrs(doc: ISlidevDocument): void {
+    if (typeof document === "undefined" || !doc) return
+
+    const validAttrsMap = new Map<string, Record<string, string>>()
+
+    // 1. 收集各分页 startBlockId 的版式
+    if (Array.isArray(doc.slides)) {
+      for (const slide of doc.slides) {
+        if (slide.startBlockId) {
+          const m: Record<string, string> = validAttrsMap.get(slide.startBlockId) || {}
+          if (slide.frontmatter?.layout) {
+            m[ATTR_PAGE_LAYOUT] = slide.frontmatter.layout
+          }
+          validAttrsMap.set(slide.startBlockId, m)
+        }
+        // 收集各幻灯片内具有特定版式/角色的块
+        if (Array.isArray(slide.blocks)) {
+          for (const b of slide.blocks) {
+            if (b.id) {
+              const bm: Record<string, string> = validAttrsMap.get(b.id) || {}
+              if (b.ial?.[ATTR_PAGE_LAYOUT]) {
+                bm[ATTR_PAGE_LAYOUT] = b.ial[ATTR_PAGE_LAYOUT]
+              }
+              if (b.ial?.[ATTR_ELEM_ROLE]) {
+                bm[ATTR_ELEM_ROLE] = b.ial[ATTR_ELEM_ROLE]
+              }
+              if (Object.keys(bm).length > 0) {
+                validAttrsMap.set(b.id, bm)
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // 2. 合并当前所有内存即时覆盖层
+    const allOverrides = globalDocumentCompiler.getAllAttrOverrides()
+    for (const [id, override] of allOverrides.entries()) {
+      const existing = validAttrsMap.get(id) || {}
+      if (override[ATTR_PAGE_LAYOUT] !== undefined) {
+        existing[ATTR_PAGE_LAYOUT] = override[ATTR_PAGE_LAYOUT]
+      }
+      if (override[ATTR_ELEM_ROLE] !== undefined) {
+        existing[ATTR_ELEM_ROLE] = override[ATTR_ELEM_ROLE]
+      }
+      validAttrsMap.set(id, existing)
+    }
+
+    purgeStaleDomSlidevAttrs(validAttrsMap)
   }
 }

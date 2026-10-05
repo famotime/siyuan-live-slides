@@ -1,11 +1,4 @@
-/**
- * 思源编辑区 DOM 块属性实时同步器 (DOM Attribute Synchronizer)
- *
- * 彻底防御与修复思源笔记本体前端在 transactions updateAttrs 中
- * 硬编码忽略 NodeThematicBreak 等特殊块导致 DOM 属性无法同步更新的缺陷。
- * 确保版式切换、动效设置、讲稿备注转换时，Protyle WYSIWYG 编辑区
- * 中的自定义属性 (custom-slidev-*) 与伪元素徽标浮动提示能毫秒级即刻刷新/消失。
- */
+import { ATTR_PAGE_LAYOUT, ATTR_ELEM_ROLE } from "../types/slidev-protocol"
 
 /**
  * 实时同步/更新 Protyle 编辑区中对应块的 DOM 元素属性
@@ -54,3 +47,62 @@ export function syncBatchDomBlockAttrs(
     }
   }
 }
+
+/**
+ * 彻底巡检并自愈清理 Protyle 编辑区中的陈旧/残留 Slidev DOM 属性与角标
+ * 扫描当前所有带有 [custom-slidev-layout] 或 [custom-slidev-role] 的 DOM 节点，
+ * 若该节点在权威有效集合中已不存在对应属性（或为空），则立即 removeAttribute 彻底清除。
+ *
+ * @param validAttrsMap 包含各合法 blockId 及其期望属性的映射表
+ */
+export function purgeStaleDomSlidevAttrs(
+  validAttrsMap: Map<string, Record<string, string>>,
+): void {
+  if (typeof document === "undefined") {
+    return
+  }
+
+  const selector = `.protyle-wysiwyg [${ATTR_PAGE_LAYOUT}], .protyle-wysiwyg [${ATTR_ELEM_ROLE}], .protyle-wysiwyg [custom-slidev-layout], .protyle-wysiwyg [custom-slidev-role]`
+  const elements = document.querySelectorAll<HTMLElement>(selector)
+  if (!elements || elements.length === 0) {
+    return
+  }
+
+  elements.forEach((el) => {
+    const blockId = el.getAttribute("data-node-id")
+    if (!blockId) {
+      el.removeAttribute(ATTR_PAGE_LAYOUT)
+      el.removeAttribute("custom-slidev-layout")
+      el.removeAttribute(ATTR_ELEM_ROLE)
+      el.removeAttribute("custom-slidev-role")
+      return
+    }
+
+    const expected = validAttrsMap.get(blockId)
+
+    // 检查 custom-slidev-layout (如旧残留的 image-right)
+    const expectedLayout = expected?.[ATTR_PAGE_LAYOUT] || expected?.["custom-slidev-layout"] || ""
+    const currentLayout = el.getAttribute(ATTR_PAGE_LAYOUT) || el.getAttribute("custom-slidev-layout")
+    if (currentLayout && currentLayout !== expectedLayout) {
+      if (expectedLayout) {
+        el.setAttribute(ATTR_PAGE_LAYOUT, expectedLayout)
+      } else {
+        el.removeAttribute(ATTR_PAGE_LAYOUT)
+        el.removeAttribute("custom-slidev-layout")
+      }
+    }
+
+    // 检查 custom-slidev-role (如旧残留的 background)
+    const expectedRole = expected?.[ATTR_ELEM_ROLE] || expected?.["custom-slidev-role"] || ""
+    const currentRole = el.getAttribute(ATTR_ELEM_ROLE) || el.getAttribute("custom-slidev-role")
+    if (currentRole && currentRole !== expectedRole) {
+      if (expectedRole) {
+        el.setAttribute(ATTR_ELEM_ROLE, expectedRole)
+      } else {
+        el.removeAttribute(ATTR_ELEM_ROLE)
+        el.removeAttribute("custom-slidev-role")
+      }
+    }
+  })
+}
+
