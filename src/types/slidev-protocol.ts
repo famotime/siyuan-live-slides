@@ -117,6 +117,7 @@ export interface ISlidevDocument {
   config: ISlidevPluginConfig
   slides: ISlidevVirtualPage[]
   fullMarkdown: string
+  customThemeCss?: string
 }
 
 /** 思源原始块节点结构接口 */

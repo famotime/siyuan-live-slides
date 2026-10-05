@@ -34,6 +34,8 @@ export interface IHostToSlidevMessage {
     frozen?: boolean
     // 是否全屏状态变更通知
     isFullscreen?: boolean
+    // 思源主题与字体样式 CSS 变量定义
+    customThemeCss?: string
   }
 }
 

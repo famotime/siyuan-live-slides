@@ -1,6 +1,7 @@
-import { getBlockAttrs, getChildBlocks, setBlockAttrs, sql } from "../api"
+import { getBlockAttrs, getChildBlocks, getInlineStyles, setBlockAttrs, sql } from "../api"
 import { extractBlockRefs } from "./block-ref-resolver"
 import { buildSlidevDocument } from "./slidev-ast-builder"
+import { generateCompleteSiYuanThemeCss } from "./theme-styles-generator"
 import {
   isSuperBlock,
   scanAndTagSuperBlocks,
@@ -36,6 +37,7 @@ export interface IDocumentCompilerDeps {
   setBlockAttrs?: (id: string, attrs: Record<string, string>) => Promise<any>
   sql: (query: string) => Promise<any[]>
   getBaseUrl?: () => string
+  getInlineStyles?: () => Promise<any>
 }
 
 const defaultDeps: IDocumentCompilerDeps = {
@@ -44,6 +46,7 @@ const defaultDeps: IDocumentCompilerDeps = {
   setBlockAttrs,
   sql,
   getBaseUrl: () => (typeof location !== "undefined" ? location.origin : ""),
+  getInlineStyles,
 }
 
 /**
@@ -344,11 +347,22 @@ export class DocumentCompilerService {
       // 8. 调用核心 AST 编译器
       const baseUrl = this.deps.getBaseUrl ? this.deps.getBaseUrl() : ""
       const slidevDoc = buildSlidevDocument(docId, docAttrs, blockNodes, { baseUrl, refContentMap })
+
+      // 9. 动态检索思源工作空间自定义样式扩展 (/api/storage/getInlineStyles) 并生成全局 CSS
+      try {
+        const rawStyles = this.deps.getInlineStyles ? await this.deps.getInlineStyles().catch(() => null) : null
+        slidevDoc.customThemeCss = generateCompleteSiYuanThemeCss(rawStyles)
+      } catch {
+        slidevDoc.customThemeCss = generateCompleteSiYuanThemeCss(null)
+      }
+
       return slidevDoc
     } catch (err) {
       console.error("[DocumentCompilerService] Failed to compile document:", err)
       // 容错兜底：返回基础空文档
-      return buildSlidevDocument(docId, {}, [], {})
+      const fallbackDoc = buildSlidevDocument(docId, {}, [], {})
+      fallbackDoc.customThemeCss = generateCompleteSiYuanThemeCss(null)
+      return fallbackDoc
     }
   }
 }

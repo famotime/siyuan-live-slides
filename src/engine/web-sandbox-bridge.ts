@@ -88,11 +88,13 @@ export class WebSandboxBridge {
     slides: ISlidevVirtualPage[],
     config?: ISlidevPluginConfig,
     fullMarkdown?: string,
+    customThemeCss?: string,
   ): void {
     this.postMessage("UPDATE_SLIDES", {
       slides,
       config,
       fullMarkdown,
+      customThemeCss,
     })
   }
 

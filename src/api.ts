@@ -602,4 +602,9 @@ export async function chatAI(prompt: string): Promise<string | null> {
   }
 }
 
+// **************************************** Storage / Inline Styles ****************************************
 
+export async function getInlineStyles(): Promise<any> {
+  const url = "/api/storage/getInlineStyles"
+  return request(url, "")
+}

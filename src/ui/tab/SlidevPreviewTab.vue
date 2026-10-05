@@ -475,7 +475,7 @@ defineExpose({
     if (engineMode.value === 'pro-cli') {
       engineManager.scaffolder.scaffold(doc, putFile).catch(() => {})
     } else {
-      sandboxBridge.updateSlides(doc.slides, doc.config, doc.fullMarkdown)
+      sandboxBridge.updateSlides(doc.slides, doc.config, doc.fullMarkdown, doc.customThemeCss)
     }
   },
   navigateToBlock(blockId: string) {
