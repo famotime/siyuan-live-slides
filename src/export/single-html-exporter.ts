@@ -80,10 +80,29 @@ export function buildStandaloneHtml(
       --slide-text: #e2e8f0;
       --slide-accent: #34d399;
     }
-    .slidev-theme-default .layout-cover h1 {
+    .slidev-theme-default .layout-cover h1,
+    .slidev-theme-default .layout-cover .slide-block h1 {
+      font-size: 3.8rem !important;
+      font-weight: 800 !important;
+      line-height: 1.15 !important;
+      letter-spacing: -0.025em !important;
+      margin-bottom: 18px !important;
       background: linear-gradient(135deg, #10b981, #06b6d4) !important;
       -webkit-background-clip: text !important;
       -webkit-text-fill-color: transparent !important;
+    }
+    .slidev-theme-default .layout-cover h2,
+    .slidev-theme-default .layout-cover .slide-block h2 {
+      font-size: 1.85rem !important;
+      font-weight: 600 !important;
+      opacity: 0.85 !important;
+      margin-bottom: 12px !important;
+    }
+    .slidev-theme-default .layout-cover p,
+    .slidev-theme-default .layout-cover .slide-block p {
+      font-size: 1.45rem !important;
+      line-height: 1.5 !important;
+      opacity: 0.85 !important;
     }
 
     /* 2. 优雅衬线主题 Seriph */
@@ -188,9 +207,10 @@ export function buildStandaloneHtml(
     :fullscreen .slide-viewport, .is-fullscreen .slide-viewport {
       border-radius: 0 !important; box-shadow: none !important;
     }
-    .slide-content { padding: 48px 56px; width: 100%; height: 100%; min-height: 100%; flex: 1 1 0%; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box; }
     .layout-cover { justify-content: center; align-items: center; text-align: center; }
-    .layout-two-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; width: 100%; height: 100%; flex: 1; align-items: start; box-sizing: border-box; }
+    .layout-cover h1, .layout-cover .slide-block h1 { font-size: 3.8rem !important; font-weight: 800 !important; line-height: 1.15 !important; letter-spacing: -0.025em !important; margin-bottom: 16px !important; }
+    .layout-cover h2, .layout-cover .slide-block h2 { font-size: 1.85rem !important; font-weight: 600 !important; opacity: 0.85 !important; margin-bottom: 12px !important; }
+    .layout-cover p, .layout-cover .slide-block p { font-size: 1.45rem !important; line-height: 1.5 !important; opacity: 0.85 !important; }
     .two-cols-left, .two-cols-right { min-width: 0; width: 100%; display: flex; flex-direction: column; box-sizing: border-box; overflow-wrap: break-word; word-break: break-word; }
     .pdf-two-cols-wrapper,
     .layout-two-cols-grid {

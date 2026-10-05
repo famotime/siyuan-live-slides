@@ -44,10 +44,29 @@
       --slide-code-bg: #1e1e24;
       --slide-accent: #34d399;
     }
-    .slidev-theme-default .layout-cover h1 {
+    .slidev-theme-default .layout-cover h1,
+    .slidev-theme-default .layout-cover .slide-block h1 {
+      font-size: 3.8rem !important;
+      font-weight: 800 !important;
+      line-height: 1.15 !important;
+      letter-spacing: -0.025em !important;
+      margin-bottom: 18px !important;
       background: linear-gradient(135deg, #10b981, #06b6d4) !important;
       -webkit-background-clip: text !important;
       -webkit-text-fill-color: transparent !important;
+    }
+    .slidev-theme-default .layout-cover h2,
+    .slidev-theme-default .layout-cover .slide-block h2 {
+      font-size: 1.85rem !important;
+      font-weight: 600 !important;
+      opacity: 0.85 !important;
+      margin-bottom: 12px !important;
+    }
+    .slidev-theme-default .layout-cover p,
+    .slidev-theme-default .layout-cover .slide-block p {
+      font-size: 1.45rem !important;
+      line-height: 1.5 !important;
+      opacity: 0.85 !important;
     }
 
     /* 2. 优雅衬线主题 Seriph (典雅学术书卷风) */
@@ -252,17 +271,30 @@
       text-align: center;
     }
 
-    .layout-cover h1 {
-      font-size: 3.2rem;
+    .layout-cover h1,
+    .layout-cover .slide-block h1 {
+      font-size: 3.8rem;
       font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.025em;
       margin-bottom: 16px;
       background: linear-gradient(135deg, #3b82f6, #8b5cf6);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
-    .layout-cover p {
-      font-size: 1.4rem;
+    .layout-cover h2,
+    .layout-cover .slide-block h2 {
+      font-size: 1.85rem;
+      font-weight: 600;
+      opacity: 0.85;
+      margin-bottom: 12px;
+    }
+
+    .layout-cover p,
+    .layout-cover .slide-block p {
+      font-size: 1.45rem;
+      line-height: 1.5;
       opacity: 0.85;
     }
 
