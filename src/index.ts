@@ -26,6 +26,7 @@ import {
   openDockImportDialog,
 } from "@/main"
 import { mirrorBlockSelection } from "@/sync/selection-mirror"
+import { syncDomBlockAttrs } from "@/sync/dom-attr-sync"
 import { PropertyManagerBridge } from "@/synergy/property-manager-bridge"
 import type { ISlidevDocument, ISiYuanBlockNode } from "@/types/slidev-protocol"
 import { ATTR_ELEM_NOTE, ATTR_PAGE_LAYOUT } from "@/types/slidev-protocol"
@@ -662,6 +663,30 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     const data = event.detail
     if (!data) return
 
+    // 针对思源前端忽略 NodeThematicBreak updateAttrs 的底层缺陷进行防御性补丁同步
+    if (data.cmd === "transactions" && Array.isArray(data.data)) {
+      for (const tx of data.data) {
+        if (Array.isArray(tx?.doOperations)) {
+          for (const op of tx.doOperations) {
+            if (op?.action === "updateAttrs" && op.id && op.data) {
+              const oldAttrs = op.data.old || {}
+              const newAttrs = op.data.new || {}
+              const diff: Record<string, string> = {}
+              for (const k of Object.keys(oldAttrs)) {
+                if (!(k in newAttrs)) {
+                  diff[k] = ""
+                }
+              }
+              for (const [k, v] of Object.entries(newAttrs)) {
+                diff[k] = String(v ?? "")
+              }
+              syncDomBlockAttrs(op.id, diff)
+            }
+          }
+        }
+      }
+    }
+
     // 检查事务是否关联当前打开文档
     if (this.debounceTimer) {
       window.clearTimeout(this.debounceTimer)
@@ -939,6 +964,9 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
         if (dividerAttrs && Object.keys(dividerAttrs).length > 0) {
           globalDocumentCompiler.setBlockAttrOverride(pageDividerId, dividerAttrs)
         }
+      }
+      if (pageDividerLayout) {
+        syncDomBlockAttrs(pageDividerId, { [ATTR_PAGE_LAYOUT]: pageDividerLayout })
       }
     } else if (this.currentDocId) {
       // 若当前块位于首个分页符之前（即第 1 页），页面版式源自文档根属性

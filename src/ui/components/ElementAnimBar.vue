@@ -48,6 +48,7 @@
 <script setup lang="ts">
 import { ref, computed, defineProps, defineEmits } from 'vue'
 import { setBlockAttrs } from '@/api'
+import { syncDomBlockAttrs } from '@/sync/dom-attr-sync'
 import {
   ATTR_ELEM_CLICK,
   ATTR_ELEM_MOTION,
@@ -88,6 +89,7 @@ const slotLabel = computed(() => {
 
 async function saveAttr(key: string, val: string) {
   if (!props.blockId) return
+  syncDomBlockAttrs(props.blockId, { [key]: val })
   await setBlockAttrs(props.blockId, { [key]: val })
   emit('updated', { [key]: val })
 }

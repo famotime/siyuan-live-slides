@@ -137,6 +137,7 @@ import { ref, computed, inject } from 'vue'
 import { showMessage } from 'siyuan'
 import { setBlockAttrs, insertBlock, appendBlock, updateBlock, deleteBlock, getBlockKramdown, chatAI } from '@/api'
 import { mirrorBlockSelection } from '@/sync/selection-mirror'
+import { syncDomBlockAttrs } from '@/sync/dom-attr-sync'
 import PageInspectorSection from '@/ui/components/PageInspectorSection.vue'
 import BlockInspectorSection from '@/ui/components/BlockInspectorSection.vue'
 import DocInspectorSection from '@/ui/components/DocInspectorSection.vue'
@@ -481,6 +482,7 @@ async function onImageRoleChange(role: string) {
       pageBackground.value = ''
       await setBlockAttrs(pageContainerId, { [ATTR_PAGE_BACKGROUND]: '' }).catch(() => {})
       globalDocumentCompiler.setBlockAttrOverride(pageContainerId, { [ATTR_PAGE_BACKGROUND]: '' })
+      syncDomBlockAttrs(pageContainerId, { [ATTR_PAGE_BACKGROUND]: '' })
       if (targetSlide.value?.frontmatter) {
         delete targetSlide.value.frontmatter.background
       }
@@ -495,6 +497,7 @@ async function onImageRoleChange(role: string) {
       pageBackground.value = imgUrl
       await setBlockAttrs(pageContainerId, { [ATTR_PAGE_BACKGROUND]: imgUrl }).catch(() => {})
       globalDocumentCompiler.setBlockAttrOverride(pageContainerId, { [ATTR_PAGE_BACKGROUND]: imgUrl })
+      syncDomBlockAttrs(pageContainerId, { [ATTR_PAGE_BACKGROUND]: imgUrl })
       if (targetSlide.value) {
         if (!targetSlide.value.frontmatter) {
           targetSlide.value.frontmatter = {}
@@ -519,6 +522,7 @@ async function saveAttrs(attrs: Record<string, string>) {
     activeBlockAttrs.value[key] = value
   }
   globalDocumentCompiler.setBlockAttrOverride(targetId, attrs)
+  syncDomBlockAttrs(targetId, attrs)
 
   if (ATTR_PAGE_LAYOUT in attrs) {
     const value = attrs[ATTR_PAGE_LAYOUT]
@@ -562,6 +566,7 @@ async function saveAttr(key: string, value: string) {
 
   activeBlockAttrs.value[key] = value
   globalDocumentCompiler.setBlockAttrOverride(targetId, { [key]: value })
+  syncDomBlockAttrs(targetId, { [key]: value })
 
   // 若修改的是版式，立即同步当前内存中 targetSlide 的 layout 与 currentPageDividerLayout，避免点击内容块时异步重编译未完成读取到旧数据
   if (key === ATTR_PAGE_LAYOUT) {
@@ -591,6 +596,7 @@ async function saveDocAttr(key: string, value: string) {
   if (!docId) return
   activeBlockAttrs.value[key] = value
   globalDocumentCompiler.setBlockAttrOverride(docId, { [key]: value })
+  syncDomBlockAttrs(docId, { [key]: value })
   if (latestDoc.value?.config) {
     if (key === ATTR_DOC_THEME) latestDoc.value.config.theme = value
     if (key === ATTR_DOC_ASPECT_RATIO) latestDoc.value.config.aspectRatio = value
@@ -655,6 +661,7 @@ async function onToggleNoteBlock() {
       // 4. 设置属性并覆盖缓存
       await setBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: 'true' })
       globalDocumentCompiler.setBlockAttrOverride(targetId, { [ATTR_ELEM_NOTE]: 'true' })
+      syncDomBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: 'true' })
       activeBlockAttrs.value[ATTR_ELEM_NOTE] = 'true'
       activeBlockType.value = 'NodeCallout'
 
@@ -676,6 +683,7 @@ async function onToggleNoteBlock() {
     try {
       await setBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: '', 'slidev-note': '' })
       globalDocumentCompiler.setBlockAttrOverride(targetId, { [ATTR_ELEM_NOTE]: '', 'slidev-note': '' })
+      syncDomBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: '', 'slidev-note': '' })
       delete activeBlockAttrs.value[ATTR_ELEM_NOTE]
       delete activeBlockAttrs.value['slidev-note']
 
@@ -831,7 +839,7 @@ async function onSetTwoColsContrast() {
 async function onClearBlockAttrs() {
   const targetId = activeBlockId.value
   if (!targetId) return
-  await setBlockAttrs(targetId, {
+  const clearMap = {
     [ATTR_ELEM_CLICK]: '',
     [ATTR_ELEM_MOTION]: '',
     [ATTR_ELEM_SLOT]: '',
@@ -842,7 +850,9 @@ async function onClearBlockAttrs() {
     [ATTR_PAGE_TRANSITION]: '',
     [ATTR_PAGE_BACKGROUND]: '',
     [ATTR_PAGE_IMAGE]: '',
-  })
+  }
+  syncDomBlockAttrs(targetId, clearMap)
+  await setBlockAttrs(targetId, clearMap)
   globalDocumentCompiler.clearBlockAttrOverride(targetId)
   activeBlockAttrs.value = {}
   elemShikiLines.value = ''
