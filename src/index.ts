@@ -38,9 +38,18 @@ const ICON_SLIDEV_SVG = `<symbol id="iconSlidev" viewBox="0 0 1024 1024">
   <path fill="currentColor" d="M416 336l256 144-256 144z"/>
 </symbol>`
 
+import {
+  DEFAULT_GLOBAL_SETTINGS,
+  getRuntimeSettings,
+  normalizeGlobalSettings,
+  setRuntimeSettings,
+  SETTINGS_STORAGE_NAME,
+} from "./settings"
+import type { ISlidevGlobalSettings } from "./settings"
+
 const DOCK_TYPE = "slidev-dock"
 const TAB_TYPE = "slidev-preview-tab"
-const STORAGE_NAME = "slidev-config.json"
+const STORAGE_NAME = SETTINGS_STORAGE_NAME
 
 export default class SiYuanSlidevPlugin extends SyPlugin {
   public isMobile = false
@@ -62,6 +71,9 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
   async onload() {
     const frontEnd = getFrontend()
     this.isMobile = frontEnd === "mobile" || frontEnd === "browser-mobile"
+
+    // 0. 加载全局持久化配置
+    await this.loadGlobalSettings()
 
     // 1. 注册图标
     this.addIcons(ICON_SLIDEV_SVG)
@@ -422,10 +434,38 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
   }
 
   async onDataChanged(reason?: "sync" | "overwrite") {
+    // 跨端同步或外部配置更新时重新载入全局配置
+    await this.loadGlobalSettings()
     // 跨端同步或外部文件覆写时轻量重新编译，避免宿主触发全量重载
     if (this.currentDocId) {
       await this.compileCurrentDocument(this.currentDocId)
     }
+  }
+
+  async loadGlobalSettings(): Promise<ISlidevGlobalSettings> {
+    try {
+      const stored = await this.loadData(STORAGE_NAME)
+      const normalized = normalizeGlobalSettings(stored)
+      setRuntimeSettings(normalized)
+      return normalized
+    } catch {
+      setRuntimeSettings(DEFAULT_GLOBAL_SETTINGS)
+      return DEFAULT_GLOBAL_SETTINGS
+    }
+  }
+
+  async saveGlobalSettings(nextSettings?: Partial<ISlidevGlobalSettings>): Promise<ISlidevGlobalSettings> {
+    const current = getRuntimeSettings()
+    const updated = setRuntimeSettings({
+      ...current,
+      ...(nextSettings || {}),
+    })
+    try {
+      await this.saveData(STORAGE_NAME, updated)
+    } catch (err) {
+      console.error("保存 Slidev 全局配置失败", err)
+    }
+    return updated
   }
 
   onunload() {

@@ -136,6 +136,7 @@
           :block-id="peekBlockId"
           :title="drawerTitle"
           :plugin="plugin!"
+          @external-jump="onExternalJump"
         />
 
         <!-- Web 外部链接速览轨 (受控微型浏览器，常驻 DOM 懒加载，杜绝卸载时 Electron guestInstanceId 异常) -->
@@ -145,6 +146,7 @@
           :visible="isDrawerOpen && peekType === 'web'"
           :url="peekUrl"
           :title="drawerTitle"
+          @external-jump="onExternalJump"
         />
       </ImmersionDrawerContainer>
     </div>
@@ -164,7 +166,7 @@
 import { ref, onMounted, onUnmounted, inject } from 'vue'
 import type { Plugin } from 'siyuan'
 import { showMessage } from 'siyuan'
-import { putFile } from '@/api'
+import { putFile, sql } from '@/api'
 import { EngineManager } from '@/engine/engine-manager'
 import { WebSandboxBridge } from '@/engine/web-sandbox-bridge'
 import type { IOpenPeekDrawerDetail } from '@/engine/web-sandbox-bridge'
@@ -177,6 +179,7 @@ import { CursorTracker } from '@/sync/cursor-tracker'
 import { mirrorBlockSelection } from '@/sync/selection-mirror'
 import { buildStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'
 import { triggerPdfExport } from '@/export/pdf-exporter'
+import { getRuntimeSettings, buildSiYuanWebUrl } from '@/settings'
 import type { ISlidevDocument, ISlidevVirtualPage } from '@/types/slidev-protocol'
 
 const plugin = inject<Plugin>('plugin')
@@ -250,18 +253,47 @@ onMounted(() => {
     totalPages.value = total
   })
 
-  unbindOpenPeekDrawer = sandboxBridge.onOpenPeekDrawer((detail: IOpenPeekDrawerDetail) => {
-    peekType.value = detail.peekType
-    if (detail.peekType === 'siyuan') {
-      peekBlockId.value = detail.target
-      drawerTitle.value = detail.title || `块速览: ${detail.target.slice(0, 8)}`
-    } else {
+  unbindOpenPeekDrawer = sandboxBridge.onOpenPeekDrawer(async (detail: IOpenPeekDrawerDetail) => {
+    const settings = getRuntimeSettings()
+    if (detail.peekType === 'siyuan' && settings.enableWebServeJump) {
+      // 检测目标是否为文档块（非文档块需要追加 &focus=1 参数）
+      let isDoc = false
+      if (latestDoc && latestDoc.docId === detail.target) {
+        isDoc = true
+      } else if (latestDoc && latestDoc.slides && latestDoc.slides.some(s => s.blocks?.some(b => b.id === detail.target))) {
+        isDoc = false
+      } else {
+        try {
+          const rows = await sql(`SELECT id, root_id, type FROM blocks WHERE id = '${detail.target}' LIMIT 1`)
+          if (rows && rows.length > 0) {
+            isDoc = rows[0].type === 'd' || rows[0].id === rows[0].root_id
+          }
+        } catch (err) {
+          console.warn('[SlidevPreviewTab] detect block type failed:', err)
+        }
+      }
+
+      peekType.value = 'web'
       hasOpenedWeb.value = true
-      peekUrl.value = detail.target
-      drawerTitle.value = detail.title || detail.target
+      peekUrl.value = buildSiYuanWebUrl(settings.webServeUrl, detail.target, {
+        focus: !isDoc,
+      })
+      drawerTitle.value = detail.title || `${isDoc ? '思源文档' : '思源块'}: ${detail.target.slice(0, 8)}`
+      isDrawerOpen.value = true
+      sandboxBridge.freezeKeyboardNav(true)
+    } else {
+      peekType.value = detail.peekType
+      if (detail.peekType === 'siyuan') {
+        peekBlockId.value = detail.target
+        drawerTitle.value = detail.title || `块速览: ${detail.target.slice(0, 8)}`
+      } else {
+        hasOpenedWeb.value = true
+        peekUrl.value = detail.target
+        drawerTitle.value = detail.title || detail.target
+      }
+      isDrawerOpen.value = true
+      sandboxBridge.freezeKeyboardNav(true)
     }
-    isDrawerOpen.value = true
-    sandboxBridge.freezeKeyboardNav(true)
   })
 
   unbindToggleFullscreen = sandboxBridge.onRequestToggleFullscreen(() => {
@@ -368,6 +400,11 @@ function onRefresh() {
 function onDrawerClose() {
   isDrawerOpen.value = false
   sandboxBridge.freezeKeyboardNav(false)
+}
+
+function onExternalJump() {
+  // 外跳至系统默认浏览器后，自动收起当前速览抽屉，同时保持全屏放映
+  onDrawerClose()
 }
 
 function onFullscreenChange() {

@@ -2961,12 +2961,14 @@
             if (blockId) {
               e.preventDefault()
               e.stopPropagation()
+              const blockTitle = (refEl.innerText || refEl.title || '').trim()
               window.parent.postMessage({
                 source: "siyuan-slidev-client",
                 action: "OPEN_PEEK_DRAWER",
                 payload: {
                   peekType: "siyuan",
-                  blockId: blockId
+                  blockId: blockId,
+                  title: blockTitle
                 }
               }, "*")
               return
@@ -2980,12 +2982,14 @@
               e.preventDefault()
               e.stopPropagation()
               const cleanBlockId = href.replace('siyuan://blocks/', '').split('?')[0]
+              const blockTitle = (linkEl.innerText || linkEl.title || '').trim()
               window.parent.postMessage({
                 source: "siyuan-slidev-client",
                 action: "OPEN_PEEK_DRAWER",
                 payload: {
                   peekType: "siyuan",
-                  blockId: cleanBlockId
+                  blockId: cleanBlockId,
+                  title: blockTitle
                 }
               }, "*")
               return

@@ -100,6 +100,45 @@
       </div>
     </div>
 
+    <!-- 本地网络伺服预览 (Web Serve) -->
+    <div class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div class="spm-control-title">
+            <SlidevIcon name="external-link" />
+            <span>本地网络伺服预览 (Web Serve)</span>
+          </div>
+          <span class="spm-control-desc">点击文档/块链接以 Webview 抽屉呈现，支持外跳</span>
+        </div>
+        <label
+          class="spm-switch b3-tooltips b3-tooltips__w"
+          :aria-label="globalSettings.enableWebServeJump ? '关闭本地网络伺服预览' : '开启本地网络伺服预览'"
+        >
+          <input
+            type="checkbox"
+            :checked="globalSettings.enableWebServeJump"
+            @change="onToggleWebServe(($event.target as HTMLInputElement).checked)"
+          />
+          <span class="spm-switch-slider"></span>
+        </label>
+      </div>
+      <div v-if="globalSettings.enableWebServeJump" class="spm-control-body" style="margin-top: 8px;">
+        <input
+          :value="globalSettings.webServeUrl"
+          class="spm-input"
+          placeholder="http://127.0.0.1:6806"
+          spellcheck="false"
+          @keydown.stop
+          @keyup.stop
+          @input="onWebServeUrlInput(($event.target as HTMLInputElement).value)"
+          @change="onWebServeUrlChange(($event.target as HTMLInputElement).value)"
+        />
+        <span class="spm-control-desc" style="display: block; margin-top: 4px; font-size: 11px; opacity: 0.8;">
+          默认伺服地址为 http://127.0.0.1:6806。开启后点击块链接将在 Webview 抽屉中打开，点击抽屉顶部『外跳』可在外部浏览器打开
+        </span>
+      </div>
+    </div>
+
     <!-- 演示全局核心动作组 -->
     <div class="spm-card-control">
       <div class="spm-control-header">
@@ -158,7 +197,30 @@
 </template>
 
 <script setup lang="ts">
+import { inject } from 'vue'
 import SlidevIcon from '@/ui/components/SlidevIcon.vue'
+import { globalSettingsState, setRuntimeSettings } from '@/settings'
+
+const plugin = inject<any>('plugin')
+const globalSettings = globalSettingsState
+
+function onToggleWebServe(enabled: boolean) {
+  setRuntimeSettings({ enableWebServeJump: enabled })
+  if (plugin && typeof plugin.saveGlobalSettings === 'function') {
+    plugin.saveGlobalSettings({ enableWebServeJump: enabled })
+  }
+}
+
+function onWebServeUrlInput(val: string) {
+  setRuntimeSettings({ webServeUrl: val })
+}
+
+function onWebServeUrlChange(val: string) {
+  setRuntimeSettings({ webServeUrl: val })
+  if (plugin && typeof plugin.saveGlobalSettings === 'function') {
+    plugin.saveGlobalSettings({ webServeUrl: val })
+  }
+}
 
 defineProps<{
   docTheme: string

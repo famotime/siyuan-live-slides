@@ -137,7 +137,11 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import SlidevIcon from '@/ui/components/SlidevIcon.vue'
-import { isDesktopEnvironment } from '@/engine/runtime-node'
+import { isDesktopEnvironment, getRuntimeModule } from '@/engine/runtime-node'
+
+const emit = defineEmits<{
+  (e: 'external-jump', url: string): void
+}>()
 
 const props = withDefaults(
   defineProps<{
@@ -431,9 +435,18 @@ async function copyUrl() {
 }
 
 function openInSystemBrowser() {
+  const targetUrl = currentUrl.value
   if (typeof window !== 'undefined') {
-    window.open(currentUrl.value, '_blank')
+    const electron = getRuntimeModule('electron')
+    if (electron?.shell?.openExternal) {
+      electron.shell.openExternal(targetUrl).catch(() => {
+        window.open(targetUrl, '_blank')
+      })
+    } else {
+      window.open(targetUrl, '_blank')
+    }
   }
+  emit('external-jump', targetUrl)
 }
 </script>
 

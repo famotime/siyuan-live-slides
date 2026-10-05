@@ -58,6 +58,17 @@
           <SlidevIcon name="window" />
           <span>独立窗口</span>
         </button>
+
+        <!-- 外跳至外部浏览器 (本地网络伺服开启时) -->
+        <button
+          v-if="globalSettings.enableWebServeJump"
+          class="spm-icon-btn b3-tooltips b3-tooltips__s"
+          aria-label="在系统默认浏览器中打开 (外跳)"
+          @click="openInSystemBrowser"
+        >
+          <SlidevIcon name="external-link" />
+          <span>外跳</span>
+        </button>
       </div>
     </div>
 
@@ -77,6 +88,12 @@ import type { Plugin } from 'siyuan'
 import { Protyle, openWindow } from 'siyuan'
 import { sql } from '@/api'
 import SlidevIcon from '@/ui/components/SlidevIcon.vue'
+import { globalSettingsState, buildSiYuanWebUrl, getRuntimeSettings } from '@/settings'
+import { getRuntimeModule } from '@/engine/runtime-node'
+
+const emit = defineEmits<{
+  (e: 'external-jump', url: string): void
+}>()
 
 const props = defineProps<{
   blockId: string
@@ -90,6 +107,7 @@ const isEditable = ref(false)
 const isFocusMode = ref(true)
 const isDoc = ref(false)
 const rootDocId = ref('')
+const globalSettings = globalSettingsState
 
 const historyStack = ref<Array<{
   blockId: string
@@ -248,6 +266,25 @@ function openInStandaloneWindow() {
   } catch (e) {
     console.warn('[ProtylePeekDrawer] openWindow failed:', e)
   }
+}
+
+function openInSystemBrowser() {
+  if (!currentBlockId.value) return
+  const settings = getRuntimeSettings()
+  const targetUrl = buildSiYuanWebUrl(settings.webServeUrl, currentBlockId.value, {
+    focus: !isDoc.value,
+  })
+  if (typeof window !== 'undefined') {
+    const electron = getRuntimeModule('electron')
+    if (electron?.shell?.openExternal) {
+      electron.shell.openExternal(targetUrl).catch(() => {
+        window.open(targetUrl, '_blank')
+      })
+    } else {
+      window.open(targetUrl, '_blank')
+    }
+  }
+  emit('external-jump', targetUrl)
 }
 
 function goBack() {

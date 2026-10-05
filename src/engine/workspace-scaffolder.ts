@@ -65,7 +65,7 @@ export default function() {
         window.parent.postMessage({
           source: 'siyuan-slidev-client',
           action: 'OPEN_PEEK_DRAWER',
-          payload: { peekType: 'siyuan', blockId }
+          payload: { peekType: 'siyuan', blockId, title: (refEl.innerText || refEl.title || '').trim() }
         }, '*')
         return
       }
@@ -81,7 +81,7 @@ export default function() {
         window.parent.postMessage({
           source: 'siyuan-slidev-client',
           action: 'OPEN_PEEK_DRAWER',
-          payload: { peekType: 'siyuan', blockId: cleanBlockId }
+          payload: { peekType: 'siyuan', blockId: cleanBlockId, title: (linkEl.innerText || linkEl.title || '').trim() }
         }, '*')
       } else if (/^https?:\\/\\//i.test(href)) {
         e.preventDefault()
