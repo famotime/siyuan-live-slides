@@ -84,10 +84,25 @@ export function isHorizontalSuperBlock(node: ISiYuanBlockNode): boolean {
 }
 
 /**
+ * 判断是否为列表项块 (NodeListItem 'i' 或 NodeList 'l' 或 Markdown 列表语法)
+ */
+export function isListItemNode(node: ISiYuanBlockNode): boolean {
+  if (!node) return false
+  const t = (node.type || "").toLowerCase()
+  if (t === "i" || t === "nodelistitem") return true
+  if (t === "l" || t === "nodelist") return true
+  const md = (node.markdown || (node as any).rawMarkdown || node.content || "").trim()
+  if (/^(?:[-*+]|\d+\.)\s+/.test(md)) return true
+  return false
+}
+
+/**
  * 判断一个块是否主要为图片块
  */
 export function isImageBlock(node: ISiYuanBlockNode): boolean {
   if (!node) return false
+  // 必须排除列表项、列表与超级块容器，列表项卡片即使内含图片也绝不属于独立图片块
+  if (isListItemNode(node) || isSuperBlock(node)) return false
 
   const imgUrl = extractImageUrl(node.markdown, node.content)
   if (!imgUrl) return false
@@ -251,19 +266,6 @@ export function getContentChildren(node: ISiYuanBlockNode): ISiYuanBlockNode[] {
 }
 
 /**
- * 判断是否为列表项块 (NodeListItem 'i' 或 NodeList 'l' 或 Markdown 列表语法)
- */
-export function isListItemNode(node: ISiYuanBlockNode): boolean {
-  if (!node) return false
-  const t = (node.type || "").toLowerCase()
-  if (t === "i" || t === "nodelistitem") return true
-  if (t === "l" || t === "nodelist") return true
-  const md = (node.markdown || node.content || "").trim()
-  if (/^(?:[-*+]|\d+\.)\s+/.test(md)) return true
-  return false
-}
-
-/**
  * 判断是否为标题块 (NodeHeading 'h' 或 h1~h6 或 Markdown # 标题)
  */
 export function isHeadingBlock(node: ISiYuanBlockNode): boolean {
@@ -323,14 +325,172 @@ export function cleanCardListItemMarkdown(markdown: string): string {
 
 export interface IListSuperBlockDetection {
   superBlockNode: ISiYuanBlockNode
+  nestedSuperBlocks?: ISiYuanBlockNode[]
   count: 2 | 3
   layout: "two-cols-header" | "three-cols-header"
   items: ISiYuanBlockNode[]
   slots: string[]
 }
 
+export interface IExtractedListColumns {
+  items: ISiYuanBlockNode[]
+  nestedSuperBlocks: ISiYuanBlockNode[]
+}
+
 /**
- * 检测超级块是否为包含 2 个或 3 个列表项的横向分栏超级块
+ * 递归展开提取单个分栏容器中的独立列表项单元
+ * 1. 若为横向超级块，递归提取其各栏单元
+ * 2. 若为 NodeList (l) 且包含多个子列表项（AST 子节点或多行 Markdown 列表项），拆分提取各子列表项
+ * 3. 否则若自身为单个列表项，作为单项返回
+ */
+export function extractListUnits(node: ISiYuanBlockNode): ISiYuanBlockNode[] {
+  if (!node) return []
+
+  // 1. 横向超级块递归展开
+  if (isSuperBlock(node) && isHorizontalSuperBlock(node) && !detectSuperBlockImageLayout(node)) {
+    const ch = getContentChildren(node)
+    const units: ISiYuanBlockNode[] = []
+    for (const c of ch) {
+      units.push(...extractListUnits(c))
+    }
+    return units
+  }
+
+  // 2. 检查是否为包含多个列表项的列表容器 (NodeList 'l')
+  const t = (node.type || "").toLowerCase()
+  const isListContainer = t === "l" || t === "nodelist" || t === "list"
+  if (isListContainer) {
+    if (node.children && node.children.length > 0) {
+      const listChildren = node.children.filter(isListItemNode)
+      if (listChildren.length > 0) {
+        return listChildren
+      }
+    }
+
+    // 容错：若 AST children 未填充，检查 Markdown 是否包含多个列表顶格项
+    const md = (node.markdown || node.content || "").trim()
+    const lines = md.split(/\r?\n/)
+    const itemStartIndices: number[] = []
+    for (let i = 0; i < lines.length; i++) {
+      if (/^(?:[-*+]|\d+\.)\s+/.test(lines[i])) {
+        itemStartIndices.push(i)
+      }
+    }
+    if (itemStartIndices.length >= 2) {
+      const splitItems: ISiYuanBlockNode[] = []
+      for (let k = 0; k < itemStartIndices.length; k++) {
+        const start = itemStartIndices[k]
+        const end = k + 1 < itemStartIndices.length ? itemStartIndices[k + 1] : lines.length
+        const chunkMd = lines.slice(start, end).join("\n")
+        splitItems.push({
+          id: `${node.id}-item-${k + 1}`,
+          type: "i",
+          markdown: chunkMd,
+          content: chunkMd,
+          ial: { ...(node.ial || {}) },
+        })
+      }
+      return splitItems
+    }
+  }
+
+  // 3. 单个列表项或单列表
+  if (isListItemNode(node)) {
+    return [node]
+  }
+
+  return []
+}
+
+/**
+ * 递归展开并提取超级块内的逻辑列表分栏项
+ * 支持以下形态：
+ * 1. 扁平 2 栏：[Item1, Item2]
+ * 2. 扁平 3 栏：[Item1, Item2, Item3]
+ * 3. 嵌套形态 A (col1-2 + col3)：外层 [内层横向超级块(Item1, Item2), Item3] 或 [包含2项的列表, 1项列表]
+ * 4. 嵌套形态 B (col1 + col2-3)：外层 [Item1, 内层横向超级块(Item2, Item3)] 或 [1项列表, 包含2项的列表]
+ * 5. 单子块冗余超级块包装解包
+ */
+export function extractListSuperBlockItems(node: ISiYuanBlockNode): IExtractedListColumns | null {
+  if (!node || !isSuperBlock(node)) return null
+  if (!isHorizontalSuperBlock(node)) return null
+
+  // 排除图文超级块
+  if (detectSuperBlockImageLayout(node)) return null
+
+  const contentChildren = getContentChildren(node)
+  if (contentChildren.length === 0) return null
+
+  // 单子块冗余包装解包
+  if (contentChildren.length === 1 && isSuperBlock(contentChildren[0]) && isHorizontalSuperBlock(contentChildren[0])) {
+    const innerRes = extractListSuperBlockItems(contentChildren[0])
+    if (innerRes) {
+      return {
+        items: innerRes.items,
+        nestedSuperBlocks: [contentChildren[0], ...innerRes.nestedSuperBlocks],
+      }
+    }
+    return null
+  }
+
+  // 收集内层嵌套的所有超级块节点用于追踪
+  const nestedSbs: ISiYuanBlockNode[] = []
+  for (const c of contentChildren) {
+    if (isSuperBlock(c)) {
+      nestedSbs.push(c)
+      const subSbs = c.children?.filter(isSuperBlock) || []
+      nestedSbs.push(...subSbs)
+    }
+  }
+
+  // 1. 若直接包含 3 个有效子块
+  if (contentChildren.length === 3) {
+    const u0 = extractListUnits(contentChildren[0])
+    const u1 = extractListUnits(contentChildren[1])
+    const u2 = extractListUnits(contentChildren[2])
+    if (u0.length === 1 && u1.length === 1 && u2.length === 1) {
+      return {
+        items: [u0[0], u1[0], u2[0]],
+        nestedSuperBlocks: nestedSbs,
+      }
+    }
+  }
+
+  // 2. 若直接包含 2 个有效子块
+  if (contentChildren.length === 2) {
+    const u0 = extractListUnits(contentChildren[0])
+    const u1 = extractListUnits(contentChildren[1])
+
+    // 形态 A (col1-2 + col3): 前列展开为 2 项，后列为 1 项 -> 3 栏！
+    if (u0.length === 2 && u1.length === 1) {
+      return {
+        items: [u0[0], u0[1], u1[0]],
+        nestedSuperBlocks: nestedSbs,
+      }
+    }
+
+    // 形态 B (col1 + col2-3): 前列为 1 项，后列展开为 2 项 -> 3 栏！
+    if (u0.length === 1 && u1.length === 2) {
+      return {
+        items: [u0[0], u1[0], u1[1]],
+        nestedSuperBlocks: nestedSbs,
+      }
+    }
+
+    // 扁平 2 栏: 前列为 1 项，后列为 1 项 -> 2 栏！
+    if (u0.length === 1 && u1.length === 1) {
+      return {
+        items: [u0[0], u1[0]],
+        nestedSuperBlocks: nestedSbs,
+      }
+    }
+  }
+
+  return null
+}
+
+/**
+ * 检测超级块是否为包含 2 个或 3 个列表项的横向分栏超级块（支持扁平及嵌套形态）
  */
 export function detectListSuperBlock(node: ISiYuanBlockNode): IListSuperBlockDetection | null {
   if (!node || !isSuperBlock(node)) return null
@@ -339,33 +499,56 @@ export function detectListSuperBlock(node: ISiYuanBlockNode): IListSuperBlockDet
   // 排除图文超级块
   if (detectSuperBlockImageLayout(node)) return null
 
-  const contentChildren = getContentChildren(node)
-  if (contentChildren.length !== 2 && contentChildren.length !== 3) {
+  const extracted = extractListSuperBlockItems(node)
+  if (!extracted) return null
+
+  const { items, nestedSuperBlocks } = extracted
+  if (items.length !== 2 && items.length !== 3) {
     return null
   }
 
-  // 必须全部子块都是列表项或列表
-  if (!contentChildren.every(isListItemNode)) {
-    return null
-  }
-
-  if (contentChildren.length === 2) {
+  if (items.length === 2) {
     return {
       superBlockNode: node,
+      nestedSuperBlocks,
       count: 2,
       layout: "two-cols-header",
-      items: contentChildren,
+      items,
       slots: ["left", "right"],
     }
   }
 
   return {
     superBlockNode: node,
+    nestedSuperBlocks,
     count: 3,
     layout: "three-cols-header",
-    items: contentChildren,
+    items,
     slots: ["col-1", "col-2", "col-3"],
   }
+}
+
+/**
+ * 递归收集超级块及其子超级块中的所有列表项叶子节点
+ * 若包含非列表项且非横向超级块的其它内容块（如普通段落、表格等），返回 null
+ */
+export function collectAllLeafListItems(node: ISiYuanBlockNode): ISiYuanBlockNode[] | null {
+  if (!node || !isSuperBlock(node)) return null
+  if (!isHorizontalSuperBlock(node)) return null
+  if (detectSuperBlockImageLayout(node)) return null
+
+  const contentChildren = getContentChildren(node)
+  if (contentChildren.length === 0) return null
+
+  const leaves: ISiYuanBlockNode[] = []
+  for (const child of contentChildren) {
+    const units = extractListUnits(child)
+    if (units.length === 0) {
+      return null
+    }
+    leaves.push(...units)
+  }
+  return leaves
 }
 
 /**
@@ -378,22 +561,23 @@ export function isInvalidListSuperBlock(
   if (!isHorizontalSuperBlock(node)) return null
   if (detectSuperBlockImageLayout(node)) return null
 
-  const contentChildren = getContentChildren(node)
-  if (contentChildren.length === 0 || contentChildren.length === 2 || contentChildren.length === 3) {
+  const leaves = collectAllLeafListItems(node)
+  if (!leaves || leaves.length === 0) return null
+
+  // 有效项数为 2 或 3 时不属于无效超级块
+  if (leaves.length === 2 || leaves.length === 3) {
     return null
   }
 
-  if (contentChildren.every(isListItemNode)) {
-    return {
-      superBlockNode: node,
-      items: contentChildren,
-    }
+  return {
+    superBlockNode: node,
+    items: leaves,
   }
-  return null
 }
 
 export interface ITrackedListSuperBlock {
   superBlockId: string
+  nestedSuperBlockIds?: string[]
   pageTargetId: string
   headerId?: string
   itemIds: string[]
@@ -486,13 +670,46 @@ export function scanAndTagListSuperBlocks(
   for (const group of slideGroups) {
     const pageTargetId = group.pageTargetId
     const pageTargetNode = blocks.find(b => b.id === pageTargetId)
+    const prevTracked = prevTrackedList.find(t => t.pageTargetId === pageTargetId)
+
+    // 检查当前页面是否属于顶层图文分栏版式 (image-left / image-right)
+    // 依据用户决策仲裁原则：若外层为图文超级块，外层管页面版式，内层管局部双栏，不与表头多栏版式冲突
+    const hasTopLevelImageLayout = group.blocks.some((b) => {
+      if (detectSuperBlockImageLayout(b)) return true
+      if (
+        isImageBlock(b) &&
+        (b.ial?.[ATTR_PAGE_LAYOUT] === "image-left" || b.ial?.[ATTR_PAGE_LAYOUT] === "image-right")
+      ) {
+        return true
+      }
+      return false
+    })
+
+    if (hasTopLevelImageLayout) {
+      if (prevTracked) {
+        const hId = prevTracked.headerId
+        if (hId) {
+          recordChange(hId, { [ATTR_ELEM_SLOT]: "" })
+          const hNode = blocks.find(b => b.id === hId)
+          if (hNode?.ial) hNode.ial[ATTR_ELEM_SLOT] = ""
+        }
+        for (const itId of prevTracked.itemIds) {
+          recordChange(itId, { [ATTR_ELEM_SLOT]: "" })
+          const itNode = blocks.find(b => b.id === itId)
+          if (itNode?.ial) itNode.ial[ATTR_ELEM_SLOT] = ""
+        }
+      }
+      continue
+    }
 
     let matchedDetection: IListSuperBlockDetection | null = null
     let matchedSbIndex = -1
 
     for (let i = 0; i < group.blocks.length; i++) {
       const b = group.blocks[i]
-      const candidates = isSuperBlock(b) ? [b] : (b.children ? findSuperBlocks(b.children) : [])
+      const candidates = isSuperBlock(b)
+        ? [b, ...findSuperBlocks(b.children || [])]
+        : (b.children ? findSuperBlocks(b.children) : [])
       for (const cand of candidates) {
         const det = detectListSuperBlock(cand)
         if (det) {
@@ -503,8 +720,6 @@ export function scanAndTagListSuperBlocks(
       }
       if (matchedDetection) break
     }
-
-    const prevTracked = prevTrackedList.find(t => t.pageTargetId === pageTargetId)
 
     if (matchedDetection) {
       const { superBlockNode, layout, items, slots } = matchedDetection
@@ -518,7 +733,8 @@ export function scanAndTagListSuperBlocks(
       const currentLayout = pageTargetNode?.ial?.[ATTR_PAGE_LAYOUT] || ""
       if (currentLayout !== layout) {
         recordChange(pageTargetId, { [ATTR_PAGE_LAYOUT]: layout }, { [ATTR_PAGE_LAYOUT]: currentLayout })
-        if (pageTargetNode?.ial) {
+        if (pageTargetNode) {
+          if (!pageTargetNode.ial) pageTargetNode.ial = {}
           pageTargetNode.ial[ATTR_PAGE_LAYOUT] = layout
         }
       }
@@ -528,9 +744,10 @@ export function scanAndTagListSuperBlocks(
         const currentSlot = headerNode.ial?.[ATTR_ELEM_SLOT] || ""
         if (currentSlot !== "header") {
           recordChange(headerNode.id, { [ATTR_ELEM_SLOT]: "header" }, { [ATTR_ELEM_SLOT]: currentSlot })
-          if (headerNode.ial) {
-            headerNode.ial[ATTR_ELEM_SLOT] = "header"
+          if (!headerNode.ial) {
+            headerNode.ial = {}
           }
+          headerNode.ial[ATTR_ELEM_SLOT] = "header"
         }
       }
 
@@ -538,7 +755,8 @@ export function scanAndTagListSuperBlocks(
       if (prevTracked?.headerId && prevTracked.headerId !== headerId) {
         recordChange(prevTracked.headerId, { [ATTR_ELEM_SLOT]: "" })
         const oldH = blocks.find(b => b.id === prevTracked.headerId)
-        if (oldH?.ial) {
+        if (oldH) {
+          if (!oldH.ial) oldH.ial = {}
           oldH.ial[ATTR_ELEM_SLOT] = ""
         }
       }
@@ -552,14 +770,16 @@ export function scanAndTagListSuperBlocks(
         const currentSlot = it.ial?.[ATTR_ELEM_SLOT] || ""
         if (currentSlot !== expectedSlot) {
           recordChange(it.id, { [ATTR_ELEM_SLOT]: expectedSlot }, { [ATTR_ELEM_SLOT]: currentSlot })
-          if (it.ial) {
-            it.ial[ATTR_ELEM_SLOT] = expectedSlot
+          if (!it.ial) {
+            it.ial = {}
           }
+          it.ial[ATTR_ELEM_SLOT] = expectedSlot
         }
         if (it.children && it.children.length > 0) {
           for (const c of it.children) {
-            if (c.ial?.[ATTR_ELEM_SLOT] !== expectedSlot) {
-              if (c.ial) c.ial[ATTR_ELEM_SLOT] = expectedSlot
+            if (!c.ial) c.ial = {}
+            if (c.ial[ATTR_ELEM_SLOT] !== expectedSlot) {
+              c.ial[ATTR_ELEM_SLOT] = expectedSlot
             }
           }
         }
@@ -571,7 +791,8 @@ export function scanAndTagListSuperBlocks(
           if (!currentItemIds.includes(oldId)) {
             recordChange(oldId, { [ATTR_ELEM_SLOT]: "" })
             const oldNode = blocks.find(b => b.id === oldId)
-            if (oldNode?.ial) {
+            if (oldNode) {
+              if (!oldNode.ial) oldNode.ial = {}
               oldNode.ial[ATTR_ELEM_SLOT] = ""
             }
           }
@@ -580,6 +801,7 @@ export function scanAndTagListSuperBlocks(
 
       newTracked.push({
         superBlockId: superBlockNode.id,
+        nestedSuperBlockIds: matchedDetection.nestedSuperBlocks?.map(n => n.id),
         pageTargetId,
         headerId,
         itemIds: currentItemIds,
@@ -590,11 +812,16 @@ export function scanAndTagListSuperBlocks(
       let hasInvalidListSb = false
       const invalidItemsToClear: string[] = []
       for (const b of group.blocks) {
-        const inv = isInvalidListSuperBlock(b)
-        if (inv) {
-          hasInvalidListSb = true
-          for (const it of inv.items) {
-            invalidItemsToClear.push(it.id)
+        const sbs = isSuperBlock(b)
+          ? [b, ...findSuperBlocks(b.children || [])]
+          : (b.children ? findSuperBlocks(b.children) : [])
+        for (const cand of sbs) {
+          const inv = isInvalidListSuperBlock(cand)
+          if (inv) {
+            hasInvalidListSb = true
+            for (const it of inv.items) {
+              invalidItemsToClear.push(it.id)
+            }
           }
         }
       }
@@ -604,7 +831,8 @@ export function scanAndTagListSuperBlocks(
 
       if (prevTracked || (hasInvalidListSb && isMultiColLayout)) {
         recordChange(pageTargetId, { [ATTR_PAGE_LAYOUT]: "" }, { [ATTR_PAGE_LAYOUT]: currentLayout })
-        if (pageTargetNode?.ial) {
+        if (pageTargetNode) {
+          if (!pageTargetNode.ial) pageTargetNode.ial = {}
           pageTargetNode.ial[ATTR_PAGE_LAYOUT] = ""
         }
 
@@ -612,7 +840,10 @@ export function scanAndTagListSuperBlocks(
         if (hId) {
           recordChange(hId, { [ATTR_ELEM_SLOT]: "" })
           const hNode = blocks.find(b => b.id === hId)
-          if (hNode?.ial) hNode.ial[ATTR_ELEM_SLOT] = ""
+          if (hNode) {
+            if (!hNode.ial) hNode.ial = {}
+            hNode.ial[ATTR_ELEM_SLOT] = ""
+          }
         }
 
         const itemsToClean = new Set<string>([
@@ -622,7 +853,10 @@ export function scanAndTagListSuperBlocks(
         for (const itId of itemsToClean) {
           recordChange(itId, { [ATTR_ELEM_SLOT]: "" })
           const itNode = blocks.find(b => b.id === itId)
-          if (itNode?.ial) itNode.ial[ATTR_ELEM_SLOT] = ""
+          if (itNode) {
+            if (!itNode.ial) itNode.ial = {}
+            itNode.ial[ATTR_ELEM_SLOT] = ""
+          }
         }
       }
     }

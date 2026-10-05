@@ -720,6 +720,23 @@ export function buildSlidevDocument(
         return
       }
 
+      // 展开带有分栏插槽或显式拆分的列表容器子项 (NodeList 'l')
+      if (
+        (itemNode.type === "l" || itemNode.type === "NodeList" || itemNode.type === "list") &&
+        itemNode.children &&
+        itemNode.children.length > 0 &&
+        (itemNode.children.some(c => c.ial?.[ATTR_ELEM_SLOT]) || elemAttrs.slot)
+      ) {
+        for (const childNode of itemNode.children) {
+          if (elemAttrs.slot && (!childNode.ial || !childNode.ial[ATTR_ELEM_SLOT])) {
+            if (!childNode.ial) childNode.ial = {}
+            childNode.ial[ATTR_ELEM_SLOT] = elemAttrs.slot
+          }
+          processBlockNode(childNode)
+        }
+        return
+      }
+
       // 讲稿备注块处理 (custom-slidev-note / slidev-note)
       if (elemAttrs.isNote) {
         const cleanNote = extractCleanNoteText(rawMd)
@@ -822,7 +839,7 @@ export function buildSlidevDocument(
         // 普通非标题内容块：若自身未显式指定，自动继承最近标题行的属性
         const currentScope = headingStack.length > 0 ? headingStack[headingStack.length - 1] : undefined
         if (currentScope) {
-          if (!effectiveSlot && currentScope.slot) {
+          if (!effectiveSlot && currentScope.slot && currentScope.slot !== "header") {
             effectiveSlot = currentScope.slot
           }
           if (!effectiveClicks && currentScope.clicks) {
@@ -899,9 +916,10 @@ export function buildSlidevDocument(
       list.map(b => wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion)).join("\n\n")
 
     const renderColList = (list: ISlidevBlockItem[]) => {
+      if (list.length === 0) return ""
       if (list.length === 1 && isListItemNode(list[0])) {
-        const cleanedMd = cleanCardListItemMarkdown(list[0].rawMarkdown)
-        return wrapElementDirectives(cleanedMd, list[0].clicks, list[0].motion)
+        const cleaned = cleanCardListItemMarkdown(list[0].rawMarkdown)
+        return wrapElementDirectives(cleaned, list[0].clicks, list[0].motion)
       }
       return renderBlocks(list)
     }

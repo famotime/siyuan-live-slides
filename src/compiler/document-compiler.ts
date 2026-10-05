@@ -176,38 +176,44 @@ export class DocumentCompilerService {
         }
       })
 
-      // 5.5 补全超级块的子节点并进行图文超级块自动扫描打标 (支持官方缩写 's' 与降级 SQL 查询)
-      for (const node of blockNodes) {
-        if (
-          isSuperBlock(node) &&
-          (!node.children || node.children.length === 0)
-        ) {
-          let rawChildren = await this.deps.getChildBlocks(node.id).catch(() => [])
-          if (!rawChildren || rawChildren.length === 0) {
-            const childSql = `SELECT id, parent_id, root_id, type, sub_type as subType, content, markdown, ial FROM blocks WHERE parent_id = '${node.id}' ORDER BY sort ASC, created ASC`
-            rawChildren = (await this.deps.sql(childSql).catch(() => [])) || []
+      // 5.5 递归补全超级块与列表容器的子节点 (支持官方缩写 's'、'sb'、'l' 与降级 SQL 查询)
+      const populateChildrenRecursively = async (nodes: ISiYuanBlockNode[], depth = 0) => {
+        if (!nodes || nodes.length === 0 || depth > 8) return
+        for (const node of nodes) {
+          const isContainer = isSuperBlock(node) || node.type === "l" || node.type === "NodeList"
+          if (isContainer && (!node.children || node.children.length === 0)) {
+            let rawChildren = await this.deps.getChildBlocks(node.id).catch(() => [])
+            if (!rawChildren || rawChildren.length === 0) {
+              const childSql = `SELECT id, parent_id, root_id, type, sub_type as subType, content, markdown, ial FROM blocks WHERE parent_id = '${node.id}' ORDER BY sort ASC, created ASC`
+              rawChildren = (await this.deps.sql(childSql).catch(() => [])) || []
+            }
+            if (Array.isArray(rawChildren) && rawChildren.length > 0) {
+              node.children = rawChildren.map((c: any) => {
+                const cIalMap = ialMapById.get(c.id) || (c.ial ? parseIALString(c.ial) : {})
+                const cOverride = this.attrOverrides.get(c.id)
+                if (cOverride) {
+                  Object.assign(cIalMap, cOverride)
+                }
+                return {
+                  id: c.id,
+                  parent_id: c.parent_id || node.id,
+                  root_id: c.root_id || docId,
+                  type: c.type,
+                  subType: c.subType,
+                  content: c.content || "",
+                  markdown: c.markdown || "",
+                  ial: cIalMap,
+                }
+              })
+            }
           }
-          if (Array.isArray(rawChildren) && rawChildren.length > 0) {
-            node.children = rawChildren.map((c: any) => {
-              const cIalMap = ialMapById.get(c.id) || (c.ial ? parseIALString(c.ial) : {})
-              const cOverride = this.attrOverrides.get(c.id)
-              if (cOverride) {
-                Object.assign(cIalMap, cOverride)
-              }
-              return {
-                id: c.id,
-                parent_id: c.parent_id || node.id,
-                root_id: c.root_id || docId,
-                type: c.type,
-                subType: c.subType,
-                content: c.content || "",
-                markdown: c.markdown || "",
-                ial: cIalMap,
-              }
-            })
+          if (node.children && node.children.length > 0) {
+            await populateChildrenRecursively(node.children, depth + 1)
           }
         }
       }
+
+      await populateChildrenRecursively(blockNodes)
 
       // 执行超级块自动检测与打标，自动写入即时覆盖层与持久化
       scanAndTagSuperBlocks(blockNodes, (record) => {
@@ -227,6 +233,18 @@ export class DocumentCompilerService {
           if (change.blockId === docId) {
             Object.assign(docAttrs, change.attrs)
           }
+          const updateNodeIal = (nodes: ISiYuanBlockNode[]) => {
+            for (const n of nodes) {
+              if (n.id === change.blockId) {
+                if (!n.ial) n.ial = {}
+                Object.assign(n.ial, change.attrs)
+              }
+              if (n.children && n.children.length > 0) {
+                updateNodeIal(n.children)
+              }
+            }
+          }
+          updateNodeIal(blockNodes)
           const saveFn = this.deps.setBlockAttrs || setBlockAttrs
           saveFn(change.blockId, change.attrs).catch((err) => {
             console.warn("[DocumentCompiler] Failed to auto-tag list superblock attrs:", err)
