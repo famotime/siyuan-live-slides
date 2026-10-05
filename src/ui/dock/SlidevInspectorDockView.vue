@@ -90,12 +90,21 @@
         :elem-max-height="elemMaxHeight"
         :is-code-block="isCodeBlock"
         :is-image="isImageBlock"
+        :is-video="isVideoBlock"
+        :video-autoplay="videoAutoplay"
+        :video-loop="videoLoop"
+        :video-muted="videoMuted"
+        :video-controls="videoControls"
         :has-block-attrs="hasBlockAttrs"
         :is-note="isNoteBlock"
         :image-role="imageRole"
         :current-slide-layout="currentSlideLayout"
         @toggle-note="onToggleNoteBlock"
         @toggle-elem-click="toggleElemClick"
+        @toggle-video-autoplay="onToggleVideoAutoplay"
+        @toggle-video-loop="onToggleVideoLoop"
+        @toggle-video-muted="onToggleVideoMuted"
+        @toggle-video-controls="onToggleVideoControls"
         @update:image-role="onImageRoleChange"
         @update:elem-click="onElemClickStepChange"
         @update:elem-motion="onElemMotionChange"
@@ -172,6 +181,10 @@ import {
   ATTR_ELEM_MAX_HEIGHT,
   ATTR_ELEM_NOTE,
   ATTR_ELEM_ROLE,
+  ATTR_VIDEO_AUTOPLAY,
+  ATTR_VIDEO_LOOP,
+  ATTR_VIDEO_MUTED,
+  ATTR_VIDEO_CONTROLS,
   ROLE_BACKGROUND,
   ROLE_IMAGE_LEFT,
   ROLE_IMAGE_RIGHT,
@@ -235,6 +248,13 @@ const isImageBlock = computed(() => {
   if (extractImageUrl(snippet)) return true
   return false
 })
+const isVideoBlock = computed(() => {
+  const type = activeBlockType.value || ''
+  if (type === 'NodeVideo' || type === 'video') return true
+  const snippet = rawSnippet.value || ''
+  if (/<video\b/i.test(snippet) || /\.mp4\b/i.test(snippet)) return true
+  return false
+})
 const isDocRoot = computed(() => 
   !activeBlockId.value || 
   activeBlockId.value === currentDocId.value || 
@@ -259,10 +279,12 @@ const sanitizedSnippet = computed(() => {
 const targetTagLabel = computed(() => {
   if (isDivider.value) return '分页符 (---)'
   if (isDocRoot.value) return '全局文档'
+  if (isVideoBlock.value) return '视频块'
   switch (activeBlockType.value) {
     case 'NodeHeading': return '标题块'
     case 'NodeParagraph': return '段落块'
     case 'NodeCodeBlock': return '代码块'
+    case 'NodeVideo': return '视频块'
     case 'NodeList':
     case 'NodeListItem': return '列表项'
     case 'NodeBlockquote': return '引述块'
@@ -440,6 +462,32 @@ const elemSlot = computed(() => {
 const elemShikiLines = ref('')
 const elemMaxHeight = ref('')
 
+// 视频块控制属性与切换
+const videoAutoplay = computed(() => activeBlockAttrs.value[ATTR_VIDEO_AUTOPLAY] === 'true')
+const videoLoop = computed(() => activeBlockAttrs.value[ATTR_VIDEO_LOOP] === 'true')
+const videoMuted = computed(() => activeBlockAttrs.value[ATTR_VIDEO_MUTED] === 'true')
+const videoControls = computed(() => activeBlockAttrs.value[ATTR_VIDEO_CONTROLS] !== 'false')
+
+async function onToggleVideoAutoplay() {
+  const nextVal = videoAutoplay.value ? 'false' : 'true'
+  await saveAttr(ATTR_VIDEO_AUTOPLAY, nextVal)
+}
+
+async function onToggleVideoLoop() {
+  const nextVal = videoLoop.value ? 'false' : 'true'
+  await saveAttr(ATTR_VIDEO_LOOP, nextVal)
+}
+
+async function onToggleVideoMuted() {
+  const nextVal = videoMuted.value ? 'false' : 'true'
+  await saveAttr(ATTR_VIDEO_MUTED, nextVal)
+}
+
+async function onToggleVideoControls() {
+  const nextVal = videoControls.value ? 'false' : 'true'
+  await saveAttr(ATTR_VIDEO_CONTROLS, nextVal)
+}
+
 // 文档全局属性绑定
 const docTheme = computed(() => latestDoc.value?.config?.theme || activeBlockAttrs.value[ATTR_DOC_THEME] || 'default')
 const docAspectRatio = computed(() => latestDoc.value?.config?.aspectRatio || activeBlockAttrs.value[ATTR_DOC_ASPECT_RATIO] || '16/9')
@@ -560,7 +608,11 @@ const hasBlockAttrs = computed(() => {
     activeBlockAttrs.value[ATTR_ELEM_NOTE] ||
     activeBlockAttrs.value['slidev-note'] ||
     activeBlockAttrs.value[ATTR_ELEM_ROLE] ||
-    activeBlockAttrs.value[ATTR_PAGE_LAYOUT]
+    activeBlockAttrs.value[ATTR_PAGE_LAYOUT] ||
+    activeBlockAttrs.value[ATTR_VIDEO_AUTOPLAY] ||
+    activeBlockAttrs.value[ATTR_VIDEO_LOOP] ||
+    activeBlockAttrs.value[ATTR_VIDEO_MUTED] ||
+    activeBlockAttrs.value[ATTR_VIDEO_CONTROLS]
   )
 })
 
@@ -860,6 +912,10 @@ async function onClearBlockAttrs() {
     [ATTR_PAGE_TRANSITION]: '',
     [ATTR_PAGE_BACKGROUND]: '',
     [ATTR_PAGE_IMAGE]: '',
+    [ATTR_VIDEO_AUTOPLAY]: '',
+    [ATTR_VIDEO_LOOP]: '',
+    [ATTR_VIDEO_MUTED]: '',
+    [ATTR_VIDEO_CONTROLS]: '',
   }
   syncDomBlockAttrs(targetId, clearMap)
   await setBlockAttrs(targetId, clearMap)

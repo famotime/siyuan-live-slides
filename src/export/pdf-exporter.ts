@@ -198,6 +198,33 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       object-fit: contain;
       border-radius: 6px;
     }
+    .slide-list-media {
+      display: block;
+      margin-top: 8px;
+      margin-bottom: 6px;
+    }
+    .slide-list-media img,
+    .slide-list-media .list-item-gif {
+      max-width: 100%;
+      max-height: 220px;
+      object-fit: contain;
+      border-radius: 6px;
+      display: block;
+    }
+    .slide-video-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      margin: 12px 0;
+    }
+    .slide-video-player {
+      max-width: 100%;
+      max-height: 48vh;
+      border-radius: 6px;
+      background: #000;
+      border: 1px solid #cbd5e1;
+    }
     .pdf-two-cols-wrapper,
     .layout-two-cols-grid {
       display: grid;

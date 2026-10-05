@@ -93,6 +93,12 @@
       <path d="m7 21 5-5 5 5" />
     </g>
 
+    <!-- 视频播放 (Video) -->
+    <g v-else-if="name === 'video'">
+      <polygon points="23 7 16 12 23 17 23 7" />
+      <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+    </g>
+
     <!-- 逐步出现 (v-click / 闪烁) -->
     <g v-else-if="name === 'step'">
       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />

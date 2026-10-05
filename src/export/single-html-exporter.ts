@@ -343,6 +343,35 @@ export function buildStandaloneHtml(
       height: 1.15em;
       cursor: pointer;
     }
+    .slide-list-media {
+      display: block;
+      margin-top: 8px;
+      margin-bottom: 6px;
+    }
+    .slide-list-media img,
+    .slide-list-media .list-item-gif {
+      max-width: 100%;
+      max-height: 240px;
+      object-fit: contain;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      display: block;
+    }
+    .slide-video-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      margin: 12px 0;
+    }
+    .slide-video-player {
+      max-width: 100%;
+      max-height: 52vh;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      background: #000;
+      outline: none;
+    }
     kbd {
       display: inline-block;
       padding: 2px 7px;
@@ -699,6 +728,61 @@ export function buildStandaloneHtml(
           div.innerHTML = "<pre" + heightStyle + "><code>" + md.slice(3, -3) + "</code></pre>";
         }
         else if (md.startsWith("> ")) div.innerHTML = "<blockquote><p>" + md.slice(2) + "</p></blockquote>";
+        else if (md.startsWith("<video") || (block && block.type === "video")) {
+          div.classList.add("slide-video-container");
+          const isAutoplay = block && block.attributes && block.attributes["custom-slidev-autoplay"] === "true";
+          const isLoop = block && block.attributes && block.attributes["custom-slidev-loop"] === "true";
+          const isMuted = block && block.attributes && (block.attributes["custom-slidev-muted"] === "true" || isAutoplay);
+          const hideControls = block && block.attributes && block.attributes["custom-slidev-controls"] === "false";
+          let videoHtml = md;
+          if (hideControls) videoHtml = videoHtml.replace(/\bcontrols\b/gi, "");
+          else if (!videoHtml.includes("controls")) videoHtml = videoHtml.replace("<video", "<video controls");
+          if (isAutoplay && !videoHtml.includes("autoplay")) videoHtml = videoHtml.replace("<video", "<video autoplay playsinline");
+          if (isLoop && !videoHtml.includes("loop")) videoHtml = videoHtml.replace("<video", "<video loop");
+          if (isMuted && !videoHtml.includes("muted")) videoHtml = videoHtml.replace("<video", "<video muted");
+          videoHtml = videoHtml.replace("<video", '<video class="slide-video-player"');
+          div.innerHTML = videoHtml;
+        }
+        else if (/^(\s*)([-*+]|\d+\.)\s+/m.test(md)) {
+          div.classList.add("pdf-list-item");
+          const lines = md.split("\n");
+          let isOrdered = false;
+          const items = [];
+          for (const line of lines) {
+            const tr = line.trim();
+            if (!tr) continue;
+            const um = line.match(/^(\s*)[-*+]\s+(.*)$/);
+            const om = line.match(/^(\s*)\d+\.\s+(.*)$/);
+            if (um) { items.push({ text: um[2], media: [] }); continue; }
+            if (om) { if (items.length === 0) isOrdered = true; items.push({ text: om[2], media: [] }); continue; }
+            if (items.length > 0) {
+              const im = tr.match(/^!\[(.*?)\]\((.*?)\)$/);
+              if (im) {
+                const isGif = /\.gif(?:\?|$)/i.test(im[2]);
+                items[items.length - 1].media.push('<div class="slide-list-media"><img alt="' + im[1] + '" src="' + im[2] + '" class="' + (isGif ? 'list-item-gif' : 'list-item-img') + '" /></div>');
+                continue;
+              }
+              const hm = tr.match(/^<img\b[\s\S]*?\/?>$/i);
+              if (hm) {
+                items[items.length - 1].media.push('<div class="slide-list-media">' + tr + '</div>');
+                continue;
+              }
+              const vm = tr.match(/^<video\b[\s\S]*?<\/video>$/i);
+              if (vm) {
+                items[items.length - 1].media.push('<div class="slide-list-media">' + tr + '</div>');
+                continue;
+              }
+              items[items.length - 1].text += " " + tr;
+            }
+          }
+          const tag = isOrdered ? "ol" : "ul";
+          const liHtml = items.map(it => {
+            let h = it.text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+            const med = it.media && it.media.length ? "\n" + it.media.join("\n") : "";
+            return "<li>" + h + med + "</li>";
+          }).join("\n");
+          div.innerHTML = "<" + tag + " class=\"pdf-list\">\n" + liHtml + "\n</" + tag + ">";
+        }
         else {
           const imgMatch = md.match(/!\\[(.*?)\\]\\((.*?)\\)/);
           if (imgMatch) {

@@ -69,6 +69,49 @@
       </div>
     </div>
 
+    <!-- 0.6 视频播放设置 (Video Playback) - 仅对视频元素显示 -->
+    <div v-if="isVideo" class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div class="spm-control-title">
+            <SlidevIcon name="video" />
+            <span>视频播放设置 (Video Playback)</span>
+          </div>
+          <span class="spm-control-desc">配置播放器控制条、自动播放与循环</span>
+        </div>
+      </div>
+      <div class="spm-video-settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+        <div class="spm-toggle-item" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; background: rgba(125,125,125,0.06); border-radius: 4px;">
+          <span style="font-size: 11px;">🎛️ 控制条</span>
+          <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="videoControls ? '关闭控制条' : '开启控制条'">
+            <input type="checkbox" :checked="Boolean(videoControls)" @change="$emit('toggleVideoControls')" />
+            <span class="spm-switch-slider"></span>
+          </label>
+        </div>
+        <div class="spm-toggle-item" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; background: rgba(125,125,125,0.06); border-radius: 4px;">
+          <span style="font-size: 11px;">▶️ 自动播放</span>
+          <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="videoAutoplay ? '关闭自动播放' : '开启自动播放'">
+            <input type="checkbox" :checked="Boolean(videoAutoplay)" @change="$emit('toggleVideoAutoplay')" />
+            <span class="spm-switch-slider"></span>
+          </label>
+        </div>
+        <div class="spm-toggle-item" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; background: rgba(125,125,125,0.06); border-radius: 4px;">
+          <span style="font-size: 11px;">🔁 循环播放</span>
+          <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="videoLoop ? '关闭循环播放' : '开启循环播放'">
+            <input type="checkbox" :checked="Boolean(videoLoop)" @change="$emit('toggleVideoLoop')" />
+            <span class="spm-switch-slider"></span>
+          </label>
+        </div>
+        <div class="spm-toggle-item" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; background: rgba(125,125,125,0.06); border-radius: 4px;">
+          <span style="font-size: 11px;">🔇 静音播放</span>
+          <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="videoMuted ? '关闭静音' : '开启静音'">
+            <input type="checkbox" :checked="Boolean(videoMuted)" @change="$emit('toggleVideoMuted')" />
+            <span class="spm-switch-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
     <!-- 1. 逐步出现 (v-click) -->
     <div class="spm-card-control">
       <div class="spm-control-header">
@@ -332,6 +375,11 @@ const props = defineProps<{
   elemMaxHeight?: string
   isCodeBlock: boolean
   isImage?: boolean
+  isVideo?: boolean
+  videoAutoplay?: boolean
+  videoLoop?: boolean
+  videoMuted?: boolean
+  videoControls?: boolean
   hasBlockAttrs: boolean
   isNote?: boolean
   imageRole?: string
@@ -427,6 +475,10 @@ const emit = defineEmits<{
   (e: 'setTwoColsContrast'): void
   (e: 'clearBlockAttrs'): void
   (e: 'update:imageRole', val: string): void
+  (e: 'toggleVideoAutoplay'): void
+  (e: 'toggleVideoLoop'): void
+  (e: 'toggleVideoMuted'): void
+  (e: 'toggleVideoControls'): void
 }>()
 
 const motionPresets = [
