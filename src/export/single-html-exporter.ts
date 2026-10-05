@@ -262,10 +262,18 @@ export function buildStandaloneHtml(
       word-break: break-word;
       box-sizing: border-box;
     }
-    .pdf-col pre {
-      white-space: pre-wrap;
-      word-break: break-word;
-      max-width: 100%;
+    .pdf-col pre,
+    .two-cols-left pre,
+    .two-cols-right pre,
+    .image-right-content pre,
+    .image-left-content pre {
+      white-space: pre-wrap !important;
+      word-break: break-all !important;
+      overflow-wrap: anywhere !important;
+      overflow-x: hidden !important;
+      overflow-y: auto !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
     }
     .slide-content.layout-image-right, .slide-content.layout-image-left {
       padding: 0;
@@ -359,7 +367,73 @@ export function buildStandaloneHtml(
       color: #f1f5f9;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
     }
-    .slide-block pre { background: rgba(0,0,0,0.1); padding: 12px; border-radius: 6px; font-family: monospace; }
+    .slide-block pre,
+    pre {
+      background: rgba(0, 0, 0, 0.1);
+      padding: 12px;
+      border-radius: 6px;
+      font-family: "JetBrains Mono", Consolas, monospace;
+      white-space: pre-wrap !important;
+      word-break: break-all !important;
+      overflow-wrap: anywhere !important;
+      overflow-x: hidden !important;
+      overflow-y: auto !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    .slide-block pre code,
+    pre code {
+      white-space: pre-wrap !important;
+      word-break: break-all !important;
+      overflow-wrap: anywhere !important;
+      display: block !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    .code-line {
+      display: flex !important;
+      align-items: flex-start !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+      line-height: 1.6;
+    }
+    .code-line .line-no {
+      display: inline-block !important;
+      flex-shrink: 0 !important;
+      min-width: 2.2em !important;
+      text-align: right !important;
+      margin-right: 12px !important;
+      user-select: none !important;
+      opacity: 0.45 !important;
+    }
+    .code-line .line-content {
+      flex: 1 1 0% !important;
+      min-width: 0 !important;
+      white-space: pre-wrap !important;
+      word-break: break-all !important;
+      overflow-wrap: anywhere !important;
+    }
+    /* 弱提示滚动条样式 */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.20) transparent;
+    }
+    *::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    *::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    *::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.20);
+      border-radius: 2px;
+      transition: background 0.2s ease;
+    }
+    *:hover::-webkit-scrollbar-thumb,
+    *::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.45);
+    }
     /* Slidev Micro-motion Keyframes & Presets */
     @keyframes slidevMotionFadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slidevMotionSlideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
@@ -436,34 +510,58 @@ export function buildStandaloneHtml(
     [hover\\:bg~="white"][hover\\:bg~="op-10"]:hover,
     [hover\\:bg="white op-10"]:hover { background: rgba(255, 255, 255, 0.1) !important; border-radius: 4px; }
     .cursor-pointer, [data-clickable] { cursor: pointer; }
+    /* Slidev 规范链接排版 (继承正文颜色，虚线底边，Hover 时平滑点亮为主题色并转为实线) */
+    .slide-content a:not(.slidev-ref-tag):not(.slidev-icon-btn):not(.slidev-toc-link),
+    .slide-block a:not(.slidev-ref-tag):not(.slidev-icon-btn):not(.slidev-toc-link),
+    a.slidev-link {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dashed currentColor;
+      transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                  border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                  border-bottom-style 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+    .slide-content a:not(.slidev-ref-tag):not(.slidev-icon-btn):not(.slidev-toc-link):hover,
+    .slide-block a:not(.slidev-ref-tag):not(.slidev-icon-btn):not(.slidev-toc-link):hover,
+    a.slidev-link:hover {
+      color: var(--slide-accent);
+      border-bottom-style: solid;
+      border-bottom-color: var(--slide-accent);
+    }
     .slidev-ref-tag, a.slidev-ref-tag {
       display: inline-flex;
       align-items: center;
-      background: rgba(59, 130, 246, 0.12);
-      color: #3b82f6;
+      background: color-mix(in srgb, var(--slide-accent) 12%, transparent);
+      color: var(--slide-accent);
       border-radius: 4px;
       padding: 2px 8px;
       font-size: 0.88em;
       text-decoration: none;
       cursor: pointer;
       margin: 2px 4px 2px 0;
-      border: 1px solid rgba(59, 130, 246, 0.25);
+      border: 1px solid color-mix(in srgb, var(--slide-accent) 25%, transparent);
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .slidev-ref-tag:hover, a.slidev-ref-tag:hover {
-      background: rgba(59, 130, 246, 0.24);
-      color: #60a5fa;
-      border-color: rgba(59, 130, 246, 0.5);
+      background: color-mix(in srgb, var(--slide-accent) 22%, transparent);
+      color: var(--slide-accent);
+      border-color: color-mix(in srgb, var(--slide-accent) 55%, transparent);
       transform: translateY(-1px);
+      box-shadow: 0 2px 8px color-mix(in srgb, var(--slide-accent) 20%, transparent);
     }
     .slidev-block-ref {
       display: block;
       padding: 10px 14px;
-      background: rgba(59, 130, 246, 0.08);
-      border-left: 3px solid #3b82f6;
+      background: color-mix(in srgb, var(--slide-accent) 8%, transparent);
+      border-left: 3px solid var(--slide-accent);
       border-radius: 0 6px 6px 0;
       margin: 8px 0;
       cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .slidev-block-ref:hover {
+      background: color-mix(in srgb, var(--slide-accent) 15%, transparent);
     }
   </style>
   <script>
@@ -595,7 +693,11 @@ export function buildStandaloneHtml(
         if (md.startsWith("### ")) div.innerHTML = "<h3>" + md.slice(4) + "</h3>";
         else if (md.startsWith("## ")) div.innerHTML = "<h2>" + md.slice(3) + "</h2>";
         else if (md.startsWith("# ")) div.innerHTML = "<h1>" + md.slice(2) + "</h1>";
-        else if (md.startsWith("\`\`\`")) div.innerHTML = "<pre><code>" + md.slice(3, -3) + "</code></pre>";
+        else if (md.startsWith("\`\`\`")) {
+          const customMaxHeight = block?.attributes?.["custom-slidev-max-height"] || block?.attrs?.["custom-slidev-max-height"] || block?.maxHeight || "";
+          const heightStyle = customMaxHeight ? ' style="max-height:' + customMaxHeight + ';overflow-y:auto;"' : "";
+          div.innerHTML = "<pre" + heightStyle + "><code>" + md.slice(3, -3) + "</code></pre>";
+        }
         else if (md.startsWith("> ")) div.innerHTML = "<blockquote><p>" + md.slice(2) + "</p></blockquote>";
         else {
           const imgMatch = md.match(/!\\[(.*?)\\]\\((.*?)\\)/);

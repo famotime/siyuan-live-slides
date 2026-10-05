@@ -48,16 +48,16 @@ export function parseShikiRanges(shikiPattern?: string): Set<number> | "all" {
 }
 
 /**
-/**
  * 允许在 Markdown 行内安全放行的通用语义 HTML 标签白名单
  */
 export const SAFE_INLINE_HTML_TAGS = new Set([
   "kbd", "mark", "sub", "sup", "span", "a", "br", "b", "i", "u", "s",
   "del", "em", "strong", "code", "small", "abbr", "ruby", "rt", "rp", "v-mark",
+  "img", "video", "source", "picture",
 ])
 
 /**
- * 行内 Markdown 转义与渲染 (支持加粗、斜体、删除线、行内代码、数学公式、思源块引用与链接、v-mark 以及安全语义 HTML 标签如 a/kbd/sub/sup 等)
+ * 行内 Markdown 转义与渲染 (支持加粗、斜体、删除线、行内代码、数学公式、思源块引用与链接、v-mark、图片以及安全语义 HTML 标签如 a/kbd/img/video 等)
  */
 export function formatInlineMarkdown(text: string): string {
   if (!text) return ""
@@ -101,6 +101,13 @@ export function formatInlineMarkdown(text: string): string {
 
   // 3.1 行内数学公式 $formula$
   res = res.replace(/\$([^$\n]+)\$/g, '<span class="katex-inline font-math"><em>$1</em></span>')
+
+  // 3.1.5 行内图片语法 ![alt](src)（必须在普通超链接之前匹配，防止将图片解析为破坏链接）
+  res = res.replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, url) => {
+    const isGif = /\.gif(?:\?|$)/i.test(url)
+    const cls = isGif ? "slide-inline-img list-item-gif" : "slide-inline-img"
+    return `<img alt="${alt}" src="${url}" class="${cls}" />`
+  })
 
   // 3.2 链接 [title](url) 与思源协议链接增强
   res = res.replace(/\[(.*?)\]\((.*?)\)/g, (match, title, url) => {
@@ -400,6 +407,7 @@ export function renderMarkdownList(
     type: "unordered" | "ordered" | "task"
     checked?: boolean
     text: string
+    media?: string[]
   }> = []
   let isOrdered = false
 
@@ -412,6 +420,7 @@ export function renderMarkdownList(
         type: "task",
         checked: taskMatch[2].toLowerCase() === "x",
         text: taskMatch[3],
+        media: [],
       })
       continue
     }
@@ -421,6 +430,7 @@ export function renderMarkdownList(
       items.push({
         type: "unordered",
         text: unorderedMatch[2],
+        media: [],
       })
       continue
     }
@@ -431,14 +441,47 @@ export function renderMarkdownList(
       items.push({
         type: "ordered",
         text: orderedMatch[2],
+        media: [],
       })
       continue
     }
 
+    const trimmed = line.trim()
+
+    // 检查列表项下属的缩进多媒体（GIF、普通图片或视频）
     if (items.length > 0) {
-      items[items.length - 1].text += " " + line.trim()
+      const mdImgMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/)
+      if (mdImgMatch) {
+        const isGif = /\.gif(?:\?|$)/i.test(mdImgMatch[2])
+        const cls = isGif ? "list-item-gif" : "list-item-img"
+        if (!items[items.length - 1].media) items[items.length - 1].media = []
+        items[items.length - 1].media!.push(
+          `<div class="slide-list-media"><img alt="${escapeHtml(mdImgMatch[1])}" src="${mdImgMatch[2]}" class="${cls}" /></div>`
+        )
+        continue
+      }
+
+      const htmlImgMatch = trimmed.match(/^<img\b[\s\S]*?\/?>$/i)
+      if (htmlImgMatch) {
+        if (!items[items.length - 1].media) items[items.length - 1].media = []
+        items[items.length - 1].media!.push(
+          `<div class="slide-list-media">${trimmed}</div>`
+        )
+        continue
+      }
+
+      const videoMatch = trimmed.match(/^<video\b[\s\S]*?<\/video>$/i)
+      if (videoMatch) {
+        if (!items[items.length - 1].media) items[items.length - 1].media = []
+        items[items.length - 1].media!.push(
+          `<div class="slide-list-media">${trimmed}</div>`
+        )
+        continue
+      }
+
+      items[items.length - 1].text += " " + trimmed
     } else {
-      leadLines.push(line.trim())
+      leadLines.push(trimmed)
     }
   }
 
@@ -448,11 +491,14 @@ export function renderMarkdownList(
   const baseListClass = options?.listClassName || (isOrdered ? "pdf-list pdf-list--ordered" : "pdf-list pdf-list--unordered")
   const itemsHtml = items.map(item => {
     const formatted = formatInlineMarkdown(item.text)
+    const mediaHtml = (item.media && item.media.length > 0)
+      ? `\n${item.media.join("\n")}`
+      : ""
     if (item.type === "task") {
       const checkedAttr = item.checked ? ' checked=""' : ""
-      return `<li class="pdf-task-item"><label><input type="checkbox" disabled=""${checkedAttr}/> <span>${formatted}</span></label></li>`
+      return `<li class="pdf-task-item"><label><input type="checkbox" disabled=""${checkedAttr}/> <span>${formatted}</span></label>${mediaHtml}</li>`
     }
-    return `<li>${formatted}</li>`
+    return `<li>${formatted}${mediaHtml}</li>`
   }).join("\n")
 
   const leadHtml = leadLines.length > 0
@@ -531,7 +577,9 @@ export function convertBlockToHtml(
       return `<span class="code-line shiki-focus"><span class="line-no">${lineNo}</span><span class="line-content">${highlightCode(line, "ts")}</span></span>`
     }).join("\n")
     const codeClass = options?.codeClassName || "pdf-code shiki-container"
-    return `<div class="${containerClass}"${motionStyle}><pre class="${codeClass}"><span class="lang-badge">TS</span><code>${formattedLines}</code></pre></div>`
+    const customMaxHeight = block.attrs?.["custom-slidev-max-height"] || block.maxHeight || ""
+    const heightStyle = customMaxHeight ? ` style="max-height:${escapeHtml(customMaxHeight)};overflow-y:auto;"` : ""
+    return `<div class="${containerClass}"${motionStyle}><pre class="${codeClass}"${heightStyle}><span class="lang-badge">TS</span><code>${formattedLines}</code></pre></div>`
   }
 
   // 4.6 隐藏内联 style 标签与提词备注
@@ -581,7 +629,10 @@ export function convertBlockToHtml(
     const langBadge = lang ? `<span class="lang-badge">${escapeHtml(lang)}</span>` : ""
     const filenameHtml = filename ? `<span class="code-filename">${escapeHtml(filename)}</span>` : ""
 
-    return `<div class="${containerClass}"${motionStyle}><pre class="${codeClass}">${filenameHtml}${langBadge}<code>${formattedLines}</code></pre></div>`
+    const customMaxHeight = block.attrs?.["custom-slidev-max-height"] || block.maxHeight || ""
+    const heightStyle = customMaxHeight ? ` style="max-height:${escapeHtml(customMaxHeight)};overflow-y:auto;"` : ""
+
+    return `<div class="${containerClass}"${motionStyle}><pre class="${codeClass}"${heightStyle}>${filenameHtml}${langBadge}<code>${formattedLines}</code></pre></div>`
   }
 
   // 6. Markdown 表格
@@ -595,6 +646,39 @@ export function convertBlockToHtml(
   if (md.startsWith("> ")) {
     const quoteClass = options?.quoteClassName || "pdf-quote"
     return `<div class="${containerClass}"${motionStyle}><blockquote class="${quoteClass}"><p>${formatInlineMarkdown(md.slice(2))}</p></blockquote></div>`
+  }
+
+  // 7.5 MP4 视频与多媒体播放块
+  const isVideoTag = md.startsWith("<video") || (block.type === "video" && md.includes("<video"))
+  if (isVideoTag) {
+    const isAutoplay = block.attributes?.["custom-slidev-autoplay"] === "true" || /autoplay/i.test(md)
+    const isLoop = block.attributes?.["custom-slidev-loop"] === "true" || /loop/i.test(md)
+    const isMuted = block.attributes?.["custom-slidev-muted"] === "true" || isAutoplay || /muted/i.test(md)
+    const hideControls = block.attributes?.["custom-slidev-controls"] === "false"
+
+    const srcMatch = md.match(/\bsrc=["']([^"']+)["']/i)
+    const src = srcMatch ? srcMatch[1] : ""
+
+    const attrParts: string[] = ['class="slide-video-player"']
+    if (!hideControls) attrParts.push("controls")
+    if (isAutoplay) {
+      attrParts.push("autoplay")
+      attrParts.push("playsinline")
+    }
+    if (isLoop) attrParts.push("loop")
+    if (isMuted) attrParts.push("muted")
+    attrParts.push('preload="metadata"')
+    if (src) {
+      attrParts.push(`src="${src}"`)
+    }
+
+    const innerContentMatch = md.match(/<video[^>]*>([\s\S]*?)<\/video>/i)
+    let innerContent = innerContentMatch ? innerContentMatch[1].trim() : ""
+    if (!innerContent && src) {
+      innerContent = `<source src="${src}" type="video/mp4" />您的浏览器不支持视频播放。`
+    }
+
+    return `<div class="${containerClass} slide-video-container"${motionStyle}><video ${attrParts.join(" ")}>${innerContent}</video></div>`
   }
 
   // 8. 图片

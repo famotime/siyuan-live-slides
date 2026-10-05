@@ -233,6 +233,44 @@
       />
     </div>
 
+    <!-- 3.5 代码块最大高度限制 (Max Height) -->
+    <div v-if="isCodeBlock" class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div class="spm-control-title">
+            <SlidevIcon name="code" />
+            <span>代码块限高 (Max Height)</span>
+          </div>
+          <span class="spm-control-desc">超出限高自动竖向滚动，弱提示滚动条</span>
+        </div>
+      </div>
+      <div class="spm-quick-chips">
+        <button
+          v-for="h in ['240px', '320px', '400px', '50vh']"
+          :key="h"
+          class="spm-chip"
+          :class="{ active: elemMaxHeight === h }"
+          @click="$emit('update:elemMaxHeight', h)"
+        >
+          {{ h }}
+        </button>
+        <button
+          v-if="elemMaxHeight"
+          class="spm-chip spm-chip-clear"
+          @click="$emit('update:elemMaxHeight', '')"
+        >
+          自适应
+        </button>
+      </div>
+      <input
+        :value="elemMaxHeight"
+        class="spm-input"
+        placeholder="自适应高度，或输入 350px、50vh"
+        @input="$emit('update:elemMaxHeight', ($event.target as HTMLInputElement).value)"
+        @change="$emit('update:elemMaxHeight', ($event.target as HTMLInputElement).value)"
+      />
+    </div>
+
     <!-- 4. 紧凑快捷操作 2x2 网格 -->
     <div class="spm-card-control">
       <div class="spm-control-header">
@@ -291,6 +329,7 @@ const props = defineProps<{
   elemMotion: string
   elemSlot: string
   elemShikiLines: string
+  elemMaxHeight?: string
   isCodeBlock: boolean
   isImage?: boolean
   hasBlockAttrs: boolean
@@ -382,6 +421,7 @@ const emit = defineEmits<{
   (e: 'update:elemMotion', val: string): void
   (e: 'update:elemSlot', val: string): void
   (e: 'update:elemShikiLines', val: string): void
+  (e: 'update:elemMaxHeight', val: string): void
   (e: 'insertDividerBefore'): void
   (e: 'insertDividerAfter'): void
   (e: 'setTwoColsContrast'): void

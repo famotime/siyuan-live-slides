@@ -135,14 +135,51 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
     .pdf-block h3 { font-size: 1.4rem; font-weight: 600; margin-bottom: 8px; }
     .pdf-block h4 { font-size: 1.2rem; font-weight: 600; margin-bottom: 6px; }
     .pdf-block p { font-size: 1.15rem; color: inherit; }
-    .pdf-code {
+    .pdf-code,
+    pre {
       background: #f1f5f9;
       padding: 14px 18px;
       border-radius: 6px;
       font-family: "JetBrains Mono", Consolas, monospace;
       font-size: 0.95rem;
       border-left: 4px solid #3b82f6;
-      white-space: pre-wrap;
+      white-space: pre-wrap !important;
+      word-break: break-all !important;
+      overflow-wrap: anywhere !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    .pdf-code code,
+    pre code {
+      white-space: pre-wrap !important;
+      word-break: break-all !important;
+      overflow-wrap: anywhere !important;
+      display: block !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    .code-line {
+      display: flex !important;
+      align-items: flex-start !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+      line-height: 1.6;
+    }
+    .code-line .line-no {
+      display: inline-block !important;
+      flex-shrink: 0 !important;
+      min-width: 2.2em !important;
+      text-align: right !important;
+      margin-right: 12px !important;
+      user-select: none !important;
+      opacity: 0.45 !important;
+    }
+    .code-line .line-content {
+      flex: 1 1 0% !important;
+      min-width: 0 !important;
+      white-space: pre-wrap !important;
+      word-break: break-all !important;
+      overflow-wrap: anywhere !important;
     }
     .theme-dark .pdf-code {
       background: #1e1e24;
@@ -212,9 +249,11 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       box-sizing: border-box;
     }
     .pdf-col pre {
-      white-space: pre-wrap;
-      word-break: break-word;
-      max-width: 100%;
+      white-space: pre-wrap !important;
+      word-break: break-all !important;
+      overflow-wrap: anywhere !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
     }
     .pdf-list-item {
       padding-left: 20px;
@@ -266,11 +305,38 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       color: #f1f5f9;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
     }
-    .pdf-block--ref {
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      padding: 12px;
+    a {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px dashed currentColor;
+    }
+    .slidev-ref-tag, a.slidev-ref-tag {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(16, 185, 129, 0.1);
+      color: #059669;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 0.88em;
+      text-decoration: none;
+      margin: 2px 4px 2px 0;
+    }
+    .theme-dark .slidev-ref-tag, .theme-dark a.slidev-ref-tag {
+      background: rgba(52, 211, 153, 0.15);
+      color: #34d399;
+      border-color: rgba(52, 211, 153, 0.3);
+    }
+    .slidev-block-ref, .pdf-block--ref {
+      background: rgba(16, 185, 129, 0.06);
+      border-left: 3px solid #059669;
+      border-radius: 0 6px 6px 0;
+      padding: 10px 14px;
+      margin: 8px 0;
+    }
+    .theme-dark .slidev-block-ref, .theme-dark .pdf-block--ref {
+      background: rgba(52, 211, 153, 0.08);
+      border-left-color: #34d399;
     }
     .pdf-slide-notes {
       font-size: 14px;

@@ -26,6 +26,7 @@ export const ATTR_ELEM_SHIKI_LINES = "custom-slidev-shiki-lines"
 export const ATTR_ELEM_SLOT = "custom-slidev-slot"
 export const ATTR_ELEM_NOTE = "custom-slidev-note"
 export const ATTR_ELEM_ROLE = "custom-slidev-role"
+export const ATTR_ELEM_MAX_HEIGHT = "custom-slidev-max-height"
 export const ROLE_BACKGROUND = "background"
 export const ROLE_IMAGE_LEFT = "image-left"
 export const ROLE_IMAGE_RIGHT = "image-right"
@@ -83,9 +84,11 @@ export interface ISlidevBlockItem {
   clicks?: string
   motion?: ISlidevMotionConfig
   shikiLines?: string
+  maxHeight?: string
   slot?: "header" | "left" | "right" | "col-1" | "col-2" | "col-3" | "default" | string
   isNote?: boolean
   attributes?: Record<string, string>
+  attrs?: Record<string, string>
 }
 
 export type ISlidevBlock = ISlidevBlockItem

@@ -14,6 +14,7 @@ import {
   ATTR_ELEM_MOTION,
   ATTR_ELEM_NOTE,
   ATTR_ELEM_ROLE,
+  ATTR_ELEM_MAX_HEIGHT,
   ROLE_BACKGROUND,
   ROLE_IMAGE_LEFT,
   ROLE_IMAGE_RIGHT,
@@ -153,6 +154,7 @@ export function parseElementAttrs(
   clicks?: string
   motion?: ISlidevMotionConfig
   shikiLines?: string
+  maxHeight?: string
   slot?: "left" | "right" | "default" | string
   isNote?: boolean
   isBackground?: boolean
@@ -162,6 +164,7 @@ export function parseElementAttrs(
     clicks?: string
     motion?: ISlidevMotionConfig
     shikiLines?: string
+    maxHeight?: string
     slot?: string
     isNote?: boolean
     isBackground?: boolean
@@ -219,9 +222,15 @@ export function parseElementAttrs(
     result.shikiLines = attrs[ATTR_ELEM_SHIKI_LINES].trim()
   }
 
+  if (attrs[ATTR_ELEM_MAX_HEIGHT]) {
+    result.maxHeight = attrs[ATTR_ELEM_MAX_HEIGHT].trim()
+  }
+
   if (attrs[ATTR_ELEM_SLOT]) {
     result.slot = attrs[ATTR_ELEM_SLOT].trim()
   }
 
   return result
 }
+
+export const mapElementAttrs = parseElementAttrs

@@ -1,0 +1,126 @@
+import fs from "node:fs"
+import path from "node:path"
+import { describe, expect, it } from "vitest"
+import { mapElementAttrs } from "../src/compiler/scope-mapper"
+import { SLIDEV_CUSTOM_STYLES_CSS } from "../src/engine/workspace-scaffolder"
+import { convertBlockToHtml } from "../src/export/markdown-renderer"
+import { buildPrintableHtml } from "../src/export/pdf-exporter"
+import { buildStandaloneHtml } from "../src/export/single-html-exporter"
+import {
+  ATTR_ELEM_MAX_HEIGHT,
+  type ISlidevBlockItem,
+  type ISlidevDocument,
+} from "../src/types/slidev-protocol"
+
+describe("Code Block Wrapping & Subtle Scrollbar (代码块换行、无横向滚动条与弱提示滚动条测试)", () => {
+  const sampleDoc: ISlidevDocument = {
+    docId: "doc-code-wrap-test",
+    config: {
+      theme: "default",
+      aspectRatio: "16/9",
+      highlighter: "shiki",
+      defaultTransition: "fade",
+      colorSchema: "dark",
+    },
+    slides: [
+      {
+        pageIndex: 1,
+        startBlockId: "b-slide-1",
+        frontmatter: { layout: "image-right" },
+        notes: "",
+        blocks: [
+          {
+            id: "b-code-1",
+            type: "c",
+            content: "```ts [demo.ts]\nconst veryLongCodeLine = '这是一行非常长非常长非常长的代码，在双栏或三栏以及image-right排版时绝不能产生横向滚动条，而应该自动换行排版';\n```",
+            rawMarkdown: "```ts [demo.ts]\nconst veryLongCodeLine = '这是一行非常长非常长非常长的代码，在双栏或三栏以及image-right排版时绝不能产生横向滚动条，而应该自动换行排版';\n```",
+            attrs: {
+              [ATTR_ELEM_MAX_HEIGHT]: "360px",
+            },
+          },
+        ],
+        rawMarkdown: "",
+      },
+    ],
+    fullMarkdown: "",
+  }
+
+  it("scope-mapper 应正确将 custom-slidev-max-height 映射为 block.maxHeight", () => {
+    const rawAttrs = {
+      [ATTR_ELEM_MAX_HEIGHT]: "400px",
+    }
+    const mapped = mapElementAttrs(rawAttrs)
+    expect(mapped.maxHeight).toBe("400px")
+  })
+
+  it("Web Sandbox HTML 模版应包含禁止横向滚动、自动换行与弱提示滚动条样式", () => {
+    const indexPath = path.resolve(__dirname, "../public/slidev-client/index.html")
+    const content = fs.readFileSync(indexPath, "utf-8")
+
+    // 1. 禁止横向滚动条，支持自动换行
+    expect(content).toContain("overflow-x: hidden !important")
+    expect(content).toContain("overflow-y: auto !important")
+    expect(content).toContain("white-space: pre-wrap !important")
+    expect(content).toContain("word-break: break-all !important")
+    expect(content).toContain("overflow-wrap: anywhere !important")
+
+    // 2. 行号与代码置顶弹性布局
+    expect(content).toContain(".slide-block .code-line")
+    expect(content).toContain("display: flex !important")
+    expect(content).toContain("align-items: flex-start !important")
+    expect(content).toContain(".slide-block .code-line .line-no")
+    expect(content).toContain(".slide-block .code-line .line-content")
+
+    // 3. 亮色与暗色模式下的 4px 细弱提示滚动条
+    expect(content).toContain("[data-theme=\"light\"] *::-webkit-scrollbar")
+    expect(content).toContain("[data-theme=\"dark\"] *::-webkit-scrollbar")
+    expect(content).toContain("scrollbar-width: thin")
+    expect(content).toContain("rgba(0, 0, 0, 0.15)")
+    expect(content).toContain("rgba(255, 255, 255, 0.20)")
+  })
+
+  it("markdown-renderer 渲染代码块时应将 custom-slidev-max-height 注入为 style max-height", () => {
+    const block: ISlidevBlockItem = {
+      id: "b-test",
+      type: "c",
+      content: "```ts\nconsole.log(1)\n```",
+      rawMarkdown: "```ts\nconsole.log(1)\n```",
+      attrs: {
+        [ATTR_ELEM_MAX_HEIGHT]: "350px",
+      },
+    }
+    const html = convertBlockToHtml(block)
+    expect(html).toContain('style="max-height:350px;overflow-y:auto;"')
+    expect(html).toContain("code-line")
+    expect(html).toContain("line-no")
+    expect(html).toContain("line-content")
+  })
+
+  it("Single-HTML Exporter 导出的独立离线 HTML 应包含代码换行、无横向滚动条与弱提示滚动条规则", () => {
+    const html = buildStandaloneHtml(sampleDoc)
+    expect(html).toContain("overflow-x: hidden !important")
+    expect(html).toContain("overflow-y: auto !important")
+    expect(html).toContain("white-space: pre-wrap !important")
+    expect(html).toContain("word-break: break-all !important")
+    expect(html).toContain("scrollbar-width: thin")
+    expect(html).toContain("width: 4px")
+  })
+
+  it("PDF Exporter 导出的打印 HTML 应包含代码自动换行与行号对齐规则", () => {
+    const html = buildPrintableHtml(sampleDoc)
+    expect(html).toContain("white-space: pre-wrap !important")
+    expect(html).toContain("word-break: break-all !important")
+    expect(html).toContain("overflow-wrap: anywhere !important")
+    expect(html).toContain(".code-line")
+    expect(html).toContain("align-items: flex-start !important")
+  })
+
+  it("Slidev Pro 本地工程 SLIDEV_CUSTOM_STYLES_CSS 应包含自动换行与弱提示滚动条样式", () => {
+    expect(SLIDEV_CUSTOM_STYLES_CSS).toContain("overflow-x: hidden !important")
+    expect(SLIDEV_CUSTOM_STYLES_CSS).toContain("overflow-y: auto !important")
+    expect(SLIDEV_CUSTOM_STYLES_CSS).toContain("white-space: pre-wrap !important")
+    expect(SLIDEV_CUSTOM_STYLES_CSS).toContain("scrollbar-width: thin")
+    expect(SLIDEV_CUSTOM_STYLES_CSS).toContain("rgba(0, 0, 0, 0.15)")
+    expect(SLIDEV_CUSTOM_STYLES_CSS).toContain("rgba(255, 255, 255, 0.20)")
+  })
+})

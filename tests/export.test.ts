@@ -87,6 +87,13 @@ describe("Single-File HTML Exporter (单文件离线 HTML 导出)", () => {
   it("在非浏览器环境调用 downloadHtmlFile 应安全返回 false", () => {
     expect(downloadHtmlFile("demo.html", "<html></html>")).toBe(false)
   })
+
+  it("导出的独立 HTML 应包含 Slidev 规范的超链接虚线底边与主题色块引用样式", () => {
+    const html = buildStandaloneHtml(dummyDoc)
+    expect(html).toContain("border-bottom: 1px dashed currentColor")
+    expect(html).toContain(".slidev-ref-tag, a.slidev-ref-tag")
+    expect(html).toContain("var(--slide-accent)")
+  })
 })
 
 describe("PDF Exporter (高保真 PDF 讲义导出)", () => {
@@ -153,6 +160,12 @@ describe("PDF Exporter (高保真 PDF 讲义导出)", () => {
 
   it("在非浏览器环境调用 triggerPdfExport 应安全返回 false", () => {
     expect(triggerPdfExport(dummyDoc)).toBe(false)
+  })
+
+  it("导出的 PDF 打印文档应包含 Slidev 规范的超链接虚线底边与主题色块引用样式", () => {
+    const html = buildPrintableHtml(dummyDoc)
+    expect(html).toContain("border-bottom: 1px dashed currentColor")
+    expect(html).toContain(".slidev-ref-tag, a.slidev-ref-tag")
   })
 })
 

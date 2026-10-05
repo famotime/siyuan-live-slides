@@ -866,7 +866,7 @@ export function extractAssetReferences(markdown: string): string[] {
     if (url) assets.push(url)
   }
 
-  const htmlRegex = /<img\b[^>]*src=["'](.*?)["']/gi
+  const htmlRegex = /<(?:img|video|source|audio)\b[^>]*src=["'](.*?)["']/gi
   while ((match = htmlRegex.exec(markdown)) !== null) {
     const url = match[1].trim()
     if (url) assets.push(url)

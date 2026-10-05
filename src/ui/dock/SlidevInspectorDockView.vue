@@ -87,6 +87,7 @@
         :elem-motion="elemMotion"
         :elem-slot="elemSlot"
         :elem-shiki-lines="elemShikiLines"
+        :elem-max-height="elemMaxHeight"
         :is-code-block="isCodeBlock"
         :is-image="isImageBlock"
         :has-block-attrs="hasBlockAttrs"
@@ -100,6 +101,7 @@
         @update:elem-motion="onElemMotionChange"
         @update:elem-slot="onElemSlotChange"
         @update:elem-shiki-lines="onElemShikiLinesChange"
+        @update:elem-max-height="onElemMaxHeightChange"
         @insert-divider-before="onInsertDividerBefore"
         @insert-divider-after="onInsertDividerAfter"
         @set-two-cols-contrast="onSetTwoColsContrast"
@@ -167,6 +169,7 @@ import {
   ATTR_ELEM_MOTION,
   ATTR_ELEM_SLOT,
   ATTR_ELEM_SHIKI_LINES,
+  ATTR_ELEM_MAX_HEIGHT,
   ATTR_ELEM_NOTE,
   ATTR_ELEM_ROLE,
   ROLE_BACKGROUND,
@@ -435,6 +438,7 @@ const elemSlot = computed(() => {
   return ''
 })
 const elemShikiLines = ref('')
+const elemMaxHeight = ref('')
 
 // 文档全局属性绑定
 const docTheme = computed(() => latestDoc.value?.config?.theme || activeBlockAttrs.value[ATTR_DOC_THEME] || 'default')
@@ -829,6 +833,11 @@ function onElemShikiLinesChange(val: string) {
   saveAttr(ATTR_ELEM_SHIKI_LINES, val)
 }
 
+function onElemMaxHeightChange(val: string) {
+  elemMaxHeight.value = val
+  saveAttr(ATTR_ELEM_MAX_HEIGHT, val)
+}
+
 async function onSetTwoColsContrast() {
   const isThreeCols = currentSlideLayout.value === 'three-cols-header'
   const slotVal = isThreeCols ? 'col-1' : 'left'
@@ -844,6 +853,7 @@ async function onClearBlockAttrs() {
     [ATTR_ELEM_MOTION]: '',
     [ATTR_ELEM_SLOT]: '',
     [ATTR_ELEM_SHIKI_LINES]: '',
+    [ATTR_ELEM_MAX_HEIGHT]: '',
     [ATTR_ELEM_NOTE]: '',
     'slidev-note': '',
     [ATTR_PAGE_LAYOUT]: '',
@@ -856,6 +866,7 @@ async function onClearBlockAttrs() {
   globalDocumentCompiler.clearBlockAttrOverride(targetId)
   activeBlockAttrs.value = {}
   elemShikiLines.value = ''
+  elemMaxHeight.value = ''
   pageBackground.value = ''
   pageImage.value = ''
   showMessage('已清除本块演示属性')
@@ -971,6 +982,7 @@ defineExpose({
     pageBackground.value = info.attrs[ATTR_PAGE_BACKGROUND] || ''
     pageImage.value = info.attrs[ATTR_PAGE_IMAGE] || ''
     elemShikiLines.value = info.attrs[ATTR_ELEM_SHIKI_LINES] || ''
+    elemMaxHeight.value = info.attrs[ATTR_ELEM_MAX_HEIGHT] || ''
     isImageExplicit.value = Boolean(info.isImage)
   },
   updateDocument(doc: ISlidevDocument) {

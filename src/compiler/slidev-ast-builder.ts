@@ -641,6 +641,33 @@ export function buildSlidevDocument(
       // 动态展开思源块引用 ((block-id))
       rawMd = resolveBlockRefsSync(rawMd, options?.refContentMap)
 
+      // 视频块属性同步与增强 (autoplay, loop, muted, controls)
+      if (itemNode.type === "video" || /<video\b/i.test(rawMd)) {
+        const isAutoplay = combinedIal["custom-slidev-autoplay"] === "true"
+        const isLoop = combinedIal["custom-slidev-loop"] === "true"
+        const isMuted = combinedIal["custom-slidev-muted"] === "true" || isAutoplay
+        const hideControls = combinedIal["custom-slidev-controls"] === "false"
+
+        rawMd = rawMd.replace(/<video\b([^>]*)>/i, (_, existingAttrs) => {
+          let attrs = existingAttrs
+          if (hideControls) {
+            attrs = attrs.replace(/\bcontrols(?:="[^"]*")?/gi, "").trim()
+          } else if (!/controls/i.test(attrs)) {
+            attrs += " controls"
+          }
+          if (isAutoplay && !/autoplay/i.test(attrs)) {
+            attrs += " autoplay playsinline"
+          }
+          if (isLoop && !/loop/i.test(attrs)) {
+            attrs += " loop"
+          }
+          if (isMuted && !/muted/i.test(attrs)) {
+            attrs += " muted"
+          }
+          return `<video ${attrs.trim()}>`
+        })
+      }
+
       // 页面背景图块处理 (custom-slidev-role="background" 或 custom-slidev-background="true")
       if (elemAttrs.isBackground) {
         const imgUrl = extractImageUrl(rawMd, itemNode.content)
