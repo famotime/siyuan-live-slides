@@ -411,6 +411,7 @@ export function renderMarkdownList(
   const leadLines: string[] = []
   const items: Array<{
     type: "unordered" | "ordered" | "task"
+    level?: number
     checked?: boolean
     text: string
     media?: string[]
@@ -423,8 +424,11 @@ export function renderMarkdownList(
 
     const taskMatch = line.match(/^(\s*)[-*+]\s+\[([ xX])\]\s+(.*)$/)
     if (taskMatch) {
+      const indent = taskMatch[1].length
+      const level = Math.floor(indent / 2)
       items.push({
         type: "task",
+        level,
         checked: taskMatch[2].toLowerCase() === "x",
         text: taskMatch[3],
         media: [],
@@ -434,8 +438,11 @@ export function renderMarkdownList(
 
     const unorderedMatch = line.match(/^(\s*)[-*+]\s+(.*)$/)
     if (unorderedMatch) {
+      const indent = unorderedMatch[1].length
+      const level = Math.floor(indent / 2)
       items.push({
         type: "unordered",
+        level,
         text: unorderedMatch[2],
         media: [],
       })
@@ -445,8 +452,11 @@ export function renderMarkdownList(
     const orderedMatch = line.match(/^(\s*)\d+\.\s+(.*)$/)
     if (orderedMatch) {
       if (items.length === 0) isOrdered = true
+      const indent = orderedMatch[1].length
+      const level = Math.floor(indent / 2)
       items.push({
         type: "ordered",
+        level,
         text: orderedMatch[2],
         media: [],
       })
@@ -562,6 +572,38 @@ export function renderMarkdownList(
     return resultParts.join("\n")
   }
 
+  function formatLeadContent(lines: string[]): string {
+    if (lines.length === 0) return ""
+    const resultParts: string[] = []
+    let pendingParaLines: string[] = []
+
+    const flushParagraph = (isFirst: boolean) => {
+      if (pendingParaLines.length > 0) {
+        const pText = pendingParaLines.join(" ")
+        const cls = isFirst ? "slide-list-item-title" : "slide-list-item-desc"
+        resultParts.push(`<p class="${cls}">${formatInlineMarkdown(pText)}</p>`)
+        pendingParaLines = []
+      }
+    }
+
+    let isFirst = true
+    for (const line of lines) {
+      const headingMatch = line.match(/^(#{1,6})\s+(.*)$/)
+      if (headingMatch) {
+        flushParagraph(isFirst)
+        const level = headingMatch[1].length
+        const headingText = headingMatch[2].trim()
+        resultParts.push(`<h${level} class="slide-list-item-title">${formatInlineMarkdown(headingText)}</h${level}>`)
+        isFirst = false
+      } else {
+        pendingParaLines.push(line)
+      }
+    }
+    flushParagraph(isFirst)
+
+    return resultParts.join("\n") + (resultParts.length > 0 ? "\n" : "")
+  }
+
   const listTag = isOrdered ? "ol" : "ul"
   const baseListClass = options?.listClassName || (isOrdered ? "pdf-list pdf-list--ordered" : "pdf-list pdf-list--unordered")
   const itemsHtml = items.map(item => {
@@ -569,16 +611,20 @@ export function renderMarkdownList(
     const mediaHtml = (item.media && item.media.length > 0)
       ? `\n${item.media.join("\n")}`
       : ""
+    const level = item.level || 0
+    const nestedStyle = level > 0
+      ? ` style="margin-left:${(level * 1.25).toFixed(2)}em;${item.type === 'unordered' ? `list-style-type:${level % 2 === 1 ? 'circle' : 'square'} !important;` : ''}"`
+      : ""
+    const nestedClass = level > 0 ? " slide-list-item--nested" : ""
     if (item.type === "task") {
       const checkedAttr = item.checked ? ' checked=""' : ""
-      return `<li class="pdf-task-item"><label><input type="checkbox" disabled=""${checkedAttr}/> <span>${formatted}</span></label>${mediaHtml}</li>`
+      return `<li class="pdf-task-item${nestedClass}"${nestedStyle}><label><input type="checkbox" disabled=""${checkedAttr}/> <span>${formatted}</span></label>${mediaHtml}</li>`
     }
-    return `<li>${formatted}${mediaHtml}</li>`
+    const classAttr = nestedClass ? ` class="${nestedClass.trim()}"` : ""
+    return `<li${classAttr}${nestedStyle}>${formatted}${mediaHtml}</li>`
   }).join("\n")
 
-  const leadHtml = leadLines.length > 0
-    ? `<p>${formatInlineMarkdown(leadLines.join(" "))}</p>\n`
-    : ""
+  const leadHtml = formatLeadContent(leadLines)
 
   return `${leadHtml}<${listTag} class="${baseListClass}">\n${itemsHtml}\n</${listTag}>`
 }

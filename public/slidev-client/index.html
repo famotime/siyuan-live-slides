@@ -592,36 +592,46 @@
     }
 
     /* ========================================================
-       两栏与三栏（超级块分栏）布局：去除列表圆点标记与缩进，消除滚动条并自适应满高
+       两栏与三栏（超级块分栏）布局：紧凑自然行距，子列表保留圆点与层级缩进
        ======================================================== */
     .layout-two-cols ul,
-    .layout-two-cols ol,
     .layout-two-cols-header ul,
-    .layout-two-cols-header ol,
     .layout-three-cols ul,
-    .layout-three-cols ol,
     .layout-three-cols-header ul,
-    .layout-three-cols-header ol,
     .two-cols-left ul,
-    .two-cols-left ol,
     .two-cols-right ul,
-    .two-cols-right ol,
     .three-cols-col ul,
-    .three-cols-col ol,
-    .layout-two-cols .slide-list,
-    .layout-three-cols .slide-list {
-      list-style: none !important;
-      list-style-type: none !important;
-      padding-left: 0 !important;
+    .layout-two-cols .slide-list--unordered,
+    .layout-three-cols .slide-list--unordered {
+      list-style: disc !important;
+      list-style-type: disc !important;
+      padding-left: 1.25em !important;
       margin-left: 0 !important;
-      flex: 1 1 0% !important;
-      min-height: 0 !important;
-      height: 100% !important;
-      max-height: 100% !important;
-      display: flex !important;
-      flex-direction: column !important;
-      overflow: hidden !important;
-      overflow-y: hidden !important;
+      margin-top: 0 !important;
+      margin-bottom: 8px !important;
+      flex: 0 0 auto !important;
+      height: auto !important;
+      display: block !important;
+    }
+
+    .layout-two-cols ol,
+    .layout-two-cols-header ol,
+    .layout-three-cols ol,
+    .layout-three-cols-header ol,
+    .two-cols-left ol,
+    .two-cols-right ol,
+    .three-cols-col ol,
+    .layout-two-cols .slide-list--ordered,
+    .layout-three-cols .slide-list--ordered {
+      list-style: decimal !important;
+      list-style-type: decimal !important;
+      padding-left: 1.25em !important;
+      margin-left: 0 !important;
+      margin-top: 0 !important;
+      margin-bottom: 8px !important;
+      flex: 0 0 auto !important;
+      height: auto !important;
+      display: block !important;
     }
 
     .layout-two-cols li,
@@ -633,29 +643,23 @@
     .three-cols-col li,
     .layout-two-cols .slide-list-item,
     .layout-three-cols .slide-list-item {
-      list-style: none !important;
-      list-style-type: none !important;
-      padding-left: 0 !important;
+      padding-left: 0.2em !important;
       margin-left: 0 !important;
-      flex: 1 1 0% !important;
-      min-height: 0 !important;
-      height: 100% !important;
-      max-height: 100% !important;
-      display: flex !important;
-      flex-direction: column !important;
-      overflow: hidden !important;
+      margin-bottom: 6px !important;
+      flex: 0 0 auto !important;
+      height: auto !important;
+      display: list-item !important;
+      line-height: 1.6 !important;
     }
 
-    .layout-two-cols li::marker,
-    .layout-two-cols-header li::marker,
-    .layout-three-cols li::marker,
-    .layout-three-cols-header li::marker,
-    .two-cols-left li::marker,
-    .two-cols-right li::marker,
-    .three-cols-col li::marker,
-    .layout-two-cols .slide-list-item::marker,
-    .layout-three-cols .slide-list-item::marker {
-      content: none !important;
+    .layout-two-cols ul ul,
+    .layout-three-cols ul ul,
+    .three-cols-col ul ul {
+      list-style: circle !important;
+      list-style-type: circle !important;
+      padding-left: 1.25em !important;
+      margin-top: 4px !important;
+      margin-bottom: 4px !important;
     }
 
     /* 分栏内默认块级元素（标题、段落、引用等）：按内容自然包裹，严禁均分列高产生巨大空隙 */
@@ -697,10 +701,7 @@
     .three-cols-col .slide-block:has(.slide-list-media),
     .three-cols-col .slide-block.slide-block--media,
     .three-cols-col .slide-block.slide-block--video,
-    .three-cols-col .slide-block.slide-block--image,
-    .two-cols-left .slide-block:only-child,
-    .two-cols-right .slide-block:only-child,
-    .three-cols-col .slide-block:only-child {
+    .three-cols-col .slide-block.slide-block--image {
       flex: 1 1 0% !important;
       min-height: 0 !important;
       height: 100% !important;
@@ -3684,8 +3685,11 @@
 
             const taskMatch = line.match(/^(\s*)[-*+]\s+\[([ xX])\]\s+(.*)$/)
             if (taskMatch) {
+              const indent = taskMatch[1].length
+              const level = Math.floor(indent / 2)
               items.push({
                 type: 'task',
+                level,
                 checked: taskMatch[2].toLowerCase() === 'x',
                 text: taskMatch[3],
                 media: []
@@ -3695,8 +3699,11 @@
 
             const unorderedMatch = line.match(/^(\s*)[-*+]\s+(.*)$/)
             if (unorderedMatch) {
+              const indent = unorderedMatch[1].length
+              const level = Math.floor(indent / 2)
               items.push({
                 type: 'unordered',
+                level,
                 text: unorderedMatch[2],
                 media: []
               })
@@ -3706,8 +3713,11 @@
             const orderedMatch = line.match(/^(\s*)\d+\.\s+(.*)$/)
             if (orderedMatch) {
               if (items.length === 0) isOrdered = true
+              const indent = orderedMatch[1].length
+              const level = Math.floor(indent / 2)
               items.push({
                 type: 'ordered',
+                level,
                 text: orderedMatch[2],
                 media: []
               })
@@ -3823,6 +3833,38 @@
             return resultParts.join("\n")
           }
 
+          function formatLeadContent(lines) {
+            if (lines.length === 0) return ""
+            const resultParts = []
+            let pendingParaLines = []
+
+            const flushParagraph = (isFirst) => {
+              if (pendingParaLines.length > 0) {
+                const pText = pendingParaLines.join(" ")
+                const cls = isFirst ? "slide-list-item-title" : "slide-list-item-desc"
+                resultParts.push(`<p class="${cls}">${formatInlineMarkdown(pText)}</p>`)
+                pendingParaLines = []
+              }
+            }
+
+            let isFirst = true
+            for (const line of lines) {
+              const headingMatch = line.match(/^(#{1,6})\s+(.*)$/)
+              if (headingMatch) {
+                flushParagraph(isFirst)
+                const level = headingMatch[1].length
+                const headingText = headingMatch[2].trim()
+                resultParts.push(`<h${level} class="slide-list-item-title">${formatInlineMarkdown(headingText)}</h${level}>`)
+                isFirst = false
+              } else {
+                pendingParaLines.push(line)
+              }
+            }
+            flushParagraph(isFirst)
+
+            return resultParts.join("\n") + (resultParts.length > 0 ? "\n" : "")
+          }
+
           const listTag = isOrdered ? 'ol' : 'ul'
           const listClass = isOrdered ? 'slide-list slide-list--ordered' : 'slide-list slide-list--unordered'
           const itemsHtml = items.map(item => {
@@ -3830,16 +3872,20 @@
             const mediaHtml = (item.media && item.media.length > 0)
               ? `\n${item.media.join("\n")}`
               : ""
+            const level = item.level || 0
+            const nestedStyle = level > 0
+              ? ` style="margin-left:${(level * 1.25).toFixed(2)}em;${item.type === 'unordered' ? `list-style-type:${level % 2 === 1 ? 'circle' : 'square'} !important;` : ''}"`
+              : ""
+            const nestedClass = level > 0 ? " slide-list-item--nested" : ""
+            const clsAttr = `slide-list-item${nestedClass}`
             if (item.type === 'task') {
               const checkedAttr = item.checked ? ' checked=""' : ''
-              return `<li class="slide-list-item slide-task-item"><label><input type="checkbox" disabled=""${checkedAttr}/> <span>${formatted}</span></label>${mediaHtml}</li>`
+              return `<li class="${clsAttr} slide-task-item"${nestedStyle}><label><input type="checkbox" disabled=""${checkedAttr}/> <span>${formatted}</span></label>${mediaHtml}</li>`
             }
-            return `<li class="slide-list-item">${formatted}${mediaHtml}</li>`
+            return `<li class="${clsAttr}"${nestedStyle}>${formatted}${mediaHtml}</li>`
           }).join('\n')
 
-          const leadHtml = leadLines.length > 0
-            ? `<p>${formatInlineMarkdown(leadLines.join(' '))}</p>\n`
-            : ''
+          const leadHtml = formatLeadContent(leadLines)
 
           return `${leadHtml}<${listTag} class="${listClass}">\n${itemsHtml}\n</${listTag}>`
         }

@@ -1,6 +1,7 @@
 import type { ISlidevDocument } from "../types/slidev-protocol"
 import { escapeHtml } from "./markdown-renderer"
 import { generateCompleteSiYuanThemeCss } from "../compiler/theme-styles-generator"
+import { cleanCardListItemMarkdown, isListItemNode } from "../compiler/superblock-scanner"
 
 export interface IStandaloneHtmlOptions {
   title?: string
@@ -353,30 +354,49 @@ export function buildStandaloneHtml(
       cursor: pointer;
     }
 
-    /* 两栏与三栏（超级块分栏）布局：去除列表圆点标记与缩进 */
+    /* 两栏与三栏（超级块分栏）布局：紧凑自然行距，子列表保留圆点与层级缩进 */
     .layout-two-cols ul,
-    .layout-two-cols ol,
     .layout-two-cols-header ul,
-    .layout-two-cols-header ol,
     .layout-three-cols ul,
-    .layout-three-cols ol,
     .layout-three-cols-header ul,
-    .layout-three-cols-header ol,
     .two-cols-left ul,
-    .two-cols-left ol,
     .two-cols-right ul,
-    .two-cols-right ol,
     .three-cols-col ul,
-    .three-cols-col ol,
     .pdf-col ul,
-    .pdf-col ol,
-    .pdf-col .pdf-list,
     .layout-two-cols-grid .pdf-list,
-    .layout-three-cols-grid .pdf-list {
-      list-style: none !important;
-      list-style-type: none !important;
-      padding-left: 0 !important;
+    .layout-three-cols-grid .pdf-list,
+    .layout-two-cols-grid .pdf-list--unordered,
+    .layout-three-cols-grid .pdf-list--unordered {
+      list-style: disc !important;
+      list-style-type: disc !important;
+      padding-left: 1.25em !important;
       margin-left: 0 !important;
+      margin-top: 0 !important;
+      margin-bottom: 8px !important;
+      flex: 0 0 auto !important;
+      height: auto !important;
+      display: block !important;
+    }
+
+    .layout-two-cols ol,
+    .layout-two-cols-header ol,
+    .layout-three-cols ol,
+    .layout-three-cols-header ol,
+    .two-cols-left ol,
+    .two-cols-right ol,
+    .three-cols-col ol,
+    .pdf-col ol,
+    .layout-two-cols-grid .pdf-list--ordered,
+    .layout-three-cols-grid .pdf-list--ordered {
+      list-style: decimal !important;
+      list-style-type: decimal !important;
+      padding-left: 1.25em !important;
+      margin-left: 0 !important;
+      margin-top: 0 !important;
+      margin-bottom: 8px !important;
+      flex: 0 0 auto !important;
+      height: auto !important;
+      display: block !important;
     }
 
     .layout-two-cols li,
@@ -388,20 +408,24 @@ export function buildStandaloneHtml(
     .three-cols-col li,
     .pdf-col li,
     .pdf-col .pdf-list-item {
-      list-style: none !important;
-      list-style-type: none !important;
-      padding-left: 0 !important;
+      padding-left: 0.2em !important;
       margin-left: 0 !important;
+      margin-bottom: 6px !important;
+      flex: 0 0 auto !important;
+      height: auto !important;
+      display: list-item !important;
+      line-height: 1.6 !important;
     }
 
-    .layout-two-cols li::marker,
-    .layout-two-cols-header li::marker,
-    .layout-three-cols li::marker,
-    .layout-three-cols-header li::marker,
-    .two-cols-left li::marker,
-    .two-cols-right li::marker,
-    .pdf-col li::marker {
-      content: none !important;
+    .layout-two-cols ul ul,
+    .layout-three-cols ul ul,
+    .three-cols-col ul ul,
+    .pdf-col ul ul {
+      list-style: circle !important;
+      list-style-type: circle !important;
+      padding-left: 1.25em !important;
+      margin-top: 4px !important;
+      margin-bottom: 4px !important;
     }
 
     /* 列表项内嵌标题与说明排版 */
@@ -970,19 +994,29 @@ export function buildStandaloneHtml(
           div.setAttribute("data-autoplay", isAutoplay ? "true" : "false");
           div.innerHTML = videoHtml;
         }
-        else if (/^(\s*)([-*+]|\d+\.)\s+/m.test(md)) {
+        else if (/^(\s*)([-*+]|\d+\.)\s+/m.test(md) || (md.includes("\n") && /^(\s*)([-*+]|\d+\.)\s+/m.test(md.split("\n").slice(1).join("\n")))) {
           div.classList.add("pdf-list-item");
           const lines = md.split("\n");
           let isOrdered = false;
           const items = [];
+          const leadLines = [];
           for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             const tr = line.trim();
             if (!tr) continue;
             const um = line.match(/^(\s*)[-*+]\s+(.*)$/);
             const om = line.match(/^(\s*)\d+\.\s+(.*)$/);
-            if (um) { items.push({ text: um[2], media: [] }); continue; }
-            if (om) { if (items.length === 0) isOrdered = true; items.push({ text: om[2], media: [] }); continue; }
+            if (um) {
+              const indent = um[1].length;
+              items.push({ type: "unordered", level: Math.floor(indent / 2), text: um[2], media: [] });
+              continue;
+            }
+            if (om) {
+              if (items.length === 0) isOrdered = true;
+              const indent = om[1].length;
+              items.push({ type: "ordered", level: Math.floor(indent / 2), text: om[2], media: [] });
+              continue;
+            }
             if (items.length > 0) {
               const im = tr.match(/^!\[(.*?)\]\((.*?)\)$/);
               if (im) {
@@ -1017,16 +1051,52 @@ export function buildStandaloneHtml(
                 continue;
               }
               items[items.length - 1].text += "\n" + tr;
+            } else {
+              leadLines.push(tr);
             }
           }
+
+          let leadHtml = "";
+          if (leadLines.length > 0) {
+            const lParts = [];
+            let pL = [];
+            const flushLeadP = (isF) => {
+              if (pL.length > 0) {
+                let txt = pL.join(" ").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+                lParts.push('<p class="' + (isF ? "slide-list-item-title" : "slide-list-item-desc") + '">' + txt + '</p>');
+                pL = [];
+              }
+            };
+            let isF = true;
+            for (const l of leadLines) {
+              const hm = l.match(/^(#{1,6})\s+(.*)$/);
+              if (hm) {
+                flushLeadP(isF);
+                const lvl = hm[1].length;
+                let th = hm[2].trim().replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+                lParts.push('<h' + lvl + ' class="slide-list-item-title">' + th + '</h' + lvl + '>');
+                isF = false;
+              } else {
+                pL.push(l);
+              }
+            }
+            flushLeadP(isF);
+            leadHtml = lParts.join("\n") + "\n";
+          }
+
           const tag = isOrdered ? "ol" : "ul";
+          const listCls = isOrdered ? "pdf-list pdf-list--ordered" : "pdf-list pdf-list--unordered";
           const liHtml = items.map(it => {
             const med = it.media && it.media.length ? "\n" + it.media.join("\n") : "";
             const lines = (it.text || "").split("\n").map(l => l.trim()).filter(Boolean);
             const hasHeading = lines.some(l => /^#{1,6}\s+/.test(l));
+            const lvl = it.level || 0;
+            const nStyle = lvl > 0 ? ' style="margin-left:' + (lvl * 1.25).toFixed(2) + 'em;' + (it.type === 'unordered' ? 'list-style-type:' + (lvl % 2 === 1 ? 'circle' : 'square') + ' !important;' : '') + '"' : "";
+            const nClass = lvl > 0 ? " slide-list-item--nested" : "";
+            const clsAttr = nClass ? ' class="' + nClass.trim() + '"' : "";
             if (!hasHeading) {
               let h = it.text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
-              return "<li>" + h + med + "</li>";
+              return '<li' + clsAttr + nStyle + '>' + h + med + '</li>';
             }
             const parts = [];
             let pLines = [];
@@ -1041,17 +1111,17 @@ export function buildStandaloneHtml(
               const hm = l.match(/^(#{1,6})\s+(.*)$/);
               if (hm) {
                 flushP();
-                const lvl = hm[1].length;
+                const hl = hm[1].length;
                 let th = hm[2].trim().replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
-                parts.push('<h' + lvl + ' class="slide-list-item-title">' + th + '</h' + lvl + '>');
+                parts.push('<h' + hl + ' class="slide-list-item-title">' + th + '</h' + hl + '>');
               } else {
                 pLines.push(l);
               }
             }
             flushP();
-            return "<li>" + parts.join("\n") + med + "</li>";
+            return '<li' + clsAttr + nStyle + '>' + parts.join("\n") + med + '</li>';
           }).join("\n");
-          div.innerHTML = "<" + tag + " class=\"pdf-list\">\n" + liHtml + "\n</" + tag + ">";
+          div.innerHTML = leadHtml + "<" + tag + " class=\"" + listCls + "\">\n" + liHtml + "\n</" + tag + ">";
         }
         else {
           const imgMatch = md.match(/!\\[(.*?)\\]\\((.*?)\\)/);

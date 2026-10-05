@@ -248,27 +248,42 @@ html.dark *::-webkit-scrollbar-thumb:hover {
   border-radius: 8px !important;
 }
 
-/* 两栏与三栏（超级块分栏）布局：去除列表圆点标记与缩进 */
+/* 两栏与三栏（超级块分栏）布局：紧凑自然行距，子列表保留圆点与层级缩进 */
 .three-cols-header ul,
-.three-cols-header ol,
 .two-cols-header ul,
-.two-cols-header ol,
 .two-cols ul,
-.two-cols ol,
 .col-1 ul,
-.col-1 ol,
 .col-2 ul,
-.col-2 ol,
 .col-3 ul,
-.col-3 ol,
 .grid-cols-2 ul,
-.grid-cols-2 ol,
-.grid-cols-3 ul,
-.grid-cols-3 ol {
-  list-style: none !important;
-  list-style-type: none !important;
-  padding-left: 0 !important;
+.grid-cols-3 ul {
+  list-style: disc !important;
+  list-style-type: disc !important;
+  padding-left: 1.25em !important;
   margin-left: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 8px !important;
+  flex: 0 0 auto !important;
+  height: auto !important;
+  display: block !important;
+}
+.three-cols-header ol,
+.two-cols-header ol,
+.two-cols ol,
+.col-1 ol,
+.col-2 ol,
+.col-3 ol,
+.grid-cols-2 ol,
+.grid-cols-3 ol {
+  list-style: decimal !important;
+  list-style-type: decimal !important;
+  padding-left: 1.25em !important;
+  margin-left: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 8px !important;
+  flex: 0 0 auto !important;
+  height: auto !important;
+  display: block !important;
 }
 .three-cols-header li,
 .two-cols-header li,
@@ -278,18 +293,25 @@ html.dark *::-webkit-scrollbar-thumb:hover {
 .col-3 li,
 .grid-cols-2 li,
 .grid-cols-3 li {
-  list-style: none !important;
-  list-style-type: none !important;
-  padding-left: 0 !important;
+  padding-left: 0.2em !important;
   margin-left: 0 !important;
+  margin-bottom: 6px !important;
+  flex: 0 0 auto !important;
+  height: auto !important;
+  display: list-item !important;
+  line-height: 1.6 !important;
 }
-.three-cols-header li::marker,
-.two-cols-header li::marker,
-.two-cols li::marker,
-.col-1 li::marker,
-.col-2 li::marker,
-.col-3 li::marker {
-  content: none !important;
+.three-cols-header ul ul,
+.two-cols-header ul ul,
+.two-cols ul ul,
+.col-1 ul ul,
+.col-2 ul ul,
+.col-3 ul ul {
+  list-style: circle !important;
+  list-style-type: circle !important;
+  padding-left: 1.25em !important;
+  margin-top: 4px !important;
+  margin-bottom: 4px !important;
 }
 
 /* 列表项内嵌标题与说明排版 */

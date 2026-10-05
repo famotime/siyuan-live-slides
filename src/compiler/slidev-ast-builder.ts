@@ -1008,6 +1008,14 @@ export function buildSlidevDocument(
       const rightList = rem.filter(b => b.slot === "right" || b.slot === "col-2")
       const leftList = rem.filter(b => !rightList.includes(b))
 
+      // 对左右分栏首个列表项执行卡片式圆点清洗（保留下级嵌套子项圆点与缩进）
+      if (leftList.length === 1 && isListItemNode(leftList[0])) {
+        leftList[0].rawMarkdown = cleanCardListItemMarkdown(leftList[0].rawMarkdown)
+      }
+      if (rightList.length === 1 && isListItemNode(rightList[0])) {
+        rightList[0].rawMarkdown = cleanCardListItemMarkdown(rightList[0].rawMarkdown)
+      }
+
       const headerContent = renderBlocks(headerList)
       const leftContent = renderColList(leftList)
       const rightContent = renderColList(rightList)
@@ -1044,6 +1052,17 @@ export function buildSlidevDocument(
         if (!b.slot) b.slot = "col-3"
       }
 
+      // 对三栏各列首个列表项执行卡片式圆点清洗（保留下级嵌套子项圆点与缩进）
+      if (col1List.length === 1 && isListItemNode(col1List[0])) {
+        col1List[0].rawMarkdown = cleanCardListItemMarkdown(col1List[0].rawMarkdown)
+      }
+      if (col2List.length === 1 && isListItemNode(col2List[0])) {
+        col2List[0].rawMarkdown = cleanCardListItemMarkdown(col2List[0].rawMarkdown)
+      }
+      if (col3List.length === 1 && isListItemNode(col3List[0])) {
+        col3List[0].rawMarkdown = cleanCardListItemMarkdown(col3List[0].rawMarkdown)
+      }
+
       // 若 rem 原本只有 1 个单块且被成功解构为 3 个虚拟块，更新 page.blocks
       if (rem.length === 1 && (col2List.length > 0 || col3List.length > 0)) {
         const origIdx = page.blocks.findIndex(b => b.id === rem[0].id)
@@ -1064,6 +1083,12 @@ export function buildSlidevDocument(
     } else if (layout === "two-cols") {
       const leftBlocks = contentBlocks.filter(b => b.slot === "left")
       const rightBlocks = contentBlocks.filter(b => b.slot === "right")
+      if (leftBlocks.length === 1 && isListItemNode(leftBlocks[0])) {
+        leftBlocks[0].rawMarkdown = cleanCardListItemMarkdown(leftBlocks[0].rawMarkdown)
+      }
+      if (rightBlocks.length === 1 && isListItemNode(rightBlocks[0])) {
+        rightBlocks[0].rawMarkdown = cleanCardListItemMarkdown(rightBlocks[0].rawMarkdown)
+      }
       const leftContent = renderBlocks(leftBlocks.length > 0 ? leftBlocks : contentBlocks.filter(b => b.slot !== "right"))
       const rightContent = renderBlocks(rightBlocks)
 

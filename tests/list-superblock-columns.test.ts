@@ -998,7 +998,7 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       expect(html).not.toContain("####")
     })
 
-    it("单文件 HTML 导出中应包含分栏布局去除列表圆点与列表标题排版样式", async () => {
+    it("单文件 HTML 导出中应包含分栏布局紧凑自然行距与子列表保留圆点标记样式", async () => {
       const { buildStandaloneHtml } = await import("../src/export/single-html-exporter")
       const testDoc = {
         docId: "doc-no-bullets-test",
@@ -1024,9 +1024,74 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       const html = await buildStandaloneHtml(testDoc)
       expect(html).toContain(".layout-three-cols ul")
       expect(html).toContain(".three-cols-col ul")
-      expect(html).toContain("list-style: none !important")
-      expect(html).toContain("padding-left: 0 !important")
+      expect(html).toContain("list-style: disc !important")
+      expect(html).toContain("margin-bottom: 6px !important")
       expect(html).toContain(".slide-list-item-title")
+    })
+
+    it("三栏表头排版中应正确剥离各栏首项圆点并保留其下子列表圆点及紧凑行距", async () => {
+      const { buildSlidevDocument } = await import("../src/compiler/slidev-ast-builder")
+      const { renderSlideBlocksToHtml } = await import("../src/export/markdown-renderer")
+
+      const mockBlocks: any[] = [
+        {
+          id: "doc-header",
+          type: "h",
+          content: "表头说明",
+          markdown: "# 表头说明",
+          subType: "h1",
+          ial: { "custom-slidev-slot": "header" },
+        },
+        {
+          id: "col-1",
+          type: "i",
+          content: "* ### 栏目一\n  * 子项 1.1\n  * 子项 1.2",
+          markdown: "* ### 栏目一\n  * 子项 1.1\n  * 子项 1.2",
+          ial: { "custom-slidev-slot": "col-1" },
+        },
+        {
+          id: "col-2",
+          type: "i",
+          content: "* 普通文字标题二\n  * 子项 2.1",
+          markdown: "* 普通文字标题二\n  * 子项 2.1",
+          ial: { "custom-slidev-slot": "col-2" },
+        },
+        {
+          id: "col-3",
+          type: "i",
+          content: "* ### 栏目三\n  * 子项 3.1",
+          markdown: "* ### 栏目三\n  * 子项 3.1",
+          ial: { "custom-slidev-slot": "col-3" },
+        },
+      ]
+
+      const doc = buildSlidevDocument(
+        "doc-three-cols-test",
+        { "custom-slidev-layout": "three-cols-header" },
+        mockBlocks,
+      )
+      expect(doc.slides.length).toBeGreaterThan(0)
+      const slide = doc.slides[0]
+      expect(slide.frontmatter.layout).toBe("three-cols-header")
+
+      // 验证第一栏首项剥离了列表圆点标记成为标题
+      const col1Block = slide.blocks.find(b => b.slot === "col-1")
+      expect(col1Block).toBeDefined()
+      expect(col1Block?.rawMarkdown).toContain("### 栏目一")
+      expect(col1Block?.rawMarkdown).not.toMatch(/^\s*[*+-]\s+### 栏目一/)
+
+      // 验证第二栏首项剥离了列表标记
+      const col2Block = slide.blocks.find(b => b.slot === "col-2")
+      expect(col2Block).toBeDefined()
+      expect(col2Block?.rawMarkdown).toContain("普通文字标题二")
+      expect(col2Block?.rawMarkdown).not.toMatch(/^\s*[*+-]\s+普通文字标题二/)
+
+      // 渲染为 HTML 并验证子项保留圆点 (disc / 嵌套 circle)
+      const renderedHtml = renderSlideBlocksToHtml(slide)
+      expect(renderedHtml).toContain("slide-list-item-title")
+      expect(renderedHtml).toContain("子项 1.1")
+      expect(renderedHtml).toContain("子项 2.1")
+      expect(renderedHtml).toContain("子项 3.1")
     })
   })
 })
