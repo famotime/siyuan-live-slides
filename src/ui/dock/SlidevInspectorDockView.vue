@@ -470,7 +470,18 @@ const videoControls = computed(() => activeBlockAttrs.value[ATTR_VIDEO_CONTROLS]
 
 async function onToggleVideoAutoplay() {
   const nextVal = videoAutoplay.value ? 'false' : 'true'
-  await saveAttr(ATTR_VIDEO_AUTOPLAY, nextVal)
+  if (nextVal === 'true') {
+    // 浏览器安全策略：未静音的视频绝对禁止无手势自动播放，故联动开启静音播放并同步持久化
+    await saveAttrs({
+      [ATTR_VIDEO_AUTOPLAY]: 'true',
+      [ATTR_VIDEO_MUTED]: 'true',
+    })
+    activeBlockAttrs.value[ATTR_VIDEO_AUTOPLAY] = 'true'
+    activeBlockAttrs.value[ATTR_VIDEO_MUTED] = 'true'
+  } else {
+    await saveAttr(ATTR_VIDEO_AUTOPLAY, 'false')
+    activeBlockAttrs.value[ATTR_VIDEO_AUTOPLAY] = 'false'
+  }
 }
 
 async function onToggleVideoLoop() {

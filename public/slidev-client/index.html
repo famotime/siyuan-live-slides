@@ -21,6 +21,183 @@
     }
 
     /* =========================================
+       SiYuan Note Built-in Font & Background Styles
+       ========================================= */
+    :root,
+    html:not(.dark),
+    [data-theme="light"],
+    [data-theme-mode="light"] {
+      /* 思源基础卡片与主题色 (浅色模式 daylight) */
+      --b3-card-error-color: #790600;
+      --b3-card-error-background: #f5d1cf;
+      --b3-card-warning-color: #8a4f00;
+      --b3-card-warning-background: #ffe8c8;
+      --b3-card-info-color: #005599;
+      --b3-card-info-background: #d6eaf9;
+      --b3-card-success-color: #006b04;
+      --b3-card-success-background: #d7eed8;
+
+      --b3-theme-primary: #3575f0;
+      --b3-theme-secondary: #ff9200;
+      --b3-theme-error: #d23f31;
+      --b3-theme-background: #ffffff;
+      --b3-theme-on-background: #222222;
+      --b3-theme-on-surface: #5f6368;
+      --b3-theme-surface-lighter: #e0e0e0;
+
+      /* 13 种内置文字颜色 */
+      --b3-font-color1: var(--b3-card-error-color);
+      --b3-font-color2: var(--b3-card-warning-color);
+      --b3-font-color3: var(--b3-card-info-color);
+      --b3-font-color4: var(--b3-card-success-color);
+      --b3-font-color5: var(--b3-theme-on-surface);
+      --b3-font-color6: var(--b3-theme-primary);
+      --b3-font-color7: var(--b3-theme-secondary);
+      --b3-font-color8: var(--b3-theme-error);
+      --b3-font-color9: #a40074;
+      --b3-font-color10: #007080;
+      --b3-font-color11: #006e2a;
+      --b3-font-color12: #6b5a00;
+      --b3-font-color13: var(--b3-theme-background);
+
+      /* 13 种内置背景颜色 */
+      --b3-font-background1: var(--b3-card-error-background);
+      --b3-font-background2: var(--b3-card-warning-background);
+      --b3-font-background3: var(--b3-card-info-background);
+      --b3-font-background4: var(--b3-card-success-background);
+      --b3-font-background5: #e2e3e4;
+      --b3-font-background6: #acd0fc;
+      --b3-font-background7: #fddaab;
+      --b3-font-background8: #ffb0a9;
+      --b3-font-background9: #fdbfff;
+      --b3-font-background10: #b1ffff;
+      --b3-font-background11: #affad1;
+      --b3-font-background12: #fff88f;
+      --b3-font-background13: var(--b3-theme-on-background);
+    }
+
+    html.dark,
+    [data-theme="dark"],
+    [data-theme-mode="dark"],
+    .theme-dark,
+    .dark {
+      /* 思源基础卡片与主题色 (深色模式 midnight) */
+      --b3-card-error-color: rgb(243, 153, 147);
+      --b3-card-error-background: #442724;
+      --b3-card-warning-color: rgb(255, 213, 153);
+      --b3-card-warning-background: #554636;
+      --b3-card-info-color: rgb(166, 213, 250);
+      --b3-card-info-background: #28405c;
+      --b3-card-success-color: rgb(183, 223, 185);
+      --b3-card-success-background: #425347;
+
+      --b3-theme-primary: #3575f0;
+      --b3-theme-secondary: #ff9200;
+      --b3-theme-error: #d23f31;
+      --b3-theme-background: #1e1e1e;
+      --b3-theme-on-background: #c8ccd6;
+      --b3-theme-on-surface: #8b949e;
+      --b3-theme-surface-lighter: #282a2e;
+
+      /* 13 种内置文字颜色 */
+      --b3-font-color1: var(--b3-card-error-color);
+      --b3-font-color2: var(--b3-card-warning-color);
+      --b3-font-color3: var(--b3-card-info-color);
+      --b3-font-color4: var(--b3-card-success-color);
+      --b3-font-color5: var(--b3-theme-on-surface);
+      --b3-font-color6: var(--b3-theme-primary);
+      --b3-font-color7: var(--b3-theme-secondary);
+      --b3-font-color8: var(--b3-theme-error);
+      --b3-font-color9: #f47c9c;
+      --b3-font-color10: #4dd0e1;
+      --b3-font-color11: #10df54;
+      --b3-font-color12: #ecd424;
+      --b3-font-color13: var(--b3-theme-background);
+
+      /* 13 种内置背景颜色 */
+      --b3-font-background1: var(--b3-card-error-background);
+      --b3-font-background2: var(--b3-card-warning-background);
+      --b3-font-background3: var(--b3-card-info-background);
+      --b3-font-background4: var(--b3-card-success-background);
+      --b3-font-background5: #3a3f42;
+      --b3-font-background6: #031840;
+      --b3-font-background7: #593905;
+      --b3-font-background8: #3a0c09;
+      --b3-font-background9: #4d1b40;
+      --b3-font-background10: #1a5459;
+      --b3-font-background11: #305415;
+      --b3-font-background12: #4a4712;
+      --b3-font-background13: var(--b3-theme-on-background);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]):not([data-theme-mode="light"]):not(.light) {
+        --b3-card-error-color: rgb(243, 153, 147);
+        --b3-card-error-background: #442724;
+        --b3-card-warning-color: rgb(255, 213, 153);
+        --b3-card-warning-background: #554636;
+        --b3-card-info-color: rgb(166, 213, 250);
+        --b3-card-info-background: #28405c;
+        --b3-card-success-color: rgb(183, 223, 185);
+        --b3-card-success-background: #425347;
+
+        --b3-theme-primary: #3575f0;
+        --b3-theme-secondary: #ff9200;
+        --b3-theme-error: #d23f31;
+        --b3-theme-background: #1e1e1e;
+        --b3-theme-on-background: #c8ccd6;
+        --b3-theme-on-surface: #8b949e;
+        --b3-theme-surface-lighter: #282a2e;
+
+        --b3-font-color1: var(--b3-card-error-color);
+        --b3-font-color2: var(--b3-card-warning-color);
+        --b3-font-color3: var(--b3-card-info-color);
+        --b3-font-color4: var(--b3-card-success-color);
+        --b3-font-color5: var(--b3-theme-on-surface);
+        --b3-font-color6: var(--b3-theme-primary);
+        --b3-font-color7: var(--b3-theme-secondary);
+        --b3-font-color8: var(--b3-theme-error);
+        --b3-font-color9: #f47c9c;
+        --b3-font-color10: #4dd0e1;
+        --b3-font-color11: #10df54;
+        --b3-font-color12: #ecd424;
+        --b3-font-color13: var(--b3-theme-background);
+
+        --b3-font-background1: var(--b3-card-error-background);
+        --b3-font-background2: var(--b3-card-warning-background);
+        --b3-font-background3: var(--b3-card-info-background);
+        --b3-font-background4: var(--b3-card-success-background);
+        --b3-font-background5: #3a3f42;
+        --b3-font-background6: #031840;
+        --b3-font-background7: #593905;
+        --b3-font-background8: #3a0c09;
+        --b3-font-background9: #4d1b40;
+        --b3-font-background10: #1a5459;
+        --b3-font-background11: #305415;
+        --b3-font-background12: #4a4712;
+        --b3-font-background13: var(--b3-theme-on-background);
+      }
+    }
+
+    /* 演示块级样式排版增强 (带背景色时赋予呼吸内边距与舒适圆角) */
+    .slide-styled-block {
+      border-radius: 6px;
+      padding: 8px 14px;
+      box-sizing: border-box;
+      margin: 6px 0;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    /* 行内带背景色文本的精美圆角与微边距 */
+    span[style*="background-color"],
+    span[style*="background:"] {
+      border-radius: 3px;
+      padding: 1px 5px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+
+    /* =========================================
        Slidev Theme Design Systems (三大官方主题范式)
        ========================================= */
 
@@ -415,7 +592,7 @@
     }
 
     /* ========================================================
-       两栏与三栏（超级块分栏）布局：去除列表圆点标记与缩进
+       两栏与三栏（超级块分栏）布局：去除列表圆点标记与缩进，消除滚动条并自适应满高
        ======================================================== */
     .layout-two-cols ul,
     .layout-two-cols ol,
@@ -437,6 +614,14 @@
       list-style-type: none !important;
       padding-left: 0 !important;
       margin-left: 0 !important;
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: hidden !important;
+      overflow-y: hidden !important;
     }
 
     .layout-two-cols li,
@@ -452,6 +637,13 @@
       list-style-type: none !important;
       padding-left: 0 !important;
       margin-left: 0 !important;
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: hidden !important;
     }
 
     .layout-two-cols li::marker,
@@ -464,6 +656,127 @@
     .layout-two-cols .slide-list-item::marker,
     .layout-three-cols .slide-list-item::marker {
       content: none !important;
+    }
+
+    /* 分栏内默认块级元素（标题、段落、引用等）：按内容自然包裹，严禁均分列高产生巨大空隙 */
+    .two-cols-left .slide-block,
+    .two-cols-right .slide-block,
+    .three-cols-col .slide-block {
+      flex: 0 0 auto !important;
+      min-height: auto !important;
+      height: auto !important;
+      max-height: none !important;
+      width: 100% !important;
+      display: block !important;
+      overflow: visible !important;
+      margin-bottom: 8px !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 分栏内包含媒体的块、媒体挂件或唯一子块：弹性吃满列内全部剩余垂直高度 */
+    .two-cols-left .slide-block:has(video),
+    .two-cols-left .slide-block:has(img),
+    .two-cols-left .slide-block:has(.slide-media-container),
+    .two-cols-left .slide-block:has(.slide-video-container),
+    .two-cols-left .slide-block:has(.slide-list-media),
+    .two-cols-left .slide-block.slide-block--media,
+    .two-cols-left .slide-block.slide-block--video,
+    .two-cols-left .slide-block.slide-block--image,
+    .two-cols-right .slide-block:has(video),
+    .two-cols-right .slide-block:has(img),
+    .two-cols-right .slide-block:has(.slide-media-container),
+    .two-cols-right .slide-block:has(.slide-video-container),
+    .two-cols-right .slide-block:has(.slide-list-media),
+    .two-cols-right .slide-block.slide-block--media,
+    .two-cols-right .slide-block.slide-block--video,
+    .two-cols-right .slide-block.slide-block--image,
+    .three-cols-col .slide-block:has(video),
+    .three-cols-col .slide-block:has(img),
+    .three-cols-col .slide-block:has(.slide-media-container),
+    .three-cols-col .slide-block:has(.slide-video-container),
+    .three-cols-col .slide-block:has(.slide-list-media),
+    .three-cols-col .slide-block.slide-block--media,
+    .three-cols-col .slide-block.slide-block--video,
+    .three-cols-col .slide-block.slide-block--image,
+    .two-cols-left .slide-block:only-child,
+    .two-cols-right .slide-block:only-child,
+    .three-cols-col .slide-block:only-child {
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      overflow: hidden !important;
+      margin-bottom: 0 !important;
+    }
+
+    /* 列内列表项的标题与段落文字：固定高度，不压缩 */
+    .two-cols-left .slide-list-item-title,
+    .two-cols-right .slide-list-item-title,
+    .three-cols-col .slide-list-item-title,
+    .two-cols-left h1, .two-cols-left h2, .two-cols-left h3, .two-cols-left h4, .two-cols-left h5, .two-cols-left h6,
+    .two-cols-right h1, .two-cols-right h2, .two-cols-right h3, .two-cols-right h4, .two-cols-right h5, .two-cols-right h6,
+    .three-cols-col h1, .three-cols-col h2, .three-cols-col h3, .three-cols-col h4, .three-cols-col h5, .three-cols-col h6,
+    .three-cols-col .slide-list-item-desc {
+      flex: 0 0 auto !important;
+      margin-top: 0 !important;
+      margin-bottom: 6px !important;
+    }
+
+    /* 列内媒体容器：填满标题下方所有剩余垂直空间，居中对齐且无溢出 */
+    .two-cols-left .slide-list-media,
+    .two-cols-right .slide-list-media,
+    .three-cols-col .slide-list-media,
+    .two-cols-left .slide-video-container,
+    .two-cols-right .slide-video-container,
+    .three-cols-col .slide-video-container,
+    .two-cols-left .slide-media-container,
+    .two-cols-right .slide-media-container,
+    .three-cols-col .slide-media-container {
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      min-width: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      max-width: 100% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      overflow: hidden !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 列内多媒体播放器：以 contain 模式等比缩放完整可见，绝对不超高超宽、不产生遮挡与滚动条 */
+    .two-cols-left video,
+    .two-cols-right video,
+    .three-cols-col video,
+    .two-cols-left img,
+    .two-cols-right img,
+    .three-cols-col img,
+    .two-cols-left .slide-video-player,
+    .two-cols-right .slide-video-player,
+    .three-cols-col .slide-video-player,
+    .layout-three-cols .slide-video-player,
+    .layout-two-cols .slide-video-player {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      object-fit: contain !important;
+      display: block !important;
+      margin: auto !important;
+      border-radius: 6px !important;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.14) !important;
+      background: transparent !important;
+      outline: none !important;
     }
 
     .slide-content-wrapper.layout-image-right,
@@ -1016,14 +1329,16 @@
     .slide-block video {
       max-width: 100% !important;
       max-height: 100% !important;
-      width: auto !important;
-      height: auto !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
       object-fit: contain !important;
       display: block !important;
       margin: auto !important;
       border-radius: 8px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
-      background: #000;
+      background: transparent;
       outline: none;
     }
 
@@ -1031,11 +1346,14 @@
     .slide-list-media {
       display: flex !important;
       align-items: center !important;
-      justify-content: flex-start !important;
+      justify-content: center !important;
       width: 100% !important;
       max-width: 100% !important;
-      margin-top: 8px !important;
-      margin-bottom: 6px !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      flex: 1 1 0% !important;
+      margin-top: 4px !important;
+      margin-bottom: 4px !important;
       min-height: 0 !important;
       overflow: hidden !important;
       box-sizing: border-box !important;
@@ -1046,30 +1364,37 @@
     .slide-list-media .list-item-gif,
     .slide-list-media .slide-video-player {
       max-width: 100% !important;
-      max-height: min(340px, 42vh) !important;
-      width: auto !important;
-      height: auto !important;
+      max-height: 100% !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
       object-fit: contain !important;
       border-radius: 6px !important;
       box-shadow: 0 3px 12px rgba(0, 0, 0, 0.14) !important;
       display: block !important;
+      margin: auto !important;
     }
 
-    /* 含有媒体的列表容器：安全弹性收缩与平滑滚动，防止超长列表溢出幻灯片 */
+    /* 含有媒体的列表容器：安全弹性收缩，绝对禁止滚动条，防止溢出 */
     .slide-block:has(.slide-list-media) {
       flex: 1 1 auto;
       min-height: 0;
+      height: 100%;
+      max-height: 100%;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow: hidden !important;
     }
     .slide-block:has(.slide-list-media) .slide-list,
     .slide-block:has(.slide-list-media) ul,
     .slide-block:has(.slide-list-media) ol {
       flex: 1 1 auto;
       min-height: 0;
+      height: 100%;
       max-height: 100%;
-      overflow-y: auto;
+      overflow: hidden !important;
+      overflow-y: hidden !important;
     }
 
     /* 分栏布局（两栏、三栏）中的图片与视频：自适应填充列空间，保持比例不超出 */
@@ -1090,9 +1415,11 @@
     .three-cols-col .slide-video-player,
     .layout-three-cols .slide-video-player {
       max-width: 100% !important;
-      max-height: min(100%, 340px, 44vh) !important;
-      width: auto !important;
-      height: auto !important;
+      max-height: 100% !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
       object-fit: contain !important;
     }
 
@@ -2350,32 +2677,85 @@
 
     function syncAutoplayVideos() {
       nextTick(() => {
-        const videoEls = document.querySelectorAll('.slide-viewport video, .slide-content-wrapper video')
+        const videoEls = document.querySelectorAll('.slide-viewport video, .slide-content-wrapper video, .layout-three-cols video, .layout-two-cols video')
         videoEls.forEach(v => {
-          const container = v.closest('.slide-video-container')
-          const shouldAutoplay = v.hasAttribute('autoplay') || container?.getAttribute('data-autoplay') === 'true'
-          const shouldMute = v.hasAttribute('muted') || container?.getAttribute('data-muted') === 'true' || shouldAutoplay
-          const shouldLoop = v.hasAttribute('loop')
+          const autoPlayContainer = v.closest('[data-autoplay]')
+          const mutedContainer = v.closest('[data-muted]')
+          const loopContainer = v.closest('[data-loop]')
+
+          const shouldAutoplay = v.hasAttribute('autoplay') ||
+            autoPlayContainer?.getAttribute('data-autoplay') === 'true' ||
+            v.getAttribute('data-autoplay') === 'true'
+          const shouldMute = v.hasAttribute('muted') ||
+            mutedContainer?.getAttribute('data-muted') === 'true' ||
+            v.getAttribute('data-muted') === 'true' ||
+            shouldAutoplay
+          const shouldLoop = v.hasAttribute('loop') ||
+            loopContainer?.getAttribute('data-loop') === 'true' ||
+            v.getAttribute('data-loop') === 'true'
+          const hideControls = v.closest('[data-controls="false"]') !== null
+
+          if (hideControls) {
+            v.removeAttribute('controls')
+          }
 
           if (shouldLoop) {
             v.loop = true
+            v.setAttribute('loop', '')
+            if (!v.__slidevLoopBound) {
+              v.__slidevLoopBound = true
+              v.addEventListener('ended', () => {
+                try {
+                  v.currentTime = 0
+                  v.play().catch(() => {})
+                } catch (e) {}
+              })
+            }
           }
+
           if (shouldMute) {
             v.muted = true
             v.defaultMuted = true
+            v.setAttribute('muted', '')
           }
+          v.playsInline = true
+          v.setAttribute('playsinline', '')
+
           if (shouldAutoplay) {
             v.muted = true
             v.defaultMuted = true
+            v.setAttribute('muted', '')
             v.playsInline = true
-            const playPromise = v.play()
-            if (playPromise !== undefined) {
-              playPromise.catch(() => {
-                // 防御性静音降级再试，确保无用户手势限制下亦能播放
-                v.muted = true
-                v.defaultMuted = true
-                v.play().catch(() => {})
-              })
+            v.setAttribute('playsinline', '')
+
+            const doPlay = () => {
+              if (!v.paused) return
+              v.muted = true
+              v.defaultMuted = true
+              const p = v.play()
+              if (p !== undefined) {
+                p.catch(() => {
+                  v.muted = true
+                  v.defaultMuted = true
+                  v.setAttribute('muted', '')
+                  setTimeout(() => {
+                    if (v.paused) {
+                      v.play().catch(() => {})
+                    }
+                  }, 150)
+                })
+              }
+            }
+
+            // 立即尝试触发
+            doPlay()
+
+            // 监听媒体异步加载就绪事件，保证网络延迟加载完毕后立即触发自动播放
+            if (!v.__slidevAutoplayBound) {
+              v.__slidevAutoplayBound = true
+              v.addEventListener('loadedmetadata', doPlay)
+              v.addEventListener('loadeddata', doPlay)
+              v.addEventListener('canplay', doPlay)
             }
           }
         })
@@ -2392,9 +2772,12 @@
       setup(props) {
         onMounted(() => {
           syncAutoplayVideos()
+          setTimeout(syncAutoplayVideos, 80)
+          setTimeout(syncAutoplayVideos, 250)
         })
         onUpdated(() => {
           syncAutoplayVideos()
+          setTimeout(syncAutoplayVideos, 80)
         })
 
         const rawContent = computed(() => {
@@ -3032,30 +3415,62 @@
           return "v-click-visible"
         }
 
-        // 获取块的微动效类
-        function getBlockMotionClass(block) {
-          if (!block || !block.motion || !block.motion.preset || block.motion.preset === "none") {
-            return ""
+        // 解析内联 CSS 字符串为样式键值对对象
+        function parseCssStyleString(styleStr) {
+          if (!styleStr || typeof styleStr !== "string") return {}
+          const res = {}
+          const rules = styleStr.split(";")
+          for (const rule of rules) {
+            const colonIdx = rule.indexOf(":")
+            if (colonIdx > 0) {
+              const key = rule.slice(0, colonIdx).trim()
+              const val = rule.slice(colonIdx + 1).trim()
+              if (key && val) {
+                res[key] = val
+              }
+            }
           }
-          // 若设置了 v-click 逐步呈现，仅在元素可见时触发动效
-          if (block.clicks) {
-            const isVisible = getBlockClickClass(block) === "v-click-visible"
-            if (!isVisible) return ""
-          }
-          const preset = String(block.motion.preset).toLowerCase().trim()
-          return "slidev-motion-" + preset
+          return res
         }
 
-        // 获取块的微动效内联样式（时长与延迟 CSS 变量）
+        // 获取块的微动效类及排版增强类
+        function getBlockMotionClass(block) {
+          const classes = []
+          const rawStyle = block?.attributes?.style || block?.ial?.style || ""
+          if (rawStyle) {
+            classes.push("slide-styled-block")
+          }
+
+          if (block && block.motion && block.motion.preset && block.motion.preset !== "none") {
+            // 若设置了 v-click 逐步呈现，仅在元素可见时触发动效
+            if (!block.clicks || getBlockClickClass(block) === "v-click-visible") {
+              const preset = String(block.motion.preset).toLowerCase().trim()
+              classes.push("slidev-motion-" + preset)
+            }
+          }
+
+          return classes.join(" ")
+        }
+
+        // 获取块的微动效内联样式与块级自定义样式
         function getBlockMotionStyle(block) {
-          if (!block || !block.motion) return {}
           const style = {}
-          if (typeof block.motion.duration === "number" && block.motion.duration > 0) {
-            style["--motion-duration"] = block.motion.duration + "ms"
+          if (!block) return style
+
+          const rawStyle = block.attributes?.style || block.ial?.style || ""
+          if (rawStyle) {
+            Object.assign(style, parseCssStyleString(rawStyle))
           }
-          if (typeof block.motion.delay === "number" && block.motion.delay > 0) {
-            style["--motion-delay"] = block.motion.delay + "ms"
+
+          if (block.motion) {
+            if (typeof block.motion.duration === "number" && block.motion.duration > 0) {
+              style["--motion-duration"] = block.motion.duration + "ms"
+            }
+            if (typeof block.motion.delay === "number" && block.motion.delay > 0) {
+              style["--motion-delay"] = block.motion.delay + "ms"
+            }
           }
+
           return style
         }
 
@@ -3881,13 +4296,26 @@
 
           switch (data.action) {
             case "UPDATE_SLIDES":
+              if (data.payload.customThemeCss) {
+                let styleTag = document.getElementById("siyuan-custom-theme-styles")
+                if (!styleTag) {
+                  styleTag = document.createElement("style")
+                  styleTag.id = "siyuan-custom-theme-styles"
+                  document.head.appendChild(styleTag)
+                }
+                styleTag.textContent = data.payload.customThemeCss
+              }
               if (data.payload.slides) {
                 slides.value = data.payload.slides
                 if (currentPageIndex.value > slides.value.length) {
                   currentPageIndex.value = Math.max(1, slides.value.length)
                 }
                 broadcastSync()
-                syncAutoplayVideos()
+                nextTick(() => {
+                  syncAutoplayVideos()
+                  setTimeout(syncAutoplayVideos, 120)
+                  setTimeout(syncAutoplayVideos, 350)
+                })
               }
               if (data.payload.config) {
                 config.value = { ...config.value, ...data.payload.config }
@@ -3900,7 +4328,11 @@
               if (typeof data.payload.pageIndex === "number") {
                 currentPageIndex.value = Math.max(1, Math.min(data.payload.pageIndex, totalPages.value || 1))
                 currentStep.value = 0
-                syncAutoplayVideos()
+                nextTick(() => {
+                  syncAutoplayVideos()
+                  setTimeout(syncAutoplayVideos, 120)
+                  setTimeout(syncAutoplayVideos, 350)
+                })
               }
               break
 

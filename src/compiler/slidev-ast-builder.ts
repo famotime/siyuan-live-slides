@@ -173,21 +173,39 @@ export function getMotionDirectives(motion?: ISlidevMotionConfig): {
 }
 
 /**
- * 包装带有 v-click 与 custom-slidev-motion 的块
+ * 包装带有 v-click、custom-slidev-motion 以及块级 style 样式的块
  */
 export function wrapElementDirectives(
   markdown: string,
   clicks?: string,
   motion?: ISlidevMotionConfig,
+  style?: string,
 ): string {
   const hasClicks = clicks !== undefined && clicks !== null && clicks.trim() !== ""
   const motionConfig = getMotionDirectives(motion)
+  const cleanStyle = style?.trim()
+  const hasStyle = cleanStyle !== undefined && cleanStyle !== ""
+
+  const styleAttr = hasStyle ? ` style="${cleanStyle.replace(/"/g, "&quot;")}" class="slide-styled-block"` : ""
 
   if (!hasClicks && !motionConfig) {
+    if (hasStyle) {
+      return `<div${styleAttr}>\n\n${markdown}\n\n</div>`
+    }
     return markdown
   }
 
   if (hasClicks && !motionConfig) {
+    if (hasStyle) {
+      const trimmedClicks = clicks!.trim()
+      let clickAttr = "v-click"
+      if (trimmedClicks === "hide") {
+        clickAttr = "v-click.hide"
+      } else if (trimmedClicks !== "" && trimmedClicks !== "+1") {
+        clickAttr = `v-click="${trimmedClicks}"`
+      }
+      return `<div ${clickAttr}${styleAttr}>\n\n${markdown}\n\n</div>`
+    }
     return wrapVClickDirective(markdown, clicks)
   }
 
@@ -197,7 +215,7 @@ export function wrapElementDirectives(
   const motionAttrs = `v-motion :initial="${initialStr}" :enter="${enterStr}"`
 
   if (!hasClicks) {
-    return `<div ${motionAttrs}>\n\n${markdown}\n\n</div>`
+    return `<div ${motionAttrs}${styleAttr}>\n\n${markdown}\n\n</div>`
   }
 
   // 同时具备 clicks 与 motion：生成复合容器
@@ -209,7 +227,7 @@ export function wrapElementDirectives(
     clickAttr = `v-click="${trimmedClicks}"`
   }
 
-  return `<div ${clickAttr} ${motionAttrs}>\n\n${markdown}\n\n</div>`
+  return `<div ${clickAttr} ${motionAttrs}${styleAttr}>\n\n${markdown}\n\n</div>`
 }
 
 /**
@@ -955,13 +973,13 @@ export function buildSlidevDocument(
     // 组织多栏插槽或常规内容（排除纯分界占位块）
     const contentBlocks = page.blocks.filter(b => b.slot !== "slot-divider-right")
     const renderBlocks = (list: ISlidevBlockItem[]) =>
-      list.map(b => wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion)).join("\n\n")
+      list.map(b => wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion, b.attributes?.style)).join("\n\n")
 
     const renderColList = (list: ISlidevBlockItem[]) => {
       if (list.length === 0) return ""
       if (list.length === 1 && isListItemNode(list[0])) {
         const cleaned = cleanCardListItemMarkdown(list[0].rawMarkdown)
-        return wrapElementDirectives(cleaned, list[0].clicks, list[0].motion)
+        return wrapElementDirectives(cleaned, list[0].clicks, list[0].motion, list[0].attributes?.style)
       }
       return renderBlocks(list)
     }
@@ -1050,7 +1068,7 @@ export function buildSlidevDocument(
     } else {
       // 常规单栏布局
       for (const block of contentBlocks) {
-        parts.push(wrapElementDirectives(block.rawMarkdown, block.clicks, block.motion))
+        parts.push(wrapElementDirectives(block.rawMarkdown, block.clicks, block.motion, block.attributes?.style))
       }
     }
 

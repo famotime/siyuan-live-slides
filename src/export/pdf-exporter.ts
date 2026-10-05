@@ -5,6 +5,7 @@ import {
   formatInlineMarkdown,
   renderSlideBlocksToHtml,
 } from "./markdown-renderer"
+import { generateCompleteSiYuanThemeCss } from "../compiler/theme-styles-generator"
 
 export { convertBlockToHtml as convertBlockToPrintHtml, escapeHtml, formatInlineMarkdown }
 
@@ -16,6 +17,7 @@ export interface IPdfExportOptions {
   showNotes?: boolean
   showPageNumber?: boolean
   theme?: "light" | "dark"
+  customInlineStyles?: any
 }
 
 /**
@@ -76,6 +78,8 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
   <meta charset="UTF-8">
   <title>${escapeHtml(title)} - 高保真讲义</title>
   <style>
+    ${generateCompleteSiYuanThemeCss(options?.customInlineStyles)}
+
     @page {
       ${sizeCss}
       margin: 0;
@@ -296,9 +300,12 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
     .pdf-col video,
     .layout-three-cols-grid video,
     .layout-two-cols-grid video {
-      max-height: min(100%, 340px, 44vh) !important;
-      width: auto !important;
       max-width: 100% !important;
+      max-height: 100% !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
       object-fit: contain !important;
       display: block !important;
       margin: auto !important;

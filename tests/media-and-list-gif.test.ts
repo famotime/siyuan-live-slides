@@ -247,7 +247,7 @@ describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", ()
       expect(html).toContain("object-fit: contain")
       expect(html).toContain("flex: 1 1 0%")
       expect(html).toContain("max-height: 100%")
-      expect(html).toContain("max-height: min(340px, 42vh)")
+      expect(html).toContain(".slide-list-media")
     })
   })
 
@@ -314,7 +314,7 @@ describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", ()
       expect(col3Block!.rawMarkdown).toContain("muted")
     })
 
-    it("单文件 HTML 导出中应包含针对分栏视频的 max-height: min(100%, 340px, 44vh) 约束与 stretch 对齐", async () => {
+    it("单文件 HTML 导出中应包含针对分栏视频的自适应 object-fit: contain 约束与 stretch 对齐", async () => {
       const { buildStandaloneHtml } = await import("../src/export/single-html-exporter")
       const testDoc = {
         docId: "doc-three-cols-export",
@@ -348,7 +348,7 @@ describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", ()
 
       const html = await buildStandaloneHtml(testDoc)
       expect(html).toContain("layout-three-cols-grid video")
-      expect(html).toContain("max-height: min(100%, 340px, 44vh)")
+      expect(html).toContain("object-fit: contain")
       expect(html).toContain(".pdf-col video")
       expect(html).toContain("align-items: stretch")
       expect(html).toContain("syncAutoplayVideos")

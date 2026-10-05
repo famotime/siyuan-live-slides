@@ -159,6 +159,7 @@ export function parseElementAttrs(
   isNote?: boolean
   isBackground?: boolean
   imageLayout?: "image-left" | "image-right" | string
+  style?: string
 } {
   const result: {
     clicks?: string
@@ -169,6 +170,7 @@ export function parseElementAttrs(
     isNote?: boolean
     isBackground?: boolean
     imageLayout?: string
+    style?: string
   } = {}
 
   if (!attrs) {
@@ -228,6 +230,10 @@ export function parseElementAttrs(
 
   if (attrs[ATTR_ELEM_SLOT]) {
     result.slot = attrs[ATTR_ELEM_SLOT].trim()
+  }
+
+  if (attrs.style && attrs.style.trim()) {
+    result.style = attrs.style.trim()
   }
 
   return result

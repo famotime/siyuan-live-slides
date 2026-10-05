@@ -588,22 +588,31 @@ export function convertBlockToHtml(
 ): string {
   let motionClass = ""
   let motionStyle = ""
+  let styledClass = ""
+  const styleParts: string[] = []
+
   if (block.motion?.preset && block.motion.preset !== "none") {
     motionClass = ` slidev-motion-${block.motion.preset.toLowerCase()}`
-    const styleParts: string[] = []
     if (typeof block.motion.duration === "number" && block.motion.duration > 0) {
       styleParts.push(`--motion-duration:${block.motion.duration}ms`)
     }
     if (typeof block.motion.delay === "number" && block.motion.delay > 0) {
       styleParts.push(`--motion-delay:${block.motion.delay}ms`)
     }
-    if (styleParts.length > 0) {
-      motionStyle = ` style="${styleParts.join(";")}"`
-    }
+  }
+
+  const rawBlockStyle = block.attributes?.style || ""
+  if (rawBlockStyle) {
+    styleParts.push(rawBlockStyle)
+    styledClass = " slide-styled-block"
+  }
+
+  if (styleParts.length > 0) {
+    motionStyle = ` style="${escapeHtml(styleParts.join(";"))}"`
   }
 
   const baseContainerClass = options?.containerClassName || "pdf-block"
-  const containerClass = `${baseContainerClass}${motionClass}`
+  const containerClass = `${baseContainerClass}${motionClass}${styledClass}`
   const md = (block.rawMarkdown || block.content || "").trim()
 
   if (!md) {

@@ -1,10 +1,12 @@
 import type { ISlidevDocument } from "../types/slidev-protocol"
 import { escapeHtml } from "./markdown-renderer"
+import { generateCompleteSiYuanThemeCss } from "../compiler/theme-styles-generator"
 
 export interface IStandaloneHtmlOptions {
   title?: string
   inlineVueBundle?: string
   inlineAssetBase64Map?: Record<string, string>
+  customInlineStyles?: any
 }
 
 /**
@@ -50,6 +52,8 @@ export function buildStandaloneHtml(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(title)}</title>
   <style>
+    ${generateCompleteSiYuanThemeCss(options?.customInlineStyles)}
+
     :root {
       --slide-bg: #ffffff;
       --slide-text: #1a1a1a;
@@ -457,6 +461,39 @@ export function buildStandaloneHtml(
       box-sizing: border-box !important;
     }
 
+    .pdf-col .slide-block {
+      flex: 0 0 auto !important;
+      min-height: auto !important;
+      height: auto !important;
+      max-height: none !important;
+      width: 100% !important;
+      display: block !important;
+      overflow: visible !important;
+      margin-bottom: 8px !important;
+      box-sizing: border-box !important;
+    }
+
+    .pdf-col .slide-block:has(video),
+    .pdf-col .slide-block:has(img),
+    .pdf-col .slide-block:has(.slide-media-container),
+    .pdf-col .slide-block:has(.slide-video-container),
+    .pdf-col .slide-block:has(.slide-list-media),
+    .pdf-col .slide-block.slide-block--media,
+    .pdf-col .slide-block.slide-block--video,
+    .pdf-col .slide-block.slide-block--image,
+    .pdf-col .slide-block:only-child {
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      overflow: hidden !important;
+      margin-bottom: 0 !important;
+    }
+
     .slide-block img,
     .slide-media-img,
     .slide-media-container img,
@@ -465,25 +502,30 @@ export function buildStandaloneHtml(
     .slide-block video {
       max-width: 100% !important;
       max-height: 100% !important;
-      width: auto !important;
-      height: auto !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
       object-fit: contain !important;
       display: block !important;
       margin: auto !important;
       border-radius: 8px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
-      background: #000;
+      background: transparent;
       outline: none;
     }
 
     .slide-list-media {
       display: flex !important;
       align-items: center !important;
-      justify-content: flex-start !important;
+      justify-content: center !important;
       width: 100% !important;
       max-width: 100% !important;
-      margin-top: 8px !important;
-      margin-bottom: 6px !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      flex: 1 1 0% !important;
+      margin-top: 4px !important;
+      margin-bottom: 4px !important;
       min-height: 0 !important;
       overflow: hidden !important;
       box-sizing: border-box !important;
@@ -493,29 +535,36 @@ export function buildStandaloneHtml(
     .slide-list-media .list-item-gif,
     .slide-list-media .slide-video-player {
       max-width: 100% !important;
-      max-height: min(340px, 42vh) !important;
-      width: auto !important;
-      height: auto !important;
+      max-height: 100% !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
       object-fit: contain !important;
       border-radius: 6px !important;
       box-shadow: 0 3px 12px rgba(0, 0, 0, 0.14) !important;
       display: block !important;
+      margin: auto !important;
     }
 
     .slide-block:has(.slide-list-media) {
       flex: 1 1 auto;
       min-height: 0;
+      height: 100%;
+      max-height: 100%;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow: hidden !important;
     }
     .slide-block:has(.slide-list-media) .pdf-list,
     .slide-block:has(.slide-list-media) ul,
     .slide-block:has(.slide-list-media) ol {
       flex: 1 1 auto;
       min-height: 0;
+      height: 100%;
       max-height: 100%;
-      overflow-y: auto;
+      overflow: hidden !important;
+      overflow-y: hidden !important;
     }
 
     .layout-two-cols .slide-media-block,
@@ -532,10 +581,14 @@ export function buildStandaloneHtml(
     .pdf-col video,
     .layout-three-cols-grid video {
       max-width: 100% !important;
-      max-height: min(100%, 340px, 44vh) !important;
-      width: auto !important;
-      height: auto !important;
+      max-height: 100% !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
       object-fit: contain !important;
+      display: block !important;
+      margin: auto !important;
     }
 
     img.slide-inline-img {
@@ -1177,7 +1230,7 @@ export function buildStandaloneHtml(
         }
 
         function syncAutoplayVideos() {
-          setTimeout(() => {
+          const doSync = () => {
             const videos = container.querySelectorAll("video");
             videos.forEach((v) => {
               const box = v.closest("[data-autoplay]");
@@ -1185,12 +1238,33 @@ export function buildStandaloneHtml(
               if (isAuto) {
                 v.muted = true;
                 v.defaultMuted = true;
+                v.setAttribute("muted", "");
                 v.playsInline = true;
-                const p = v.play();
-                if (p !== undefined) p.catch(() => {});
+                v.setAttribute("playsinline", "");
+                const playFn = () => {
+                  if (!v.paused) return;
+                  v.muted = true;
+                  v.defaultMuted = true;
+                  const p = v.play();
+                  if (p !== undefined) {
+                    p.catch(() => {
+                      v.muted = true;
+                      v.defaultMuted = true;
+                      setTimeout(() => { if (v.paused) v.play().catch(() => {}); }, 150);
+                    });
+                  }
+                };
+                playFn();
+                if (!v.__autoplayBound) {
+                  v.__autoplayBound = true;
+                  v.addEventListener("loadedmetadata", playFn);
+                  v.addEventListener("canplay", playFn);
+                }
               }
             });
-          }, 60);
+          };
+          setTimeout(doSync, 60);
+          setTimeout(doSync, 200);
         }
         syncAutoplayVideos();
       }
