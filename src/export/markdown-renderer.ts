@@ -52,12 +52,12 @@ export function parseShikiRanges(shikiPattern?: string): Set<number> | "all" {
  * 允许在 Markdown 行内安全放行的通用语义 HTML 标签白名单
  */
 export const SAFE_INLINE_HTML_TAGS = new Set([
-  "kbd", "mark", "sub", "sup", "span", "br", "b", "i", "u", "s",
+  "kbd", "mark", "sub", "sup", "span", "a", "br", "b", "i", "u", "s",
   "del", "em", "strong", "code", "small", "abbr", "ruby", "rt", "rp", "v-mark",
 ])
 
 /**
- * 行内 Markdown 转义与渲染 (支持加粗、斜体、删除线、行内代码、数学公式、链接、v-mark 以及安全语义 HTML 标签如 kbd/sub/sup 等)
+ * 行内 Markdown 转义与渲染 (支持加粗、斜体、删除线、行内代码、数学公式、思源块引用与链接、v-mark 以及安全语义 HTML 标签如 a/kbd/sub/sup 等)
  */
 export function formatInlineMarkdown(text: string): string {
   if (!text) return ""
@@ -91,12 +91,30 @@ export function formatInlineMarkdown(text: string): string {
   // 2. 对其余文本执行标准 HTML 转义
   let res = escapeHtml(tokenized)
 
-  // 3. 处理标准 Markdown 行内语法
+  // 3. 处理标准 Markdown 行内语法与思源链接标记
+  // 3.0 思源块引用 ((block-id 'anchor')) / ((block-id "anchor")) / ((block-id))
+  res = res.replace(/\(\(([0-9a-zA-Z-]+)(?:\s*(?:&#039;([^&#]*)&#039;|&quot;([^&]*)&quot;|'([^']*)'|"([^"]*)"|([^\)]+?)))?\s*\)\)/g, (match, blockId, singleEscaped, doubleEscaped, singleRaw, doubleRaw, plainRaw) => {
+    const anchor = (singleEscaped ?? doubleEscaped ?? singleRaw ?? doubleRaw ?? plainRaw ?? "").trim()
+    const text = anchor || `Ref(${blockId.slice(0, 8)})`
+    return `<a href="siyuan://blocks/${blockId}" data-ref-id="${blockId}" class="slidev-ref-tag">🔗 ${text}</a>`
+  })
+
   // 3.1 行内数学公式 $formula$
   res = res.replace(/\$([^$\n]+)\$/g, '<span class="katex-inline font-math"><em>$1</em></span>')
 
-  // 3.2 链接 [title](url)
-  res = res.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="slidev-link">$1</a>')
+  // 3.2 链接 [title](url) 与思源协议链接增强
+  res = res.replace(/\[(.*?)\]\((.*?)\)/g, (match, title, url) => {
+    if (url.startsWith("siyuan://blocks/")) {
+      const blockId = url.replace("siyuan://blocks/", "").split("?")[0]
+      return `<a href="${url}" data-ref-id="${blockId}" class="slidev-ref-tag">🔗 ${title}</a>`
+    }
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="slidev-link">${title}</a>`
+  })
+
+  // 3.2.1 裸思源协议链接 (如 siyuan://blocks/20260625214150-d151ljw)
+  res = res.replace(/(^|[\s(])(siyuan:\/\/blocks\/([0-9a-zA-Z-]+)(?:\?[^\s\)]*)?)/g, (match, prefix, url, blockId) => {
+    return `${prefix}<a href="${url}" data-ref-id="${blockId}" class="slidev-ref-tag">🔗 ${url}</a>`
+  })
 
   // 3.3 加粗 **text**
   res = res.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")

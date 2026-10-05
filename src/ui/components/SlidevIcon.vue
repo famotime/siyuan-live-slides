@@ -251,6 +251,13 @@
       <line x1="10" y1="9" x2="8" y2="9" />
     </g>
 
+    <!-- 聚焦/准心靶标 (Focus / Target) -->
+    <g v-else-if="name === 'focus' || name === 'target'">
+      <circle cx="12" cy="12" r="3" fill="currentColor" />
+      <path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      <circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="1.8" />
+    </g>
+
     <!-- ====== 幻灯片版式线框图标 ====== -->
     <!-- 1. 版式：封面 (cover) -->
     <g v-else-if="name === 'layout-cover' || name === 'cover'">

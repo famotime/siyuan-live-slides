@@ -415,16 +415,45 @@
       font-size: 0.95em;
     }
 
-    .slide-block .slidev-ref-tag {
+    .slide-block .slidev-ref-tag,
+    a.slidev-ref-tag {
       display: inline-flex;
       align-items: center;
       background: rgba(59, 130, 246, 0.12);
       color: var(--slide-accent);
       border-radius: 4px;
-      padding: 2px 6px;
-      font-size: 0.85em;
-      text-decoration: underline;
+      padding: 2px 8px;
+      font-size: 0.88em;
+      text-decoration: none;
       cursor: pointer;
+      margin: 2px 4px 2px 0;
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+    }
+
+    .slide-block .slidev-ref-tag:hover,
+    a.slidev-ref-tag:hover {
+      background: rgba(59, 130, 246, 0.24);
+      color: #60a5fa;
+      border-color: rgba(59, 130, 246, 0.5);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
+    }
+
+    .slide-block .slidev-block-ref {
+      display: block;
+      padding: 10px 14px;
+      background: rgba(59, 130, 246, 0.08);
+      border-left: 3px solid var(--slide-accent);
+      border-radius: 0 6px 6px 0;
+      margin: 8px 0;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .slide-block .slidev-block-ref:hover {
+      background: rgba(59, 130, 246, 0.15);
     }
 
     /* Shiki Code Spotlight & Language Badge */
@@ -1351,7 +1380,7 @@
     }
 
     const SAFE_INLINE_HTML_TAGS = new Set([
-      "kbd", "mark", "sub", "sup", "span", "br", "b", "i", "u", "s",
+      "kbd", "mark", "sub", "sup", "span", "a", "br", "b", "i", "u", "s",
       "del", "em", "strong", "code", "small", "abbr", "ruby", "rt", "rp", "v-mark"
     ])
 
@@ -1387,12 +1416,30 @@
       // 2. 对其余文本执行标准 HTML 转义
       let res = escapeHtml(tokenized)
 
-      // 3. 处理标准 Markdown 行内标记
+      // 3. 处理标准 Markdown 行内标记与思源链接标记
+      // 3.0 思源块引用 ((block-id 'anchor')) / ((block-id "anchor")) / ((block-id))
+      res = res.replace(/\(\(([0-9a-zA-Z-]+)(?:\s*(?:&#039;([^&#]*)&#039;|&quot;([^&]*)&quot;|'([^']*)'|"([^"]*)"|([^\)]+?)))?\s*\)\)/g, (match, blockId, singleEscaped, doubleEscaped, singleRaw, doubleRaw, plainRaw) => {
+        const anchor = (singleEscaped ?? doubleEscaped ?? singleRaw ?? doubleRaw ?? plainRaw ?? "").trim()
+        const text = anchor || `Ref(${blockId.slice(0, 8)})`
+        return `<a href="siyuan://blocks/${blockId}" data-ref-id="${blockId}" class="slidev-ref-tag">🔗 ${text}</a>`
+      })
+
       // 3.1 行内数学公式 $formula$
       res = res.replace(/\$([^$\n]+)\$/g, '<span class="katex-inline font-math"><em>$1</em></span>')
 
-      // 3.2 链接 [title](url)
-      res = res.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="slidev-link">$1</a>')
+      // 3.2 链接 [title](url) 与思源协议链接增强
+      res = res.replace(/\[(.*?)\]\((.*?)\)/g, (match, title, url) => {
+        if (url.startsWith("siyuan://blocks/")) {
+          const blockId = url.replace("siyuan://blocks/", "").split("?")[0]
+          return `<a href="${url}" data-ref-id="${blockId}" class="slidev-ref-tag">🔗 ${title}</a>`
+        }
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="slidev-link">${title}</a>`
+      })
+
+      // 3.2.1 裸思源协议链接 (如 siyuan://blocks/20260625214150-d151ljw)
+      res = res.replace(/(^|[\s(])(siyuan:\/\/blocks\/([0-9a-zA-Z-]+)(?:\?[^\s\)]*)?)/g, (match, prefix, url, blockId) => {
+        return `${prefix}<a href="${url}" data-ref-id="${blockId}" class="slidev-ref-tag">🔗 ${url}</a>`
+      })
 
       // 3.3 加粗 **text**
       res = res.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
@@ -2370,7 +2417,7 @@
         }
 
         const SAFE_INLINE_HTML_TAGS = new Set([
-          "kbd", "mark", "sub", "sup", "span", "br", "b", "i", "u", "s",
+          "kbd", "mark", "sub", "sup", "span", "a", "br", "b", "i", "u", "s",
           "del", "em", "strong", "code", "small", "abbr", "ruby", "rt", "rp", "v-mark"
         ])
 
@@ -2406,12 +2453,30 @@
           // 2. 对其余文本执行标准 HTML 转义
           let res = escapeHtml(tokenized)
 
-          // 3. 处理标准 Markdown 行内标记
+          // 3. 处理标准 Markdown 行内标记与思源链接标记
+          // 3.0 思源块引用 ((block-id 'anchor')) / ((block-id "anchor")) / ((block-id))
+          res = res.replace(/\(\(([0-9a-zA-Z-]+)(?:\s*(?:&#039;([^&#]*)&#039;|&quot;([^&]*)&quot;|'([^']*)'|"([^"]*)"|([^\)]+?)))?\s*\)\)/g, (match, blockId, singleEscaped, doubleEscaped, singleRaw, doubleRaw, plainRaw) => {
+            const anchor = (singleEscaped ?? doubleEscaped ?? singleRaw ?? doubleRaw ?? plainRaw ?? "").trim()
+            const text = anchor || `Ref(${blockId.slice(0, 8)})`
+            return `<a href="siyuan://blocks/${blockId}" data-ref-id="${blockId}" class="slidev-ref-tag">🔗 ${text}</a>`
+          })
+
           // 3.1 行内数学公式 $formula$
           res = res.replace(/\$([^$\n]+)\$/g, '<span class="katex-inline font-math"><em>$1</em></span>')
 
-          // 3.2 链接 [title](url)
-          res = res.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="slidev-link">$1</a>')
+          // 3.2 链接 [title](url) 与思源协议链接增强
+          res = res.replace(/\[(.*?)\]\((.*?)\)/g, (match, title, url) => {
+            if (url.startsWith("siyuan://blocks/")) {
+              const blockId = url.replace("siyuan://blocks/", "").split("?")[0]
+              return `<a href="${url}" data-ref-id="${blockId}" class="slidev-ref-tag">🔗 ${title}</a>`
+            }
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="slidev-link">${title}</a>`
+          })
+
+          // 3.2.1 裸思源协议链接 (如 siyuan://blocks/20260625214150-d151ljw)
+          res = res.replace(/(^|[\s(])(siyuan:\/\/blocks\/([0-9a-zA-Z-]+)(?:\?[^\s\)]*)?)/g, (match, prefix, url, blockId) => {
+            return `${prefix}<a href="${url}" data-ref-id="${blockId}" class="slidev-ref-tag">🔗 ${url}</a>`
+          })
 
           // 3.3 加粗 **text**
           res = res.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
@@ -2543,8 +2608,11 @@
           if (!md) return ""
 
           // 1. 已解析的思源引用与内联 HTML 结构直接原样保留
-          if (md.includes('class="slidev-block-ref"') || md.includes('class="slidev-ref-tag"')) {
+          if (md.startsWith('<div class="slidev-block-ref"')) {
             return md
+          }
+          if (md.startsWith('<a ') && md.endsWith('</a>') && md.includes('class="slidev-ref-tag"')) {
+            return `<p>${md}</p>`
           }
 
           // 2. 独立公式块 $$...$$

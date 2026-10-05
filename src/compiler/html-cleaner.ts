@@ -453,6 +453,16 @@ export function convertHtmlToCleanMarkdown(html: string): string {
     return "\n" + q.trim().split("\n").map((line: string) => `> ${line.trim()}`).join("\n") + "\n"
   })
 
+  // 21.5 思源笔记 Protyle 原生富文本块引用与链接转换
+  text = text.replace(/<span\b[^>]*data-type=["']block-ref["'][^>]*data-id=["']([0-9a-zA-Z-]+)["'][^>]*>([\s\S]*?)<\/span>/gi, (_, id, anchor) => {
+    const cleanAnchor = anchor.replace(/<[^>]+>/g, "").trim()
+    return cleanAnchor ? `((${id} '${cleanAnchor}'))` : `((${id}))`
+  })
+  text = text.replace(/<span\b[^>]*data-type=["']a["'][^>]*data-href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/span>/gi, (_, href, anchor) => {
+    const cleanAnchor = anchor.replace(/<[^>]+>/g, "").trim()
+    return `[${cleanAnchor}](${href})`
+  })
+
   // 22. 解包剩余纯布局标签，块级闭合标签转为换行，行内标签解包，确保块间自然断行
   text = text.replace(/<\/(?:div|section|header|footer|main|article|nav|aside)\b[^>]*>/gi, "\n")
   text = text.replace(/<(?:div|section|header|footer|main|article|nav|aside)\b[^>]*>/gi, "")

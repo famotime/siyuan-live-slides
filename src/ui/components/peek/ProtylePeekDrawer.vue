@@ -7,18 +7,37 @@
         <button
           v-if="historyStack.length > 0"
           class="spm-icon-btn b3-tooltips b3-tooltips__s"
-          aria-label="返回上层引用文档"
+          aria-label="返回上层引用文档或块"
           @click="goBack"
         >
           <SlidevIcon name="arrow-left" />
           <span>返回</span>
         </button>
 
-        <span class="spm-protyle-badge">思源文档速览</span>
-        <span class="spm-protyle-id">{{ currentTitle || currentBlockId }}</span>
+        <span
+          class="spm-protyle-badge"
+          :class="{ 'is-focus': isFocusMode && !isDoc }"
+        >
+          {{ isFocusMode && !isDoc ? '思源块聚焦' : '思源文档速览' }}
+        </span>
+        <span class="spm-protyle-id" :title="currentTitle || currentBlockId">
+          {{ currentTitle || currentBlockId }}
+        </span>
       </div>
 
       <div class="spm-protyle-drawer__actions">
+        <!-- 块链接专属：聚焦显示当前块 / 查看所属文档上下文全文切换 -->
+        <button
+          v-if="!isDoc"
+          class="spm-icon-btn b3-tooltips b3-tooltips__s"
+          :class="{ 'is-primary': isFocusMode }"
+          :aria-label="isFocusMode ? '当前为块聚焦模式（点击展开所属文档全文）' : '当前为文档全文模式（点击切回仅聚焦当前块）'"
+          @click="toggleFocusMode"
+        >
+          <SlidevIcon :name="isFocusMode ? 'focus' : 'file-text'" />
+          <span>{{ isFocusMode ? '块聚焦' : '展开全文' }}</span>
+        </button>
+
         <!-- 只读 / 即时编辑切换 -->
         <button
           class="spm-icon-btn b3-tooltips b3-tooltips__s"
@@ -46,6 +65,7 @@
     <div
       ref="mountEl"
       class="spm-protyle-mount"
+      :class="{ 'is-focus-mode': isFocusMode && !isDoc }"
       @click="handleProtyleClick"
     />
   </div>
@@ -55,6 +75,7 @@
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import type { Plugin } from 'siyuan'
 import { Protyle, openWindow } from 'siyuan'
+import { sql } from '@/api'
 import SlidevIcon from '@/ui/components/SlidevIcon.vue'
 
 const props = defineProps<{
@@ -66,7 +87,16 @@ const props = defineProps<{
 const currentBlockId = ref(props.blockId)
 const currentTitle = ref(props.title || '')
 const isEditable = ref(false)
-const historyStack = ref<Array<{ blockId: string; title: string }>>([])
+const isFocusMode = ref(true)
+const isDoc = ref(false)
+const rootDocId = ref('')
+
+const historyStack = ref<Array<{
+  blockId: string
+  title: string
+  isFocusMode: boolean
+  isDoc: boolean
+}>>([])
 
 const mountEl = ref<HTMLElement | null>(null)
 let protyleInstance: any = null
@@ -93,20 +123,70 @@ onBeforeUnmount(() => {
   destroyProtyle()
 })
 
-function loadProtyle(id: string) {
+async function detectBlockType(id: string) {
+  try {
+    const rows = await sql(`SELECT id, root_id, type, content FROM blocks WHERE id = '${id}' LIMIT 1`)
+    if (Array.isArray(rows) && rows.length > 0) {
+      const row = rows[0]
+      rootDocId.value = row.root_id || ''
+      const isDocument = row.id === row.root_id || row.type === 'd'
+      isDoc.value = isDocument
+      // 如果目标是文档，则为文档模式；如果是块，默认开启块聚焦模式！
+      isFocusMode.value = !isDocument
+      if (!currentTitle.value && row.content) {
+        currentTitle.value = row.content.trim().slice(0, 30)
+      }
+      return
+    }
+  } catch (e) {
+    console.warn('[ProtylePeekDrawer] detectBlockType query failed:', e)
+  }
+  // 兜底策略：如果无法识别或单测未挂载真实数据库，默认按块聚焦处理
+  isDoc.value = false
+  isFocusMode.value = true
+}
+
+async function loadProtyle(id: string, forceFocus?: boolean) {
   if (!mountEl.value || !id) return
   destroyProtyle()
+
+  await detectBlockType(id)
+
+  if (typeof forceFocus === 'boolean') {
+    isFocusMode.value = !isDoc.value && forceFocus
+  }
+
+  // 区分“块聚焦”与“文档全文”模式
+  let action: string[]
+  let renderOpts: any
+
+  if (isFocusMode.value && !isDoc.value) {
+    // 🎯 块链接：聚焦模式，只加载当前块内容，不含上下文全文，不渲染文档大标题与封面背景
+    action = ['cb-get-all', 'cb-get-hl', 'cb-get-focus']
+    renderOpts = {
+      background: false,
+      title: false,
+      gutter: true,
+      breadcrumbDocName: true,
+      scroll: true,
+    }
+  } else {
+    // 📄 文档链接或展开全文模式：加载整篇文档上下文与大标题
+    action = ['cb-get-context', 'cb-get-hl']
+    renderOpts = {
+      background: true,
+      title: true,
+      gutter: true,
+      breadcrumbDocName: true,
+      scroll: true,
+    }
+  }
 
   try {
     protyleInstance = new Protyle(props.plugin.app, mountEl.value, {
       blockId: id,
-      action: ['cb-get-hl', 'cb-get-context'],
-      render: {
-        background: true,
-        title: true,
-        gutter: true,
-        breadcrumbDocName: true,
-      },
+      action,
+      render: renderOpts,
     })
 
     // 默认以只读模式载入，防止演讲现场误触
@@ -132,6 +212,12 @@ function destroyProtyle() {
   if (mountEl.value) {
     mountEl.value.innerHTML = ''
   }
+}
+
+function toggleFocusMode() {
+  if (isDoc.value) return
+  isFocusMode.value = !isFocusMode.value
+  loadProtyle(currentBlockId.value, isFocusMode.value)
 }
 
 function toggleEditable() {
@@ -170,7 +256,9 @@ function goBack() {
     if (prev) {
       currentBlockId.value = prev.blockId
       currentTitle.value = prev.title
-      loadProtyle(prev.blockId)
+      isFocusMode.value = prev.isFocusMode
+      isDoc.value = prev.isDoc
+      loadProtyle(prev.blockId, prev.isFocusMode)
     }
   }
 }
@@ -189,6 +277,8 @@ function handleProtyleClick(e: MouseEvent) {
       historyStack.value.push({
         blockId: currentBlockId.value,
         title: currentTitle.value || currentBlockId.value,
+        isFocusMode: isFocusMode.value,
+        isDoc: isDoc.value,
       })
       currentBlockId.value = nextId
       currentTitle.value = refEl.innerText.trim() || nextId
@@ -207,6 +297,8 @@ function handleProtyleClick(e: MouseEvent) {
       historyStack.value.push({
         blockId: currentBlockId.value,
         title: currentTitle.value || currentBlockId.value,
+        isFocusMode: isFocusMode.value,
+        isDoc: isDoc.value,
       })
       currentBlockId.value = nextId
       currentTitle.value = linkEl.innerText.trim() || nextId
@@ -255,6 +347,13 @@ function handleProtyleClick(e: MouseEvent) {
   background: var(--b3-theme-primary-light, rgba(59, 130, 246, 0.1));
   color: var(--b3-theme-primary, #3b82f6);
   flex-shrink: 0;
+  transition: all 0.2s ease;
+
+  &.is-focus {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
 }
 
 .spm-protyle-id {
@@ -286,6 +385,12 @@ function handleProtyleClick(e: MouseEvent) {
 
   :deep(.protyle-content) {
     padding: 16px 24px;
+  }
+
+  &.is-focus-mode {
+    :deep(.protyle-content) {
+      padding: 20px 24px;
+    }
   }
 }
 </style>

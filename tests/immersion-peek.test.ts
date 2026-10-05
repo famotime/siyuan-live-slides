@@ -361,4 +361,30 @@ describe("Immersion Peek Drawer & IPC Coordination (原位速览抽屉与通信�
     expect(normalHandled).toBe(false)
     expect(normalEvent.preventDefault).not.toHaveBeenCalled()
   })
+
+  it("ProtylePeekDrawer 应支持块聚焦模式，排除文档上下文全文并支持模式切换", async () => {
+    const fs = await import("fs")
+    const path = await import("path")
+
+    const drawerPath = path.resolve(__dirname, "../src/ui/components/peek/ProtylePeekDrawer.vue")
+    const content = fs.readFileSync(drawerPath, "utf-8")
+
+    // 1. 验证存在块聚焦模式状态与切换机制
+    expect(content).toContain("isFocusMode")
+    expect(content).toContain("toggleFocusMode")
+    expect(content).toContain("思源块聚焦")
+
+    // 2. 验证针对块链接排除了 cb-get-context，使用 cb-get-all 与 cb-get-focus 聚焦
+    expect(content).toContain("cb-get-all")
+    expect(content).toContain("cb-get-focus")
+    expect(content).toContain("cb-get-context")
+
+    // 3. 验证聚焦模式下关闭文档大标题与背景
+    expect(content).toContain("background: false")
+    expect(content).toContain("title: false")
+
+    // 4. 验证具备模式切换图标与按钮
+    expect(content).toContain("name=\"isFocusMode ? 'focus' : 'file-text'\"")
+  })
 })
+

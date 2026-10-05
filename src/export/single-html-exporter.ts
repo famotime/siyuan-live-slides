@@ -302,6 +302,35 @@ export function buildStandaloneHtml(
     [hover\\:bg~="white"][hover\\:bg~="op-10"]:hover,
     [hover\\:bg="white op-10"]:hover { background: rgba(255, 255, 255, 0.1) !important; border-radius: 4px; }
     .cursor-pointer, [data-clickable] { cursor: pointer; }
+    .slidev-ref-tag, a.slidev-ref-tag {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(59, 130, 246, 0.12);
+      color: #3b82f6;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 0.88em;
+      text-decoration: none;
+      cursor: pointer;
+      margin: 2px 4px 2px 0;
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .slidev-ref-tag:hover, a.slidev-ref-tag:hover {
+      background: rgba(59, 130, 246, 0.24);
+      color: #60a5fa;
+      border-color: rgba(59, 130, 246, 0.5);
+      transform: translateY(-1px);
+    }
+    .slidev-block-ref {
+      display: block;
+      padding: 10px 14px;
+      background: rgba(59, 130, 246, 0.08);
+      border-left: 3px solid #3b82f6;
+      border-radius: 0 6px 6px 0;
+      margin: 8px 0;
+      cursor: pointer;
+    }
   </style>
   <script>
     // 注入演示数据载荷
@@ -575,6 +604,16 @@ export function buildStandaloneHtml(
         if (e.key === "ArrowRight" || e.key === " ") renderSlide(currentIndex + 1);
         if (e.key === "ArrowLeft") renderSlide(currentIndex - 1);
         if (e.key === "f" || e.key === "F") btnFullscreen.click();
+      });
+
+      document.addEventListener("click", (e) => {
+        const refEl = e.target && e.target.closest ? e.target.closest("[data-ref-id]") : null;
+        if (refEl) {
+          const id = refEl.getAttribute("data-ref-id");
+          if (id) {
+            window.open("siyuan://blocks/" + id, "_blank");
+          }
+        }
       });
 
       renderSlide(0);
