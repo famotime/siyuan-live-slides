@@ -183,6 +183,46 @@ html.dark *:hover::-webkit-scrollbar-thumb,
 html.dark *::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.45);
 }
+
+/* 多媒体（GIF动图、静态图片、MP4视频）最大化自适应且不超出视口 */
+.slidev-layout img,
+.slidev-layout video {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  width: auto;
+  height: auto;
+  object-fit: contain !important;
+}
+.slide-list-media {
+  display: flex !important;
+  align-items: center !important;
+  margin-top: 8px !important;
+  margin-bottom: 6px !important;
+  max-width: 100% !important;
+}
+.slide-list-media img,
+.slide-list-media video,
+.slide-list-media .list-item-gif {
+  max-width: 100% !important;
+  max-height: min(340px, 42vh) !important;
+  object-fit: contain !important;
+  border-radius: 6px !important;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.14) !important;
+}
+.slide-video-container {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  max-height: 100% !important;
+  margin: 6px 0 !important;
+}
+.slide-video-player {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  border-radius: 8px !important;
+}
 `
 
 /**

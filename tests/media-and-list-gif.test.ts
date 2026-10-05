@@ -189,4 +189,65 @@ describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", ()
       expect(doc.fullMarkdown).toContain("assets/demo.mp4")
     })
   })
+
+  describe("媒体可视区域最大化自适应与防溢出", () => {
+    it("图片块应包含 slide-media-block 与 slide-media-container 类，便于 Flex 弹性最大化排版", () => {
+      const imgBlock: ISlidevBlockItem = {
+        id: "img-1",
+        rawMarkdown: "![系统架构](assets/arch.png)",
+        attributes: {},
+      }
+
+      const html = convertBlockToHtml(imgBlock)
+      expect(html).toContain("slide-media-block")
+      expect(html).toContain("slide-media-container")
+      expect(html).toContain("slide-media-img")
+      expect(html).toContain('src="assets/arch.png"')
+    })
+
+    it("视频块应包含 slide-media-block 与 slide-media-container 类", () => {
+      const videoBlock: ISlidevBlockItem = {
+        id: "vid-adaptive",
+        rawMarkdown: '<video src="assets/tour.mp4"></video>',
+        attributes: {},
+      }
+
+      const html = convertBlockToHtml(videoBlock)
+      expect(html).toContain("slide-media-block")
+      expect(html).toContain("slide-media-container")
+      expect(html).toContain("slide-video-player")
+    })
+
+    it("单文件 HTML 导出器应注入多媒体最大化自适应及防溢出核心规则", async () => {
+      const { buildStandaloneHtml } = await import("../src/export/single-html-exporter")
+      const testDoc = {
+        docId: "doc-media-export",
+        title: "Media Presentation",
+        config: { theme: "default", aspectRatio: "16/9", highlighter: "shiki" as const, defaultTransition: "slide-left", colorSchema: "dark" as const },
+        slides: [
+          {
+            pageIndex: 1,
+            startBlockId: "p1",
+            frontmatter: { layout: "default" },
+            notes: "",
+            blocks: [
+              { id: "b1", type: "h", content: "# 演示", rawMarkdown: "# 演示" },
+              { id: "b2", type: "p", content: "![动图](assets/demo.gif)", rawMarkdown: "![动图](assets/demo.gif)" },
+            ],
+            rawMarkdown: "# 演示\n![动图](assets/demo.gif)",
+          },
+        ],
+        fullMarkdown: "",
+        assetMap: {},
+      }
+
+      const html = await buildStandaloneHtml(testDoc)
+      expect(html).toContain(".slide-media-block")
+      expect(html).toContain(".slide-media-container")
+      expect(html).toContain("object-fit: contain")
+      expect(html).toContain("flex: 1 1 0%")
+      expect(html).toContain("max-height: 100%")
+      expect(html).toContain("max-height: min(340px, 42vh)")
+    })
+  })
 })

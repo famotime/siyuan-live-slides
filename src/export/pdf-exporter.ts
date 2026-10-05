@@ -192,35 +192,54 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       border-radius: 0 4px 4px 0;
       font-style: italic;
     }
-    .pdf-image {
-      max-width: 100%;
-      max-height: 48vh;
-      object-fit: contain;
+    .pdf-image,
+    .slide-media-img {
+      max-width: 100% !important;
+      max-height: 48vh !important;
+      width: auto !important;
+      height: auto !important;
+      object-fit: contain !important;
       border-radius: 6px;
-    }
-    .slide-list-media {
-      display: block;
-      margin-top: 8px;
-      margin-bottom: 6px;
-    }
-    .slide-list-media img,
-    .slide-list-media .list-item-gif {
-      max-width: 100%;
-      max-height: 220px;
-      object-fit: contain;
-      border-radius: 6px;
+      margin: auto;
       display: block;
     }
+    .slide-media-block,
+    .slide-media-container,
     .slide-video-container {
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       width: 100%;
-      margin: 12px 0;
+      max-height: 48vh;
+      margin: 8px 0;
+      overflow: hidden;
+    }
+    .slide-list-media {
+      display: flex;
+      align-items: center;
+      margin-top: 8px;
+      margin-bottom: 6px;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .slide-list-media img,
+    .slide-list-media video,
+    .slide-list-media .list-item-gif {
+      max-width: 100% !important;
+      max-height: min(280px, 36vh) !important;
+      width: auto !important;
+      height: auto !important;
+      object-fit: contain !important;
+      border-radius: 6px;
+      display: block;
     }
     .slide-video-player {
-      max-width: 100%;
-      max-height: 48vh;
+      max-width: 100% !important;
+      max-height: 48vh !important;
+      width: auto !important;
+      height: auto !important;
+      object-fit: contain !important;
       border-radius: 6px;
       background: #000;
       border: 1px solid #cbd5e1;

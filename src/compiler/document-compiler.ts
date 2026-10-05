@@ -1,7 +1,12 @@
 import { getBlockAttrs, getChildBlocks, setBlockAttrs, sql } from "../api"
 import { extractBlockRefs } from "./block-ref-resolver"
 import { buildSlidevDocument } from "./slidev-ast-builder"
-import { isSuperBlock, scanAndTagSuperBlocks } from "./superblock-scanner"
+import {
+  isSuperBlock,
+  scanAndTagSuperBlocks,
+  scanAndTagListSuperBlocks,
+  ITrackedListSuperBlock,
+} from "./superblock-scanner"
 import type { ISiYuanBlockNode, ISlidevDocument } from "../types/slidev-protocol"
 import { ATTR_PAGE_LAYOUT } from "../types/slidev-protocol"
 
@@ -47,6 +52,7 @@ const defaultDeps: IDocumentCompilerDeps = {
 export class DocumentCompilerService {
   private deps: IDocumentCompilerDeps
   private attrOverrides = new Map<string, Record<string, string>>()
+  private trackedListSuperBlocks = new Map<string, ITrackedListSuperBlock[]>()
 
   constructor(deps?: Partial<IDocumentCompilerDeps>) {
     this.deps = {
@@ -72,6 +78,13 @@ export class DocumentCompilerService {
   }
 
   /**
+   * 获取某篇文档已自动跟踪的列表超级块状态
+   */
+  public getTrackedListSuperBlocks(docId: string): ITrackedListSuperBlock[] {
+    return this.trackedListSuperBlocks.get(docId) || []
+  }
+
+  /**
    * 清除特定块或属性的即时覆盖缓存
    */
   public clearBlockAttrOverride(id: string, key?: string): void {
@@ -90,10 +103,11 @@ export class DocumentCompilerService {
   }
 
   /**
-   * 清除所有即时覆盖缓存
+   * 清除所有即时覆盖缓存与追踪状态
    */
   public clearAllOverrides(): void {
     this.attrOverrides.clear()
+    this.trackedListSuperBlocks.clear()
   }
 
   public async compile(docId: string): Promise<ISlidevDocument> {
@@ -203,6 +217,23 @@ export class DocumentCompilerService {
           console.warn("[DocumentCompiler] Failed to auto-tag superblock image layout:", err)
         })
       })
+
+      // 执行列表超级块（表头双栏/三栏）自动识别与打标，自适应拖拽与自愈
+      const prevTracked = this.trackedListSuperBlocks.get(docId) || []
+      const listScanRes = scanAndTagListSuperBlocks(docId, blockNodes, {
+        tracked: prevTracked,
+        onTagChange: (change) => {
+          this.setBlockAttrOverride(change.blockId, change.attrs)
+          if (change.blockId === docId) {
+            Object.assign(docAttrs, change.attrs)
+          }
+          const saveFn = this.deps.setBlockAttrs || setBlockAttrs
+          saveFn(change.blockId, change.attrs).catch((err) => {
+            console.warn("[DocumentCompiler] Failed to auto-tag list superblock attrs:", err)
+          })
+        },
+      })
+      this.trackedListSuperBlocks.set(docId, listScanRes.newTracked)
 
       // 6. 扫描所有块中的思源块引用 ((block-id))
       const allRefIds = new Set<string>()

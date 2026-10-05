@@ -343,34 +343,117 @@ export function buildStandaloneHtml(
       height: 1.15em;
       cursor: pointer;
     }
-    .slide-list-media {
-      display: block;
-      margin-top: 8px;
-      margin-bottom: 6px;
+    /* 多媒体（GIF动图、静态图片、MP4视频）全视口最大化自适应且不超出视口 */
+    .slide-media-block,
+    .slide-media-container,
+    .slide-video-container,
+    .slide-block--media,
+    .slide-block--image,
+    .slide-block--video,
+    .slide-block:has(> img),
+    .slide-block:has(> .slide-media-container),
+    .slide-block:has(> p > img:only-child),
+    .slide-block:has(> .slide-video-container),
+    .slide-block:has(> video) {
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      min-width: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 100% !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      overflow: hidden !important;
+      margin: 4px 0 !important;
+      box-sizing: border-box !important;
     }
-    .slide-list-media img,
-    .slide-list-media .list-item-gif {
-      max-width: 100%;
-      max-height: 240px;
-      object-fit: contain;
-      border-radius: 6px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-      display: block;
-    }
-    .slide-video-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-      margin: 12px 0;
-    }
-    .slide-video-player {
-      max-width: 100%;
-      max-height: 52vh;
+
+    .slide-block img,
+    .slide-media-img,
+    .slide-media-container img,
+    .slide-video-player,
+    video.slide-video-player,
+    .slide-block video {
+      max-width: 100% !important;
+      max-height: 100% !important;
+      width: auto !important;
+      height: auto !important;
+      object-fit: contain !important;
+      display: block !important;
+      margin: auto !important;
       border-radius: 8px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
       background: #000;
       outline: none;
+    }
+
+    .slide-list-media {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      margin-top: 8px !important;
+      margin-bottom: 6px !important;
+      min-height: 0 !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+    }
+    .slide-list-media img,
+    .slide-list-media video,
+    .slide-list-media .list-item-gif,
+    .slide-list-media .slide-video-player {
+      max-width: 100% !important;
+      max-height: min(340px, 42vh) !important;
+      width: auto !important;
+      height: auto !important;
+      object-fit: contain !important;
+      border-radius: 6px !important;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.14) !important;
+      display: block !important;
+    }
+
+    .slide-block:has(.slide-list-media) {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .slide-block:has(.slide-list-media) .pdf-list,
+    .slide-block:has(.slide-list-media) ul,
+    .slide-block:has(.slide-list-media) ol {
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: 100%;
+      overflow-y: auto;
+    }
+
+    .layout-two-cols .slide-media-block,
+    .layout-two-cols .slide-video-container,
+    .layout-two-cols .slide-media-container,
+    .layout-three-cols .slide-media-block,
+    .layout-three-cols .slide-video-container,
+    .layout-three-cols .slide-media-container,
+    .two-cols-left img,
+    .two-cols-right img,
+    .two-cols-left video,
+    .two-cols-right video {
+      max-width: 100% !important;
+      max-height: 100% !important;
+      width: auto !important;
+      height: auto !important;
+      object-fit: contain !important;
+    }
+
+    img.slide-inline-img {
+      max-width: 100% !important;
+      max-height: min(320px, 40vh) !important;
+      object-fit: contain !important;
+      vertical-align: middle;
+      border-radius: 4px;
     }
     kbd {
       display: inline-block;
@@ -729,7 +812,7 @@ export function buildStandaloneHtml(
         }
         else if (md.startsWith("> ")) div.innerHTML = "<blockquote><p>" + md.slice(2) + "</p></blockquote>";
         else if (md.startsWith("<video") || (block && block.type === "video")) {
-          div.classList.add("slide-video-container");
+          div.classList.add("slide-video-container", "slide-media-container", "slide-media-block");
           const isAutoplay = block && block.attributes && block.attributes["custom-slidev-autoplay"] === "true";
           const isLoop = block && block.attributes && block.attributes["custom-slidev-loop"] === "true";
           const isMuted = block && block.attributes && (block.attributes["custom-slidev-muted"] === "true" || isAutoplay);
@@ -786,7 +869,8 @@ export function buildStandaloneHtml(
         else {
           const imgMatch = md.match(/!\\[(.*?)\\]\\((.*?)\\)/);
           if (imgMatch) {
-            div.innerHTML = '<img alt="' + imgMatch[1] + '" src="' + imgMatch[2] + '" style="max-width:100%;max-height:45vh;object-fit:contain;" />';
+            div.classList.add("slide-media-container", "slide-media-block", "slide-block--image");
+            div.innerHTML = '<img alt="' + imgMatch[1] + '" src="' + imgMatch[2] + '" class="slide-media-img" />';
           } else {
             let html = md.replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
             div.innerHTML = "<p>" + html + "</p>";

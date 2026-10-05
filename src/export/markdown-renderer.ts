@@ -1,5 +1,6 @@
 import type { ISlidevBlockItem, ISlidevVirtualPage } from "../types/slidev-protocol"
 import { distributeThreeColumns } from "../compiler/slidev-ast-builder"
+import { cleanCardListItemMarkdown, isListItemNode } from "../compiler/superblock-scanner"
 
 /**
  * HTML 特殊字符转义
@@ -678,14 +679,14 @@ export function convertBlockToHtml(
       innerContent = `<source src="${src}" type="video/mp4" />您的浏览器不支持视频播放。`
     }
 
-    return `<div class="${containerClass} slide-video-container"${motionStyle}><video ${attrParts.join(" ")}>${innerContent}</video></div>`
+    return `<div class="${containerClass} ${containerClass}--video slide-media-block slide-video-container slide-media-container"${motionStyle}><video ${attrParts.join(" ")}>${innerContent}</video></div>`
   }
 
   // 8. 图片
   const imgMatch = md.match(/^!\[(.*?)\]\((.*?)\)$/)
   if (imgMatch) {
-    const imgClass = options?.imageClassName || "pdf-image"
-    return `<div class="${containerClass} ${containerClass}--image"${motionStyle}><img alt="${escapeHtml(imgMatch[1])}" src="${imgMatch[2]}" class="${imgClass}" /></div>`
+    const imgClass = options?.imageClassName || "pdf-image slide-media-img"
+    return `<div class="${containerClass} ${containerClass}--image slide-media-block slide-media-container"${motionStyle}><img alt="${escapeHtml(imgMatch[1])}" src="${imgMatch[2]}" class="${imgClass}" /></div>`
   }
 
   // 9. 任务列表与有序/无序列表（支持单项、多项及带导语的列表）
@@ -777,9 +778,17 @@ export function renderSlideBlocksToHtml(
     const rightBlocks = rem.filter(b => b.slot === "right" || b.slot === "col-2")
     const leftBlocks = rem.filter(b => !rightBlocks.includes(b))
 
+    const renderColBlockToHtml = (colBlocks: ISlidevBlockItem[]) => {
+      if (colBlocks.length === 1 && isListItemNode(colBlocks[0])) {
+        const cleanedMd = cleanCardListItemMarkdown(colBlocks[0].rawMarkdown)
+        return convertBlockToHtml({ ...colBlocks[0], rawMarkdown: cleanedMd }, options)
+      }
+      return colBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
+    }
+
     const headerHtml = headerBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
-    const leftHtml = leftBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
-    const rightHtml = rightBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
+    const leftHtml = renderColBlockToHtml(leftBlocks)
+    const rightHtml = renderColBlockToHtml(rightBlocks)
 
     return `
       <div class="layout-two-cols-header-container">
@@ -808,10 +817,18 @@ export function renderSlideBlocksToHtml(
     const rem = blocks.filter(b => !headerBlocks.includes(b))
     const { col1: col1Blocks, col2: col2Blocks, col3: col3Blocks } = distributeThreeColumns(rem)
 
+    const renderColBlockToHtml = (colBlocks: ISlidevBlockItem[]) => {
+      if (colBlocks.length === 1 && isListItemNode(colBlocks[0])) {
+        const cleanedMd = cleanCardListItemMarkdown(colBlocks[0].rawMarkdown)
+        return convertBlockToHtml({ ...colBlocks[0], rawMarkdown: cleanedMd }, options)
+      }
+      return colBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
+    }
+
     const headerHtml = headerBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
-    const col1Html = col1Blocks.map(b => convertBlockToHtml(b, options)).join("\n")
-    const col2Html = col2Blocks.map(b => convertBlockToHtml(b, options)).join("\n")
-    const col3Html = col3Blocks.map(b => convertBlockToHtml(b, options)).join("\n")
+    const col1Html = renderColBlockToHtml(col1Blocks)
+    const col2Html = renderColBlockToHtml(col2Blocks)
+    const col3Html = renderColBlockToHtml(col3Blocks)
 
     return `
       <div class="layout-three-cols-header-container">

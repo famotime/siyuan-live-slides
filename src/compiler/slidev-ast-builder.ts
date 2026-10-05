@@ -20,7 +20,13 @@ import {
   parseElementAttrs,
   parsePageAttrs,
 } from "./scope-mapper"
-import { detectSuperBlockImageLayout, extractImageUrl, isSuperBlock } from "./superblock-scanner"
+import {
+  cleanCardListItemMarkdown,
+  detectSuperBlockImageLayout,
+  extractImageUrl,
+  isListItemNode,
+  isSuperBlock,
+} from "./superblock-scanner"
 
 /**
  * 序列化 Frontmatter 对象为 YAML 字符串
@@ -892,6 +898,14 @@ export function buildSlidevDocument(
     const renderBlocks = (list: ISlidevBlockItem[]) =>
       list.map(b => wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion)).join("\n\n")
 
+    const renderColList = (list: ISlidevBlockItem[]) => {
+      if (list.length === 1 && isListItemNode(list[0])) {
+        const cleanedMd = cleanCardListItemMarkdown(list[0].rawMarkdown)
+        return wrapElementDirectives(cleanedMd, list[0].clicks, list[0].motion)
+      }
+      return renderBlocks(list)
+    }
+
     const layout = page.frontmatter.layout || "default"
 
     if (layout === "two-cols-header") {
@@ -911,8 +925,8 @@ export function buildSlidevDocument(
       const leftList = rem.filter(b => !rightList.includes(b))
 
       const headerContent = renderBlocks(headerList)
-      const leftContent = renderBlocks(leftList)
-      const rightContent = renderBlocks(rightList)
+      const leftContent = renderColList(leftList)
+      const rightContent = renderColList(rightList)
 
       if (headerContent) parts.push(headerContent)
       if (leftContent) parts.push(`::left::\n\n${leftContent}`)
@@ -955,9 +969,9 @@ export function buildSlidevDocument(
       }
 
       const headerContent = renderBlocks(headerList)
-      const col1Content = renderBlocks(col1List)
-      const col2Content = renderBlocks(col2List)
-      const col3Content = renderBlocks(col3List)
+      const col1Content = renderColList(col1List)
+      const col2Content = renderColList(col2List)
+      const col3Content = renderColList(col3List)
 
       if (headerContent) parts.push(headerContent)
       if (col1Content) parts.push(`::col-1::\n\n${col1Content}`)
