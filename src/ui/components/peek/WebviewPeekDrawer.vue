@@ -106,6 +106,7 @@
         :src="currentUrl"
         allowpopups="true"
         partition="persist:slidev-peek"
+        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: inline-flex;"
       ></webview>
 
       <!-- Web / Docker 纯前端环境降级 (iframe + 友好引导卡片) -->
@@ -114,7 +115,7 @@
         class="spm-webview-fallback"
       >
         <iframe
-          class="spm-webview-frame"
+          class="spm-webview-fallback-frame"
           :src="currentUrl"
           frameborder="0"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
@@ -138,10 +139,16 @@ import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import SlidevIcon from '@/ui/components/SlidevIcon.vue'
 import { isDesktopEnvironment } from '@/engine/runtime-node'
 
-const props = defineProps<{
-  url: string
-  title?: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    url: string
+    title?: string
+    visible?: boolean
+  }>(),
+  {
+    visible: true,
+  }
+)
 
 const isDesktop = ref(isDesktopEnvironment())
 const currentUrl = ref(props.url)
@@ -154,6 +161,9 @@ const isCopied = ref(false)
 
 const webviewRef = ref<any>(null)
 const containerEl = ref<HTMLElement | null>(null)
+let resizeObserver: ResizeObserver | null = null
+let globalErrorHandler: ((e: ErrorEvent) => void) | null = null
+let unhandledRejectionHandler: ((e: PromiseRejectionEvent) => void) | null = null
 
 watch(
   () => props.url,
@@ -168,12 +178,89 @@ watch(
   }
 )
 
+watch(
+  () => props.visible,
+  (isVisible) => {
+    if (!isVisible) {
+      // 抽屉隐藏时：停止正在进行的加载与音视频播放
+      if (webviewRef.value) {
+        try {
+          if (typeof webviewRef.value.stop === 'function') {
+            webviewRef.value.stop()
+          }
+        } catch {
+          // 忽略已停止加载的异常
+        }
+      }
+    } else {
+      // 抽屉重新显示时重置缩放
+      applyZoomFactor()
+    }
+  }
+)
+
 onMounted(() => {
   setupWebviewListeners()
+  if (containerEl.value && typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => {
+      const wv = webviewRef.value
+      if (wv && typeof wv.invalidate === 'function') {
+        try {
+          wv.invalidate()
+        } catch {
+          // 忽略宿主不支持 invalidate 的异常
+        }
+      }
+    })
+    resizeObserver.observe(containerEl.value)
+  }
+
+  // 针对 Electron 内核已知 webview teardown 异常的全局保底拦截
+  globalErrorHandler = (event: ErrorEvent) => {
+    const errorMsg = event.message || event.error?.message
+    if (typeof errorMsg === 'string' && errorMsg.includes('Invalid guestInstanceId')) {
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      return true
+    }
+  }
+  window.addEventListener('error', globalErrorHandler, true)
+
+  unhandledRejectionHandler = (event: PromiseRejectionEvent) => {
+    const reason = event.reason
+    const msg = typeof reason === 'string' ? reason : reason?.message
+    if (typeof msg === 'string' && msg.includes('Invalid guestInstanceId')) {
+      event.preventDefault()
+    }
+  }
+  window.addEventListener('unhandledrejection', unhandledRejectionHandler)
 })
 
 onBeforeUnmount(() => {
   cleanupWebviewListeners()
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+  if (globalErrorHandler) {
+    window.removeEventListener('error', globalErrorHandler, true)
+    globalErrorHandler = null
+  }
+  if (unhandledRejectionHandler) {
+    window.removeEventListener('unhandledrejection', unhandledRejectionHandler)
+    unhandledRejectionHandler = null
+  }
+
+  // 组件最终销毁前平稳停止网络与渲染管道
+  if (webviewRef.value) {
+    try {
+      if (typeof webviewRef.value.stop === 'function') {
+        webviewRef.value.stop()
+      }
+    } catch {
+      // 忽略
+    }
+  }
 })
 
 function setupWebviewListeners() {
@@ -354,6 +441,8 @@ function openInSystemBrowser() {
 .spm-webview-drawer {
   width: 100%;
   height: 100%;
+  flex: 1 1 0%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -439,29 +528,50 @@ function openInSystemBrowser() {
 }
 
 .spm-webview-body {
-  flex: 1;
+  flex: 1 1 0%;
   width: 100%;
   height: 100%;
   min-height: 0;
   position: relative;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  background: var(--b3-theme-background, #ffffff);
 }
 
-.spm-webview-frame {
-  width: 100%;
-  height: 100%;
-  flex: 1;
-  border: none;
-  display: block;
+.spm-webview-frame,
+webview.spm-webview-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100% !important;
+  height: 100% !important;
+  flex: 1 1 100% !important;
+  min-height: 0 !important;
+  display: inline-flex !important;
+  border: none !important;
+  outline: none;
 }
 
 .spm-webview-fallback {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
+}
+
+.spm-webview-fallback-frame {
+  width: 100%;
+  height: 100%;
+  flex: 1 1 0%;
+  min-height: 0;
+  border: none;
+  display: block;
 }
 
 .spm-fallback-bar {
@@ -474,5 +584,17 @@ function openInSystemBrowser() {
   background: var(--b3-theme-surface, #f8fafc);
   border-top: 1px solid var(--b3-border-color, #e2e8f0);
   color: var(--b3-theme-on-surface, #64748b);
+  flex-shrink: 0;
+}
+
+:global(webview.spm-webview-frame) {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: inline-flex !important;
 }
 </style>

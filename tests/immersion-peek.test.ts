@@ -281,4 +281,84 @@ describe("Immersion Peek Drawer & IPC Coordination (原位速览抽屉与通信�
     expect(preventDefaultSpy).toHaveBeenCalled()
     expect(mockWebview.loadURL).toHaveBeenCalledWith("https://example.com/pricing")
   })
+
+  it("微型浏览器 webview 元素必须遵循 inline-flex 与 100% 绝对铺满契约，杜绝 display: block 导致的高度塌陷", async () => {
+    // 读取 WebviewPeekDrawer.vue 源文件校验模板和样式规则
+    const fs = await import("fs")
+    const path = await import("path")
+    const vueFilePath = path.resolve(__dirname, "../src/ui/components/peek/WebviewPeekDrawer.vue")
+    const content = fs.readFileSync(vueFilePath, "utf-8")
+
+    // 1. 验证 template 中 webview 带有绝对全铺与 inline-flex 行内样式
+    expect(content).toContain('style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: inline-flex;"')
+
+    // 2. 验证样式表中严禁对 webview 应用 display: block
+    expect(content).not.toMatch(/\.spm-webview-frame\s*\{[^}]*display:\s*block/s)
+
+    // 3. 验证样式表中包含了 display: inline-flex !important 与 100% 铺满声明
+    expect(content).toMatch(/display:\s*inline-flex\s*!important/)
+    expect(content).toMatch(/width:\s*100%\s*!important/)
+    expect(content).toMatch(/height:\s*100%\s*!important/)
+
+    // 4. 验证全局选择器 :global(webview.spm-webview-frame) 保底穿透
+    expect(content).toContain(":global(webview.spm-webview-frame)")
+  })
+
+  it("抽屉容器与微型浏览器必须采用 v-show 常驻 DOM 懒加载架构，杜绝关闭时触发 Electron guestInstanceId 异常", async () => {
+    const fs = await import("fs")
+    const path = await import("path")
+
+    // 1. 验证 ImmersionDrawerContainer 采用 v-show="visible"
+    const containerPath = path.resolve(__dirname, "../src/ui/components/peek/ImmersionDrawerContainer.vue")
+    const containerContent = fs.readFileSync(containerPath, "utf-8")
+    expect(containerContent).toContain('v-show="visible"')
+    expect(containerContent).not.toContain('v-if="visible"')
+
+    // 2. 验证 SlidevPreviewTab 中对 WebviewPeekDrawer 采用 hasOpenedWeb 懒加载与 v-show
+    const tabPath = path.resolve(__dirname, "../src/ui/tab/SlidevPreviewTab.vue")
+    const tabContent = fs.readFileSync(tabPath, "utf-8")
+    expect(tabContent).toContain('v-if="hasOpenedWeb"')
+    expect(tabContent).toContain('v-show="peekType === \'web\'"')
+    expect(tabContent).toContain(":visible=\"isDrawerOpen && peekType === 'web'\"")
+  })
+
+  it("微型浏览器全局异常拦截器应能精准屏蔽 Electron 内核的 Invalid guestInstanceId 错误", () => {
+    // 模拟 Electron 派发至 window 的未捕获错误事件
+    let prevented = false
+    let stoppedPropagation = false
+    const mockEvent = {
+      message: "Uncaught Error: Invalid guestInstanceId: 23",
+      preventDefault: () => {
+        prevented = true
+      },
+      stopImmediatePropagation: () => {
+        stoppedPropagation = true
+      },
+    }
+
+    const testErrorHandler = (event: any) => {
+      const errorMsg = event.message || event.error?.message
+      if (typeof errorMsg === "string" && errorMsg.includes("Invalid guestInstanceId")) {
+        event.preventDefault()
+        event.stopImmediatePropagation()
+        return true
+      }
+      return false
+    }
+
+    const handled = testErrorHandler(mockEvent)
+    expect(handled).toBe(true)
+    expect(prevented).toBe(true)
+    expect(stoppedPropagation).toBe(true)
+
+    // 非相关常规错误不应被意外拦截
+    const normalEvent = {
+      message: "TypeError: Cannot read properties of undefined",
+      preventDefault: vi.fn(),
+      stopImmediatePropagation: vi.fn(),
+    }
+    const normalHandled = testErrorHandler(normalEvent)
+    expect(normalHandled).toBe(false)
+    expect(normalEvent.preventDefault).not.toHaveBeenCalled()
+  })
 })

@@ -138,9 +138,11 @@
           :plugin="plugin!"
         />
 
-        <!-- Web 外部链接速览轨 (受控微型浏览器) -->
+        <!-- Web 外部链接速览轨 (受控微型浏览器，常驻 DOM 懒加载，杜绝卸载时 Electron guestInstanceId 异常) -->
         <WebviewPeekDrawer
-          v-else-if="peekType === 'web' && peekUrl"
+          v-if="hasOpenedWeb"
+          v-show="peekType === 'web'"
+          :visible="isDrawerOpen && peekType === 'web'"
           :url="peekUrl"
           :title="drawerTitle"
         />
@@ -200,6 +202,7 @@ const peekType = ref<'siyuan' | 'web'>('siyuan')
 const peekBlockId = ref('')
 const peekUrl = ref('')
 const drawerTitle = ref('')
+const hasOpenedWeb = ref(false)
 
 // Pin 图钉锁定状态
 const isPinned = ref(false)
@@ -253,6 +256,7 @@ onMounted(() => {
       peekBlockId.value = detail.target
       drawerTitle.value = detail.title || `块速览: ${detail.target.slice(0, 8)}`
     } else {
+      hasOpenedWeb.value = true
       peekUrl.value = detail.target
       drawerTitle.value = detail.title || detail.target
     }

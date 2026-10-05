@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="visible"
+    v-show="visible"
     class="spm-immersion-container"
     :class="{ 'is-maximized': isMaximized }"
     @keydown.stop="onKeyDown"

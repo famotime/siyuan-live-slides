@@ -220,6 +220,8 @@ function handleProtyleClick(e: MouseEvent) {
 .spm-protyle-drawer {
   width: 100%;
   height: 100%;
+  flex: 1 1 0%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
