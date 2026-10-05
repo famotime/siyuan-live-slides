@@ -1,8 +1,8 @@
 {
   "name": "siyuan-slidev",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "type": "module",
-  "description": "Ideas are content, notes are presentations.",
+  "description": "Notes as presentations, content as thought.",
   "author": "Quincy Zou",
   "license": "MIT",
   "homepage": "https://github.com/famotime/siyuan-slidev",
