@@ -28,7 +28,7 @@ import {
 import { mirrorBlockSelection } from "@/sync/selection-mirror"
 import { PropertyManagerBridge } from "@/synergy/property-manager-bridge"
 import type { ISlidevDocument, ISiYuanBlockNode } from "@/types/slidev-protocol"
-import { ATTR_ELEM_NOTE } from "@/types/slidev-protocol"
+import { ATTR_ELEM_NOTE, ATTR_PAGE_LAYOUT } from "@/types/slidev-protocol"
 import "@/index.scss"
 
 // 专属 SVG 幻灯片放映图标
@@ -401,6 +401,23 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
       document.addEventListener("click", this.onEditorClickBound, true)
       document.addEventListener("selectionchange", this.onSelectionChangeBound)
     }
+
+    // 8. 插件启动/重启时自动检测当前主编辑区文档并即时编译，确保 Dock 面板能即刻获取持久化的版式模型
+    if (typeof document !== "undefined") {
+      const detectAndCompile = () => {
+        const docId = this.getActiveDocumentId()
+        if (docId) {
+          if (docId !== this.currentDocId) {
+            this.currentDocId = docId
+          }
+          if (!this.latestCompiledDoc) {
+            this.compileCurrentDocument(docId)
+          }
+        }
+      }
+      setTimeout(detectAndCompile, 300)
+      setTimeout(detectAndCompile, 1000)
+    }
   }
 
   async onDataChanged(reason?: "sync" | "overwrite") {
@@ -556,6 +573,30 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
   }
 
   /**
+   * 自动探测当前工作空间活跃主编辑区的文档 ID
+   */
+  public getActiveDocumentId(): string {
+    if (typeof document === "undefined") return ""
+    const activeTitle = (
+      document.querySelector(".layout__wnd--active .protyle-title[data-node-id]") ||
+      document.querySelector(".item--focus .protyle-title[data-node-id]") ||
+      document.querySelector(".protyle-title[data-node-id]")
+    ) as HTMLElement | null
+    const titleDocId = activeTitle?.getAttribute("data-node-id")
+    if (titleDocId) return titleDocId
+
+    const protyleTitle = document.querySelector(".protyle .protyle-title[data-node-id]") as HTMLElement | null
+    const innerDocId = protyleTitle?.getAttribute("data-node-id")
+    if (innerDocId) return innerDocId
+
+    const docEl = document.querySelector("[data-doc-id]") as HTMLElement | null
+    const docId = docEl?.getAttribute("data-doc-id")
+    if (docId) return docId
+
+    return ""
+  }
+
+  /**
    * 从 DOM 元素解析所属文档的 rootId
    */
   public resolveDocIdFromElement(el: HTMLElement): string {
@@ -564,25 +605,20 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     const titleDocId = titleEl?.getAttribute("data-node-id")
     if (titleDocId) return titleDocId
 
-    // 2. 尝试从 .protyle 编辑器容器提取 data-doc-id
+    // 2. 尝试从当前元素所在的 .protyle 容器寻找子级 .protyle-title
     const protyle = el.closest(".protyle") as HTMLElement | null
-    const protyleDocId = protyle?.getAttribute("data-doc-id")
-    if (protyleDocId) return protyleDocId
-
-    // 3. 尝试从子级 .protyle-title 提取
     const innerTitle = protyle?.querySelector(".protyle-title") as HTMLElement | null
     const innerTitleId = innerTitle?.getAttribute("data-node-id")
     if (innerTitleId) return innerTitleId
 
-    // 4. 尝试从正文区 .protyle-wysiwyg 提取
-    const wysiwyg = protyle?.querySelector(".protyle-wysiwyg") as HTMLElement | null
-    const wysiwygDocId = wysiwyg?.getAttribute("data-doc-id")
-    if (wysiwygDocId) return wysiwygDocId
-
-    // 5. 查找最近包含 data-doc-id 的祖先
+    // 3. 查找带有 data-doc-id 的容器
     const docEl = el.closest("[data-doc-id]") as HTMLElement | null
     const anyDocId = docEl?.getAttribute("data-doc-id")
     if (anyDocId) return anyDocId
+
+    // 4. 从全局主编辑区活跃标题提取
+    const activeDocId = this.getActiveDocumentId()
+    if (activeDocId) return activeDocId
 
     return this.currentDocId
   }
@@ -654,6 +690,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
       this.syncInspectorBlock(blockEl, blockId, blockType)
     } else {
       let pageDividerId = ""
+      let pageDividerLayout = ""
       if (this.latestCompiledDoc?.slides) {
         const matched = this.latestCompiledDoc.slides.find(s =>
           s.startBlockId === blockId ||
@@ -664,14 +701,30 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
         if (matched?.startBlockId) {
           pageDividerId = matched.startBlockId
         }
+        if (matched?.frontmatter?.layout) {
+          pageDividerLayout = matched.frontmatter.layout
+        }
       }
-      getBlockAttrs(blockId).then(attrs => {
+      getBlockAttrs(blockId).then(async attrs => {
+        if (pageDividerId && !pageDividerLayout) {
+          const cachedOverride = globalDocumentCompiler.getBlockAttrOverride(pageDividerId)
+          if (cachedOverride?.[ATTR_PAGE_LAYOUT] || cachedOverride?.["custom-slidev-layout"]) {
+            pageDividerLayout = cachedOverride[ATTR_PAGE_LAYOUT] || cachedOverride["custom-slidev-layout"] || ""
+          } else {
+            const dividerAttrs = (await getBlockAttrs(pageDividerId).catch(() => ({}))) || {}
+            pageDividerLayout = dividerAttrs[ATTR_PAGE_LAYOUT] || dividerAttrs["custom-slidev-layout"] || ""
+            if (dividerAttrs && Object.keys(dividerAttrs).length > 0) {
+              globalDocumentCompiler.setBlockAttrOverride(pageDividerId, dividerAttrs)
+            }
+          }
+        }
         updateInspectorCurrentBlock({
           id: blockId,
           rootId: this.currentDocId,
           type: blockType || "NodeParagraph",
           attrs: attrs || {},
           pageDividerId,
+          pageDividerLayout,
         })
       }).catch(() => {})
     }
@@ -725,6 +778,12 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     const blockId = blockEl.getAttribute("data-node-id")
     const blockType = blockEl.getAttribute("data-type") || ""
     if (blockId) {
+      if (!this.currentDocId) {
+        this.currentDocId = this.resolveDocIdFromElement(target) || ""
+      }
+      if (this.currentDocId && !this.latestCompiledDoc) {
+        this.compileCurrentDocument(this.currentDocId)
+      }
       if (blockId !== this.activeCursorBlockId) {
         this.activeCursorBlockId = blockId
         navigateDockToBlock(blockId)
@@ -773,6 +832,12 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     const blockId = blockEl?.getAttribute("data-node-id")
     const blockType = blockEl?.getAttribute("data-type") || ""
     if (blockEl && blockId) {
+      if (!this.currentDocId) {
+        this.currentDocId = this.resolveDocIdFromElement(el) || ""
+      }
+      if (this.currentDocId && !this.latestCompiledDoc) {
+        this.compileCurrentDocument(this.currentDocId)
+      }
       if (blockId !== this.activeCursorBlockId) {
         this.activeCursorBlockId = blockId
         navigateDockToBlock(blockId)
@@ -812,24 +877,30 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
     const override = globalDocumentCompiler.getBlockAttrOverride(effectiveId) || {}
     const finalAttrs = { ...attrs, ...override }
 
-    // 解析当前块所属顶层块 ID 以及其所归属的前置分页符 ID
+    // 解析当前块所属顶层块 ID 以及其所归属的前置分页符 ID 与版式
     const topBlockEl = (effectiveEl.closest(".protyle-wysiwyg > [data-node-id]") || effectiveEl) as HTMLElement
     const topBlockId = topBlockEl?.getAttribute("data-node-id") || effectiveId
 
     let pageDividerId = ""
+    let pageDividerLayout = ""
     let prev = topBlockEl.previousElementSibling
     while (prev) {
       const pType = prev.getAttribute("data-type")
       if (pType === "NodeThematicBreak" || pType === "tb" || prev.classList?.contains("hr")) {
         pageDividerId = prev.getAttribute("data-node-id") || ""
+        pageDividerLayout =
+          prev.getAttribute(ATTR_PAGE_LAYOUT) ||
+          prev.getAttribute("custom-slidev-layout") ||
+          prev.getAttribute("data-custom-slidev-layout") ||
+          ""
         break
       }
       prev = prev.previousElementSibling
     }
 
     // 容错降级：若 Protyle 虚拟滚动导致前置分页符已从 DOM 中卸载，
-    // 则直接从最新编译的虚拟演示文档 (latestCompiledDoc) 中精准反查归属幻灯片及其 startBlockId (即分页符 ID)
-    if (!pageDividerId && this.latestCompiledDoc?.slides) {
+    // 则直接从最新编译的虚拟演示文档 (latestCompiledDoc) 中精准反查归属幻灯片及其 startBlockId 与 layout
+    if (this.latestCompiledDoc?.slides) {
       const candidateIds = [effectiveId, topBlockId]
       let parentEl = effectiveEl.parentElement
       while (parentEl && !parentEl.classList.contains("protyle-wysiwyg")) {
@@ -846,10 +917,42 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
         s.allBlockIds?.some(id => candidateIds.includes(id)) ||
         s.noteBlocks?.some(b => candidateIds.includes(b.id))
       )
-      if (matchedSlide?.startBlockId) {
-        pageDividerId = matchedSlide.startBlockId
+      if (matchedSlide) {
+        if (!pageDividerId && matchedSlide.startBlockId) {
+          pageDividerId = matchedSlide.startBlockId
+        }
+        if (!pageDividerLayout && matchedSlide.frontmatter?.layout) {
+          pageDividerLayout = matchedSlide.frontmatter.layout
+        }
       }
     }
+
+    // 深度持久化回溯：若确定了前置分页符但其版式尚未获取到，查缓存并直接调用思源内核 API 获取持久化属性
+    if (pageDividerId) {
+      const cachedOverride = globalDocumentCompiler.getBlockAttrOverride(pageDividerId)
+      if (cachedOverride?.[ATTR_PAGE_LAYOUT] || cachedOverride?.["custom-slidev-layout"]) {
+        pageDividerLayout = cachedOverride[ATTR_PAGE_LAYOUT] || cachedOverride["custom-slidev-layout"] || ""
+      }
+      if (!pageDividerLayout) {
+        const dividerAttrs = (await getBlockAttrs(pageDividerId).catch(() => ({}))) || {}
+        pageDividerLayout = dividerAttrs[ATTR_PAGE_LAYOUT] || dividerAttrs["custom-slidev-layout"] || ""
+        if (dividerAttrs && Object.keys(dividerAttrs).length > 0) {
+          globalDocumentCompiler.setBlockAttrOverride(pageDividerId, dividerAttrs)
+        }
+      }
+    } else if (this.currentDocId) {
+      // 若当前块位于首个分页符之前（即第 1 页），页面版式源自文档根属性
+      const docOverride = globalDocumentCompiler.getBlockAttrOverride(this.currentDocId)
+      if (docOverride?.[ATTR_PAGE_LAYOUT] || docOverride?.["custom-slidev-layout"]) {
+        pageDividerLayout = docOverride[ATTR_PAGE_LAYOUT] || docOverride["custom-slidev-layout"] || ""
+      } else if (!pageDividerLayout && this.latestCompiledDoc?.slides?.[0]?.frontmatter?.layout) {
+        pageDividerLayout = this.latestCompiledDoc.slides[0].frontmatter.layout
+      }
+    }
+
+    const hasImgTag = Boolean(effectiveEl.querySelector("img, span[data-type='img']"))
+    const textWithoutImg = (effectiveEl.innerText || "").replace(/[\r\n\t\s]+/g, " ").trim()
+    const isImage = hasImgTag && textWithoutImg.length <= 50
 
     updateInspectorCurrentBlock({
       id: effectiveId,
@@ -859,8 +962,10 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
       attrs: finalAttrs,
       isDivider,
       isCode,
+      isImage,
       topBlockId,
       pageDividerId,
+      pageDividerLayout,
     })
   }
 
@@ -868,16 +973,22 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
    * 提取并编译当前文档为 Slidev 演示模型，推送给 Dock
    */
   public async compileCurrentDocument(targetDocId?: string): Promise<void> {
-    const docId = targetDocId || this.currentDocId
+    let docId = targetDocId || this.currentDocId
     if (!docId) {
-      // 尝试从当前激活编辑器提取
-      const activeEl = document.querySelector(".protyle-content[data-doc-id]")
-      const inferredId = activeEl?.getAttribute("data-doc-id")
+      // 尝试从当前激活编辑器提取 (兼容多种 Protyle 容器布局)
+      const activeEl = document.querySelector(".protyle.layout__wnd--active, .layout__wnd--active .protyle, .protyle") as HTMLElement | null
+      const inferredId = activeEl?.getAttribute("data-doc-id") ||
+        activeEl?.querySelector(".protyle-wysiwyg")?.getAttribute("data-doc-id") ||
+        activeEl?.querySelector(".protyle-title")?.getAttribute("data-node-id") ||
+        document.querySelector(".protyle-content[data-doc-id]")?.getAttribute("data-doc-id") ||
+        document.querySelector("[data-doc-id]")?.getAttribute("data-doc-id")
+
       if (inferredId) {
         this.currentDocId = inferredId
-        return this.compileCurrentDocument(inferredId)
+        docId = inferredId
+      } else {
+        return
       }
-      return
     }
 
     try {

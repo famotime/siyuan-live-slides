@@ -153,4 +153,46 @@ describe("DocumentCompilerService - compile (编排编译服务)", () => {
     const docReset = await compiler.compile("doc-delay")
     expect(docReset.slides[1].notes).toBe("")
   })
+
+  it("应支持从 attributes 表联合读取自定义属性并提取带尺寸参数的背景图", async () => {
+    const mockGetBlockAttrs = vi.fn().mockResolvedValue({})
+    const mockGetChildBlocks = vi.fn().mockResolvedValue([
+      { id: "h1", type: "NodeHeading", content: "Builder的美好时代", markdown: "# Builder的美好时代" },
+      { id: "p1", type: "NodeParagraph", content: "一个产品经理的业余实践", markdown: "一个产品经理的业余实践" },
+      { id: "img1", type: "NodeParagraph", content: "", markdown: "![配图](assets/cover-gold.png =800x600)" },
+    ])
+    const mockSql = vi.fn().mockImplementation((query: string) => {
+      // 验证查询包含了 LIMIT 99999
+      expect(query).toContain("LIMIT 99999")
+      if (query.includes("FROM blocks")) {
+        // 模拟 blocks.ial 中并未包含 custom-slidev-role
+        return Promise.resolve([
+          { id: "h1", ial: "{: id=\"h1\" }" },
+          { id: "img1", ial: "{: id=\"img1\" }" },
+        ])
+      }
+      if (query.includes("FROM attributes")) {
+        // attributes 表中包含已落库的 custom-slidev-role
+        return Promise.resolve([
+          { block_id: "img1", name: "custom-slidev-role", value: "background" },
+        ])
+      }
+      return Promise.resolve([])
+    })
+
+    const compiler = new DocumentCompilerService({
+      getBlockAttrs: mockGetBlockAttrs,
+      getChildBlocks: mockGetChildBlocks,
+      sql: mockSql,
+    })
+
+    const doc = await compiler.compile("doc-bg-test")
+    expect(doc.slides.length).toBe(1)
+    const page = doc.slides[0]
+    // 验证背景图成功提取为 cover 全屏背景
+    expect(page.frontmatter.background).toBe("/assets/cover-gold.png")
+    // 验证正文内容中排除了该图片块
+    expect(page.blocks.some(b => b.id === "img1")).toBe(false)
+    expect(page.blocks.length).toBe(2)
+  })
 })

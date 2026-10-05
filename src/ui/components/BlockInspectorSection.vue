@@ -26,8 +26,8 @@
       </div>
     </div>
 
-    <!-- 0.5 演示图片角色与排版 (Role & Layout) -->
-    <div class="spm-card-control">
+    <!-- 0.5 演示图片角色与排版 (Role & Layout) - 仅对图片元素或已打标块显示 -->
+    <div v-if="isImage || Boolean(imageRole)" class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
           <div class="spm-control-title">
@@ -292,6 +292,7 @@ const props = defineProps<{
   elemSlot: string
   elemShikiLines: string
   isCodeBlock: boolean
+  isImage?: boolean
   hasBlockAttrs: boolean
   isNote?: boolean
   imageRole?: string
@@ -331,6 +332,7 @@ const availableSlots = computed(() => {
   const l = effectiveLayout.value
   if (l === 'three-cols-header') {
     return [
+      { value: '', label: '默认' },
       { value: 'header', label: '表头' },
       { value: 'col-1', label: '第 1 栏' },
       { value: 'col-2', label: '第 2 栏' },
@@ -339,6 +341,7 @@ const availableSlots = computed(() => {
   }
   if (l === 'two-cols-header') {
     return [
+      { value: '', label: '默认' },
       { value: 'header', label: '表头' },
       { value: 'left', label: '左栏' },
       { value: 'right', label: '右栏' },

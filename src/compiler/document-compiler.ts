@@ -108,8 +108,8 @@ export class DocumentCompilerService {
       // 2. 优先通过 getChildBlocks 获取按思源文档真实排版顺序排列的所有子块
       let rawBlocks: any[] = await this.deps.getChildBlocks(docId).catch(() => [])
 
-      // 3. 批量检索当前文档所有块的 IAL 属性字典
-      const ialQuery = `SELECT id, ial FROM blocks WHERE root_id = '${docId}'`
+      // 3. 批量检索当前文档所有块的 IAL 属性字典 (显式添加 LIMIT 99999 突破默认 search.limit 截断)
+      const ialQuery = `SELECT id, ial FROM blocks WHERE root_id = '${docId}' LIMIT 99999`
       const ialRows = (await this.deps.sql(ialQuery).catch(() => [])) || []
       const ialMapById = new Map<string, Record<string, string>>()
       if (Array.isArray(ialRows)) {
@@ -120,9 +120,25 @@ export class DocumentCompilerService {
         }
       }
 
+      // 3.1 联合查询 attributes 表：思源官方结构化自定义属性键值对，补充合并到 ialMapById
+      const attrQuery = `SELECT block_id, name, value FROM attributes WHERE root_id = '${docId}' LIMIT 99999`
+      const attrRows = (await this.deps.sql(attrQuery).catch(() => [])) || []
+      if (Array.isArray(attrRows)) {
+        for (const row of attrRows) {
+          if (row.block_id && row.name) {
+            let m = ialMapById.get(row.block_id)
+            if (!m) {
+              m = {}
+              ialMapById.set(row.block_id, m)
+            }
+            m[row.name] = row.value || ""
+          }
+        }
+      }
+
       // 4. 容错降级：如果 getChildBlocks 为空，从 SQL 回退检索
       if (!rawBlocks || rawBlocks.length === 0) {
-        const fallbackSql = `SELECT id, parent_id, root_id, type, sub_type as subType, content, markdown, ial FROM blocks WHERE root_id = '${docId}' AND id != '${docId}' ORDER BY created ASC`
+        const fallbackSql = `SELECT id, parent_id, root_id, type, sub_type as subType, content, markdown, ial FROM blocks WHERE root_id = '${docId}' AND id != '${docId}' ORDER BY created ASC LIMIT 99999`
         rawBlocks = (await this.deps.sql(fallbackSql).catch(() => [])) || []
       }
 

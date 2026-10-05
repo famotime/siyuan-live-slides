@@ -12,8 +12,8 @@ export function extractImageUrl(markdown?: string, content?: string): string | n
   const text = (markdown || content || "").trim()
   if (!text) return null
 
-  // 1. Markdown 图片语法: ![alt](url "title") 或 ![alt](url)
-  const mdMatch = text.match(/!\[.*?\]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)/)
+  // 1. Markdown 图片语法: ![alt](url) 或 ![alt](url "title") 或 ![alt](url =widthxheight)
+  const mdMatch = text.match(/!\[[\s\S]*?\]\(\s*([^\s)]+)(?:\s+(?:=["']?[^"'\s)]*["']?|["'][^"']*["']))*?\s*\)/)
   if (mdMatch) {
     return mdMatch[1].trim()
   }

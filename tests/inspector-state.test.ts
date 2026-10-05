@@ -105,11 +105,22 @@ describe("Inspector State Machine (演示配置面板状态推断)", () => {
       expect(state.slotControlTitle).toBe("三栏插槽归属 (Slot)")
       expect(state.actionButtonText).toBe("设为第1栏")
       expect(state.availableSlots).toEqual([
+        { value: "", label: "默认" },
         { value: "header", label: "表头" },
         { value: "col-1", label: "第 1 栏" },
         { value: "col-2", label: "第 2 栏" },
         { value: "col-3", label: "第 3 栏" },
       ])
+    })
+
+    it("当页面为 three-cols-header 且块为 header 时，正确保持三栏插槽选项且激活表头", () => {
+      const state = resolveBlockSlotState("three-cols-header", "header")
+      expect(state.effectiveLayout).toBe("three-cols-header")
+      expect(state.isMultiColsLayout).toBe(true)
+      expect(state.slotControlTitle).toBe("三栏插槽归属 (Slot)")
+      expect(state.actionButtonText).toBe("设为第1栏")
+      expect(state.isSlotActive("header")).toBe(true)
+      expect(state.availableSlots.map(s => s.value)).toEqual(["", "header", "col-1", "col-2", "col-3"])
     })
 
     it("当切换操作返回该页面且 currentSlideLayout 降级为 default，但块自身保留 col-1 插槽时，应智能推断恢复为 three-cols-header 并呈现三栏选项而非双栏", () => {
@@ -118,7 +129,7 @@ describe("Inspector State Machine (演示配置面板状态推断)", () => {
       expect(state.isMultiColsLayout).toBe(true)
       expect(state.slotControlTitle).toBe("三栏插槽归属 (Slot)")
       expect(state.actionButtonText).toBe("设为第1栏")
-      expect(state.availableSlots.map(s => s.value)).toEqual(["header", "col-1", "col-2", "col-3"])
+      expect(state.availableSlots.map(s => s.value)).toEqual(["", "header", "col-1", "col-2", "col-3"])
       expect(state.isSlotActive("col-1")).toBe(true)
       expect(state.isSlotActive("header")).toBe(false)
       // 在三栏模式下严禁错误激活 left
@@ -163,6 +174,7 @@ export function resolveBlockSlotState(currentSlideLayout: string, elemSlot: stri
   let availableSlots: Array<{ value: string; label: string }> = []
   if (effectiveLayout === 'three-cols-header') {
     availableSlots = [
+      { value: '', label: '默认' },
       { value: 'header', label: '表头' },
       { value: 'col-1', label: '第 1 栏' },
       { value: 'col-2', label: '第 2 栏' },
@@ -170,6 +182,7 @@ export function resolveBlockSlotState(currentSlideLayout: string, elemSlot: stri
     ]
   } else if (effectiveLayout === 'two-cols-header') {
     availableSlots = [
+      { value: '', label: '默认' },
       { value: 'header', label: '表头' },
       { value: 'left', label: '左栏' },
       { value: 'right', label: '右栏' },

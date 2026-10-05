@@ -88,6 +88,7 @@
         :elem-slot="elemSlot"
         :elem-shiki-lines="elemShikiLines"
         :is-code-block="isCodeBlock"
+        :is-image="isImageBlock"
         :has-block-attrs="hasBlockAttrs"
         :is-note="isNoteBlock"
         :image-role="imageRole"
@@ -142,6 +143,7 @@ import DocInspectorSection from '@/ui/components/DocInspectorSection.vue'
 import SlidevImportDialog from '@/ui/components/SlidevImportDialog.vue'
 import SlidevIcon from '@/ui/components/SlidevIcon.vue'
 import { extractCleanNoteText } from '@/compiler/slidev-ast-builder'
+import { extractImageUrl } from '@/compiler/superblock-scanner'
 import { globalDocumentCompiler } from '@/compiler/document-compiler'
 import { generateSpeakerNotesWithAIDetailed } from '@/ai/notes-generator'
 import { buildStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'
@@ -221,6 +223,14 @@ function onCopyBlockId() {
 // 目标标签计算
 const isDivider = computed(() => activeBlockType.value === 'NodeThematicBreak')
 const isCodeBlock = computed(() => activeBlockType.value === 'NodeCodeBlock')
+const isImageExplicit = ref(false)
+const isImageBlock = computed(() => {
+  if (isImageExplicit.value) return true
+  if (imageRole.value) return true
+  const snippet = rawSnippet.value || ''
+  if (extractImageUrl(snippet)) return true
+  return false
+})
 const isDocRoot = computed(() => 
   !activeBlockId.value || 
   activeBlockId.value === currentDocId.value || 
@@ -439,6 +449,15 @@ const imageRole = computed(() => {
   if (layout === 'image-left' || layout === 'image-right') {
     return layout
   }
+  // 智能推断：若当前块为图片且所属幻灯片页面背景图匹配本图片，则该图片角色必然为 background
+  const snippet = rawSnippet.value || ''
+  const imgUrl = extractImageUrl(snippet)
+  if (imgUrl && targetSlide.value?.frontmatter?.background) {
+    const slideBg = targetSlide.value.frontmatter.background
+    if (slideBg === imgUrl || slideBg.endsWith(imgUrl) || imgUrl.endsWith(slideBg)) {
+      return 'background'
+    }
+  }
   return ''
 })
 
@@ -446,18 +465,81 @@ async function onImageRoleChange(role: string) {
   const targetId = activeBlockId.value
   if (!targetId) return
 
+  const snippet = rawSnippet.value || ''
+  const imgUrl = extractImageUrl(snippet) || ''
+  const pageContainerId = currentPageDividerId.value || currentDocId.value
+
   if (!role) {
-    await saveAttr(ATTR_ELEM_ROLE, '')
-    await saveAttr(ATTR_PAGE_LAYOUT, '')
-    if (activeBlockAttrs.value[ATTR_PAGE_BACKGROUND] === 'true') {
-      await saveAttr(ATTR_PAGE_BACKGROUND, '')
+    const updates: Record<string, string> = {
+      [ATTR_ELEM_ROLE]: '',
+      [ATTR_PAGE_LAYOUT]: '',
     }
+    if (activeBlockAttrs.value[ATTR_PAGE_BACKGROUND] === 'true') {
+      updates[ATTR_PAGE_BACKGROUND] = ''
+    }
+    if (pageContainerId && imgUrl && pageBackground.value === imgUrl) {
+      pageBackground.value = ''
+      await setBlockAttrs(pageContainerId, { [ATTR_PAGE_BACKGROUND]: '' }).catch(() => {})
+      globalDocumentCompiler.setBlockAttrOverride(pageContainerId, { [ATTR_PAGE_BACKGROUND]: '' })
+      if (targetSlide.value?.frontmatter) {
+        delete targetSlide.value.frontmatter.background
+      }
+    }
+    await saveAttrs(updates)
   } else if (role === 'background') {
-    await saveAttr(ATTR_ELEM_ROLE, 'background')
-    await saveAttr(ATTR_PAGE_LAYOUT, '')
+    const updates: Record<string, string> = {
+      [ATTR_ELEM_ROLE]: 'background',
+      [ATTR_PAGE_LAYOUT]: '',
+    }
+    if (pageContainerId && imgUrl) {
+      pageBackground.value = imgUrl
+      await setBlockAttrs(pageContainerId, { [ATTR_PAGE_BACKGROUND]: imgUrl }).catch(() => {})
+      globalDocumentCompiler.setBlockAttrOverride(pageContainerId, { [ATTR_PAGE_BACKGROUND]: imgUrl })
+      if (targetSlide.value) {
+        if (!targetSlide.value.frontmatter) {
+          targetSlide.value.frontmatter = {}
+        }
+        targetSlide.value.frontmatter.background = imgUrl
+      }
+    }
+    await saveAttrs(updates)
   } else if (role === 'image-left' || role === 'image-right') {
-    await saveAttr(ATTR_PAGE_LAYOUT, role)
-    await saveAttr(ATTR_ELEM_ROLE, '')
+    await saveAttrs({
+      [ATTR_PAGE_LAYOUT]: role,
+      [ATTR_ELEM_ROLE]: '',
+    })
+  }
+}
+
+async function saveAttrs(attrs: Record<string, string>) {
+  const targetId = activeBlockId.value || currentDocId.value
+  if (!targetId) return
+
+  for (const [key, value] of Object.entries(attrs)) {
+    activeBlockAttrs.value[key] = value
+  }
+  globalDocumentCompiler.setBlockAttrOverride(targetId, attrs)
+
+  if (ATTR_PAGE_LAYOUT in attrs) {
+    const value = attrs[ATTR_PAGE_LAYOUT]
+    currentPageDividerLayout.value = value
+    if (targetSlide.value) {
+      if (!targetSlide.value.frontmatter) {
+        targetSlide.value.frontmatter = {}
+      }
+      targetSlide.value.frontmatter.layout = value as any
+    }
+  }
+
+  triggerSaveNotice('保存中...')
+  try {
+    await setBlockAttrs(targetId, attrs)
+    triggerSaveNotice('已同步')
+    if (plugin) {
+      await plugin.compileCurrentDocument()
+    }
+  } catch (e) {
+    triggerSaveNotice('同步失败')
   }
 }
 
@@ -726,7 +808,12 @@ function onElemMotionChange(val: string) {
 }
 
 function onElemSlotChange(slot: string) {
-  saveAttr(ATTR_ELEM_SLOT, slot)
+  const currentSlot = activeBlockAttrs.value[ATTR_ELEM_SLOT] || ''
+  if (currentSlot === slot) {
+    saveAttr(ATTR_ELEM_SLOT, '')
+  } else {
+    saveAttr(ATTR_ELEM_SLOT, slot)
+  }
 }
 
 function onElemShikiLinesChange(val: string) {
@@ -874,6 +961,7 @@ defineExpose({
     pageBackground.value = info.attrs[ATTR_PAGE_BACKGROUND] || ''
     pageImage.value = info.attrs[ATTR_PAGE_IMAGE] || ''
     elemShikiLines.value = info.attrs[ATTR_ELEM_SHIKI_LINES] || ''
+    isImageExplicit.value = Boolean(info.isImage)
   },
   updateDocument(doc: ISlidevDocument) {
     latestDoc.value = doc

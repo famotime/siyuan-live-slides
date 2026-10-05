@@ -135,6 +135,7 @@ export interface IActiveBlockInfo {
   attrs: Record<string, string>
   isDivider?: boolean
   isCode?: boolean
+  isImage?: boolean
   topBlockId?: string
   pageDividerId?: string
   pageDividerLayout?: string
