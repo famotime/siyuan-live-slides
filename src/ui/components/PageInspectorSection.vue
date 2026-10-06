@@ -22,11 +22,13 @@
           <span>检测到本页横向超级块列宽比例：<b>{{ detectedSbRatio }}</b></span>
         </div>
         <button
-          class="spm-btn-action"
-          style="padding: 2px 8px; height: 26px; font-size: 11px; flex-shrink: 0; background: var(--b3-theme-primary); color: #fff;"
+          class="spm-btn-action b3-tooltips b3-tooltips__w"
+          aria-label="一键将本页版式设为分栏并应用超级块列宽"
+          style="padding: 2px 8px; height: 26px; font-size: 11px; flex-shrink: 0; background: var(--b3-theme-primary); color: #fff; display: inline-flex; align-items: center; gap: 4px;"
           @click="$emit('applySuperBlockLayout', detectedSbInfo || { recommendedLayout: 'two-cols', ratio: detectedSbRatio })"
         >
-          一键设为分栏并应用
+          <SlidevIcon name="columns" />
+          <span>设为分栏</span>
         </button>
       </div>
     </div>
@@ -41,25 +43,40 @@
           </div>
           <span class="spm-control-desc">设置各列横向空间占比，默认平均分配</span>
         </div>
-        <button
-          v-if="detectedSbRatio"
-          class="spm-btn-text b3-tooltips b3-tooltips__w"
-          :aria-label="`从当前页思源超级块读取实际宽度比例 (${detectedSbRatio})`"
-          @click="$emit('update:pageLayoutRatio', detectedSbRatio)"
-        >
-          <SlidevIcon name="sparkles" />
-          <span>从超级块读取 ({{ detectedSbRatio }})</span>
-        </button>
-        <button
-          v-else
-          class="spm-btn-text b3-tooltips b3-tooltips__w"
-          disabled
-          style="opacity: 0.45; cursor: not-allowed;"
-          aria-label="当前页未检测到调整过列宽的横向超级块（默认各列平均分配）"
-        >
-          <SlidevIcon name="sparkles" />
-          <span>从超级块读取 (未检测到)</span>
-        </button>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <!-- 读取按钮：显示在 重置 按钮之前，同行显示 -->
+          <button
+            v-if="detectedSbRatio"
+            class="spm-btn-action b3-tooltips b3-tooltips__w"
+            :aria-label="`从当前页思源超级块读取实际宽度比例 (${detectedSbRatio})`"
+            style="padding: 0 8px; height: 26px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;"
+            @click="$emit('update:pageLayoutRatio', detectedSbRatio)"
+          >
+            <SlidevIcon name="sparkles" />
+            <span>读取</span>
+          </button>
+          <button
+            v-else
+            class="spm-btn-action b3-tooltips b3-tooltips__w"
+            disabled
+            style="opacity: 0.45; cursor: not-allowed; padding: 0 8px; height: 26px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;"
+            aria-label="当前页未检测到调整过列宽的横向超级块"
+          >
+            <SlidevIcon name="sparkles" />
+            <span>读取</span>
+          </button>
+
+          <!-- 重置按钮：同行紧跟在 读取 按钮之后，点击后重置为平均分布比例覆盖超级块配置 -->
+          <button
+            class="spm-btn-action b3-tooltips b3-tooltips__w"
+            aria-label="重置为平均分布比例（覆盖思源超级块列宽配置）"
+            style="padding: 0 8px; height: 26px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;"
+            @click="onResetRatioToEqual"
+          >
+            <SlidevIcon name="reset" />
+            <span>重置</span>
+          </button>
+        </div>
       </div>
 
       <!-- 快捷芯片预设 -->
@@ -75,7 +92,7 @@
         </button>
       </div>
 
-      <!-- 自定义输入框与重置按钮 -->
+      <!-- 自定义输入框 -->
       <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
         <input
           :value="pageLayoutRatio || ''"
@@ -85,20 +102,12 @@
           @input="$emit('update:pageLayoutRatio', ($event.target as HTMLInputElement).value)"
           @change="$emit('update:pageLayoutRatio', ($event.target as HTMLInputElement).value)"
         />
-        <button
-          v-if="pageLayoutRatio"
-          class="spm-btn-action b3-tooltips b3-tooltips__w"
-          aria-label="重置为默认平均分配"
-          style="flex-shrink: 0; padding: 0 10px; height: 28px;"
-          @click="$emit('update:pageLayoutRatio', '')"
-        >
-          重置
-        </button>
       </div>
 
       <div v-if="detectedSbRatio" style="margin-top: 6px; font-size: 11px; opacity: 0.85; display: flex; align-items: center; justify-content: space-between;">
         <div style="display: flex; align-items: center; gap: 4px;">
-          <span>📐 检测到思源超级块宽度：</span>
+          <SlidevIcon name="ratio" />
+          <span>检测到思源超级块宽度：</span>
           <code style="background: rgba(125, 125, 125, 0.15); padding: 1px 4px; border-radius: 3px; font-weight: bold;">{{ detectedSbRatio }}</code>
         </div>
         <button
@@ -107,11 +116,12 @@
           style="font-size: 11px; padding: 0 4px;"
           @click="$emit('update:pageLayoutRatio', detectedSbRatio)"
         >
-          点击应用
+          应用此比例
         </button>
       </div>
-      <div v-else style="margin-top: 6px; font-size: 11px; opacity: 0.6;">
-        <span>📐 未检测到调宽超级块（默认各列平均分配）</span>
+      <div v-else style="margin-top: 6px; font-size: 11px; opacity: 0.6; display: flex; align-items: center; gap: 4px;">
+        <SlidevIcon name="ratio" />
+        <span>未检测到调宽超级块（默认各列平均分配）</span>
       </div>
     </div>
 
@@ -290,6 +300,32 @@
           <span>添加讲稿备注块</span>
         </button>
       </div>
+
+      <!-- 讲稿批量操作栏（全部追加 / 全部删除） -->
+      <div class="spm-batch-actions-box" style="margin-top: 8px; border-top: 1px dashed var(--b3-border-color, #e2e8f0); padding-top: 8px;">
+        <div class="spm-action-grid">
+          <button
+            class="spm-btn-action b3-tooltips b3-tooltips__s"
+            :disabled="isBatchProcessing"
+            :style="isBatchProcessing ? 'opacity: 0.5; cursor: not-allowed;' : ''"
+            aria-label="在所有尚未配置讲稿的页面末尾批量追加讲稿提示块"
+            @click="$emit('batchAppendNotes')"
+          >
+            <SlidevIcon name="insert-below" />
+            <span>全部追加</span>
+          </button>
+          <button
+            class="spm-btn-action spm-btn-danger b3-tooltips b3-tooltips__s"
+            :disabled="isBatchProcessing"
+            :style="isBatchProcessing ? 'opacity: 0.5; cursor: not-allowed;' : ''"
+            aria-label="批量物理删除正文中的全部讲稿备注块（涉及全部页）"
+            @click="$emit('batchDeleteNotes')"
+          >
+            <SlidevIcon name="trash" />
+            <span>全部删除</span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- 分页符快捷操作 (紧凑 2 列网格) -->
@@ -338,6 +374,7 @@ const props = defineProps<{
   pageLayoutRatio?: string
   detectedSbRatio?: string
   detectedSbInfo?: any
+  isBatchProcessing?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -351,6 +388,8 @@ const emit = defineEmits<{
   (e: 'addNoteBlock'): void
   (e: 'locateNoteBlock'): void
   (e: 'generateNotes'): void
+  (e: 'batchAppendNotes'): void
+  (e: 'batchDeleteNotes'): void
   (e: 'insertDividerAfter'): void
   (e: 'deleteDivider'): void
 }>()
@@ -429,6 +468,12 @@ const currentRatioPresets = computed(() => {
 const currentActiveRatio = computed(() => {
   return props.pageLayoutRatio || ''
 })
+
+function onResetRatioToEqual() {
+  const cols = detectedColumnsCount.value || 2
+  const equalRatio = Array(cols).fill('1').join(':')
+  emit('update:pageLayoutRatio', equalRatio)
+}
 
 const notePreviewSnippet = computed(() => {
   if (!props.pageNotes) return ''

@@ -12,6 +12,14 @@ export class Plugin {
   addDock = () => {}
 }
 export const showMessage = (_msg: string) => {}
+export const confirm = (
+  _title: string,
+  _text: string,
+  confirmCallback?: (dialog?: any) => void,
+  cancelCallback?: (dialog?: any) => void
+) => {
+  confirmCallback?.()
+}
 export const openWindow = (_options?: any) => {}
 export class Protyle {
   destroy = () => {}

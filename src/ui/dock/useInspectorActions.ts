@@ -1,5 +1,5 @@
-import type { ComputedRef, Ref } from "vue"
-import { showMessage } from "siyuan"
+import { ref, type ComputedRef, type Ref } from "vue"
+import { confirm, showMessage } from "siyuan"
 import {
   appendBlock,
   chatAI,
@@ -70,6 +70,7 @@ export interface IInspectorActionsContext {
 }
 
 export function useInspectorActions(ctx: IInspectorActionsContext) {
+  const isBatchProcessing = ref(false)
   let saveTimer: number | null = null
 
   function triggerSaveNotice(msg = "已同步") {
@@ -534,6 +535,149 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     }
   }
 
+  async function onBatchAppendNotes() {
+    if (isBatchProcessing.value) return
+    const slides = ctx.latestDoc.value?.slides || []
+    if (slides.length === 0) {
+      showMessage("当前文档无幻灯片页面")
+      return
+    }
+
+    // 过滤出未配置讲稿的页面（跳过已有讲稿块或讲稿文本的页面）
+    const targetSlidesWithIndex = slides
+      .map((s, idx) => ({ slide: s, idx }))
+      .filter(({ slide }) => {
+        const hasBlocks = Array.isArray(slide.noteBlocks) && slide.noteBlocks.length > 0
+        const hasText = Boolean(slide.notes?.trim())
+        return !hasBlocks && !hasText
+      })
+
+    if (targetSlidesWithIndex.length === 0) {
+      showMessage("所有幻灯片页面均已存在讲稿备注块，无需追加")
+      return
+    }
+
+    const targetCount = targetSlidesWithIndex.length
+    confirm(
+      "批量追加讲稿备注",
+      `将在未配置讲稿的 ${targetCount} 页末尾自动插入讲稿提示块，是否继续？`,
+      async () => {
+        if (isBatchProcessing.value) return
+        isBatchProcessing.value = true
+        showMessage("正在批量追加讲稿块...")
+        let successCount = 0
+        try {
+          const content = "在此输入本页讲稿提词..."
+          const noteLines = content.split(/\r?\n/).map(l => `> ${l}`).join("\n")
+          const markdownPayload = `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slidev-note="true"}`
+
+          for (const { slide, idx } of targetSlidesWithIndex) {
+            try {
+              let insertedRes: any = null
+              if (idx < slides.length - 1) {
+                const nextSlide = slides[idx + 1]
+                insertedRes = await insertBlock("markdown", markdownPayload, nextSlide.startBlockId)
+              } else {
+                const lastBlock = slide?.noteBlocks?.slice(-1)[0] || slide?.blocks?.slice(-1)[0]
+                const previousId = lastBlock?.id || slide?.startBlockId
+                if (previousId) {
+                  insertedRes = await insertBlock("markdown", markdownPayload, undefined, previousId)
+                } else {
+                  insertedRes = await appendBlock("markdown", markdownPayload, ctx.currentDocId.value)
+                }
+              }
+
+              const newId = insertedRes?.[0]?.doOperations?.[0]?.id || insertedRes?.[0]?.id
+              if (newId) {
+                await setBlockAttrs(newId, { [ATTR_ELEM_NOTE]: "true" })
+                globalDocumentCompiler.setBlockAttrOverride(newId, { [ATTR_ELEM_NOTE]: "true" })
+              }
+              successCount++
+            } catch (err) {
+              console.error(`[SiYuanSlidev] 为第 ${idx + 1} 页追加讲稿块失败:`, err)
+            }
+          }
+
+          if (ctx.plugin) {
+            await ctx.plugin.compileCurrentDocument()
+          }
+          showMessage(`已成功为 ${successCount} 页追加讲稿备注块`)
+        } catch (error) {
+          console.error("[SiYuanSlidev] 批量追加讲稿块失败:", error)
+          showMessage("批量追加讲稿块时出现异常")
+        } finally {
+          isBatchProcessing.value = false
+        }
+      }
+    )
+  }
+
+  async function onBatchDeleteNotes() {
+    if (isBatchProcessing.value) return
+    const slides = ctx.latestDoc.value?.slides || []
+    if (slides.length === 0) {
+      showMessage("当前文档无幻灯片页面")
+      return
+    }
+
+    // 收集所有页面的讲稿块
+    const allNoteBlocks: { id: string; pageIndex: number }[] = []
+    for (const slide of slides) {
+      if (slide.noteBlocks && slide.noteBlocks.length > 0) {
+        for (const nb of slide.noteBlocks) {
+          if (nb.id) {
+            allNoteBlocks.push({ id: nb.id, pageIndex: slide.pageIndex })
+          }
+        }
+      }
+    }
+
+    if (allNoteBlocks.length === 0) {
+      showMessage("当前文档中没有讲稿备注块，无需删除")
+      return
+    }
+
+    const affectedPagesCount = new Set(allNoteBlocks.map(b => b.pageIndex)).size
+    const totalBlocks = allNoteBlocks.length
+
+    confirm(
+      "危险操作：批量删除所有讲稿块",
+      `此操作将从正文中物理删除全部 ${totalBlocks} 个讲稿备注块（涉及 ${affectedPagesCount} 页），删除后无法撤销。是否确认继续？`,
+      async () => {
+        if (isBatchProcessing.value) return
+        isBatchProcessing.value = true
+        showMessage("正在批量删除讲稿块...")
+        let deletedCount = 0
+        try {
+          for (const item of allNoteBlocks) {
+            try {
+              await deleteBlock(item.id)
+              globalDocumentCompiler.clearBlockAttrOverride(item.id)
+              deletedCount++
+            } catch (err) {
+              console.error(`[SiYuanSlidev] 删除讲稿块 ${item.id} 失败:`, err)
+            }
+          }
+
+          if (ctx.activeBlockId.value && allNoteBlocks.some(b => b.id === ctx.activeBlockId.value)) {
+            delete ctx.activeBlockAttrs.value[ATTR_ELEM_NOTE]
+            delete ctx.activeBlockAttrs.value["slidev-note"]
+          }
+
+          if (ctx.plugin) {
+            await ctx.plugin.compileCurrentDocument()
+          }
+          showMessage(`已成功删除全部 ${deletedCount} 个讲稿备注块`)
+        } catch (error) {
+          console.error("[SiYuanSlidev] 批量删除讲稿块失败:", error)
+          showMessage("批量删除讲稿块时出现异常")
+        } finally {
+          isBatchProcessing.value = false
+        }
+      }
+    )
+  }
+
   function toggleElemClick() {
     if (ctx.elemClick.value) {
       saveAttr(ATTR_ELEM_CLICK, "")
@@ -700,6 +844,9 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     onAddNoteBlock,
     onLocateNoteBlock,
     onGenerateNotesWithAI,
+    isBatchProcessing,
+    onBatchAppendNotes,
+    onBatchDeleteNotes,
     toggleElemClick,
     onElemClickStepChange,
     onElemMotionChange,

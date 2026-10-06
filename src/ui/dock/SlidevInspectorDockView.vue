@@ -83,6 +83,9 @@
         @add-note-block="onAddNoteBlock"
         @locate-note-block="onLocateNoteBlock"
         @generate-notes="onGenerateNotesWithAI"
+        @batch-append-notes="onBatchAppendNotes"
+        @batch-delete-notes="onBatchDeleteNotes"
+        :is-batch-processing="isBatchProcessing"
         @insert-divider-after="onInsertDividerAfter"
         @delete-divider="onDeleteCurrentBlock"
       />
@@ -652,6 +655,9 @@ const {
   onAddNoteBlock,
   onLocateNoteBlock,
   onGenerateNotesWithAI,
+  isBatchProcessing,
+  onBatchAppendNotes,
+  onBatchDeleteNotes,
   toggleElemClick,
   onElemClickStepChange,
   onElemMotionChange,
