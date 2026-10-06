@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest"
+import { resolveTargetSlide } from "@/sync/inspector-slide-resolver"
+import type { ISlidevVirtualPage } from "@/types/slidev-protocol"
 
 /**
  * 演示配置面板的纯函数状态机与标签辅助解析器
@@ -151,6 +153,94 @@ describe("Inspector State Machine (演示配置面板状态推断)", () => {
       expect(stateTwoCols.effectiveLayout).toBe("two-cols")
       expect(stateTwoCols.actionButtonText).toBe("设为双栏")
       expect(stateTwoCols.isSlotActive("right")).toBe(true)
+    })
+  })
+
+  describe("Target Slide & Notes Inference (点击分隔行识别下一页内容与讲稿备注)", () => {
+    // 构造模拟的三页幻灯片
+    const mockSlides: ISlidevVirtualPage[] = [
+      {
+        pageIndex: 1,
+        startBlockId: "doc-root",
+        frontmatter: { layout: "cover" },
+        notes: "第一页欢迎词讲稿",
+        noteBlocks: [{ id: "note-block-p1", type: "NodeCallout", content: "第一页欢迎词讲稿", rawMarkdown: "", isNote: true }],
+        blocks: [{ id: "b-title", type: "NodeHeading", content: "欢迎来到演示", rawMarkdown: "# 欢迎来到演示" }],
+        rawMarkdown: "# 欢迎来到演示",
+        allBlockIds: ["doc-root", "b-title", "note-block-p1"],
+      },
+      {
+        pageIndex: 2,
+        startBlockId: "divider-1",
+        frontmatter: { layout: "default" },
+        notes: "Demo为主，用于表达思想。造完即弃——能否造些能持久存在，真正发挥作用的？",
+        noteBlocks: [{ id: "note-block-p2", type: "NodeCallout", content: "Demo为主，用于表达思想...", rawMarkdown: "", isNote: true }],
+        blocks: [{ id: "b-p2-text", type: "NodeParagraph", content: "第二页正文内容", rawMarkdown: "第二页正文内容" }],
+        rawMarkdown: "第二页正文内容",
+        allBlockIds: ["divider-1", "b-p2-text", "note-block-p2"],
+      },
+      {
+        pageIndex: 3,
+        startBlockId: "divider-2",
+        frontmatter: { layout: "two-cols" },
+        notes: "第三页总结讲稿备注",
+        noteBlocks: [{ id: "note-block-p3", type: "NodeCallout", content: "第三页总结讲稿备注", rawMarkdown: "", isNote: true }],
+        blocks: [{ id: "b-p3-text", type: "NodeParagraph", content: "第三页内容", rawMarkdown: "第三页内容" }],
+        rawMarkdown: "第三页内容",
+        allBlockIds: ["divider-2", "b-p3-text", "note-block-p3"],
+      },
+    ]
+
+    it("点击第 1 个分隔行时，应正确识别为第 2 页（下一页）及其讲稿备注与备注块", () => {
+      const target = resolveTargetSlide(mockSlides, {
+        activeBlockId: "divider-1",
+        activeBlockType: "NodeThematicBreak",
+        currentPageDividerId: "divider-1",
+      })
+
+      expect(target).not.toBeNull()
+      expect(target?.pageIndex).toBe(2)
+      expect(target?.startBlockId).toBe("divider-1")
+      // 核心验证：识别出的是该分隔行下一页（第 2 页）的讲稿备注，而非第一页！
+      expect(target?.notes).toContain("Demo为主，用于表达思想")
+      expect(target?.noteBlocks?.[0]?.id).toBe("note-block-p2")
+    })
+
+    it("点击第 2 个分隔行时，即便由于历史扫描逻辑传入了前置分页符 divider-1，也必须精准识别为第 3 页（下一页）", () => {
+      const target = resolveTargetSlide(mockSlides, {
+        activeBlockId: "divider-2",
+        activeBlockType: "NodeThematicBreak",
+        // 模拟缺陷场景：此前未加 isDivider 判断时，会往上查找找到上一个分隔符 divider-1
+        currentPageDividerId: "divider-1",
+      })
+
+      expect(target).not.toBeNull()
+      expect(target?.pageIndex).toBe(3)
+      expect(target?.startBlockId).toBe("divider-2")
+      // 核心验证：必须识别下一页（第 3 页）的总结讲稿，严禁错误识别为第 2 页的讲稿！
+      expect(target?.notes).toBe("第三页总结讲稿备注")
+      expect(target?.noteBlocks?.[0]?.id).toBe("note-block-p3")
+    })
+
+    it("在思源内核上报 tb 或 thematic-break 缩写类型时，同样能够正确识别下一页与讲稿", () => {
+      const targetTb = resolveTargetSlide(mockSlides, {
+        activeBlockId: "divider-2",
+        activeBlockType: "tb",
+      })
+
+      expect(targetTb?.pageIndex).toBe(3)
+      expect(targetTb?.notes).toBe("第三页总结讲稿备注")
+    })
+
+    it("点击普通内容块时，根据前置分页符正确定位所属页面", () => {
+      const targetBlock = resolveTargetSlide(mockSlides, {
+        activeBlockId: "b-p2-text",
+        activeBlockType: "NodeParagraph",
+        currentPageDividerId: "divider-1",
+      })
+
+      expect(targetBlock?.pageIndex).toBe(2)
+      expect(targetBlock?.notes).toContain("Demo为主")
     })
   })
 })

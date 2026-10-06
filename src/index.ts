@@ -936,29 +936,42 @@ export default class SiYuanSlidevPlugin extends SyPlugin {
       }
     }
 
-    const isDivider = effectiveType === "NodeThematicBreak"
+    // 解析当前块所属顶层块 ID 以及其所归属的前置分页符 ID 与版式
+    const topBlockEl = (effectiveEl.closest(".protyle-wysiwyg > [data-node-id]") || effectiveEl) as HTMLElement
+    const topBlockId = topBlockEl?.getAttribute("data-node-id") || effectiveId
+
+    const isDivider =
+      effectiveType === "NodeThematicBreak" ||
+      effectiveType === "tb" ||
+      effectiveType === "thematic-break" ||
+      topBlockEl?.getAttribute("data-type") === "NodeThematicBreak" ||
+      topBlockEl?.getAttribute("data-type") === "tb" ||
+      Boolean(topBlockEl?.classList?.contains("hr"))
     const isCode = effectiveType === "NodeCodeBlock"
     const contentText = effectiveEl.innerText?.trim() || ""
     const attrs = (await getBlockAttrs(effectiveId).catch(() => ({}))) || {}
     const override = globalDocumentCompiler.getBlockAttrOverride(effectiveId) || {}
     const finalAttrs = { ...attrs, ...override }
 
-    // 解析当前块所属顶层块 ID 以及其所归属的前置分页符 ID 与版式
-    const topBlockEl = (effectiveEl.closest(".protyle-wysiwyg > [data-node-id]") || effectiveEl) as HTMLElement
-    const topBlockId = topBlockEl?.getAttribute("data-node-id") || effectiveId
-
     let pageDividerId = ""
     let pageDividerLayout = ""
-    let prev = topBlockEl.previousElementSibling
-    while (prev) {
-      const pType = prev.getAttribute("data-type")
-      if (pType === "NodeThematicBreak" || pType === "tb" || prev.classList?.contains("hr")) {
-        pageDividerId = prev.getAttribute("data-node-id") || ""
-        // 注意：绝不能直接盲目信任并读取 DOM 上可能残留的 custom-slidev-layout
-        // 权威事实来源必须是缓存、编译模型与内核真实属性
-        break
+
+    if (isDivider) {
+      // 当前激活块本身即为分页符 (---)，其开启并承载了分隔行下一页的页面配置与演讲备注
+      pageDividerId = effectiveId
+      pageDividerLayout = finalAttrs[ATTR_PAGE_LAYOUT] || finalAttrs["custom-slidev-layout"] || ""
+    } else {
+      let prev = topBlockEl.previousElementSibling
+      while (prev) {
+        const pType = prev.getAttribute("data-type")
+        if (pType === "NodeThematicBreak" || pType === "tb" || prev.classList?.contains("hr")) {
+          pageDividerId = prev.getAttribute("data-node-id") || ""
+          // 注意：绝不能直接盲目信任并读取 DOM 上可能残留的 custom-slidev-layout
+          // 权威事实来源必须是缓存、编译模型与内核真实属性
+          break
+        }
+        prev = prev.previousElementSibling
       }
-      prev = prev.previousElementSibling
     }
 
     // 容错降级：若 Protyle 虚拟滚动导致前置分页符已从 DOM 中卸载，
