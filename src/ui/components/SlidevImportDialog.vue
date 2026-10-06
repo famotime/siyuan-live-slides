@@ -176,20 +176,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onMounted, ref } from 'vue'
-import { openTab, showMessage } from 'siyuan'
-import {
-  createDocWithMd,
-  getChildBlocks,
-  lsNotebooks,
-  setBlockAttrs,
-  upload,
-} from '@/api'
-import { extractSlidevZip, rewritePresentationAssetPaths } from '@/compiler/asset-importer'
-import type { IParsedSlidevPresentation } from '@/compiler/slidev-importer'
-import { parseSlidevPresentation } from '@/compiler/slidev-importer'
-import type { IExtractedAssetItem } from '@/compiler/asset-importer'
-import { ATTR_ELEM_SLOT } from '@/types/slidev-protocol'
+import { inject, onMounted } from 'vue'
+import { useSlidevImport } from './useSlidevImport'
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -198,303 +186,45 @@ const emit = defineEmits<{
 
 const plugin = inject<any>('plugin')
 
-const inputMode = ref<'file' | 'text'>('file')
-const isDragging = ref(false)
-const isImporting = ref(false)
-const errorMessage = ref('')
-
-const fileInputRef = ref<HTMLInputElement | null>(null)
-const selectedFile = ref<File | null>(null)
-const selectedFileName = ref('')
-const selectedFileSize = ref(0)
-const rawMarkdownText = ref('')
-
-const extractedAssets = ref<IExtractedAssetItem[]>([])
-const parsedPresentation = ref<IParsedSlidevPresentation | null>(null)
-
-const customDocTitle = ref('')
-const notebooks = ref<Array<{ id: string; name: string }>>([])
-const selectedNotebookId = ref('')
-
-// 选项开关
-const optCleanHtml = ref(true)
-const optStripNotes = ref(true)
-const optUploadAssets = ref(true)
-const optAutoPreview = ref(true)
-
-async function reprocessCurrentInput() {
-  if (selectedFile.value) {
-    await processFile(selectedFile.value)
-  } else if (rawMarkdownText.value) {
-    onTextChange()
-  }
-}
-
-const formattedFileSize = computed(() => {
-  const bytes = selectedFileSize.value
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return `${(bytes / (k ** i)).toFixed(1)} ${sizes[i]}`
-})
-
-const currentTheme = computed(() => {
-  return parsedPresentation.value?.docRootAttrs['custom-slidev-theme'] || 'default'
-})
-
-const extractedAssetsCount = computed(() => {
-  if (extractedAssets.value.length > 0) {
-    return extractedAssets.value.length
-  }
-  return parsedPresentation.value?.stats.discoveredAssets.length || 0
-})
-
-const layoutChips = computed(() => {
-  const dist = parsedPresentation.value?.stats.layoutDistribution || {}
-  return Object.entries(dist).map(([name, count]) => ({ name, count }))
-})
+const {
+  inputMode,
+  isDragging,
+  isImporting,
+  errorMessage,
+  fileInputRef,
+  selectedFileName,
+  rawMarkdownText,
+  extractedAssetsCount,
+  parsedPresentation,
+  customDocTitle,
+  notebooks,
+  selectedNotebookId,
+  optCleanHtml,
+  optStripNotes,
+  optUploadAssets,
+  optAutoPreview,
+  formattedFileSize,
+  currentTheme,
+  layoutChips,
+  fetchNotebooks,
+  triggerFileInput,
+  clearFile,
+  onFileSelected,
+  onFileDrop,
+  onTextChange,
+  reprocessCurrentInput,
+  handleConfirmImport,
+} = useSlidevImport(plugin)
 
 onMounted(async () => {
-  try {
-    const nbRes: any = await lsNotebooks()
-    if (nbRes?.notebooks && Array.isArray(nbRes.notebooks)) {
-      notebooks.value = nbRes.notebooks.filter((n: any) => !n.closed)
-      if (notebooks.value.length > 0) {
-        selectedNotebookId.value = notebooks.value[0].id
-      }
-    }
-  } catch (e) {
-    console.warn('获取笔记本列表失败:', e)
-  }
+  await fetchNotebooks()
 })
 
-function triggerFileInput() {
-  fileInputRef.value?.click()
-}
-
-function clearFile() {
-  selectedFile.value = null
-  selectedFileName.value = ''
-  selectedFileSize.value = 0
-  parsedPresentation.value = null
-  extractedAssets.value = []
-  errorMessage.value = ''
-}
-
-async function onFileSelected(e: Event) {
-  const input = e.target as HTMLInputElement
-  if (input.files && input.files[0]) {
-    await processFile(input.files[0])
-  }
-}
-
-async function onFileDrop(e: DragEvent) {
-  isDragging.value = false
-  if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
-    await processFile(e.dataTransfer.files[0])
-  }
-}
-
-async function processFile(file: File) {
-  errorMessage.value = ''
-  selectedFile.value = file
-  selectedFileName.value = file.name
-  selectedFileSize.value = file.size
-
-  try {
-    const isZip = file.name.toLowerCase().endsWith('.zip')
-    if (isZip) {
-      const buffer = await file.arrayBuffer()
-      const zipRes = await extractSlidevZip(buffer)
-      if (!zipRes.entryMarkdown) {
-        errorMessage.value = '未在 Zip 压缩包中找到 slides.md 或任何有效的 Markdown 入口文件'
-        return
-      }
-      extractedAssets.value = zipRes.assets
-      const parsed = parseSlidevPresentation(zipRes.entryMarkdown, {
-        stripNotesFromMarkdown: optStripNotes.value,
-        cleanHtmlToMarkdown: optCleanHtml.value,
-        cleanSlots: false,
-        virtualFiles: zipRes.virtualFiles,
-      })
-      parsedPresentation.value = parsed
-      customDocTitle.value = parsed.docTitle || file.name.replace(/\.zip$/i, '')
-    } else {
-      // .md 文件
-      const text = await file.text()
-      extractedAssets.value = []
-      const filePath = (file as any).path || ''
-      const baseDir = filePath ? filePath.replace(/[\\/][^\\/]+$/, '') : ''
-      const parsed = parseSlidevPresentation(text, {
-        stripNotesFromMarkdown: optStripNotes.value,
-        cleanHtmlToMarkdown: optCleanHtml.value,
-        cleanSlots: false,
-        baseDir: baseDir || undefined,
-      })
-      parsedPresentation.value = parsed
-      customDocTitle.value = parsed.docTitle || file.name.replace(/\.md$/i, '')
-    }
-  } catch (err: any) {
-    console.error('解析文件失败:', err)
-    errorMessage.value = `解析文件失败: ${err.message || String(err)}`
-  }
-}
-
-function onTextChange() {
-  errorMessage.value = ''
-  if (!rawMarkdownText.value.trim()) {
-    parsedPresentation.value = null
-    return
-  }
-  try {
-    const parsed = parseSlidevPresentation(rawMarkdownText.value, {
-      stripNotesFromMarkdown: optStripNotes.value,
-      cleanHtmlToMarkdown: optCleanHtml.value,
-      cleanSlots: false,
-    })
-    parsedPresentation.value = parsed
-    customDocTitle.value = parsed.docTitle || 'Slidev 演示文稿'
-  } catch (err: any) {
-    errorMessage.value = `解析 Markdown 源码失败: ${err.message || String(err)}`
-  }
-}
-
 async function onConfirmImport() {
-  if (!parsedPresentation.value) return
-  if (!selectedNotebookId.value && notebooks.value.length > 0) {
-    selectedNotebookId.value = notebooks.value[0].id
-  }
-  if (!selectedNotebookId.value) {
-    errorMessage.value = '请先选择目标笔记本'
-    return
-  }
-
-  isImporting.value = true
-  errorMessage.value = ''
-
-  try {
-    const finalPresentation = parsedPresentation.value
-    const assetMap: Record<string, string> = {}
-
-    // 1. 若有待上传资产且勾选了上传选项
-    if (optUploadAssets.value && extractedAssets.value.length > 0) {
-      const filesToUpload: File[] = []
-      for (const a of extractedAssets.value) {
-        const fileObj = new File([a.data], a.fileName, { type: 'application/octet-stream' })
-        filesToUpload.push(fileObj)
-      }
-      try {
-        const uploadRes: any = await upload('/data/assets', filesToUpload)
-        if (uploadRes?.succMap) {
-          for (const [origName, syPath] of Object.entries(uploadRes.succMap)) {
-            assetMap[origName] = String(syPath)
-          }
-        }
-      } catch (upErr) {
-        console.warn('上传本地静态资产失败，保留原路径:', upErr)
-      }
-    }
-
-    // 2. 重写媒体路径
-    if (Object.keys(assetMap).length > 0) {
-      rewritePresentationAssetPaths(finalPresentation, assetMap)
-    }
-
-    // 3. 在思源笔记创建新文档
-    const safeTitle = (customDocTitle.value.trim() || 'Slidev 演示文稿').replace(/[\\/:*?"<>|]/g, '_')
-    const docPath = `/${safeTitle}`
-
-    const newDocId: string = await createDocWithMd(
-      selectedNotebookId.value,
-      docPath,
-      finalPresentation.flattenedMarkdown,
-    )
-
-    if (!newDocId) {
-      throw new Error('思源内核创建文档失败，未返回有效 DocumentId')
-    }
-
-    // 4. 设置文档根属性 (Doc Attrs 与第 1 页 Page Attrs 融合，确保第一页版式如 image-right、image 等完整持久化)
-    const firstSlideAttrs = finalPresentation.slides[0]?.pageAttrs || {}
-    await setBlockAttrs(newDocId, { ...firstSlideAttrs, ...finalPresentation.docRootAttrs })
-
-    // 5. 设置各页分割线属性 (Page Attrs)
-    const rawBlocks: any[] = await getChildBlocks(newDocId).catch(() => [])
-    const isDivider = (b: any) => {
-      if (!b) return false
-      const t = String(b.type || '').toLowerCase()
-      const md = String(b.markdown || '').trim()
-      const c = String(b.content || '').trim()
-      return (
-        t === 'tb' ||
-        t === 'thematic-break' ||
-        t === 'nodethematicbreak' ||
-        md === '---' ||
-        md === '***' ||
-        c === '---' ||
-        c === '***'
-      )
-    }
-    const dividerBlocks = rawBlocks.filter(isDivider)
-
-    // 若第一段为分割线（dividerBlocks 与 slides 数量一致），各页分割线一一对应
-    if (dividerBlocks.length >= finalPresentation.slides.length) {
-      for (let i = 0; i < finalPresentation.slides.length; i++) {
-        const slide = finalPresentation.slides[i]
-        const tbBlock = dividerBlocks[i]
-        if (tbBlock && tbBlock.id && Object.keys(slide.pageAttrs).length > 0) {
-          await setBlockAttrs(tbBlock.id, slide.pageAttrs)
-        }
-      }
-    } else {
-      // 容错降级：第 1 页属性保存在根节点，第 2 页及后续页绑定在对应的水平分割线上
-      for (let i = 1; i < finalPresentation.slides.length; i++) {
-        const slide = finalPresentation.slides[i]
-        const tbBlock = dividerBlocks[i - 1]
-        if (tbBlock && tbBlock.id && Object.keys(slide.pageAttrs).length > 0) {
-          await setBlockAttrs(tbBlock.id, slide.pageAttrs)
-        }
-      }
-    }
-
-    // 5.1 扫描各块并将 ::right:: 插槽标记之后的块自动持久化打上 custom-slidev-slot="right" 块属性
-    let inRightSlot = false
-    for (const b of rawBlocks) {
-      if (isDivider(b)) {
-        inRightSlot = false
-        continue
-      }
-      const text = (b.markdown || b.content || '').trim()
-      if (text === '::right::' || text.startsWith('::right::')) {
-        inRightSlot = true
-        continue
-      }
-      if (inRightSlot && b.id) {
-        await setBlockAttrs(b.id, { [ATTR_ELEM_SLOT]: 'right' }).catch(() => {})
-      }
-    }
-
-    showMessage(`🎉 成功导入 Slidev 演示文档《${safeTitle}》！`)
-    emit('success', { docId: newDocId })
+  const docId = await handleConfirmImport()
+  if (docId) {
+    emit('success', { docId })
     emit('close')
-
-    // 6. 沉浸式流转闭环：打开文档并在下方分屏放映
-    if (optAutoPreview.value && plugin) {
-      plugin.currentDocId = newDocId
-      await openTab({
-        app: plugin.app,
-        doc: { id: newDocId },
-      })
-      if (plugin.openBottomPreviewTab) {
-        plugin.openBottomPreviewTab()
-      }
-    }
-  } catch (err: any) {
-    console.error('导入 Slidev 演示失败:', err)
-    errorMessage.value = `导入执行失败: ${err.message || String(err)}`
-  } finally {
-    isImporting.value = false
   }
 }
 

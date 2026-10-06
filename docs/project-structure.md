@@ -37,9 +37,11 @@ d:\MyCodingProjects\siyuan-slidev
 │   │   ├── document-compiler.ts            # [RF-001] 文档编译编排服务（AST 获取、IAL 解析、块引解析、沙箱推送）
 │   │   ├── directive-wrapper.ts            # [RF-009] 指令包装器（Frontmatter 序列化、v-click/v-motion 生成、Shiki 聚光注入、三栏分配）
 │   │   ├── slidev-ast-builder.ts           # [RF-009] 思源块 AST 到 Slidev 幻灯片数据模型构建器
-│   │   ├── slidev-importer.ts              # [RF-003] Slidev 导入器（Frontmatter 解析、Markdown 切片、思源 AST 映射）
+│   │   ├── slidev-importer.ts              # [RF-003, RF-013] Slidev 导入器主服务（幻灯片切片与思源 AST 映射）
+│   │   ├── frontmatter-parser.ts           # [RF-013] 独立 YAML Frontmatter 解析器与代码切片展开器
 │   │   ├── html-cleaner.ts                 # [RF-003] HTML 标签清洗转换模块（网格容器剥离、Vue 标签保护、Markdown 清洗）
-│   │   ├── superblock-scanner.ts           # 超级块分栏布局扫描与图片角色推断
+│   │   ├── superblock-scanner.ts           # [RF-014] 图文超级块分栏布局扫描与图片角色推断门面
+│   │   ├── list-column-scanner.ts          # [RF-014] 专用多栏列表超级块扫描与槽位分配器
 │   │   ├── ast-crawler.ts                  # 思源块级树状深度优先遍历器
 │   │   ├── block-ref-resolver.ts           # 思源动态块引用 ((id)) 内容拉取与递归解析
 │   │   ├── scope-mapper.ts                 # 思源 IAL 自定义属性到 Slidev 作用域与字段映射
@@ -66,11 +68,14 @@ d:\MyCodingProjects\siyuan-slidev
 │   │   └── v-click-resolver.ts             # 页面级与块级 v-click 步数聚合计算器
 │   │
 │   ├── export/                             # 导出与打印管线
-│   │   ├── markdown-renderer.ts            # [RF-004] 通用轻量级 Markdown 块级转 HTML 渲染器
+│   │   ├── markdown-renderer.ts            # [RF-004, RF-012] 通用轻量级 Markdown 块级转 HTML 渲染器门面
+│   │   ├── visual-list-renderer.ts         # [RF-012] 卡片网格、时间线、步骤等富列表渲染器
+│   │   ├── slide-layout-renderer.ts        # [RF-012] 幻灯片页面版式容器分发器（两栏/三栏/图文/全屏等）
 │   │   ├── single-html-exporter.ts         # [RF-006] 离线单文件 HTML 打包导出中枢（专注于 Base64 资产内联与骨架装配）
 │   │   ├── standalone-template-styles.ts   # [RF-006] 独立单文件 HTML 样式生成器（~1000 行内联 CSS 与主题样式封装）
 │   │   ├── standalone-client-runtime.ts    # [RF-006] 离线播放器客户端 JavaScript 运行时脚本模板（~700 行）
-│   │   └── pdf-exporter.ts                 # [RF-004] 16:9 横版高分辨率打印与 PDF 导出器
+│   │   ├── pdf-exporter.ts                 # [RF-004, RF-011] 16:9 横版高分辨率打印与 PDF 导出器
+│   │   └── pdf-template-styles.ts          # [RF-011] 独立 PDF 打印样式表与 @page 纸张规则生成器
 │   │
 │   ├── ui/                                 # 用户界面组件层 (Vue 3)
 │   │   ├── dock/
@@ -85,7 +90,8 @@ d:\MyCodingProjects\siyuan-slidev
 │   │   │   ├── TransitionSelector.vue      # 转场过渡动效选择器组件
 │   │   │   ├── ElementAnimBar.vue          # 元素级动画快捷操作条
 │   │   │   ├── QuickDividerPopover.vue     # 原生分割线悬浮快捷菜单
-│   │   │   └── SlidevImportDialog.vue      # Slidev 项目导入对话框
+│   │   │   ├── SlidevImportDialog.vue      # [RF-015] Slidev 项目导入对话框（精简聚焦 UI 交互与预检卡片）
+│   │   │   └── useSlidevImport.ts          # [RF-015] 导入编排 Composable（资产上传、新建文档、属性注入与分屏联动）
 │   │   ├── tab/
 │   │   │   └── SlidevPreviewTab.vue        # 下方分屏实时演示放映页签
 │   │   └── popover-manager.ts              # 悬浮弹层与气泡位置计算管理
@@ -109,7 +115,7 @@ d:\MyCodingProjects\siyuan-slidev
 │       ├── api.d.ts                        # 思源内核响应数据类型
 │       └── index.d.ts                      # 全局环境与插件对象类型
 │
-├── tests/                                  # 自动化测试套件 (Vitest, 43 个测试文件，343 项用例全绿)
+├── tests/                                  # 自动化测试套件 (Vitest, 49 个测试文件，374 项用例全绿)
 │   ├── mocks/
 │   │   └── siyuan.ts                       # 思源插件宿主环境轻量 Mock（支持纯 Node 离线测试）
 │   ├── command-registry.test.ts            # [RF-007] 插件命令注册表独立单测
@@ -118,10 +124,16 @@ d:\MyCodingProjects\siyuan-slidev
 │   ├── directive-wrapper.test.ts           # [RF-009] Frontmatter 与动画指令包装纯函数单测
 │   ├── utils.test.ts                       # [RF-010] 通用 Markdown 与工具函数单测
 │   ├── export.test.ts                      # [RF-006] 离线单文件导出、样式与客户端运行时隔离测试
+│   ├── pdf-template-styles.test.ts         # [RF-011] PDF 打印样式表与 @page 纸张尺寸单测
+│   ├── visual-list-renderer.test.ts        # [RF-012] 卡片、时间线、步骤等富列表渲染单测
+│   ├── slide-layout-renderer.test.ts       # [RF-012] 双栏、三栏、图文等版式容器分发单测
+│   ├── markdown-renderer.test.ts           # [RF-004, RF-012] 导出 Markdown 块级渲染器通用单测
+│   ├── frontmatter-parser.test.ts          # [RF-013] YAML Frontmatter 状态机与代码切片单测
+│   ├── list-column-scanner.test.ts         # [RF-014] 多栏列表超级块扫描与分栏解析单测
+│   ├── use-slidev-import.test.ts           # [RF-015] Slidev 导入 Composable 业务与回填逻辑单测
 │   ├── document-compiler.test.ts           # [RF-001] 文档编译编排与 IAL 解析独立单测
 │   ├── inspector-state.test.ts             # [RF-002] Inspector 三态切换与数据模型单测
 │   ├── clean-markdown.test.ts              # [RF-003] HTML 容器转换与标签清洗边界单测
-│   ├── markdown-renderer.test.ts           # [RF-004] 导出 Markdown 块级渲染器通用单测
 │   ├── compiler.test.ts                    # AST 构建器与 IAL 解析单测
 │   ├── compiler-importer.test.ts           # Slidev Markdown 导入综合集成测试
 │   ├── asset-importer.test.ts              # 外部资源提取与解压测试
@@ -145,7 +157,7 @@ d:\MyCodingProjects\siyuan-slidev
 
 ---
 
-## 3. 重构演进对照表 (RF-001 ~ RF-010)
+## 3. 重构演进对照表 (RF-001 ~ RF-015)
 
 | 模块 | 重构前状况 | 重构后演进 | 收益 |
 | :--- | :--- | :--- | :--- |
@@ -159,3 +171,8 @@ d:\MyCodingProjects\siyuan-slidev
 | **Slidev 导入清洗 (`src/compiler/`)** | 导入器内联 400 行 HTML 标签清洗转换代码 | 抽离为 `html-cleaner.ts` | 导入器专注 AST 映射，清洗转换可独立进行边界单测 |
 | **导出 Markdown 渲染器 (`src/export/`)** | 离线 HTML 与 PDF 导出器各自内联独立渲染逻辑 | 统一提取 `markdown-renderer.ts` 共享渲染模块 | 彻底消除重复渲染逻辑，保证各导出渠道排版 100% 一致 |
 | **废弃模板与死代码** | 包含 0 引用的 `SlidevDockView.vue`、`App.vue` 及 `SiyuanTheme/` | 彻底清理删除 | 减少约 500 行无用代码，降低静态分析与包体积负担 |
+| **PDF 打印导出样式解耦 (RF-011)** | `pdf-exporter.ts` (733 行) 混杂近 600 行内联打印 CSS 字符串 | 抽离 `src/export/pdf-template-styles.ts`，主文件精简至 110 行 | 打印样式生成器支持独立测试与纸张尺寸覆盖，排版规则更清晰 |
+| **富列表渲染与版式分发 (RF-012)** | `markdown-renderer.ts` (1159 行) 混合行内标记、视觉列表与版式容器 | 抽离 `visual-list-renderer.ts` 与 `slide-layout-renderer.ts`，主文件精简至 558 行 | 消除全仓库最大单文件，卡片网格与幻灯片多栏容器独立可维护 |
+| **YAML 解析与代码切片展开 (RF-013)** | `slidev-importer.ts` (877 行) 混杂 210 行 YAML 状态机与切片展开器 | 抽离 `src/compiler/frontmatter-parser.ts`，主导入器精简至 494 行 | YAML 状态机纯函数隔离并具备全方位边界测试，代码切片提取解耦 |
+| **多栏列表超级块扫描解耦 (RF-014)** | `superblock-scanner.ts` (789 行) 混杂图文扫描与复杂列表分栏状态机 | 抽离 `src/compiler/list-column-scanner.ts`，原文件保留图文扫描与门面 | 列表超级块槽位分配与图文角色推断独立解耦，单向依赖清晰 |
+| **Slidev 导入弹窗业务解耦 (RF-015)** | `SlidevImportDialog.vue` (875 行) `<script setup>` 堆叠 300+ 行内核调用 | 抽取 `src/ui/components/useSlidevImport.ts`，对话框精简至仅负责 UI | 业务编排与 Vue 视图完全解耦，支持 Composable 级与端到端自动化测试 |

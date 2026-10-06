@@ -28,7 +28,9 @@ Stack: Vue 3, TypeScript, Vite, Vitest, Sass, SiYuan Plugin API.
 - **Compiler Pipeline**: `src/compiler/`
   - `document-compiler.ts`: Orchestrates AST retrieval, IAL parsing, dynamic block ref resolution, and sandbox updates.
   - `slidev-ast-builder.ts` & `directive-wrapper.ts`: Converts SiYuan block AST into Slidev presentation models and handles Frontmatter/v-click/v-motion/Shiki directives.
-  - `slidev-importer.ts` & `html-cleaner.ts`: Parses external Slidev Markdown and cleans/converts HTML containers and grids.
+  - `slidev-importer.ts` & `frontmatter-parser.ts`: Parses external Slidev Markdown, handles YAML frontmatter state machine, and unfolds code slice directives.
+  - `html-cleaner.ts`: Cleans and converts HTML containers and grids to native SiYuan blocks.
+  - `superblock-scanner.ts` & `list-column-scanner.ts`: Scans superblocks, allocates list column slots, and infers image roles.
   - `block-ref-resolver.ts`: Recursively resolves SiYuan block references (`((id))`).
 - **Sync & Coordination**: `src/sync/`
   - `inspector-sync-coordinator.ts`: Manages Protyle DOM selection probing, preceding divider back-tracing, and list item attribute self-healing.
@@ -37,20 +39,23 @@ Stack: Vue 3, TypeScript, Vite, Vitest, Sass, SiYuan Plugin API.
   - `engine-manager.ts`: Toggles between the built-in zero-dependency Web Sandbox and local Slidev CLI DevServer (port 3030).
   - `web-sandbox-bridge.ts`: Handles iframe postMessage IPC with the embedded preview player.
 - **Export Pipeline**: `src/export/`
-  - `markdown-renderer.ts`: Shared lightweight Markdown-to-HTML block renderer.
+  - `markdown-renderer.ts`: Shared lightweight Markdown-to-HTML block renderer facade.
+  - `visual-list-renderer.ts`: Renders visual list formats (cards, timelines, steps).
+  - `slide-layout-renderer.ts`: Dispatches multi-column and rich slide layouts (two-cols, image-right, etc.).
   - `single-html-exporter.ts`: Orchestrates Base64 asset inlining and standalone presentation assembly.
   - `standalone-template-styles.ts`: Generates standalone CSS stylesheets and theme custom properties.
   - `standalone-client-runtime.ts`: Self-contained presentation player client runtime script template.
-  - `pdf-exporter.ts`: Outputs printable 16:9 landscape PDF slides.
+  - `pdf-exporter.ts` & `pdf-template-styles.ts`: Generates 16:9 landscape PDF slides and handles isolated @page print styles.
 - **Presentation Inspector UI**: `src/ui/`
   - `dock/SlidevInspectorDockView.vue`: Master container dock view managing state and layout orchestration.
   - `dock/useInspectorActions.ts`: Encapsulates kernel API mutations, notes conversion, and divider management.
+  - `components/SlidevImportDialog.vue` & `components/useSlidevImport.ts`: Slidev project import dialog and composable orchestrating asset uploads, document creation, and slot backfilling.
   - `components/PageInspectorSection.vue`: Slide layout, transition, background, notes.
   - `components/BlockInspectorSection.vue`: Block `v-click` animation, column slot, Shiki code spotlight.
   - `components/DocInspectorSection.vue`: Presentation theme, aspect ratio, AI toolbar, quick actions.
   - `tab/SlidevPreviewTab.vue`: Split-screen live preview tab.
 - **Testing & Mocks**: `tests/`
-  - 43 test suites (340+ tests) covering compiler, cleaner, renderer, inspector state, actions, coordinator, engine, export, and synergy.
+  - 49 test suites (374 tests) covering compiler, cleaner, renderer, inspector state, actions, coordinator, engine, export, import composable, and synergy.
   - `tests/mocks/siyuan.ts`: Host plugin mock aliased in `vitest.config.ts` for running tests in pure Node environments.
 
 ---
