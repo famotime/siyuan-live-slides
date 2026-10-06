@@ -9,6 +9,7 @@ export const ATTR_DOC_ASPECT_RATIO = "custom-slidev-aspect-ratio"
 export const ATTR_DOC_HIGHLIGHTER = "custom-slidev-highlighter"
 export const ATTR_DOC_DEFAULT_TRANSITION = "custom-slidev-default-transition"
 export const ATTR_DOC_COLOR_SCHEMA = "custom-slidev-color-schema"
+export const ATTR_DOC_SPACING = "custom-slidev-spacing"
 
 // 2. 幻灯片页面级属性常量 (Page Scope，承载于水平分割线或根块)
 export const ATTR_PAGE_SLIDE = "custom-slidev-slide"
@@ -18,6 +19,7 @@ export const ATTR_PAGE_BACKGROUND = "custom-slidev-background"
 export const ATTR_PAGE_IMAGE = "custom-slidev-image"
 export const ATTR_PAGE_NOTES = "custom-slidev-notes"
 export const ATTR_PAGE_CLASS = "custom-slidev-class"
+export const ATTR_PAGE_SPACING = "custom-slidev-spacing"
 
 // 3. 元素动效级与内容属性常量 (Element Scope)
 export const ATTR_ELEM_CLICK = "custom-slidev-click"
@@ -42,6 +44,7 @@ export interface ISlidevPluginConfig {
   highlighter: "shiki" | "prism"
   defaultTransition: string
   colorSchema: "auto" | "dark" | "light"
+  spacing?: "compact" | "normal" | "loose"
 }
 
 /** 页面版式类型 */

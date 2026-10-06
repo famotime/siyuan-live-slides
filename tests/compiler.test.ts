@@ -34,12 +34,14 @@ describe("Scope Mapper (三层作用域解析)", () => {
       "custom-slidev-highlighter": "shiki",
       "custom-slidev-default-transition": "fade",
       "custom-slidev-color-schema": "dark",
+      "custom-slidev-spacing": "compact",
     }
     const config = parseDocumentConfig(docAttrs)
     expect(config.theme).toBe("seriph")
     expect(config.aspectRatio).toBe("4/3")
     expect(config.defaultTransition).toBe("fade")
     expect(config.colorSchema).toBe("dark")
+    expect(config.spacing).toBe("compact")
   })
 
   it("当无文档属性时应提供稳定默认值", () => {
@@ -47,6 +49,7 @@ describe("Scope Mapper (三层作用域解析)", () => {
     expect(config.theme).toBe("default")
     expect(config.aspectRatio).toBe("16/9")
     expect(config.defaultTransition).toBe("slide-left")
+    expect(config.spacing).toBe("normal")
   })
 
   it("应该准确识别水平分割线与分页标记", () => {
@@ -65,11 +68,13 @@ describe("Scope Mapper (三层作用域解析)", () => {
       "custom-slidev-transition": "slide-up",
       "custom-slidev-background": "assets/bg.jpg",
       "custom-slidev-notes": "这是演讲备忘录",
+      "custom-slidev-spacing": "loose",
     }
     const { frontmatter, notes } = parsePageAttrs(pageAttrs)
     expect(frontmatter.layout).toBe("two-cols")
     expect(frontmatter.transition).toBe("slide-up")
     expect(frontmatter.background).toBe("assets/bg.jpg")
+    expect(frontmatter.spacing).toBe("loose")
     expect(notes).toBe("这是演讲备忘录")
   })
 

@@ -104,6 +104,34 @@ describe("Single-File HTML Exporter (单文件离线 HTML 导出)", () => {
     expect(html).toContain("renderSlide(currentIndex - 1);")
     expect(html).toContain("renderSlide(currentIndex + 1);")
   })
+
+  it("导出的独立 HTML 应包含间距系统 CSS 变量、分栏弹性链、contain 媒体与 Lightbox 模态", () => {
+    const spacingDoc: ISlidevDocument = {
+      ...dummyDoc,
+      config: {
+        ...dummyDoc.config,
+        spacing: "compact",
+      },
+      slides: [
+        {
+          ...dummyDoc.slides[0],
+          frontmatter: { layout: "three-cols-header", spacing: "loose" },
+        },
+      ],
+    }
+    const html = buildStandaloneHtml(spacingDoc)
+    expect(html).toContain("--slidev-padding-y")
+    expect(html).toContain("--slidev-header-gap")
+    expect(html).toContain(".slide-content.spacing-compact")
+    expect(html).toContain(".slide-content.spacing-normal")
+    expect(html).toContain(".slide-content.spacing-loose")
+    expect(html).toContain("object-fit: contain !important;")
+    expect(html).toContain("cursor: zoom-in;")
+    expect(html).toContain('id="slidev-lightbox"')
+    expect(html).toContain("openLightbox")
+    expect(html).toContain("closeLightbox")
+    expect(html).toContain('e.key === "Escape"')
+  })
 })
 
 describe("PDF Exporter (高保真 PDF 讲义导出)", () => {
@@ -166,6 +194,25 @@ describe("PDF Exporter (高保真 PDF 讲义导出)", () => {
     expect(html).toContain("<strong>粗体</strong>")
     expect(html).toContain("pdf-quote")
     expect(html).toContain("重要引言")
+  })
+
+  it("导出的 PDF 打印文档应支持间距预设类与分栏媒体 contain 样式", () => {
+    const spacingDoc: ISlidevDocument = {
+      ...dummyDoc,
+      config: { ...dummyDoc.config, spacing: "compact" },
+      slides: [
+        {
+          ...dummyDoc.slides[0],
+          frontmatter: { layout: "three-cols-header", spacing: "loose" },
+        },
+      ],
+    }
+    const html = buildPrintableHtml(spacingDoc)
+    expect(html).toContain("spacing-loose")
+    expect(html).toContain(".pdf-slide-page.spacing-compact")
+    expect(html).toContain(".pdf-slide-page.spacing-normal")
+    expect(html).toContain(".pdf-slide-page.spacing-loose")
+    expect(html).toContain("object-fit: contain !important;")
   })
 
   it("在非浏览器环境调用 triggerPdfExport 应安全返回 false", () => {

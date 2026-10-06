@@ -212,6 +212,45 @@ export function buildStandaloneHtml(
     :fullscreen .slide-viewport, .is-fullscreen .slide-viewport {
       border-radius: 0 !important; box-shadow: none !important;
     }
+    .slide-content {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      flex: 1 1 0%;
+      padding: var(--slidev-padding-y, 32px) var(--slidev-padding-x, 48px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    /* 间距预设风格 */
+    .slide-content.spacing-compact,
+    .slide-viewport[data-spacing="compact"] .slide-content,
+    [data-slidev-spacing="compact"] {
+      --slidev-padding-y: 20px;
+      --slidev-padding-x: 36px;
+      --slidev-header-gap: 10px;
+      --slidev-title-margin-bottom: 6px;
+    }
+    .slide-content.spacing-normal,
+    .slide-viewport[data-spacing="normal"] .slide-content,
+    [data-slidev-spacing="normal"] {
+      --slidev-padding-y: 32px;
+      --slidev-padding-x: 48px;
+      --slidev-header-gap: 16px;
+      --slidev-title-margin-bottom: 10px;
+    }
+    .slide-content.spacing-loose,
+    .slide-viewport[data-spacing="loose"] .slide-content,
+    [data-slidev-spacing="loose"] {
+      --slidev-padding-y: 48px;
+      --slidev-padding-x: 56px;
+      --slidev-header-gap: 24px;
+      --slidev-title-margin-bottom: 16px;
+    }
+
     .layout-cover { justify-content: center; align-items: center; text-align: center; }
     .layout-cover h1, .layout-cover .slide-block h1 { font-size: 3.8rem !important; font-weight: 800 !important; line-height: 1.15 !important; letter-spacing: -0.025em !important; margin-bottom: 16px !important; }
     .layout-cover h2, .layout-cover .slide-block h2 { font-size: 1.85rem !important; font-weight: 600 !important; opacity: 0.85 !important; margin-bottom: 12px !important; }
@@ -236,8 +275,13 @@ export function buildStandaloneHtml(
     }
     .layout-header-section {
       width: 100%;
-      margin-bottom: 24px;
+      margin-bottom: var(--slidev-header-gap, 16px) !important;
       flex-shrink: 0;
+    }
+    .layout-header-section h1,
+    .layout-header-section h2,
+    .layout-header-section h3 {
+      margin-bottom: var(--slidev-title-margin-bottom, 10px) !important;
     }
     .pdf-three-cols-wrapper,
     .layout-three-cols-grid {
@@ -485,37 +529,95 @@ export function buildStandaloneHtml(
       box-sizing: border-box !important;
     }
 
+    .two-cols-left > .slide-block,
+    .two-cols-right > .slide-block,
+    .three-cols-col > .slide-block,
+    .pdf-col > .slide-block,
     .pdf-col .slide-block {
-      flex: 0 0 auto !important;
-      min-height: auto !important;
-      height: auto !important;
-      max-height: none !important;
-      width: 100% !important;
-      display: block !important;
-      overflow: visible !important;
-      margin-bottom: 8px !important;
-      box-sizing: border-box !important;
-    }
-
-    .pdf-col .slide-block:has(video),
-    .pdf-col .slide-block:has(img),
-    .pdf-col .slide-block:has(.slide-media-container),
-    .pdf-col .slide-block:has(.slide-video-container),
-    .pdf-col .slide-block:has(.slide-list-media),
-    .pdf-col .slide-block.slide-block--media,
-    .pdf-col .slide-block.slide-block--video,
-    .pdf-col .slide-block.slide-block--image,
-    .pdf-col .slide-block:only-child {
       flex: 1 1 0% !important;
       min-height: 0 !important;
-      height: 100% !important;
       max-height: 100% !important;
       display: flex !important;
       flex-direction: column !important;
+      width: 100% !important;
+      height: 100% !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+      margin-bottom: 0 !important;
+    }
+
+    /* 列内列表项的标题与段落文字：固定高度，不压缩 */
+    .two-cols-left .slide-list-item-title,
+    .two-cols-right .slide-list-item-title,
+    .three-cols-col .slide-list-item-title,
+    .pdf-col .slide-list-item-title,
+    .two-cols-left h1, .two-cols-left h2, .two-cols-left h3, .two-cols-left h4, .two-cols-left h5, .two-cols-left h6,
+    .two-cols-right h1, .two-cols-right h2, .two-cols-right h3, .two-cols-right h4, .two-cols-right h5, .two-cols-right h6,
+    .three-cols-col h1, .three-cols-col h2, .three-cols-col h3, .three-cols-col h4, .three-cols-col h5, .three-cols-col h6,
+    .pdf-col h1, .pdf-col h2, .pdf-col h3, .pdf-col h4, .pdf-col h5, .pdf-col h6,
+    .three-cols-col .slide-list-item-desc,
+    .pdf-col .slide-list-item-desc {
+      flex: 0 0 auto !important;
+      margin-top: 0 !important;
+      margin-bottom: 6px !important;
+    }
+
+    /* 列内媒体容器：填满标题下方所有剩余垂直空间，居中对齐且无溢出 */
+    .two-cols-left .slide-list-media,
+    .two-cols-right .slide-list-media,
+    .three-cols-col .slide-list-media,
+    .pdf-col .slide-list-media,
+    .two-cols-left .slide-video-container,
+    .two-cols-right .slide-video-container,
+    .three-cols-col .slide-video-container,
+    .pdf-col .slide-video-container,
+    .two-cols-left .slide-media-container,
+    .two-cols-right .slide-media-container,
+    .three-cols-col .slide-media-container,
+    .pdf-col .slide-media-container {
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      min-width: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      max-width: 100% !important;
+      display: flex !important;
       align-items: center !important;
       justify-content: center !important;
       overflow: hidden !important;
-      margin-bottom: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 列内多媒体播放器：以 contain 模式等比缩放完整可见，绝对不超高超宽、不产生遮挡与滚动条 */
+    .two-cols-left video,
+    .two-cols-right video,
+    .three-cols-col video,
+    .pdf-col video,
+    .two-cols-left img,
+    .two-cols-right img,
+    .three-cols-col img,
+    .pdf-col img,
+    .two-cols-left .slide-video-player,
+    .two-cols-right .slide-video-player,
+    .three-cols-col .slide-video-player,
+    .pdf-col .slide-video-player,
+    .layout-three-cols-grid video,
+    .layout-two-cols-grid video,
+    .layout-three-cols-grid img,
+    .layout-two-cols-grid img {
+      max-width: 100% !important;
+      max-height: 100% !important;
+      width: auto !important;
+      height: auto !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      object-fit: contain !important;
+      display: block !important;
+      margin: 0 auto !important;
+      cursor: zoom-in;
     }
 
     .slide-block img,
@@ -526,8 +628,8 @@ export function buildStandaloneHtml(
     .slide-block video {
       max-width: 100% !important;
       max-height: 100% !important;
-      width: 100% !important;
-      height: 100% !important;
+      width: auto !important;
+      height: auto !important;
       min-width: 0 !important;
       min-height: 0 !important;
       object-fit: contain !important;
@@ -537,6 +639,7 @@ export function buildStandaloneHtml(
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
       background: transparent;
       outline: none;
+      cursor: zoom-in;
     }
 
     .slide-list-media {
@@ -560,8 +663,8 @@ export function buildStandaloneHtml(
     .slide-list-media .slide-video-player {
       max-width: 100% !important;
       max-height: 100% !important;
-      width: 100% !important;
-      height: 100% !important;
+      width: auto !important;
+      height: auto !important;
       min-width: 0 !important;
       min-height: 0 !important;
       object-fit: contain !important;
@@ -569,6 +672,7 @@ export function buildStandaloneHtml(
       box-shadow: 0 3px 12px rgba(0, 0, 0, 0.14) !important;
       display: block !important;
       margin: auto !important;
+      cursor: zoom-in;
     }
 
     .slide-block:has(.slide-list-media) {
@@ -596,23 +700,83 @@ export function buildStandaloneHtml(
     .layout-two-cols .slide-media-container,
     .layout-three-cols .slide-media-block,
     .layout-three-cols .slide-video-container,
-    .layout-three-cols .slide-media-container,
-    .two-cols-left img,
-    .two-cols-right img,
-    .two-cols-left video,
-    .two-cols-right video,
-    .three-cols-col video,
-    .pdf-col video,
-    .layout-three-cols-grid video {
+    .layout-three-cols .slide-media-container {
       max-width: 100% !important;
       max-height: 100% !important;
       width: 100% !important;
       height: 100% !important;
       min-width: 0 !important;
       min-height: 0 !important;
-      object-fit: contain !important;
-      display: block !important;
-      margin: auto !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      overflow: hidden !important;
+    }
+
+    /* Lightbox 大图与视频灯箱模态窗口 */
+    .slidev-lightbox {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(8px);
+      z-index: 999999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-out;
+      opacity: 0;
+      transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .slidev-lightbox.active {
+      display: flex;
+      opacity: 1;
+    }
+    .slidev-lightbox-content {
+      position: relative;
+      max-width: 92vw;
+      max-height: 92vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: default;
+    }
+    .slidev-lightbox-img {
+      max-width: 92vw;
+      max-height: 92vh;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+    }
+    .slidev-lightbox-video {
+      max-width: 92vw;
+      max-height: 92vh;
+      border-radius: 8px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+    }
+    .slidev-lightbox-close {
+      position: absolute;
+      top: 24px;
+      right: 28px;
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 50%;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+      z-index: 1000000;
+    }
+    .slidev-lightbox-close:hover {
+      background: rgba(255, 255, 255, 0.35);
+      transform: scale(1.05);
     }
 
     img.slide-inline-img {
@@ -862,6 +1026,11 @@ export function buildStandaloneHtml(
       <span id="page-num">1 / 1</span>
       <button id="btn-next">下一页 ▶</button>
       <button id="btn-fullscreen">⛶ 全屏</button>
+    </div>
+    <!-- 全屏媒体灯箱 (Lightbox) 模态窗口 -->
+    <div id="slidev-lightbox" class="slidev-lightbox">
+      <button class="slidev-lightbox-close" id="lightbox-close" aria-label="关闭 (Esc)">✕</button>
+      <div class="slidev-lightbox-content" id="lightbox-content"></div>
     </div>
   </div>
 
@@ -1224,7 +1393,10 @@ export function buildStandaloneHtml(
         const slide = slides[currentIndex];
         pageNum.textContent = (currentIndex + 1) + " / " + slides.length;
 
-        container.className = "slide-content layout-" + (slide.frontmatter?.layout || "default");
+        const pageSp = slide.frontmatter?.spacing;
+        const currentSpacing = (pageSp && pageSp !== "inherit") ? pageSp : (data.config?.spacing || "normal");
+        container.className = "slide-content layout-" + (slide.frontmatter?.layout || "default") + " spacing-" + currentSpacing;
+        if (viewport) viewport.setAttribute("data-spacing", currentSpacing);
         container.innerHTML = "";
 
         const z = typeof slide.frontmatter?.zoom === "number" && slide.frontmatter.zoom > 0 ? slide.frontmatter.zoom : 1;
@@ -1437,6 +1609,58 @@ export function buildStandaloneHtml(
         syncAutoplayVideos();
       }
 
+      // Lightbox 控制逻辑
+      const lightbox = document.getElementById("slidev-lightbox");
+      const lightboxContent = document.getElementById("lightbox-content");
+      const lightboxClose = document.getElementById("lightbox-close");
+      let isLightboxOpen = false;
+
+      function openLightbox(type, src, alt) {
+        if (!lightbox || !lightboxContent) return;
+        lightboxContent.innerHTML = "";
+        if (type === "video") {
+          const v = document.createElement("video");
+          v.className = "slidev-lightbox-video";
+          v.src = src;
+          v.controls = true;
+          v.autoplay = true;
+          v.playsInline = true;
+          lightboxContent.appendChild(v);
+        } else {
+          const img = document.createElement("img");
+          img.className = "slidev-lightbox-img";
+          img.src = src;
+          img.alt = alt || "";
+          lightboxContent.appendChild(img);
+        }
+        lightbox.classList.add("active");
+        isLightboxOpen = true;
+      }
+
+      function closeLightbox() {
+        if (!lightbox) return;
+        const v = lightbox.querySelector("video");
+        if (v) v.pause();
+        lightbox.classList.remove("active");
+        if (lightboxContent) lightboxContent.innerHTML = "";
+        isLightboxOpen = false;
+      }
+
+      if (lightboxClose) {
+        lightboxClose.addEventListener("click", (e) => {
+          e.stopPropagation();
+          closeLightbox();
+        });
+      }
+      if (lightbox) {
+        lightbox.addEventListener("click", (e) => {
+          if (e.target === lightbox || e.target === lightboxClose) {
+            e.stopPropagation();
+            closeLightbox();
+          }
+        });
+      }
+
       btnPrev.addEventListener("click", () => renderSlide(currentIndex - 1));
       btnNext.addEventListener("click", () => renderSlide(currentIndex + 1));
       btnFullscreen.addEventListener("click", () => {
@@ -1448,12 +1672,21 @@ export function buildStandaloneHtml(
       });
 
       window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" || e.key === "Esc") {
+          if (isLightboxOpen) {
+            closeLightbox();
+            e.preventDefault();
+            return;
+          }
+        }
+        if (isLightboxOpen) return;
         if (e.key === "ArrowRight" || e.key === " ") renderSlide(currentIndex + 1);
         if (e.key === "ArrowLeft") renderSlide(currentIndex - 1);
         if (e.key === "f" || e.key === "F") btnFullscreen.click();
       });
 
       document.addEventListener("click", (e) => {
+        if (isLightboxOpen) return;
         if (e.button !== 0) return;
         const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
         if (!targetEl || !targetEl.closest) return;
@@ -1463,6 +1696,18 @@ export function buildStandaloneHtml(
           const id = refEl.getAttribute("data-ref-id");
           if (id) {
             window.open("siyuan://blocks/" + id, "_blank");
+            return;
+          }
+        }
+
+        // 媒体点击唤起 Lightbox 放大模态
+        const mediaEl = targetEl.closest(".slide-content img, .slide-content video");
+        if (mediaEl && !mediaEl.closest(".controls, button, a")) {
+          e.stopPropagation();
+          const isVideo = mediaEl.tagName.toLowerCase() === "video";
+          const src = isVideo ? (mediaEl.currentSrc || mediaEl.src || mediaEl.querySelector("source")?.src) : mediaEl.src;
+          if (src) {
+            openLightbox(isVideo ? "video" : "image", src, mediaEl.alt || "");
             return;
           }
         }

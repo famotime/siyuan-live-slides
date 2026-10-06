@@ -10,6 +10,8 @@ import {
   ATTR_DOC_DEFAULT_TRANSITION,
   ATTR_DOC_HIGHLIGHTER,
   ATTR_DOC_THEME,
+  ATTR_DOC_SPACING,
+  ATTR_PAGE_SPACING,
   ATTR_ELEM_CLICK,
   ATTR_ELEM_MOTION,
   ATTR_ELEM_NOTE,
@@ -36,6 +38,7 @@ export const DEFAULT_SLIDEV_CONFIG: ISlidevPluginConfig = {
   highlighter: "shiki",
   defaultTransition: "slide-left",
   colorSchema: "auto",
+  spacing: "normal",
 }
 
 /**
@@ -54,6 +57,7 @@ export function parseDocumentConfig(
     highlighter: (attrs[ATTR_DOC_HIGHLIGHTER]?.trim() as any) || DEFAULT_SLIDEV_CONFIG.highlighter,
     defaultTransition: attrs[ATTR_DOC_DEFAULT_TRANSITION]?.trim() || DEFAULT_SLIDEV_CONFIG.defaultTransition,
     colorSchema: (attrs[ATTR_DOC_COLOR_SCHEMA]?.trim() as any) || DEFAULT_SLIDEV_CONFIG.colorSchema,
+    spacing: (attrs[ATTR_DOC_SPACING]?.trim() as any) || DEFAULT_SLIDEV_CONFIG.spacing,
   }
 }
 
@@ -115,6 +119,10 @@ export function parsePageAttrs(
     frontmatter.class = attrs[ATTR_PAGE_CLASS].trim()
   }
 
+  if (attrs[ATTR_PAGE_SPACING]) {
+    frontmatter.spacing = attrs[ATTR_PAGE_SPACING].trim()
+  }
+
   if (attrs[ATTR_PAGE_NOTES]) {
     notes = attrs[ATTR_PAGE_NOTES].trim()
   }
@@ -129,6 +137,7 @@ export function parsePageAttrs(
         ATTR_PAGE_BACKGROUND,
         ATTR_PAGE_IMAGE,
         ATTR_PAGE_CLASS,
+        ATTR_PAGE_SPACING,
         ATTR_PAGE_NOTES,
         ATTR_PAGE_SLIDE,
       ].includes(k)

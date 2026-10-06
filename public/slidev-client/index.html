@@ -434,11 +434,37 @@
       height: 100%;
       min-height: 100%;
       flex: 1 1 0%;
-      padding: 48px 56px;
+      padding: var(--slidev-padding-y, 32px) var(--slidev-padding-x, 48px);
       display: flex;
       flex-direction: column;
       overflow: hidden;
       box-sizing: border-box;
+    }
+
+    /* 间距预设风格 */
+    .slide-content-wrapper.spacing-compact,
+    .slide-viewport[data-spacing="compact"] .slide-content-wrapper,
+    [data-slidev-spacing="compact"] {
+      --slidev-padding-y: 20px;
+      --slidev-padding-x: 36px;
+      --slidev-header-gap: 10px;
+      --slidev-title-margin-bottom: 6px;
+    }
+    .slide-content-wrapper.spacing-normal,
+    .slide-viewport[data-spacing="normal"] .slide-content-wrapper,
+    [data-slidev-spacing="normal"] {
+      --slidev-padding-y: 32px;
+      --slidev-padding-x: 48px;
+      --slidev-header-gap: 16px;
+      --slidev-title-margin-bottom: 10px;
+    }
+    .slide-content-wrapper.spacing-loose,
+    .slide-viewport[data-spacing="loose"] .slide-content-wrapper,
+    [data-slidev-spacing="loose"] {
+      --slidev-padding-y: 48px;
+      --slidev-padding-x: 56px;
+      --slidev-header-gap: 24px;
+      --slidev-title-margin-bottom: 16px;
     }
 
     /* Layouts */
@@ -493,10 +519,16 @@
     }
 
     .two-cols-header-top,
-    .three-cols-header-top {
+    .three-cols-header-top,
+    .layout-header-section {
       width: 100% !important;
-      margin-bottom: 20px !important;
+      margin-bottom: var(--slidev-header-gap, 16px) !important;
       flex-shrink: 0 !important;
+    }
+    .two-cols-header-top h1, .two-cols-header-top h2, .two-cols-header-top h3,
+    .three-cols-header-top h1, .three-cols-header-top h2, .three-cols-header-top h3,
+    .layout-header-section h1, .layout-header-section h2, .layout-header-section h3 {
+      margin-bottom: var(--slidev-title-margin-bottom, 10px) !important;
     }
 
     .layout-two-cols {
@@ -542,6 +574,19 @@
       overflow-wrap: break-word !important;
       word-break: break-word !important;
       white-space: normal !important;
+    }
+
+    .two-cols-left > .slide-block,
+    .two-cols-right > .slide-block,
+    .three-cols-col > .slide-block {
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      max-height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      width: 100% !important;
+      height: 100% !important;
+      box-sizing: border-box !important;
     }
 
     .three-cols-col .slide-block,
@@ -1404,7 +1449,21 @@
     .layout-two-cols .slide-media-container,
     .layout-three-cols .slide-media-block,
     .layout-three-cols .slide-video-container,
-    .layout-three-cols .slide-media-container,
+    .layout-three-cols .slide-media-container {
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      min-width: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+    }
+
     .two-cols-left img,
     .two-cols-right img,
     .three-cols-col img,
@@ -1414,14 +1473,85 @@
     .layout-three-cols video,
     .layout-two-cols video,
     .three-cols-col .slide-video-player,
-    .layout-three-cols .slide-video-player {
+    .layout-three-cols .slide-video-player,
+    .two-cols-left .slide-video-player,
+    .two-cols-right .slide-video-player {
       max-width: 100% !important;
       max-height: 100% !important;
-      width: 100% !important;
-      height: 100% !important;
+      width: auto !important;
+      height: auto !important;
       min-width: 0 !important;
       min-height: 0 !important;
       object-fit: contain !important;
+      display: block !important;
+      margin: 0 auto !important;
+      cursor: zoom-in;
+    }
+
+    /* Lightbox 大图与视频灯箱模态窗口 */
+    .slidev-lightbox {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(8px);
+      z-index: 999999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-out;
+      opacity: 0;
+      animation: slidev-lightbox-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes slidev-lightbox-fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .slidev-lightbox-content {
+      position: relative;
+      max-width: 92vw;
+      max-height: 92vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: default;
+    }
+    .slidev-lightbox-img {
+      max-width: 92vw;
+      max-height: 92vh;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+    }
+    .slidev-lightbox-video {
+      max-width: 92vw;
+      max-height: 92vh;
+      border-radius: 8px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+    }
+    .slidev-lightbox-close {
+      position: absolute;
+      top: 24px;
+      right: 28px;
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 50%;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+      z-index: 1000000;
+    }
+    .slidev-lightbox-close:hover {
+      background: rgba(255, 255, 255, 0.4);
+      transform: scale(1.08);
     }
 
     /* 行内媒体 */
@@ -1952,6 +2082,7 @@
       <div
         class="slide-viewport"
         :class="['slidev-theme-' + currentSlidevTheme]"
+        :data-spacing="currentSpacing"
         :style="viewportStyle"
       >
         <div class="ambient-glow" v-if="isDarkTheme"></div>
@@ -1960,7 +2091,7 @@
             v-if="currentSlide"
             :key="currentSlide.pageIndex"
             class="slide-content-wrapper"
-            :class="['layout-' + (currentSlide.frontmatter.layout || 'default'), currentSlide.frontmatter.class, currentSlide.frontmatter.layoutClass]"
+            :class="['layout-' + (currentSlide.frontmatter.layout || 'default'), 'spacing-' + currentSpacing, currentSlide.frontmatter.class, currentSlide.frontmatter.layoutClass]"
             :style="contentWrapperStyle"
           >
             <!-- 带表头的双栏布局 -->
@@ -2227,6 +2358,32 @@
           </svg>
         </button>
       </div>
+
+      <!-- 全屏媒体灯箱 (Lightbox) 模态窗口 -->
+      <transition name="fade">
+        <div
+          v-if="activeLightbox"
+          class="slidev-lightbox"
+          @click.stop="closeLightbox"
+        >
+          <button class="slidev-lightbox-close" @click.stop="closeLightbox" aria-label="关闭 (Esc)">✕</button>
+          <div class="slidev-lightbox-content" @click.stop>
+            <img
+              v-if="activeLightbox.type === 'img'"
+              :src="activeLightbox.src"
+              :alt="activeLightbox.alt"
+              class="slidev-lightbox-img"
+            />
+            <video
+              v-else-if="activeLightbox.type === 'video'"
+              :src="activeLightbox.src"
+              class="slidev-lightbox-video"
+              controls
+              autoplay
+            ></video>
+          </div>
+        </div>
+      </transition>
     </div>
   </div>
 
@@ -2925,16 +3082,58 @@
           return 1
         })
 
+        const currentSpacing = computed(() => {
+          const pageSp = currentSlide.value?.frontmatter?.spacing
+          if (pageSp && pageSp !== 'inherit') return pageSp
+          return config.value?.spacing || 'normal'
+        })
+
+        const spacingCssVars = computed(() => {
+          const sp = currentSpacing.value
+          if (sp === 'compact') {
+            return {
+              '--slidev-padding-y': '20px',
+              '--slidev-padding-x': '36px',
+              '--slidev-header-gap': '10px',
+              '--slidev-title-margin-bottom': '6px',
+            }
+          }
+          if (sp === 'loose') {
+            return {
+              '--slidev-padding-y': '48px',
+              '--slidev-padding-x': '56px',
+              '--slidev-header-gap': '24px',
+              '--slidev-title-margin-bottom': '16px',
+            }
+          }
+          return {
+            '--slidev-padding-y': '32px',
+            '--slidev-padding-x': '48px',
+            '--slidev-header-gap': '16px',
+            '--slidev-title-margin-bottom': '10px',
+          }
+        })
+
         const contentWrapperStyle = computed(() => {
-          if (currentSlideZoom.value === 1) return {}
+          const base = { ...spacingCssVars.value }
+          if (currentSlideZoom.value === 1) return base
           const z = currentSlideZoom.value
           return {
+            ...base,
             width: `${100 / z}%`,
             height: `${100 / z}%`,
             transformOrigin: "top left",
             transform: `scale(${z})`
           }
         })
+
+        const activeLightbox = ref(null)
+        function openLightbox(type, src, alt = '') {
+          activeLightbox.value = { type, src, alt }
+        }
+        function closeLightbox() {
+          activeLightbox.value = null
+        }
 
         const currentThemeMode = computed(() => isDarkTheme.value ? "dark" : "light")
         const currentSlidevTheme = computed(() => config.value?.theme || "default")
@@ -4315,6 +4514,20 @@
         }
 
         function onBlockClick(blockId, e) {
+          if (e && e.target) {
+            const img = e.target.closest('img')
+            if (img && img.src && !img.closest('.slidev-lightbox')) {
+              e.stopPropagation()
+              openLightbox('img', img.src, img.alt || '')
+              return
+            }
+            const vid = e.target.closest('video')
+            if (vid && vid.src && !vid.closest('.slidev-lightbox') && !vid.hasAttribute('controls')) {
+              e.stopPropagation()
+              openLightbox('video', vid.src)
+              return
+            }
+          }
           if (e && e.target && (e.target.closest('button') || e.target.closest('a') || e.target.closest('[data-clickable]'))) {
             highlightedBlockId.value = blockId
             return
@@ -4461,6 +4674,13 @@
 
         // 监听键盘快捷键
         function onKeyDown(e) {
+          if (activeLightbox.value) {
+            if (e.key === "Escape") {
+              e.preventDefault()
+              closeLightbox()
+            }
+            return
+          }
           if (isKeyboardFrozen.value) {
             return
           }
@@ -4733,7 +4953,11 @@
           prevStepOrSlide,
           toggleTheme,
           toggleFullScreen,
-          onBlockClick
+          onBlockClick,
+          currentSpacing,
+          activeLightbox,
+          openLightbox,
+          closeLightbox
         }
       }
     })

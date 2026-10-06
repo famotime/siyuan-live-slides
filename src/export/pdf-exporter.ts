@@ -51,11 +51,13 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
 
   const slidesHtml = doc.slides.map((slide, idx) => {
     const layout = slide.frontmatter.layout || "default"
+    const pageSp = slide.frontmatter.spacing
+    const spacing = (pageSp && pageSp !== "inherit") ? pageSp : (doc.config.spacing || "normal")
     const contentHtml = renderSlideBlocksToHtml(slide)
     const pageNumText = `${idx + 1} / ${doc.slides.length}`
 
     return `
-      <section class="pdf-slide-page layout-${layout} theme-${theme}">
+      <section class="pdf-slide-page layout-${layout} theme-${theme} spacing-${spacing}">
         <header class="pdf-slide-header">
           <span class="pdf-doc-title">${escapeHtml(title)}</span>
           ${showPageNumber ? `<span class="pdf-page-badge">P. ${pageNumText}</span>` : ""}
@@ -101,12 +103,30 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       height: 100vh;
       page-break-after: always;
       break-after: page;
-      padding: 40px 60px;
+      padding: var(--slidev-padding-y, 36px) var(--slidev-padding-x, 56px);
       display: flex;
       flex-direction: column;
       position: relative;
       background: #ffffff;
       overflow: hidden;
+    }
+    .pdf-slide-page.spacing-compact {
+      --slidev-padding-y: 20px;
+      --slidev-padding-x: 36px;
+      --slidev-header-gap: 10px;
+      --slidev-title-margin-bottom: 6px;
+    }
+    .pdf-slide-page.spacing-normal {
+      --slidev-padding-y: 36px;
+      --slidev-padding-x: 56px;
+      --slidev-header-gap: 16px;
+      --slidev-title-margin-bottom: 10px;
+    }
+    .pdf-slide-page.spacing-loose {
+      --slidev-padding-y: 48px;
+      --slidev-padding-x: 64px;
+      --slidev-header-gap: 24px;
+      --slidev-title-margin-bottom: 16px;
     }
     .pdf-slide-page.theme-dark {
       background: #0f1117;
@@ -267,8 +287,13 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
     }
     .layout-header-section {
       width: 100%;
-      margin-bottom: 24px;
+      margin-bottom: var(--slidev-header-gap, 16px) !important;
       flex-shrink: 0;
+    }
+    .layout-header-section h1,
+    .layout-header-section h2,
+    .layout-header-section h3 {
+      margin-bottom: var(--slidev-title-margin-bottom, 10px) !important;
     }
     .pdf-three-cols-wrapper,
     .layout-three-cols-grid {
@@ -297,13 +322,54 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       word-break: break-word;
       white-space: normal;
     }
-    .pdf-col video,
-    .layout-three-cols-grid video,
-    .layout-two-cols-grid video {
-      max-width: 100% !important;
+    .pdf-col > .pdf-block,
+    .pdf-col > .slide-block {
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
       max-height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
       width: 100% !important;
       height: 100% !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    .pdf-col .slide-list-item-title,
+    .pdf-col h1, .pdf-col h2, .pdf-col h3, .pdf-col h4, .pdf-col h5, .pdf-col h6,
+    .pdf-col .slide-list-item-desc {
+      flex: 0 0 auto !important;
+      margin-top: 0 !important;
+      margin-bottom: 6px !important;
+    }
+    .pdf-col .slide-list-media,
+    .pdf-col .slide-video-container,
+    .pdf-col .slide-media-container {
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      min-width: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      max-width: 100% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      overflow: hidden !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-sizing: border-box !important;
+    }
+    .pdf-col video,
+    .layout-three-cols-grid video,
+    .layout-two-cols-grid video,
+    .pdf-col img,
+    .layout-three-cols-grid img,
+    .layout-two-cols-grid img,
+    .pdf-col .slide-video-player {
+      max-width: 100% !important;
+      max-height: 100% !important;
+      width: auto !important;
+      height: auto !important;
       min-width: 0 !important;
       min-height: 0 !important;
       object-fit: contain !important;

@@ -16,6 +16,49 @@
       @change="$emit('update:pageTransition', $event)"
     />
 
+    <!-- 页面间距风格 (Spacing) -->
+    <div class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div class="spm-control-title">
+            <SlidevIcon name="ratio" />
+            <span>页面间距 (Spacing)</span>
+          </div>
+          <span class="spm-control-desc">覆盖本页内边距与顶部标题间距</span>
+        </div>
+      </div>
+      <div class="spm-segmented-group">
+        <button
+          class="spm-segmented-item"
+          :class="{ active: !pageSpacing || pageSpacing === 'inherit' }"
+          @click="$emit('update:pageSpacing', 'inherit')"
+        >
+          继承全局
+        </button>
+        <button
+          class="spm-segmented-item"
+          :class="{ active: pageSpacing === 'compact' }"
+          @click="$emit('update:pageSpacing', 'compact')"
+        >
+          紧凑
+        </button>
+        <button
+          class="spm-segmented-item"
+          :class="{ active: pageSpacing === 'normal' }"
+          @click="$emit('update:pageSpacing', 'normal')"
+        >
+          标准
+        </button>
+        <button
+          class="spm-segmented-item"
+          :class="{ active: pageSpacing === 'loose' }"
+          @click="$emit('update:pageSpacing', 'loose')"
+        >
+          宽松
+        </button>
+      </div>
+    </div>
+
     <!-- 页面背景 -->
     <div class="spm-card-control">
       <div class="spm-control-header">
@@ -183,6 +226,7 @@ const props = defineProps<{
   pageLayout: string
   pageTransition: string
   pageBackground: string
+  pageSpacing?: string
   pageImage?: string
   pageNotes?: string
   pageIndex?: number
@@ -192,6 +236,7 @@ const emit = defineEmits<{
   (e: 'update:pageLayout', val: string): void
   (e: 'update:pageTransition', val: string): void
   (e: 'update:pageBackground', val: string): void
+  (e: 'update:pageSpacing', val: string): void
   (e: 'update:pageImage', val: string): void
   (e: 'addNoteBlock'): void
   (e: 'locateNoteBlock'): void

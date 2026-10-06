@@ -66,12 +66,14 @@
         :page-layout="pageLayout"
         :page-transition="pageTransition"
         :page-background="pageBackground"
+        :page-spacing="pageSpacing"
         :page-image="pageImage"
         :page-notes="currentSlideNotes"
         :page-index="targetPageIndex"
         @update:page-layout="onLayoutChange"
         @update:page-transition="onTransitionChange"
         @update:page-background="onBackgroundChange"
+        @update:page-spacing="onPageSpacingChange"
         @update:page-image="onImageChange"
         @add-note-block="onAddNoteBlock"
         @locate-note-block="onLocateNoteBlock"
@@ -123,9 +125,11 @@
         :doc-theme="docTheme"
         :doc-aspect-ratio="docAspectRatio"
         :doc-default-transition="docDefaultTransition"
+        :doc-spacing="docSpacing"
         @update:doc-theme="onDocThemeChange"
         @update:doc-aspect-ratio="onDocAspectRatioChange"
         @update:doc-default-transition="onDocTransitionChange"
+        @update:doc-spacing="onDocSpacingChange"
         @open-bottom-preview="onOpenBottomPreview"
         @open-presenter="onOpenPresenter"
         @ai-auto-split="onAiAutoSplit"
@@ -170,11 +174,13 @@ import {
   ATTR_DOC_THEME,
   ATTR_DOC_ASPECT_RATIO,
   ATTR_DOC_DEFAULT_TRANSITION,
+  ATTR_DOC_SPACING,
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_TRANSITION,
   ATTR_PAGE_BACKGROUND,
   ATTR_PAGE_IMAGE,
   ATTR_PAGE_NOTES,
+  ATTR_PAGE_SPACING,
   ATTR_ELEM_CLICK,
   ATTR_ELEM_MOTION,
   ATTR_ELEM_SLOT,
@@ -308,6 +314,7 @@ const pageLayout = computed(() => activeBlockAttrs.value[ATTR_PAGE_LAYOUT] || 'd
 const pageTransition = computed(() => activeBlockAttrs.value[ATTR_PAGE_TRANSITION] || 'slide-left')
 const pageBackground = ref('')
 const pageImage = ref('')
+const pageSpacing = computed(() => activeBlockAttrs.value[ATTR_PAGE_SPACING] || 'inherit')
 
 // 讲稿备注与当前页模型响应式绑定
 const targetSlide = computed(() => {
@@ -460,6 +467,7 @@ async function onToggleVideoControls() {
 const docTheme = computed(() => latestDoc.value?.config?.theme || activeBlockAttrs.value[ATTR_DOC_THEME] || 'default')
 const docAspectRatio = computed(() => latestDoc.value?.config?.aspectRatio || activeBlockAttrs.value[ATTR_DOC_ASPECT_RATIO] || '16/9')
 const docDefaultTransition = computed(() => latestDoc.value?.config?.defaultTransition || activeBlockAttrs.value[ATTR_DOC_DEFAULT_TRANSITION] || 'slide-left')
+const docSpacing = computed(() => latestDoc.value?.config?.spacing || activeBlockAttrs.value[ATTR_DOC_SPACING] || 'normal')
 
 const imageRole = computed(() => {
   const role = activeBlockAttrs.value[ATTR_ELEM_ROLE] || activeBlockAttrs.value['slidev-role']
@@ -668,6 +676,10 @@ function onBackgroundChange(val: string) {
 function onImageChange(val: string) {
   pageImage.value = val
   saveAttr(ATTR_PAGE_IMAGE, val)
+}
+
+function onPageSpacingChange(val: string) {
+  saveAttr(ATTR_PAGE_SPACING, val === 'inherit' ? '' : val)
 }
 
 async function onToggleNoteBlock() {
@@ -938,6 +950,10 @@ function onDocAspectRatioChange(ratio: string) {
 
 function onDocTransitionChange(trans: string) {
   saveDocAttr(ATTR_DOC_DEFAULT_TRANSITION, trans)
+}
+
+function onDocSpacingChange(spacing: string) {
+  saveDocAttr(ATTR_DOC_SPACING, spacing)
 }
 
 // 快捷操作

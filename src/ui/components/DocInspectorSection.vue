@@ -65,6 +65,45 @@
       </div>
     </div>
 
+    <!-- 间距风格 (Spacing) -->
+    <div class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div class="spm-control-title">
+            <SlidevIcon name="ratio" />
+            <span>间距风格 (Spacing)</span>
+          </div>
+          <span class="spm-control-desc">内边距与顶部标题下边距预设</span>
+        </div>
+      </div>
+      <div class="spm-segmented-group">
+        <button
+          class="spm-segmented-item b3-tooltips b3-tooltips__s"
+          :class="{ active: (docSpacing || 'normal') === 'compact' }"
+          aria-label="紧凑排版：上下 20px / 左右 36px，释放垂直空间，适配图文分栏"
+          @click="$emit('update:docSpacing', 'compact')"
+        >
+          紧凑 (Compact)
+        </button>
+        <button
+          class="spm-segmented-item b3-tooltips b3-tooltips__s"
+          :class="{ active: (docSpacing || 'normal') === 'normal' }"
+          aria-label="标准排版：上下 32px / 左右 48px，协调美观（推荐默认）"
+          @click="$emit('update:docSpacing', 'normal')"
+        >
+          标准 (Normal)
+        </button>
+        <button
+          class="spm-segmented-item b3-tooltips b3-tooltips__s"
+          :class="{ active: (docSpacing || 'normal') === 'loose' }"
+          aria-label="宽松排版：上下 48px / 左右 56px，大留白适合极简大字"
+          @click="$emit('update:docSpacing', 'loose')"
+        >
+          宽松 (Loose)
+        </button>
+      </div>
+    </div>
+
     <!-- 全局默认转场 -->
     <div class="spm-card-control">
       <div class="spm-control-header">
@@ -228,12 +267,14 @@ defineProps<{
   docTheme: string
   docAspectRatio: string
   docDefaultTransition: string
+  docSpacing?: string
 }>()
 
 defineEmits<{
   (e: 'update:docTheme', val: string): void
   (e: 'update:docAspectRatio', val: string): void
   (e: 'update:docDefaultTransition', val: string): void
+  (e: 'update:docSpacing', val: string): void
   (e: 'openBottomPreview'): void
   (e: 'openPresenter'): void
   (e: 'aiAutoSplit'): void
