@@ -173,6 +173,92 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     }
   }
 
+  function getPageTargetBlockId(): string {
+    const isCurDivider = ctx.activeBlockType.value === "NodeThematicBreak" || 
+                         ctx.activeBlockType.value === "NodeThematicBreakBlock" || 
+                         ctx.activeBlockType.value === "hr" || 
+                         ctx.activeBlockType.value === "thematicbreak"
+    return ctx.currentPageDividerId.value || (isCurDivider ? ctx.activeBlockId.value : "") || ctx.currentDocId.value
+  }
+
+  async function savePageAttr(key: string, value: string) {
+    const targetId = getPageTargetBlockId()
+    if (!targetId) return
+
+    if (targetId === ctx.activeBlockId.value) {
+      ctx.activeBlockAttrs.value[key] = value
+    }
+    globalDocumentCompiler.setBlockAttrOverride(targetId, { [key]: value })
+    syncDomBlockAttrs(targetId, { [key]: value })
+
+    if (key === ATTR_PAGE_LAYOUT) {
+      ctx.currentPageDividerLayout.value = value
+      if (ctx.targetSlide.value) {
+        if (!ctx.targetSlide.value.frontmatter) {
+          ctx.targetSlide.value.frontmatter = {}
+        }
+        ctx.targetSlide.value.frontmatter.layout = value as any
+      }
+    }
+
+    if (key === ATTR_PAGE_LAYOUT_RATIO) {
+      if (ctx.targetSlide.value) {
+        if (!ctx.targetSlide.value.frontmatter) {
+          ctx.targetSlide.value.frontmatter = {}
+        }
+        ctx.targetSlide.value.frontmatter.layoutRatio = value
+      }
+    }
+
+    triggerSaveNotice("保存中...")
+    try {
+      await setBlockAttrs(targetId, { [key]: value })
+      triggerSaveNotice("已同步")
+      if (ctx.plugin) {
+        await ctx.plugin.compileCurrentDocument()
+      }
+    } catch (e) {
+      triggerSaveNotice("同步失败")
+    }
+  }
+
+  async function applyPageLayoutAndRatio(layout: string, ratio: string) {
+    const targetId = getPageTargetBlockId()
+    if (!targetId) return
+
+    const updates: Record<string, string> = {
+      [ATTR_PAGE_LAYOUT]: layout,
+      [ATTR_PAGE_LAYOUT_RATIO]: ratio,
+    }
+
+    if (targetId === ctx.activeBlockId.value) {
+      ctx.activeBlockAttrs.value[ATTR_PAGE_LAYOUT] = layout
+      ctx.activeBlockAttrs.value[ATTR_PAGE_LAYOUT_RATIO] = ratio
+    }
+    ctx.currentPageDividerLayout.value = layout
+    globalDocumentCompiler.setBlockAttrOverride(targetId, updates)
+    syncDomBlockAttrs(targetId, updates)
+
+    if (ctx.targetSlide.value) {
+      if (!ctx.targetSlide.value.frontmatter) {
+        ctx.targetSlide.value.frontmatter = {}
+      }
+      ctx.targetSlide.value.frontmatter.layout = layout as any
+      ctx.targetSlide.value.frontmatter.layoutRatio = ratio
+    }
+
+    triggerSaveNotice("应用排版中...")
+    try {
+      await setBlockAttrs(targetId, updates)
+      triggerSaveNotice("已应用分栏与比例")
+      if (ctx.plugin) {
+        await ctx.plugin.compileCurrentDocument()
+      }
+    } catch (e) {
+      triggerSaveNotice("应用失败")
+    }
+  }
+
   async function saveDocAttr(key: string, value: string) {
     const docId = ctx.currentDocId.value || ctx.activeBlockId.value
     if (!docId) return
@@ -601,6 +687,8 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     triggerSaveNotice,
     saveAttrs,
     saveAttr,
+    savePageAttr,
+    applyPageLayoutAndRatio,
     saveDocAttr,
     onToggleVideoAutoplay,
     onToggleVideoLoop,

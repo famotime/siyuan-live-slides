@@ -5,6 +5,54 @@
       <span>元素动效与排版</span>
     </div>
 
+    <!-- 超级块专属：列宽比例与布局一键同步 -->
+    <div v-if="isSuperBlock || detectedSbInfo?.hasSuperBlock" class="spm-card-control" style="border-left: 3px solid var(--b3-theme-primary);">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div class="spm-control-title">
+            <SlidevIcon name="ratio" />
+            <span>超级块列宽与布局</span>
+          </div>
+          <span class="spm-control-desc">读取思源超级块列宽并一键同步到幻灯片分栏</span>
+        </div>
+      </div>
+
+      <div style="background: var(--b3-theme-surface); border: 1px solid var(--b3-theme-surface-lighter); border-radius: 6px; padding: 10px; margin-bottom: 8px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+          <div style="font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 4px;">
+            <span v-if="detectedSbInfo?.isCustomWidth">📐 已识别自定义列宽比例</span>
+            <span v-else>📐 识别到 {{ detectedSbInfo?.colCount || 2 }} 列超级块分栏</span>
+          </div>
+          <code style="background: var(--b3-theme-primary-lightest); color: var(--b3-theme-primary); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 12px;">
+            {{ detectedSbInfo?.ratio || '1:1' }}
+          </code>
+        </div>
+        <div style="font-size: 11px; opacity: 0.75; line-height: 1.4;">
+          {{ detectedSbInfo?.isCustomWidth ? '检测到已调节子块宽度，可一键应用为当前页分栏比例。' : '当前超级块子列为思源默认均宽，可在思源中拖动调节或直接应用。' }}
+        </div>
+      </div>
+
+      <div class="spm-action-grid">
+        <button
+          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          aria-label="一键将当前页版式切换为对应双栏/三栏，并写入此列宽比例"
+          style="background: var(--b3-theme-primary-lightest); color: var(--b3-theme-primary); font-weight: 500;"
+          @click="$emit('applySuperBlockLayout', detectedSbInfo)"
+        >
+          <SlidevIcon name="sparkles" />
+          <span>设为本页排版与比例</span>
+        </button>
+        <button
+          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          aria-label="仅将提取的比值写入当前页的分栏比例属性"
+          @click="$emit('applySuperBlockRatio', detectedSbInfo?.ratio || '1:1')"
+        >
+          <SlidevIcon name="check" />
+          <span>仅应用比例 ({{ detectedSbInfo?.ratio || '1:1' }})</span>
+        </button>
+      </div>
+    </div>
+
     <!-- 0. 设为讲稿备注 (slidev-note) -->
     <div class="spm-card-control">
       <div class="spm-control-header">
@@ -384,6 +432,14 @@ const props = defineProps<{
   isNote?: boolean
   imageRole?: string
   currentSlideLayout?: string
+  isSuperBlock?: boolean
+  detectedSbInfo?: {
+    hasSuperBlock: boolean
+    colCount: number
+    ratio: string
+    isCustomWidth: boolean
+    recommendedLayout: string
+  } | null
 }>()
 
 const effectiveLayout = computed(() => {
@@ -470,6 +526,8 @@ const emit = defineEmits<{
   (e: 'update:elemSlot', val: string): void
   (e: 'update:elemShikiLines', val: string): void
   (e: 'update:elemMaxHeight', val: string): void
+  (e: 'applySuperBlockLayout', info: any): void
+  (e: 'applySuperBlockRatio', ratio: string): void
   (e: 'insertDividerBefore'): void
   (e: 'insertDividerAfter'): void
   (e: 'setTwoColsContrast'): void

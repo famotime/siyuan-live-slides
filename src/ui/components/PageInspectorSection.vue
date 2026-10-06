@@ -10,6 +10,27 @@
       @change="$emit('update:pageLayout', $event)"
     />
 
+    <!-- 智能分栏提示 (当默认版式下检测到横向超级块) -->
+    <div
+      v-if="!isMultiColLayout && detectedSbRatio"
+      class="spm-card-control"
+      style="border-left: 3px solid var(--b3-theme-primary); background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.06); padding: 8px 12px; margin-top: 6px;"
+    >
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+        <div style="font-size: 11px; display: flex; align-items: center; gap: 6px; flex: 1;">
+          <SlidevIcon name="sparkles" />
+          <span>检测到本页横向超级块列宽比例：<b>{{ detectedSbRatio }}</b></span>
+        </div>
+        <button
+          class="spm-btn-action"
+          style="padding: 2px 8px; height: 26px; font-size: 11px; flex-shrink: 0; background: var(--b3-theme-primary); color: #fff;"
+          @click="$emit('applySuperBlockLayout', detectedSbInfo || { recommendedLayout: 'two-cols', ratio: detectedSbRatio })"
+        >
+          一键设为分栏并应用
+        </button>
+      </div>
+    </div>
+
     <!-- 分栏比例设置 (仅支持分栏与图文布局) -->
     <div v-if="isMultiColLayout" class="spm-card-control">
       <div class="spm-control-header">
@@ -23,11 +44,21 @@
         <button
           v-if="detectedSbRatio"
           class="spm-btn-text b3-tooltips b3-tooltips__w"
-          aria-label="从当前页思源超级块读取实际宽度比例"
+          :aria-label="`从当前页思源超级块读取实际宽度比例 (${detectedSbRatio})`"
           @click="$emit('update:pageLayoutRatio', detectedSbRatio)"
         >
           <SlidevIcon name="sparkles" />
-          <span>从超级块读取</span>
+          <span>从超级块读取 ({{ detectedSbRatio }})</span>
+        </button>
+        <button
+          v-else
+          class="spm-btn-text b3-tooltips b3-tooltips__w"
+          disabled
+          style="opacity: 0.45; cursor: not-allowed;"
+          aria-label="当前页未检测到调整过列宽的横向超级块（默认各列平均分配）"
+        >
+          <SlidevIcon name="sparkles" />
+          <span>从超级块读取 (未检测到)</span>
         </button>
       </div>
 
@@ -65,9 +96,22 @@
         </button>
       </div>
 
-      <div v-if="detectedSbRatio" style="margin-top: 6px; font-size: 11px; opacity: 0.75; display: flex; align-items: center; gap: 4px;">
-        <span>📐 检测到思源超级块宽度：</span>
-        <code style="background: rgba(125, 125, 125, 0.15); padding: 1px 4px; border-radius: 3px;">{{ detectedSbRatio }}</code>
+      <div v-if="detectedSbRatio" style="margin-top: 6px; font-size: 11px; opacity: 0.85; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 4px;">
+          <span>📐 检测到思源超级块宽度：</span>
+          <code style="background: rgba(125, 125, 125, 0.15); padding: 1px 4px; border-radius: 3px; font-weight: bold;">{{ detectedSbRatio }}</code>
+        </div>
+        <button
+          v-if="pageLayoutRatio !== detectedSbRatio"
+          class="spm-btn-text"
+          style="font-size: 11px; padding: 0 4px;"
+          @click="$emit('update:pageLayoutRatio', detectedSbRatio)"
+        >
+          点击应用
+        </button>
+      </div>
+      <div v-else style="margin-top: 6px; font-size: 11px; opacity: 0.6;">
+        <span>📐 未检测到调宽超级块（默认各列平均分配）</span>
       </div>
     </div>
 
@@ -293,6 +337,7 @@ const props = defineProps<{
   pageIndex?: number
   pageLayoutRatio?: string
   detectedSbRatio?: string
+  detectedSbInfo?: any
 }>()
 
 const emit = defineEmits<{
@@ -302,6 +347,7 @@ const emit = defineEmits<{
   (e: 'update:pageSpacing', val: string): void
   (e: 'update:pageImage', val: string): void
   (e: 'update:pageLayoutRatio', val: string): void
+  (e: 'applySuperBlockLayout', info: any): void
   (e: 'addNoteBlock'): void
   (e: 'locateNoteBlock'): void
   (e: 'generateNotes'): void
