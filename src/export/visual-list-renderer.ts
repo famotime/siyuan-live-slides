@@ -12,7 +12,7 @@ export function formatListItemContent(rawText: string): string {
 
   const hasHeading = lines.some(line => /^#{1,6}\s+/.test(line))
   if (!hasHeading) {
-    return formatInlineMarkdown(lines.join(" "))
+    return lines.map(l => formatInlineMarkdown(l)).join("<br/>")
   }
 
   const resultParts: string[] = []
@@ -20,8 +20,8 @@ export function formatListItemContent(rawText: string): string {
 
   const flushParagraph = () => {
     if (pendingParaLines.length > 0) {
-      const pText = pendingParaLines.join(" ")
-      resultParts.push(`<p class="slide-list-item-desc">${formatInlineMarkdown(pText)}</p>`)
+      const pText = pendingParaLines.map(l => formatInlineMarkdown(l)).join("<br/>")
+      resultParts.push(`<p class="slide-list-item-desc">${pText}</p>`)
       pendingParaLines = []
     }
   }
@@ -43,36 +43,49 @@ export function formatListItemContent(rawText: string): string {
 }
 
 /**
- * 格式化列表前置说明导语段落
+ * 格式化列表前置说明导语段落（首行作为栏目标题去圆点，后续各行作为说明段落自然分行）
  */
 export function formatLeadContent(lines: string[]): string {
   if (lines.length === 0) return ""
   const resultParts: string[] = []
-  let pendingParaLines: string[] = []
 
-  const flushParagraph = (isFirst: boolean) => {
-    if (pendingParaLines.length > 0) {
-      const pText = pendingParaLines.join(" ")
-      const cls = isFirst ? "slide-list-item-title" : "slide-list-item-desc"
-      resultParts.push(`<p class="${cls}">${formatInlineMarkdown(pText)}</p>`)
-      pendingParaLines = []
-    }
+  // 1. 首行独立作为栏目标题
+  const firstLine = lines[0]
+  const firstHeadingMatch = firstLine.match(/^(#{1,6})\s+(.*)$/)
+  if (firstHeadingMatch) {
+    const level = firstHeadingMatch[1].length
+    const headingText = firstHeadingMatch[2].trim()
+    resultParts.push(`<h${level} class="slide-list-item-title">${formatInlineMarkdown(headingText)}</h${level}>`)
+  } else {
+    resultParts.push(`<p class="slide-list-item-title">${formatInlineMarkdown(firstLine)}</p>`)
   }
 
-  let isFirst = true
-  for (const line of lines) {
-    const headingMatch = line.match(/^(#{1,6})\s+(.*)$/)
-    if (headingMatch) {
-      flushParagraph(isFirst)
-      const level = headingMatch[1].length
-      const headingText = headingMatch[2].trim()
-      resultParts.push(`<h${level} class="slide-list-item-title">${formatInlineMarkdown(headingText)}</h${level}>`)
-      isFirst = false
-    } else {
-      pendingParaLines.push(line)
+  // 2. 剩余行作为说明段落，自然换行
+  if (lines.length > 1) {
+    const descLines = lines.slice(1)
+    let pendingParaLines: string[] = []
+
+    const flushParagraph = () => {
+      if (pendingParaLines.length > 0) {
+        const pText = pendingParaLines.map(l => formatInlineMarkdown(l)).join("<br/>")
+        resultParts.push(`<p class="slide-list-item-desc">${pText}</p>`)
+        pendingParaLines = []
+      }
     }
+
+    for (const line of descLines) {
+      const headingMatch = line.match(/^(#{1,6})\s+(.*)$/)
+      if (headingMatch) {
+        flushParagraph()
+        const level = headingMatch[1].length
+        const headingText = headingMatch[2].trim()
+        resultParts.push(`<h${level} class="slide-list-item-title">${formatInlineMarkdown(headingText)}</h${level}>`)
+      } else {
+        pendingParaLines.push(line)
+      }
+    }
+    flushParagraph()
   }
-  flushParagraph(isFirst)
 
   return resultParts.join("\n") + (resultParts.length > 0 ? "\n" : "")
 }

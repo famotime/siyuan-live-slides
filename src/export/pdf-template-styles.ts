@@ -294,12 +294,22 @@ export function generatePdfExportStyles(options?: {
     /* 表头多栏内超级块子块首个列表项去圆点后居中显示标题/首行文本 */
     .layout-cols-wrapper .pdf-col > *:first-child .slide-list-item-title,
     .layout-cols-wrapper .pdf-col > *:first-child > :is(h1, h2, h3, h4),
-    .layout-cols-wrapper .pdf-col > *:first-child > p:first-child,
+    .layout-cols-wrapper .pdf-col > *:first-child > p.slide-list-item-title,
     .layout-cols-header-container .pdf-col > *:first-child .slide-list-item-title,
     .layout-cols-header-container .pdf-col > *:first-child > :is(h1, h2, h3, h4),
-    .layout-cols-header-container .pdf-col > *:first-child > p:first-child {
+    .layout-cols-header-container .pdf-col > *:first-child > p.slide-list-item-title {
       text-align: center !important;
       width: 100% !important;
+    }
+
+    /* 栏内说明段落与列表项：左对齐，自然阅读排版 */
+    .layout-cols-wrapper .pdf-col .slide-list-item-desc,
+    .layout-cols-header-container .pdf-col .slide-list-item-desc,
+    .pdf-col .slide-list-item-desc,
+    .layout-cols-wrapper .pdf-col li,
+    .layout-cols-header-container .pdf-col li,
+    .pdf-col li {
+      text-align: left !important;
     }
 
     /* 全局特定标题大小规范化 (除封面外页首首个标题按 H2 1.7rem，表头多栏内首个标题按 H3 1.3rem) */
@@ -370,14 +380,13 @@ export function generatePdfExportStyles(options?: {
     .pdf-col .pdf-list-item:has(.slide-video-container),
     .pdf-col .pdf-list-item:has(img),
     .pdf-col .pdf-list-item:has(video) {
-      flex: 1 1 0% !important;
-      min-height: 0 !important;
-      height: 100% !important;
-      max-height: 100% !important;
-      display: flex !important;
-      flex-direction: column !important;
-      overflow: hidden !important;
-      margin-bottom: 0 !important;
+      display: list-item !important;
+      list-style-type: disc !important;
+      flex: 0 0 auto !important;
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+      margin-bottom: 6px !important;
     }
     .pdf-col video,
     .layout-three-cols-grid video,

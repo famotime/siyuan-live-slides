@@ -218,28 +218,39 @@ export function getStandaloneClientRuntimeScript(): string {
           let leadHtml = "";
           if (leadLines.length > 0) {
             const lParts = [];
-            let pL = [];
-            const flushLeadP = (isF) => {
-              if (pL.length > 0) {
-                let txt = pL.join(" ").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
-                lParts.push('<p class="' + (isF ? "slide-list-item-title" : "slide-list-item-desc") + '">' + txt + '</p>');
-                pL = [];
-              }
-            };
-            let isF = true;
-            for (const l of leadLines) {
-              const hm = l.match(/^(#{1,6})\s+(.*)$/);
-              if (hm) {
-                flushLeadP(isF);
-                const lvl = hm[1].length;
-                let th = hm[2].trim().replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
-                lParts.push('<h' + lvl + ' class="slide-list-item-title">' + th + '</h' + lvl + '>');
-                isF = false;
-              } else {
-                pL.push(l);
-              }
+            const firstL = leadLines[0];
+            const fhm = firstL.match(/^(#{1,6})\s+(.*)$/);
+            if (fhm) {
+              const lvl = fhm[1].length;
+              let th = fhm[2].trim().replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+              lParts.push('<h' + lvl + ' class="slide-list-item-title">' + th + '</h' + lvl + '>');
+            } else {
+              let th = firstL.trim().replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+              lParts.push('<p class="slide-list-item-title">' + th + '</p>');
             }
-            flushLeadP(isF);
+            if (leadLines.length > 1) {
+              const dLines = leadLines.slice(1);
+              let pL = [];
+              const flushLeadP = () => {
+                if (pL.length > 0) {
+                  let txt = pL.map(l => l.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>")).join("<br/>");
+                  lParts.push('<p class="slide-list-item-desc">' + txt + '</p>');
+                  pL = [];
+                }
+              };
+              for (const l of dLines) {
+                const hm = l.match(/^(#{1,6})\s+(.*)$/);
+                if (hm) {
+                  flushLeadP();
+                  const lvl = hm[1].length;
+                  let th = hm[2].trim().replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+                  lParts.push('<h' + lvl + ' class="slide-list-item-title">' + th + '</h' + lvl + '>');
+                } else {
+                  pL.push(l);
+                }
+              }
+              flushLeadP();
+            }
             leadHtml = lParts.join("\n") + "\n";
           }
 
@@ -254,14 +265,14 @@ export function getStandaloneClientRuntimeScript(): string {
             const nClass = lvl > 0 ? " slide-list-item--nested" : "";
             const clsAttr = nClass ? ' class="' + nClass.trim() + '"' : "";
             if (!hasHeading) {
-              let h = it.text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+              let h = lines.map(l => l.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>")).join("<br/>");
               return '<li' + clsAttr + nStyle + '>' + h + med + '</li>';
             }
             const parts = [];
             let pLines = [];
             const flushP = () => {
               if (pLines.length > 0) {
-                let ph = pLines.join(" ").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+                let ph = pLines.map(l => l.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>")).join("<br/>");
                 parts.push('<p class="slide-list-item-desc">' + ph + '</p>');
                 pLines = [];
               }

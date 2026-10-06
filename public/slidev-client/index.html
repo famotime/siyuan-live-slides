@@ -669,11 +669,19 @@
     .layout-two-cols-header ul,
     .layout-three-cols ul,
     .layout-three-cols-header ul,
+    .layout-cols-header ul,
+    .layout-cols-grid ul,
     .two-cols-left ul,
     .two-cols-right ul,
     .three-cols-col ul,
+    .col ul,
+    .pdf-col ul,
+    .layout-two-cols .slide-list,
+    .layout-three-cols .slide-list,
+    .layout-cols-grid .slide-list,
     .layout-two-cols .slide-list--unordered,
-    .layout-three-cols .slide-list--unordered {
+    .layout-three-cols .slide-list--unordered,
+    .layout-cols-grid .slide-list--unordered {
       list-style: disc !important;
       list-style-type: disc !important;
       padding-left: 1.25em !important;
@@ -689,11 +697,16 @@
     .layout-two-cols-header ol,
     .layout-three-cols ol,
     .layout-three-cols-header ol,
+    .layout-cols-header ol,
+    .layout-cols-grid ol,
     .two-cols-left ol,
     .two-cols-right ol,
     .three-cols-col ol,
+    .col ol,
+    .pdf-col ol,
     .layout-two-cols .slide-list--ordered,
-    .layout-three-cols .slide-list--ordered {
+    .layout-three-cols .slide-list--ordered,
+    .layout-cols-grid .slide-list--ordered {
       list-style: decimal !important;
       list-style-type: decimal !important;
       padding-left: 1.25em !important;
@@ -709,11 +722,16 @@
     .layout-two-cols-header li,
     .layout-three-cols li,
     .layout-three-cols-header li,
+    .layout-cols-header li,
+    .layout-cols-grid li,
     .two-cols-left li,
     .two-cols-right li,
     .three-cols-col li,
+    .col li,
+    .pdf-col li,
     .layout-two-cols .slide-list-item,
-    .layout-three-cols .slide-list-item {
+    .layout-three-cols .slide-list-item,
+    .layout-cols-grid .slide-list-item {
       padding-left: 0.2em !important;
       margin-left: 0 !important;
       margin-bottom: 6px !important;
@@ -721,6 +739,7 @@
       height: auto !important;
       display: list-item !important;
       line-height: 1.6 !important;
+      list-style-type: disc !important;
     }
 
     .layout-two-cols ul ul,
@@ -801,18 +820,30 @@
     /* 表头多栏内超级块子块首个列表项去圆点后居中显示标题/首行文本 */
     .layout-cols-grid .col .slide-block:first-child .slide-list-item-title,
     .layout-cols-grid .col .slide-block:first-child > :is(h1, h2, h3, h4),
-    .layout-cols-grid .col .slide-block:first-child > p:first-child,
+    .layout-cols-grid .col .slide-block:first-child > p.slide-list-item-title,
     .two-cols-left .slide-block:first-child .slide-list-item-title,
     .two-cols-left .slide-block:first-child > :is(h1, h2, h3, h4),
-    .two-cols-left .slide-block:first-child > p:first-child,
+    .two-cols-left .slide-block:first-child > p.slide-list-item-title,
     .two-cols-right .slide-block:first-child .slide-list-item-title,
     .two-cols-right .slide-block:first-child > :is(h1, h2, h3, h4),
-    .two-cols-right .slide-block:first-child > p:first-child,
+    .two-cols-right .slide-block:first-child > p.slide-list-item-title,
     .three-cols-col .slide-block:first-child .slide-list-item-title,
     .three-cols-col .slide-block:first-child > :is(h1, h2, h3, h4),
-    .three-cols-col .slide-block:first-child > p:first-child {
+    .three-cols-col .slide-block:first-child > p.slide-list-item-title {
       text-align: center !important;
       width: 100% !important;
+    }
+
+    /* 栏内说明段落与列表项：左对齐，自然阅读排版 */
+    .layout-cols-grid .col .slide-list-item-desc,
+    .two-cols-left .slide-list-item-desc,
+    .two-cols-right .slide-list-item-desc,
+    .three-cols-col .slide-list-item-desc,
+    .layout-cols-grid .col li,
+    .two-cols-left li,
+    .two-cols-right li,
+    .three-cols-col li {
+      text-align: left !important;
     }
 
     /* 全局特定标题大小规范化 (除封面外页首首个标题按 H2 1.7rem，表头多栏内首个标题按 H3 1.3rem) */
@@ -1490,27 +1521,24 @@
       margin: 0 auto !important;
     }
 
-    /* 含有媒体的列表容器与列表项：安全弹性收缩，绝对禁止滚动条，防止溢出视口 */
+    /* 含有媒体的列表容器与列表项：保持列表圆点与列表项标记，媒体在项内自适应排布 */
     .slide-block:has(.slide-list-media) {
-      flex: 1 1 0% !important;
-      min-height: 0 !important;
-      height: 100% !important;
-      max-height: 100% !important;
-      display: flex !important;
-      flex-direction: column !important;
-      overflow: hidden !important;
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
     .slide-block:has(.slide-list-media) .slide-list,
     .slide-block:has(.slide-list-media) ul,
     .slide-block:has(.slide-list-media) ol {
-      flex: 1 1 0% !important;
-      min-height: 0 !important;
-      height: 100% !important;
-      max-height: 100% !important;
-      display: flex !important;
-      flex-direction: column !important;
-      overflow: hidden !important;
-      overflow-y: hidden !important;
+      display: block !important;
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: 100%;
+      overflow: visible !important;
+      list-style: disc !important;
+      list-style-type: disc !important;
     }
     .slide-block:has(.slide-list-media) li,
     .slide-block:has(.slide-list-media) .slide-list-item,
@@ -1518,22 +1546,23 @@
     .slide-block:has(.slide-video-container) li,
     .slide-block:has(video) li,
     .slide-block:has(img) li,
+    .layout-cols-grid li:has(.slide-list-media),
     .layout-two-cols li:has(.slide-list-media),
     .layout-three-cols li:has(.slide-list-media),
     .two-cols-left li:has(.slide-list-media),
     .two-cols-right li:has(.slide-list-media),
     .three-cols-col li:has(.slide-list-media),
+    .col li:has(.slide-list-media),
     li:has(.slide-list-media),
     li:has(.slide-video-container),
     li:has(.slide-media-container) {
-      flex: 1 1 0% !important;
-      min-height: 0 !important;
-      height: 100% !important;
-      max-height: 100% !important;
-      display: flex !important;
-      flex-direction: column !important;
-      overflow: hidden !important;
-      margin-bottom: 0 !important;
+      display: list-item !important;
+      list-style-type: disc !important;
+      flex: 0 0 auto !important;
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+      margin-bottom: 6px !important;
     }
 
     /* 分栏布局（两栏、三栏）中的图片与视频：自适应填充列空间，保持比例不超出，纵向顶部对齐，横向居中 */
@@ -4087,7 +4116,7 @@
 
             const hasHeading = lines.some(line => /^#{1,6}\s+/.test(line))
             if (!hasHeading) {
-              return formatInlineMarkdown(lines.join(" "))
+              return lines.map(l => formatInlineMarkdown(l)).join("<br/>")
             }
 
             const resultParts = []
@@ -4095,8 +4124,8 @@
 
             const flushParagraph = () => {
               if (pendingParaLines.length > 0) {
-                const pText = pendingParaLines.join(" ")
-                resultParts.push(`<p class="slide-list-item-desc">${formatInlineMarkdown(pText)}</p>`)
+                const pText = pendingParaLines.map(l => formatInlineMarkdown(l)).join("<br/>")
+                resultParts.push(`<p class="slide-list-item-desc">${pText}</p>`)
                 pendingParaLines = []
               }
             }
@@ -4120,31 +4149,44 @@
           function formatLeadContent(lines) {
             if (lines.length === 0) return ""
             const resultParts = []
-            let pendingParaLines = []
 
-            const flushParagraph = (isFirst) => {
-              if (pendingParaLines.length > 0) {
-                const pText = pendingParaLines.join(" ")
-                const cls = isFirst ? "slide-list-item-title" : "slide-list-item-desc"
-                resultParts.push(`<p class="${cls}">${formatInlineMarkdown(pText)}</p>`)
-                pendingParaLines = []
-              }
+            // 1. 首行独立作为栏目标题
+            const firstLine = lines[0]
+            const firstHMatch = firstLine.match(/^(#{1,6})\s+(.*)$/)
+            if (firstHMatch) {
+              const level = firstHMatch[1].length
+              const headingText = firstHMatch[2].trim()
+              resultParts.push(`<h${level} class="slide-list-item-title">${formatInlineMarkdown(headingText)}</h${level}>`)
+            } else {
+              resultParts.push(`<p class="slide-list-item-title">${formatInlineMarkdown(firstLine)}</p>`)
             }
 
-            let isFirst = true
-            for (const line of lines) {
-              const headingMatch = line.match(/^(#{1,6})\s+(.*)$/)
-              if (headingMatch) {
-                flushParagraph(isFirst)
-                const level = headingMatch[1].length
-                const headingText = headingMatch[2].trim()
-                resultParts.push(`<h${level} class="slide-list-item-title">${formatInlineMarkdown(headingText)}</h${level}>`)
-                isFirst = false
-              } else {
-                pendingParaLines.push(line)
+            // 2. 剩余行作为说明段落，自然换行
+            if (lines.length > 1) {
+              const descLines = lines.slice(1)
+              let pendingParaLines = []
+
+              const flushParagraph = () => {
+                if (pendingParaLines.length > 0) {
+                  const pText = pendingParaLines.map(l => formatInlineMarkdown(l)).join("<br/>")
+                  resultParts.push(`<p class="slide-list-item-desc">${pText}</p>`)
+                  pendingParaLines = []
+                }
               }
+
+              for (const line of descLines) {
+                const headingMatch = line.match(/^(#{1,6})\s+(.*)$/)
+                if (headingMatch) {
+                  flushParagraph()
+                  const level = headingMatch[1].length
+                  const headingText = headingMatch[2].trim()
+                  resultParts.push(`<h${level} class="slide-list-item-title">${formatInlineMarkdown(headingText)}</h${level}>`)
+                } else {
+                  pendingParaLines.push(line)
+                }
+              }
+              flushParagraph()
             }
-            flushParagraph(isFirst)
 
             return resultParts.join("\n") + (resultParts.length > 0 ? "\n" : "")
           }

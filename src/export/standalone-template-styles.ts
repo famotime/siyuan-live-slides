@@ -285,14 +285,26 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     /* 表头多栏内超级块子块首个列表项去圆点后居中显示标题/首行文本 */
     .layout-cols-wrapper .pdf-col > *:first-child .slide-list-item-title,
     .layout-cols-wrapper .pdf-col > *:first-child > :is(h1, h2, h3, h4),
-    .layout-cols-wrapper .pdf-col > *:first-child > p:first-child,
+    .layout-cols-wrapper .pdf-col > *:first-child > p.slide-list-item-title,
     .layout-cols-header-container .pdf-col > *:first-child .slide-list-item-title,
     .layout-cols-header-container .pdf-col > *:first-child > :is(h1, h2, h3, h4),
-    .layout-cols-header-container .pdf-col > *:first-child > p:first-child,
+    .layout-cols-header-container .pdf-col > *:first-child > p.slide-list-item-title,
     .two-cols-left > *:first-child .slide-list-item-title,
     .two-cols-right > *:first-child .slide-list-item-title {
       text-align: center !important;
       width: 100% !important;
+    }
+
+    /* 栏内说明段落与列表项：左对齐，自然阅读排版 */
+    .layout-cols-wrapper .pdf-col .slide-list-item-desc,
+    .layout-cols-header-container .pdf-col .slide-list-item-desc,
+    .two-cols-left .slide-list-item-desc,
+    .two-cols-right .slide-list-item-desc,
+    .layout-cols-wrapper .pdf-col li,
+    .layout-cols-header-container .pdf-col li,
+    .two-cols-left li,
+    .two-cols-right li {
+      text-align: left !important;
     }
 
     /* 全局特定标题大小规范化 (除封面外页首首个标题按 H2 1.7rem，表头多栏内首个标题按 H3 1.3rem) */
@@ -697,20 +709,21 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     .slide-block:has(.slide-list-media) .pdf-list,
     .slide-block:has(.slide-list-media) ul,
     .slide-block:has(.slide-list-media) ol {
-      flex: 1 1 0% !important;
-      min-height: 0 !important;
-      height: 100% !important;
-      max-height: 100% !important;
-      display: flex !important;
-      flex-direction: column !important;
-      overflow: hidden !important;
-      overflow-y: hidden !important;
+      display: block !important;
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: 100%;
+      overflow: visible !important;
+      list-style: disc !important;
+      list-style-type: disc !important;
     }
     .slide-block:has(.slide-list-media) li,
     .slide-block:has(.slide-list-media) .slide-list-item,
     .slide-block:has(.slide-list-media) .pdf-list-item,
     .slide-block:has(.slide-media-container) li,
     .slide-block:has(.slide-video-container) li,
+    .layout-cols-wrapper li:has(.slide-list-media),
+    .layout-cols-header-container li:has(.slide-list-media),
     .two-cols-left li:has(.slide-list-media),
     .two-cols-right li:has(.slide-list-media),
     .three-cols-col li:has(.slide-list-media),
@@ -718,14 +731,13 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     li:has(.slide-list-media),
     li:has(.slide-video-container),
     li:has(.slide-media-container) {
-      flex: 1 1 0% !important;
-      min-height: 0 !important;
-      height: 100% !important;
-      max-height: 100% !important;
-      display: flex !important;
-      flex-direction: column !important;
-      overflow: hidden !important;
-      margin-bottom: 0 !important;
+      display: list-item !important;
+      list-style-type: disc !important;
+      flex: 0 0 auto !important;
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+      margin-bottom: 6px !important;
     }
 
     .layout-two-cols .slide-media-block,

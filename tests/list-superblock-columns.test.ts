@@ -1170,7 +1170,44 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       const standaloneHtml = buildStandaloneHtml(doc)
       expect(standaloneHtml).toContain("layout-three-cols-header")
     })
+
+    it("分栏首项首行作为栏目标题居中去圆点，后续换行文字作为说明段落以 <br/> 自然分行", () => {
+      // 模拟首项去圆点后与后续列表项组成的 Markdown 文本
+      const md = `首行栏目标题
+第一行说明文字
+第二行说明文字
+* 第二个列表项首行
+  第二个列表项换行`
+
+      const html = renderMarkdownList(md)
+      expect(html).not.toBeNull()
+      // 首项首行应为栏目标题
+      expect(html).toContain('<p class="slide-list-item-title">首行栏目标题</p>')
+      // 首项后续换行文字应为说明段落，且内部通过 <br/> 自然分行
+      expect(html).toContain('<p class="slide-list-item-desc">第一行说明文字<br/>第二行说明文字</p>')
+      // 第二项首行与换行文字应在 <li> 内部通过 <br/> 自然分行，保留列表圆点
+      expect(html).toContain('<li>第二个列表项首行<br/>第二个列表项换行</li>')
+    })
+
+    it("分栏内列表项包含图片或媒体时，导出的样式确保列表项使用 display: list-item 与 list-style: disc 保护圆点", async () => {
+      const { generateStandaloneExportStyles } = await import("../src/export/standalone-template-styles")
+      const { generatePdfExportStyles } = await import("../src/export/pdf-template-styles")
+
+      const standaloneStyles = generateStandaloneExportStyles()
+      const pdfStyles = generatePdfExportStyles()
+
+      // 验证 standalone CSS 中含媒体/图片的 li 样式为 display: list-item !important 且 list-style-type: disc !important
+      expect(standaloneStyles).toContain("display: list-item !important")
+      expect(standaloneStyles).toContain("list-style-type: disc !important")
+      expect(standaloneStyles).not.toMatch(/\.slide-block:has\(img\)\s+li\s*\{\s*[^}]*display:\s*flex\s*!important/)
+
+      // 验证 PDF CSS 中 pdf-col 内含图片的 li 不再设置 display: flex !important
+      expect(pdfStyles).toContain("display: list-item !important")
+      expect(pdfStyles).toContain("list-style-type: disc !important")
+      expect(pdfStyles).not.toMatch(/\.pdf-col\s+\.pdf-list-item:has\(img\)\s*\{\s*[^}]*display:\s*flex\s*!important/)
+    })
   })
 })
+
 
 
