@@ -3584,17 +3584,39 @@
 
           const blockMap = new Map()
           const idMap = new Map()
+          const containerBaseStepMap = new Map()
           let stepCounter = 0
 
           // 按页面内块的顺序遍历 (排除纯插槽分界块)
           const validBlocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right")
 
           for (const b of validBlocks) {
-            if (!b.clicks) {
-              // 未配置 clicks 的块：始终可见，不占用步进计数
-              const rule = { type: "always" }
-              blockMap.set(b, rule)
-              if (b.id) idMap.set(b.id, rule)
+            if (b.parentContainerId && b.parentClicks && String(b.parentClicks).trim() !== "") {
+              if (!containerBaseStepMap.has(b.parentContainerId)) {
+                const rawParent = String(b.parentClicks).trim()
+                if (/^\d+$/.test(rawParent)) {
+                  const target = parseInt(rawParent, 10)
+                  stepCounter = Math.max(stepCounter, target)
+                  containerBaseStepMap.set(b.parentContainerId, target)
+                } else {
+                  stepCounter += 1
+                  containerBaseStepMap.set(b.parentContainerId, stepCounter)
+                }
+              }
+            }
+
+            const hasSelfClicks = Boolean(b.clicks && String(b.clicks).trim() !== "")
+            if (!hasSelfClicks) {
+              if (b.parentContainerId && containerBaseStepMap.has(b.parentContainerId)) {
+                const baseStep = containerBaseStepMap.get(b.parentContainerId)
+                const rule = { type: "step", step: baseStep }
+                blockMap.set(b, rule)
+                if (b.id) idMap.set(b.id, rule)
+              } else {
+                const rule = { type: "always" }
+                blockMap.set(b, rule)
+                if (b.id) idMap.set(b.id, rule)
+              }
               continue
             }
 
@@ -3699,7 +3721,7 @@
 
         // 判断块的 v-click 显隐状态 (支持单个数字、顺延 +1 与 [min, max] 范围区间)
         function getBlockClickClass(block) {
-          if (!block || !block.clicks) return "v-click-visible"
+          if (!block) return "v-click-visible"
           const plan = slideClicksPlan.value
           const rule = plan.blockMap.get(block) || (block.id ? plan.idMap.get(block.id) : null)
           if (!rule || rule.type === "always") {

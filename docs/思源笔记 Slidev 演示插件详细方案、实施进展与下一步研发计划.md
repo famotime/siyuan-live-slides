@@ -126,11 +126,6 @@ sequenceDiagram
 
 ### Sprint 6：高级动效与深层数据融合（P1 级，2 ~ 3 周）
 
-- [x] **Task 6.1：落地 `custom-slidev-motion` 进入微动效**
-  - 在 `BlockInspectorSection.vue` 增加预设微动效选择器（`淡入 (fade-in)`、`滑入 (slide-up)`、`下沉 (slide-down)`、`左滑 (slide-left)`、`右滑 (slide-right)`、`放大 (zoom-in)`、`弹性 (bounce)`）与时长延迟微调；
-  - 在内置沙箱中注入对应的 CSS Keyframes 动效类与 CSS 变量，实现无需重型依赖的流畅进入动画；
-  - 导出单文件 HTML 与 PDF 打印端同步支持与重置；
-  - 在 Slidev AST 导出构建器中优雅复合生成标准 `v-motion` 与 `v-click` 指令容器。
 - [ ] **Task 6.2：支持块嵌入与递归块引用展开**
   - 在 `block-ref-resolver.ts` 中增加对 `{{select ...}}` 嵌入块语法的识别；
   - 接入思源内核 API `/api/block/getBlockKramdown`，对深层复杂块结构进行递归无损展开；
@@ -147,13 +142,3 @@ sequenceDiagram
   - 增加对热门开源 Slidev 主题样式的预置与内嵌支持；
   - 更新版本号至 v1.0.0 正式版，打包提交思源官方集市。
 
----
-
-## 6. 质量保障与测试验证策略
-
-1. **持续测试自动化**：
-   - 维持当前 18 个测试套件（覆盖编译器、解析器、AI、导出、协同等）的 100% 通过率；
-   - 针对 KaTeX、Mermaid 及块嵌入新增对应的单元测试（`tests/math-mermaid.test.ts`、`tests/embed-block.test.ts`）。
-2. **构建与打包校验**：
-   - 每次提交前严格执行 `npm run typecheck`、`npm test` 与 `npm run build`；
-   - 保证输出的 `dist/index.js`、`dist/kernel.js` 与 `package.zip` 无依赖泄露与路径解析异常。

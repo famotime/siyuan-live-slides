@@ -217,7 +217,10 @@ export class DocumentCompilerService {
               rawChildren = (await this.deps.sql(childSql).catch(() => [])) || []
             }
             if (Array.isArray(rawChildren) && rawChildren.length > 0) {
-              node.children = rawChildren.map((c: any) => {
+              const rootBlockIds = new Set(blockNodes.map(b => b.id))
+              const validRawChildren = rawChildren.filter((c: any) => c.id !== node.id && !rootBlockIds.has(c.id))
+              if (validRawChildren.length > 0) {
+                node.children = validRawChildren.map((c: any) => {
                 const cIalMap = ialMapById.get(c.id) || (c.ial ? parseIALString(c.ial) : {})
                 const cOverride = this.attrOverrides.get(c.id)
                 if (cOverride) {
@@ -236,6 +239,7 @@ export class DocumentCompilerService {
               })
             }
           }
+        }
           if (node.children && node.children.length > 0) {
             await populateChildrenRecursively(node.children, depth + 1)
           }

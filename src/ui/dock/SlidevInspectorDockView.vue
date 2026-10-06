@@ -112,6 +112,9 @@
         :is-note="isNoteBlock"
         :image-role="imageRole"
         :current-slide-layout="currentSlideLayout"
+        :parent-elem-click="parentContainerClicks"
+        :parent-container-slot="parentContainerSlot"
+        :parent-container-id="parentContainerId"
         @toggle-note="onToggleNoteBlock"
         @toggle-elem-click="toggleElemClick"
         @toggle-video-autoplay="onToggleVideoAutoplay"
@@ -226,6 +229,9 @@ const currentDocId = ref('')
 const currentTopBlockId = ref('')
 const currentPageDividerId = ref('')
 const currentPageDividerLayout = ref('')
+const parentContainerId = ref('')
+const parentContainerSlot = ref('')
+const parentContainerClicks = ref('')
 const latestDoc = ref<ISlidevDocument | null>(null)
 const saveStatus = ref('')
 const copyNotice = ref('')
@@ -286,20 +292,29 @@ const targetTagLabel = computed(() => {
   if (isDivider.value) return '分页符 (---)'
   if (isDocRoot.value) return '全局文档'
   if (isVideoBlock.value) return '视频块'
+  let baseLabel = '内容块'
   switch (activeBlockType.value) {
-    case 'NodeHeading': return '标题块'
-    case 'NodeParagraph': return '段落块'
-    case 'NodeCodeBlock': return '代码块'
-    case 'NodeVideo': return '视频块'
+    case 'NodeHeading': baseLabel = '标题块'; break
+    case 'NodeParagraph': baseLabel = '段落块'; break
+    case 'NodeCodeBlock': baseLabel = '代码块'; break
+    case 'NodeVideo': baseLabel = '视频块'; break
     case 'NodeList':
-    case 'NodeListItem': return '列表项'
-    case 'NodeBlockquote': return '引述块'
-    case 'NodeTable': return '表格块'
+    case 'NodeListItem': baseLabel = '列表项'; break
+    case 'NodeBlockquote': baseLabel = '引述块'; break
+    case 'NodeTable': baseLabel = '表格块'; break
     case 'NodeSuperBlock':
     case 's':
-    case 'sb': return '超级块'
-    default: return '内容块'
+    case 'sb': baseLabel = '超级块'; break
+    default: baseLabel = '内容块'; break
   }
+  if (parentContainerId.value) {
+    if (parentContainerSlot.value) {
+      const colName = parentContainerSlot.value.replace(/^col-(\d+)$/, '第 $1 栏')
+      return `${colName} › ${baseLabel}`
+    }
+    return `分栏容器 › ${baseLabel}`
+  }
+  return baseLabel
 })
 
 const targetTagClass = computed(() => {
@@ -555,9 +570,29 @@ const targetPageIndex = computed(() => targetSlide.value?.pageIndex || 1)
 const isNoteBlock = computed(() => Boolean(activeBlockAttrs.value[ATTR_ELEM_NOTE] || activeBlockAttrs.value['slidev-note']))
 
 // 内容块属性绑定
+function isCurrentBlockMainText(): boolean {
+  if (!parentContainerId.value) return false
+  if (activeBlockId.value === parentContainerId.value) return true
+  if (typeof document === 'undefined') return true
+  const parentEl = document.querySelector(`.protyle-wysiwyg [data-node-id="${parentContainerId.value}"]`) ||
+                   document.querySelector(`[data-node-id="${parentContainerId.value}"]`)
+  if (!parentEl) return false
+  const firstChild = parentEl.querySelector(':scope > [data-node-id], :scope > div > [data-node-id]')
+  return firstChild?.getAttribute('data-node-id') === activeBlockId.value
+}
+
 const elemClick = computed(() => {
-  if (activeBlockAttrs.value[ATTR_ELEM_CLICK]) {
-    return activeBlockAttrs.value[ATTR_ELEM_CLICK]
+  if (activeBlockAttrs.value[ATTR_ELEM_CLICK] !== undefined) {
+    return activeBlockAttrs.value[ATTR_ELEM_CLICK] || ''
+  }
+  // 若当前聚焦的块是列表项容器的首行主文本，且自身未定义，展示容器的 clicks (主容器视觉权威)
+  if (parentContainerId.value && isCurrentBlockMainText()) {
+    return parentContainerClicks.value || ''
+  }
+  // 若当前聚焦的块归属于列表项容器内部其他子组件 (如图片)，且自身未显式定义 clicks，
+  // 则严格遵循未单独开启逐步呈现，绝对不回退到匹配模型或父级 clicks，保持为 '' (跟随整栏)
+  if (parentContainerId.value) {
+    return ''
   }
   const aid = activeBlockId.value
   if (aid && targetSlide.value?.blocks) {
@@ -681,6 +716,8 @@ const {
   currentDocId,
   currentPageDividerId,
   currentPageDividerLayout,
+  parentContainerId,
+  parentContainerClicks,
   latestDoc,
   targetSlide,
   currentSlideNoteBlockId,
@@ -787,6 +824,9 @@ defineExpose({
     currentTopBlockId.value = info.topBlockId || info.id
     currentPageDividerId.value = info.pageDividerId || ''
     currentPageDividerLayout.value = info.pageDividerLayout || ''
+    parentContainerId.value = info.parentContainerId || ''
+    parentContainerSlot.value = info.parentContainerSlot || ''
+    parentContainerClicks.value = info.parentContainerClicks || ''
     if (info.rootId) {
       currentDocId.value = info.rootId
     } else if ((info.type === 'doc' || info.type === 'NodeDocument') && info.id) {

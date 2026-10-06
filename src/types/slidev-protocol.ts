@@ -105,6 +105,8 @@ export interface ISlidevBlockItem {
   maxHeight?: string
   slot?: "header" | "left" | "right" | "col-1" | "col-2" | "col-3" | "default" | string
   isNote?: boolean
+  parentClicks?: string
+  parentContainerId?: string
   attributes?: Record<string, string>
   attrs?: Record<string, string>
   ial?: Record<string, string>
@@ -164,4 +166,7 @@ export interface IActiveBlockInfo {
   pageDividerId?: string
   pageDividerLayout?: string
   pageDividerLayoutRatio?: string
+  parentContainerId?: string
+  parentContainerSlot?: string
+  parentContainerClicks?: string
 }

@@ -197,6 +197,16 @@
           {{ step === '+1' ? '顺延 (+1)' : step === 'hide' ? '隐藏 (hide)' : '第 ' + step + ' 步' }}
         </button>
       </div>
+
+      <!-- 继承状态指示器：未开启独立开关时，提示跟随整栏出现 -->
+      <div
+        v-else-if="parentElemClick"
+        class="spm-inherit-tip"
+        style="margin-top: 6px; padding: 4px 8px; background: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.08); border-radius: 4px; font-size: 11px; opacity: 0.85; display: flex; align-items: center; gap: 4px;"
+      >
+        <SlidevIcon name="check" />
+        <span>未单独开启逐步呈现：当前跟随整栏同时出现</span>
+      </div>
     </div>
 
     <!-- 2. 入场微动效 (v-motion) -->
@@ -437,6 +447,9 @@ const props = defineProps<{
   imageRole?: string
   currentSlideLayout?: string
   isSuperBlock?: boolean
+  parentElemClick?: string
+  parentContainerSlot?: string
+  parentContainerId?: string
   detectedSbInfo?: {
     hasSuperBlock: boolean
     colCount: number

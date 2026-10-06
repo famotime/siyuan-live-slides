@@ -51,6 +51,8 @@ export interface IInspectorActionsContext {
   currentDocId: Ref<string>
   currentPageDividerId: Ref<string>
   currentPageDividerLayout: Ref<string>
+  parentContainerId?: Ref<string>
+  parentContainerClicks?: Ref<string>
   latestDoc: Ref<ISlidevDocument | null>
   targetSlide: ComputedRef<ISlidevVirtualPage | null>
   currentSlideNoteBlockId: ComputedRef<string>
@@ -67,6 +69,17 @@ export interface IInspectorActionsContext {
   elemMaxHeight: Ref<string>
   saveStatus: Ref<string>
   plugin?: any
+}
+
+function isContainerMainText(activeId: string, parentContainerId?: string): boolean {
+  if (!parentContainerId) return false
+  if (activeId === parentContainerId) return true
+  if (typeof document === "undefined") return true
+  const parentEl = document.querySelector(`.protyle-wysiwyg [data-node-id="${parentContainerId}"]`) ||
+                   document.querySelector(`[data-node-id="${parentContainerId}"]`)
+  if (!parentEl) return false
+  const firstChild = parentEl.querySelector(':scope > [data-node-id], :scope > div > [data-node-id]')
+  return firstChild?.getAttribute('data-node-id') === activeId
 }
 
 export function useInspectorActions(ctx: IInspectorActionsContext) {
@@ -101,6 +114,18 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     }
     globalDocumentCompiler.setBlockAttrOverride(targetId, attrs)
     syncDomBlockAttrs(targetId, attrs)
+
+    const parentId = ctx.parentContainerId?.value
+    const shouldSyncParent = Boolean(parentId && isContainerMainText(targetId, parentId))
+    if (ATTR_ELEM_CLICK in attrs && shouldSyncParent && parentId) {
+      const clickVal = attrs[ATTR_ELEM_CLICK]
+      if (ctx.parentContainerClicks) {
+        ctx.parentContainerClicks.value = clickVal
+      }
+      globalDocumentCompiler.setBlockAttrOverride(parentId, { [ATTR_ELEM_CLICK]: clickVal })
+      syncDomBlockAttrs(parentId, { [ATTR_ELEM_CLICK]: clickVal })
+      setBlockAttrs(parentId, { [ATTR_ELEM_CLICK]: clickVal }).catch(() => {})
+    }
 
     if (ATTR_PAGE_LAYOUT in attrs) {
       const value = attrs[ATTR_PAGE_LAYOUT]
@@ -142,6 +167,17 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     ctx.activeBlockAttrs.value[key] = value
     globalDocumentCompiler.setBlockAttrOverride(targetId, { [key]: value })
     syncDomBlockAttrs(targetId, { [key]: value })
+
+    const parentId = ctx.parentContainerId?.value
+    const shouldSyncParent = Boolean(parentId && isContainerMainText(targetId, parentId))
+    if (key === ATTR_ELEM_CLICK && shouldSyncParent && parentId) {
+      if (ctx.parentContainerClicks) {
+        ctx.parentContainerClicks.value = value
+      }
+      globalDocumentCompiler.setBlockAttrOverride(parentId, { [ATTR_ELEM_CLICK]: value })
+      syncDomBlockAttrs(parentId, { [ATTR_ELEM_CLICK]: value })
+      setBlockAttrs(parentId, { [ATTR_ELEM_CLICK]: value }).catch(() => {})
+    }
 
     if (key === ATTR_PAGE_LAYOUT) {
       ctx.currentPageDividerLayout.value = value

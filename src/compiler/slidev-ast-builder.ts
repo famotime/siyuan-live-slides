@@ -184,7 +184,14 @@ export function buildSlidevDocument(
     }
 
     // 普通内容块处理逻辑（支持递归处理超级块子内容）
-    const processBlockNode = (itemNode: ISiYuanBlockNode) => {
+    const processBlockNode = (
+      itemNode: ISiYuanBlockNode,
+      inheritedContext?: {
+        parentClicks?: string
+        parentContainerId?: string
+        defaultSlot?: string
+      },
+    ) => {
       if (!currentPage.allBlockIds) {
         currentPage.allBlockIds = []
       }
@@ -239,13 +246,19 @@ export function buildSlidevDocument(
       // 动态展开思源块引用 ((block-id))
       rawMd = resolveBlockRefsSync(rawMd, options?.refContentMap)
 
-      // 若当前容器节点自身未设置视频属性，递归检索子节点中的视频块属性并向上合并
+      // 若当前容器节点自身未设置视频属性，仅递归检索子节点中的视频块属性并向上合并 (避免污染 clicks/motion)
       if (itemNode.children && itemNode.children.length > 0) {
+        const videoAttrKeys = [
+          "custom-slidev-autoplay",
+          "custom-slidev-loop",
+          "custom-slidev-muted",
+          "custom-slidev-controls",
+        ]
         const collectAttrsFromTree = (nodes: ISiYuanBlockNode[]) => {
           for (const n of nodes) {
             if (n.ial) {
               for (const [k, v] of Object.entries(n.ial)) {
-                if (k.startsWith("custom-slidev-") && !combinedIal[k]) {
+                if (videoAttrKeys.includes(k) && !combinedIal[k]) {
                   combinedIal[k] = v
                 }
               }
@@ -345,19 +358,106 @@ export function buildSlidevDocument(
         return
       }
 
+      const isColContext = Boolean(
+        elemAttrs.slot ||
+        inheritedContext?.defaultSlot ||
+        isColsHeaderLayout(currentPage.frontmatter.layout) ||
+        currentPage.frontmatter.layout === "two-cols"
+      )
+
       // 展开带有分栏插槽或显式拆分的列表容器子项 (NodeList 'l')
       if (
         (itemNode.type === "l" || itemNode.type === "NodeList" || itemNode.type === "list") &&
         itemNode.children &&
         itemNode.children.length > 0 &&
-        (itemNode.children.some(c => c.ial?.[ATTR_ELEM_SLOT]) || elemAttrs.slot)
+        (
+          itemNode.children.some(c => c.ial?.[ATTR_ELEM_SLOT] || c.ial?.[ATTR_ELEM_CLICK]) ||
+          elemAttrs.slot ||
+          elemAttrs.clicks ||
+          isColContext
+        )
       ) {
         for (const childNode of itemNode.children) {
           if (elemAttrs.slot && (!childNode.ial || !childNode.ial[ATTR_ELEM_SLOT])) {
             if (!childNode.ial) childNode.ial = {}
             childNode.ial[ATTR_ELEM_SLOT] = elemAttrs.slot
           }
-          processBlockNode(childNode)
+          processBlockNode(childNode, {
+            ...inheritedContext,
+            parentClicks: elemAttrs.clicks || inheritedContext?.parentClicks,
+            defaultSlot: elemAttrs.slot || inheritedContext?.defaultSlot,
+          })
+        }
+        return
+      }
+
+      const shouldUnpackListItem =
+        Boolean(itemNode.children && itemNode.children.length >= 2) ||
+        Boolean(elemAttrs.clicks) ||
+        Boolean(itemNode.children?.some(c => c.ial?.[ATTR_ELEM_CLICK])) ||
+        (!itemNode.markdown && Boolean(itemNode.children && itemNode.children.length > 0))
+
+      if (
+        isListItemNode(itemNode) &&
+        itemNode.children &&
+        itemNode.children.length > 0 &&
+        (isColContext || Boolean(elemAttrs.clicks) || Boolean(itemNode.children.some(c => c.ial?.[ATTR_ELEM_CLICK]))) &&
+        shouldUnpackListItem
+      ) {
+        // 查找首个有内容的有效子块（代表主容器自身的主文本）
+        const hasMultipleChildren = Boolean(itemNode.children && itemNode.children.length >= 2)
+        const firstValidChild = itemNode.children.find(c => Boolean((c.markdown || c.content || "").trim())) || itemNode.children[0]
+        const firstChildClicks = firstValidChild?.ial?.[ATTR_ELEM_CLICK] || firstValidChild?.ial?.["custom-slidev-click"]
+
+        // 确定容器 clicks：
+        // 1. 若列表项自身配置了 clicks，以自身为准；
+        // 2. 若列表项自身未配置，但包含多个子块（首行文本+子组件）且首行文本配置了 clicks，提升为容器 clicks；
+        // 3. 否则继承外部 parentClicks
+        const shouldLiftFirstChild = Boolean(!elemAttrs.clicks && hasMultipleChildren && firstChildClicks)
+        const containerClicks = elemAttrs.clicks || (shouldLiftFirstChild ? firstChildClicks : undefined) || inheritedContext?.parentClicks
+        const containerId = itemNode.id || inheritedContext?.parentContainerId
+        const targetSlot = elemAttrs.slot || inheritedContext?.defaultSlot
+
+        let isFirstValidChild = true
+        for (const childNode of itemNode.children) {
+          if (targetSlot && (!childNode.ial || !childNode.ial[ATTR_ELEM_SLOT])) {
+            if (!childNode.ial) childNode.ial = {}
+            childNode.ial[ATTR_ELEM_SLOT] = targetSlot
+          }
+
+          const hasContent = Boolean((childNode.markdown || childNode.content || "").trim())
+          const isThisFirstValid = isFirstValidChild && hasContent
+
+          if (isThisFirstValid) {
+            if (childNode.markdown) {
+              childNode.markdown = cleanCardListItemMarkdown(childNode.markdown)
+            }
+            if (childNode.content) {
+              childNode.content = cleanCardListItemMarkdown(childNode.content)
+            }
+            isFirstValidChild = false
+          }
+
+          // 首行有效子块代表主容器自身的主文本，归入基础层：
+          // 当容器存在 clicks（无论是自身配置还是多子块下由首行提升）且存在多个子块时，
+          // 首行子块清除自身独立 clicks，仅作为基础层继承 parentClicks: containerClicks，
+          // 绝不保留自身独立的 clicks，避免首行文本被调度引擎顺延至第二步，
+          // 从而保证首行文本与同容器内未显式配置 clicks 的子组件（如图片）严格在同一个 step 同时呈现！
+          let childToProcess = childNode
+          if (isThisFirstValid && containerClicks && hasMultipleChildren) {
+            childToProcess = {
+              ...childNode,
+              ial: { ...(childNode.ial || {}) },
+            }
+            delete childToProcess.ial[ATTR_ELEM_CLICK]
+            delete childToProcess.ial["custom-slidev-click"]
+          }
+
+          processBlockNode(childToProcess, {
+            parentClicks: containerClicks,
+            parentContainerId: containerId,
+            defaultSlot: targetSlot,
+          })
         }
         return
       }
@@ -433,7 +533,7 @@ export function buildSlidevDocument(
         if (!effectiveSlot && parentScope?.slot) {
           effectiveSlot = parentScope.slot
         }
-        if (!effectiveClicks && parentScope?.clicks) {
+        if (!effectiveClicks && parentScope?.clicks && !inheritedContext?.parentContainerId) {
           effectiveClicks = parentScope.clicks
         }
         if (!effectiveMotion && parentScope?.motion) {
@@ -452,14 +552,16 @@ export function buildSlidevDocument(
           }
         }
 
-        // 压入当前标题作用域
-        headingStack.push({
-          level: headingLevel,
-          slot: effectiveSlot,
-          clicks: effectiveClicks,
-          motion: effectiveMotion,
-          customAttrs: headingCustomAttrs,
-        })
+        // 仅全局大纲标题压入作用域栈；分栏容器内部子标题不污染全局大纲栈
+        if (!inheritedContext?.parentContainerId) {
+          headingStack.push({
+            level: headingLevel,
+            slot: effectiveSlot,
+            clicks: effectiveClicks,
+            motion: effectiveMotion,
+            customAttrs: headingCustomAttrs,
+          })
+        }
       } else {
         // 普通非标题内容块：若自身未显式指定，自动继承最近标题行的属性
         const currentScope = headingStack.length > 0 ? headingStack[headingStack.length - 1] : undefined
@@ -467,7 +569,7 @@ export function buildSlidevDocument(
           if (!effectiveSlot && currentScope.slot && currentScope.slot !== "header") {
             effectiveSlot = currentScope.slot
           }
-          if (!effectiveClicks && currentScope.clicks) {
+          if (!effectiveClicks && currentScope.clicks && !inheritedContext?.parentContainerId) {
             effectiveClicks = currentScope.clicks
           }
           if (!effectiveMotion && currentScope.motion) {
@@ -486,6 +588,10 @@ export function buildSlidevDocument(
       // 若当前页前面存在 ::right:: 分界标记且当前块未显式声明 slot，自动归属右栏
       if (!effectiveSlot && currentPage.blocks.some(b => b.slot === "slot-divider-right")) {
         effectiveSlot = "right"
+      }
+
+      if (!effectiveSlot && inheritedContext?.defaultSlot) {
+        effectiveSlot = inheritedContext.defaultSlot
       }
 
       if (effectiveSlot) {
@@ -516,6 +622,8 @@ export function buildSlidevDocument(
         content: itemNode.content || "",
         rawMarkdown: rawMd,
         clicks: effectiveClicks,
+        parentClicks: inheritedContext?.parentClicks,
+        parentContainerId: inheritedContext?.parentContainerId,
         motion: effectiveMotion,
         shikiLines: elemAttrs.shikiLines,
         slot: effectiveSlot,
@@ -567,10 +675,49 @@ export function buildSlidevDocument(
       }
     }
 
-    const renderColList = (list: ISlidevBlockItem[]) => {
-      if (list.length === 0) return ""
-      cleanFirstListBlock(list)
-      return renderBlocks(list)
+    const renderColList = (colList: ISlidevBlockItem[]) => {
+      if (colList.length === 0) return ""
+      cleanFirstListBlock(colList)
+
+      const parentClicks = colList.find(b => b.parentClicks)?.parentClicks
+
+      if (!parentClicks) {
+        return colList
+          .filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
+          .map(b => wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion, b.attributes?.style))
+          .join("\n\n")
+      }
+
+      const resultParts: string[] = []
+      let baseGroup: ISlidevBlockItem[] = []
+
+      const flushBaseGroup = () => {
+        if (baseGroup.length === 0) return
+        const combinedMd = baseGroup
+          .map(b => (b.rawMarkdown || b.content || "").trim())
+          .filter(Boolean)
+          .join("\n\n")
+        if (combinedMd) {
+          resultParts.push(wrapVClickDirective(combinedMd, parentClicks))
+        }
+        baseGroup = []
+      }
+
+      for (const b of colList) {
+        const md = (b.rawMarkdown || b.content || "").trim()
+        if (!md) continue
+
+        const hasSelfClicks = Boolean(b.clicks && b.clicks.trim() !== "")
+        if (!hasSelfClicks) {
+          baseGroup.push(b)
+        } else {
+          flushBaseGroup()
+          resultParts.push(wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion, b.attributes?.style))
+        }
+      }
+
+      flushBaseGroup()
+      return resultParts.join("\n\n")
     }
 
     const layout = page.frontmatter.layout || "default"

@@ -11,6 +11,8 @@ import {
   ATTR_ELEM_NOTE,
   ATTR_ELEM_ROLE,
   ATTR_PAGE_LAYOUT,
+  ATTR_ELEM_SLOT,
+  ATTR_ELEM_CLICK,
 } from "@/types/slidev-protocol"
 
 export class InspectorSyncCoordinator {
@@ -297,14 +299,22 @@ export class InspectorSyncCoordinator {
       syncDomBlockAttrs(effectiveId, { [ATTR_ELEM_ROLE]: expectedRole })
     }
 
+    let parentContainerId = ""
+    let parentContainerSlot = ""
+    let parentContainerClicks = ""
+
     // 针对列表项结构：若当前激活块位于列表项内部（如列表段落），检查并自愈外层 NodeListItem 容器的 DOM 属性
     const parentLiEl = effectiveEl.closest('[data-type="NodeListItem"]') as HTMLElement | null
     if (parentLiEl && parentLiEl !== effectiveEl) {
       const parentLiId = parentLiEl.getAttribute("data-node-id")
       if (parentLiId) {
+        parentContainerId = parentLiId
         const parentAttrs = (await getBlockAttrs(parentLiId).catch(() => ({}))) || {}
         const parentOverride = globalDocumentCompiler.getBlockAttrOverride(parentLiId) || {}
         const parentFinalAttrs = { ...parentAttrs, ...parentOverride }
+        parentContainerSlot = parentFinalAttrs[ATTR_ELEM_SLOT] || ""
+        parentContainerClicks = parentFinalAttrs[ATTR_ELEM_CLICK] || ""
+
         const parentExpectedLayout = parentFinalAttrs[ATTR_PAGE_LAYOUT] || parentFinalAttrs["custom-slidev-layout"] || ""
         const parentDomLayout = parentLiEl.getAttribute(ATTR_PAGE_LAYOUT) || parentLiEl.getAttribute("custom-slidev-layout")
         if (parentDomLayout && parentDomLayout !== parentExpectedLayout) {
@@ -334,6 +344,9 @@ export class InspectorSyncCoordinator {
       topBlockId,
       pageDividerId,
       pageDividerLayout,
+      parentContainerId,
+      parentContainerSlot,
+      parentContainerClicks,
     })
   }
 
