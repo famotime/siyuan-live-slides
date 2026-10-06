@@ -10,6 +10,67 @@
       @change="$emit('update:pageLayout', $event)"
     />
 
+    <!-- 分栏比例设置 (仅支持分栏与图文布局) -->
+    <div v-if="isMultiColLayout" class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div class="spm-control-title">
+            <SlidevIcon name="ratio" />
+            <span>分栏比例 (Ratio)</span>
+          </div>
+          <span class="spm-control-desc">设置各列横向空间占比，默认平均分配</span>
+        </div>
+        <button
+          v-if="detectedSbRatio"
+          class="spm-btn-text b3-tooltips b3-tooltips__w"
+          aria-label="从当前页思源超级块读取实际宽度比例"
+          @click="$emit('update:pageLayoutRatio', detectedSbRatio)"
+        >
+          <SlidevIcon name="sparkles" />
+          <span>从超级块读取</span>
+        </button>
+      </div>
+
+      <!-- 快捷芯片预设 -->
+      <div class="spm-quick-chips">
+        <button
+          v-for="chip in currentRatioPresets"
+          :key="chip.value"
+          class="spm-chip"
+          :class="{ active: currentActiveRatio === chip.value }"
+          @click="$emit('update:pageLayoutRatio', chip.value)"
+        >
+          {{ chip.label }}
+        </button>
+      </div>
+
+      <!-- 自定义输入框与重置按钮 -->
+      <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
+        <input
+          :value="pageLayoutRatio || ''"
+          class="spm-input"
+          style="flex: 1;"
+          placeholder="自定义比例（如 1:2 或 30:70，留空为默认）"
+          @input="$emit('update:pageLayoutRatio', ($event.target as HTMLInputElement).value)"
+          @change="$emit('update:pageLayoutRatio', ($event.target as HTMLInputElement).value)"
+        />
+        <button
+          v-if="pageLayoutRatio"
+          class="spm-btn-action b3-tooltips b3-tooltips__w"
+          aria-label="重置为默认平均分配"
+          style="flex-shrink: 0; padding: 0 10px; height: 28px;"
+          @click="$emit('update:pageLayoutRatio', '')"
+        >
+          重置
+        </button>
+      </div>
+
+      <div v-if="detectedSbRatio" style="margin-top: 6px; font-size: 11px; opacity: 0.75; display: flex; align-items: center; gap: 4px;">
+        <span>📐 检测到思源超级块宽度：</span>
+        <code style="background: rgba(125, 125, 125, 0.15); padding: 1px 4px; border-radius: 3px;">{{ detectedSbRatio }}</code>
+      </div>
+    </div>
+
     <!-- 转场动效选择 -->
     <TransitionSelector
       :model-value="pageTransition"
@@ -230,6 +291,8 @@ const props = defineProps<{
   pageImage?: string
   pageNotes?: string
   pageIndex?: number
+  pageLayoutRatio?: string
+  detectedSbRatio?: string
 }>()
 
 const emit = defineEmits<{
@@ -238,12 +301,44 @@ const emit = defineEmits<{
   (e: 'update:pageBackground', val: string): void
   (e: 'update:pageSpacing', val: string): void
   (e: 'update:pageImage', val: string): void
+  (e: 'update:pageLayoutRatio', val: string): void
   (e: 'addNoteBlock'): void
   (e: 'locateNoteBlock'): void
   (e: 'generateNotes'): void
   (e: 'insertDividerAfter'): void
   (e: 'deleteDivider'): void
 }>()
+
+const isMultiColLayout = computed(() => {
+  return ['two-cols', 'two-cols-header', 'three-cols-header', 'image-left', 'image-right'].includes(props.pageLayout)
+})
+
+const isThreeCols = computed(() => props.pageLayout === 'three-cols-header')
+
+const currentRatioPresets = computed(() => {
+  if (isThreeCols.value) {
+    return [
+      { label: '默认 1:1:1', value: '' },
+      { label: '1:2:1 (主中)', value: '1:2:1' },
+      { label: '2:1:1 (主左)', value: '2:1:1' },
+      { label: '1:1:2 (主右)', value: '1:1:2' },
+      { label: '1:3:1', value: '1:3:1' },
+    ]
+  }
+  return [
+    { label: '默认 1:1', value: '' },
+    { label: '1:2', value: '1:2' },
+    { label: '2:1', value: '2:1' },
+    { label: '3:7', value: '3:7' },
+    { label: '7:3', value: '7:3' },
+    { label: '4:6', value: '4:6' },
+    { label: '6:4', value: '6:4' },
+  ]
+})
+
+const currentActiveRatio = computed(() => {
+  return props.pageLayoutRatio || ''
+})
 
 const notePreviewSnippet = computed(() => {
   if (!props.pageNotes) return ''

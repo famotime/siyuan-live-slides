@@ -1,6 +1,6 @@
 import type { ISlidevBlockItem, ISlidevVirtualPage } from "../types/slidev-protocol"
 import { distributeThreeColumns } from "../compiler/slidev-ast-builder"
-import { cleanCardListItemMarkdown, isListItemNode } from "../utils"
+import { cleanCardListItemMarkdown, isListItemNode, parseRatioToGridCols } from "../utils"
 import { convertBlockToHtml, escapeHtml } from "./markdown-renderer"
 import type { IBlockRenderOptions } from "./markdown-renderer"
 
@@ -43,9 +43,11 @@ export function renderSlideBlocksToHtml(
     const layoutClass = slide.frontmatter?.layoutClass ? ` ${slide.frontmatter.layoutClass}` : ""
     const leftClass = options?.leftColClass || "pdf-col pdf-col--left"
     const rightClass = options?.rightColClass || "pdf-col pdf-col--right"
+    const gridCols = parseRatioToGridCols(slide.frontmatter?.layoutRatio, 2)
+    const gridStyle = `style="grid-template-columns: ${gridCols};"`
 
     return `
-      <div class="${wrapperClass}${layoutClass}">
+      <div class="${wrapperClass}${layoutClass}" ${gridStyle}>
         <div class="${leftClass}">${leftHtml}</div>
         <div class="${rightClass}">${rightHtml}</div>
       </div>
@@ -86,11 +88,13 @@ export function renderSlideBlocksToHtml(
     const headerHtml = headerBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
     const leftHtml = renderColBlockToHtml(leftBlocks)
     const rightHtml = renderColBlockToHtml(rightBlocks)
+    const gridCols = parseRatioToGridCols(slide.frontmatter?.layoutRatio, 2)
+    const gridStyle = `style="grid-template-columns: ${gridCols};"`
 
     return `
       <div class="layout-two-cols-header-container">
         <div class="layout-header-section">${headerHtml}</div>
-        <div class="pdf-two-cols-wrapper layout-two-cols-grid">
+        <div class="pdf-two-cols-wrapper layout-two-cols-grid" ${gridStyle}>
           <div class="pdf-col pdf-col--left">${leftHtml}</div>
           <div class="pdf-col pdf-col--right">${rightHtml}</div>
         </div>
@@ -132,11 +136,13 @@ export function renderSlideBlocksToHtml(
     const col1Html = renderColBlockToHtml(col1Blocks)
     const col2Html = renderColBlockToHtml(col2Blocks)
     const col3Html = renderColBlockToHtml(col3Blocks)
+    const gridCols = parseRatioToGridCols(slide.frontmatter?.layoutRatio, 3)
+    const gridStyle = `style="grid-template-columns: ${gridCols};"`
 
     return `
       <div class="layout-three-cols-header-container">
         <div class="layout-header-section">${headerHtml}</div>
-        <div class="pdf-three-cols-wrapper layout-three-cols-grid">
+        <div class="pdf-three-cols-wrapper layout-three-cols-grid" ${gridStyle}>
           <div class="pdf-col pdf-col--1">${col1Html}</div>
           <div class="pdf-col pdf-col--2">${col2Html}</div>
           <div class="pdf-col pdf-col--3">${col3Html}</div>
@@ -154,8 +160,9 @@ export function renderSlideBlocksToHtml(
     const contentCol = `<div class="pdf-content-col" style="padding:48px 56px;display:flex;flex-direction:column;justify-content:flex-start;height:100%;box-sizing:border-box;overflow-y:auto;">${contentHtml}</div>`
 
     const cols = isImageRight ? `${contentCol}\n${imgHtml}` : `${imgHtml}\n${contentCol}`
+    const gridCols = parseRatioToGridCols(slide.frontmatter?.layoutRatio, 2)
     return `
-      <div class="layout-image-cols-grid" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:100%;width:100%;height:100%;position:absolute;top:0;left:0;right:0;bottom:0;box-sizing:border-box;">
+      <div class="layout-image-cols-grid" style="display:grid;grid-template-columns:${gridCols};grid-template-rows:100%;width:100%;height:100%;position:absolute;top:0;left:0;right:0;bottom:0;box-sizing:border-box;">
         ${cols}
       </div>
     `

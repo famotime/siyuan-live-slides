@@ -64,6 +64,8 @@
       <PageInspectorSection
         v-if="isDivider"
         :page-layout="pageLayout"
+        :page-layout-ratio="pageLayoutRatio"
+        :detected-sb-ratio="detectedSbRatio"
         :page-transition="pageTransition"
         :page-background="pageBackground"
         :page-spacing="pageSpacing"
@@ -71,6 +73,7 @@
         :page-notes="currentSlideNotes"
         :page-index="targetPageIndex"
         @update:page-layout="onLayoutChange"
+        @update:page-layout-ratio="onLayoutRatioChange"
         @update:page-transition="onTransitionChange"
         @update:page-background="onBackgroundChange"
         @update:page-spacing="onPageSpacingChange"
@@ -168,6 +171,7 @@ import {
   ATTR_DOC_DEFAULT_TRANSITION,
   ATTR_DOC_SPACING,
   ATTR_PAGE_LAYOUT,
+  ATTR_PAGE_LAYOUT_RATIO,
   ATTR_PAGE_TRANSITION,
   ATTR_PAGE_BACKGROUND,
   ATTR_PAGE_IMAGE,
@@ -355,6 +359,76 @@ const currentSlideLayout = computed(() => {
   return 'default'
 })
 
+const pageLayoutRatio = computed(() => {
+  if (isDivider.value) {
+    const directRatio = activeBlockAttrs.value[ATTR_PAGE_LAYOUT_RATIO] || activeBlockAttrs.value['custom-slidev-layout-ratio']
+    if (directRatio) return directRatio
+  }
+  const divId = currentPageDividerId.value || (isDivider.value ? activeBlockId.value : '')
+  if (divId) {
+    const override = globalDocumentCompiler.getBlockAttrOverride(divId)
+    if (override?.[ATTR_PAGE_LAYOUT_RATIO]) {
+      return override[ATTR_PAGE_LAYOUT_RATIO]
+    }
+  }
+  return targetSlide.value?.frontmatter?.layoutRatio || ''
+})
+
+const detectedSbRatio = computed(() => {
+  if (typeof document === 'undefined') return ''
+  const divId = currentPageDividerId.value || (isDivider.value ? activeBlockId.value : '')
+  if (!divId) return ''
+  const divEl = document.querySelector(`.protyle-wysiwyg [data-node-id="${divId}"]`)
+  if (!divEl) return ''
+  let sibling = divEl.nextElementSibling
+  while (sibling) {
+    if (sibling.getAttribute('data-type') === 'NodeThematicBreak' || sibling.classList?.contains('protyle-wysiwyg__block--hr')) {
+      break
+    }
+    const sbEl = sibling.getAttribute('data-type') === 'NodeSuperBlock' ? sibling : sibling.querySelector('[data-type="NodeSuperBlock"]')
+    if (sbEl && sbEl.getAttribute('data-sb-layout') === 'col') {
+      const children = Array.from(sbEl.querySelectorAll(':scope > [data-node-id]')) as HTMLElement[]
+      if (children.length >= 2) {
+        const rawPcts: (number | null)[] = children.map(c => {
+          const m = (c.getAttribute('style') || '').match(/calc\(([\d.]+)%/)
+          return m ? parseFloat(m[1]) : null
+        })
+        if (rawPcts.some(p => p !== null)) {
+          const knownSum = rawPcts.reduce((a, b) => a + (b || 0), 0)
+          const unknownCount = rawPcts.filter(p => p === null).length
+          const fill = unknownCount > 0 ? (100 - knownSum) / unknownCount : 100 / children.length
+          const finalPcts = rawPcts.map(p => p !== null ? p : fill)
+          const sum = finalPcts.reduce((a, b) => a + b, 0) || 1
+          const norm = finalPcts.map(p => (p / sum) * 100)
+          if (norm.length === 2) {
+            const [p1] = norm
+            if (p1 >= 48 && p1 <= 52) return '1:1'
+            if (p1 >= 31 && p1 <= 35) return '1:2'
+            if (p1 >= 65 && p1 <= 69) return '2:1'
+            if (p1 >= 28 && p1 <= 32) return '3:7'
+            if (p1 >= 68 && p1 <= 72) return '7:3'
+            if (p1 >= 38 && p1 <= 42) return '4:6'
+            if (p1 >= 58 && p1 <= 62) return '6:4'
+            const r1 = Math.round(p1)
+            return `${r1}:${100 - r1}`
+          }
+          if (norm.length === 3) {
+            const [p1, p2, p3] = norm
+            if (p1 >= 31 && p1 <= 35 && p2 >= 31 && p2 <= 35 && p3 >= 31 && p3 <= 35) return '1:1:1'
+            if (p1 >= 23 && p1 <= 27 && p2 >= 48 && p2 <= 52 && p3 >= 23 && p3 <= 27) return '1:2:1'
+            const r1 = Math.round(p1)
+            const r2 = Math.round(p2)
+            return `${r1}:${r2}:${100 - r1 - r2}`
+          }
+          return norm.map(p => Math.round(p)).join(':')
+        }
+      }
+    }
+    sibling = sibling.nextElementSibling
+  }
+  return ''
+})
+
 const targetPageIndex = computed(() => targetSlide.value?.pageIndex || 1)
 const isNoteBlock = computed(() => Boolean(activeBlockAttrs.value[ATTR_ELEM_NOTE] || activeBlockAttrs.value['slidev-note']))
 
@@ -500,6 +574,10 @@ const {
 // 场景 A 事件
 function onLayoutChange(val: string) {
   saveAttr(ATTR_PAGE_LAYOUT, val)
+}
+
+function onLayoutRatioChange(val: string) {
+  saveAttr(ATTR_PAGE_LAYOUT_RATIO, val)
 }
 
 function onTransitionChange(val: string) {

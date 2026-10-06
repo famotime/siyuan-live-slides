@@ -2,11 +2,13 @@ import type { ISiYuanBlockNode } from "../types/slidev-protocol"
 import {
   ATTR_ELEM_SLOT,
   ATTR_PAGE_LAYOUT,
+  ATTR_PAGE_LAYOUT_RATIO,
 } from "../types/slidev-protocol"
 import { isPageBreak } from "./scope-mapper"
 import { isListItemNode } from "../utils/markdown-utils"
 import {
   detectSuperBlockImageLayout,
+  extractSuperBlockWidthRatios,
   getContentChildren,
   isHeadingBlock,
   isHorizontalSuperBlock,
@@ -21,6 +23,7 @@ export interface IListSuperBlockDetection {
   layout: "two-cols-header" | "three-cols-header"
   items: ISiYuanBlockNode[]
   slots: string[]
+  ratio?: string
 }
 
 export interface IExtractedListColumns {
@@ -198,6 +201,8 @@ export function detectListSuperBlock(node: ISiYuanBlockNode): IListSuperBlockDet
     return null
   }
 
+  const detectedRatio = extractSuperBlockWidthRatios(node) || undefined
+
   if (items.length === 2) {
     return {
       superBlockNode: node,
@@ -206,6 +211,7 @@ export function detectListSuperBlock(node: ISiYuanBlockNode): IListSuperBlockDet
       layout: "two-cols-header",
       items,
       slots: ["left", "right"],
+      ratio: detectedRatio,
     }
   }
 
@@ -216,6 +222,7 @@ export function detectListSuperBlock(node: ISiYuanBlockNode): IListSuperBlockDet
     layout: "three-cols-header",
     items,
     slots: ["col-1", "col-2", "col-3"],
+    ratio: detectedRatio,
   }
 }
 
@@ -426,6 +433,17 @@ export function scanAndTagListSuperBlocks(
         if (pageTargetNode) {
           if (!pageTargetNode.ial) pageTargetNode.ial = {}
           pageTargetNode.ial[ATTR_PAGE_LAYOUT] = layout
+        }
+      }
+
+      // 2.1.5 检查并配置分栏比例 custom-slidev-layout-ratio (未设置时自动从超级块提取，手动设置后以手动为准)
+      const currentRatio = pageTargetNode?.ial?.[ATTR_PAGE_LAYOUT_RATIO] || ""
+      const sbRatio = matchedDetection.ratio
+      if (!currentRatio && sbRatio) {
+        recordChange(pageTargetId, { [ATTR_PAGE_LAYOUT_RATIO]: sbRatio })
+        if (pageTargetNode) {
+          if (!pageTargetNode.ial) pageTargetNode.ial = {}
+          pageTargetNode.ial[ATTR_PAGE_LAYOUT_RATIO] = sbRatio
         }
       }
 

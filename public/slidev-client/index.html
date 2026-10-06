@@ -533,7 +533,7 @@
 
     .layout-two-cols {
       display: grid !important;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+      grid-template-columns: var(--slide-grid-cols, minmax(0, 1fr) minmax(0, 1fr)) !important;
       grid-template-rows: minmax(0, 1fr) !important;
       column-gap: 32px;
       gap: 32px;
@@ -549,7 +549,7 @@
 
     .layout-three-cols {
       display: grid !important;
-      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      grid-template-columns: var(--slide-grid-cols, repeat(3, minmax(0, 1fr))) !important;
       grid-template-rows: minmax(0, 1fr) !important;
       column-gap: 24px;
       gap: 24px;
@@ -853,7 +853,7 @@
     .layout-image-right,
     .layout-image-left {
       display: grid !important;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+      grid-template-columns: var(--slide-grid-cols, minmax(0, 1fr) minmax(0, 1fr)) !important;
       grid-template-rows: 100% !important;
       width: 100% !important;
       height: 100% !important;
@@ -2143,7 +2143,7 @@
                   <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
                 </div>
               </div>
-              <div class="layout-two-cols" style="flex: 1;">
+              <div class="layout-two-cols" :style="getLayoutGridStyle(currentSlide, 2)" style="flex: 1;">
                 <div class="two-cols-left" :class="currentSlide.frontmatter.class">
                   <div
                     v-for="block in leftBlocks"
@@ -2188,7 +2188,7 @@
                   <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
                 </div>
               </div>
-              <div class="layout-three-cols" style="flex: 1;">
+              <div class="layout-three-cols" :style="getLayoutGridStyle(currentSlide, 3)" style="flex: 1;">
                 <div class="three-cols-col three-cols-col--1" :class="currentSlide.frontmatter.class">
                   <div
                     v-for="block in col1Blocks"
@@ -2233,7 +2233,7 @@
 
             <!-- 双栏布局 -->
             <template v-else-if="currentSlide.frontmatter.layout === 'two-cols'">
-              <div class="layout-two-cols" :class="currentSlide.frontmatter.layoutClass">
+              <div class="layout-two-cols" :style="getLayoutGridStyle(currentSlide, 2)" :class="currentSlide.frontmatter.layoutClass">
                 <div class="two-cols-left" :class="currentSlide.frontmatter.class">
                   <div
                     v-for="block in leftBlocks"
@@ -2265,7 +2265,7 @@
 
             <!-- 右侧图片布局 image-right -->
             <template v-else-if="currentSlide.frontmatter.layout === 'image-right'">
-              <div class="layout-image-right">
+              <div class="layout-image-right" :style="getLayoutGridStyle(currentSlide, 2)">
                 <div class="image-right-content" :class="currentSlide.frontmatter.class">
                   <div
                     v-for="block in normalBlocks"
@@ -2298,7 +2298,7 @@
 
             <!-- 左侧图片布局 image-left -->
             <template v-else-if="currentSlide.frontmatter.layout === 'image-left'">
-              <div class="layout-image-left">
+              <div class="layout-image-left" :style="getLayoutGridStyle(currentSlide, 2)">
                 <div class="image-left-img-container">
                   <img
                     v-if="currentSlideImageUrl"
@@ -3167,6 +3167,25 @@
         }
         function closeLightbox() {
           activeLightbox.value = null
+        }
+
+        function getLayoutGridStyle(slide, defaultCols = 2) {
+          if (!slide || !slide.frontmatter) return {}
+          const ratio = slide.frontmatter.layoutRatio
+          if (!ratio || typeof ratio !== "string") return {}
+          const trimmed = ratio.trim()
+          if (!trimmed) return {}
+          if (trimmed.includes(":")) {
+            const parts = trimmed.split(":").map(p => parseFloat(p.trim())).filter(n => !isNaN(n) && n > 0)
+            if (parts.length >= 2) {
+              return { "--slide-grid-cols": parts.map(n => `${n}fr`).join(" ") }
+            }
+          }
+          const tokens = trimmed.split(/\s+/).filter(Boolean)
+          if (tokens.length >= 2) {
+            return { "--slide-grid-cols": tokens.join(" ") }
+          }
+          return {}
         }
 
         const currentThemeMode = computed(() => isDarkTheme.value ? "dark" : "light")
@@ -4958,6 +4977,7 @@
           viewportStyle,
           currentSlideZoom,
           contentWrapperStyle,
+          getLayoutGridStyle,
           updateScale,
           currentThemeMode,
           currentSlidevTheme,

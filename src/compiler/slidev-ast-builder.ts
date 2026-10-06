@@ -9,6 +9,7 @@ import {
   ATTR_ELEM_CLICK,
   ATTR_ELEM_MOTION,
   ATTR_ELEM_SLOT,
+  ATTR_PAGE_LAYOUT_RATIO,
 } from "../types/slidev-protocol"
 import type { IAssetRewriteOptions } from "./assets-rewriter"
 import { extractBlockMarkdown, parseKramdownIAL } from "./ast-crawler"
@@ -304,6 +305,9 @@ export function buildSlidevDocument(
       if (sbLayout) {
         currentPage.frontmatter.layout = sbLayout.layout
         currentPage.frontmatter.image = rewriteSingleAssetUrl(sbLayout.imageUrl, options)
+        if (!currentPage.frontmatter.layoutRatio && sbLayout.ratio) {
+          currentPage.frontmatter.layoutRatio = sbLayout.ratio
+        }
 
         // 将超级块内的非图片内容子块平铺为幻灯片普通内容块
         for (const childNode of sbLayout.contentNodes) {
@@ -318,6 +322,9 @@ export function buildSlidevDocument(
         if (imgUrl) {
           currentPage.frontmatter.layout = elemAttrs.imageLayout
           currentPage.frontmatter.image = rewriteSingleAssetUrl(imgUrl, options)
+          if (!currentPage.frontmatter.layoutRatio && itemNode.ial?.[ATTR_PAGE_LAYOUT_RATIO]) {
+            currentPage.frontmatter.layoutRatio = itemNode.ial[ATTR_PAGE_LAYOUT_RATIO]
+          }
           // 幻灯片内容流中排除该配图
           return
         }

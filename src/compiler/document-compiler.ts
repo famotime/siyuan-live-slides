@@ -9,7 +9,7 @@ import {
   ITrackedListSuperBlock,
 } from "./superblock-scanner"
 import type { ISiYuanBlockNode, ISlidevDocument } from "../types/slidev-protocol"
-import { ATTR_PAGE_LAYOUT } from "../types/slidev-protocol"
+import { ATTR_PAGE_LAYOUT, ATTR_PAGE_LAYOUT_RATIO } from "../types/slidev-protocol"
 
 /**
  * 辅助解析思源数据库中的 IAL 字段文本为键值对字典
@@ -282,9 +282,13 @@ export class DocumentCompilerService {
 
       // 执行超级块自动检测与打标，自动写入即时覆盖层与持久化
       scanAndTagSuperBlocks(blockNodes, (record) => {
-        this.setBlockAttrOverride(record.blockId, { [ATTR_PAGE_LAYOUT]: record.layout })
+        const updates: Record<string, string> = { [ATTR_PAGE_LAYOUT]: record.layout }
+        if (record.ratio) {
+          updates[ATTR_PAGE_LAYOUT_RATIO] = record.ratio
+        }
+        this.setBlockAttrOverride(record.blockId, updates)
         const saveFn = this.deps.setBlockAttrs || setBlockAttrs
-        saveFn(record.blockId, { [ATTR_PAGE_LAYOUT]: record.layout }).catch((err) => {
+        saveFn(record.blockId, updates).catch((err) => {
           console.warn("[DocumentCompiler] Failed to auto-tag superblock image layout:", err)
         })
       })

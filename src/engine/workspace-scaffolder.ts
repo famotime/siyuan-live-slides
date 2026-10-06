@@ -30,12 +30,39 @@ export function sayHello() {
 `,
 }
 
-export const THREE_COLS_HEADER_LAYOUT_VUE = `<template>
+export const THREE_COLS_HEADER_LAYOUT_VUE = `<script setup lang="ts">
+import { computed } from 'vue'
+
+const props = defineProps({
+  layoutRatio: {
+    type: String,
+    default: '',
+  },
+})
+
+const gridStyle = computed(() => {
+  const r = props.layoutRatio || ''
+  if (!r) return {}
+  if (r.includes(':')) {
+    const parts = r.split(':').map(p => parseFloat(p.trim())).filter(n => !isNaN(n) && n > 0)
+    if (parts.length >= 2) {
+      return { gridTemplateColumns: parts.map(n => \`\${n}fr\`).join(' ') }
+    }
+  }
+  const tokens = r.split(/\\s+/).filter(Boolean)
+  if (tokens.length >= 2) {
+    return { gridTemplateColumns: tokens.join(' ') }
+  }
+  return {}
+})
+</script>
+
+<template>
   <div class="slidev-layout three-cols-header w-full h-full flex flex-col">
     <div class="header-section mb-4 w-full">
       <slot />
     </div>
-    <div class="grid grid-cols-3 gap-6 flex-1 items-stretch">
+    <div class="grid gap-6 flex-1 items-stretch" :class="gridStyle.gridTemplateColumns ? '' : 'grid-cols-3'" :style="gridStyle">
       <div class="col-1 min-w-0 h-full max-h-full overflow-hidden break-words [overflow-wrap:break-word] [word-break:break-word]">
         <slot name="col-1" />
       </div>

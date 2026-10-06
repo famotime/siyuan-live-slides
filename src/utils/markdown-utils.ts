@@ -86,3 +86,33 @@ export function isListItemNode(node?: ISiYuanBlockNode | { type?: string; markdo
   if (/^(?:[-*+]|\d+\.)\s+/.test(md)) return true
   return false
 }
+
+/**
+ * 将比例字符串（如 "1:2", "3:7", "1:2:1", "40% 60%"）解析转换为标准 CSS Grid grid-template-columns 样式
+ */
+export function parseRatioToGridCols(ratio?: string, defaultCols = 2): string {
+  if (!ratio || typeof ratio !== "string") {
+    return `repeat(${defaultCols}, 1fr)`
+  }
+
+  const trimmed = ratio.trim()
+  if (!trimmed) {
+    return `repeat(${defaultCols}, 1fr)`
+  }
+
+  // 1. 如果包含冒号分隔，如 "1:2" 或 "1:1:1" 或 "30:70"
+  if (trimmed.includes(":")) {
+    const parts = trimmed.split(":").map(p => parseFloat(p.trim())).filter(n => !isNaN(n) && n > 0)
+    if (parts.length >= 2) {
+      return parts.map(n => `${n}fr`).join(" ")
+    }
+  }
+
+  // 2. 如果包含空格或百分比分隔，如 "40% 60%" 或 "1fr 2fr"
+  const tokens = trimmed.split(/\s+/).filter(Boolean)
+  if (tokens.length >= 2) {
+    return tokens.join(" ")
+  }
+
+  return `repeat(${defaultCols}, 1fr)`
+}

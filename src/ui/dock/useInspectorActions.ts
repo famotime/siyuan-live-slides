@@ -33,6 +33,7 @@ import {
   ATTR_PAGE_BACKGROUND,
   ATTR_PAGE_IMAGE,
   ATTR_PAGE_LAYOUT,
+  ATTR_PAGE_LAYOUT_RATIO,
   ATTR_PAGE_TRANSITION,
   ATTR_VIDEO_AUTOPLAY,
   ATTR_VIDEO_CONTROLS,
@@ -111,6 +112,16 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
       }
     }
 
+    if (ATTR_PAGE_LAYOUT_RATIO in attrs) {
+      const value = attrs[ATTR_PAGE_LAYOUT_RATIO]
+      if (ctx.targetSlide.value) {
+        if (!ctx.targetSlide.value.frontmatter) {
+          ctx.targetSlide.value.frontmatter = {}
+        }
+        ctx.targetSlide.value.frontmatter.layoutRatio = value
+      }
+    }
+
     triggerSaveNotice("保存中...")
     try {
       await setBlockAttrs(targetId, attrs)
@@ -138,6 +149,15 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
           ctx.targetSlide.value.frontmatter = {}
         }
         ctx.targetSlide.value.frontmatter.layout = value as any
+      }
+    }
+
+    if (key === ATTR_PAGE_LAYOUT_RATIO) {
+      if (ctx.targetSlide.value) {
+        if (!ctx.targetSlide.value.frontmatter) {
+          ctx.targetSlide.value.frontmatter = {}
+        }
+        ctx.targetSlide.value.frontmatter.layoutRatio = value
       }
     }
 
@@ -482,6 +502,7 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
       [ATTR_ELEM_NOTE]: "",
       "slidev-note": "",
       [ATTR_PAGE_LAYOUT]: "",
+      [ATTR_PAGE_LAYOUT_RATIO]: "",
       [ATTR_ELEM_ROLE]: "",
       [ATTR_PAGE_TRANSITION]: "",
       [ATTR_PAGE_BACKGROUND]: "",

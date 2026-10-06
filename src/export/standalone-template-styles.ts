@@ -211,7 +211,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     .pdf-two-cols-wrapper,
     .layout-two-cols-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-columns: var(--slide-grid-cols, minmax(0, 1fr) minmax(0, 1fr));
       grid-template-rows: minmax(0, 1fr) !important;
       gap: 32px;
       width: 100%;
@@ -245,7 +245,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     .pdf-three-cols-wrapper,
     .layout-three-cols-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-columns: var(--slide-grid-cols, minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr));
       grid-template-rows: minmax(0, 1fr) !important;
       gap: 24px;
       width: 100%;
@@ -295,7 +295,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     .slide-content.layout-image-right, .slide-content.layout-image-left {
       padding: 0;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-columns: var(--slide-grid-cols, minmax(0, 1fr) minmax(0, 1fr));
       grid-template-rows: 100%;
       width: 100%;
       height: 100%;

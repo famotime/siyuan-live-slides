@@ -20,6 +20,7 @@ export const ATTR_PAGE_IMAGE = "custom-slidev-image"
 export const ATTR_PAGE_NOTES = "custom-slidev-notes"
 export const ATTR_PAGE_CLASS = "custom-slidev-class"
 export const ATTR_PAGE_SPACING = "custom-slidev-spacing"
+export const ATTR_PAGE_LAYOUT_RATIO = "custom-slidev-layout-ratio"
 
 // 3. 元素动效级与内容属性常量 (Element Scope)
 export const ATTR_ELEM_CLICK = "custom-slidev-click"
@@ -71,6 +72,7 @@ export interface ISlidePageFrontmatter {
   image?: string
   class?: string
   clicks?: number
+  layoutRatio?: string
   [key: string]: any
 }
 
@@ -151,4 +153,5 @@ export interface IActiveBlockInfo {
   topBlockId?: string
   pageDividerId?: string
   pageDividerLayout?: string
+  pageDividerLayoutRatio?: string
 }

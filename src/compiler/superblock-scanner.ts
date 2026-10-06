@@ -2,6 +2,7 @@ import type { ISiYuanBlockNode } from "../types/slidev-protocol"
 import {
   ATTR_ELEM_SLOT,
   ATTR_PAGE_LAYOUT,
+  ATTR_PAGE_LAYOUT_RATIO,
   ROLE_IMAGE_LEFT,
   ROLE_IMAGE_RIGHT,
 } from "../types/slidev-protocol"
@@ -89,6 +90,98 @@ export interface ISuperBlockImageLayout {
   imageUrl: string
   layout: "image-left" | "image-right"
   contentNodes: ISiYuanBlockNode[]
+  ratio?: string
+}
+
+/**
+ * 从横向分栏超级块的子块中提取宽度比例配置
+ * 思源笔记在用户调整超级块列宽时，会在子块 style 中持久化类似:
+ * width: calc(30% - 13.8px); flex: none; 或 width: calc(33.3% - 10px);
+ * 如果成功提取，返回归一化比值字符串（如 "1:2", "3:7", "1:2:1" 或 "35:65"）；
+ * 若子块均未设置宽度或无法识别，返回 null。
+ */
+export function extractSuperBlockWidthRatios(node: ISiYuanBlockNode): string | null {
+  if (!node || !isSuperBlock(node)) return null
+  if (!isHorizontalSuperBlock(node)) return null
+
+  const contentChildren = getContentChildren(node)
+  if (!contentChildren || contentChildren.length < 2) return null
+
+  // 提取各直接子块的宽度设置
+  const rawPercentages: (number | null)[] = []
+  let anyWidthFound = false
+
+  for (const child of contentChildren) {
+    const styleStr = (child.ial?.style || (child as any).style || "").trim()
+    let pct: number | null = null
+    if (styleStr) {
+      const calcMatch = styleStr.match(/calc\(\s*([\d.]+)%/i)
+      if (calcMatch) {
+        pct = parseFloat(calcMatch[1])
+      } else {
+        const widthMatch = styleStr.match(/(?:^|;|\s)width:\s*([\d.]+)%/i)
+        if (widthMatch) {
+          pct = parseFloat(widthMatch[1])
+        }
+      }
+    }
+    if (pct !== null && !isNaN(pct) && pct > 0) {
+      rawPercentages.push(pct)
+      anyWidthFound = true
+    } else {
+      rawPercentages.push(null)
+    }
+  }
+
+  if (!anyWidthFound) {
+    return null
+  }
+
+  // 若部分子块有宽度，部分没有，未设置的均分剩余比例（对齐思源 rebalanceSbWidth 逻辑）
+  const totalCount = contentChildren.length
+  const knownSum = rawPercentages.reduce((acc: number, curr) => acc + (curr || 0), 0)
+  const unknownCount = rawPercentages.filter(p => p === null).length
+  const remaining = Math.max(0, 100 - knownSum)
+  const fillPct = unknownCount > 0 ? remaining / unknownCount : 100 / totalCount
+
+  const finalPercentages = rawPercentages.map(p => (p !== null ? p : fillPct))
+  const finalSum = finalPercentages.reduce((a: number, b: number) => a + b, 0)
+  if (finalSum <= 0) return null
+
+  // 归一化到 100%
+  const normalized = finalPercentages.map(p => (p / finalSum) * 100)
+
+  // 检查经典比值
+  if (normalized.length === 2) {
+    const [p1] = normalized
+    if (p1 >= 48 && p1 <= 52) return "1:1"
+    if (p1 >= 31 && p1 <= 35) return "1:2"
+    if (p1 >= 65 && p1 <= 69) return "2:1"
+    if (p1 >= 28 && p1 <= 32) return "3:7"
+    if (p1 >= 68 && p1 <= 72) return "7:3"
+    if (p1 >= 38 && p1 <= 42) return "4:6"
+    if (p1 >= 58 && p1 <= 62) return "6:4"
+    if (p1 >= 23 && p1 <= 27) return "1:3"
+    if (p1 >= 73 && p1 <= 77) return "3:1"
+    const r1 = Math.round(p1)
+    const r2 = 100 - r1
+    return `${r1}:${r2}`
+  }
+
+  if (normalized.length === 3) {
+    const [p1, p2, p3] = normalized
+    if (p1 >= 31 && p1 <= 35 && p2 >= 31 && p2 <= 35 && p3 >= 31 && p3 <= 35) return "1:1:1"
+    if (p1 >= 23 && p1 <= 27 && p2 >= 48 && p2 <= 52 && p3 >= 23 && p3 <= 27) return "1:2:1"
+    if (p1 >= 48 && p1 <= 52 && p2 >= 23 && p2 <= 27 && p3 >= 23 && p3 <= 27) return "2:1:1"
+    if (p1 >= 23 && p1 <= 27 && p2 >= 23 && p2 <= 27 && p3 >= 48 && p3 <= 52) return "1:1:2"
+    if (p1 >= 18 && p1 <= 22 && p2 >= 58 && p2 <= 62 && p3 >= 18 && p3 <= 22) return "1:3:1"
+    const r1 = Math.round(p1)
+    const r2 = Math.round(p2)
+    const r3 = 100 - r1 - r2
+    return `${r1}:${r2}:${r3}`
+  }
+
+  return normalized.map(p => Math.round(p)).join(":")
 }
 
 /**
@@ -129,6 +222,7 @@ export function detectSuperBlockImageLayout(node: ISiYuanBlockNode): ISuperBlock
 
   const firstIsImg = isImageBlock(contentChildren[0])
   const lastIsImg = isImageBlock(contentChildren[contentChildren.length - 1])
+  const detectedRatio = extractSuperBlockWidthRatios(node) || undefined
 
   // 1. 图左模式：首个子块为图片，末尾子块包含非图片内容
   if (firstIsImg && !lastIsImg) {
@@ -139,6 +233,7 @@ export function detectSuperBlockImageLayout(node: ISiYuanBlockNode): ISuperBlock
         imageUrl: imgUrl,
         layout: ROLE_IMAGE_LEFT,
         contentNodes: contentChildren.slice(1),
+        ratio: detectedRatio,
       }
     }
   }
@@ -152,6 +247,7 @@ export function detectSuperBlockImageLayout(node: ISiYuanBlockNode): ISuperBlock
         imageUrl: imgUrl,
         layout: ROLE_IMAGE_RIGHT,
         contentNodes: contentChildren.slice(0, contentChildren.length - 1),
+        ratio: detectedRatio,
       }
     }
   }
@@ -163,6 +259,7 @@ export interface ITagChangeRecord {
   blockId: string
   layout: "image-left" | "image-right"
   previousLayout?: string
+  ratio?: string
 }
 
 /**
@@ -178,19 +275,27 @@ export function scanAndTagSuperBlocks(
     for (const node of nodes) {
       const detected = detectSuperBlockImageLayout(node)
       if (detected) {
-        const { imageNode, layout } = detected
+        const { imageNode, layout, ratio } = detected
         if (!imageNode.ial) {
           imageNode.ial = {}
         }
 
         const currentLayout = imageNode.ial[ATTR_PAGE_LAYOUT]
-        if (currentLayout !== layout) {
+        const currentRatio = imageNode.ial[ATTR_PAGE_LAYOUT_RATIO]
+        const needLayoutUpdate = currentLayout !== layout
+        const needRatioUpdate = !currentRatio && Boolean(ratio)
+
+        if (needLayoutUpdate || needRatioUpdate) {
           const record: ITagChangeRecord = {
             blockId: imageNode.id,
             layout,
             previousLayout: currentLayout,
+            ratio: ratio || currentRatio,
           }
           imageNode.ial[ATTR_PAGE_LAYOUT] = layout
+          if (needRatioUpdate && ratio) {
+            imageNode.ial[ATTR_PAGE_LAYOUT_RATIO] = ratio
+          }
           changes.push(record)
           if (onTagChange) {
             onTagChange(record)
