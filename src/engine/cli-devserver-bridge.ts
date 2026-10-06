@@ -122,7 +122,12 @@ export class CliDevServerBridge {
       return `${header}${contentBody}${notesFooter}`
     }).join("\n\n")
 
-    return `${globalHeader}${slidesMarkdown}\n`
+    let styleFooter = ""
+    if (doc.config.normalizeHeadingSizes) {
+      styleFooter = `\n\n<style>\n/* Specific Heading Normalization */\n.slidev-layout:not(.cover) > :is(h1, h2, h3, h4, h5, h6):first-child {\n  font-size: 1.7rem !important;\n}\n.two-cols-header-top :is(h1, h2, h3, h4, h5, h6),\n.cols-header-top :is(h1, h2, h3, h4, h5, h6),\n.layout-header-section :is(h1, h2, h3, h4, h5, h6) {\n  font-size: 1.7rem !important;\n}\n:is(.two-cols-left, .two-cols-right, .col, .col-1, .col-2, .col-3, .three-cols-col) > :is(h1, h2, h3, h4, h5, h6):first-child {\n  font-size: 1.3rem !important;\n}\n</style>`
+    }
+
+    return `${globalHeader}${slidesMarkdown}${styleFooter}\n`
   }
 
   /**

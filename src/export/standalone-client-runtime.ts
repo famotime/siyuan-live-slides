@@ -51,6 +51,16 @@ export function getStandaloneClientRuntimeScript(): string {
         return cleaned.trim();
       }
 
+      function isHeadingBlock(b) {
+        if (!b) return false;
+        if (b.type === "h" || b.type === "NodeHeading") return true;
+        if (b.subType && /^h[1-6]$/i.test(b.subType)) return true;
+        const md = (b.rawMarkdown || b.content || "").trim();
+        if (/^#{1,6}\s+/.test(md)) return true;
+        if (/^(?:[-*+]|\d+\.)\s+#{1,6}\s+/.test(md)) return true;
+        return false;
+      }
+
       function cleanColList(blocks) {
         const valid = (blocks || []).filter(b => Boolean((b.rawMarkdown || b.content || "").trim()));
         if (valid.length === 0) return valid;
@@ -64,9 +74,9 @@ export function getStandaloneClientRuntimeScript(): string {
         return valid;
       }
 
-      function renderBlock(block) {
+      function renderBlock(block, extraClass) {
         const div = document.createElement("div");
-        div.className = "slide-block";
+        div.className = "slide-block" + (extraClass ? " " + extraClass : "");
         if (block && block.motion && block.motion.preset && block.motion.preset !== "none") {
           div.classList.add("slidev-motion-" + block.motion.preset.toLowerCase());
           if (typeof block.motion.duration === "number" && block.motion.duration > 0) {
@@ -126,10 +136,13 @@ export function getStandaloneClientRuntimeScript(): string {
         }
 
         const hasHeadingTag = /(?:^|\n)\s*#{1,6}\s+/.test(md);
+        const hMatch = md.match(/^(#{1,6})\\s+(.*)$/);
 
-        if (md.startsWith("### ")) div.innerHTML = "<h3>" + md.slice(4) + "</h3>";
-        else if (md.startsWith("## ")) div.innerHTML = "<h2>" + md.slice(3) + "</h2>";
-        else if (md.startsWith("# ")) div.innerHTML = "<h1>" + md.slice(2) + "</h1>";
+        if (hMatch) {
+          const level = hMatch[1].length;
+          let th = hMatch[2].trim().replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+          div.innerHTML = "<h" + level + ">" + th + "</h" + level + ">";
+        }
         else if (md.startsWith("\`\`\`")) {
           const customMaxHeight = block?.attributes?.["custom-slidev-max-height"] || block?.attrs?.["custom-slidev-max-height"] || block?.maxHeight || "";
           const heightStyle = customMaxHeight ? ' style="max-height:' + customMaxHeight + ';overflow-y:auto;"' : "";
@@ -419,11 +432,15 @@ export function getStandaloneClientRuntimeScript(): string {
           }
           leftList = cleanColList(leftList);
           rightList = cleanColList(rightList);
-          for (const b of leftList) leftCol.appendChild(renderBlock(b));
-          for (const b of rightList) rightCol.appendChild(renderBlock(b));
+          const isCover = slide.frontmatter?.layout === "cover";
+          const leftFirstH = !isCover ? leftList.find(isHeadingBlock) : null;
+          const rightFirstH = !isCover ? rightList.find(isHeadingBlock) : null;
+          for (const b of leftList) leftCol.appendChild(renderBlock(b, b === leftFirstH ? "slidev-col-first-heading-block" : ""));
+          for (const b of rightList) rightCol.appendChild(renderBlock(b, b === rightFirstH ? "slidev-col-first-heading-block" : ""));
           container.appendChild(leftCol);
           container.appendChild(rightCol);
         } else if (slide.frontmatter?.layout === "cols-header" || slide.frontmatter?.layout === "two-cols-header" || slide.frontmatter?.layout === "three-cols-header") {
+          const isCover = slide.frontmatter?.layout === "cover";
           const blocks = (slide.blocks || []).filter(b => b.slot !== "slot-divider-right");
           let headerBlocks = blocks.filter(b => b.slot === "header");
           if (headerBlocks.length === 0 && blocks.length > 0) {
@@ -490,14 +507,16 @@ export function getStandaloneClientRuntimeScript(): string {
             }
           }
 
-          for (const b of headerBlocks) headerDiv.appendChild(renderBlock(b));
+          const headerFirstH = !isCover ? headerBlocks.find(isHeadingBlock) : null;
+          for (const b of headerBlocks) headerDiv.appendChild(renderBlock(b, b === headerFirstH ? "slidev-page-first-heading-block" : ""));
           containerDiv.appendChild(headerDiv);
 
           colsList.forEach((colBlocks, idx) => {
             const colDiv = document.createElement("div");
             colDiv.className = "pdf-col pdf-col--" + (idx + 1) + " col-" + (idx + 1) + (targetCols === 2 && idx === 0 ? " pdf-col--left" : "") + (targetCols === 2 && idx === 1 ? " pdf-col--right" : "");
             const cleaned = cleanColList(colBlocks);
-            for (const b of cleaned) colDiv.appendChild(renderBlock(b));
+            const colFirstH = !isCover ? (cleaned.find(isHeadingBlock) || cleaned[0]) : null;
+            for (const b of cleaned) colDiv.appendChild(renderBlock(b, b === colFirstH ? "slidev-col-first-heading-block" : ""));
             gridDiv.appendChild(colDiv);
           });
           containerDiv.appendChild(gridDiv);
@@ -507,8 +526,10 @@ export function getStandaloneClientRuntimeScript(): string {
           const contentCol = document.createElement("div");
           contentCol.className = isImageRight ? "image-right-content" : "image-left-content";
 
+          const isCover = slide.frontmatter?.layout === "cover";
+          const pageFirstH = !isCover ? (slide.blocks || []).find(isHeadingBlock) : null;
           for (const block of (slide.blocks || [])) {
-            contentCol.appendChild(renderBlock(block));
+            contentCol.appendChild(renderBlock(block, block === pageFirstH ? "slidev-page-first-heading-block" : ""));
           }
 
           const imgCol = document.createElement("div");
@@ -530,8 +551,11 @@ export function getStandaloneClientRuntimeScript(): string {
             container.appendChild(contentCol);
           }
         } else {
+          const isCover = slide.frontmatter?.layout === "cover";
+          const validBlocks = (slide.blocks || []).filter(b => b.slot !== "slot-divider-right");
+          const pageFirstH = !isCover ? validBlocks.find(isHeadingBlock) : null;
           for (const block of (slide.blocks || [])) {
-            container.appendChild(renderBlock(block));
+            container.appendChild(renderBlock(block, block === pageFirstH ? "slidev-page-first-heading-block" : ""));
           }
         }
 
@@ -651,6 +675,51 @@ export function getStandaloneClientRuntimeScript(): string {
         if (e.key === "f" || e.key === "F") btnFullscreen.click();
       });
 
+      // 监听鼠标滚轮上下翻页调度
+      let lastWheelTime = 0;
+      const WHEEL_COOLDOWN_MS = 280;
+      const WHEEL_DELTA_THRESHOLD = 15;
+
+      function canElementScrollY(el, deltaY) {
+        let cur = el;
+        while (cur && cur !== document.body && cur !== document.documentElement) {
+          if (cur.classList && (cur.classList.contains("slidev-viewport") || cur.classList.contains("slidev-stage") || cur.classList.contains("slide-container"))) {
+            break;
+          }
+          const style = window.getComputedStyle(cur);
+          const overflowY = style.overflowY;
+          if (overflowY === "auto" || overflowY === "scroll") {
+            const maxScroll = cur.scrollHeight - cur.clientHeight;
+            if (maxScroll > 2) {
+              if (deltaY > 0 && cur.scrollTop < maxScroll - 1) return true;
+              if (deltaY < 0 && cur.scrollTop > 1) return true;
+            }
+          }
+          cur = cur.parentElement;
+        }
+        return false;
+      }
+
+      window.addEventListener("wheel", (e) => {
+        if (isLightboxOpen) return;
+        if (Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+        if (Math.abs(e.deltaY) < WHEEL_DELTA_THRESHOLD) return;
+
+        const target = e.target instanceof Element ? e.target : e.target?.parentElement;
+        if (target && canElementScrollY(target, e.deltaY)) return;
+
+        e.preventDefault();
+        const now = Date.now();
+        if (now - lastWheelTime < WHEEL_COOLDOWN_MS) return;
+        lastWheelTime = now;
+
+        if (e.deltaY > 0) {
+          renderSlide(currentIndex + 1);
+        } else {
+          renderSlide(currentIndex - 1);
+        }
+      }, { passive: false });
+
       document.addEventListener("click", (e) => {
         if (isLightboxOpen) {
           const target = e.target instanceof Element ? e.target : e.target?.parentElement;
@@ -676,7 +745,7 @@ export function getStandaloneClientRuntimeScript(): string {
 
         // 媒体点击唤起 Lightbox 放大模态
         const mediaEl = targetEl.closest(".slide-content img, .slide-content video");
-        if (mediaEl && !mediaEl.closest(".controls, button, a")) {
+        if (mediaEl && !mediaEl.closest(".controls, .controls-bar, button, a")) {
           e.stopPropagation();
           const isVideo = mediaEl.tagName.toLowerCase() === "video";
           const src = isVideo ? (mediaEl.currentSrc || mediaEl.src || mediaEl.querySelector("source")?.src) : mediaEl.src;
@@ -690,7 +759,7 @@ export function getStandaloneClientRuntimeScript(): string {
         if (selection.length > 0) return;
 
         const isComponent = targetEl.closest(
-          ".slide-block, .controls-bar, .image-right-img-container, .image-left-img-container, img, video, audio, button, a, input, textarea, select, [data-clickable], [data-ref-id], .slidev-toc, .empty-state"
+          ".slide-block, .controls-bar, .image-right-img-container, .image-left-img-container, .controls, img, video, audio, button, a, input, textarea, select, [data-clickable], [data-ref-id], .slidev-toc, .empty-state"
         );
         if (isComponent) return;
 

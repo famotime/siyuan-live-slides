@@ -418,6 +418,37 @@
           }
         }
 
+        // 监听鼠标滚轮上下翻页调度
+        let lastWheelTime = 0
+        const WHEEL_COOLDOWN_MS = 280
+        const WHEEL_DELTA_THRESHOLD = 15
+
+        function onWheel(e) {
+          if (Math.abs(e.deltaY) < Math.abs(e.deltaX)) return
+          if (Math.abs(e.deltaY) < WHEEL_DELTA_THRESHOLD) return
+
+          const target = e.target instanceof Element ? e.target : e.target?.parentElement
+          if (target && target.closest('.presenter-notes, .presenter-sidebar')) {
+            const scrollEl = target.closest('.presenter-notes, .presenter-sidebar')
+            const maxScroll = scrollEl.scrollHeight - scrollEl.clientHeight
+            if (maxScroll > 2) {
+              if (e.deltaY > 0 && scrollEl.scrollTop < maxScroll - 1) return
+              if (e.deltaY < 0 && scrollEl.scrollTop > 1) return
+            }
+          }
+
+          e.preventDefault()
+          const now = Date.now()
+          if (now - lastWheelTime < WHEEL_COOLDOWN_MS) return
+          lastWheelTime = now
+
+          if (e.deltaY > 0) {
+            nextSlide()
+          } else {
+            prevSlide()
+          }
+        }
+
         const notesFontSize = ref(20)
         function increaseFontSize() {
           if (notesFontSize.value < 36) notesFontSize.value += 2
@@ -439,6 +470,7 @@
 
         onMounted(() => {
           window.addEventListener("keydown", onKeyDown)
+          window.addEventListener("wheel", onWheel, { passive: false })
           timerInterval = setInterval(() => {
             if (isTimerRunning.value) {
               elapsedSeconds.value++
@@ -464,6 +496,7 @@
 
         onUnmounted(() => {
           window.removeEventListener("keydown", onKeyDown)
+          window.removeEventListener("wheel", onWheel)
           if (timerInterval) clearInterval(timerInterval)
           if (broadcastChannel) broadcastChannel.close()
         })

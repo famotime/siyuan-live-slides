@@ -276,10 +276,13 @@ function onToggleWebServe(enabled: boolean) {
   }
 }
 
-function onToggleNormalizeHeadings(enabled: boolean) {
+async function onToggleNormalizeHeadings(enabled: boolean) {
   setRuntimeSettings({ normalizeHeadingSizes: enabled })
   if (plugin && typeof plugin.saveGlobalSettings === 'function') {
-    plugin.saveGlobalSettings({ normalizeHeadingSizes: enabled })
+    await plugin.saveGlobalSettings({ normalizeHeadingSizes: enabled })
+  }
+  if (plugin && typeof plugin.compileCurrentDocument === 'function') {
+    plugin.compileCurrentDocument(plugin.currentDocId || plugin.getActiveDocumentId?.())
   }
 }
 

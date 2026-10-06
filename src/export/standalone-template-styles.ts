@@ -345,10 +345,10 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     }
 
     /* 全局特定标题大小规范化 (除封面外页首首个标题按 H2 1.7rem，表头多栏内首个标题按 H3 1.3rem) */
-    [data-normalize-headings="true"] .slidev-page-first-heading-block :is(h1, h2, h3, h4, h5, h6),
-    [data-normalize-headings="true"] .slidev-page-first-heading-block:is(h1, h2, h3, h4, h5, h6),
-    [data-normalize-headings="true"] .slide-content:not(.layout-cover) > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
-    [data-normalize-headings="true"] .slide-content:not(.layout-cover) > .layout-header-section .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    [data-normalize-headings="true"] .slidev-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .slidev-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .slide-content:not(.layout-cover) > :is(.pdf-block, .slide-block):first-child :is(h1, h2, h3, h4, h5, h6),
+    [data-normalize-headings="true"] .slide-content:not(.layout-cover) > .layout-header-section :is(.pdf-block, .slide-block):first-child :is(h1, h2, h3, h4, h5, h6),
     [data-normalize-headings="true"] .slide-content:not(.layout-cover) > :not(.layout-cols-wrapper):not(.pdf-two-cols-wrapper):not(.layout-image-cols-grid):first-child :is(h1, h2, h3, h4, h5, h6) {
       font-size: 1.7rem !important;
       font-weight: 600 !important;
@@ -358,7 +358,8 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
 
     [data-normalize-headings="true"] .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
     [data-normalize-headings="true"] .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    [data-normalize-headings="true"] :is(.layout-cols-wrapper, .pdf-two-cols-wrapper, .layout-cols-header-container) .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    [data-normalize-headings="true"] :is(.layout-cols-wrapper, .pdf-two-cols-wrapper, .layout-cols-header-container, .layout-cols-grid) .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] :is(.two-cols-left, .two-cols-right, .pdf-col, .col) > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       font-size: 1.3rem !important;
       font-weight: 600 !important;
       line-height: 1.3 !important;
@@ -551,6 +552,25 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     .pdf-list li > h2, li > h2.slide-list-item-title { font-size: 1.4rem !important; }
     .pdf-list li > h3, li > h3.slide-list-item-title { font-size: 1.22rem !important; }
     .pdf-list li > h4, li > h4.slide-list-item-title { font-size: 1.1rem !important; }
+
+    /* 全局特定标题大小规范化后置强力锁定 (防止被列表项内部字号覆盖) */
+    [data-normalize-headings="true"] .slidev-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .slidev-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+      font-size: 1.7rem !important;
+      font-weight: 600 !important;
+      line-height: 1.25 !important;
+      margin-bottom: 10px !important;
+    }
+    [data-normalize-headings="true"] .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] :is(.layout-cols-wrapper, .pdf-two-cols-wrapper, .layout-cols-header-container, .layout-cols-grid) .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] :is(.two-cols-left, .two-cols-right, .pdf-col, .col) > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+      font-size: 1.3rem !important;
+      font-weight: 600 !important;
+      line-height: 1.3 !important;
+      margin-bottom: 8px !important;
+      text-align: center !important;
+    }
     .slide-list-item-desc,
     .pdf-list li > p {
       margin-top: 4px !important;
@@ -985,6 +1005,14 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       position: absolute; bottom: 16px; display: flex; gap: 12px; align-items: center;
       background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(8px);
       padding: 6px 18px; border-radius: 20px; color: #fff; font-size: 13px; z-index: 10;
+      opacity: 0; pointer-events: auto;
+      transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .controls::before {
+      content: ""; position: absolute; top: -20px; bottom: -16px; left: -24px; right: -24px;
+    }
+    .controls:hover, .controls:focus-within {
+      opacity: 1; transform: translateY(-2px);
     }
     .controls button { background: transparent; border: none; color: inherit; cursor: pointer; padding: 2px 6px; }
 

@@ -114,6 +114,7 @@
     <div
       ref="fullscreenContainerRef"
       class="spm-slidev-tab__viewport spm-slidev-fullscreen-container"
+      @wheel="onViewportWheel"
     >
       <iframe
         ref="sandboxIframeRef"
@@ -360,22 +361,41 @@ function togglePin() {
   }
 }
 
+let lastHostWheelTime = 0
+function onViewportWheel(e: WheelEvent) {
+  if (isDrawerOpen.value) return
+  if (Math.abs(e.deltaY) < Math.abs(e.deltaX)) return
+  if (Math.abs(e.deltaY) < 15) return
+  const now = Date.now()
+  if (now - lastHostWheelTime < 280) return
+  lastHostWheelTime = now
+  if (e.deltaY > 0) {
+    onNextPage()
+  } else {
+    onPrevPage()
+  }
+}
+
 function onPrevPage() {
   if (currentPage.value > 1) {
+    const target = currentPage.value - 1
+    currentPage.value = target
     if (engineMode.value === 'pro-cli') {
-      engineManager.nativeBridge.navigateToPage(currentPage.value - 1)
+      engineManager.nativeBridge.navigateToPage(target)
     } else {
-      sandboxBridge.navigatePage(currentPage.value - 1)
+      sandboxBridge.navigatePage(target)
     }
   }
 }
 
 function onNextPage() {
   if (currentPage.value < totalPages.value) {
+    const target = currentPage.value + 1
+    currentPage.value = target
     if (engineMode.value === 'pro-cli') {
-      engineManager.nativeBridge.navigateToPage(currentPage.value + 1)
+      engineManager.nativeBridge.navigateToPage(target)
     } else {
-      sandboxBridge.navigatePage(currentPage.value + 1)
+      sandboxBridge.navigatePage(target)
     }
   }
 }

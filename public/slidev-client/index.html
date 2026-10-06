@@ -886,21 +886,23 @@
     }
 
     /* 全局特定标题大小规范化 (除封面外页首首个标题按 H2 1.7rem，表头多栏内首个标题按 H3 1.3rem) */
-    .slide-stage-container[data-normalize-headings="true"] .slidev-page-first-heading-block :is(h1, h2, h3, h4, h5, h6),
-    .slide-stage-container[data-normalize-headings="true"] .slidev-page-first-heading-block:is(h1, h2, h3, h4, h5, h6),
-    .slide-stage-container[data-normalize-headings="true"] .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
-    .slide-stage-container[data-normalize-headings="true"] .slide-content-wrapper:not(.layout-cover) > .layout-header-section .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
-    .slide-stage-container[data-normalize-headings="true"] .slide-content-wrapper:not(.layout-cover) > :not(.layout-cols-grid):not(.layout-two-cols):not(.layout-image-left):not(.layout-image-right):first-child :is(h1, h2, h3, h4, h5, h6) {
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slidev-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slidev-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slide-content-wrapper:not(.layout-cover) > .layout-header-section .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slide-content-wrapper:not(.layout-cover) > :not(.layout-cols-grid):not(.layout-two-cols):not(.layout-image-left):not(.layout-image-right):first-child :is(h1, h2, h3, h4, h5, h6) {
       font-size: 1.7rem !important;
       font-weight: 600 !important;
       line-height: 1.25 !important;
       margin-bottom: 10px !important;
     }
 
-    .slide-stage-container[data-normalize-headings="true"] .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    .slide-stage-container[data-normalize-headings="true"] .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    .slide-stage-container[data-normalize-headings="true"] .layout-cols-grid .col .slide-block:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    .slide-stage-container[data-normalize-headings="true"] :is(.two-cols-left, .two-cols-right, .three-cols-col, .col) .slide-block:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .layout-cols-grid .col .slide-block:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) :is(.layout-cols-grid, .two-cols-left, .two-cols-right, .three-cols-col, .col, .pdf-col) .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) :is(.two-cols-left, .two-cols-right, .three-cols-col, .col, .pdf-col) .slide-block:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) :is(.two-cols-left, .two-cols-right, .three-cols-col, .col, .pdf-col) > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       font-size: 1.3rem !important;
       font-weight: 600 !important;
       line-height: 1.3 !important;
@@ -1465,6 +1467,27 @@
     .slide-list-item > h4, .slide-list-item h4.slide-list-item-title { font-size: 1.1rem !important; }
     .slide-list-item > h5, .slide-list-item h5.slide-list-item-title { font-size: 1.0rem !important; }
     .slide-list-item > h6, .slide-list-item h6.slide-list-item-title { font-size: 0.95rem !important; }
+
+    /* 全局特定标题大小规范化强制覆盖 (确保在列表项字号之后生效) */
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slidev-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slidev-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+      font-size: 1.7rem !important;
+      font-weight: 600 !important;
+      line-height: 1.25 !important;
+      margin-bottom: 10px !important;
+    }
+
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) :is(.layout-cols-grid, .two-cols-left, .two-cols-right, .three-cols-col, .col, .pdf-col) .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) :is(.two-cols-left, .two-cols-right, .three-cols-col, .col, .pdf-col) .slide-block:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) :is(.two-cols-left, .two-cols-right, .three-cols-col, .col, .pdf-col) > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+      font-size: 1.3rem !important;
+      font-weight: 600 !important;
+      line-height: 1.3 !important;
+      margin-bottom: 8px !important;
+      text-align: center !important;
+    }
     .slide-list-item-desc,
     .slide-list-item > p {
       margin-top: 4px !important;
@@ -2010,12 +2033,24 @@
       color: #f4f4f5;
       font-size: 0.85rem;
       z-index: 100;
-      opacity: 0.25;
-      transition: opacity 0.25s ease, transform 0.25s ease;
+      opacity: 0;
+      pointer-events: auto;
+      transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     }
 
-    .controls-bar:hover {
+    /* 悬浮感应辅助层：向四周适度扩展响应热区，鼠标靠近即平滑浮现 */
+    .controls-bar::before {
+      content: "";
+      position: absolute;
+      top: -20px;
+      bottom: -12px;
+      left: -24px;
+      right: -24px;
+    }
+
+    .controls-bar:hover,
+    .controls-bar:focus-within {
       opacity: 1;
       transform: translateY(-2px);
     }
@@ -2233,19 +2268,20 @@
   <script src="./assets/unocss.attributify.global.js"></script>
 </head>
 <body>
-  <div id="app">
+  <div id="app" :data-normalize-headings="isNormalizeHeadings ? 'true' : null">
     <div
       ref="stageContainerRef"
       class="slide-stage-container"
       :class="{ 'is-fullscreen': isFullscreenMode }"
       :data-theme="currentThemeMode"
       :data-slidev-theme="currentSlidevTheme"
-      :data-normalize-headings="Boolean(config?.normalizeHeadingSizes)"
+      :data-normalize-headings="isNormalizeHeadings ? 'true' : null"
     >
       <div
         class="slide-viewport"
         :class="['slidev-theme-' + currentSlidevTheme]"
         :data-spacing="currentSpacing"
+        :data-normalize-headings="isNormalizeHeadings ? 'true' : null"
         :style="viewportStyle"
       >
         <div class="ambient-glow" v-if="isDarkTheme"></div>
@@ -3270,6 +3306,7 @@
 
         const currentThemeMode = computed(() => isDarkTheme.value ? "dark" : "light")
         const currentSlidevTheme = computed(() => config.value?.theme || "default")
+        const isNormalizeHeadings = computed(() => Boolean(config.value?.normalizeHeadingSizes))
 
         // 页面背景样式
         const pageBackgroundStyle = computed(() => {
@@ -3487,7 +3524,9 @@
           if (b.type === "h" || b.type === "NodeHeading") return true;
           if (b.subType && /^h[1-6]$/i.test(b.subType)) return true;
           const md = (b.rawMarkdown || b.content || "").trim();
-          return /^#{1,6}\s+/.test(md);
+          if (/^#{1,6}\s+/.test(md)) return true;
+          if (/^(?:[-*+]|\d+\.)\s+#{1,6}\s+/.test(md)) return true;
+          return false;
         }
 
         const pageFirstHeadingBlockId = computed(() => {
@@ -3495,9 +3534,12 @@
           const fm = currentSlide.value.frontmatter || {};
           if (fm.layout === "cover") return null;
 
-          if (isColsHeader(fm.layout) && headerBlocks.value.length > 0) {
-            const hb = headerBlocks.value.find(isHeadingBlock);
-            if (hb) return hb.id;
+          if (isColsHeader(fm.layout)) {
+            if (headerBlocks.value.length > 0) {
+              const hb = headerBlocks.value.find(isHeadingBlock);
+              if (hb) return hb.id;
+            }
+            return null;
           }
           const all = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right");
           const found = all.find(isHeadingBlock);
@@ -3510,16 +3552,10 @@
           const fm = currentSlide.value.frontmatter || {};
           if (fm.layout === "cover") return ids;
 
-          if (isColsHeader(fm.layout)) {
-            for (const col of multiColBlocks.value) {
-              const h = col.find(isHeadingBlock);
-              if (h) ids.add(h.id);
-            }
-          } else if (fm.layout === "two-cols") {
-            const hl = leftBlocks.value.find(isHeadingBlock);
-            if (hl) ids.add(hl.id);
-            const hr = rightBlocks.value.find(isHeadingBlock);
-            if (hr) ids.add(hr.id);
+          const cols = multiColBlocks.value.length >= 2 ? multiColBlocks.value : (fm.layout === "two-cols" ? [leftBlocks.value, rightBlocks.value] : (isColsHeader(fm.layout) ? multiColBlocks.value : []));
+          for (const col of cols) {
+            const h = col.find(isHeadingBlock) || col[0];
+            if (h) ids.add(h.id);
           }
           return ids;
         });
@@ -4831,6 +4867,9 @@
               currentPageIndex.value = Math.max(1, Math.min(e.data.page, totalPages.value || 1))
               currentStep.value = 0
               notifySlideChanged()
+            } else if (e.data?.type === "SYNC_SLIDES") {
+              if (e.data.slides) slides.value = e.data.slides
+              if (e.data.config) config.value = { ...config.value, ...e.data.config }
             } else if (e.data?.type === "REQUEST_SYNC") {
               broadcastSync()
             }
@@ -4847,9 +4886,11 @@
             })
             // 通过 JSON 序列化脱敏 Vue 响应式 Proxy 对象，防止 BroadcastChannel 抛出 DataCloneError
             const plainSlides = JSON.parse(JSON.stringify(slides.value || []))
+            const plainConfig = JSON.parse(JSON.stringify(config.value || {}))
             broadcastChannel.postMessage({
               type: "SYNC_SLIDES",
-              slides: plainSlides
+              slides: plainSlides,
+              config: plainConfig
             })
           } catch (err) {
             console.warn("[Slidev] BroadcastChannel postMessage warning:", err)
@@ -4886,6 +4927,55 @@
             e.preventDefault()
             openPresenter()
           }
+        }
+
+        // 监听鼠标滚轮上下翻页调度
+        let lastWheelTime = 0
+        const WHEEL_COOLDOWN_MS = 280
+        const WHEEL_DELTA_THRESHOLD = 15
+
+        function canElementScrollY(el, deltaY) {
+          let cur = el
+          while (cur && cur !== document.body && cur !== document.documentElement) {
+            if (cur.classList && (cur.classList.contains('slidev-viewport') || cur.classList.contains('slidev-stage') || cur.classList.contains('slidev-container'))) {
+              break
+            }
+            const style = window.getComputedStyle(cur)
+            const overflowY = style.overflowY
+            if (overflowY === 'auto' || overflowY === 'scroll') {
+              const maxScroll = cur.scrollHeight - cur.clientHeight
+              if (maxScroll > 2) {
+                if (deltaY > 0 && cur.scrollTop < maxScroll - 1) return true
+                if (deltaY < 0 && cur.scrollTop > 1) return true
+              }
+            }
+            cur = cur.parentElement
+          }
+          return false
+        }
+
+        function onWheel(e) {
+          if (activeLightbox && activeLightbox.value) return
+          if (isKeyboardFrozen && isKeyboardFrozen.value) return
+          if (Math.abs(e.deltaY) < Math.abs(e.deltaX)) return
+          if (Math.abs(e.deltaY) < WHEEL_DELTA_THRESHOLD) return
+
+          const target = e.target instanceof Element ? e.target : e.target?.parentElement
+          if (target && canElementScrollY(target, e.deltaY)) {
+            return
+          }
+
+          e.preventDefault()
+          const now = Date.now()
+          if (now - lastWheelTime < WHEEL_COOLDOWN_MS) return
+          lastWheelTime = now
+
+          if (e.deltaY > 0) {
+            nextStepOrSlide()
+          } else {
+            prevStepOrSlide()
+          }
+          syncAutoplayVideos()
         }
 
         // 全局拦截思源块引用与网页链接点击，转由宿主原位浮层呈现；并在未点中页面组件的空白区域响应鼠标左键左右侧翻页
@@ -5006,6 +5096,7 @@
                   currentPageIndex.value = Math.max(1, slides.value.length)
                 }
                 broadcastSync()
+                notifySlideChanged()
                 nextTick(() => {
                   syncAutoplayVideos()
                   setTimeout(syncAutoplayVideos, 120)
@@ -5023,6 +5114,8 @@
               if (typeof data.payload.pageIndex === "number") {
                 currentPageIndex.value = Math.max(1, Math.min(data.payload.pageIndex, totalPages.value || 1))
                 currentStep.value = 0
+                notifySlideChanged()
+                broadcastSync()
                 nextTick(() => {
                   syncAutoplayVideos()
                   setTimeout(syncAutoplayVideos, 120)
@@ -5039,6 +5132,8 @@
                   if (slides.value[i].blocks.some(b => b.id === data.payload.targetBlockId)) {
                     if (currentPageIndex.value !== i + 1) {
                       currentPageIndex.value = i + 1
+                      notifySlideChanged()
+                      broadcastSync()
                     }
                     break
                   }
@@ -5072,10 +5167,22 @@
           }
         }
 
+        // 双向监听页码与总页数变动，确保沙箱与宿主始终 100% 强同步
+        watch(currentPageIndex, (newVal, oldVal) => {
+          if (newVal !== oldVal) {
+            notifySlideChanged()
+            broadcastSync()
+          }
+        })
+        watch(totalPages, () => {
+          notifySlideChanged()
+        })
+
         let resizeObserver = null
         onMounted(() => {
           window.addEventListener("keydown", onKeyDown)
           window.addEventListener("message", onHostMessage)
+          window.addEventListener("wheel", onWheel, { passive: false })
           document.addEventListener("click", onDocumentClick, true)
           window.addEventListener("resize", updateScale)
           document.addEventListener("fullscreenchange", updateScale)
@@ -5092,17 +5199,22 @@
             syncAutoplayVideos()
           })
 
-          // 告知宿主客户端沙箱已准备就绪
+          // 告知宿主客户端沙箱已准备就绪并上报初始页码
           window.parent.postMessage({
             source: "siyuan-slidev-client",
             action: "CLIENT_READY",
-            payload: {}
+            payload: {
+              currentPage: currentPageIndex.value,
+              totalPages: totalPages.value
+            }
           }, "*")
+          notifySlideChanged()
         })
 
         onUnmounted(() => {
           window.removeEventListener("keydown", onKeyDown)
           window.removeEventListener("message", onHostMessage)
+          window.removeEventListener("wheel", onWheel)
           document.removeEventListener("click", onDocumentClick, true)
           window.removeEventListener("resize", updateScale)
           document.removeEventListener("fullscreenchange", updateScale)
@@ -5113,6 +5225,8 @@
         })
 
         return {
+          config,
+          isNormalizeHeadings,
           slides,
           currentPageIndex,
           totalPages,

@@ -207,5 +207,74 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
       expect(pdfCss).toContain("data-normalize-headings=\"true\"] .slidev-col-first-heading-block")
     })
   })
+
+  describe("5. 离线客户端运行时与 Pro CLI 模式中的标题规范化全面生效验证", () => {
+    it("getStandaloneClientRuntimeScript 应包含 isHeadingBlock 与页首/栏首打标逻辑", async () => {
+      const { getStandaloneClientRuntimeScript } = await import("../src/export/standalone-client-runtime")
+      const script = getStandaloneClientRuntimeScript()
+      expect(script).toContain("function isHeadingBlock(b)")
+      expect(script).toContain("slidev-page-first-heading-block")
+      expect(script).toContain("slidev-col-first-heading-block")
+    })
+
+    it("CliDevServerBridge.buildStandardSlidevMarkdown 在开启 normalizeHeadingSizes 时应注入规范化样式", async () => {
+      const { CliDevServerBridge } = await import("../src/engine/cli-devserver-bridge")
+      const bridge = new CliDevServerBridge()
+      const doc = {
+        docId: "doc-cli-test",
+        title: "CLI Normalization Test",
+        config: {
+          theme: "default",
+          aspectRatio: "16/9",
+          highlighter: "shiki" as const,
+          defaultTransition: "slide-left",
+          colorSchema: "dark" as const,
+          normalizeHeadingSizes: true,
+        },
+        slides: [
+          {
+            pageIndex: 1,
+            frontmatter: { layout: "default" },
+            blocks: [{ id: "b1", type: "h", content: "### 页首标题", rawMarkdown: "### 页首标题" }],
+          },
+        ],
+      }
+      const md = bridge.buildStandardSlidevMarkdown(doc as any)
+      expect(md).toContain("<style>")
+      expect(md).toContain("Specific Heading Normalization")
+      expect(md).toContain("font-size: 1.7rem !important;")
+      expect(md).toContain("font-size: 1.3rem !important;")
+    })
+
+    it("单文件导出与 PDF 导出样式应包含后置强力覆盖规则以防被列表项字号覆写", async () => {
+      const { generateStandaloneExportStyles } = await import("../src/export/standalone-template-styles")
+      const { generatePdfExportStyles } = await import("../src/export/pdf-template-styles")
+
+      const htmlCss = generateStandaloneExportStyles()
+      const pdfCss = generatePdfExportStyles()
+
+      expect(htmlCss).toContain("/* 全局特定标题大小规范化后置强力锁定 (防止被列表项内部字号覆盖) */")
+      expect(pdfCss).toContain("/* 全局特定标题大小规范化后置强力锁定 (防止被列表项内部字号覆盖) */")
+      expect(htmlCss).toContain(".slide-content:not(.layout-cover) > :is(.pdf-block, .slide-block):first-child")
+      expect(pdfCss).toContain(".pdf-slide:not(.layout-cover) > :is(.pdf-block, .slide-block):first-child")
+    })
+
+    it("public/slidev-client/index.html 应在 setup 中返回 config 与 isNormalizeHeadings 并绑定至 DOM", async () => {
+      const fs = await import("fs")
+      const path = await import("path")
+      const html = fs.readFileSync(path.resolve(__dirname, "../public/slidev-client/index.html"), "utf-8")
+      expect(html).toContain(":data-normalize-headings=\"isNormalizeHeadings ? 'true' : null\"")
+      expect(html).toMatch(/return\s*\{[^}]*\bconfig\b[^}]*\bisNormalizeHeadings\b/)
+      expect(html).toContain("const isNormalizeHeadings = computed(() => Boolean(config.value?.normalizeHeadingSizes))")
+    })
+
+    it("standalone-client-runtime 应全面兼容 H1~H6 任意层级标题（涵盖六级标题 ######）", async () => {
+      const { getStandaloneClientRuntimeScript } = await import("../src/export/standalone-client-runtime")
+      const script = getStandaloneClientRuntimeScript()
+      expect(script).toContain("const hMatch = md.match(/^(#{1,6})\\s+(.*)$/);")
+      expect(script).toContain("div.innerHTML = \"<h\" + level + \">\" + th + \"</h\" + level + \">\";")
+    })
+  })
 })
+
 
