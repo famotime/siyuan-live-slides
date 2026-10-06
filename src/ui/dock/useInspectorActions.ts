@@ -1,0 +1,608 @@
+import type { ComputedRef, Ref } from "vue"
+import { showMessage } from "siyuan"
+import {
+  appendBlock,
+  chatAI,
+  deleteBlock,
+  getBlockKramdown,
+  insertBlock,
+  setBlockAttrs,
+  updateBlock,
+} from "@/api"
+import { generateSpeakerNotesWithAIDetailed } from "@/ai/notes-generator"
+import { globalDocumentCompiler } from "@/compiler/document-compiler"
+import { extractCleanNoteText } from "@/compiler/slidev-ast-builder"
+import { extractImageUrl } from "@/compiler/superblock-scanner"
+import { triggerPdfExport } from "@/export/pdf-exporter"
+import { buildStandaloneHtml, downloadHtmlFile } from "@/export/single-html-exporter"
+import { syncDomBlockAttrs } from "@/sync/dom-attr-sync"
+import { mirrorBlockSelection } from "@/sync/selection-mirror"
+import type { ISlidevDocument, ISlidevVirtualPage } from "@/types/slidev-protocol"
+import {
+  ATTR_DOC_ASPECT_RATIO,
+  ATTR_DOC_DEFAULT_TRANSITION,
+  ATTR_DOC_SPACING,
+  ATTR_DOC_THEME,
+  ATTR_ELEM_CLICK,
+  ATTR_ELEM_MAX_HEIGHT,
+  ATTR_ELEM_MOTION,
+  ATTR_ELEM_NOTE,
+  ATTR_ELEM_ROLE,
+  ATTR_ELEM_SHIKI_LINES,
+  ATTR_ELEM_SLOT,
+  ATTR_PAGE_BACKGROUND,
+  ATTR_PAGE_IMAGE,
+  ATTR_PAGE_LAYOUT,
+  ATTR_PAGE_TRANSITION,
+  ATTR_VIDEO_AUTOPLAY,
+  ATTR_VIDEO_CONTROLS,
+  ATTR_VIDEO_LOOP,
+  ATTR_VIDEO_MUTED,
+  ROLE_IMAGE_LEFT,
+  ROLE_IMAGE_RIGHT,
+} from "@/types/slidev-protocol"
+
+export interface IInspectorActionsContext {
+  activeBlockId: Ref<string>
+  activeBlockType: Ref<string>
+  activeBlockAttrs: Ref<Record<string, string>>
+  rawSnippet: Ref<string>
+  currentDocId: Ref<string>
+  currentPageDividerId: Ref<string>
+  currentPageDividerLayout: Ref<string>
+  latestDoc: Ref<ISlidevDocument | null>
+  targetSlide: ComputedRef<ISlidevVirtualPage | null>
+  currentSlideNoteBlockId: ComputedRef<string>
+  currentSlideLayout: ComputedRef<string>
+  isNoteBlock: ComputedRef<boolean>
+  elemClick: ComputedRef<string>
+  videoAutoplay: ComputedRef<boolean>
+  videoLoop: ComputedRef<boolean>
+  videoMuted: ComputedRef<boolean>
+  videoControls: ComputedRef<boolean>
+  pageBackground: Ref<string>
+  pageImage: Ref<string>
+  elemShikiLines: Ref<string>
+  elemMaxHeight: Ref<string>
+  saveStatus: Ref<string>
+  plugin?: any
+}
+
+export function useInspectorActions(ctx: IInspectorActionsContext) {
+  let saveTimer: number | null = null
+
+  function triggerSaveNotice(msg = "已同步") {
+    ctx.saveStatus.value = msg
+    if (saveTimer) {
+      if (typeof window !== "undefined") {
+        window.clearTimeout(saveTimer)
+      } else {
+        clearTimeout(saveTimer)
+      }
+    }
+    const timerCallback = () => {
+      ctx.saveStatus.value = ""
+    }
+    if (typeof window !== "undefined") {
+      saveTimer = window.setTimeout(timerCallback, 1200)
+    } else {
+      saveTimer = setTimeout(timerCallback, 1200) as any
+    }
+  }
+
+  async function saveAttrs(attrs: Record<string, string>) {
+    const targetId = ctx.activeBlockId.value || ctx.currentDocId.value
+    if (!targetId) return
+
+    for (const [key, value] of Object.entries(attrs)) {
+      ctx.activeBlockAttrs.value[key] = value
+    }
+    globalDocumentCompiler.setBlockAttrOverride(targetId, attrs)
+    syncDomBlockAttrs(targetId, attrs)
+
+    if (ATTR_PAGE_LAYOUT in attrs) {
+      const value = attrs[ATTR_PAGE_LAYOUT]
+      ctx.currentPageDividerLayout.value = value
+      if (ctx.targetSlide.value) {
+        if (!ctx.targetSlide.value.frontmatter) {
+          ctx.targetSlide.value.frontmatter = {}
+        }
+        ctx.targetSlide.value.frontmatter.layout = value as any
+      }
+    }
+
+    triggerSaveNotice("保存中...")
+    try {
+      await setBlockAttrs(targetId, attrs)
+      triggerSaveNotice("已同步")
+      if (ctx.plugin) {
+        await ctx.plugin.compileCurrentDocument()
+      }
+    } catch (e) {
+      triggerSaveNotice("同步失败")
+    }
+  }
+
+  async function saveAttr(key: string, value: string) {
+    const targetId = ctx.activeBlockId.value || ctx.currentDocId.value
+    if (!targetId) return
+
+    ctx.activeBlockAttrs.value[key] = value
+    globalDocumentCompiler.setBlockAttrOverride(targetId, { [key]: value })
+    syncDomBlockAttrs(targetId, { [key]: value })
+
+    if (key === ATTR_PAGE_LAYOUT) {
+      ctx.currentPageDividerLayout.value = value
+      if (ctx.targetSlide.value) {
+        if (!ctx.targetSlide.value.frontmatter) {
+          ctx.targetSlide.value.frontmatter = {}
+        }
+        ctx.targetSlide.value.frontmatter.layout = value as any
+      }
+    }
+
+    triggerSaveNotice("保存中...")
+    try {
+      await setBlockAttrs(targetId, { [key]: value })
+      triggerSaveNotice("已同步")
+      if (ctx.plugin) {
+        await ctx.plugin.compileCurrentDocument()
+      }
+    } catch (e) {
+      triggerSaveNotice("同步失败")
+    }
+  }
+
+  async function saveDocAttr(key: string, value: string) {
+    const docId = ctx.currentDocId.value || ctx.activeBlockId.value
+    if (!docId) return
+    ctx.activeBlockAttrs.value[key] = value
+    globalDocumentCompiler.setBlockAttrOverride(docId, { [key]: value })
+    syncDomBlockAttrs(docId, { [key]: value })
+    if (ctx.latestDoc.value?.config) {
+      if (key === ATTR_DOC_THEME) ctx.latestDoc.value.config.theme = value
+      if (key === ATTR_DOC_ASPECT_RATIO) ctx.latestDoc.value.config.aspectRatio = value
+      if (key === ATTR_DOC_DEFAULT_TRANSITION) ctx.latestDoc.value.config.defaultTransition = value
+    }
+    triggerSaveNotice("更新中...")
+    try {
+      await setBlockAttrs(docId, { [key]: value })
+      triggerSaveNotice("已更新")
+      if (ctx.plugin) {
+        await ctx.plugin.compileCurrentDocument(docId)
+      }
+    } catch (e) {
+      triggerSaveNotice("更新失败")
+    }
+  }
+
+  async function onToggleVideoAutoplay() {
+    const nextVal = ctx.videoAutoplay.value ? "false" : "true"
+    if (nextVal === "true") {
+      await saveAttrs({
+        [ATTR_VIDEO_AUTOPLAY]: "true",
+        [ATTR_VIDEO_MUTED]: "true",
+      })
+      ctx.activeBlockAttrs.value[ATTR_VIDEO_AUTOPLAY] = "true"
+      ctx.activeBlockAttrs.value[ATTR_VIDEO_MUTED] = "true"
+    } else {
+      await saveAttr(ATTR_VIDEO_AUTOPLAY, "false")
+      ctx.activeBlockAttrs.value[ATTR_VIDEO_AUTOPLAY] = "false"
+    }
+  }
+
+  async function onToggleVideoLoop() {
+    const nextVal = ctx.videoLoop.value ? "false" : "true"
+    await saveAttr(ATTR_VIDEO_LOOP, nextVal)
+  }
+
+  async function onToggleVideoMuted() {
+    const nextVal = ctx.videoMuted.value ? "false" : "true"
+    await saveAttr(ATTR_VIDEO_MUTED, nextVal)
+  }
+
+  async function onToggleVideoControls() {
+    const nextVal = ctx.videoControls.value ? "false" : "true"
+    await saveAttr(ATTR_VIDEO_CONTROLS, nextVal)
+  }
+
+  async function onImageRoleChange(role: string) {
+    const targetId = ctx.activeBlockId.value
+    if (!targetId) return
+
+    const snippet = ctx.rawSnippet.value || ""
+    const imgUrl = extractImageUrl(snippet) || ""
+    const pageContainerId = ctx.currentPageDividerId.value || ctx.currentDocId.value
+
+    if (!role) {
+      const updates: Record<string, string> = {
+        [ATTR_ELEM_ROLE]: "",
+        [ATTR_PAGE_LAYOUT]: "",
+      }
+      if (ctx.activeBlockAttrs.value[ATTR_PAGE_BACKGROUND] === "true") {
+        updates[ATTR_PAGE_BACKGROUND] = ""
+      }
+      if (pageContainerId && imgUrl && ctx.pageBackground.value === imgUrl) {
+        ctx.pageBackground.value = ""
+        await setBlockAttrs(pageContainerId, { [ATTR_PAGE_BACKGROUND]: "" }).catch(() => {})
+        globalDocumentCompiler.setBlockAttrOverride(pageContainerId, { [ATTR_PAGE_BACKGROUND]: "" })
+        syncDomBlockAttrs(pageContainerId, { [ATTR_PAGE_BACKGROUND]: "" })
+        if (ctx.targetSlide.value?.frontmatter) {
+          delete ctx.targetSlide.value.frontmatter.background
+        }
+      }
+      await saveAttrs(updates)
+
+      if (typeof document !== "undefined") {
+        const activeEl = document.querySelector(`.protyle-wysiwyg [data-node-id="${targetId}"]`) as HTMLElement | null
+        const parentLi = activeEl?.closest('[data-type="NodeListItem"]') as HTMLElement | null
+        const parentLiId = parentLi?.getAttribute("data-node-id")
+        if (parentLiId && parentLiId !== targetId) {
+          const liUpdates = { [ATTR_PAGE_LAYOUT]: "", [ATTR_ELEM_ROLE]: "" }
+          syncDomBlockAttrs(parentLiId, liUpdates)
+          globalDocumentCompiler.setBlockAttrOverride(parentLiId, liUpdates)
+          await setBlockAttrs(parentLiId, liUpdates).catch(() => {})
+        }
+      }
+    } else if (role === "background") {
+      const updates: Record<string, string> = {
+        [ATTR_ELEM_ROLE]: "background",
+        [ATTR_PAGE_LAYOUT]: "",
+      }
+      if (pageContainerId && imgUrl) {
+        ctx.pageBackground.value = imgUrl
+        await setBlockAttrs(pageContainerId, { [ATTR_PAGE_BACKGROUND]: imgUrl }).catch(() => {})
+        globalDocumentCompiler.setBlockAttrOverride(pageContainerId, { [ATTR_PAGE_BACKGROUND]: imgUrl })
+        syncDomBlockAttrs(pageContainerId, { [ATTR_PAGE_BACKGROUND]: imgUrl })
+        if (ctx.targetSlide.value) {
+          if (!ctx.targetSlide.value.frontmatter) {
+            ctx.targetSlide.value.frontmatter = {}
+          }
+          ctx.targetSlide.value.frontmatter.background = imgUrl
+        }
+      }
+      await saveAttrs(updates)
+    } else if (role === ROLE_IMAGE_LEFT || role === ROLE_IMAGE_RIGHT) {
+      await saveAttrs({
+        [ATTR_PAGE_LAYOUT]: role,
+        [ATTR_ELEM_ROLE]: "",
+      })
+    }
+  }
+
+  async function createNoteBlockOnCurrentSlide(noteContent?: string) {
+    const content = noteContent || "在此输入本页讲稿提词..."
+    const noteLines = content.split(/\r?\n/).map(l => `> ${l}`).join("\n")
+    const markdownPayload = `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slidev-note="true"}`
+
+    const slides = ctx.latestDoc.value?.slides || []
+    const curSlide = ctx.targetSlide.value
+    const curIdx = curSlide ? slides.findIndex(s => s === curSlide) : -1
+
+    let insertedRes: any = null
+    if (curIdx !== -1 && curIdx < slides.length - 1) {
+      const nextSlide = slides[curIdx + 1]
+      insertedRes = await insertBlock("markdown", markdownPayload, nextSlide.startBlockId)
+    } else {
+      const lastBlock = curSlide?.noteBlocks?.slice(-1)[0] || curSlide?.blocks?.slice(-1)[0]
+      const previousId = lastBlock?.id || curSlide?.startBlockId
+      if (previousId) {
+        insertedRes = await insertBlock("markdown", markdownPayload, undefined, previousId)
+      } else {
+        insertedRes = await appendBlock("markdown", markdownPayload, ctx.currentDocId.value)
+      }
+    }
+
+    const newId = insertedRes?.[0]?.doOperations?.[0]?.id || insertedRes?.[0]?.id
+    if (newId) {
+      await setBlockAttrs(newId, { [ATTR_ELEM_NOTE]: "true" })
+      globalDocumentCompiler.setBlockAttrOverride(newId, { [ATTR_ELEM_NOTE]: "true" })
+      mirrorBlockSelection(newId, ctx.plugin?.app)
+    }
+
+    if (ctx.plugin) {
+      await ctx.plugin.compileCurrentDocument()
+    }
+    return newId
+  }
+
+  async function onToggleNoteBlock() {
+    const targetId = ctx.activeBlockId.value
+    if (!targetId) return
+
+    if (!ctx.isNoteBlock.value) {
+      triggerSaveNotice("转换中...")
+      try {
+        let sourceText = ctx.rawSnippet.value
+        try {
+          const kramdownRes = await getBlockKramdown(targetId)
+          if (kramdownRes?.kramdown) {
+            sourceText = kramdownRes.kramdown
+          }
+        } catch (_) {}
+
+        const cleanContent = extractCleanNoteText(sourceText) || sourceText.replace(/<[^>]+>/g, "").trim() || "在此输入本页讲稿提词..."
+        const noteBody = cleanContent.split(/\r?\n/).map(line => `> ${line}`).join("\n")
+        const calloutMd = `> [!NOTE] 💡 演讲备注\n${noteBody}\n{: custom-slidev-note="true"}`
+
+        await updateBlock("markdown", calloutMd, targetId)
+        await setBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: "true" })
+        globalDocumentCompiler.setBlockAttrOverride(targetId, { [ATTR_ELEM_NOTE]: "true" })
+        syncDomBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: "true" })
+        ctx.activeBlockAttrs.value[ATTR_ELEM_NOTE] = "true"
+        ctx.activeBlockType.value = "NodeCallout"
+
+        triggerSaveNotice("已设为讲稿备注")
+        showMessage("已转为讲稿备注提示块（不在幻灯片中渲染）")
+
+        if (ctx.plugin) {
+          await ctx.plugin.compileCurrentDocument()
+        }
+      } catch (err) {
+        console.error("[SiYuanSlidev] 转换讲稿备注提示块失败:", err)
+        triggerSaveNotice("设置失败")
+        showMessage("转为讲稿备注提示块失败")
+      }
+    } else {
+      triggerSaveNotice("取消中...")
+      try {
+        await setBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: "", "slidev-note": "" })
+        globalDocumentCompiler.setBlockAttrOverride(targetId, { [ATTR_ELEM_NOTE]: "", "slidev-note": "" })
+        syncDomBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: "", "slidev-note": "" })
+        delete ctx.activeBlockAttrs.value[ATTR_ELEM_NOTE]
+        delete ctx.activeBlockAttrs.value["slidev-note"]
+
+        triggerSaveNotice("已取消备注")
+        showMessage("已取消讲稿备注")
+
+        if (ctx.plugin) {
+          await ctx.plugin.compileCurrentDocument()
+        }
+      } catch (err) {
+        console.error("[SiYuanSlidev] 取消讲稿备注失败:", err)
+        triggerSaveNotice("取消失败")
+        showMessage("取消讲稿备注失败")
+      }
+    }
+  }
+
+  async function onAddNoteBlock() {
+    try {
+      await createNoteBlockOnCurrentSlide()
+      showMessage("已在正文末尾插入讲稿备注提示块")
+    } catch (err) {
+      showMessage("插入讲稿备注块失败")
+      console.error(err)
+    }
+  }
+
+  function onLocateNoteBlock() {
+    const blockId = ctx.currentSlideNoteBlockId.value
+    if (!blockId) {
+      showMessage("未找到本页关联的讲稿备注块")
+      return
+    }
+    const ok = mirrorBlockSelection(blockId, ctx.plugin?.app)
+    if (ok) {
+      showMessage("已在编辑区定位讲稿备注块")
+    } else {
+      showMessage("定位讲稿备注块失败")
+    }
+  }
+
+  async function onGenerateNotesWithAI() {
+    if (!ctx.currentDocId.value) return
+
+    const slideToUse: ISlidevVirtualPage = ctx.targetSlide.value || {
+      pageIndex: 1,
+      startBlockId: ctx.activeBlockId.value || ctx.currentDocId.value,
+      frontmatter: {},
+      notes: "",
+      blocks: ctx.rawSnippet.value && ctx.rawSnippet.value !== "---"
+        ? [{ id: ctx.activeBlockId.value, type: ctx.activeBlockType.value, content: ctx.rawSnippet.value, rawMarkdown: "" }]
+        : [],
+      rawMarkdown: ctx.rawSnippet.value && ctx.rawSnippet.value !== "---" ? ctx.rawSnippet.value : "",
+    }
+
+    showMessage("正在调用思源 AI 提炼本页讲稿提词...")
+    const result = await generateSpeakerNotesWithAIDetailed(slideToUse, chatAI)
+    if (result.notes) {
+      const existingNoteBlockId = ctx.currentSlideNoteBlockId.value
+      if (existingNoteBlockId) {
+        const formattedNoteMd = `> [!NOTE] 💡 演讲备注\n${result.notes.split(/\r?\n/).map(l => `> ${l}`).join("\n")}\n{: custom-slidev-note="true"}`
+        await updateBlock("markdown", formattedNoteMd, existingNoteBlockId)
+        await setBlockAttrs(existingNoteBlockId, { [ATTR_ELEM_NOTE]: "true" })
+        globalDocumentCompiler.setBlockAttrOverride(existingNoteBlockId, { [ATTR_ELEM_NOTE]: "true" })
+        mirrorBlockSelection(existingNoteBlockId, ctx.plugin?.app)
+      } else {
+        await createNoteBlockOnCurrentSlide(result.notes)
+      }
+      if (result.isAiGenerated) {
+        showMessage("思源 AI 演讲提词卡生成成功！")
+      } else {
+        showMessage("未获取到思源 AI 响应，已生成预设提词卡模板", 5000)
+      }
+      if (ctx.plugin) {
+        await ctx.plugin.compileCurrentDocument()
+      }
+    }
+  }
+
+  function toggleElemClick() {
+    if (ctx.elemClick.value) {
+      saveAttr(ATTR_ELEM_CLICK, "")
+    } else {
+      saveAttr(ATTR_ELEM_CLICK, "+1")
+    }
+  }
+
+  function onElemClickStepChange(step: string) {
+    saveAttr(ATTR_ELEM_CLICK, step)
+  }
+
+  function onElemMotionChange(val: string) {
+    saveAttr(ATTR_ELEM_MOTION, val)
+  }
+
+  function onElemSlotChange(slot: string) {
+    const currentSlot = ctx.activeBlockAttrs.value[ATTR_ELEM_SLOT] || ""
+    if (currentSlot === slot) {
+      saveAttr(ATTR_ELEM_SLOT, "")
+    } else {
+      saveAttr(ATTR_ELEM_SLOT, slot)
+    }
+  }
+
+  function onElemShikiLinesChange(val: string) {
+    ctx.elemShikiLines.value = val
+    saveAttr(ATTR_ELEM_SHIKI_LINES, val)
+  }
+
+  function onElemMaxHeightChange(val: string) {
+    ctx.elemMaxHeight.value = val
+    saveAttr(ATTR_ELEM_MAX_HEIGHT, val)
+  }
+
+  async function onSetTwoColsContrast() {
+    const isThreeCols = ctx.currentSlideLayout.value === "three-cols-header"
+    const slotVal = isThreeCols ? "col-1" : "left"
+    await saveAttr(ATTR_ELEM_SLOT, slotVal)
+    showMessage(isThreeCols ? "已将当前块设置为第 1 栏 (col-1)" : "已将当前块设置为双栏左栏 (left)")
+  }
+
+  async function onClearBlockAttrs() {
+    const targetId = ctx.activeBlockId.value
+    if (!targetId) return
+    const clearMap = {
+      [ATTR_ELEM_CLICK]: "",
+      [ATTR_ELEM_MOTION]: "",
+      [ATTR_ELEM_SLOT]: "",
+      [ATTR_ELEM_SHIKI_LINES]: "",
+      [ATTR_ELEM_MAX_HEIGHT]: "",
+      [ATTR_ELEM_NOTE]: "",
+      "slidev-note": "",
+      [ATTR_PAGE_LAYOUT]: "",
+      [ATTR_ELEM_ROLE]: "",
+      [ATTR_PAGE_TRANSITION]: "",
+      [ATTR_PAGE_BACKGROUND]: "",
+      [ATTR_PAGE_IMAGE]: "",
+      [ATTR_VIDEO_AUTOPLAY]: "",
+      [ATTR_VIDEO_LOOP]: "",
+      [ATTR_VIDEO_MUTED]: "",
+      [ATTR_VIDEO_CONTROLS]: "",
+    }
+    syncDomBlockAttrs(targetId, clearMap)
+    await setBlockAttrs(targetId, clearMap)
+    globalDocumentCompiler.clearBlockAttrOverride(targetId)
+
+    if (typeof document !== "undefined") {
+      const activeEl = document.querySelector(`.protyle-wysiwyg [data-node-id="${targetId}"]`) as HTMLElement | null
+      const parentLi = activeEl?.closest('[data-type="NodeListItem"]') as HTMLElement | null
+      const parentLiId = parentLi?.getAttribute("data-node-id")
+      if (parentLiId && parentLiId !== targetId) {
+        syncDomBlockAttrs(parentLiId, clearMap)
+        await setBlockAttrs(parentLiId, clearMap).catch(() => {})
+        globalDocumentCompiler.clearBlockAttrOverride(parentLiId)
+      }
+    }
+
+    ctx.activeBlockAttrs.value = {}
+    ctx.elemShikiLines.value = ""
+    ctx.elemMaxHeight.value = ""
+    ctx.pageBackground.value = ""
+    ctx.pageImage.value = ""
+    showMessage("已清除本块演示属性")
+    if (ctx.plugin) {
+      await ctx.plugin.compileCurrentDocument()
+    }
+  }
+
+  async function onInsertDividerBefore() {
+    if (!ctx.activeBlockId.value) return
+    try {
+      await insertBlock("markdown", "---", ctx.activeBlockId.value, undefined)
+      showMessage("已在上方插入分页符 (---)")
+      if (ctx.plugin) ctx.plugin.compileCurrentDocument()
+    } catch (e) {
+      showMessage("插入分页符失败")
+    }
+  }
+
+  async function onInsertDividerAfter() {
+    const targetId = ctx.activeBlockId.value || ctx.currentDocId.value
+    if (!targetId) return
+    try {
+      await insertBlock("markdown", "---", undefined, targetId)
+      showMessage("已在下方插入分页符 (---)")
+      if (ctx.plugin) ctx.plugin.compileCurrentDocument()
+    } catch (e) {
+      showMessage("插入分页符失败")
+    }
+  }
+
+  async function onDeleteCurrentBlock() {
+    if (!ctx.activeBlockId.value) return
+    try {
+      await deleteBlock(ctx.activeBlockId.value)
+      showMessage("已删除该分页符")
+      ctx.activeBlockId.value = ""
+      ctx.activeBlockType.value = ""
+      if (ctx.plugin) ctx.plugin.compileCurrentDocument()
+    } catch (e) {
+      showMessage("删除失败")
+    }
+  }
+
+  function onExportHtml() {
+    if (!ctx.latestDoc.value) {
+      showMessage("请先在主编辑区打开幻灯片文档")
+      return
+    }
+    const html = buildStandaloneHtml(ctx.latestDoc.value)
+    const ok = downloadHtmlFile("presentation.html", html)
+    if (ok) {
+      showMessage("已开始下载单文件离线 HTML 演示包")
+    }
+  }
+
+  function onExportPdf() {
+    if (!ctx.latestDoc.value) {
+      showMessage("请先在主编辑区打开幻灯片文档")
+      return
+    }
+    const ok = triggerPdfExport(ctx.latestDoc.value)
+    if (ok) {
+      showMessage("已唤起打印视窗，请在打印选项中选择「另存为 PDF」")
+    }
+  }
+
+  return {
+    triggerSaveNotice,
+    saveAttrs,
+    saveAttr,
+    saveDocAttr,
+    onToggleVideoAutoplay,
+    onToggleVideoLoop,
+    onToggleVideoMuted,
+    onToggleVideoControls,
+    onImageRoleChange,
+    onToggleNoteBlock,
+    createNoteBlockOnCurrentSlide,
+    onAddNoteBlock,
+    onLocateNoteBlock,
+    onGenerateNotesWithAI,
+    toggleElemClick,
+    onElemClickStepChange,
+    onElemMotionChange,
+    onElemSlotChange,
+    onElemShikiLinesChange,
+    onElemMaxHeightChange,
+    onSetTwoColsContrast,
+    onClearBlockAttrs,
+    onInsertDividerBefore,
+    onInsertDividerAfter,
+    onDeleteCurrentBlock,
+    onExportHtml,
+    onExportPdf,
+  }
+}

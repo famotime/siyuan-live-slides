@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest"
 import { CliDevServerBridge } from "../src/engine/cli-devserver-bridge"
 import { buildPrintableHtml, triggerPdfExport } from "../src/export/pdf-exporter"
 import { buildStandaloneHtml, downloadHtmlFile } from "../src/export/single-html-exporter"
+import { generateStandaloneExportStyles } from "../src/export/standalone-template-styles"
+import { getStandaloneClientRuntimeScript } from "../src/export/standalone-client-runtime"
 import type { ISlidevDocument } from "../src/types/slidev-protocol"
 
 const dummyDoc: ISlidevDocument = {
@@ -131,6 +133,25 @@ describe("Single-File HTML Exporter (单文件离线 HTML 导出)", () => {
     expect(html).toContain("openLightbox")
     expect(html).toContain("closeLightbox")
     expect(html).toContain('e.key === "Escape"')
+  })
+
+  it("generateStandaloneExportStyles 应生成包含主题、视口与媒体自适应的完整 CSS", () => {
+    const css = generateStandaloneExportStyles()
+    expect(css).toContain(":root")
+    expect(css).toContain("--slide-bg")
+    expect(css).toContain(".slidev-theme-default")
+    expect(css).toContain(".slidev-theme-seriph")
+    expect(css).toContain("@keyframes slidevMotionFadeIn")
+    expect(css).toContain(".slide-media-container")
+  })
+
+  it("getStandaloneClientRuntimeScript 应包含离线播放器自适应与交互按键逻辑", () => {
+    const js = getStandaloneClientRuntimeScript()
+    expect(js).toContain("updateScale")
+    expect(js).toContain("renderSlide")
+    expect(js).toContain("window.__SLIDEV_DATA__")
+    expect(js).toContain("btnPrev")
+    expect(js).toContain("btnNext")
   })
 })
 

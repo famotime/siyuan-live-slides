@@ -149,26 +149,18 @@
 
 <script setup lang="ts">
 import { ref, computed, inject } from 'vue'
-import { showMessage } from 'siyuan'
-import { setBlockAttrs, insertBlock, appendBlock, updateBlock, deleteBlock, getBlockKramdown, chatAI } from '@/api'
-import { mirrorBlockSelection } from '@/sync/selection-mirror'
-import { syncDomBlockAttrs } from '@/sync/dom-attr-sync'
 import PageInspectorSection from '@/ui/components/PageInspectorSection.vue'
 import BlockInspectorSection from '@/ui/components/BlockInspectorSection.vue'
 import DocInspectorSection from '@/ui/components/DocInspectorSection.vue'
 import SlidevImportDialog from '@/ui/components/SlidevImportDialog.vue'
 import SlidevIcon from '@/ui/components/SlidevIcon.vue'
-import { extractCleanNoteText } from '@/compiler/slidev-ast-builder'
-import { extractImageUrl } from '@/compiler/superblock-scanner'
+import { extractImageUrl } from '@/utils'
 import { globalDocumentCompiler } from '@/compiler/document-compiler'
-import { generateSpeakerNotesWithAIDetailed } from '@/ai/notes-generator'
 import { resolveTargetSlide, isDividerBlockType } from '@/sync/inspector-slide-resolver'
-import { buildStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'
-import { triggerPdfExport } from '@/export/pdf-exporter'
+import { useInspectorActions } from '@/ui/dock/useInspectorActions'
 import type {
   IActiveBlockInfo,
   ISlidevDocument,
-  ISlidevVirtualPage,
 } from '@/types/slidev-protocol'
 import {
   ATTR_DOC_THEME,
@@ -179,7 +171,6 @@ import {
   ATTR_PAGE_TRANSITION,
   ATTR_PAGE_BACKGROUND,
   ATTR_PAGE_IMAGE,
-  ATTR_PAGE_NOTES,
   ATTR_PAGE_SPACING,
   ATTR_ELEM_CLICK,
   ATTR_ELEM_MOTION,
@@ -193,8 +184,6 @@ import {
   ATTR_VIDEO_MUTED,
   ATTR_VIDEO_CONTROLS,
   ROLE_BACKGROUND,
-  ROLE_IMAGE_LEFT,
-  ROLE_IMAGE_RIGHT,
 } from '@/types/slidev-protocol'
 
 const plugin = inject<any>('plugin')
@@ -221,20 +210,10 @@ const latestDoc = ref<ISlidevDocument | null>(null)
 const saveStatus = ref('')
 const copyNotice = ref('')
 
-let saveTimer: number | null = null
-
-function triggerSaveNotice(msg = '已同步') {
-  saveStatus.value = msg
-  if (saveTimer) window.clearTimeout(saveTimer)
-  saveTimer = window.setTimeout(() => {
-    saveStatus.value = ''
-  }, 1200)
-}
-
 function onCopyBlockId() {
   const id = activeBlockId.value || currentDocId.value
   if (!id) return
-  if (navigator?.clipboard?.writeText) {
+  if (typeof navigator !== 'undefined' && navigator?.clipboard?.writeText) {
     navigator.clipboard.writeText(id).then(() => {
       copyNotice.value = '已复制！'
       setTimeout(() => {
@@ -331,24 +310,20 @@ const currentSlideNotes = computed(() => targetSlide.value?.notes || '')
 const currentSlideNoteBlockId = computed(() => targetSlide.value?.noteBlocks?.[0]?.id || '')
 
 const currentSlideLayout = computed(() => {
-  // 1. 若当前激活块就是分页符，优先以当前分页符实时属性为准
   if (isDivider.value) {
     const directLayout = activeBlockAttrs.value[ATTR_PAGE_LAYOUT] || activeBlockAttrs.value['custom-slidev-layout']
     if (directLayout) return directLayout
   }
 
-  // 1.5 强关联推断：若当前选中块已配置了 col-1 / col-2 / col-3 插槽，该幻灯片必定为 three-cols-header
   const blockSlot = activeBlockAttrs.value[ATTR_ELEM_SLOT] || activeBlockAttrs.value['custom-slidev-slot']
   if (blockSlot && ['col-1', 'col-2', 'col-3'].includes(blockSlot)) {
     return 'three-cols-header'
   }
 
-  // 1.8 前置分页符直传的持久化版式（毫秒级穿透，解决重编译前的竞态或初次加载）
   if (currentPageDividerLayout.value) {
     return currentPageDividerLayout.value
   }
 
-  // 2. 检查当前页前置分页符或当前块是否存在即时覆盖层属性 (毫秒级穿透，解决异步落库重编译前的竞态时序)
   const divId = currentPageDividerId.value || (isDivider.value ? activeBlockId.value : '')
   if (divId) {
     const override = globalDocumentCompiler.getBlockAttrOverride(divId)
@@ -357,7 +332,6 @@ const currentSlideLayout = computed(() => {
     }
   }
 
-  // 2.5 若存在前置分页符 ID，从已编译幻灯片中按 startBlockId 匹配版式
   if (divId && latestDoc.value?.slides) {
     const matched = latestDoc.value.slides.find(s => s.startBlockId === divId)
     if (matched?.frontmatter?.layout) {
@@ -365,17 +339,14 @@ const currentSlideLayout = computed(() => {
     }
   }
 
-  // 3. 从精确匹配的目标 slide 中获取 layout
   if (targetSlide.value?.frontmatter?.layout) {
     return targetSlide.value.frontmatter.layout
   }
 
-  // 3.5 若目标 slide 中存在包含 col-1 / col-2 / col-3 的块，推断为 three-cols-header
   if (targetSlide.value?.blocks?.some(b => b.slot === 'col-1' || b.slot === 'col-2' || b.slot === 'col-3')) {
     return 'three-cols-header'
   }
 
-  // 4. 文档级覆盖层兜底
   const docOverride = globalDocumentCompiler.getBlockAttrOverride(currentDocId.value)
   if (docOverride?.[ATTR_PAGE_LAYOUT]) {
     return docOverride[ATTR_PAGE_LAYOUT]
@@ -387,7 +358,7 @@ const currentSlideLayout = computed(() => {
 const targetPageIndex = computed(() => targetSlide.value?.pageIndex || 1)
 const isNoteBlock = computed(() => Boolean(activeBlockAttrs.value[ATTR_ELEM_NOTE] || activeBlockAttrs.value['slidev-note']))
 
-// 内容块属性绑定 (支持继承属性反射)
+// 内容块属性绑定
 const elemClick = computed(() => {
   if (activeBlockAttrs.value[ATTR_ELEM_CLICK]) {
     return activeBlockAttrs.value[ATTR_ELEM_CLICK]
@@ -426,42 +397,10 @@ const elemSlot = computed(() => {
 const elemShikiLines = ref('')
 const elemMaxHeight = ref('')
 
-// 视频块控制属性与切换
 const videoAutoplay = computed(() => activeBlockAttrs.value[ATTR_VIDEO_AUTOPLAY] === 'true')
 const videoLoop = computed(() => activeBlockAttrs.value[ATTR_VIDEO_LOOP] === 'true')
 const videoMuted = computed(() => activeBlockAttrs.value[ATTR_VIDEO_MUTED] === 'true')
 const videoControls = computed(() => activeBlockAttrs.value[ATTR_VIDEO_CONTROLS] !== 'false')
-
-async function onToggleVideoAutoplay() {
-  const nextVal = videoAutoplay.value ? 'false' : 'true'
-  if (nextVal === 'true') {
-    // 浏览器安全策略：未静音的视频绝对禁止无手势自动播放，故联动开启静音播放并同步持久化
-    await saveAttrs({
-      [ATTR_VIDEO_AUTOPLAY]: 'true',
-      [ATTR_VIDEO_MUTED]: 'true',
-    })
-    activeBlockAttrs.value[ATTR_VIDEO_AUTOPLAY] = 'true'
-    activeBlockAttrs.value[ATTR_VIDEO_MUTED] = 'true'
-  } else {
-    await saveAttr(ATTR_VIDEO_AUTOPLAY, 'false')
-    activeBlockAttrs.value[ATTR_VIDEO_AUTOPLAY] = 'false'
-  }
-}
-
-async function onToggleVideoLoop() {
-  const nextVal = videoLoop.value ? 'false' : 'true'
-  await saveAttr(ATTR_VIDEO_LOOP, nextVal)
-}
-
-async function onToggleVideoMuted() {
-  const nextVal = videoMuted.value ? 'false' : 'true'
-  await saveAttr(ATTR_VIDEO_MUTED, nextVal)
-}
-
-async function onToggleVideoControls() {
-  const nextVal = videoControls.value ? 'false' : 'true'
-  await saveAttr(ATTR_VIDEO_CONTROLS, nextVal)
-}
 
 // 文档全局属性绑定
 const docTheme = computed(() => latestDoc.value?.config?.theme || activeBlockAttrs.value[ATTR_DOC_THEME] || 'default')
@@ -478,7 +417,6 @@ const imageRole = computed(() => {
   if (layout === 'image-left' || layout === 'image-right') {
     return layout
   }
-  // 智能推断：若当前块为图片且所属幻灯片页面背景图匹配本图片，则该图片角色必然为 background
   const snippet = rawSnippet.value || ''
   const imgUrl = extractImageUrl(snippet)
   if (imgUrl && targetSlide.value?.frontmatter?.background) {
@@ -489,104 +427,6 @@ const imageRole = computed(() => {
   }
   return ''
 })
-
-async function onImageRoleChange(role: string) {
-  const targetId = activeBlockId.value
-  if (!targetId) return
-
-  const snippet = rawSnippet.value || ''
-  const imgUrl = extractImageUrl(snippet) || ''
-  const pageContainerId = currentPageDividerId.value || currentDocId.value
-
-  if (!role) {
-    const updates: Record<string, string> = {
-      [ATTR_ELEM_ROLE]: '',
-      [ATTR_PAGE_LAYOUT]: '',
-    }
-    if (activeBlockAttrs.value[ATTR_PAGE_BACKGROUND] === 'true') {
-      updates[ATTR_PAGE_BACKGROUND] = ''
-    }
-    if (pageContainerId && imgUrl && pageBackground.value === imgUrl) {
-      pageBackground.value = ''
-      await setBlockAttrs(pageContainerId, { [ATTR_PAGE_BACKGROUND]: '' }).catch(() => {})
-      globalDocumentCompiler.setBlockAttrOverride(pageContainerId, { [ATTR_PAGE_BACKGROUND]: '' })
-      syncDomBlockAttrs(pageContainerId, { [ATTR_PAGE_BACKGROUND]: '' })
-      if (targetSlide.value?.frontmatter) {
-        delete targetSlide.value.frontmatter.background
-      }
-    }
-    await saveAttrs(updates)
-
-    // 若当前激活块位于列表项内部（如列表段落），联动清除外层 NodeListItem 上的演示属性
-    if (typeof document !== 'undefined') {
-      const activeEl = document.querySelector(`.protyle-wysiwyg [data-node-id="${targetId}"]`) as HTMLElement | null
-      const parentLi = activeEl?.closest('[data-type="NodeListItem"]') as HTMLElement | null
-      const parentLiId = parentLi?.getAttribute('data-node-id')
-      if (parentLiId && parentLiId !== targetId) {
-        const liUpdates = { [ATTR_PAGE_LAYOUT]: '', [ATTR_ELEM_ROLE]: '' }
-        syncDomBlockAttrs(parentLiId, liUpdates)
-        globalDocumentCompiler.setBlockAttrOverride(parentLiId, liUpdates)
-        await setBlockAttrs(parentLiId, liUpdates).catch(() => {})
-      }
-    }
-  } else if (role === 'background') {
-    const updates: Record<string, string> = {
-      [ATTR_ELEM_ROLE]: 'background',
-      [ATTR_PAGE_LAYOUT]: '',
-    }
-    if (pageContainerId && imgUrl) {
-      pageBackground.value = imgUrl
-      await setBlockAttrs(pageContainerId, { [ATTR_PAGE_BACKGROUND]: imgUrl }).catch(() => {})
-      globalDocumentCompiler.setBlockAttrOverride(pageContainerId, { [ATTR_PAGE_BACKGROUND]: imgUrl })
-      syncDomBlockAttrs(pageContainerId, { [ATTR_PAGE_BACKGROUND]: imgUrl })
-      if (targetSlide.value) {
-        if (!targetSlide.value.frontmatter) {
-          targetSlide.value.frontmatter = {}
-        }
-        targetSlide.value.frontmatter.background = imgUrl
-      }
-    }
-    await saveAttrs(updates)
-  } else if (role === 'image-left' || role === 'image-right') {
-    await saveAttrs({
-      [ATTR_PAGE_LAYOUT]: role,
-      [ATTR_ELEM_ROLE]: '',
-    })
-  }
-}
-
-async function saveAttrs(attrs: Record<string, string>) {
-  const targetId = activeBlockId.value || currentDocId.value
-  if (!targetId) return
-
-  for (const [key, value] of Object.entries(attrs)) {
-    activeBlockAttrs.value[key] = value
-  }
-  globalDocumentCompiler.setBlockAttrOverride(targetId, attrs)
-  syncDomBlockAttrs(targetId, attrs)
-
-  if (ATTR_PAGE_LAYOUT in attrs) {
-    const value = attrs[ATTR_PAGE_LAYOUT]
-    currentPageDividerLayout.value = value
-    if (targetSlide.value) {
-      if (!targetSlide.value.frontmatter) {
-        targetSlide.value.frontmatter = {}
-      }
-      targetSlide.value.frontmatter.layout = value as any
-    }
-  }
-
-  triggerSaveNotice('保存中...')
-  try {
-    await setBlockAttrs(targetId, attrs)
-    triggerSaveNotice('已同步')
-    if (plugin) {
-      await plugin.compileCurrentDocument()
-    }
-  } catch (e) {
-    triggerSaveNotice('同步失败')
-  }
-}
 
 const hasBlockAttrs = computed(() => {
   return Boolean(
@@ -605,59 +445,57 @@ const hasBlockAttrs = computed(() => {
   )
 })
 
-async function saveAttr(key: string, value: string) {
-  const targetId = activeBlockId.value || currentDocId.value
-  if (!targetId) return
-
-  activeBlockAttrs.value[key] = value
-  globalDocumentCompiler.setBlockAttrOverride(targetId, { [key]: value })
-  syncDomBlockAttrs(targetId, { [key]: value })
-
-  // 若修改的是版式，立即同步当前内存中 targetSlide 的 layout 与 currentPageDividerLayout，避免点击内容块时异步重编译未完成读取到旧数据
-  if (key === ATTR_PAGE_LAYOUT) {
-    currentPageDividerLayout.value = value
-    if (targetSlide.value) {
-      if (!targetSlide.value.frontmatter) {
-        targetSlide.value.frontmatter = {}
-      }
-      targetSlide.value.frontmatter.layout = value as any
-    }
-  }
-
-  triggerSaveNotice('保存中...')
-  try {
-    await setBlockAttrs(targetId, { [key]: value })
-    triggerSaveNotice('已同步')
-    if (plugin) {
-      await plugin.compileCurrentDocument()
-    }
-  } catch (e) {
-    triggerSaveNotice('同步失败')
-  }
-}
-
-async function saveDocAttr(key: string, value: string) {
-  const docId = currentDocId.value || activeBlockId.value
-  if (!docId) return
-  activeBlockAttrs.value[key] = value
-  globalDocumentCompiler.setBlockAttrOverride(docId, { [key]: value })
-  syncDomBlockAttrs(docId, { [key]: value })
-  if (latestDoc.value?.config) {
-    if (key === ATTR_DOC_THEME) latestDoc.value.config.theme = value
-    if (key === ATTR_DOC_ASPECT_RATIO) latestDoc.value.config.aspectRatio = value
-    if (key === ATTR_DOC_DEFAULT_TRANSITION) latestDoc.value.config.defaultTransition = value
-  }
-  triggerSaveNotice('更新中...')
-  try {
-    await setBlockAttrs(docId, { [key]: value })
-    triggerSaveNotice('已更新')
-    if (plugin) {
-      await plugin.compileCurrentDocument(docId)
-    }
-  } catch (e) {
-    triggerSaveNotice('更新失败')
-  }
-}
+// 引入抽象的 actions 组合逻辑
+const {
+  saveAttr,
+  saveDocAttr,
+  onToggleVideoAutoplay,
+  onToggleVideoLoop,
+  onToggleVideoMuted,
+  onToggleVideoControls,
+  onImageRoleChange,
+  onToggleNoteBlock,
+  onAddNoteBlock,
+  onLocateNoteBlock,
+  onGenerateNotesWithAI,
+  toggleElemClick,
+  onElemClickStepChange,
+  onElemMotionChange,
+  onElemSlotChange,
+  onElemShikiLinesChange,
+  onElemMaxHeightChange,
+  onSetTwoColsContrast,
+  onClearBlockAttrs,
+  onInsertDividerBefore,
+  onInsertDividerAfter,
+  onDeleteCurrentBlock,
+  onExportHtml,
+  onExportPdf,
+} = useInspectorActions({
+  activeBlockId,
+  activeBlockType,
+  activeBlockAttrs,
+  rawSnippet,
+  currentDocId,
+  currentPageDividerId,
+  currentPageDividerLayout,
+  latestDoc,
+  targetSlide,
+  currentSlideNoteBlockId,
+  currentSlideLayout,
+  isNoteBlock,
+  elemClick,
+  videoAutoplay,
+  videoLoop,
+  videoMuted,
+  videoControls,
+  pageBackground,
+  pageImage,
+  elemShikiLines,
+  elemMaxHeight,
+  saveStatus,
+  plugin,
+})
 
 // 场景 A 事件
 function onLayoutChange(val: string) {
@@ -682,263 +520,6 @@ function onPageSpacingChange(val: string) {
   saveAttr(ATTR_PAGE_SPACING, val === 'inherit' ? '' : val)
 }
 
-async function onToggleNoteBlock() {
-  const targetId = activeBlockId.value
-  if (!targetId) return
-
-  if (!isNoteBlock.value) {
-    // 开启讲稿备注：将当前块转为思源标准提示块 (NodeCallout)
-    triggerSaveNotice('转换中...')
-    try {
-      // 1. 获取目标块的原始内容
-      let sourceText = rawSnippet.value
-      try {
-        const kramdownRes = await getBlockKramdown(targetId)
-        if (kramdownRes?.kramdown) {
-          sourceText = kramdownRes.kramdown
-        }
-      } catch (_) {}
-
-      // 2. 清洗正文并构造思源标准提示块 Markdown (> [!NOTE] 💡 演讲备注)
-      const cleanContent = extractCleanNoteText(sourceText) || sourceText.replace(/<[^>]+>/g, '').trim() || '在此输入本页讲稿提词...'
-      const noteBody = cleanContent.split(/\r?\n/).map(line => `> ${line}`).join('\n')
-      const calloutMd = `> [!NOTE] 💡 演讲备注\n${noteBody}\n{: custom-slidev-note="true"}`
-
-      // 3. 将原块更新为标准提示块
-      await updateBlock('markdown', calloutMd, targetId)
-
-      // 4. 设置属性并覆盖缓存
-      await setBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: 'true' })
-      globalDocumentCompiler.setBlockAttrOverride(targetId, { [ATTR_ELEM_NOTE]: 'true' })
-      syncDomBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: 'true' })
-      activeBlockAttrs.value[ATTR_ELEM_NOTE] = 'true'
-      activeBlockType.value = 'NodeCallout'
-
-      triggerSaveNotice('已设为讲稿备注')
-      showMessage('已转为讲稿备注提示块（不在幻灯片中渲染）')
-
-      // 5. 立即重新编译文档以更新 Dock 面板模型
-      if (plugin) {
-        await plugin.compileCurrentDocument()
-      }
-    } catch (err) {
-      console.error('[SiYuanSlidev] 转换讲稿备注提示块失败:', err)
-      triggerSaveNotice('设置失败')
-      showMessage('转为讲稿备注提示块失败')
-    }
-  } else {
-    // 取消讲稿备注
-    triggerSaveNotice('取消中...')
-    try {
-      await setBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: '', 'slidev-note': '' })
-      globalDocumentCompiler.setBlockAttrOverride(targetId, { [ATTR_ELEM_NOTE]: '', 'slidev-note': '' })
-      syncDomBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: '', 'slidev-note': '' })
-      delete activeBlockAttrs.value[ATTR_ELEM_NOTE]
-      delete activeBlockAttrs.value['slidev-note']
-
-      triggerSaveNotice('已取消备注')
-      showMessage('已取消讲稿备注')
-
-      if (plugin) {
-        await plugin.compileCurrentDocument()
-      }
-    } catch (err) {
-      console.error('[SiYuanSlidev] 取消讲稿备注失败:', err)
-      triggerSaveNotice('取消失败')
-      showMessage('取消讲稿备注失败')
-    }
-  }
-}
-
-async function createNoteBlockOnCurrentSlide(noteContent?: string) {
-  const content = noteContent || '在此输入本页讲稿提词...'
-  const noteLines = content.split(/\r?\n/).map(l => `> ${l}`).join('\n')
-  const markdownPayload = `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slidev-note="true"}`
-
-  const slides = latestDoc.value?.slides || []
-  const curSlide = targetSlide.value
-  const curIdx = curSlide ? slides.findIndex(s => s === curSlide) : -1
-
-  let insertedRes: any = null
-  if (curIdx !== -1 && curIdx < slides.length - 1) {
-    const nextSlide = slides[curIdx + 1]
-    insertedRes = await insertBlock('markdown', markdownPayload, nextSlide.startBlockId)
-  } else {
-    const lastBlock = curSlide?.noteBlocks?.slice(-1)[0] || curSlide?.blocks?.slice(-1)[0]
-    const previousId = lastBlock?.id || curSlide?.startBlockId
-    if (previousId) {
-      insertedRes = await insertBlock('markdown', markdownPayload, undefined, previousId)
-    } else {
-      insertedRes = await appendBlock('markdown', markdownPayload, currentDocId.value)
-    }
-  }
-
-  const newId = insertedRes?.[0]?.doOperations?.[0]?.id || insertedRes?.[0]?.id
-  if (newId) {
-    await setBlockAttrs(newId, { [ATTR_ELEM_NOTE]: 'true' })
-    globalDocumentCompiler.setBlockAttrOverride(newId, { [ATTR_ELEM_NOTE]: 'true' })
-    mirrorBlockSelection(newId, plugin?.app)
-  }
-
-  if (plugin) {
-    await plugin.compileCurrentDocument()
-  }
-  return newId
-}
-
-async function onAddNoteBlock() {
-  try {
-    await createNoteBlockOnCurrentSlide()
-    showMessage('已在正文末尾插入讲稿备注提示块')
-  } catch (err) {
-    showMessage('插入讲稿备注块失败')
-    console.error(err)
-  }
-}
-
-function onLocateNoteBlock() {
-  const blockId = currentSlideNoteBlockId.value
-  if (!blockId) {
-    showMessage('未找到本页关联的讲稿备注块')
-    return
-  }
-  const ok = mirrorBlockSelection(blockId, plugin?.app)
-  if (ok) {
-    showMessage('已在编辑区定位讲稿备注块')
-  } else {
-    showMessage('定位讲稿备注块失败')
-  }
-}
-
-async function onGenerateNotesWithAI() {
-  if (!currentDocId.value) return
-
-  const slideToUse: ISlidevVirtualPage = targetSlide.value || {
-    pageIndex: 1,
-    startBlockId: activeBlockId.value || currentDocId.value,
-    frontmatter: {},
-    notes: '',
-    blocks: rawSnippet.value && rawSnippet.value !== '---'
-      ? [{ id: activeBlockId.value, type: activeBlockType.value, content: rawSnippet.value, rawMarkdown: '' }]
-      : [],
-    rawMarkdown: rawSnippet.value && rawSnippet.value !== '---' ? rawSnippet.value : '',
-  }
-
-  showMessage('正在调用思源 AI 提炼本页讲稿提词...')
-  const result = await generateSpeakerNotesWithAIDetailed(slideToUse, chatAI)
-  if (result.notes) {
-    const existingNoteBlockId = currentSlideNoteBlockId.value
-    if (existingNoteBlockId) {
-      const formattedNoteMd = `> [!NOTE] 💡 演讲备注\n${result.notes.split(/\r?\n/).map(l => `> ${l}`).join('\n')}\n{: custom-slidev-note="true"}`
-      await updateBlock('markdown', formattedNoteMd, existingNoteBlockId)
-      await setBlockAttrs(existingNoteBlockId, { [ATTR_ELEM_NOTE]: 'true' })
-      globalDocumentCompiler.setBlockAttrOverride(existingNoteBlockId, { [ATTR_ELEM_NOTE]: 'true' })
-      mirrorBlockSelection(existingNoteBlockId, plugin?.app)
-    } else {
-      await createNoteBlockOnCurrentSlide(result.notes)
-    }
-    if (result.isAiGenerated) {
-      showMessage('思源 AI 演讲提词卡生成成功！')
-    } else {
-      showMessage('未获取到思源 AI 响应，已生成预设提词卡模板', 5000)
-    }
-    if (plugin) {
-      await plugin.compileCurrentDocument()
-    }
-  }
-}
-
-// 场景 B 事件
-function toggleElemClick() {
-  if (elemClick.value) {
-    saveAttr(ATTR_ELEM_CLICK, '')
-  } else {
-    saveAttr(ATTR_ELEM_CLICK, '+1')
-  }
-}
-
-function onElemClickStepChange(step: string) {
-  saveAttr(ATTR_ELEM_CLICK, step)
-}
-
-function onElemMotionChange(val: string) {
-  saveAttr(ATTR_ELEM_MOTION, val)
-}
-
-function onElemSlotChange(slot: string) {
-  const currentSlot = activeBlockAttrs.value[ATTR_ELEM_SLOT] || ''
-  if (currentSlot === slot) {
-    saveAttr(ATTR_ELEM_SLOT, '')
-  } else {
-    saveAttr(ATTR_ELEM_SLOT, slot)
-  }
-}
-
-function onElemShikiLinesChange(val: string) {
-  elemShikiLines.value = val
-  saveAttr(ATTR_ELEM_SHIKI_LINES, val)
-}
-
-function onElemMaxHeightChange(val: string) {
-  elemMaxHeight.value = val
-  saveAttr(ATTR_ELEM_MAX_HEIGHT, val)
-}
-
-async function onSetTwoColsContrast() {
-  const isThreeCols = currentSlideLayout.value === 'three-cols-header'
-  const slotVal = isThreeCols ? 'col-1' : 'left'
-  await saveAttr(ATTR_ELEM_SLOT, slotVal)
-  showMessage(isThreeCols ? '已将当前块设置为第 1 栏 (col-1)' : '已将当前块设置为双栏左栏 (left)')
-}
-
-async function onClearBlockAttrs() {
-  const targetId = activeBlockId.value
-  if (!targetId) return
-  const clearMap = {
-    [ATTR_ELEM_CLICK]: '',
-    [ATTR_ELEM_MOTION]: '',
-    [ATTR_ELEM_SLOT]: '',
-    [ATTR_ELEM_SHIKI_LINES]: '',
-    [ATTR_ELEM_MAX_HEIGHT]: '',
-    [ATTR_ELEM_NOTE]: '',
-    'slidev-note': '',
-    [ATTR_PAGE_LAYOUT]: '',
-    [ATTR_ELEM_ROLE]: '',
-    [ATTR_PAGE_TRANSITION]: '',
-    [ATTR_PAGE_BACKGROUND]: '',
-    [ATTR_PAGE_IMAGE]: '',
-    [ATTR_VIDEO_AUTOPLAY]: '',
-    [ATTR_VIDEO_LOOP]: '',
-    [ATTR_VIDEO_MUTED]: '',
-    [ATTR_VIDEO_CONTROLS]: '',
-  }
-  syncDomBlockAttrs(targetId, clearMap)
-  await setBlockAttrs(targetId, clearMap)
-  globalDocumentCompiler.clearBlockAttrOverride(targetId)
-
-  // 若当前激活块位于列表项内部（如列表段落），联动清除外层 NodeListItem 上的演示属性
-  if (typeof document !== 'undefined') {
-    const activeEl = document.querySelector(`.protyle-wysiwyg [data-node-id="${targetId}"]`) as HTMLElement | null
-    const parentLi = activeEl?.closest('[data-type="NodeListItem"]') as HTMLElement | null
-    const parentLiId = parentLi?.getAttribute('data-node-id')
-    if (parentLiId && parentLiId !== targetId) {
-      syncDomBlockAttrs(parentLiId, clearMap)
-      await setBlockAttrs(parentLiId, clearMap).catch(() => {})
-      globalDocumentCompiler.clearBlockAttrOverride(parentLiId)
-    }
-  }
-
-  activeBlockAttrs.value = {}
-  elemShikiLines.value = ''
-  elemMaxHeight.value = ''
-  pageBackground.value = ''
-  pageImage.value = ''
-  showMessage('已清除本块演示属性')
-  if (plugin) {
-    await plugin.compileCurrentDocument()
-  }
-}
-
 // 场景 C 事件
 function onDocThemeChange(theme: string) {
   saveDocAttr(ATTR_DOC_THEME, theme)
@@ -956,43 +537,7 @@ function onDocSpacingChange(spacing: string) {
   saveDocAttr(ATTR_DOC_SPACING, spacing)
 }
 
-// 快捷操作
-async function onInsertDividerBefore() {
-  if (!activeBlockId.value) return
-  try {
-    await insertBlock('markdown', '---', activeBlockId.value, undefined)
-    showMessage('已在上方插入分页符 (---)')
-    if (plugin) plugin.compileCurrentDocument()
-  } catch (e) {
-    showMessage('插入分页符失败')
-  }
-}
-
-async function onInsertDividerAfter() {
-  const targetId = activeBlockId.value || currentDocId.value
-  if (!targetId) return
-  try {
-    await insertBlock('markdown', '---', undefined, targetId)
-    showMessage('已在下方插入分页符 (---)')
-    if (plugin) plugin.compileCurrentDocument()
-  } catch (e) {
-    showMessage('插入分页符失败')
-  }
-}
-
-async function onDeleteCurrentBlock() {
-  if (!activeBlockId.value) return
-  try {
-    await deleteBlock(activeBlockId.value)
-    showMessage('已删除该分页符')
-    activeBlockId.value = ''
-    activeBlockType.value = ''
-    if (plugin) plugin.compileCurrentDocument()
-  } catch (e) {
-    showMessage('删除失败')
-  }
-}
-
+// 顶栏操作
 function onOpenBottomPreview() {
   if (plugin?.openBottomPreviewTab) {
     plugin.openBottomPreviewTab()
@@ -1000,35 +545,14 @@ function onOpenBottomPreview() {
 }
 
 function onOpenPresenter() {
-  window.open('/plugins/siyuan-slidev/slidev-client/presenter.html', 'SlidevPresenter', 'width=1200,height=800')
+  if (typeof window !== 'undefined') {
+    window.open('/plugins/siyuan-slidev/slidev-client/presenter.html', 'SlidevPresenter', 'width=1200,height=800')
+  }
 }
 
 function onAiAutoSplit() {
   if (plugin?.executeCommand) {
     plugin.executeCommand('slidevAiSplit')
-  }
-}
-
-function onExportHtml() {
-  if (!latestDoc.value) {
-    showMessage('请先在主编辑区打开幻灯片文档')
-    return
-  }
-  const html = buildStandaloneHtml(latestDoc.value)
-  const ok = downloadHtmlFile('presentation.html', html)
-  if (ok) {
-    showMessage('已开始下载单文件离线 HTML 演示包')
-  }
-}
-
-function onExportPdf() {
-  if (!latestDoc.value) {
-    showMessage('请先在主编辑区打开幻灯片文档')
-    return
-  }
-  const ok = triggerPdfExport(latestDoc.value)
-  if (ok) {
-    showMessage('已唤起打印视窗，请在打印选项中选择「另存为 PDF」')
   }
 }
 

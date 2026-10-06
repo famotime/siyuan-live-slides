@@ -21,30 +21,36 @@ Stack: Vue 3, TypeScript, Vite, Vitest, Sass, SiYuan Plugin API.
 
 ## 3. Architecture & Key Modules
 
-- **Plugin Entry**: `src/index.ts`
-  - Extends `Plugin` from `siyuan`.
-  - Manages plugin lifecycle, command palette items, dock panel, and bottom split-screen preview tab.
+- **Plugin Entry & Commands**: `src/index.ts` & `src/plugin/`
+  - `src/index.ts`: Extends `Plugin` from `siyuan`. Manages plugin lifecycle, dock panel, and bottom split-screen preview tab.
+  - `src/plugin/command-registry.ts`: Centralizes registration and callbacks for 12+ commands and palette actions.
   - Delegates document compilation to `src/compiler/document-compiler.ts`.
 - **Compiler Pipeline**: `src/compiler/`
   - `document-compiler.ts`: Orchestrates AST retrieval, IAL parsing, dynamic block ref resolution, and sandbox updates.
-  - `slidev-ast-builder.ts`: Converts SiYuan block AST into Slidev presentation models.
+  - `slidev-ast-builder.ts` & `directive-wrapper.ts`: Converts SiYuan block AST into Slidev presentation models and handles Frontmatter/v-click/v-motion/Shiki directives.
   - `slidev-importer.ts` & `html-cleaner.ts`: Parses external Slidev Markdown and cleans/converts HTML containers and grids.
   - `block-ref-resolver.ts`: Recursively resolves SiYuan block references (`((id))`).
+- **Sync & Coordination**: `src/sync/`
+  - `inspector-sync-coordinator.ts`: Manages Protyle DOM selection probing, preceding divider back-tracing, and list item attribute self-healing.
+  - `cursor-tracker.ts`: Synchronizes cursor position with active slide pages.
 - **Dual-mode Engine**: `src/engine/`
   - `engine-manager.ts`: Toggles between the built-in zero-dependency Web Sandbox and local Slidev CLI DevServer (port 3030).
   - `web-sandbox-bridge.ts`: Handles iframe postMessage IPC with the embedded preview player.
 - **Export Pipeline**: `src/export/`
   - `markdown-renderer.ts`: Shared lightweight Markdown-to-HTML block renderer.
-  - `single-html-exporter.ts`: Bundles complete presentation assets into a standalone offline `.html`.
+  - `single-html-exporter.ts`: Orchestrates Base64 asset inlining and standalone presentation assembly.
+  - `standalone-template-styles.ts`: Generates standalone CSS stylesheets and theme custom properties.
+  - `standalone-client-runtime.ts`: Self-contained presentation player client runtime script template.
   - `pdf-exporter.ts`: Outputs printable 16:9 landscape PDF slides.
 - **Presentation Inspector UI**: `src/ui/`
-  - `dock/SlidevInspectorDockView.vue`: Master container dock view managing state and sync.
+  - `dock/SlidevInspectorDockView.vue`: Master container dock view managing state and layout orchestration.
+  - `dock/useInspectorActions.ts`: Encapsulates kernel API mutations, notes conversion, and divider management.
   - `components/PageInspectorSection.vue`: Slide layout, transition, background, notes.
   - `components/BlockInspectorSection.vue`: Block `v-click` animation, column slot, Shiki code spotlight.
   - `components/DocInspectorSection.vue`: Presentation theme, aspect ratio, AI toolbar, quick actions.
   - `tab/SlidevPreviewTab.vue`: Split-screen live preview tab.
 - **Testing & Mocks**: `tests/`
-  - 14 test suites covering compiler, cleaner, renderer, inspector state, engine, export, and synergy.
+  - 43 test suites (340+ tests) covering compiler, cleaner, renderer, inspector state, actions, coordinator, engine, export, and synergy.
   - `tests/mocks/siyuan.ts`: Host plugin mock aliased in `vitest.config.ts` for running tests in pure Node environments.
 
 ---

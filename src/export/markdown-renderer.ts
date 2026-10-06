@@ -1,6 +1,6 @@
 import type { ISlidevBlockItem, ISlidevVirtualPage } from "../types/slidev-protocol"
 import { distributeThreeColumns } from "../compiler/slidev-ast-builder"
-import { cleanCardListItemMarkdown, isListItemNode } from "../compiler/superblock-scanner"
+import { cleanCardListItemMarkdown, isListItemNode } from "../utils"
 import { cleanAndTransformInlineKramdown } from "../compiler/html-cleaner"
 
 /**

@@ -7,33 +7,13 @@ import {
 } from "../types/slidev-protocol"
 import { isPageBreak } from "./scope-mapper"
 
-/**
- * 从块的 Markdown 文本或纯文本中提取第一张图片的 URL
- */
-export function extractImageUrl(markdown?: string, content?: string): string | null {
-  const text = (markdown || content || "").trim()
-  if (!text) return null
+import {
+  cleanCardListItemMarkdown,
+  extractImageUrl,
+  isListItemNode,
+} from "../utils/markdown-utils"
 
-  // 1. Markdown 图片语法: ![alt](url) 或 ![alt](url "title") 或 ![alt](url =widthxheight)
-  const mdMatch = text.match(/!\[[\s\S]*?\]\(\s*([^\s)]+)(?:\s+(?:=["']?[^"'\s)]*["']?|["'][^"']*["']))*?\s*\)/)
-  if (mdMatch) {
-    return mdMatch[1].trim()
-  }
-
-  // 2. HTML <img> 标签: <img ... src="url" ...>
-  const imgTagMatch = text.match(/<img\b[^>]*?\bsrc=["']([^"']+)["']/i)
-  if (imgTagMatch) {
-    return imgTagMatch[1].trim()
-  }
-
-  // 3. 纯资源文件路径 (如 assets/foo.png 或 https://...)
-  const pureUrl = text.replace(/\{:[^}]*\}/g, "").trim()
-  if (/^(?:assets\/|https?:\/\/|\/|\.\.?\/)[^\s]+\.(?:png|jpe?g|gif|webp|svg|avif)(?:\?[^\s]*)?$/i.test(pureUrl)) {
-    return pureUrl
-  }
-
-  return null
-}
+export { cleanCardListItemMarkdown, extractImageUrl, isListItemNode }
 
 /**
  * 判断一个块节点是否为超级块 (思源内核缩写为 's'，AST 为 'NodeSuperBlock'，兼容 'sb')
@@ -81,19 +61,6 @@ export function isHorizontalSuperBlock(node: ISiYuanBlockNode): boolean {
 
   // 5. 默认行为：思源中新建分栏超级块默认是横向 col，未明确指定为纵向则视为横向
   return true
-}
-
-/**
- * 判断是否为列表项块 (NodeListItem 'i' 或 NodeList 'l' 或 Markdown 列表语法)
- */
-export function isListItemNode(node: ISiYuanBlockNode): boolean {
-  if (!node) return false
-  const t = (node.type || "").toLowerCase()
-  if (t === "i" || t === "nodelistitem") return true
-  if (t === "l" || t === "nodelist") return true
-  const md = (node.markdown || (node as any).rawMarkdown || node.content || "").trim()
-  if (/^(?:[-*+]|\d+\.)\s+/.test(md)) return true
-  return false
 }
 
 /**
@@ -276,51 +243,6 @@ export function isHeadingBlock(node: ISiYuanBlockNode): boolean {
   const md = (node.markdown || node.content || "").trim()
   if (/^#{1,6}\s+/.test(md)) return true
   return false
-}
-
-/**
- * 清洗分栏卡片中的首层列表项前缀（剥离开头的 - / * / + / 1. 等，并将首行去标记，后续行去除首层缩进）
- */
-export function cleanCardListItemMarkdown(markdown: string): string {
-  if (!markdown) return ""
-  const lines = markdown.split(/\r?\n/)
-  if (lines.length === 0) return ""
-
-  const firstLine = lines[0]
-  const firstMatch = firstLine.match(/^(\s*)(?:[-*+]|\d+\.)\s+(.*)$/)
-  if (!firstMatch) {
-    return markdown
-  }
-
-  const baseIndent = firstMatch[1].length
-  const firstLineText = firstMatch[2].trim()
-  const prefixLength = firstLine.length - firstMatch[2].length
-
-  if (lines.length === 1) {
-    return firstLineText
-  }
-
-  const resultLines = [firstLineText]
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i]
-    if (!line.trim()) {
-      resultLines.push("")
-      continue
-    }
-
-    const spaceMatch = line.match(/^(\s*)/)
-    const spaces = spaceMatch ? spaceMatch[1].length : 0
-
-    if (spaces >= prefixLength) {
-      resultLines.push(line.slice(prefixLength))
-    } else if (spaces > baseIndent) {
-      resultLines.push(line.slice(spaces))
-    } else {
-      resultLines.push(line)
-    }
-  }
-
-  return resultLines.join("\n")
 }
 
 export interface IListSuperBlockDetection {
