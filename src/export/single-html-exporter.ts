@@ -260,11 +260,15 @@ export function buildStandaloneHtml(
     .layout-two-cols-grid {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr) !important;
       gap: 32px;
       width: 100%;
       height: 100%;
+      min-height: 0 !important;
+      max-height: 100% !important;
       flex: 1 1 0%;
       align-items: stretch;
+      overflow: hidden !important;
     }
     .layout-two-cols-header-container,
     .layout-three-cols-header-container {
@@ -272,6 +276,9 @@ export function buildStandaloneHtml(
       flex-direction: column;
       width: 100%;
       height: 100%;
+      min-height: 0 !important;
+      max-height: 100% !important;
+      overflow: hidden !important;
     }
     .layout-header-section {
       width: 100%;
@@ -287,12 +294,16 @@ export function buildStandaloneHtml(
     .layout-three-cols-grid {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr) !important;
       gap: 24px;
       width: 100%;
       height: 100%;
+      min-height: 0 !important;
+      max-height: 100% !important;
       flex: 1 1 0%;
       align-items: stretch;
       box-sizing: border-box;
+      overflow: hidden !important;
     }
     .pdf-col {
       display: flex;
@@ -562,7 +573,7 @@ export function buildStandaloneHtml(
       margin-bottom: 6px !important;
     }
 
-    /* 列内媒体容器：填满标题下方所有剩余垂直空间，居中对齐且无溢出 */
+    /* 列内媒体容器：填满标题下方所有剩余垂直空间，纵向顶部对齐，横向居中，无溢出 */
     .two-cols-left .slide-list-media,
     .two-cols-right .slide-list-media,
     .three-cols-col .slide-list-media,
@@ -583,8 +594,9 @@ export function buildStandaloneHtml(
       max-height: 100% !important;
       max-width: 100% !important;
       display: flex !important;
+      flex-direction: column !important;
       align-items: center !important;
-      justify-content: center !important;
+      justify-content: flex-start !important;
       overflow: hidden !important;
       margin: 0 !important;
       padding: 0 !important;
@@ -634,7 +646,7 @@ export function buildStandaloneHtml(
       min-height: 0 !important;
       object-fit: contain !important;
       display: block !important;
-      margin: auto !important;
+      margin: 0 auto !important;
       border-radius: 8px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
       background: transparent;
@@ -644,8 +656,9 @@ export function buildStandaloneHtml(
 
     .slide-list-media {
       display: flex !important;
+      flex-direction: column !important;
       align-items: center !important;
-      justify-content: center !important;
+      justify-content: flex-start !important;
       width: 100% !important;
       max-width: 100% !important;
       height: 100% !important;
@@ -671,28 +684,51 @@ export function buildStandaloneHtml(
       border-radius: 6px !important;
       box-shadow: 0 3px 12px rgba(0, 0, 0, 0.14) !important;
       display: block !important;
-      margin: auto !important;
+      margin: 0 auto !important;
       cursor: zoom-in;
     }
 
     .slide-block:has(.slide-list-media) {
-      flex: 1 1 auto;
-      min-height: 0;
-      height: 100%;
-      max-height: 100%;
-      display: flex;
-      flex-direction: column;
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
       overflow: hidden !important;
     }
     .slide-block:has(.slide-list-media) .pdf-list,
     .slide-block:has(.slide-list-media) ul,
     .slide-block:has(.slide-list-media) ol {
-      flex: 1 1 auto;
-      min-height: 0;
-      height: 100%;
-      max-height: 100%;
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
       overflow: hidden !important;
       overflow-y: hidden !important;
+    }
+    .slide-block:has(.slide-list-media) li,
+    .slide-block:has(.slide-list-media) .slide-list-item,
+    .slide-block:has(.slide-list-media) .pdf-list-item,
+    .slide-block:has(.slide-media-container) li,
+    .slide-block:has(.slide-video-container) li,
+    .two-cols-left li:has(.slide-list-media),
+    .two-cols-right li:has(.slide-list-media),
+    .three-cols-col li:has(.slide-list-media),
+    .pdf-col li:has(.slide-list-media),
+    li:has(.slide-list-media),
+    li:has(.slide-video-container),
+    li:has(.slide-media-container) {
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: hidden !important;
+      margin-bottom: 0 !important;
     }
 
     .layout-two-cols .slide-media-block,
@@ -708,8 +744,9 @@ export function buildStandaloneHtml(
       min-width: 0 !important;
       min-height: 0 !important;
       display: flex !important;
+      flex-direction: column !important;
       align-items: center !important;
-      justify-content: center !important;
+      justify-content: flex-start !important;
       overflow: hidden !important;
     }
 
@@ -1194,7 +1231,7 @@ export function buildStandaloneHtml(
           for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             const tr = line.trim();
-            if (!tr) continue;
+            if (!tr || /^\{:.*?\}$/.test(tr)) continue;
             const um = line.match(/^(\s*)[-*+]\s+(.*)$/);
             const om = line.match(/^(\s*)\d+\.\s+(.*)$/);
             if (um) {
@@ -1209,7 +1246,7 @@ export function buildStandaloneHtml(
               continue;
             }
             if (items.length > 0) {
-              const im = tr.match(/^!\[(.*?)\]\((.*?)\)$/);
+              const im = tr.match(/^!\[(.*?)\]\((.*?)\)(?:\{:?[^}]*\})?$/);
               if (im) {
                 const isGif = /\.gif(?:\?|$)/i.test(im[2]);
                 items[items.length - 1].media.push('<div class="slide-list-media"><img alt="' + im[1] + '" src="' + im[2] + '" class="' + (isGif ? 'list-item-gif' : 'list-item-img') + '" /></div>');
@@ -1217,7 +1254,8 @@ export function buildStandaloneHtml(
               }
               const hm = tr.match(/^<img\b[\s\S]*?\/?>$/i);
               if (hm) {
-                items[items.length - 1].media.push('<div class="slide-list-media">' + tr + '</div>');
+                const cleanTr = tr.replace(/\s+style="[^"]*"/gi, "");
+                items[items.length - 1].media.push('<div class="slide-list-media">' + cleanTr + '</div>');
                 continue;
               }
               if (/<video\b/i.test(tr)) {

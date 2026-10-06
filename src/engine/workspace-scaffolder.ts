@@ -187,7 +187,7 @@ html.dark *::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.45);
 }
 
-/* 多媒体（GIF动图、静态图片、MP4视频）最大化自适应且不超出视口 */
+/* 多媒体（GIF动图、静态图片、MP4视频）最大化自适应且不超出视口：顶部对齐，横向居中 */
 .slidev-layout img,
 .slidev-layout video {
   max-width: 100% !important;
@@ -203,16 +203,19 @@ html.dark *::-webkit-scrollbar-thumb:hover {
 .col-1 video,
 .col-2 video,
 .col-3 video {
-  width: 100% !important;
-  height: 100% !important;
+  width: auto !important;
+  height: auto !important;
   max-width: 100% !important;
   max-height: 100% !important;
   object-fit: contain !important;
+  display: block !important;
+  margin: 0 auto !important;
 }
 .slide-list-media {
   display: flex !important;
+  flex-direction: column !important;
   align-items: center !important;
-  justify-content: center !important;
+  justify-content: flex-start !important;
   margin-top: 4px !important;
   margin-bottom: 4px !important;
   width: 100% !important;
@@ -225,17 +228,20 @@ html.dark *::-webkit-scrollbar-thumb:hover {
 .slide-list-media img,
 .slide-list-media video,
 .slide-list-media .list-item-gif {
-  width: 100% !important;
-  height: 100% !important;
+  width: auto !important;
+  height: auto !important;
   max-width: 100% !important;
   max-height: 100% !important;
   object-fit: contain !important;
   border-radius: 6px !important;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.14) !important;
+  display: block !important;
+  margin: 0 auto !important;
 }
 .slide-video-container {
   display: flex !important;
-  justify-content: center !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
   align-items: center !important;
   width: 100% !important;
   max-height: 100% !important;

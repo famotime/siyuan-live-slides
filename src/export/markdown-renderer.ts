@@ -464,10 +464,11 @@ export function renderMarkdownList(
     }
 
     const trimmed = line.trim()
+    if (!trimmed || /^\{:.*?\}$/.test(trimmed)) continue
 
     // 检查列表项下属的缩进多媒体（GIF、普通图片或视频）
     if (items.length > 0) {
-      const mdImgMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/)
+      const mdImgMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)(?:\{:?[^}]*\})?$/)
       if (mdImgMatch) {
         const isGif = /\.gif(?:\?|$)/i.test(mdImgMatch[2])
         const cls = isGif ? "list-item-gif" : "list-item-img"
@@ -480,9 +481,10 @@ export function renderMarkdownList(
 
       const htmlImgMatch = trimmed.match(/^<img\b[\s\S]*?\/?>$/i)
       if (htmlImgMatch) {
+        const cleanImgHtml = trimmed.replace(/\s+style="[^"]*"/gi, "")
         if (!items[items.length - 1].media) items[items.length - 1].media = []
         items[items.length - 1].media!.push(
-          `<div class="slide-list-media">${trimmed}</div>`
+          `<div class="slide-list-media">${cleanImgHtml}</div>`
         )
         continue
       }

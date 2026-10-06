@@ -534,27 +534,33 @@
     .layout-two-cols {
       display: grid !important;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+      grid-template-rows: minmax(0, 1fr) !important;
       column-gap: 32px;
       gap: 32px;
       width: 100% !important;
       height: 100% !important;
-      min-height: 100% !important;
+      min-height: 0 !important;
+      max-height: 100% !important;
       flex: 1 1 0% !important;
-      align-items: start !important;
+      align-items: stretch !important;
       box-sizing: border-box !important;
+      overflow: hidden !important;
     }
 
     .layout-three-cols {
       display: grid !important;
       grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      grid-template-rows: minmax(0, 1fr) !important;
       column-gap: 24px;
       gap: 24px;
       width: 100% !important;
       height: 100% !important;
-      min-height: 100% !important;
+      min-height: 0 !important;
+      max-height: 100% !important;
       flex: 1 1 0% !important;
       align-items: stretch !important;
       box-sizing: border-box !important;
+      overflow: hidden !important;
     }
 
     .two-cols-left,
@@ -722,7 +728,7 @@
       box-sizing: border-box !important;
     }
 
-    /* 分栏内包含媒体的块、媒体挂件或唯一子块：弹性吃满列内全部剩余垂直高度 */
+    /* 分栏内包含媒体的块、媒体挂件或唯一子块：弹性吃满列内全部剩余垂直高度，顶部开始排布 */
     .two-cols-left .slide-block:has(video),
     .two-cols-left .slide-block:has(img),
     .two-cols-left .slide-block:has(.slide-media-container),
@@ -753,8 +759,8 @@
       max-height: 100% !important;
       display: flex !important;
       flex-direction: column !important;
-      align-items: center !important;
-      justify-content: center !important;
+      align-items: stretch !important;
+      justify-content: flex-start !important;
       overflow: hidden !important;
       margin-bottom: 0 !important;
     }
@@ -772,7 +778,7 @@
       margin-bottom: 6px !important;
     }
 
-    /* 列内媒体容器：填满标题下方所有剩余垂直空间，居中对齐且无溢出 */
+    /* 列内媒体容器：填满标题下方所有剩余垂直空间，纵向有空间时默认顶部对齐，横向居中对齐 */
     .two-cols-left .slide-list-media,
     .two-cols-right .slide-list-media,
     .three-cols-col .slide-list-media,
@@ -790,15 +796,16 @@
       max-height: 100% !important;
       max-width: 100% !important;
       display: flex !important;
+      flex-direction: column !important;
+      justify-content: flex-start !important;
       align-items: center !important;
-      justify-content: center !important;
       overflow: hidden !important;
       margin: 0 !important;
       padding: 0 !important;
       box-sizing: border-box !important;
     }
 
-    /* 列内多媒体播放器：以 contain 模式等比缩放完整可见，绝对不超高超宽、不产生遮挡与滚动条 */
+    /* 列内多媒体播放器：以最大高度/最大宽度等比自适应(contain)，横向居中，纵向默认顶部对齐 */
     .two-cols-left video,
     .two-cols-right video,
     .three-cols-col video,
@@ -810,19 +817,20 @@
     .three-cols-col .slide-video-player,
     .layout-three-cols .slide-video-player,
     .layout-two-cols .slide-video-player {
-      width: 100% !important;
-      height: 100% !important;
       max-width: 100% !important;
       max-height: 100% !important;
+      width: auto !important;
+      height: auto !important;
       min-width: 0 !important;
       min-height: 0 !important;
       object-fit: contain !important;
       display: block !important;
-      margin: auto !important;
+      margin: 0 auto !important;
       border-radius: 6px !important;
       box-shadow: 0 3px 12px rgba(0, 0, 0, 0.14) !important;
       background: transparent !important;
       outline: none !important;
+      cursor: zoom-in;
     }
 
     .slide-content-wrapper.layout-image-right,
@@ -1340,7 +1348,7 @@
        多媒体（GIF动图、静态图片、MP4视频）全视口最大化自适应且不超出视口
        ======================================================== */
 
-    /* 独立多媒体块在幻灯片可视区域内最大化自适应填充 */
+    /* 独立多媒体块在幻灯片可视区域内最大化自适应填充：纵向默认顶部对齐，横向水平居中 */
     .slide-media-block,
     .slide-media-container,
     .slide-video-container,
@@ -1358,7 +1366,7 @@
       display: flex !important;
       flex-direction: column !important;
       align-items: center !important;
-      justify-content: center !important;
+      justify-content: flex-start !important;
       width: 100% !important;
       height: 100% !important;
       max-height: 100% !important;
@@ -1375,24 +1383,25 @@
     .slide-block video {
       max-width: 100% !important;
       max-height: 100% !important;
-      width: 100% !important;
-      height: 100% !important;
+      width: auto !important;
+      height: auto !important;
       min-width: 0 !important;
       min-height: 0 !important;
       object-fit: contain !important;
       display: block !important;
-      margin: auto !important;
+      margin: 0 auto !important;
       border-radius: 8px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
       background: transparent;
       outline: none;
     }
 
-    /* 列表项下的多媒体（GIF、静态图片、视频）：自适应排版且严格限制在 li 容器与视口内部 */
+    /* 列表项下的多媒体（GIF、静态图片、视频）：自适应排版且严格限制在 li 容器与视口内部，顶部对齐 */
     .slide-list-media {
       display: flex !important;
+      flex-direction: column !important;
       align-items: center !important;
-      justify-content: center !important;
+      justify-content: flex-start !important;
       width: 100% !important;
       max-width: 100% !important;
       height: 100% !important;
@@ -1411,39 +1420,64 @@
     .slide-list-media .slide-video-player {
       max-width: 100% !important;
       max-height: 100% !important;
-      width: 100% !important;
-      height: 100% !important;
+      width: auto !important;
+      height: auto !important;
       min-width: 0 !important;
       min-height: 0 !important;
       object-fit: contain !important;
       border-radius: 6px !important;
       box-shadow: 0 3px 12px rgba(0, 0, 0, 0.14) !important;
       display: block !important;
-      margin: auto !important;
+      margin: 0 auto !important;
     }
 
-    /* 含有媒体的列表容器：安全弹性收缩，绝对禁止滚动条，防止溢出 */
+    /* 含有媒体的列表容器与列表项：安全弹性收缩，绝对禁止滚动条，防止溢出视口 */
     .slide-block:has(.slide-list-media) {
-      flex: 1 1 auto;
-      min-height: 0;
-      height: 100%;
-      max-height: 100%;
-      display: flex;
-      flex-direction: column;
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
       overflow: hidden !important;
     }
     .slide-block:has(.slide-list-media) .slide-list,
     .slide-block:has(.slide-list-media) ul,
     .slide-block:has(.slide-list-media) ol {
-      flex: 1 1 auto;
-      min-height: 0;
-      height: 100%;
-      max-height: 100%;
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
       overflow: hidden !important;
       overflow-y: hidden !important;
     }
+    .slide-block:has(.slide-list-media) li,
+    .slide-block:has(.slide-list-media) .slide-list-item,
+    .slide-block:has(.slide-media-container) li,
+    .slide-block:has(.slide-video-container) li,
+    .slide-block:has(video) li,
+    .slide-block:has(img) li,
+    .layout-two-cols li:has(.slide-list-media),
+    .layout-three-cols li:has(.slide-list-media),
+    .two-cols-left li:has(.slide-list-media),
+    .two-cols-right li:has(.slide-list-media),
+    .three-cols-col li:has(.slide-list-media),
+    li:has(.slide-list-media),
+    li:has(.slide-video-container),
+    li:has(.slide-media-container) {
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: hidden !important;
+      margin-bottom: 0 !important;
+    }
 
-    /* 分栏布局（两栏、三栏）中的图片与视频：自适应填充列空间，保持比例不超出 */
+    /* 分栏布局（两栏、三栏）中的图片与视频：自适应填充列空间，保持比例不超出，纵向顶部对齐，横向居中 */
     .layout-two-cols .slide-media-block,
     .layout-two-cols .slide-video-container,
     .layout-two-cols .slide-media-container,
@@ -1459,7 +1493,7 @@
       display: flex !important;
       flex-direction: column !important;
       align-items: center !important;
-      justify-content: center !important;
+      justify-content: flex-start !important;
       overflow: hidden !important;
       box-sizing: border-box !important;
     }
@@ -3942,10 +3976,11 @@
             }
 
             const trimmed = line.trim()
+            if (!trimmed || /^\{:.*?\}$/.test(trimmed)) continue
 
             // 检查列表项下属的缩进多媒体（GIF、普通图片或视频）
             if (items.length > 0) {
-              const mdImgMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/)
+              const mdImgMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)(?:\{:?[^}]*\})?$/)
               if (mdImgMatch) {
                 const isGif = /\.gif(?:\?|$)/i.test(mdImgMatch[2])
                 const cls = isGif ? "list-item-gif" : "list-item-img"
@@ -3958,9 +3993,10 @@
 
               const htmlImgMatch = trimmed.match(/^<img\b[\s\S]*?\/?>$/i)
               if (htmlImgMatch) {
+                let cleanImgHtml = trimmed.replace(/\s+style="[^"]*"/gi, "")
                 if (!items[items.length - 1].media) items[items.length - 1].media = []
                 items[items.length - 1].media.push(
-                  `<div class="slide-list-media">${trimmed}</div>`
+                  `<div class="slide-list-media">${cleanImgHtml}</div>`
                 )
                 continue
               }

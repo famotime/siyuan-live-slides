@@ -241,7 +241,9 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
     }
     .slide-list-media {
       display: flex;
+      flex-direction: column;
       align-items: center;
+      justify-content: flex-start;
       margin-top: 8px;
       margin-bottom: 6px;
       max-width: 100%;
@@ -254,9 +256,12 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       max-height: min(280px, 36vh) !important;
       width: auto !important;
       height: auto !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
       object-fit: contain !important;
       border-radius: 6px;
       display: block;
+      margin: 0 auto !important;
     }
     .slide-video-player {
       max-width: 100% !important;
@@ -272,11 +277,15 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
     .layout-two-cols-grid {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr) !important;
       gap: 36px;
       width: 100%;
       height: 100%;
+      min-height: 0 !important;
+      max-height: 100% !important;
       flex: 1 1 0%;
       align-items: stretch;
+      overflow: hidden !important;
     }
     .layout-two-cols-header-container,
     .layout-three-cols-header-container {
@@ -284,6 +293,9 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       flex-direction: column;
       width: 100%;
       height: 100%;
+      min-height: 0 !important;
+      max-height: 100% !important;
+      overflow: hidden !important;
     }
     .layout-header-section {
       width: 100%;
@@ -299,12 +311,16 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
     .layout-three-cols-grid {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr) !important;
       gap: 24px;
       width: 100%;
       height: 100%;
+      min-height: 0 !important;
+      max-height: 100% !important;
       flex: 1 1 0%;
       align-items: stretch;
       box-sizing: border-box;
+      overflow: hidden !important;
     }
     .pdf-col {
       display: flex;
@@ -316,6 +332,7 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       height: 100%;
       max-height: 100%;
       min-height: 0;
+      justify-content: flex-start;
       overflow: hidden;
       box-sizing: border-box;
       overflow-wrap: break-word;
@@ -352,12 +369,32 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       max-height: 100% !important;
       max-width: 100% !important;
       display: flex !important;
+      flex-direction: column !important;
       align-items: center !important;
-      justify-content: center !important;
+      justify-content: flex-start !important;
       overflow: hidden !important;
       margin: 0 !important;
       padding: 0 !important;
       box-sizing: border-box !important;
+    }
+    .pdf-col li:has(.slide-list-media),
+    .pdf-col li:has(.slide-media-container),
+    .pdf-col li:has(.slide-video-container),
+    .pdf-col li:has(img),
+    .pdf-col li:has(video),
+    .pdf-col .pdf-list-item:has(.slide-list-media),
+    .pdf-col .pdf-list-item:has(.slide-media-container),
+    .pdf-col .pdf-list-item:has(.slide-video-container),
+    .pdf-col .pdf-list-item:has(img),
+    .pdf-col .pdf-list-item:has(video) {
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: hidden !important;
+      margin-bottom: 0 !important;
     }
     .pdf-col video,
     .layout-three-cols-grid video,
@@ -374,7 +411,7 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
       min-height: 0 !important;
       object-fit: contain !important;
       display: block !important;
-      margin: auto !important;
+      margin: 0 auto !important;
     }
     .pdf-col * {
       overflow-wrap: break-word;

@@ -352,6 +352,26 @@ describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", ()
       expect(html).toContain(".pdf-col video")
       expect(html).toContain("align-items: stretch")
       expect(html).toContain("syncAutoplayVideos")
+      // 验证网格限高与顶部对齐、水平居中
+      expect(html).toContain("grid-template-rows: minmax(0, 1fr) !important;")
+      expect(html).toContain("justify-content: flex-start !important;")
+      expect(html).toContain("margin: 0 auto !important;")
+    })
+
+    it("列表项中带思源 IAL 属性的图片与属性行应正确识别为 slide-list-media 且去除 IAL 污染", () => {
+      const mdWithIal = [
+        "- #### AI 摄影师 PoseDirector 2025.10",
+        '  ![](assets/sample.gif){: style="width: 344px;"}',
+        '  {: id="20261005172839-qtb6rn7" updated="20261005172857"}',
+      ].join("\n")
+
+      const html = renderMarkdownList(mdWithIal)
+      expect(html).not.toBeNull()
+      expect(html).toContain('<div class="slide-list-media">')
+      expect(html).toContain('src="assets/sample.gif"')
+      expect(html).toContain("slide-list-item-title")
+      expect(html).not.toContain("20261005172839-qtb6rn7")
+      expect(html).not.toContain('{: style="width: 344px;"}')
     })
   })
 })
