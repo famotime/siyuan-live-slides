@@ -781,7 +781,8 @@ export function convertBlockToHtml(
   // 7.5 MP4 视频与多媒体播放块
   const isVideoTag = /<video\b/i.test(md) || block.type === "video" || block.type === "NodeVideo"
   const hasListPrefix = /^(\s*)([-*+]|\d+\.)\s+/m.test(md)
-  if (isVideoTag && !hasListPrefix) {
+  const hasHeadingTag = /(?:^|\n)\s*#{1,6}\s+/.test(md)
+  if (isVideoTag && !hasListPrefix && !hasHeadingTag && !md.includes("\n")) {
     const isAutoplay = block.attributes?.["custom-slidev-autoplay"] === "true" || /autoplay/i.test(md)
     const isLoop = block.attributes?.["custom-slidev-loop"] === "true" || /loop/i.test(md)
     const isMuted = block.attributes?.["custom-slidev-muted"] === "true" || isAutoplay || /muted/i.test(md)
@@ -839,8 +840,146 @@ export function convertBlockToHtml(
     })}</div>`
   }
 
+  // 10.5 复合多段 Markdown 块（例如卡片内部的标题行 + 配图/视频/说明段落）
+  if (md.includes("\n") || hasHeadingTag) {
+    const compoundHtml = renderCompoundMarkdown(md, options, block)
+    if (compoundHtml) {
+      return `<div class="${containerClass}"${motionStyle}>${compoundHtml}</div>`
+    }
+  }
+
   // 11. 普通段落
   return `<div class="${containerClass}"${motionStyle}><p>${formatInlineMarkdown(md)}</p></div>`
+}
+
+/**
+ * 渲染复合/多段 Markdown 内容（例如卡片内部的标题行 + 配图/视频/说明段落/子列表）
+ */
+export function renderCompoundMarkdown(
+  md: string,
+  options?: IBlockRenderOptions,
+  block?: ISlidevBlockItem,
+): string {
+  const containerClass = options?.containerClassName || "pdf-block"
+  const lines = md.split(/\r?\n/)
+  const subBlocks: string[] = []
+  let current: string[] = []
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    const trimmed = line.trim()
+
+    // 遇到独立标题行：单独作为一个子块
+    if (/^#{1,6}\s+/.test(trimmed)) {
+      if (current.length > 0) {
+        subBlocks.push(current.join("\n"))
+        current = []
+      }
+      subBlocks.push(trimmed)
+      continue
+    }
+
+    // 遇到空行：切分段落
+    if (!trimmed) {
+      if (current.length > 0) {
+        subBlocks.push(current.join("\n"))
+        current = []
+      }
+      continue
+    }
+
+    // 遇到独立图片行：单独作为一个子块
+    if (/^!\[.*?\]\(.*?\)$/.test(trimmed)) {
+      if (current.length > 0) {
+        subBlocks.push(current.join("\n"))
+        current = []
+      }
+      subBlocks.push(trimmed)
+      continue
+    }
+
+    // 遇到独立视频标签：单独作为一个子块
+    if (/<video\b/i.test(trimmed)) {
+      if (current.length > 0) {
+        subBlocks.push(current.join("\n"))
+        current = []
+      }
+      let videoRaw = trimmed
+      if (!/<\/video>/i.test(videoRaw)) {
+        while (i + 1 < lines.length && !/<\/video>/i.test(videoRaw)) {
+          i++
+          videoRaw += "\n" + lines[i]
+        }
+      }
+      subBlocks.push(videoRaw)
+      continue
+    }
+
+    current.push(line)
+  }
+
+  if (current.length > 0) {
+    subBlocks.push(current.join("\n"))
+  }
+
+  // 对拆分出的各子块分别渲染并合并
+  const htmlParts = subBlocks.map((sub) => {
+    const trimmedSub = sub.trim()
+    if (!trimmedSub) return ""
+
+    // 1. 标题
+    const hMatch = trimmedSub.match(/^(#{1,6})\s+(.*)$/)
+    if (hMatch) {
+      const level = hMatch[1].length
+      return `<h${level} class="slide-list-item-title">${formatInlineMarkdown(hMatch[2].trim())}</h${level}>`
+    }
+
+    // 2. 图片
+    const imgMatch = trimmedSub.match(/^!\[(.*?)\]\((.*?)\)$/)
+    if (imgMatch) {
+      const isGif = /\.gif(?:\?|$)/i.test(imgMatch[2])
+      const imgClass = options?.imageClassName || (isGif ? "list-item-gif" : "pdf-image slide-media-img")
+      return `<div class="${containerClass} ${containerClass}--image slide-media-block slide-media-container slide-list-media"><img alt="${escapeHtml(imgMatch[1])}" src="${imgMatch[2]}" class="${imgClass}" /></div>`
+    }
+
+    // 3. 视频
+    if (/<video\b/i.test(trimmedSub)) {
+      const isAutoplay = block?.attributes?.["custom-slidev-autoplay"] === "true" || /autoplay/i.test(trimmedSub)
+      const isLoop = block?.attributes?.["custom-slidev-loop"] === "true" || /loop/i.test(trimmedSub)
+      const isMuted = block?.attributes?.["custom-slidev-muted"] === "true" || isAutoplay || /muted/i.test(trimmedSub)
+      const hideControls = block?.attributes?.["custom-slidev-controls"] === "false"
+
+      const srcMatch = trimmedSub.match(/\bsrc=["']([^"']+)["']/i)
+      const src = srcMatch ? srcMatch[1] : ""
+
+      const attrParts: string[] = ['class="slide-video-player"']
+      if (!hideControls) attrParts.push("controls")
+      if (isAutoplay) attrParts.push("autoplay playsinline")
+      if (isLoop) attrParts.push("loop")
+      if (isMuted) attrParts.push("muted")
+      attrParts.push('preload="metadata"')
+      if (src) attrParts.push(`src="${src}"`)
+
+      const innerContentMatch = trimmedSub.match(/<video[^>]*>([\s\S]*?)<\/video>/i)
+      let innerContent = innerContentMatch ? innerContentMatch[1].trim() : ""
+      if (!innerContent && src) {
+        innerContent = `<source src="${src}" type="video/mp4" />您的浏览器不支持视频播放。`
+      }
+
+      return `<div class="${containerClass} ${containerClass}--video slide-media-block slide-video-container slide-media-container" data-autoplay="${isAutoplay ? 'true' : 'false'}" data-muted="${isMuted ? 'true' : 'false'}"><video ${attrParts.join(" ")}>${innerContent}</video></div>`
+    }
+
+    // 4. 列表
+    const listHtml = renderMarkdownList(trimmedSub, options, block)
+    if (listHtml) {
+      return listHtml
+    }
+
+    // 5. 段落
+    return `<p class="slide-list-item-desc">${formatInlineMarkdown(trimmedSub)}</p>`
+  }).filter(Boolean)
+
+  return htmlParts.join("\n")
 }
 
 export interface IRenderSlideOptions extends IBlockRenderOptions {
@@ -909,11 +1048,17 @@ export function renderSlideBlocksToHtml(
     const leftBlocks = rem.filter(b => !rightBlocks.includes(b))
 
     const renderColBlockToHtml = (colBlocks: ISlidevBlockItem[]) => {
-      if (colBlocks.length === 1 && isListItemNode(colBlocks[0])) {
-        const cleanedMd = cleanCardListItemMarkdown(colBlocks[0].rawMarkdown)
-        return convertBlockToHtml({ ...colBlocks[0], rawMarkdown: cleanedMd }, options)
+      const validBlocks = colBlocks.filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
+      if (validBlocks.length > 0) {
+        const first = validBlocks[0]
+        const md = (first.rawMarkdown || first.content || "").trim()
+        const isList = isListItemNode(first) || /^(?:[-*+]|\d+\.)\s+/.test(md)
+        if (isList) {
+          first.rawMarkdown = cleanCardListItemMarkdown(first.rawMarkdown || first.content || "")
+          first.content = first.rawMarkdown
+        }
       }
-      return colBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
+      return validBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
     }
 
     const headerHtml = headerBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
@@ -948,11 +1093,17 @@ export function renderSlideBlocksToHtml(
     const { col1: col1Blocks, col2: col2Blocks, col3: col3Blocks } = distributeThreeColumns(rem)
 
     const renderColBlockToHtml = (colBlocks: ISlidevBlockItem[]) => {
-      if (colBlocks.length === 1 && isListItemNode(colBlocks[0])) {
-        const cleanedMd = cleanCardListItemMarkdown(colBlocks[0].rawMarkdown)
-        return convertBlockToHtml({ ...colBlocks[0], rawMarkdown: cleanedMd }, options)
+      const validBlocks = colBlocks.filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
+      if (validBlocks.length > 0) {
+        const first = validBlocks[0]
+        const md = (first.rawMarkdown || first.content || "").trim()
+        const isList = isListItemNode(first) || /^(?:[-*+]|\d+\.)\s+/.test(md)
+        if (isList) {
+          first.rawMarkdown = cleanCardListItemMarkdown(first.rawMarkdown || first.content || "")
+          first.content = first.rawMarkdown
+        }
       }
-      return colBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
+      return validBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
     }
 
     const headerHtml = headerBlocks.map(b => convertBlockToHtml(b, options)).join("\n")

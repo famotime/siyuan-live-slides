@@ -1093,6 +1093,93 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       expect(renderedHtml).toContain("子项 2.1")
       expect(renderedHtml).toContain("子项 3.1")
     })
+
+    it("三栏列表容器内放置图片和视频且混入空块时，标题正确渲染为标题标签且首项圆点完全去除", async () => {
+      const { buildSlidevDocument } = await import("../src/compiler/slidev-ast-builder")
+      const { renderSlideBlocksToHtml } = await import("../src/export/markdown-renderer")
+      const { buildStandaloneHtml } = await import("../src/export/single-html-exporter")
+
+      const mockBlocks: any[] = [
+        {
+          id: "header-1",
+          type: "h",
+          content: "我的代表作品",
+          markdown: "## 我的代表作品",
+          subType: "h2",
+          ial: { "custom-slidev-slot": "header" },
+        },
+        {
+          id: "col-1-list",
+          type: "i",
+          content: "- #### AI 摄影师 PoseDirector\n\n  <video controls=\"controls\" src=\"assets/demo.mp4\"></video>",
+          markdown: "- #### AI 摄影师 PoseDirector\n\n  <video controls=\"controls\" src=\"assets/demo.mp4\"></video>",
+          ial: { "custom-slidev-slot": "col-1" },
+        },
+        {
+          id: "col-2-list",
+          type: "i",
+          content: "- #### 订阅管家 SubManage\n\n  ![](assets/sub.png)",
+          markdown: "- #### 订阅管家 SubManage\n\n  ![](assets/sub.png)",
+          ial: { "custom-slidev-slot": "col-2" },
+        },
+        {
+          id: "col-3-list",
+          type: "i",
+          content: "- #### 方块射手 BlockShooter\n\n  休闲益智小游戏",
+          markdown: "- #### 方块射手 BlockShooter\n\n  休闲益智小游戏",
+          ial: { "custom-slidev-slot": "col-3" },
+        },
+        // 混入历史空段落块
+        {
+          id: "empty-p-1",
+          type: "p",
+          content: "",
+          markdown: "",
+          ial: { "custom-slidev-slot": "col-3" },
+        },
+        {
+          id: "empty-p-2",
+          type: "p",
+          content: "   ",
+          markdown: "   ",
+          ial: { "custom-slidev-slot": "col-3" },
+        },
+      ]
+
+      const doc = buildSlidevDocument(
+        "doc-media-compound-test",
+        { "custom-slidev-layout": "three-cols-header" },
+        mockBlocks,
+      )
+      expect(doc.slides.length).toBeGreaterThan(0)
+      const slide = doc.slides[0]
+      expect(slide.frontmatter.layout).toBe("three-cols-header")
+
+      // 验证第 3 栏虽然混入空块，首项列表项依然成功剥离了列表前缀
+      const col3Block = slide.blocks.find(b => b.id === "col-3-list")
+      expect(col3Block).toBeDefined()
+      expect(col3Block?.rawMarkdown).not.toMatch(/^\s*[-*+]\s+####/)
+      expect(col3Block?.rawMarkdown).toContain("#### 方块射手 BlockShooter")
+
+      // 验证 markdown-renderer 渲染出的 HTML
+      const html = renderSlideBlocksToHtml(slide)
+      // 1. 标题必须被正确解析为 h4.slide-list-item-title，严禁出现字面量 ####
+      expect(html).toContain('<h4 class="slide-list-item-title">AI 摄影师 PoseDirector</h4>')
+      expect(html).toContain('<h4 class="slide-list-item-title">订阅管家 SubManage</h4>')
+      expect(html).toContain('<h4 class="slide-list-item-title">方块射手 BlockShooter</h4>')
+      expect(html).not.toContain('&gt;####')
+      expect(html).not.toMatch(/<p[^>]*>####/i)
+
+      // 2. 视频与图片必须正确挂载媒体容器
+      expect(html).toContain('slide-video-container')
+      expect(html).toContain('assets/demo.mp4')
+      expect(html).toContain('slide-media-container')
+      expect(html).toContain('assets/sub.png')
+
+      // 3. 验证三栏导出 standalone HTML 也具备正常结构
+      const standaloneHtml = buildStandaloneHtml(doc)
+      expect(standaloneHtml).toContain("layout-three-cols-header")
+    })
   })
 })
 

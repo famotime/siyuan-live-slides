@@ -976,17 +976,29 @@ export function buildSlidevDocument(
       parts.push(fmYaml)
     }
 
-    // 组织多栏插槽或常规内容（排除纯分界占位块）
+    // 组织多栏插槽或常规内容（排除纯分界占位块与纯空白段落）
     const contentBlocks = page.blocks.filter(b => b.slot !== "slot-divider-right")
     const renderBlocks = (list: ISlidevBlockItem[]) =>
-      list.map(b => wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion, b.attributes?.style)).join("\n\n")
+      list
+        .filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
+        .map(b => wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion, b.attributes?.style))
+        .join("\n\n")
+
+    const cleanFirstListBlock = (list: ISlidevBlockItem[]) => {
+      const valid = list.filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
+      if (valid.length === 0) return
+      const first = valid[0]
+      const md = (first.rawMarkdown || first.content || "").trim()
+      const isList = isListItemNode(first) || /^(?:[-*+]|\d+\.)\s+/.test(md)
+      if (isList) {
+        first.rawMarkdown = cleanCardListItemMarkdown(first.rawMarkdown || first.content || "")
+        first.content = first.rawMarkdown
+      }
+    }
 
     const renderColList = (list: ISlidevBlockItem[]) => {
       if (list.length === 0) return ""
-      if (list.length === 1 && isListItemNode(list[0])) {
-        const cleaned = cleanCardListItemMarkdown(list[0].rawMarkdown)
-        return wrapElementDirectives(cleaned, list[0].clicks, list[0].motion, list[0].attributes?.style)
-      }
+      cleanFirstListBlock(list)
       return renderBlocks(list)
     }
 
@@ -1009,12 +1021,8 @@ export function buildSlidevDocument(
       const leftList = rem.filter(b => !rightList.includes(b))
 
       // 对左右分栏首个列表项执行卡片式圆点清洗（保留下级嵌套子项圆点与缩进）
-      if (leftList.length === 1 && isListItemNode(leftList[0])) {
-        leftList[0].rawMarkdown = cleanCardListItemMarkdown(leftList[0].rawMarkdown)
-      }
-      if (rightList.length === 1 && isListItemNode(rightList[0])) {
-        rightList[0].rawMarkdown = cleanCardListItemMarkdown(rightList[0].rawMarkdown)
-      }
+      cleanFirstListBlock(leftList)
+      cleanFirstListBlock(rightList)
 
       const headerContent = renderBlocks(headerList)
       const leftContent = renderColList(leftList)
@@ -1053,15 +1061,9 @@ export function buildSlidevDocument(
       }
 
       // 对三栏各列首个列表项执行卡片式圆点清洗（保留下级嵌套子项圆点与缩进）
-      if (col1List.length === 1 && isListItemNode(col1List[0])) {
-        col1List[0].rawMarkdown = cleanCardListItemMarkdown(col1List[0].rawMarkdown)
-      }
-      if (col2List.length === 1 && isListItemNode(col2List[0])) {
-        col2List[0].rawMarkdown = cleanCardListItemMarkdown(col2List[0].rawMarkdown)
-      }
-      if (col3List.length === 1 && isListItemNode(col3List[0])) {
-        col3List[0].rawMarkdown = cleanCardListItemMarkdown(col3List[0].rawMarkdown)
-      }
+      cleanFirstListBlock(col1List)
+      cleanFirstListBlock(col2List)
+      cleanFirstListBlock(col3List)
 
       // 若 rem 原本只有 1 个单块且被成功解构为 3 个虚拟块，更新 page.blocks
       if (rem.length === 1 && (col2List.length > 0 || col3List.length > 0)) {
@@ -1083,12 +1085,8 @@ export function buildSlidevDocument(
     } else if (layout === "two-cols") {
       const leftBlocks = contentBlocks.filter(b => b.slot === "left")
       const rightBlocks = contentBlocks.filter(b => b.slot === "right")
-      if (leftBlocks.length === 1 && isListItemNode(leftBlocks[0])) {
-        leftBlocks[0].rawMarkdown = cleanCardListItemMarkdown(leftBlocks[0].rawMarkdown)
-      }
-      if (rightBlocks.length === 1 && isListItemNode(rightBlocks[0])) {
-        rightBlocks[0].rawMarkdown = cleanCardListItemMarkdown(rightBlocks[0].rawMarkdown)
-      }
+      cleanFirstListBlock(leftBlocks)
+      cleanFirstListBlock(rightBlocks)
       const leftContent = renderBlocks(leftBlocks.length > 0 ? leftBlocks : contentBlocks.filter(b => b.slot !== "right"))
       const rightContent = renderBlocks(rightBlocks)
 
