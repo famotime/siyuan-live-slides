@@ -67,7 +67,7 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
     ${generatePdfExportStyles({ pageRatio, customInlineStyles: options?.customInlineStyles })}
   </style>
 </head>
-<body>
+<body data-normalize-headings="${doc.config.normalizeHeadingSizes ? 'true' : 'false'}">
   ${slidesHtml}
 </body>
 </html>`

@@ -291,6 +291,37 @@ export function generatePdfExportStyles(options?: {
       word-break: break-word;
       white-space: normal;
     }
+    /* 表头多栏内超级块子块首个列表项去圆点后居中显示标题/首行文本 */
+    .layout-cols-wrapper .pdf-col > *:first-child .slide-list-item-title,
+    .layout-cols-wrapper .pdf-col > *:first-child > :is(h1, h2, h3, h4),
+    .layout-cols-wrapper .pdf-col > *:first-child > p:first-child,
+    .layout-cols-header-container .pdf-col > *:first-child .slide-list-item-title,
+    .layout-cols-header-container .pdf-col > *:first-child > :is(h1, h2, h3, h4),
+    .layout-cols-header-container .pdf-col > *:first-child > p:first-child {
+      text-align: center !important;
+      width: 100% !important;
+    }
+
+    /* 全局特定标题大小规范化 (除封面外页首首个标题按 H2 1.7rem，表头多栏内首个标题按 H3 1.3rem) */
+    [data-normalize-headings="true"] .slidev-page-first-heading-block :is(h1, h2, h3, h4, h5, h6),
+    [data-normalize-headings="true"] .slidev-page-first-heading-block:is(h1, h2, h3, h4, h5, h6),
+    [data-normalize-headings="true"] .pdf-slide:not(.layout-cover) > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    [data-normalize-headings="true"] .pdf-slide:not(.layout-cover) > .layout-header-section .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    [data-normalize-headings="true"] .pdf-slide:not(.layout-cover) > :not(.layout-cols-wrapper):not(.pdf-two-cols-wrapper):not(.layout-image-cols-grid):first-child :is(h1, h2, h3, h4, h5, h6) {
+      font-size: 1.7rem !important;
+      font-weight: 600 !important;
+      line-height: 1.25 !important;
+      margin-bottom: 10px !important;
+    }
+
+    [data-normalize-headings="true"] .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] :is(.layout-cols-wrapper, .pdf-two-cols-wrapper, .layout-cols-header-container) .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+      font-size: 1.3rem !important;
+      font-weight: 600 !important;
+      line-height: 1.3 !important;
+      margin-bottom: 8px !important;
+    }
     .pdf-col > .pdf-block,
     .pdf-col > .slide-block {
       flex: 1 1 0% !important;

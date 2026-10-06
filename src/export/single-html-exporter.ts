@@ -65,7 +65,7 @@ ${generateStandaloneExportStyles(options?.customInlineStyles)}
   </script>
 </head>
 <body>
-  <div id="app">
+  <div id="app" data-normalize-headings="${doc.config.normalizeHeadingSizes ? 'true' : 'false'}">
     <div class="slide-viewport slidev-theme-${doc.config.theme || 'default'}" id="viewport" data-slidev-theme="${doc.config.theme || 'default'}">
       <div class="slide-content" id="slide-container"></div>
     </div>
@@ -73,7 +73,7 @@ ${generateStandaloneExportStyles(options?.customInlineStyles)}
       <button id="btn-prev">◀ 上一页</button>
       <span id="page-num">1 / 1</span>
       <button id="btn-next">下一页 ▶</button>
-      <button id="btn-fullscreen">⛶ 全屏</button>
+      <button id="btn-fullscreen">全屏</button>
     </div>
     <!-- 全屏媒体灯箱 (Lightbox) 模态窗口 -->
     <div id="slidev-lightbox" class="slidev-lightbox">

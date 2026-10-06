@@ -97,9 +97,15 @@ function selectLayout(name: string) {
 
 .spm-layout-item.active {
   border-color: var(--b3-theme-primary, #3b82f6);
-  background: rgba(59, 130, 246, 0.08);
-  color: var(--b3-theme-primary, #3b82f6);
+  background: var(--b3-theme-primary, #3b82f6);
+  color: #ffffff !important;
   font-weight: 600;
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
+}
+
+.spm-layout-item.active .spm-layout-icon {
+  color: #ffffff !important;
+  opacity: 1;
 }
 
 .spm-layout-icon {
@@ -126,9 +132,9 @@ function selectLayout(name: string) {
   transform: translateY(-1px);
 }
 
-.spm-layout-item.active .spm-layout-icon {
-  color: var(--b3-theme-primary, #3b82f6);
-  opacity: 1;
+.spm-layout-item.active:hover .spm-layout-icon {
+  color: #ffffff !important;
+  transform: none;
 }
 
 .spm-layout-label {

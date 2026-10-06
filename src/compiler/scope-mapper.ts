@@ -32,6 +32,8 @@ import {
   ATTR_PAGE_TRANSITION,
 } from "../types/slidev-protocol"
 
+import { getRuntimeSettings } from "../settings"
+
 /** 默认全局配置 */
 export const DEFAULT_SLIDEV_CONFIG: ISlidevPluginConfig = {
   theme: "default",
@@ -40,6 +42,7 @@ export const DEFAULT_SLIDEV_CONFIG: ISlidevPluginConfig = {
   defaultTransition: "slide-left",
   colorSchema: "auto",
   spacing: "normal",
+  normalizeHeadingSizes: false,
 }
 
 /**
@@ -48,8 +51,9 @@ export const DEFAULT_SLIDEV_CONFIG: ISlidevPluginConfig = {
 export function parseDocumentConfig(
   attrs?: Record<string, string> | null,
 ): ISlidevPluginConfig {
+  const globalSettings = getRuntimeSettings()
   if (!attrs) {
-    return { ...DEFAULT_SLIDEV_CONFIG }
+    return { ...DEFAULT_SLIDEV_CONFIG, normalizeHeadingSizes: globalSettings.normalizeHeadingSizes }
   }
 
   return {
@@ -59,6 +63,7 @@ export function parseDocumentConfig(
     defaultTransition: attrs[ATTR_DOC_DEFAULT_TRANSITION]?.trim() || DEFAULT_SLIDEV_CONFIG.defaultTransition,
     colorSchema: (attrs[ATTR_DOC_COLOR_SCHEMA]?.trim() as any) || DEFAULT_SLIDEV_CONFIG.colorSchema,
     spacing: (attrs[ATTR_DOC_SPACING]?.trim() as any) || DEFAULT_SLIDEV_CONFIG.spacing,
+    normalizeHeadingSizes: globalSettings.normalizeHeadingSizes,
   }
 }
 

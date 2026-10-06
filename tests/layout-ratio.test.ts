@@ -121,7 +121,7 @@ describe("Layout Ratio & SuperBlock Width Integration (分栏与图文布局比�
   })
 
   describe("自动识别与手动优先策略协同", () => {
-    it("未手动配置比例时，超级块扫描器应自动将提取的比例写入 custom-slidev-layout-ratio", () => {
+    it("超级块扫描器不应自动将提取的比例写入 custom-slidev-layout-ratio（由用户在面板显式点击读取按钮应用）", () => {
       const docId = "doc-root"
       const blocks: ISiYuanBlockNode[] = [
         {
@@ -159,9 +159,7 @@ describe("Layout Ratio & SuperBlock Width Integration (分栏与图文布局比�
 
       const res = scanAndTagListSuperBlocks(docId, blocks)
       const ratioChange = res.changes.find(c => c.attrs[ATTR_PAGE_LAYOUT_RATIO])
-      expect(ratioChange).toBeDefined()
-      expect(ratioChange?.blockId).toBe("div-1")
-      expect(ratioChange?.attrs[ATTR_PAGE_LAYOUT_RATIO]).toBe("3:7")
+      expect(ratioChange).toBeUndefined()
     })
 
     it("用户已在页面手动配置 custom-slidev-layout-ratio 时，以手动为准，不被超级块覆盖", () => {

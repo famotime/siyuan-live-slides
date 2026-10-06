@@ -827,12 +827,101 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     }
   }
 
+  /**
+   * 重置当前页面横向超级块的各列宽度分布为默认均分
+   * 清空思源中各子块的 inline style width，恢复思源默认平均分布
+   */
+  async function resetSuperBlockWidth() {
+    try {
+      let sbEl: Element | null = null
+      if (typeof document !== "undefined") {
+        const activeId = ctx.activeBlockId.value
+        if (activeId) {
+          const activeEl = document.querySelector(`.protyle-wysiwyg [data-node-id="${activeId}"]`)
+          if (activeEl) {
+            sbEl = activeEl.getAttribute("data-type") === "NodeSuperBlock" ? activeEl : activeEl.closest('[data-type="NodeSuperBlock"]')
+          }
+        }
+        if (!sbEl) {
+          const divId = ctx.currentPageDividerId.value || (ctx.activeBlockType.value === "hr" || ctx.activeBlockType.value === "NodeThematicBreak" ? ctx.activeBlockId.value : "")
+          if (divId) {
+            const divEl = document.querySelector(`.protyle-wysiwyg [data-node-id="${divId}"]`)
+            if (divEl) {
+              let sibling = divEl.nextElementSibling
+              while (sibling) {
+                if (sibling.getAttribute("data-type") === "NodeThematicBreak" || sibling.classList?.contains("protyle-wysiwyg__block--hr")) {
+                  break
+                }
+                const found = sibling.getAttribute("data-type") === "NodeSuperBlock" ? sibling : sibling.querySelector('[data-type="NodeSuperBlock"]')
+                if (found) {
+                  sbEl = found
+                  break
+                }
+                sibling = sibling.nextElementSibling
+              }
+            }
+          } else {
+            // 首页
+            const firstDivider = document.querySelector('.protyle-wysiwyg [data-type="NodeThematicBreak"], .protyle-wysiwyg .protyle-wysiwyg__block--hr')
+            const allSuperBlocks = Array.from(document.querySelectorAll('.protyle-wysiwyg [data-type="NodeSuperBlock"]'))
+            for (const sb of allSuperBlocks) {
+              if (!firstDivider || (sb.compareDocumentPosition(firstDivider) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+                sbEl = sb
+                break
+              }
+            }
+          }
+        }
+      }
+
+      const childIds: string[] = []
+      if (sbEl) {
+        const children = Array.from(sbEl.querySelectorAll(":scope > [data-node-id]")) as HTMLElement[]
+        for (const child of children) {
+          const cid = child.getAttribute("data-node-id")
+          if (cid) {
+            childIds.push(cid)
+            child.removeAttribute("style")
+          }
+        }
+      } else if (ctx.targetSlide.value?.blocks) {
+        // 从 AST 回退获取子块 ID
+        for (const b of ctx.targetSlide.value.blocks) {
+          if (b.children && b.children.length >= 2) {
+            for (const c of b.children) {
+              if (c.id) childIds.push(c.id)
+            }
+            break
+          }
+        }
+      }
+
+      if (childIds.length > 0) {
+        for (const cid of childIds) {
+          await setBlockAttrs(cid, { style: "" }).catch(() => {})
+        }
+      }
+
+      // 重置页面上的分栏比例配置为均分
+      await savePageAttr(ATTR_PAGE_LAYOUT_RATIO, "")
+
+      showMessage("已重置超级块为平均分布比例")
+      if (ctx.plugin) {
+        await ctx.plugin.compileCurrentDocument()
+      }
+    } catch (e) {
+      console.error("[useInspectorActions] resetSuperBlockWidth error:", e)
+      showMessage("重置超级块比例失败")
+    }
+  }
+
   return {
     triggerSaveNotice,
     saveAttrs,
     saveAttr,
     savePageAttr,
     applyPageLayoutAndRatio,
+    resetSuperBlockWidth,
     saveDocAttr,
     onToggleVideoAutoplay,
     onToggleVideoLoop,

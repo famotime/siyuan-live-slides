@@ -20,10 +20,11 @@
       <div style="background: var(--b3-theme-surface); border: 1px solid var(--b3-theme-surface-lighter); border-radius: 6px; padding: 10px; margin-bottom: 8px;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
           <div style="font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 4px;">
-            <span v-if="detectedSbInfo?.isCustomWidth">📐 已识别自定义列宽比例</span>
-            <span v-else>📐 识别到 {{ detectedSbInfo?.colCount || 2 }} 列超级块分栏</span>
+            <SlidevIcon name="ratio" />
+            <span v-if="detectedSbInfo?.isCustomWidth">已识别自定义列宽比例</span>
+            <span v-else>识别到 {{ detectedSbInfo?.colCount || 2 }} 列超级块分栏</span>
           </div>
-          <code style="background: var(--b3-theme-primary-lightest); color: var(--b3-theme-primary); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 12px;">
+          <code style="background: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.16); color: var(--b3-theme-primary); border: 1px solid rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.3); padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 12px;">
             {{ detectedSbInfo?.ratio || '1:1' }}
           </code>
         </div>
@@ -36,11 +37,11 @@
         <button
           class="spm-btn-action b3-tooltips b3-tooltips__s"
           aria-label="一键将当前页版式切换为对应双栏/三栏，并写入此列宽比例"
-          style="background: var(--b3-theme-primary-lightest); color: var(--b3-theme-primary); font-weight: 500;"
+          style="background: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.16); color: var(--b3-theme-primary); font-weight: 500; border: 1px solid rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.3);"
           @click="$emit('applySuperBlockLayout', detectedSbInfo)"
         >
           <SlidevIcon name="sparkles" />
-          <span>设为本页排版与比例</span>
+          <span>应用版式与比例</span>
         </button>
         <button
           class="spm-btn-action b3-tooltips b3-tooltips__s"
@@ -48,7 +49,7 @@
           @click="$emit('applySuperBlockRatio', detectedSbInfo?.ratio || '1:1')"
         >
           <SlidevIcon name="check" />
-          <span>仅应用比例 ({{ detectedSbInfo?.ratio || '1:1' }})</span>
+          <span>应用比例 ({{ detectedSbInfo?.ratio || '1:1' }})</span>
         </button>
       </div>
     </div>
@@ -98,21 +99,24 @@
           :class="{ active: imageRole === 'background' }"
           @click="$emit('update:imageRole', 'background')"
         >
-          🖼️ 背景图
+          <SlidevIcon name="image" />
+          <span>背景图</span>
         </button>
         <button
           class="spm-chip"
           :class="{ active: imageRole === 'image-left' }"
           @click="$emit('update:imageRole', 'image-left')"
         >
-          🎨 图左
+          <SlidevIcon name="image-left" />
+          <span>图左</span>
         </button>
         <button
           class="spm-chip"
           :class="{ active: imageRole === 'image-right' }"
           @click="$emit('update:imageRole', 'image-right')"
         >
-          🖼️ 图右
+          <SlidevIcon name="image-right" />
+          <span>图右</span>
         </button>
       </div>
     </div>
@@ -130,28 +134,28 @@
       </div>
       <div class="spm-video-settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
         <div class="spm-toggle-item" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; background: rgba(125,125,125,0.06); border-radius: 4px;">
-          <span style="font-size: 11px;">🎛️ 控制条</span>
+          <span style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><SlidevIcon name="sliders" /> 控制条</span>
           <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="videoControls ? '关闭控制条' : '开启控制条'">
             <input type="checkbox" :checked="Boolean(videoControls)" @change="$emit('toggleVideoControls')" />
             <span class="spm-switch-slider"></span>
           </label>
         </div>
         <div class="spm-toggle-item" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; background: rgba(125,125,125,0.06); border-radius: 4px;">
-          <span style="font-size: 11px;">▶️ 自动播放</span>
+          <span style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><SlidevIcon name="video" /> 自动播放</span>
           <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="videoAutoplay ? '关闭自动播放' : '开启自动播放'">
             <input type="checkbox" :checked="Boolean(videoAutoplay)" @change="$emit('toggleVideoAutoplay')" />
             <span class="spm-switch-slider"></span>
           </label>
         </div>
         <div class="spm-toggle-item" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; background: rgba(125,125,125,0.06); border-radius: 4px;">
-          <span style="font-size: 11px;">🔁 循环播放</span>
+          <span style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><SlidevIcon name="repeat" /> 循环播放</span>
           <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="videoLoop ? '关闭循环播放' : '开启循环播放'">
             <input type="checkbox" :checked="Boolean(videoLoop)" @change="$emit('toggleVideoLoop')" />
             <span class="spm-switch-slider"></span>
           </label>
         </div>
         <div class="spm-toggle-item" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; background: rgba(125,125,125,0.06); border-radius: 4px;">
-          <span style="font-size: 11px;">🔇 静音播放</span>
+          <span style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><SlidevIcon name="volume-x" /> 静音播放</span>
           <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="videoMuted ? '关闭静音' : '开启静音'">
             <input type="checkbox" :checked="Boolean(videoMuted)" @change="$emit('toggleVideoMuted')" />
             <span class="spm-switch-slider"></span>

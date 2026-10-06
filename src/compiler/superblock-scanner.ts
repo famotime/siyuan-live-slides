@@ -281,21 +281,16 @@ export function scanAndTagSuperBlocks(
         }
 
         const currentLayout = imageNode.ial[ATTR_PAGE_LAYOUT]
-        const currentRatio = imageNode.ial[ATTR_PAGE_LAYOUT_RATIO]
         const needLayoutUpdate = currentLayout !== layout
-        const needRatioUpdate = !currentRatio && Boolean(ratio)
 
-        if (needLayoutUpdate || needRatioUpdate) {
+        if (needLayoutUpdate) {
           const record: ITagChangeRecord = {
             blockId: imageNode.id,
             layout,
             previousLayout: currentLayout,
-            ratio: ratio || currentRatio,
+            ratio,
           }
           imageNode.ial[ATTR_PAGE_LAYOUT] = layout
-          if (needRatioUpdate && ratio) {
-            imageNode.ial[ATTR_PAGE_LAYOUT_RATIO] = ratio
-          }
           changes.push(record)
           if (onTagChange) {
             onTagChange(record)

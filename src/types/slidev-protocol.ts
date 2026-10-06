@@ -46,6 +46,7 @@ export interface ISlidevPluginConfig {
   defaultTransition: string
   colorSchema: "auto" | "dark" | "light"
   spacing?: "compact" | "normal" | "loose"
+  normalizeHeadingSizes?: boolean
 }
 
 /** 页面版式类型 */
@@ -107,6 +108,7 @@ export interface ISlidevBlockItem {
   attributes?: Record<string, string>
   attrs?: Record<string, string>
   ial?: Record<string, string>
+  children?: ISlidevBlockItem[] | any[]
 }
 
 export type ISlidevBlock = ISlidevBlockItem

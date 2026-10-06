@@ -408,6 +408,93 @@
       <line x1="12" y1="18" x2="12.01" y2="18" stroke-width="2" stroke-linecap="round" />
     </g>
 
+    <!-- 文本/标题排版 (Type / Typography) -->
+    <g v-else-if="name === 'type' || name === 'heading'">
+      <polyline points="4 7 4 4 20 4 20 7" />
+      <line x1="9" y1="20" x2="15" y2="20" />
+      <line x1="12" y1="4" x2="12" y2="20" />
+    </g>
+
+    <!-- 重置 / 恢复 (Reset / Undo) -->
+    <g v-else-if="name === 'reset' || name === 'undo'">
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <polyline points="3 3 3 8 8 8" />
+    </g>
+
+    <!-- 循环播放 (Repeat) -->
+    <g v-else-if="name === 'repeat' || name === 'loop'">
+      <path d="m17 1 4 4-4 4" />
+      <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+      <path d="m7 23-4-4 4-4" />
+      <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+    </g>
+
+    <!-- 静音播放 (Volume X / Mute) -->
+    <g v-else-if="name === 'volume-x' || name === 'mute'">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+      <line x1="22" y1="9" x2="16" y2="15" />
+      <line x1="16" y1="9" x2="22" y2="15" />
+    </g>
+
+    <!-- 控制条 / 控制器 (Sliders / Controls) -->
+    <g v-else-if="name === 'sliders' || name === 'controls'">
+      <line x1="4" y1="21" x2="4" y2="14" />
+      <line x1="4" y1="10" x2="4" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12" y2="3" />
+      <line x1="20" y1="21" x2="20" y2="16" />
+      <line x1="20" y1="12" x2="20" y2="3" />
+      <line x1="1" y1="14" x2="7" y2="14" />
+      <line x1="9" y1="8" x2="15" y2="8" />
+      <line x1="17" y1="16" x2="23" y2="16" />
+    </g>
+
+    <!-- 安装包 / 归档 (Package / Zip) -->
+    <g v-else-if="name === 'package' || name === 'zip' || name === 'archive'">
+      <line x1="16.5" y1="9.4" x2="7.5" y2="4.21" />
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+      <line x1="12" y1="22.08" x2="12" y2="12" />
+    </g>
+
+    <!-- 文件夹 (Folder) -->
+    <g v-else-if="name === 'folder'">
+      <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
+    </g>
+
+    <!-- 火箭 / 发送 (Rocket) -->
+    <g v-else-if="name === 'rocket'">
+      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+      <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+      <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
+      <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+    </g>
+
+    <!-- 动效 / 魔法棒 (Wand / Magic) -->
+    <g v-else-if="name === 'wand' || name === 'magic'">
+      <path d="m19 2 2 2-6 6-2-2Z" />
+      <path d="m13 8 2 2" />
+      <path d="m3 21 9-9" />
+    </g>
+
+    <!-- 图左版式图标 -->
+    <g v-else-if="name === 'image-left'">
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <rect x="4" y="6" width="6" height="12" rx="1" />
+      <line x1="13" y1="8" x2="19" y2="8" />
+      <line x1="13" y1="12" x2="19" y2="12" />
+      <line x1="13" y1="16" x2="17" y2="16" />
+    </g>
+
+    <!-- 图右版式图标 -->
+    <g v-else-if="name === 'image-right'">
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <rect x="14" y="6" width="6" height="12" rx="1" />
+      <line x1="5" y1="8" x2="11" y2="8" />
+      <line x1="5" y1="12" x2="11" y2="12" />
+      <line x1="5" y1="16" x2="9" y2="16" />
+    </g>
+
     <!-- 默认兜底图标 (幻灯片画板) -->
     <g v-else>
       <rect x="2" y="3" width="20" height="14" rx="2" />

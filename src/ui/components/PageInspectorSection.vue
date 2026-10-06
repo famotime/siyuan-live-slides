@@ -43,40 +43,6 @@
           </div>
           <span class="spm-control-desc">设置各列横向空间占比，默认平均分配</span>
         </div>
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <!-- 读取按钮：显示在 重置 按钮之前，同行显示 -->
-          <button
-            v-if="detectedSbRatio"
-            class="spm-btn-action b3-tooltips b3-tooltips__w"
-            :aria-label="`从当前页思源超级块读取实际宽度比例 (${detectedSbRatio})`"
-            style="padding: 0 8px; height: 26px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;"
-            @click="$emit('update:pageLayoutRatio', detectedSbRatio)"
-          >
-            <SlidevIcon name="sparkles" />
-            <span>读取</span>
-          </button>
-          <button
-            v-else
-            class="spm-btn-action b3-tooltips b3-tooltips__w"
-            disabled
-            style="opacity: 0.45; cursor: not-allowed; padding: 0 8px; height: 26px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;"
-            aria-label="当前页未检测到调整过列宽的横向超级块"
-          >
-            <SlidevIcon name="sparkles" />
-            <span>读取</span>
-          </button>
-
-          <!-- 重置按钮：同行紧跟在 读取 按钮之后，点击后重置为平均分布比例覆盖超级块配置 -->
-          <button
-            class="spm-btn-action b3-tooltips b3-tooltips__w"
-            aria-label="重置为平均分布比例（覆盖思源超级块列宽配置）"
-            style="padding: 0 8px; height: 26px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;"
-            @click="onResetRatioToEqual"
-          >
-            <SlidevIcon name="reset" />
-            <span>重置</span>
-          </button>
-        </div>
       </div>
 
       <!-- 快捷芯片预设 -->
@@ -92,32 +58,55 @@
         </button>
       </div>
 
-      <!-- 自定义输入框 -->
-      <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
+      <!-- 自定义输入框与操作按钮（读取即应用、重置渲染与超级块） -->
+      <div style="display: flex; gap: 6px; align-items: center; margin-top: 6px;">
         <input
           :value="pageLayoutRatio || ''"
           class="spm-input"
-          style="flex: 1;"
+          style="flex: 1; min-width: 0;"
           placeholder="自定义比例（如 1:2 或 30:70，留空为默认）"
           @input="$emit('update:pageLayoutRatio', ($event.target as HTMLInputElement).value)"
           @change="$emit('update:pageLayoutRatio', ($event.target as HTMLInputElement).value)"
         />
-      </div>
-
-      <div v-if="detectedSbRatio" style="margin-top: 6px; font-size: 11px; opacity: 0.85; display: flex; align-items: center; justify-content: space-between;">
-        <div style="display: flex; align-items: center; gap: 4px;">
-          <SlidevIcon name="ratio" />
-          <span>检测到思源超级块宽度：</span>
-          <code style="background: rgba(125, 125, 125, 0.15); padding: 1px 4px; border-radius: 3px; font-weight: bold;">{{ detectedSbRatio }}</code>
-        </div>
+        <!-- 读取按钮：读取即应用，移动到输入框右侧 -->
         <button
-          v-if="pageLayoutRatio !== detectedSbRatio"
-          class="spm-btn-text"
-          style="font-size: 11px; padding: 0 4px;"
+          v-if="detectedSbRatio"
+          class="spm-icon-btn b3-tooltips b3-tooltips__w"
+          :aria-label="`从当前页思源超级块读取实际宽度比例 (${detectedSbRatio}) 并应用`"
+          style="padding: 0 8px; height: 26px; font-size: 11px; white-space: nowrap; flex-shrink: 0;"
           @click="$emit('update:pageLayoutRatio', detectedSbRatio)"
         >
-          应用此比例
+          <SlidevIcon name="sparkles" />
+          <span>读取</span>
         </button>
+        <button
+          v-else
+          class="spm-icon-btn b3-tooltips b3-tooltips__w"
+          disabled
+          style="opacity: 0.45; cursor: not-allowed; padding: 0 8px; height: 26px; font-size: 11px; white-space: nowrap; flex-shrink: 0;"
+          aria-label="当前页未检测到调整过列宽的横向超级块"
+        >
+          <SlidevIcon name="sparkles" />
+          <span>读取</span>
+        </button>
+
+        <!-- 重置按钮：同行紧跟在读取按钮之后，重置渲染比例并清空文档超级块自定义列宽 -->
+        <button
+          class="spm-icon-btn b3-tooltips b3-tooltips__w"
+          aria-label="重置渲染比例为平均分布，并立即重置文档中超级块内容分布比例"
+          style="padding: 0 8px; height: 26px; font-size: 11px; white-space: nowrap; flex-shrink: 0;"
+          @click="onResetRatioToEqual"
+        >
+          <SlidevIcon name="reset" />
+          <span>重置</span>
+        </button>
+      </div>
+
+      <!-- 超级块宽度检测提示信息（取消独立的应用此比例按钮） -->
+      <div v-if="detectedSbRatio" style="margin-top: 6px; font-size: 11px; opacity: 0.85; display: flex; align-items: center; gap: 4px;">
+        <SlidevIcon name="ratio" />
+        <span>检测到思源超级块宽度：</span>
+        <code style="background: rgba(125, 125, 125, 0.15); padding: 1px 4px; border-radius: 3px; font-weight: bold;">{{ detectedSbRatio }}</code>
       </div>
       <div v-else style="margin-top: 6px; font-size: 11px; opacity: 0.6; display: flex; align-items: center; gap: 4px;">
         <SlidevIcon name="ratio" />
@@ -385,6 +374,7 @@ const emit = defineEmits<{
   (e: 'update:pageImage', val: string): void
   (e: 'update:pageLayoutRatio', val: string): void
   (e: 'applySuperBlockLayout', info: any): void
+  (e: 'resetSuperblockRatio'): void
   (e: 'addNoteBlock'): void
   (e: 'locateNoteBlock'): void
   (e: 'generateNotes'): void
@@ -473,6 +463,7 @@ function onResetRatioToEqual() {
   const cols = detectedColumnsCount.value || 2
   const equalRatio = Array(cols).fill('1').join(':')
   emit('update:pageLayoutRatio', equalRatio)
+  emit('resetSuperblockRatio')
 }
 
 const notePreviewSnippet = computed(() => {

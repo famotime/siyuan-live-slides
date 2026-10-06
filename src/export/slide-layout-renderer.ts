@@ -11,6 +11,13 @@ export interface IRenderSlideOptions extends IBlockRenderOptions {
   rightColClass?: string
 }
 
+function isHeadingBlock(b: ISlidevBlockItem): boolean {
+  if (!b) return false
+  if (b.type === "h" || b.type === "NodeHeading") return true
+  const md = (b.rawMarkdown || b.content || "").trim()
+  return /^#{1,6}\s+/.test(md)
+}
+
 /**
  * 渲染单个幻灯片页面的所有块，支持多种标准版式（two-cols, cols-header, two-cols-header, three-cols-header, cover, fact, image-left, image-right 等）
  */
@@ -21,6 +28,8 @@ export function renderSlideBlocksToHtml(
   const layout = slide.frontmatter?.layout || "default"
   const rawBlocks = slide.blocks || []
   const blocks = rawBlocks.filter(b => b.slot !== "slot-divider-right")
+  const isCover = layout === "cover"
+  const pageFirstH = !isCover ? blocks.find(isHeadingBlock) : null
 
   // 1. 双栏布局 (two-cols)
   if (layout === "two-cols") {
@@ -37,8 +46,18 @@ export function renderSlideBlocksToHtml(
       rightBlocks = blocks.slice(mid)
     }
 
-    const leftHtml = leftBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
-    const rightHtml = rightBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
+    const leftFirstH = leftBlocks.find(isHeadingBlock)
+    const rightFirstH = rightBlocks.find(isHeadingBlock)
+
+    const leftHtml = leftBlocks.map(b => {
+      const extraClass = b === leftFirstH ? "slidev-col-first-heading-block" : ""
+      return convertBlockToHtml(b, { ...options, extraClassName: extraClass })
+    }).join("\n")
+
+    const rightHtml = rightBlocks.map(b => {
+      const extraClass = b === rightFirstH ? "slidev-col-first-heading-block" : ""
+      return convertBlockToHtml(b, { ...options, extraClassName: extraClass })
+    }).join("\n")
 
     const wrapperClass = options?.twoColsWrapperClass || "pdf-two-cols-wrapper layout-two-cols-grid"
     const layoutClass = slide.frontmatter?.layoutClass ? ` ${slide.frontmatter.layoutClass}` : ""
@@ -111,10 +130,18 @@ export function renderSlideBlocksToHtml(
           first.content = first.rawMarkdown
         }
       }
-      return validBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
+      const colFirstH = validBlocks.find(isHeadingBlock)
+      return validBlocks.map(b => {
+        const extraClass = b === colFirstH ? "slidev-col-first-heading-block" : ""
+        return convertBlockToHtml(b, { ...options, extraClassName: extraClass })
+      }).join("\n")
     }
 
-    const headerHtml = headerBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
+    const headerFirstH = headerBlocks.find(isHeadingBlock)
+    const headerHtml = headerBlocks.map(b => {
+      const extraClass = b === headerFirstH ? "slidev-page-first-heading-block" : ""
+      return convertBlockToHtml(b, { ...options, extraClassName: extraClass })
+    }).join("\n")
     const gridCols = parseRatioToGridCols(slide.frontmatter?.layoutRatio, targetCols)
     const gridStyle = `style="grid-template-columns: ${gridCols};"`
 
@@ -184,5 +211,8 @@ export function renderSlideBlocksToHtml(
   }
 
   // 5. 默认流式布局
-  return blocks.map(b => convertBlockToHtml(b, options)).join("\n")
+  return blocks.map(b => {
+    const extraClass = b === pageFirstH ? "slidev-page-first-heading-block" : ""
+    return convertBlockToHtml(b, { ...options, extraClassName: extraClass })
+  }).join("\n")
 }

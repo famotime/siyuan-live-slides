@@ -627,7 +627,15 @@ export function getStandaloneClientRuntimeScript(): string {
       });
 
       document.addEventListener("click", (e) => {
-        if (isLightboxOpen) return;
+        if (isLightboxOpen) {
+          const target = e.target instanceof Element ? e.target : e.target?.parentElement;
+          const isMediaItself = target && target.closest && target.closest(".slidev-lightbox-img, .slidev-lightbox-video");
+          if (!isMediaItself) {
+            e.stopPropagation();
+            closeLightbox();
+          }
+          return;
+        }
         if (e.button !== 0) return;
         const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
         if (!targetEl || !targetEl.closest) return;

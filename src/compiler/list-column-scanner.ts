@@ -408,16 +408,7 @@ export function scanAndTagListSuperBlocks(
         }
       }
 
-      // 2.1.5 检查并配置分栏比例 custom-slidev-layout-ratio (未设置时自动从超级块提取，手动设置后以手动为准)
-      const currentRatio = pageTargetNode?.ial?.[ATTR_PAGE_LAYOUT_RATIO] || ""
-      const sbRatio = matchedDetection.ratio
-      if (!currentRatio && sbRatio) {
-        recordChange(pageTargetId, { [ATTR_PAGE_LAYOUT_RATIO]: sbRatio })
-        if (pageTargetNode) {
-          if (!pageTargetNode.ial) pageTargetNode.ial = {}
-          pageTargetNode.ial[ATTR_PAGE_LAYOUT_RATIO] = sbRatio
-        }
-      }
+      // 2.1.5 不再自动同步超级块宽度设置到 custom-slidev-layout-ratio，改为由用户在面板显式点击「读取」按钮应用
 
       // 2.2 检查并配置表头 custom-slidev-slot="header"
       if (headerNode) {

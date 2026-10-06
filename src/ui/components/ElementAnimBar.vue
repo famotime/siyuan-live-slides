@@ -7,7 +7,8 @@
       title="切换当前块按翻页键逐步出现 (v-click)"
       @click="toggleClick"
     >
-      <span>✨ 逐步出现</span>
+      <SlidevIcon name="step" />
+      <span>逐步出现</span>
       <span v-if="currentClick" class="spm-badge">{{ currentClick }}</span>
     </button>
 
@@ -18,7 +19,8 @@
       title="切换当前块入场微动效 (v-motion)"
       @click="cycleMotion"
     >
-      <span>🌊 动效: {{ motionLabel }}</span>
+      <SlidevIcon name="motion" />
+      <span>动效: {{ motionLabel }}</span>
     </button>
 
     <!-- 分栏插槽 -->
@@ -28,7 +30,8 @@
       title="设置在双栏布局中的归属 (left / right)"
       @click="cycleSlot"
     >
-      <span>▥ 分栏: {{ slotLabel }}</span>
+      <SlidevIcon name="columns" />
+      <span>分栏: {{ slotLabel }}</span>
     </button>
 
     <!-- 代码聚光高亮 (仅代码块) -->
@@ -39,7 +42,8 @@
       title="设置代码逐行聚光高亮 (如 1-3|5|all)"
       @click="promptShikiLines"
     >
-      <span>🔍 代码聚光</span>
+      <SlidevIcon name="code" />
+      <span>代码聚光</span>
       <span v-if="currentShiki" class="spm-badge">{{ currentShiki }}</span>
     </button>
   </div>
@@ -47,6 +51,7 @@
 
 <script setup lang="ts">
 import { ref, computed, defineProps, defineEmits } from 'vue'
+import SlidevIcon from '@/ui/components/SlidevIcon.vue'
 import { setBlockAttrs } from '@/api'
 import { syncDomBlockAttrs } from '@/sync/dom-attr-sync'
 import {

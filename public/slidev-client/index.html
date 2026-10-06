@@ -798,6 +798,45 @@
       margin-bottom: 6px !important;
     }
 
+    /* 表头多栏内超级块子块首个列表项去圆点后居中显示标题/首行文本 */
+    .layout-cols-grid .col .slide-block:first-child .slide-list-item-title,
+    .layout-cols-grid .col .slide-block:first-child > :is(h1, h2, h3, h4),
+    .layout-cols-grid .col .slide-block:first-child > p:first-child,
+    .two-cols-left .slide-block:first-child .slide-list-item-title,
+    .two-cols-left .slide-block:first-child > :is(h1, h2, h3, h4),
+    .two-cols-left .slide-block:first-child > p:first-child,
+    .two-cols-right .slide-block:first-child .slide-list-item-title,
+    .two-cols-right .slide-block:first-child > :is(h1, h2, h3, h4),
+    .two-cols-right .slide-block:first-child > p:first-child,
+    .three-cols-col .slide-block:first-child .slide-list-item-title,
+    .three-cols-col .slide-block:first-child > :is(h1, h2, h3, h4),
+    .three-cols-col .slide-block:first-child > p:first-child {
+      text-align: center !important;
+      width: 100% !important;
+    }
+
+    /* 全局特定标题大小规范化 (除封面外页首首个标题按 H2 1.7rem，表头多栏内首个标题按 H3 1.3rem) */
+    .slide-stage-container[data-normalize-headings="true"] .slidev-page-first-heading-block :is(h1, h2, h3, h4, h5, h6),
+    .slide-stage-container[data-normalize-headings="true"] .slidev-page-first-heading-block:is(h1, h2, h3, h4, h5, h6),
+    .slide-stage-container[data-normalize-headings="true"] .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slide-stage-container[data-normalize-headings="true"] .slide-content-wrapper:not(.layout-cover) > .layout-header-section .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slide-stage-container[data-normalize-headings="true"] .slide-content-wrapper:not(.layout-cover) > :not(.layout-cols-grid):not(.layout-two-cols):not(.layout-image-left):not(.layout-image-right):first-child :is(h1, h2, h3, h4, h5, h6) {
+      font-size: 1.7rem !important;
+      font-weight: 600 !important;
+      line-height: 1.25 !important;
+      margin-bottom: 10px !important;
+    }
+
+    .slide-stage-container[data-normalize-headings="true"] .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    .slide-stage-container[data-normalize-headings="true"] .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    .slide-stage-container[data-normalize-headings="true"] .layout-cols-grid .col .slide-block:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    .slide-stage-container[data-normalize-headings="true"] :is(.two-cols-left, .two-cols-right, .three-cols-col, .col) .slide-block:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+      font-size: 1.3rem !important;
+      font-weight: 600 !important;
+      line-height: 1.3 !important;
+      margin-bottom: 8px !important;
+    }
+
     /* 列内媒体容器：填满标题下方所有剩余垂直空间，纵向有空间时默认顶部对齐，横向居中对齐 */
     .two-cols-left .slide-list-media,
     .two-cols-right .slide-list-media,
@@ -2132,6 +2171,7 @@
       :class="{ 'is-fullscreen': isFullscreenMode }"
       :data-theme="currentThemeMode"
       :data-slidev-theme="currentSlidevTheme"
+      :data-normalize-headings="Boolean(config?.normalizeHeadingSizes)"
     >
       <div
         class="slide-viewport"
@@ -2155,7 +2195,7 @@
                   v-for="block in headerBlocks"
                   :key="block.id"
                   class="slide-block"
-                  :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                  :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                   :style="getBlockMotionStyle(block)"
                   :data-block-id="block.id"
                   @click="onBlockClick(block.id, $event)"
@@ -2189,7 +2229,7 @@
                     v-for="block in colBlocks"
                     :key="block.id"
                     class="slide-block"
-                    :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                     :style="getBlockMotionStyle(block)"
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
@@ -2208,7 +2248,7 @@
                     v-for="block in leftBlocks"
                     :key="block.id"
                     class="slide-block"
-                    :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                     :style="getBlockMotionStyle(block)"
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
@@ -2221,7 +2261,7 @@
                     v-for="block in rightBlocks"
                     :key="block.id"
                     class="slide-block"
-                    :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                     :style="getBlockMotionStyle(block)"
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
@@ -2240,7 +2280,7 @@
                     v-for="block in normalBlocks"
                     :key="block.id"
                     class="slide-block"
-                    :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                     :style="getBlockMotionStyle(block)"
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
@@ -2287,7 +2327,7 @@
                     v-for="block in normalBlocks"
                     :key="block.id"
                     class="slide-block"
-                    :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                     :style="getBlockMotionStyle(block)"
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
@@ -2304,7 +2344,7 @@
                 v-for="block in normalBlocks"
                 :key="block.id"
                 class="slide-block"
-                :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                 :style="getBlockMotionStyle(block)"
                 :data-block-id="block.id"
                 @click="onBlockClick(block.id, $event)"
@@ -2370,12 +2410,13 @@
           @click.stop="closeLightbox"
         >
           <button class="slidev-lightbox-close" @click.stop="closeLightbox" aria-label="关闭 (Esc)">✕</button>
-          <div class="slidev-lightbox-content" @click.stop>
+          <div class="slidev-lightbox-content" @click.stop="closeLightbox">
             <img
               v-if="activeLightbox.type === 'img'"
               :src="activeLightbox.src"
               :alt="activeLightbox.alt"
               class="slidev-lightbox-img"
+              @click.stop
             />
             <video
               v-else-if="activeLightbox.type === 'video'"
@@ -2383,6 +2424,7 @@
               class="slidev-lightbox-video"
               controls
               autoplay
+              @click.stop
             ></video>
           </div>
         </div>
@@ -3368,6 +3410,63 @@
         const col1Blocks = computed(() => multiColBlocks.value[0] || []);
         const col2Blocks = computed(() => multiColBlocks.value[1] || []);
         const col3Blocks = computed(() => multiColBlocks.value[2] || []);
+
+        function isHeadingBlock(b) {
+          if (!b) return false;
+          if (b.type === "h" || b.type === "NodeHeading") return true;
+          if (b.subType && /^h[1-6]$/i.test(b.subType)) return true;
+          const md = (b.rawMarkdown || b.content || "").trim();
+          return /^#{1,6}\s+/.test(md);
+        }
+
+        const pageFirstHeadingBlockId = computed(() => {
+          if (!currentSlide.value) return null;
+          const fm = currentSlide.value.frontmatter || {};
+          if (fm.layout === "cover") return null;
+
+          if (isColsHeader(fm.layout) && headerBlocks.value.length > 0) {
+            const hb = headerBlocks.value.find(isHeadingBlock);
+            if (hb) return hb.id;
+          }
+          const all = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right");
+          const found = all.find(isHeadingBlock);
+          return found ? found.id : null;
+        });
+
+        const colFirstHeadingBlockIds = computed(() => {
+          const ids = new Set();
+          if (!currentSlide.value) return ids;
+          const fm = currentSlide.value.frontmatter || {};
+          if (fm.layout === "cover") return ids;
+
+          if (isColsHeader(fm.layout)) {
+            for (const col of multiColBlocks.value) {
+              const h = col.find(isHeadingBlock);
+              if (h) ids.add(h.id);
+            }
+          } else if (fm.layout === "two-cols") {
+            const hl = leftBlocks.value.find(isHeadingBlock);
+            if (hl) ids.add(hl.id);
+            const hr = rightBlocks.value.find(isHeadingBlock);
+            if (hr) ids.add(hr.id);
+          }
+          return ids;
+        });
+
+        function getHeadingNormalizeClass(block) {
+          if (!config.value?.normalizeHeadingSizes) return "";
+          if (!block || !currentSlide.value) return "";
+          const fm = currentSlide.value.frontmatter || {};
+          if (fm.layout === "cover") return "";
+
+          if (block.id === pageFirstHeadingBlockId.value) {
+            return "slidev-page-first-heading-block";
+          }
+          if (colFirstHeadingBlockIds.value.has(block.id)) {
+            return "slidev-col-first-heading-block";
+          }
+          return "";
+        }
 
         // 幻灯片专属图文分栏图片状态与容灾回退
         const slideImageFailed = ref(false)
@@ -4671,6 +4770,21 @@
         function onDocumentClick(e) {
           if (e.button !== 0) return
 
+          // 核心保护：若媒体灯箱处于打开放大状态，点击媒体外部自动关闭返回，绝不翻页！
+          if (activeLightbox && activeLightbox.value) {
+            const target = e.target instanceof Element ? e.target : e.target?.parentElement
+            const isMediaItself = target && target.closest && target.closest('.slidev-lightbox-img, .slidev-lightbox-video')
+            if (!isMediaItself) {
+              e.preventDefault()
+              e.stopPropagation()
+              if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation()
+              }
+              closeLightbox()
+            }
+            return
+          }
+
           const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement
           if (!targetEl || !targetEl.closest) return
 
@@ -4929,7 +5043,8 @@
           currentSpacing,
           activeLightbox,
           openLightbox,
-          closeLightbox
+          closeLightbox,
+          getHeadingNormalizeClass
         }
       }
     })

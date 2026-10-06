@@ -76,6 +76,7 @@
         @update:page-layout="onLayoutChange"
         @update:page-layout-ratio="onLayoutRatioChange"
         @apply-super-block-layout="onApplySuperBlockLayout"
+        @reset-superblock-ratio="onResetSuperBlockRatio"
         @update:page-transition="onTransitionChange"
         @update:page-background="onBackgroundChange"
         @update:page-spacing="onPageSpacingChange"
@@ -645,6 +646,7 @@ const {
   saveAttr,
   savePageAttr,
   applyPageLayoutAndRatio,
+  resetSuperBlockWidth,
   saveDocAttr,
   onToggleVideoAutoplay,
   onToggleVideoLoop,
@@ -715,6 +717,10 @@ function onApplySuperBlockLayout(info: any) {
 
 function onApplySuperBlockRatio(ratio: string) {
   savePageAttr(ATTR_PAGE_LAYOUT_RATIO, ratio)
+}
+
+async function onResetSuperBlockRatio() {
+  await resetSuperBlockWidth()
 }
 
 function onTransitionChange(val: string) {

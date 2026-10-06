@@ -161,6 +161,30 @@
       </div>
     </div>
 
+    <!-- 规范化特定标题大小 (Normalize Heading Sizes) -->
+    <div class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div class="spm-control-title">
+            <SlidevIcon name="type" />
+            <span>固定特定标题大小</span>
+          </div>
+          <span class="spm-control-desc">除封面外页首标题按 H2、多栏内首标题按 H3 大小展示</span>
+        </div>
+        <label
+          class="spm-switch b3-tooltips b3-tooltips__w"
+          :aria-label="globalSettings.normalizeHeadingSizes ? '关闭固定特定标题大小' : '开启固定特定标题大小'"
+        >
+          <input
+            type="checkbox"
+            :checked="globalSettings.normalizeHeadingSizes"
+            @change="onToggleNormalizeHeadings(($event.target as HTMLInputElement).checked)"
+          />
+          <span class="spm-switch-slider"></span>
+        </label>
+      </div>
+    </div>
+
     <!-- 演示全局核心动作组 -->
     <div class="spm-card-control">
       <div class="spm-control-header">
@@ -249,6 +273,13 @@ function onToggleWebServe(enabled: boolean) {
   setRuntimeSettings({ enableWebServeJump: enabled })
   if (plugin && typeof plugin.saveGlobalSettings === 'function') {
     plugin.saveGlobalSettings({ enableWebServeJump: enabled })
+  }
+}
+
+function onToggleNormalizeHeadings(enabled: boolean) {
+  setRuntimeSettings({ normalizeHeadingSizes: enabled })
+  if (plugin && typeof plugin.saveGlobalSettings === 'function') {
+    plugin.saveGlobalSettings({ normalizeHeadingSizes: enabled })
   }
 }
 

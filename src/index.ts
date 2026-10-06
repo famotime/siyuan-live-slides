@@ -188,6 +188,10 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
     } catch (err) {
       console.error("保存 Slidev 全局配置失败", err)
     }
+    const docId = this.currentDocId || this.getActiveDocumentId()
+    if (docId) {
+      await this.compileCurrentDocument(docId)
+    }
     return updated
   }
 

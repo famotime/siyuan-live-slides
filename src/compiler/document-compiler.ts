@@ -280,12 +280,9 @@ export class DocumentCompilerService {
 
       syncMediaAttrsInTree(blockNodes)
 
-      // 执行超级块自动检测与打标，自动写入即时覆盖层与持久化
+      // 执行超级块自动检测与打标，自动写入即时覆盖层与持久化（不自动同步列宽比例）
       scanAndTagSuperBlocks(blockNodes, (record) => {
         const updates: Record<string, string> = { [ATTR_PAGE_LAYOUT]: record.layout }
-        if (record.ratio) {
-          updates[ATTR_PAGE_LAYOUT_RATIO] = record.ratio
-        }
         this.setBlockAttrOverride(record.blockId, updates)
         const saveFn = this.deps.setBlockAttrs || setBlockAttrs
         saveFn(record.blockId, updates).catch((err) => {

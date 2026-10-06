@@ -3,6 +3,7 @@ import { reactive } from 'vue'
 export interface ISlidevGlobalSettings {
   enableWebServeJump: boolean
   webServeUrl: string
+  normalizeHeadingSizes: boolean
 }
 
 export const SETTINGS_STORAGE_NAME = 'slidev-config.json'
@@ -10,6 +11,7 @@ export const SETTINGS_STORAGE_NAME = 'slidev-config.json'
 export const DEFAULT_GLOBAL_SETTINGS: ISlidevGlobalSettings = {
   enableWebServeJump: false,
   webServeUrl: 'http://127.0.0.1:6806',
+  normalizeHeadingSizes: false,
 }
 
 export const globalSettingsState = reactive<ISlidevGlobalSettings>({
@@ -27,6 +29,7 @@ export function normalizeGlobalSettings(val: unknown): ISlidevGlobalSettings {
       typeof s.webServeUrl === 'string' && s.webServeUrl.trim()
         ? s.webServeUrl.trim()
         : DEFAULT_GLOBAL_SETTINGS.webServeUrl,
+    normalizeHeadingSizes: Boolean(s.normalizeHeadingSizes),
   }
 }
 
@@ -40,6 +43,9 @@ export function setRuntimeSettings(val: Partial<ISlidevGlobalSettings> | unknown
   }
   if (s.webServeUrl !== undefined) {
     globalSettingsState.webServeUrl = String(s.webServeUrl)
+  }
+  if (s.normalizeHeadingSizes !== undefined) {
+    globalSettingsState.normalizeHeadingSizes = Boolean(s.normalizeHeadingSizes)
   }
   return { ...globalSettingsState }
 }

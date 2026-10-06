@@ -47,7 +47,7 @@
           :aria-label="engineMode === 'pro-cli' ? '当前：官方原生 Pro 模式 (localhost:' + activeProPort + ')，点击切回沙箱' : '当前：内置高保真沙箱，点击切换官方原生 Pro 模式'"
           @click="toggleEngineMode"
         >
-          <SlidevIcon name="step" />
+          <SlidevIcon name="rocket" />
           <span>{{ engineMode === 'pro-cli' ? 'Pro (' + activeProPort + ')' : '沙箱' }}</span>
         </button>
 
