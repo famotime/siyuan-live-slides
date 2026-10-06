@@ -284,15 +284,52 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     }
     /* 表头多栏内超级块子块首个列表项去圆点后居中显示标题/首行文本 */
     .layout-cols-wrapper .pdf-col > *:first-child .slide-list-item-title,
-    .layout-cols-wrapper .pdf-col > *:first-child > :is(h1, h2, h3, h4),
-    .layout-cols-wrapper .pdf-col > *:first-child > p.slide-list-item-title,
+    .layout-cols-wrapper .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6),
+    .layout-cols-wrapper .pdf-col > *:first-child p.slide-list-item-title,
+    .layout-cols-wrapper .pdf-col > *:first-child p:first-of-type,
+    .layout-cols-wrapper .pdf-col > *:first-child p:first-child,
+    .layout-cols-wrapper .pdf-col > *:first-child :is(ul, ol) > li:first-child,
+    .layout-cols-wrapper .pdf-col > *:first-child .slide-list > .slide-list-item:first-child,
+    .layout-cols-wrapper .pdf-col > *:first-child .pdf-list > li:first-child,
     .layout-cols-header-container .pdf-col > *:first-child .slide-list-item-title,
-    .layout-cols-header-container .pdf-col > *:first-child > :is(h1, h2, h3, h4),
-    .layout-cols-header-container .pdf-col > *:first-child > p.slide-list-item-title,
+    .layout-cols-header-container .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6),
+    .layout-cols-header-container .pdf-col > *:first-child p.slide-list-item-title,
+    .layout-cols-header-container .pdf-col > *:first-child p:first-of-type,
+    .layout-cols-header-container .pdf-col > *:first-child p:first-child,
+    .layout-cols-header-container .pdf-col > *:first-child :is(ul, ol) > li:first-child,
+    .layout-cols-header-container .pdf-col > *:first-child .slide-list > .slide-list-item:first-child,
+    .layout-cols-header-container .pdf-col > *:first-child .pdf-list > li:first-child,
     .two-cols-left > *:first-child .slide-list-item-title,
-    .two-cols-right > *:first-child .slide-list-item-title {
+    .two-cols-left > *:first-child :is(h1, h2, h3, h4, h5, h6),
+    .two-cols-left > *:first-child p:first-of-type,
+    .two-cols-left > *:first-child :is(ul, ol) > li:first-child,
+    .two-cols-right > *:first-child .slide-list-item-title,
+    .two-cols-right > *:first-child :is(h1, h2, h3, h4, h5, h6),
+    .two-cols-right > *:first-child p:first-of-type,
+    .two-cols-right > *:first-child :is(ul, ol) > li:first-child,
+    .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+      list-style: none !important;
+      list-style-type: none !important;
       text-align: center !important;
+      margin-left: 0 !important;
+      padding-left: 0 !important;
       width: 100% !important;
+    }
+
+    /* 彻底清除首个列表项的原生圆点 Marker */
+    :is(.layout-cols-wrapper, .layout-cols-header-container) .pdf-col > *:first-child :is(ul, ol) > li:first-child::marker,
+    .two-cols-left > *:first-child :is(ul, ol) > li:first-child::marker,
+    .two-cols-right > *:first-child :is(ul, ol) > li:first-child::marker {
+      content: "" !important;
+      display: none !important;
+    }
+
+    /* 确保首个列表项内部内联与块级元素居中 */
+    :is(.layout-cols-wrapper, .layout-cols-header-container) .pdf-col > *:first-child :is(ul, ol) > li:first-child *,
+    .two-cols-left > *:first-child :is(ul, ol) > li:first-child *,
+    .two-cols-right > *:first-child :is(ul, ol) > li:first-child * {
+      text-align: center !important;
     }
 
     /* 栏内说明段落与列表项：左对齐，自然阅读排版 */
@@ -300,10 +337,10 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     .layout-cols-header-container .pdf-col .slide-list-item-desc,
     .two-cols-left .slide-list-item-desc,
     .two-cols-right .slide-list-item-desc,
-    .layout-cols-wrapper .pdf-col li,
-    .layout-cols-header-container .pdf-col li,
-    .two-cols-left li,
-    .two-cols-right li {
+    .layout-cols-wrapper .pdf-col li:not(:first-child),
+    .layout-cols-header-container .pdf-col li:not(:first-child),
+    .two-cols-left li:not(:first-child),
+    .two-cols-right li:not(:first-child) {
       text-align: left !important;
     }
 
@@ -326,6 +363,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       font-weight: 600 !important;
       line-height: 1.3 !important;
       margin-bottom: 8px !important;
+      text-align: center !important;
     }
     .pdf-col pre,
     .two-cols-left pre,

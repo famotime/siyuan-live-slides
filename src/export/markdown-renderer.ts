@@ -472,7 +472,9 @@ export function convertBlockToHtml(
   if (hMatch) {
     const level = hMatch[1].length
     const titleText = formatInlineMarkdown(hMatch[2])
-    return `<div class="${containerClass}"${motionStyle}><h${level}>${titleText}</h${level}></div>`
+    const isList = block.type === "i"
+    const hClass = isList ? ' class="slide-list-item-title"' : ""
+    return `<div class="${containerClass}"${motionStyle}><h${level}${hClass}>${titleText}</h${level}></div>`
   }
 
   // 4. Callout 警示框 / 容器 ::: info / ::: tip / ::: warning / ::: danger
@@ -636,6 +638,8 @@ export function convertBlockToHtml(
   }
 
   // 11. 普通段落
-  return `<div class="${containerClass}"${motionStyle}><p>${formatInlineMarkdown(md)}</p></div>`
+  const isList = block.type === "i"
+  const pClass = isList ? ' class="slide-list-item-title"' : ""
+  return `<div class="${containerClass}"${motionStyle}><p${pClass}>${formatInlineMarkdown(md)}</p></div>`
 }
 

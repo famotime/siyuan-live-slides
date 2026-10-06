@@ -46,6 +46,21 @@ export function renderSlideBlocksToHtml(
       rightBlocks = blocks.slice(mid)
     }
 
+    const cleanFirstList = (list: ISlidevBlockItem[]) => {
+      const valid = list.filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
+      if (valid.length > 0) {
+        const first = valid[0]
+        const md = (first.rawMarkdown || first.content || "").trim()
+        const isList = isListItemNode(first) || /^(?:[-*+]|\d+\.)\s+/.test(md)
+        if (isList) {
+          first.rawMarkdown = cleanCardListItemMarkdown(first.rawMarkdown || first.content || "")
+          first.content = first.rawMarkdown
+        }
+      }
+    }
+    cleanFirstList(leftBlocks)
+    cleanFirstList(rightBlocks)
+
     const leftFirstH = leftBlocks.find(isHeadingBlock)
     const rightFirstH = rightBlocks.find(isHeadingBlock)
 

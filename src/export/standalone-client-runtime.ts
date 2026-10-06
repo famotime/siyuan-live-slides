@@ -332,11 +332,13 @@ export function getStandaloneClientRuntimeScript(): string {
           if (current.length > 0) subBlocks.push(current.join("\n"));
 
           if (subBlocks.length > 1 || (subBlocks.length === 1 && /^#{1,6}\s+/.test(subBlocks[0].trim()))) {
+            let isFirstParagraph = true;
             const htmlParts = subBlocks.map(sub => {
               const t = sub.trim();
               if (!t) return "";
               const hm = t.match(/^(#{1,6})\s+(.*)$/);
               if (hm) {
+                isFirstParagraph = false;
                 const hl = hm[1].length;
                 let th = hm[2].trim().replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
                 return '<h' + hl + ' class="slide-list-item-title">' + th + '</h' + hl + '>';
@@ -347,6 +349,17 @@ export function getStandaloneClientRuntimeScript(): string {
               }
               if (/<video\b/i.test(t)) {
                 return '<div class="slide-media-block slide-video-container slide-media-container">' + t + '</div>';
+              }
+              if (isFirstParagraph) {
+                isFirstParagraph = false;
+                const subLines = t.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                if (subLines.length === 1) {
+                  let ph = subLines[0].replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+                  return '<p class="slide-list-item-title">' + ph + '</p>';
+                }
+                let titleHtml = subLines[0].replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+                let descHtml = subLines.slice(1).map(l => l.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>")).join("<br/>");
+                return '<p class="slide-list-item-title">' + titleHtml + '</p>\n<p class="slide-list-item-desc">' + descHtml + '</p>';
               }
               let ph = t.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
               return '<p class="slide-list-item-desc">' + ph + '</p>';
@@ -359,7 +372,8 @@ export function getStandaloneClientRuntimeScript(): string {
               div.innerHTML = '<img alt="' + imgMatch[1] + '" src="' + imgMatch[2] + '" class="slide-media-img" />';
             } else {
               let html = md.replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
-              div.innerHTML = "<p>" + html + "</p>";
+              const pCls = (block && (block.type === "i" || block.isColFirst)) ? ' class="slide-list-item-title"' : '';
+              div.innerHTML = "<p" + pCls + ">" + html + "</p>";
             }
           }
         }

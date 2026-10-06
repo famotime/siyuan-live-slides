@@ -327,6 +327,7 @@ export function renderCompoundMarkdown(
   }
 
   // 对拆分出的各子块分别渲染并合并
+  let isFirstParagraph = true
   const htmlParts = subBlocks.map((sub) => {
     const trimmedSub = sub.trim()
     if (!trimmedSub) return ""
@@ -334,6 +335,7 @@ export function renderCompoundMarkdown(
     // 1. 标题
     const hMatch = trimmedSub.match(/^(#{1,6})\s+(.*)$/)
     if (hMatch) {
+      isFirstParagraph = false
       const level = hMatch[1].length
       return `<h${level} class="slide-list-item-title">${formatInlineMarkdown(hMatch[2].trim())}</h${level}>`
     }
@@ -376,10 +378,22 @@ export function renderCompoundMarkdown(
     // 4. 列表
     const listHtml = renderMarkdownList(trimmedSub, options, block)
     if (listHtml) {
+      isFirstParagraph = false
       return listHtml
     }
 
-    // 5. 段落
+    // 5. 段落 (首个段落作为卡片/分栏首行标题，赋予 slide-list-item-title，后续换行/段落作为说明描述)
+    if (isFirstParagraph) {
+      isFirstParagraph = false
+      const subLines = trimmedSub.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
+      if (subLines.length === 1) {
+        return `<p class="slide-list-item-title">${formatInlineMarkdown(subLines[0])}</p>`
+      }
+      const titleLine = subLines[0]
+      const descLines = subLines.slice(1)
+      const descHtml = descLines.map(l => formatInlineMarkdown(l)).join("<br/>")
+      return `<p class="slide-list-item-title">${formatInlineMarkdown(titleLine)}</p>\n<p class="slide-list-item-desc">${descHtml}</p>`
+    }
     return `<p class="slide-list-item-desc">${formatInlineMarkdown(trimmedSub)}</p>`
   }).filter(Boolean)
 

@@ -134,4 +134,78 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
       expect(html).toMatch(/class="[^"]*slidev-col-first-heading-block[^"]*"[^>]*><h4/)
     })
   })
+
+  describe("4. 表头多栏超级块子块首个列表项去圆点与居中显示", () => {
+    it("复合 Markdown 块中首个段落自动标记为 slide-list-item-title，后续段落标记为 slide-list-item-desc", async () => {
+      const { renderCompoundMarkdown } = await import("../src/export/visual-list-renderer")
+      const md = "核心引擎架构\n零网络依赖极速离线放映"
+      const html = renderCompoundMarkdown(md)
+      expect(html).toContain('<p class="slide-list-item-title">核心引擎架构</p>')
+      expect(html).toContain('<p class="slide-list-item-desc">零网络依赖极速离线放映</p>')
+    })
+
+    it("单文件导出样式包含表头多栏首个列表项去圆点、清除 marker 与居中声明，且排除首项左对齐", async () => {
+      const { generateStandaloneExportStyles } = await import("../src/export/standalone-template-styles")
+      const css = generateStandaloneExportStyles()
+
+      // 首个列表项去圆点与居中
+      expect(css).toContain(".layout-cols-wrapper .pdf-col > *:first-child :is(ul, ol) > li:first-child")
+      expect(css).toContain("list-style: none !important")
+      expect(css).toContain("text-align: center !important")
+      // marker 清除
+      expect(css).toContain("li:first-child::marker")
+      // 左对齐明确排除首项
+      expect(css).toContain(".layout-cols-wrapper .pdf-col li:not(:first-child)")
+    })
+
+    it("PDF 导出样式同样包含表头多栏首个列表项去圆点、清除 marker 与居中声明", async () => {
+      const { generatePdfExportStyles } = await import("../src/export/pdf-template-styles")
+      const css = generatePdfExportStyles()
+
+      expect(css).toContain(".layout-cols-wrapper .pdf-col > *:first-child :is(ul, ol) > li:first-child")
+      expect(css).toContain("list-style: none !important")
+      expect(css).toContain("text-align: center !important")
+      expect(css).toContain("li:first-child::marker")
+      expect(css).toContain(".layout-cols-wrapper .pdf-col li:not(:first-child)")
+    })
+
+    it("当列表项内容为以 # 开头的标题时，自动赋予 slide-list-item-title 类名", async () => {
+      const { renderCompoundMarkdown } = await import("../src/export/visual-list-renderer")
+      const md = "# 模块化设计\n底层逻辑解耦清晰"
+      const html = renderCompoundMarkdown(md)
+      expect(html).toContain('<h1 class="slide-list-item-title">模块化设计</h1>')
+      expect(html).toContain('<p class="slide-list-item-desc">底层逻辑解耦清晰</p>')
+    })
+
+    it("convertBlockToHtml 对作为标题的列表项块赋予 slide-list-item-title 类名", async () => {
+      const { convertBlockToHtml } = await import("../src/export/markdown-renderer")
+      const block = {
+        id: "b-h",
+        type: "i",
+        content: "### 分栏首标题",
+        rawMarkdown: "### 分栏首标题",
+      }
+      const html = convertBlockToHtml(block as any, { extraClassName: "slidev-col-first-heading-block" })
+      expect(html).toContain('<h3 class="slide-list-item-title">分栏首标题</h3>')
+    })
+
+    it("单文件导出样式与 PDF 样式中的标题选择器为后代选择器并包含 h1~h6 强制居中", async () => {
+      const { generateStandaloneExportStyles } = await import("../src/export/standalone-template-styles")
+      const { generatePdfExportStyles } = await import("../src/export/pdf-template-styles")
+
+      const htmlCss = generateStandaloneExportStyles()
+      const pdfCss = generatePdfExportStyles()
+
+      // 后代选择器包含 h1~h6 居中
+      expect(htmlCss).toContain(".layout-cols-wrapper .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6)")
+      expect(htmlCss).toContain(".slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title)")
+      expect(pdfCss).toContain(".layout-cols-wrapper .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6)")
+      expect(pdfCss).toContain(".slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title)")
+
+      // 固定特定标题大小选项中同样包含居中声明，两者协同无冲突
+      expect(htmlCss).toContain("data-normalize-headings=\"true\"] .slidev-col-first-heading-block")
+      expect(pdfCss).toContain("data-normalize-headings=\"true\"] .slidev-col-first-heading-block")
+    })
+  })
 })
+
