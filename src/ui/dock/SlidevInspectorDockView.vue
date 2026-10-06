@@ -332,8 +332,8 @@ const currentSlideLayout = computed(() => {
   }
 
   const blockSlot = activeBlockAttrs.value[ATTR_ELEM_SLOT] || activeBlockAttrs.value['custom-slidev-slot']
-  if (blockSlot && ['col-1', 'col-2', 'col-3'].includes(blockSlot)) {
-    return 'three-cols-header'
+  if (blockSlot && (['col-1', 'col-2', 'col-3'].includes(blockSlot) || /^col-\d+$/.test(blockSlot))) {
+    return 'cols-header'
   }
 
   if (currentPageDividerLayout.value) {
@@ -359,8 +359,8 @@ const currentSlideLayout = computed(() => {
     return targetSlide.value.frontmatter.layout
   }
 
-  if (targetSlide.value?.blocks?.some(b => b.slot === 'col-1' || b.slot === 'col-2' || b.slot === 'col-3')) {
-    return 'three-cols-header'
+  if (targetSlide.value?.blocks?.some(b => b.slot && (['col-1', 'col-2', 'col-3'].includes(b.slot) || /^col-\d+$/.test(b.slot)))) {
+    return 'cols-header'
   }
 
   const docOverride = globalDocumentCompiler.getBlockAttrOverride(currentDocId.value)
@@ -452,10 +452,10 @@ function parseSuperBlockDom(sbEl: Element): IDetectedSuperBlockInfo | null {
     }
   } else {
     isCustomWidth = false
-    ratio = colCount === 3 ? '1:1:1' : '1:1'
+    ratio = Array.from({ length: colCount }, () => 1).join(':')
   }
 
-  const recommendedLayout = colCount === 3 ? 'three-cols-header' : 'two-cols'
+  const recommendedLayout = colCount >= 2 ? 'cols-header' : 'two-cols'
   return {
     hasSuperBlock: true,
     colCount,
@@ -476,9 +476,9 @@ function parseSuperBlockAst(slide: any): IDetectedSuperBlockInfo | null {
       return {
         hasSuperBlock: true,
         colCount,
-        ratio: r || (colCount === 3 ? '1:1:1' : '1:1'),
+        ratio: r || Array.from({ length: colCount }, () => 1).join(':'),
         isCustomWidth: Boolean(r),
-        recommendedLayout: colCount === 3 ? 'three-cols-header' : 'two-cols',
+        recommendedLayout: colCount >= 2 ? 'cols-header' : 'two-cols',
       }
     }
   }
@@ -702,8 +702,8 @@ function onLayoutRatioChange(val: string) {
 
 function onApplySuperBlockLayout(info: any) {
   if (!info) return
-  const layout = info.recommendedLayout || (info.colCount === 3 ? 'three-cols-header' : 'two-cols')
-  const ratio = info.ratio || (info.colCount === 3 ? '1:1:1' : '1:1')
+  const layout = info.recommendedLayout || (info.colCount && info.colCount >= 2 ? 'cols-header' : 'two-cols')
+  const ratio = info.ratio || (info.colCount ? Array(info.colCount).fill(1).join(':') : '1:1')
   applyPageLayoutAndRatio(layout, ratio)
 }
 

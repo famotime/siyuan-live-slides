@@ -1,5 +1,6 @@
 import type { ISlidevBlockItem, ISlidevVirtualPage } from "../types/slidev-protocol"
-import { distributeThreeColumns } from "../compiler/slidev-ast-builder"
+import { isColsHeaderLayout } from "../types/slidev-protocol"
+import { distributeNColumns, distributeThreeColumns } from "../compiler/slidev-ast-builder"
 import { cleanCardListItemMarkdown, isListItemNode, parseRatioToGridCols } from "../utils"
 import { convertBlockToHtml, escapeHtml } from "./markdown-renderer"
 import type { IBlockRenderOptions } from "./markdown-renderer"
@@ -11,7 +12,7 @@ export interface IRenderSlideOptions extends IBlockRenderOptions {
 }
 
 /**
- * 渲染单个幻灯片页面的所有块，支持多种标准版式（two-cols, two-cols-header, three-cols-header, cover, fact, image-left, image-right 等）
+ * 渲染单个幻灯片页面的所有块，支持多种标准版式（two-cols, cols-header, two-cols-header, three-cols-header, cover, fact, image-left, image-right 等）
  */
 export function renderSlideBlocksToHtml(
   slide: ISlidevVirtualPage,
@@ -54,8 +55,8 @@ export function renderSlideBlocksToHtml(
     `
   }
 
-  // 2. 带表头的双栏布局 (two-cols-header)
-  if (layout === "two-cols-header") {
+  // 2. 带表头的多栏布局 (通用 cols-header 与历史兼容 two-cols-header, three-cols-header)
+  if (isColsHeaderLayout(layout)) {
     let headerBlocks: ISlidevBlockItem[] = []
     const explicitHeader = blocks.filter(b => b.slot === "header")
     if (explicitHeader.length > 0) {
@@ -68,8 +69,36 @@ export function renderSlideBlocksToHtml(
     }
 
     const rem = blocks.filter(b => !headerBlocks.includes(b))
-    const rightBlocks = rem.filter(b => b.slot === "right" || b.slot === "col-2")
-    const leftBlocks = rem.filter(b => !rightBlocks.includes(b))
+
+    // 确定栏数 targetCols (自适应 2~N 栏)
+    let targetCols = 2
+    if (layout === "three-cols-header") {
+      targetCols = 3
+    } else if (layout === "two-cols-header") {
+      targetCols = 2
+    } else {
+      let maxCol = 0
+      for (const b of rem) {
+        const m = (b.slot || "").match(/^col-(\d+)$/i)
+        if (m) maxCol = Math.max(maxCol, parseInt(m[1], 10))
+      }
+      if (maxCol >= 2) {
+        targetCols = maxCol
+      } else if (slide.frontmatter?.layoutRatio) {
+        const r = slide.frontmatter.layoutRatio.trim()
+        if (r.includes(":")) {
+          const parts = r.split(":").map(p => parseFloat(p.trim())).filter(n => !isNaN(n) && n > 0)
+          if (parts.length >= 2) targetCols = parts.length
+        } else {
+          const tokens = r.split(/\s+/).filter(Boolean)
+          if (tokens.length >= 2) targetCols = tokens.length
+        }
+      } else if (rem.length === 1 && rem[0].children && rem[0].children.length >= 2) {
+        targetCols = Math.min(6, rem[0].children.length)
+      }
+    }
+
+    const cols = distributeNColumns(rem, targetCols)
 
     const renderColBlockToHtml = (colBlocks: ISlidevBlockItem[]) => {
       const validBlocks = colBlocks.filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
@@ -86,66 +115,40 @@ export function renderSlideBlocksToHtml(
     }
 
     const headerHtml = headerBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
-    const leftHtml = renderColBlockToHtml(leftBlocks)
-    const rightHtml = renderColBlockToHtml(rightBlocks)
-    const gridCols = parseRatioToGridCols(slide.frontmatter?.layoutRatio, 2)
+    const gridCols = parseRatioToGridCols(slide.frontmatter?.layoutRatio, targetCols)
     const gridStyle = `style="grid-template-columns: ${gridCols};"`
 
-    return `
-      <div class="layout-two-cols-header-container">
-        <div class="layout-header-section">${headerHtml}</div>
-        <div class="pdf-two-cols-wrapper layout-two-cols-grid" ${gridStyle}>
-          <div class="pdf-col pdf-col--left">${leftHtml}</div>
-          <div class="pdf-col pdf-col--right">${rightHtml}</div>
-        </div>
-      </div>
-    `
-  }
+    const containerClasses = [
+      "layout-cols-header-container",
+      targetCols === 2 ? "layout-two-cols-header-container" : "",
+      targetCols === 3 ? "layout-three-cols-header-container" : "",
+      `layout-${layout}-container`,
+    ].filter(Boolean).join(" ")
 
-  // 2.5 带表头的三栏布局 (three-cols-header)
-  if (layout === "three-cols-header") {
-    let headerBlocks: ISlidevBlockItem[] = []
-    const explicitHeader = blocks.filter(b => b.slot === "header")
-    if (explicitHeader.length > 0) {
-      headerBlocks = explicitHeader
-    } else if (blocks.length > 0) {
-      const candidateH = blocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"))
-      if (candidateH) {
-        headerBlocks = [candidateH]
-      }
-    }
+    const wrapperClasses = [
+      "layout-cols-wrapper",
+      "layout-cols-grid",
+      targetCols === 2 ? "pdf-two-cols-wrapper layout-two-cols-grid" : "",
+      targetCols === 3 ? "pdf-three-cols-wrapper layout-three-cols-grid" : "",
+    ].filter(Boolean).join(" ")
 
-    const rem = blocks.filter(b => !headerBlocks.includes(b))
-    const { col1: col1Blocks, col2: col2Blocks, col3: col3Blocks } = distributeThreeColumns(rem)
-
-    const renderColBlockToHtml = (colBlocks: ISlidevBlockItem[]) => {
-      const validBlocks = colBlocks.filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
-      if (validBlocks.length > 0) {
-        const first = validBlocks[0]
-        const md = (first.rawMarkdown || first.content || "").trim()
-        const isList = isListItemNode(first) || /^(?:[-*+]|\d+\.)\s+/.test(md)
-        if (isList) {
-          first.rawMarkdown = cleanCardListItemMarkdown(first.rawMarkdown || first.content || "")
-          first.content = first.rawMarkdown
-        }
-      }
-      return validBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
-    }
-
-    const headerHtml = headerBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
-    const col1Html = renderColBlockToHtml(col1Blocks)
-    const col2Html = renderColBlockToHtml(col2Blocks)
-    const col3Html = renderColBlockToHtml(col3Blocks)
-    const gridCols = parseRatioToGridCols(slide.frontmatter?.layoutRatio, 3)
-    const gridStyle = `style="grid-template-columns: ${gridCols};"`
+    const colsHtml = cols.map((colBlocks, idx) => {
+      const colNum = idx + 1
+      const colClass = [
+        "pdf-col",
+        targetCols === 2 && colNum === 1 ? "pdf-col--left" : "",
+        targetCols === 2 && colNum === 2 ? "pdf-col--right" : "",
+        `pdf-col--${colNum}`,
+        `col-${colNum}`,
+      ].filter(Boolean).join(" ")
+      return `<div class="${colClass}">${renderColBlockToHtml(colBlocks)}</div>`
+    }).join("\n")
 
     return `
-      <div class="layout-three-cols-header-container">
+      <div class="${containerClasses}">
         <div class="layout-header-section">${headerHtml}</div>
-        <div class="pdf-three-cols-wrapper layout-three-cols-grid" ${gridStyle}>
-          <div class="pdf-col pdf-col--1">${col1Html}</div>
-          <div class="pdf-col pdf-col--2">${col2Html}</div>
-          <div class="pdf-col pdf-col--3">${col3Html}</div>
+        <div class="${wrapperClasses}" ${gridStyle}>
+          ${colsHtml}
         </div>
       </div>
     `

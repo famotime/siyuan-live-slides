@@ -56,7 +56,7 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
   })
 
   describe("2. detectListSuperBlock 列表超级块检测判定", () => {
-    it("命中 2 项列表超级块：判定为 two-cols-header，分配 left 与 right 插槽", () => {
+    it("命中 2 项列表超级块：判定为 cols-header，分配 col-1 与 col-2 插槽", () => {
       const sbNode: ISiYuanBlockNode = {
         id: "sb-2cols",
         type: "s",
@@ -70,12 +70,12 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       const res = detectListSuperBlock(sbNode)
       expect(res).not.toBeNull()
       expect(res?.count).toBe(2)
-      expect(res?.layout).toBe("two-cols-header")
-      expect(res?.slots).toEqual(["left", "right"])
+      expect(res?.layout).toBe("cols-header")
+      expect(res?.slots).toEqual(["col-1", "col-2"])
       expect(res?.items.map(it => it.id)).toEqual(["item-1", "item-2"])
     })
 
-    it("命中 3 项列表超级块：判定为 three-cols-header，分配 col-1, col-2, col-3 插槽", () => {
+    it("命中 3 项列表超级块：判定为 cols-header，分配 col-1, col-2, col-3 插槽", () => {
       const sbNode: ISiYuanBlockNode = {
         id: "sb-3cols",
         type: "NodeSuperBlock",
@@ -90,7 +90,7 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       const res = detectListSuperBlock(sbNode)
       expect(res).not.toBeNull()
       expect(res?.count).toBe(3)
-      expect(res?.layout).toBe("three-cols-header")
+      expect(res?.layout).toBe("cols-header")
       expect(res?.slots).toEqual(["col-1", "col-2", "col-3"])
       expect(res?.items.map(it => it.id)).toEqual(["item-1", "item-2", "item-3"])
     })
@@ -127,7 +127,7 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       expect(detectListSuperBlock(sbNode)).toBeNull()
     })
 
-    it("数量为 1 项或 4+ 项时，detectListSuperBlock 返回 null，isInvalidListSuperBlock 识别出边界超限", () => {
+    it("数量为 1 项或 7+ 项时，detectListSuperBlock 返回 null，isInvalidListSuperBlock 识别出边界超限", () => {
       const sb1: ISiYuanBlockNode = {
         id: "sb-1item",
         type: "s",
@@ -137,19 +137,14 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       expect(detectListSuperBlock(sb1)).toBeNull()
       expect(isInvalidListSuperBlock(sb1)?.items.length).toBe(1)
 
-      const sb4: ISiYuanBlockNode = {
-        id: "sb-4items",
+      const sb7: ISiYuanBlockNode = {
+        id: "sb-7items",
         type: "s",
         subType: "col",
-        children: [
-          { id: "it-1", type: "i", markdown: "- 1" },
-          { id: "it-2", type: "i", markdown: "- 2" },
-          { id: "it-3", type: "i", markdown: "- 3" },
-          { id: "it-4", type: "i", markdown: "- 4" },
-        ],
+        children: Array.from({ length: 7 }, (_, i) => ({ id: `it-${i + 1}`, type: "i", markdown: `- ${i + 1}` })),
       }
-      expect(detectListSuperBlock(sb4)).toBeNull()
-      expect(isInvalidListSuperBlock(sb4)?.items.length).toBe(4)
+      expect(detectListSuperBlock(sb7)).toBeNull()
+      expect(isInvalidListSuperBlock(sb7)?.items.length).toBe(7)
     })
   })
 
@@ -174,21 +169,21 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
 
       // 验证页面根块配置
       const docChange = res.changes.find(c => c.blockId === docId)
-      expect(docChange?.attrs[ATTR_PAGE_LAYOUT]).toBe("two-cols-header")
+      expect(docChange?.attrs[ATTR_PAGE_LAYOUT]).toBe("cols-header")
 
       // 验证表头插槽
       const hChange = res.changes.find(c => c.blockId === "h-title")
       expect(hChange?.attrs[ATTR_ELEM_SLOT]).toBe("header")
 
-      // 验证左右栏插槽
+      // 验证分栏插槽
       const it1Change = res.changes.find(c => c.blockId === "it-1")
       const it2Change = res.changes.find(c => c.blockId === "it-2")
-      expect(it1Change?.attrs[ATTR_ELEM_SLOT]).toBe("left")
-      expect(it2Change?.attrs[ATTR_ELEM_SLOT]).toBe("right")
+      expect(it1Change?.attrs[ATTR_ELEM_SLOT]).toBe("col-1")
+      expect(it2Change?.attrs[ATTR_ELEM_SLOT]).toBe("col-2")
 
       // 验证追踪状态
       expect(res.newTracked.length).toBe(1)
-      expect(res.newTracked[0].layout).toBe("two-cols-header")
+      expect(res.newTracked[0].layout).toBe("cols-header")
       expect(res.newTracked[0].itemIds).toEqual(["it-1", "it-2"])
     })
 
@@ -202,8 +197,8 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
           type: "s",
           subType: "col",
           children: [
-            { id: "it-2", type: "i", markdown: "- 模块二", ial: { [ATTR_ELEM_SLOT]: "right" } },
-            { id: "it-1", type: "i", markdown: "- 模块一", ial: { [ATTR_ELEM_SLOT]: "left" } },
+            { id: "it-2", type: "i", markdown: "- 模块二", ial: { [ATTR_ELEM_SLOT]: "col-2" } },
+            { id: "it-1", type: "i", markdown: "- 模块一", ial: { [ATTR_ELEM_SLOT]: "col-1" } },
           ],
         },
       ]
@@ -213,18 +208,18 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
         pageTargetId: docId,
         headerId: "h-title",
         itemIds: ["it-1", "it-2"],
-        layout: "two-cols-header" as const,
+        layout: "cols-header" as const,
       }]
 
       const res = scanAndTagListSuperBlocks(docId, blocks, { tracked })
-      // it-2 变成了第 1 项，应被更新为 left；it-1 变成了第 2 项，应被更新为 right
+      // it-2 变成了第 1 项，应被更新为 col-1；it-1 变成了第 2 项，应被更新为 col-2
       const it2Change = res.changes.find(c => c.blockId === "it-2")
       const it1Change = res.changes.find(c => c.blockId === "it-1")
-      expect(it2Change?.attrs[ATTR_ELEM_SLOT]).toBe("left")
-      expect(it1Change?.attrs[ATTR_ELEM_SLOT]).toBe("right")
+      expect(it2Change?.attrs[ATTR_ELEM_SLOT]).toBe("col-1")
+      expect(it1Change?.attrs[ATTR_ELEM_SLOT]).toBe("col-2")
     })
 
-    it("用户拖入第 3 个列表项（2 变 3）：自动升级为 three-cols-header 并重新分配三栏插槽", () => {
+    it("用户拖入第 3 个列表项（2 变 3）：自动升级为 3 栏并重新分配统一插槽", () => {
       const docId = "doc-test-2to3"
       const blocks: ISiYuanBlockNode[] = [
         { id: "h-title", type: "h", markdown: "# 研发团队三向能力", ial: { [ATTR_ELEM_SLOT]: "header" } },
@@ -245,19 +240,16 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
         pageTargetId: docId,
         headerId: "h-title",
         itemIds: ["it-1", "it-2"],
-        layout: "two-cols-header" as const,
+        layout: "cols-header" as const,
       }]
 
       const res = scanAndTagListSuperBlocks(docId, blocks, { tracked })
-      const docChange = res.changes.find(c => c.blockId === docId)
-      expect(docChange?.attrs[ATTR_PAGE_LAYOUT]).toBe("three-cols-header")
-
       expect(res.changes.find(c => c.blockId === "it-1")?.attrs[ATTR_ELEM_SLOT]).toBe("col-1")
       expect(res.changes.find(c => c.blockId === "it-2")?.attrs[ATTR_ELEM_SLOT]).toBe("col-2")
       expect(res.changes.find(c => c.blockId === "it-3")?.attrs[ATTR_ELEM_SLOT]).toBe("col-3")
     })
 
-    it("用户拖出列表项（3 变 2）：自动降级为 two-cols-header，分配 left/right 并清空移出项的 slot", () => {
+    it("用户拖出列表项（3 变 2）：自动调整为 2 栏 cols-header，保持 col-1/col-2 并清空移出项的 slot", () => {
       const docId = "doc-test-3to2"
       // it-3 被移出超级块
       const blocks: ISiYuanBlockNode[] = [
@@ -279,17 +271,15 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
         pageTargetId: docId,
         headerId: "h-title",
         itemIds: ["it-1", "it-2", "it-3"],
-        layout: "three-cols-header" as const,
+        layout: "cols-header" as const,
       }]
 
       const res = scanAndTagListSuperBlocks(docId, blocks, { tracked })
-      expect(res.changes.find(c => c.blockId === docId)?.attrs[ATTR_PAGE_LAYOUT]).toBe("two-cols-header")
-      expect(res.changes.find(c => c.blockId === "it-1")?.attrs[ATTR_ELEM_SLOT]).toBe("left")
-      expect(res.changes.find(c => c.blockId === "it-2")?.attrs[ATTR_ELEM_SLOT]).toBe("right")
-
       // 验证 it-3 的 slot 被清空
       const it3Change = res.changes.find(c => c.blockId === "it-3")
       expect(it3Change?.attrs[ATTR_ELEM_SLOT]).toBe("")
+      // 验证追踪状态更新为 2 项
+      expect(res.newTracked[0].itemIds).toEqual(["it-1", "it-2"])
     })
 
     it("边界自愈：列表项减少至 1 项时，自动恢复默认版式并清理相关 slot", () => {
@@ -328,7 +318,7 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
   })
 
   describe("4. DocumentCompilerService 全链路编译与持久化集成", () => {
-    it("compile() 自动识别 2 项列表超级块并生成带表头双栏的 Slidev 演示文档", async () => {
+    it("compile() 自动识别 2 项列表超级块并生成带表头多栏 (cols-header) 的 Slidev 演示文档", async () => {
       const docId = "doc-compile-2cols"
       const mockSetAttrs = vi.fn().mockResolvedValue({})
       const mockSql = vi.fn().mockResolvedValue([])
@@ -367,21 +357,21 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       expect(doc.slides.length).toBe(1)
       const page = doc.slides[0]
 
-      expect(page.frontmatter.layout).toBe("two-cols-header")
+      expect(page.frontmatter.layout).toBe("cols-header")
       expect(page.rawMarkdown).toContain("# 核心双引擎")
-      expect(page.rawMarkdown).toContain("::left::")
+      expect(page.rawMarkdown).toContain("::col-1::")
       expect(page.rawMarkdown).toContain("本地引擎\n零网络依赖极速离线放映")
-      expect(page.rawMarkdown).toContain("::right::")
+      expect(page.rawMarkdown).toContain("::col-2::")
       expect(page.rawMarkdown).toContain("远程协同引擎\n支持多设备实时同步放映")
 
       // 验证持久化 setBlockAttrs 被调用
-      expect(mockSetAttrs).toHaveBeenCalledWith(docId, { [ATTR_PAGE_LAYOUT]: "two-cols-header" })
+      expect(mockSetAttrs).toHaveBeenCalledWith(docId, { [ATTR_PAGE_LAYOUT]: "cols-header" })
       expect(mockSetAttrs).toHaveBeenCalledWith("h-main", { [ATTR_ELEM_SLOT]: "header" })
-      expect(mockSetAttrs).toHaveBeenCalledWith("item-left", { [ATTR_ELEM_SLOT]: "left" })
-      expect(mockSetAttrs).toHaveBeenCalledWith("item-right", { [ATTR_ELEM_SLOT]: "right" })
+      expect(mockSetAttrs).toHaveBeenCalledWith("item-left", { [ATTR_ELEM_SLOT]: "col-1" })
+      expect(mockSetAttrs).toHaveBeenCalledWith("item-right", { [ATTR_ELEM_SLOT]: "col-2" })
     })
 
-    it("compile() 自动识别 3 项列表超级块并生成带表头三栏的 Slidev 演示文档", async () => {
+    it("compile() 自动识别 3 项列表超级块并生成带表头多栏 (cols-header) 的 Slidev 演示文档", async () => {
       const docId = "doc-compile-3cols"
       const mockSetAttrs = vi.fn().mockResolvedValue({})
       const mockSql = vi.fn().mockResolvedValue([])
@@ -410,7 +400,7 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       const doc = await compiler.compile(docId)
       const page = doc.slides[0]
 
-      expect(page.frontmatter.layout).toBe("three-cols-header")
+      expect(page.frontmatter.layout).toBe("cols-header")
       expect(page.rawMarkdown).toContain("# 三阶段战略")
       expect(page.rawMarkdown).toContain("::col-1::\n\n第一阶段\n打桩稳固基础")
       expect(page.rawMarkdown).toContain("::col-2::\n\n第二阶段\n全面拓展应用")
@@ -468,7 +458,7 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       const res = detectListSuperBlock(sbOuter)
       expect(res).not.toBeNull()
       expect(res?.count).toBe(3)
-      expect(res?.layout).toBe("three-cols-header")
+      expect(res?.layout).toBe("cols-header")
       expect(res?.slots).toEqual(["col-1", "col-2", "col-3"])
       expect(res?.items.map(it => it.id)).toEqual(["item-1", "item-2", "item-3"])
       expect(res?.nestedSuperBlocks?.map(n => n.id)).toEqual(["sb-inner-a"])
@@ -496,7 +486,7 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       const res = detectListSuperBlock(sbOuter)
       expect(res).not.toBeNull()
       expect(res?.count).toBe(3)
-      expect(res?.layout).toBe("three-cols-header")
+      expect(res?.layout).toBe("cols-header")
       expect(res?.slots).toEqual(["col-1", "col-2", "col-3"])
       expect(res?.items.map(it => it.id)).toEqual(["item-1", "item-2", "item-3"])
       expect(res?.nestedSuperBlocks?.map(n => n.id)).toEqual(["sb-inner-b"])
@@ -511,7 +501,7 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
           pageTargetId: docId,
           headerId: "h-title",
           itemIds: ["it-1", "it-2"],
-          layout: "two-cols-header" as const,
+          layout: "cols-header" as const,
         },
       ]
 
@@ -528,8 +518,8 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
               type: "s",
               subType: "col",
               children: [
-                { id: "it-1", type: "i", markdown: "- 模块 1", ial: { "custom-slidev-slot": "left" } },
-                { id: "it-2", type: "i", markdown: "- 模块 2", ial: { "custom-slidev-slot": "right" } },
+                { id: "it-1", type: "i", markdown: "- 模块 1", ial: { "custom-slidev-slot": "col-1" } },
+                { id: "it-2", type: "i", markdown: "- 模块 2", ial: { "custom-slidev-slot": "col-2" } },
               ],
             },
             { id: "it-3", type: "i", markdown: "- 模块 3", ial: {} },
@@ -540,12 +530,12 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       const docNode: ISiYuanBlockNode = {
         id: docId,
         type: "d",
-        ial: { "custom-slidev-layout": "two-cols-header" },
+        ial: { "custom-slidev-layout": "cols-header" },
         children: blocks,
       }
 
       const result = scanAndTagListSuperBlocks(docId, [docNode, ...blocks], { tracked: trackedInit })
-      expect(docNode.ial["custom-slidev-layout"]).toBe("three-cols-header")
+      expect(docNode.ial["custom-slidev-layout"]).toBe("cols-header")
       const it1 = blocks[1].children![0].children![0]
       const it2 = blocks[1].children![0].children![1]
       const it3 = blocks[1].children![1]
@@ -553,11 +543,11 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       expect(it1.ial?.["custom-slidev-slot"]).toBe("col-1")
       expect(it2.ial?.["custom-slidev-slot"]).toBe("col-2")
       expect(it3.ial?.["custom-slidev-slot"]).toBe("col-3")
-      expect(result.newTracked[0].layout).toBe("three-cols-header")
+      expect(result.newTracked[0].layout).toBe("cols-header")
       expect(result.newTracked[0].itemIds).toEqual(["it-1", "it-2", "it-3"])
     })
 
-    it("动态降级：嵌套 3 栏中拖走第 3 项变回 2 栏，自动降级为 two-cols-header 并清空第 3 项插槽", () => {
+    it("动态降级：嵌套 3 栏中拖走第 3 项变回 2 栏，自动降级为 2 栏 cols-header 并清空第 3 项插槽", () => {
       const docId = "doc-nested-downgrade"
       const trackedInit = [
         {
@@ -566,7 +556,7 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
           pageTargetId: docId,
           headerId: "h-title",
           itemIds: ["it-1", "it-2", "it-3"],
-          layout: "three-cols-header" as const,
+          layout: "cols-header" as const,
         },
       ]
 
@@ -594,19 +584,19 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       const docNode: ISiYuanBlockNode = {
         id: docId,
         type: "d",
-        ial: { "custom-slidev-layout": "three-cols-header" },
+        ial: { "custom-slidev-layout": "cols-header" },
         children: blocks,
       }
 
       const result = scanAndTagListSuperBlocks(docId, [docNode, ...blocks], { tracked: trackedInit })
-      expect(docNode.ial["custom-slidev-layout"]).toBe("two-cols-header")
+      expect(docNode.ial["custom-slidev-layout"]).toBe("cols-header")
       const it1 = blocks[1].children![0]
       const it2 = blocks[1].children![1]
 
-      expect(it1.ial?.["custom-slidev-slot"]).toBe("left")
-      expect(it2.ial?.["custom-slidev-slot"]).toBe("right")
+      expect(it1.ial?.["custom-slidev-slot"]).toBe("col-1")
+      expect(it2.ial?.["custom-slidev-slot"]).toBe("col-2")
       expect(it3Node.ial?.["custom-slidev-slot"]).toBe("")
-      expect(result.newTracked[0].layout).toBe("two-cols-header")
+      expect(result.newTracked[0].layout).toBe("cols-header")
       expect(result.newTracked[0].itemIds).toEqual(["it-1", "it-2"])
     })
 
@@ -643,7 +633,7 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       const doc = await compiler.compile(docId)
       const page = doc.slides[0]
 
-      expect(page.frontmatter.layout).toBe("three-cols-header")
+      expect(page.frontmatter.layout).toBe("cols-header")
       expect(page.rawMarkdown).toContain("# 战略三支柱")
       expect(page.rawMarkdown).toContain("::col-1::\n\n支柱一\n组织韧性建设")
       expect(page.rawMarkdown).toContain("::col-2::\n\n支柱二\n敏捷效能交付")
@@ -663,7 +653,7 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       expect(isImageBlock(itemWithImg)).toBe(false)
     })
 
-    it("包含内嵌配图列表项的双栏超级块，正确识别为 two-cols-header 而非 image-left", () => {
+    it("包含内嵌配图列表项的双栏超级块，正确识别为 cols-header 而非 image-left", () => {
       const sbNode: ISiYuanBlockNode = {
         id: "sb-card-img",
         type: "s",
@@ -685,11 +675,11 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       // 验证未被误识别为图文分栏
       expect(detectSuperBlockImageLayout(sbNode)).toBeNull()
 
-      // 正确识别为列表双栏
+      // 正确识别为列表多栏 (cols-header)
       const listRes = detectListSuperBlock(sbNode)
       expect(listRes).not.toBeNull()
-      expect(listRes?.layout).toBe("two-cols-header")
-      expect(listRes?.slots).toEqual(["left", "right"])
+      expect(listRes?.layout).toBe("cols-header")
+      expect(listRes?.slots).toEqual(["col-1", "col-2"])
     })
 
     it("顶层图文超级块包裹内层列表超级块时，顶层保持 image-left 版式，不被列表多栏覆盖", () => {
@@ -800,8 +790,8 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       expect(doc.slides.length).toBe(1)
       const page = doc.slides[0]
 
-      // 1. 验证版式识别为 three-cols-header (绝非降级为 two-cols-header)
-      expect(page.frontmatter.layout).toBe("three-cols-header")
+      // 1. 验证版式识别为 cols-header
+      expect(page.frontmatter.layout).toBe("cols-header")
 
       // 2. 验证生成的 Slidev Markdown 具备三栏插槽，且三个列表项分别归入独立的栏目
       expect(page.rawMarkdown).toContain("# 个人经历与沉淀")
@@ -817,7 +807,7 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       expect(page.rawMarkdown).not.toContain("::right::")
 
       // 4. 验证持久化 setBlockAttrs 正确写入对应三栏插槽
-      expect(mockSetAttrs).toHaveBeenCalledWith(docId, { [ATTR_PAGE_LAYOUT]: "three-cols-header" })
+      expect(mockSetAttrs).toHaveBeenCalledWith(docId, { [ATTR_PAGE_LAYOUT]: "cols-header" })
       expect(mockSetAttrs).toHaveBeenCalledWith("h-title", { [ATTR_ELEM_SLOT]: "header" })
       expect(mockSetAttrs).toHaveBeenCalledWith("item-1", { [ATTR_ELEM_SLOT]: "col-1" })
       expect(mockSetAttrs).toHaveBeenCalledWith("item-2", { [ATTR_ELEM_SLOT]: "col-2" })
@@ -825,7 +815,7 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
 
       // 5. 验证单页 HTML/PDF 导出渲染也是三栏独立结构
       const html = renderSlideBlocksToHtml(page)
-      expect(html).toContain("layout-three-cols-header-container")
+      expect(html).toContain("layout-cols-header-container")
       expect(html).toContain("pdf-col--1")
       expect(html).toContain("pdf-col--2")
       expect(html).toContain("pdf-col--3")
@@ -887,7 +877,7 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       const doc = await compiler.compile(docId)
       const page = doc.slides[0]
 
-      expect(page.frontmatter.layout).toBe("three-cols-header")
+      expect(page.frontmatter.layout).toBe("cols-header")
       expect(page.rawMarkdown).toContain("::col-1::")
       expect(page.rawMarkdown).toContain("第一阶段：调研验证")
       expect(page.rawMarkdown).toContain("::col-2::")
@@ -943,7 +933,7 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       const doc = await compiler.compile(docId)
       const page = doc.slides[0]
 
-      expect(page.frontmatter.layout).toBe("three-cols-header")
+      expect(page.frontmatter.layout).toBe("cols-header")
       expect(page.rawMarkdown).toContain("::col-1::")
       expect(page.rawMarkdown).toContain("模块 1：网关接入")
       expect(page.rawMarkdown).toContain("::col-2::")

@@ -356,19 +356,63 @@ const emit = defineEmits<{
 }>()
 
 const isMultiColLayout = computed(() => {
-  return ['two-cols', 'two-cols-header', 'three-cols-header', 'image-left', 'image-right'].includes(props.pageLayout)
+  return ['two-cols', 'cols-header', 'two-cols-header', 'three-cols-header', 'image-left', 'image-right'].includes(props.pageLayout)
 })
 
-const isThreeCols = computed(() => props.pageLayout === 'three-cols-header')
+const detectedColumnsCount = computed(() => {
+  if (props.pageLayout === 'two-cols-header' || props.pageLayout === 'two-cols' || props.pageLayout === 'image-left' || props.pageLayout === 'image-right') {
+    return 2
+  }
+  if (props.pageLayout === 'three-cols-header') {
+    return 3
+  }
+  // cols-header: 依据 pageLayoutRatio, detectedSbRatio 或 detectedSbInfo 动态推断
+  const ratio = (props.pageLayoutRatio || '').trim()
+  if (ratio.includes(':')) {
+    const count = ratio.split(':').filter(Boolean).length
+    if (count >= 2 && count <= 6) return count
+  }
+  const sbRatio = (props.detectedSbRatio || '').trim()
+  if (sbRatio.includes(':')) {
+    const count = sbRatio.split(':').filter(Boolean).length
+    if (count >= 2 && count <= 6) return count
+  }
+  if (props.detectedSbInfo?.colCount && props.detectedSbInfo.colCount >= 2) {
+    return Math.min(props.detectedSbInfo.colCount, 6)
+  }
+  if (props.detectedSbInfo?.slots && Array.isArray(props.detectedSbInfo.slots)) {
+    const count = props.detectedSbInfo.slots.length
+    if (count >= 2 && count <= 6) return count
+  }
+  return 2
+})
 
 const currentRatioPresets = computed(() => {
-  if (isThreeCols.value) {
+  const cols = detectedColumnsCount.value
+  if (cols === 3) {
     return [
       { label: '默认 1:1:1', value: '' },
       { label: '1:2:1 (主中)', value: '1:2:1' },
       { label: '2:1:1 (主左)', value: '2:1:1' },
       { label: '1:1:2 (主右)', value: '1:1:2' },
       { label: '1:3:1', value: '1:3:1' },
+    ]
+  }
+  if (cols === 4) {
+    return [
+      { label: '默认 1:1:1:1', value: '' },
+      { label: '1:2:2:1', value: '1:2:2:1' },
+      { label: '2:1:1:2', value: '2:1:1:2' },
+    ]
+  }
+  if (cols === 5) {
+    return [
+      { label: '默认 1:1:1:1:1', value: '' },
+    ]
+  }
+  if (cols === 6) {
+    return [
+      { label: '默认 1:1:1:1:1:1', value: '' },
     ]
   }
   return [

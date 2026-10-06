@@ -9,10 +9,24 @@ describe("LayoutPicker & SlidevIcon 版式线框图标体系测试", () => {
   const layoutPickerContent = fs.readFileSync(layoutPickerPath, "utf-8")
   const slidevIconContent = fs.readFileSync(slidevIconPath, "utf-8")
 
-  const expectedLayouts = [
+  const pickerLayouts = [
     "cover",
     "default",
     "two-cols",
+    "cols-header",
+    "image-right",
+    "image-left",
+    "center",
+    "fact",
+    "intro",
+    "quote",
+  ]
+
+  const expectedSvgLayouts = [
+    "cover",
+    "default",
+    "two-cols",
+    "cols-header",
     "two-cols-header",
     "three-cols-header",
     "image-right",
@@ -23,8 +37,8 @@ describe("LayoutPicker & SlidevIcon 版式线框图标体系测试", () => {
     "quote",
   ]
 
-  it("LayoutPicker 应定义所有 11 种标准版式", () => {
-    expectedLayouts.forEach(layout => {
+  it("LayoutPicker 应定义合并后的通用表头多栏 (cols-header) 及其他标准版式", () => {
+    pickerLayouts.forEach(layout => {
       expect(layoutPickerContent).toContain(`name: '${layout}'`)
     })
   })
@@ -37,8 +51,8 @@ describe("LayoutPicker & SlidevIcon 版式线框图标体系测试", () => {
     expect(layoutPickerContent).toContain("<SlidevIcon :name=\"'layout-' + layout.name\" />")
   })
 
-  it("SlidevIcon 应包含所有 11 种版式的专属线框 SVG 定义", () => {
-    expectedLayouts.forEach(layout => {
+  it("SlidevIcon 应包含所有版式（含 cols-header 及历史版式）的专属线框 SVG 定义", () => {
+    expectedSvgLayouts.forEach(layout => {
       expect(slidevIconContent).toContain(`layout-${layout}`)
     })
   })

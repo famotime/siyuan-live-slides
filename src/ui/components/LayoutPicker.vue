@@ -6,7 +6,7 @@
         v-for="layout in layouts"
         :key="layout.name"
         class="spm-layout-item"
-        :class="{ active: modelValue === layout.name }"
+        :class="{ active: isLayoutActive(layout.name) }"
         :title="layout.desc"
         @click="selectLayout(layout.name)"
       >
@@ -36,8 +36,7 @@ const layouts = [
   { name: 'cover', label: '封面', desc: '大标题与副标题封面页' },
   { name: 'default', label: '标准', desc: '标题在上方，内容在下方' },
   { name: 'two-cols', label: '双栏', desc: '左右双栏对比展示' },
-  { name: 'two-cols-header', label: '表头双栏', desc: '顶部通栏标题，下方左右双栏' },
-  { name: 'three-cols-header', label: '表头三栏', desc: '顶部通栏标题，下方等宽三栏' },
+  { name: 'cols-header', label: '表头多栏', desc: '顶部通栏标题，下方自适应 2~N 栏' },
   { name: 'image-right', label: '图右', desc: '左侧为内容，右侧全屏背景图' },
   { name: 'image-left', label: '图左', desc: '左侧全屏背景图，右侧为内容' },
   { name: 'center', label: '居中', desc: '内容全屏垂直水平居中' },
@@ -45,6 +44,14 @@ const layouts = [
   { name: 'intro', label: '介绍', desc: '演讲者自我介绍或章节导览' },
   { name: 'quote', label: '引言', desc: '名人名言与强调段落' },
 ]
+
+function isLayoutActive(layoutName: string): boolean {
+  if (props.modelValue === layoutName) return true
+  if (layoutName === 'cols-header' && (props.modelValue === 'two-cols-header' || props.modelValue === 'three-cols-header')) {
+    return true
+  }
+  return false
+}
 
 function selectLayout(name: string) {
   emit('update:modelValue', name)

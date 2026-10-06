@@ -508,6 +508,7 @@
     }
 
     .slide-content-wrapper.layout-two-cols,
+    .slide-content-wrapper.layout-cols-header,
     .slide-content-wrapper.layout-two-cols-header,
     .slide-content-wrapper.layout-three-cols-header {
       display: flex !important;
@@ -520,6 +521,7 @@
 
     .two-cols-header-top,
     .three-cols-header-top,
+    .cols-header-top,
     .layout-header-section {
       width: 100% !important;
       margin-bottom: var(--slidev-header-gap, 16px) !important;
@@ -527,6 +529,7 @@
     }
     .two-cols-header-top h1, .two-cols-header-top h2, .two-cols-header-top h3,
     .three-cols-header-top h1, .three-cols-header-top h2, .three-cols-header-top h3,
+    .cols-header-top h1, .cols-header-top h2, .cols-header-top h3,
     .layout-header-section h1, .layout-header-section h2, .layout-header-section h3 {
       margin-bottom: var(--slidev-title-margin-bottom, 10px) !important;
     }
@@ -563,9 +566,26 @@
       overflow: hidden !important;
     }
 
+    .layout-cols-grid {
+      display: grid !important;
+      grid-template-columns: var(--slide-grid-cols, repeat(auto-fit, minmax(0, 1fr))) !important;
+      grid-template-rows: minmax(0, 1fr) !important;
+      column-gap: 24px;
+      gap: 24px;
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 0 !important;
+      max-height: 100% !important;
+      flex: 1 1 0% !important;
+      align-items: stretch !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+
     .two-cols-left,
     .two-cols-right,
-    .three-cols-col {
+    .three-cols-col,
+    .col {
       min-width: 0 !important;
       width: 100% !important;
       max-width: 100% !important;
@@ -2128,9 +2148,9 @@
             :class="['layout-' + (currentSlide.frontmatter.layout || 'default'), 'spacing-' + currentSpacing, currentSlide.frontmatter.class, currentSlide.frontmatter.layoutClass]"
             :style="contentWrapperStyle"
           >
-            <!-- 带表头的双栏布局 -->
-            <template v-if="currentSlide.frontmatter.layout === 'two-cols-header'">
-              <div class="two-cols-header-top" v-if="headerBlocks.length > 0">
+            <!-- 带表头的多栏布局 (通用 cols-header 与历史兼容 two-cols-header, three-cols-header) -->
+            <template v-if="isColsHeader(currentSlide.frontmatter.layout)">
+              <div class="two-cols-header-top three-cols-header-top cols-header-top layout-header-section" v-if="headerBlocks.length > 0">
                 <div
                   v-for="block in headerBlocks"
                   :key="block.id"
@@ -2143,81 +2163,30 @@
                   <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
                 </div>
               </div>
-              <div class="layout-two-cols" :style="getLayoutGridStyle(currentSlide, 2)" style="flex: 1;">
-                <div class="two-cols-left" :class="currentSlide.frontmatter.class">
-                  <div
-                    v-for="block in leftBlocks"
-                    :key="block.id"
-                    class="slide-block"
-                    :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
-                    :style="getBlockMotionStyle(block)"
-                    :data-block-id="block.id"
-                    @click="onBlockClick(block.id, $event)"
-                  >
-                    <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
-                  </div>
-                </div>
-                <div class="two-cols-right" :class="currentSlide.frontmatter.class">
-                  <div
-                    v-for="block in rightBlocks"
-                    :key="block.id"
-                    class="slide-block"
-                    :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
-                    :style="getBlockMotionStyle(block)"
-                    :data-block-id="block.id"
-                    @click="onBlockClick(block.id, $event)"
-                  >
-                    <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
-                  </div>
-                </div>
-              </div>
-            </template>
-
-            <!-- 带表头的三栏布局 -->
-            <template v-else-if="currentSlide.frontmatter.layout === 'three-cols-header'">
-              <div class="three-cols-header-top" v-if="headerBlocks.length > 0">
+              <div
+                class="layout-cols-grid"
+                :class="[
+                  dynamicColsCount === 2 ? 'layout-two-cols' : '',
+                  dynamicColsCount === 3 ? 'layout-three-cols' : '',
+                ]"
+                :style="getLayoutGridStyle(currentSlide, dynamicColsCount)"
+                style="flex: 1;"
+              >
                 <div
-                  v-for="block in headerBlocks"
-                  :key="block.id"
-                  class="slide-block"
-                  :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
-                  :style="getBlockMotionStyle(block)"
-                  :data-block-id="block.id"
-                  @click="onBlockClick(block.id, $event)"
+                  v-for="(colBlocks, colIdx) in multiColBlocks"
+                  :key="colIdx"
+                  :class="[
+                    'col',
+                    'col-' + (colIdx + 1),
+                    'pdf-col--' + (colIdx + 1),
+                    dynamicColsCount === 2 && colIdx === 0 ? 'two-cols-left' : '',
+                    dynamicColsCount === 2 && colIdx === 1 ? 'two-cols-right' : '',
+                    dynamicColsCount === 3 ? 'three-cols-col three-cols-col--' + (colIdx + 1) : '',
+                    currentSlide.frontmatter.class,
+                  ]"
                 >
-                  <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
-                </div>
-              </div>
-              <div class="layout-three-cols" :style="getLayoutGridStyle(currentSlide, 3)" style="flex: 1;">
-                <div class="three-cols-col three-cols-col--1" :class="currentSlide.frontmatter.class">
                   <div
-                    v-for="block in col1Blocks"
-                    :key="block.id"
-                    class="slide-block"
-                    :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
-                    :style="getBlockMotionStyle(block)"
-                    :data-block-id="block.id"
-                    @click="onBlockClick(block.id, $event)"
-                  >
-                    <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
-                  </div>
-                </div>
-                <div class="three-cols-col three-cols-col--2" :class="currentSlide.frontmatter.class">
-                  <div
-                    v-for="block in col2Blocks"
-                    :key="block.id"
-                    class="slide-block"
-                    :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
-                    :style="getBlockMotionStyle(block)"
-                    :data-block-id="block.id"
-                    @click="onBlockClick(block.id, $event)"
-                  >
-                    <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
-                  </div>
-                </div>
-                <div class="three-cols-col three-cols-col--3" :class="currentSlide.frontmatter.class">
-                  <div
-                    v-for="block in col3Blocks"
+                    v-for="block in colBlocks"
                     :key="block.id"
                     class="slide-block"
                     :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
@@ -3230,231 +3199,175 @@
           return []
         })
 
-        const leftBlocks = computed(() => {
-          if (!currentSlide.value) return []
-          const layout = currentSlide.value.frontmatter?.layout
-          const blocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right")
-          if (layout === "two-cols-header") {
-            const headers = headerBlocks.value
-            const rem = blocks.filter(b => !headers.includes(b))
-            const right = rem.filter(b => b.slot === "right" || b.slot === "col-2")
-            return rem.filter(b => !right.includes(b))
+        function isColsHeader(layout) {
+          return layout === 'cols-header' || layout === 'two-cols-header' || layout === 'three-cols-header';
+        }
+
+        const dynamicColsCount = computed(() => {
+          if (!currentSlide.value) return 2;
+          const layout = currentSlide.value.frontmatter?.layout;
+          if (layout === 'three-cols-header') return 3;
+          if (layout === 'two-cols-header') return 2;
+          const blocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right");
+          let maxCol = 0;
+          for (const b of blocks) {
+            const m = (b.slot || '').match(/^col-(\d+)$/i);
+            if (m) maxCol = Math.max(maxCol, parseInt(m[1], 10));
           }
-          const left = blocks.filter(b => b.slot === "left")
-          if (left.length > 0) return left
-          const hasRight = blocks.some(b => b.slot === "right")
-          if (hasRight) return blocks.filter(b => b.slot !== "right")
-          const mid = Math.ceil(blocks.length / 2)
-          return blocks.slice(0, mid)
-        })
-
-        const rightBlocks = computed(() => {
-          if (!currentSlide.value) return []
-          const layout = currentSlide.value.frontmatter?.layout
-          const blocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right")
-          if (layout === "two-cols-header") {
-            const headers = headerBlocks.value
-            const rem = blocks.filter(b => !headers.includes(b))
-            return rem.filter(b => b.slot === "right" || b.slot === "col-2")
+          if (maxCol >= 2) return maxCol;
+          const r = (currentSlide.value.frontmatter?.layoutRatio || '').trim();
+          if (r.includes(':')) {
+            const parts = r.split(':').map(p => parseFloat(p.trim())).filter(n => !isNaN(n) && n > 0);
+            if (parts.length >= 2) return parts.length;
           }
-          const right = blocks.filter(b => b.slot === "right")
-          if (right.length > 0) return right
-          const mid = Math.ceil(blocks.length / 2)
-          return blocks.slice(mid)
-        })
+          return 2;
+        });
 
-        function distributeThreeColumns(rem) {
-          if (!rem || rem.length === 0) return { col1: [], col2: [], col3: [] }
+        function distributeNColumns(rem, targetCols = 2) {
+          const n = Math.max(2, targetCols);
+          if (!rem || rem.length === 0) return Array.from({ length: n }, () => []);
 
-          // 1. 检查是否存在超级块且具有子块 (在单块包裹场景下自动解包)
           if (rem.length === 1 && rem[0].children && rem[0].children.length >= 2) {
-            const ch = rem[0].children
-            if (ch.length >= 3) {
-              const c1 = Math.ceil(ch.length / 3)
-              const c2 = Math.ceil((ch.length - c1) / 2)
-              return {
-                col1: ch.slice(0, c1),
-                col2: ch.slice(c1, c1 + c2),
-                col3: ch.slice(c1 + c2),
-              }
-            } else {
-              return { col1: [ch[0]], col2: [ch[1]], col3: [] }
+            const ch = rem[0].children;
+            const cols = Array.from({ length: n }, () => []);
+            const actualN = Math.min(n, ch.length);
+            const baseSize = Math.floor(ch.length / actualN);
+            const extra = ch.length % actualN;
+            let cur = 0;
+            for (let i = 0; i < actualN; i++) {
+              const take = baseSize + (i < extra ? 1 : 0);
+              cols[i] = ch.slice(cur, cur + take);
+              cur += take;
             }
+            return cols;
           }
 
           const getColNum = (b) => {
-            const s = b.slot || ""
-            if (s === "col-1" || s === "left") return 1
-            if (s === "col-2" || s === "center") return 2
-            if (s === "col-3" || s === "right") return 3
-            return null
-          }
+            const s = (b.slot || '').trim();
+            if (!s) return null;
+            if (s === 'col-1' || s === 'left') return 1;
+            if (s === 'col-2' || s === 'center') return 2;
+            if (s === 'col-3') return 3;
+            if (s === 'right') return n === 2 ? 2 : n;
+            const m = s.match(/^col-(\d+)$/i);
+            if (m) {
+              const idx = parseInt(m[1], 10);
+              if (idx >= 1 && idx <= n) return idx;
+            }
+            return null;
+          };
 
-          const explicitCols = rem.map(getColNum)
-          const hasExplicitCols = explicitCols.some(c => c !== null)
+          const explicitCols = rem.map(getColNum);
+          const hasExplicitCols = explicitCols.some(c => c !== null);
 
-          // 2. 显式插槽分配
           if (hasExplicitCols) {
-            const hasCol2 = explicitCols.includes(2)
-            const hasCol3 = explicitCols.includes(3)
-
-            // 场景 2A: 显式标记了第 2 栏或第 3 栏 -> 流式继承模式
-            if (hasCol2 || hasCol3) {
-              const col1 = []
-              const col2 = []
-              const col3 = []
-              let currentCol = 1
-
-              for (const b of rem) {
-                const directCol = getColNum(b)
-                if (directCol !== null) {
-                  currentCol = directCol
-                }
-                if (currentCol === 1) col1.push(b)
-                else if (currentCol === 2) col2.push(b)
-                else col3.push(b)
-              }
-              return { col1, col2, col3 }
+            const cols = Array.from({ length: n }, () => []);
+            let currentIdx = 1;
+            for (const b of rem) {
+              const directCol = getColNum(b);
+              if (directCol !== null) currentIdx = directCol;
+              cols[currentIdx - 1].push(b);
             }
-
-            // 场景 2B: 仅显式标记了第 1 栏 (例如点击了“设为第1栏”)，未显式标记第 2、3 栏
-            const col1 = rem.filter(b => getColNum(b) === 1)
-            const untagged = rem.filter(b => getColNum(b) === null)
-            if (untagged.length >= 2) {
-              const mid = Math.ceil(untagged.length / 2)
-              return {
-                col1,
-                col2: untagged.slice(0, mid),
-                col3: untagged.slice(mid),
-              }
-            } else if (untagged.length === 1) {
-              return {
-                col1,
-                col2: untagged,
-                col3: [],
-              }
-            } else {
-              return { col1, col2: [], col3: [] }
-            }
+            return cols;
           }
 
-          // 3. 检查大纲标题自动分组 (若存在 >= 3 个标题行，按标题分组)
+          // 大纲标题分组
           const isHeading = (b) => {
-            if (b.type === "h") return true
-            if (b.subType && /^h[1-6]$/i.test(b.subType)) return true
-            const md = (b.rawMarkdown || b.content || "").trim()
-            return /^#{1,6}\s+/.test(md)
-          }
-          const headingIndices = rem.map((b, idx) => (isHeading(b) ? idx : -1)).filter(idx => idx !== -1)
-          if (headingIndices.length >= 3) {
-            return {
-              col1: rem.slice(0, headingIndices[1]),
-              col2: rem.slice(headingIndices[1], headingIndices[2]),
-              col3: rem.slice(headingIndices[2]),
+            if (b.type === "h") return true;
+            if (b.subType && /^h[1-6]$/i.test(b.subType)) return true;
+            const md = (b.rawMarkdown || b.content || "").trim();
+            return /^#{1,6}\s+/.test(md);
+          };
+          const headingIndices = rem.map((b, idx) => (isHeading(b) ? idx : -1)).filter(idx => idx !== -1);
+          if (headingIndices.length >= n) {
+            const cols = Array.from({ length: n }, () => []);
+            for (let i = 0; i < n; i++) {
+              const start = headingIndices[i];
+              const end = i + 1 < n ? headingIndices[i + 1] : rem.length;
+              cols[i] = rem.slice(start, end);
             }
+            return cols;
           }
 
-          // 4. 多块列表/段落均分 (rem.length >= 3)
-          if (rem.length >= 3) {
-            const c1Count = Math.ceil(rem.length / 3)
-            const c2Count = Math.ceil((rem.length - c1Count) / 2)
-            return {
-              col1: rem.slice(0, c1Count),
-              col2: rem.slice(c1Count, c1Count + c2Count),
-              col3: rem.slice(c1Count + c2Count),
+          if (rem.length >= n) {
+            const cols = Array.from({ length: n }, () => []);
+            let cur = 0;
+            for (let i = 0; i < n; i++) {
+              const remainingCols = n - i;
+              const remainingItems = rem.length - cur;
+              const take = Math.ceil(remainingItems / remainingCols);
+              cols[i] = rem.slice(cur, cur + take);
+              cur += take;
             }
+            return cols;
           }
 
-          // 5. 2 个内容块分配
-          if (rem.length === 2) {
-            return {
-              col1: [rem[0]],
-              col2: [rem[1]],
-              col3: [],
-            }
+          if (rem.length > 1 && rem.length < n) {
+            const cols = Array.from({ length: n }, () => []);
+            for (let i = 0; i < rem.length; i++) cols[i] = [rem[i]];
+            return cols;
           }
 
-          // 6. 仅 1 个内容块时的细粒度拆分 (列表项、HTML <li>、多段落)
           if (rem.length === 1) {
-            const single = rem[0]
-            const text = (single.rawMarkdown || single.content || "").trim()
-
-            // 6.1 Markdown 列表项 (- item / 1. item)
-            const lines = text.split(/\r?\n/)
-            const itemLines = lines.filter(l => /^[ \t]*[-*+]\s+|^[ \t]*\d+\.\s+/.test(l))
-            if (itemLines.length >= 3) {
-              const c1 = Math.ceil(itemLines.length / 3)
-              const c2 = Math.ceil((itemLines.length - c1) / 2)
-              const items1 = itemLines.slice(0, c1).join("\n")
-              const items2 = itemLines.slice(c1, c1 + c2).join("\n")
-              const items3 = itemLines.slice(c1 + c2).join("\n")
-              return {
-                col1: [{ ...single, rawMarkdown: items1, content: items1 }],
-                col2: [{ ...single, id: `${single.id}-col2`, rawMarkdown: items2, content: items2 }],
-                col3: [{ ...single, id: `${single.id}-col3`, rawMarkdown: items3, content: items3 }],
+            const single = rem[0];
+            const text = (single.rawMarkdown || single.content || "").trim();
+            const lines = text.split(/\r?\n/);
+            const itemLines = lines.filter(l => /^[ \t]*[-*+]\s+|^[ \t]*\d+\.\s+/.test(l));
+            if (itemLines.length >= n) {
+              const cols = Array.from({ length: n }, () => []);
+              let cur = 0;
+              for (let i = 0; i < n; i++) {
+                const remainingCols = n - i;
+                const remainingItems = itemLines.length - cur;
+                const take = Math.ceil(remainingItems / remainingCols);
+                const itemsText = itemLines.slice(cur, cur + take).join("\n");
+                cols[i] = [{
+                  ...single,
+                  id: i === 0 ? single.id : `${single.id}-col${i + 1}`,
+                  rawMarkdown: itemsText,
+                  content: itemsText,
+                }];
+                cur += take;
               }
-            }
-
-            // 6.2 HTML 列表项 (<li>...</li>)
-            const liMatches = text.match(/<li[\s\S]*?<\/li>/gi)
-            if (liMatches && liMatches.length >= 3) {
-              const c1 = Math.ceil(liMatches.length / 3)
-              const c2 = Math.ceil((liMatches.length - c1) / 2)
-              const ul1 = `<ul>\n${liMatches.slice(0, c1).join("\n")}\n</ul>`
-              const ul2 = `<ul>\n${liMatches.slice(c1, c1 + c2).join("\n")}\n</ul>`
-              const ul3 = `<ul>\n${liMatches.slice(c1 + c2).join("\n")}\n</ul>`
-              return {
-                col1: [{ ...single, rawMarkdown: ul1, content: ul1 }],
-                col2: [{ ...single, id: `${single.id}-col2`, rawMarkdown: ul2, content: ul2 }],
-                col3: [{ ...single, id: `${single.id}-col3`, rawMarkdown: ul3, content: ul3 }],
-              }
-            }
-
-            // 6.3 纯文本多段落 (空行分隔)
-            const paras = text.split(/\r?\n\s*\r?\n/).filter(p => p.trim() !== "")
-            if (paras.length >= 3) {
-              const c1 = Math.ceil(paras.length / 3)
-              const c2 = Math.ceil((paras.length - c1) / 2)
-              return {
-                col1: [{ ...single, rawMarkdown: paras.slice(0, c1).join("\n\n"), content: paras.slice(0, c1).join("\n\n") }],
-                col2: [{ ...single, id: `${single.id}-col2`, rawMarkdown: paras.slice(c1, c1 + c2).join("\n\n"), content: paras.slice(c1, c1 + c2).join("\n\n") }],
-                col3: [{ ...single, id: `${single.id}-col3`, rawMarkdown: paras.slice(c1 + c2).join("\n\n"), content: paras.slice(c1 + c2).join("\n\n") }],
-              }
+              return cols;
             }
           }
 
-          return { col1: rem, col2: [], col3: [] }
+          const cols = Array.from({ length: n }, () => []);
+          cols[0] = rem;
+          return cols;
         }
 
-        const threeColsDistribution = computed(() => {
-          if (!currentSlide.value) return { col1: [], col2: [], col3: [] }
-          const blocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right")
-          const headers = headerBlocks.value
-          const rem = blocks.filter(b => !headers.includes(b))
-          const dist = distributeThreeColumns(rem)
+        function distributeThreeColumns(rem) {
+          const cols = distributeNColumns(rem, 3);
+          return { col1: cols[0] || [], col2: cols[1] || [], col3: cols[2] || [] };
+        }
 
-          const cleanCol = (colList) => {
-            const valid = (colList || []).filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
-            if (valid.length === 0) return valid
-            const first = valid[0]
-            const md = (first.rawMarkdown || first.content || "").trim()
-            const isList = /^(?:[-*+]|\d+\.)\s+/.test(md) || first.type === "i" || first.type === "l"
+        const multiColBlocks = computed(() => {
+          if (!currentSlide.value) return [];
+          const headers = headerBlocks.value;
+          const blocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right");
+          const rem = blocks.filter(b => !headers.includes(b));
+          const colsCount = dynamicColsCount.value;
+          const cols = distributeNColumns(rem, colsCount);
+          return cols.map(colList => {
+            const valid = (colList || []).filter(b => Boolean((b.rawMarkdown || b.content || "").trim()));
+            if (valid.length === 0) return valid;
+            const first = valid[0];
+            const md = (first.rawMarkdown || first.content || "").trim();
+            const isList = /^(?:[-*+]|\d+\.)\s+/.test(md) || first.type === "i" || first.type === "l";
             if (isList) {
-              first.rawMarkdown = cleanCardListItemMarkdown(first.rawMarkdown || first.content || "")
+              first.rawMarkdown = cleanCardListItemMarkdown(first.rawMarkdown || first.content || "");
             }
-            return valid
-          }
+            return valid;
+          });
+        });
 
-          return {
-            col1: cleanCol(dist.col1),
-            col2: cleanCol(dist.col2),
-            col3: cleanCol(dist.col3),
-          }
-        })
-
-        const col1Blocks = computed(() => threeColsDistribution.value.col1)
-        const col2Blocks = computed(() => threeColsDistribution.value.col2)
-        const col3Blocks = computed(() => threeColsDistribution.value.col3)
+        const leftBlocks = computed(() => multiColBlocks.value[0] || []);
+        const rightBlocks = computed(() => multiColBlocks.value[1] || []);
+        const col1Blocks = computed(() => multiColBlocks.value[0] || []);
+        const col2Blocks = computed(() => multiColBlocks.value[1] || []);
+        const col3Blocks = computed(() => multiColBlocks.value[2] || []);
 
         // 幻灯片专属图文分栏图片状态与容灾回退
         const slideImageFailed = ref(false)
@@ -4993,6 +4906,9 @@
           col1Blocks,
           col2Blocks,
           col3Blocks,
+          isColsHeader,
+          dynamicColsCount,
+          multiColBlocks,
           normalBlocks,
           isDarkTheme,
           isMaxStep,

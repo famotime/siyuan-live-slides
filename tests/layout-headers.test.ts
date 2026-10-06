@@ -507,4 +507,74 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
       expect(isSlotActive("col-3", "col-3")).toBe(true)
     })
   })
+
+  describe("5. 通用 cols-header 4 栏自适应与自定义宽度比例测试", () => {
+    it("cols-header: 4 栏卡片内容自动均分至 col-1 ~ col-4", () => {
+      const docId = "doc-4cols"
+      const docAttrs = { "custom-slidev-layout": "cols-header", "custom-slidev-layout-ratio": "1:1:1:1" }
+      const blocks: ISiYuanBlockNode[] = [
+        { id: "h0", type: "h", markdown: "# 核心业务四大支柱", ial: { id: "h0", "custom-slidev-slot": "header" } },
+        { id: "p1", type: "p", markdown: "研发支柱", ial: { id: "p1" } },
+        { id: "p2", type: "p", markdown: "产品支柱", ial: { id: "p2" } },
+        { id: "p3", type: "p", markdown: "运营支柱", ial: { id: "p3" } },
+        { id: "p4", type: "p", markdown: "商业支柱", ial: { id: "p4" } },
+      ]
+      const doc = buildSlidevDocument(docId, docAttrs, blocks)
+      const page = doc.slides[0]
+      expect(page.frontmatter.layout).toBe("cols-header")
+      expect(page.frontmatter.layoutRatio).toBe("1:1:1:1")
+      expect(page.rawMarkdown).toContain("::col-1::\n\n研发支柱")
+      expect(page.rawMarkdown).toContain("::col-2::\n\n产品支柱")
+      expect(page.rawMarkdown).toContain("::col-3::\n\n运营支柱")
+      expect(page.rawMarkdown).toContain("::col-4::\n\n商业支柱")
+    })
+
+    it("cols-header: renderSlideBlocksToHtml 渲染 4 栏网格容器与对应 grid-template-columns", () => {
+      const slide = {
+        pageIndex: 1,
+        startBlockId: "p1",
+        frontmatter: { layout: "cols-header", layoutRatio: "2:3:3:2" },
+        notes: "",
+        blocks: [
+          { id: "h0", type: "h", content: "季度指标", rawMarkdown: "# 季度指标", slot: "header" },
+          { id: "c1", type: "p", content: "Q1", rawMarkdown: "Q1", slot: "col-1" },
+          { id: "c2", type: "p", content: "Q2", rawMarkdown: "Q2", slot: "col-2" },
+          { id: "c3", type: "p", content: "Q3", rawMarkdown: "Q3", slot: "col-3" },
+          { id: "c4", type: "p", content: "Q4", rawMarkdown: "Q4", slot: "col-4" },
+        ],
+        rawMarkdown: "",
+      }
+      const html = renderSlideBlocksToHtml(slide)
+      expect(html).toContain("layout-cols-header-container")
+      expect(html).toContain("grid-template-columns: 2fr 3fr 3fr 2fr;")
+      expect(html).toContain("pdf-col--1")
+      expect(html).toContain("pdf-col--4")
+    })
+
+    it("WorkspaceScaffolder: 当页面包含 cols-header 时，自动写入 layouts/cols-header.vue", async () => {
+      const { WorkspaceScaffolder } = await import("../src/engine/workspace-scaffolder")
+      const scaffolder = new WorkspaceScaffolder({ workspacePath: "/test/workspace" })
+      const putFileFn = vi.fn().mockResolvedValue({ success: true })
+      const doc = {
+        docId: "doc-cols",
+        title: "Cols Header Demo",
+        config: { theme: "default" },
+        slides: [
+          {
+            pageIndex: 1,
+            startBlockId: "b1",
+            frontmatter: { layout: "cols-header" },
+            blocks: [],
+            notes: "",
+            rawMarkdown: "# 演示",
+          },
+        ],
+      } as any
+
+      const result = await scaffolder.scaffold(doc, putFileFn)
+      expect(result.success).toBe(true)
+      const writtenPaths = putFileFn.mock.calls.map(call => call[0])
+      expect(writtenPaths).toContain("/test/workspace/layouts/cols-header.vue")
+    })
+  })
 })

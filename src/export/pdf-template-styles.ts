@@ -223,7 +223,9 @@ export function generatePdfExportStyles(options?: {
       border: 1px solid #cbd5e1;
     }
     .pdf-two-cols-wrapper,
-    .layout-two-cols-grid {
+    .layout-two-cols-grid,
+    .layout-cols-wrapper,
+    .layout-cols-grid {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       grid-template-rows: minmax(0, 1fr) !important;
@@ -236,6 +238,7 @@ export function generatePdfExportStyles(options?: {
       align-items: stretch;
       overflow: hidden !important;
     }
+    .layout-cols-header-container,
     .layout-two-cols-header-container,
     .layout-three-cols-header-container {
       display: flex;
@@ -400,21 +403,25 @@ export function generatePdfExportStyles(options?: {
       height: 1.15em;
       cursor: pointer;
     }
-    /* 两栏与三栏（超级块分栏）布局：紧凑自然行距，子列表保留圆点与层级缩进 */
+    /* 两栏与三栏及多栏（超级块分栏）布局：紧凑自然行距，子列表保留圆点与层级缩进 */
     .layout-two-cols ul,
+    .layout-cols-header ul,
     .layout-two-cols-header ul,
     .layout-three-cols ul,
     .layout-three-cols-header ul,
     .two-cols-left ul,
     .two-cols-right ul,
     .three-cols-col ul,
+    .col ul,
     .pdf-two-cols-wrapper ul,
     .pdf-three-cols-wrapper ul,
     .pdf-col ul,
     .layout-two-cols-grid .pdf-list,
     .layout-three-cols-grid .pdf-list,
+    .layout-cols-grid .pdf-list,
     .layout-two-cols-grid .pdf-list--unordered,
-    .layout-three-cols-grid .pdf-list--unordered {
+    .layout-three-cols-grid .pdf-list--unordered,
+    .layout-cols-grid .pdf-list--unordered {
       list-style: disc !important;
       list-style-type: disc !important;
       padding-left: 1.25em !important;
@@ -426,17 +433,20 @@ export function generatePdfExportStyles(options?: {
       display: block !important;
     }
     .layout-two-cols ol,
+    .layout-cols-header ol,
     .layout-two-cols-header ol,
     .layout-three-cols ol,
     .layout-three-cols-header ol,
     .two-cols-left ol,
     .two-cols-right ol,
     .three-cols-col ol,
+    .col ol,
     .pdf-two-cols-wrapper ol,
     .pdf-three-cols-wrapper ol,
     .pdf-col ol,
     .layout-two-cols-grid .pdf-list--ordered,
-    .layout-three-cols-grid .pdf-list--ordered {
+    .layout-three-cols-grid .pdf-list--ordered,
+    .layout-cols-grid .pdf-list--ordered {
       list-style: decimal !important;
       list-style-type: decimal !important;
       padding-left: 1.25em !important;
@@ -448,12 +458,14 @@ export function generatePdfExportStyles(options?: {
       display: block !important;
     }
     .layout-two-cols li,
+    .layout-cols-header li,
     .layout-two-cols-header li,
     .layout-three-cols li,
     .layout-three-cols-header li,
     .two-cols-left li,
     .two-cols-right li,
     .three-cols-col li,
+    .col li,
     .pdf-col li,
     .pdf-col .pdf-list-item {
       padding-left: 0.2em !important;

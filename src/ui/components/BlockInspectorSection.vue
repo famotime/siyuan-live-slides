@@ -444,20 +444,39 @@ const props = defineProps<{
 
 const effectiveLayout = computed(() => {
   const l = props.currentSlideLayout || ''
-  // 智能推断：如果当前块已经分配了 col-1 / col-2 / col-3 插槽，无论上层传入什么，它必然属于 three-cols-header
-  if (['col-1', 'col-2', 'col-3'].includes(props.elemSlot)) {
-    return 'three-cols-header'
+  // 智能推断：如果当前块已经分配了 col-1 ~ col-6 插槽，无论上层传入什么，它必然属于 cols-header
+  if (['col-1', 'col-2', 'col-3', 'col-4', 'col-5', 'col-6'].includes(props.elemSlot)) {
+    return 'cols-header'
   }
   return l
 })
 
 const isMultiColsLayout = computed(() => {
   const l = effectiveLayout.value
-  return ['two-cols', 'two-cols-header', 'three-cols-header'].includes(l)
+  return ['two-cols', 'cols-header', 'two-cols-header', 'three-cols-header'].includes(l)
+})
+
+const detectedColumnsCount = computed(() => {
+  if (props.detectedSbInfo?.colCount && props.detectedSbInfo.colCount >= 2) {
+    return Math.min(props.detectedSbInfo.colCount, 6)
+  }
+  const match = props.elemSlot?.match(/^col-(\d+)$/)
+  if (match) {
+    const num = parseInt(match[1], 10)
+    if (num >= 2 && num <= 6) return Math.max(num, 3)
+  }
+  if (props.currentSlideLayout === 'three-cols-header') return 3
+  if (props.currentSlideLayout === 'two-cols-header' || props.currentSlideLayout === 'two-cols') return 2
+  if (props.detectedSbInfo?.ratio?.includes(':')) {
+    const parts = props.detectedSbInfo.ratio.split(':').filter(Boolean)
+    if (parts.length >= 2) return Math.min(parts.length, 6)
+  }
+  return 3 // 默认按 3 栏
 })
 
 const slotControlTitle = computed(() => {
   const l = effectiveLayout.value
+  if (l === 'cols-header') return '多栏插槽归属 (Slot)'
   if (l === 'three-cols-header') return '三栏插槽归属 (Slot)'
   if (l === 'two-cols-header') return '带表头双栏插槽 (Slot)'
   return '多栏插槽归属 (Slot)'
@@ -465,6 +484,7 @@ const slotControlTitle = computed(() => {
 
 const slotControlDesc = computed(() => {
   const l = effectiveLayout.value
+  if (l === 'cols-header') return `在 cols-header 表头多栏（${detectedColumnsCount.value} 栏）中的内容块位置`
   if (l === 'three-cols-header') return '在 three-cols-header 版式中的内容块位置'
   if (l === 'two-cols-header') return '在 two-cols-header 版式中的内容块位置'
   if (l === 'two-cols') return '在 two-cols 双栏版式中的归属'
@@ -473,13 +493,10 @@ const slotControlDesc = computed(() => {
 
 const availableSlots = computed(() => {
   const l = effectiveLayout.value
-  if (l === 'three-cols-header') {
+  if (l === 'two-cols') {
     return [
-      { value: '', label: '默认' },
-      { value: 'header', label: '表头' },
-      { value: 'col-1', label: '第 1 栏' },
-      { value: 'col-2', label: '第 2 栏' },
-      { value: 'col-3', label: '第 3 栏' },
+      { value: '', label: '默认 (左)' },
+      { value: 'right', label: '右栏' },
     ]
   }
   if (l === 'two-cols-header') {
@@ -490,18 +507,25 @@ const availableSlots = computed(() => {
       { value: 'right', label: '右栏' },
     ]
   }
-  if (l === 'two-cols') {
+  if (l === 'three-cols-header') {
     return [
-      { value: '', label: '默认 (左)' },
-      { value: 'right', label: '右栏' },
+      { value: '', label: '默认' },
+      { value: 'header', label: '表头' },
+      { value: 'col-1', label: '第 1 栏' },
+      { value: 'col-2', label: '第 2 栏' },
+      { value: 'col-3', label: '第 3 栏' },
     ]
   }
-  return [
+  // cols-header
+  const cols = detectedColumnsCount.value
+  const slots = [
     { value: '', label: '默认' },
     { value: 'header', label: '表头' },
-    { value: 'left', label: '左栏' },
-    { value: 'right', label: '右栏' },
   ]
+  for (let i = 1; i <= cols; i++) {
+    slots.push({ value: `col-${i}`, label: `第 ${i} 栏` })
+  }
+  return slots
 })
 
 function isSlotActive(val: string): boolean {
@@ -512,7 +536,8 @@ function isSlotActive(val: string): boolean {
   if (s === val) return true
   if (val === 'col-1' && s === 'left') return true
   if (val === 'col-2' && s === 'center') return true
-  if (val === 'col-3' && s === 'right') return true
+  if (val === 'col-3' && s === 'right' && detectedColumnsCount.value === 3) return true
+  if (val === 'col-2' && s === 'right' && detectedColumnsCount.value === 2) return true
   if (val === 'left' && s === 'col-1') return true
   if (val === 'right' && (s === 'col-2' || s === 'col-3')) return true
   return false

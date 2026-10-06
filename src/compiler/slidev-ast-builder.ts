@@ -10,6 +10,7 @@ import {
   ATTR_ELEM_MOTION,
   ATTR_ELEM_SLOT,
   ATTR_PAGE_LAYOUT_RATIO,
+  isColsHeaderLayout,
 } from "../types/slidev-protocol"
 import type { IAssetRewriteOptions } from "./assets-rewriter"
 import { extractBlockMarkdown, parseKramdownIAL } from "./ast-crawler"
@@ -39,6 +40,7 @@ import {
   extractCleanNoteText,
   getBlockHeadingLevel,
   distributeThreeColumns,
+  distributeNColumns,
 } from "./directive-wrapper"
 
 export {
@@ -50,6 +52,7 @@ export {
   extractCleanNoteText,
   getBlockHeadingLevel,
   distributeThreeColumns,
+  distributeNColumns,
 }
 export type { IThreeColsDistribution } from "./directive-wrapper"
 
@@ -572,7 +575,7 @@ export function buildSlidevDocument(
 
     const layout = page.frontmatter.layout || "default"
 
-    if (layout === "two-cols-header") {
+    if (isColsHeaderLayout(layout)) {
       let headerList: ISlidevBlockItem[] = []
       const explicitHeader = contentBlocks.filter(b => b.slot === "header")
       if (explicitHeader.length > 0) {
@@ -585,71 +588,77 @@ export function buildSlidevDocument(
       }
 
       const rem = contentBlocks.filter(b => !headerList.includes(b))
-      const rightList = rem.filter(b => b.slot === "right" || b.slot === "col-2")
-      const leftList = rem.filter(b => !rightList.includes(b))
 
-      // 对左右分栏首个列表项执行卡片式圆点清洗（保留下级嵌套子项圆点与缩进）
-      cleanFirstListBlock(leftList)
-      cleanFirstListBlock(rightList)
-
-      const headerContent = renderBlocks(headerList)
-      const leftContent = renderColList(leftList)
-      const rightContent = renderColList(rightList)
-
-      if (headerContent) parts.push(headerContent)
-      if (leftContent) parts.push(`::left::\n\n${leftContent}`)
-      if (rightContent) parts.push(`::right::\n\n${rightContent}`)
-    } else if (layout === "three-cols-header") {
-      let headerList: ISlidevBlockItem[] = []
-      const explicitHeader = contentBlocks.filter(b => b.slot === "header")
-      if (explicitHeader.length > 0) {
-        headerList = explicitHeader
-      } else if (contentBlocks.length > 0) {
-        const candidateH = contentBlocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"))
-        if (candidateH) {
-          headerList = [candidateH]
+      // 确定栏数 targetCols (自适应 2~N 栏)
+      let targetCols = 2
+      if (layout === "three-cols-header") {
+        targetCols = 3
+      } else if (layout === "two-cols-header") {
+        targetCols = 2
+      } else {
+        let maxColSlot = 0
+        for (const b of rem) {
+          const m = (b.slot || "").match(/^col-(\d+)$/i)
+          if (m) {
+            maxColSlot = Math.max(maxColSlot, parseInt(m[1], 10))
+          }
+        }
+        if (maxColSlot >= 2) {
+          targetCols = maxColSlot
+        } else if (page.frontmatter.layoutRatio) {
+          const r = page.frontmatter.layoutRatio.trim()
+          if (r.includes(":")) {
+            const parts = r.split(":").map(p => parseFloat(p.trim())).filter(n => !isNaN(n) && n > 0)
+            if (parts.length >= 2) targetCols = parts.length
+          } else {
+            const tokens = r.split(/\s+/).filter(Boolean)
+            if (tokens.length >= 2) targetCols = tokens.length
+          }
+        } else if (rem.length === 1 && rem[0].children && rem[0].children.length >= 2) {
+          targetCols = Math.min(6, rem[0].children.length)
         }
       }
 
-      const rem = contentBlocks.filter(b => !headerList.includes(b))
-      const distribution = distributeThreeColumns(rem)
-      const col1List = distribution.col1
-      const col2List = distribution.col2
-      const col3List = distribution.col3
+      const cols = distributeNColumns(rem, targetCols)
 
       // 为虚拟 AST 模型上的块补全 slot，确保 Web 沙箱接收到 slides 时 slot 与渲染对齐
-      for (const b of col1List) {
-        if (!b.slot) b.slot = "col-1"
-      }
-      for (const b of col2List) {
-        if (!b.slot) b.slot = "col-2"
-      }
-      for (const b of col3List) {
-        if (!b.slot) b.slot = "col-3"
-      }
+      cols.forEach((colList, colIdx) => {
+        const slotName = `col-${colIdx + 1}`
+        for (const b of colList) {
+          if (!b.slot || b.slot === "default") {
+            b.slot = slotName
+          }
+        }
+        cleanFirstListBlock(colList)
+      })
 
-      // 对三栏各列首个列表项执行卡片式圆点清洗（保留下级嵌套子项圆点与缩进）
-      cleanFirstListBlock(col1List)
-      cleanFirstListBlock(col2List)
-      cleanFirstListBlock(col3List)
-
-      // 若 rem 原本只有 1 个单块且被成功解构为 3 个虚拟块，更新 page.blocks
-      if (rem.length === 1 && (col2List.length > 0 || col3List.length > 0)) {
+      // 若 rem 原本只有 1 个单块且被成功解构为多块，更新 page.blocks
+      const decompressedBlocks = cols.flat()
+      if (rem.length === 1 && decompressedBlocks.length > 1) {
         const origIdx = page.blocks.findIndex(b => b.id === rem[0].id)
         if (origIdx !== -1) {
-          page.blocks.splice(origIdx, 1, ...col1List, ...col2List, ...col3List)
+          page.blocks.splice(origIdx, 1, ...decompressedBlocks)
         }
       }
 
       const headerContent = renderBlocks(headerList)
-      const col1Content = renderColList(col1List)
-      const col2Content = renderColList(col2List)
-      const col3Content = renderColList(col3List)
-
       if (headerContent) parts.push(headerContent)
-      if (col1Content) parts.push(`::col-1::\n\n${col1Content}`)
-      if (col2Content) parts.push(`::col-2::\n\n${col2Content}`)
-      if (col3Content) parts.push(`::col-3::\n\n${col3Content}`)
+
+      // 如果是旧版的 two-cols-header 且只有 2 栏，输出 ::left:: 与 ::right:: 保证 Slidev CLI 官方 theme 原生兼容；
+      // 否则输出通用的 ::col-1::, ::col-2::, ..., ::col-N::
+      if (layout === "two-cols-header" && targetCols === 2) {
+        const leftContent = renderColList(cols[0] || [])
+        const rightContent = renderColList(cols[1] || [])
+        if (leftContent) parts.push(`::left::\n\n${leftContent}`)
+        if (rightContent) parts.push(`::right::\n\n${rightContent}`)
+      } else {
+        cols.forEach((colList, colIdx) => {
+          const colContent = renderColList(colList)
+          if (colContent) {
+            parts.push(`::col-${colIdx + 1}::\n\n${colContent}`)
+          }
+        })
+      }
     } else if (layout === "two-cols") {
       const leftBlocks = contentBlocks.filter(b => b.slot === "left")
       const rightBlocks = contentBlocks.filter(b => b.slot === "right")

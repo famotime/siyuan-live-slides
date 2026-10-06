@@ -3,6 +3,7 @@ import {
   ATTR_ELEM_SLOT,
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_LAYOUT_RATIO,
+  isColsHeaderLayout,
 } from "../types/slidev-protocol"
 import { isPageBreak } from "./scope-mapper"
 import { isListItemNode } from "../utils/markdown-utils"
@@ -19,8 +20,8 @@ import {
 export interface IListSuperBlockDetection {
   superBlockNode: ISiYuanBlockNode
   nestedSuperBlocks?: ISiYuanBlockNode[]
-  count: 2 | 3
-  layout: "two-cols-header" | "three-cols-header"
+  count: number
+  layout: "cols-header" | "two-cols-header" | "three-cols-header"
   items: ISiYuanBlockNode[]
   slots: string[]
   ratio?: string
@@ -137,44 +138,26 @@ export function extractListSuperBlockItems(node: ISiYuanBlockNode): IExtractedLi
     }
   }
 
-  // 1. 若直接包含 3 个有效子块
-  if (contentChildren.length === 3) {
-    const u0 = extractListUnits(contentChildren[0])
-    const u1 = extractListUnits(contentChildren[1])
-    const u2 = extractListUnits(contentChildren[2])
-    if (u0.length === 1 && u1.length === 1 && u2.length === 1) {
+  // 遍历所有子块提取列表单元，自适应 2~N 栏（上限 6 栏）及嵌套形态
+  const unitsPerChild: ISiYuanBlockNode[][] = contentChildren.map(extractListUnits)
+  if (unitsPerChild.length >= 2 && unitsPerChild.every(u => u.length > 0)) {
+    const allUnits = unitsPerChild.flat()
+    if (allUnits.length >= 2 && allUnits.length <= 6) {
       return {
-        items: [u0[0], u1[0], u2[0]],
+        items: allUnits,
         nestedSuperBlocks: nestedSbs,
       }
     }
   }
 
-  // 2. 若直接包含 2 个有效子块
+  // 容错处理：若外层为 2 个子块但内含嵌套形态（如 2 项 + 1 项，或 1 项 + 2 项）
   if (contentChildren.length === 2) {
     const u0 = extractListUnits(contentChildren[0])
     const u1 = extractListUnits(contentChildren[1])
 
-    // 形态 A (col1-2 + col3): 前列展开为 2 项，后列为 1 项 -> 3 栏！
-    if (u0.length === 2 && u1.length === 1) {
+    if (u0.length + u1.length >= 2 && u0.length + u1.length <= 6 && (u0.length > 0 || u1.length > 0)) {
       return {
-        items: [u0[0], u0[1], u1[0]],
-        nestedSuperBlocks: nestedSbs,
-      }
-    }
-
-    // 形态 B (col1 + col2-3): 前列为 1 项，后列展开为 2 项 -> 3 栏！
-    if (u0.length === 1 && u1.length === 2) {
-      return {
-        items: [u0[0], u1[0], u1[1]],
-        nestedSuperBlocks: nestedSbs,
-      }
-    }
-
-    // 扁平 2 栏: 前列为 1 项，后列为 1 项 -> 2 栏！
-    if (u0.length === 1 && u1.length === 1) {
-      return {
-        items: [u0[0], u1[0]],
+        items: [...u0, ...u1],
         nestedSuperBlocks: nestedSbs,
       }
     }
@@ -184,7 +167,7 @@ export function extractListSuperBlockItems(node: ISiYuanBlockNode): IExtractedLi
 }
 
 /**
- * 检测超级块是否为包含 2 个或 3 个列表项的横向分栏超级块（支持扁平及嵌套形态）
+ * 检测超级块是否为包含 2~N 个列表项的横向分栏超级块（支持自适应 2~6 栏）
  */
 export function detectListSuperBlock(node: ISiYuanBlockNode): IListSuperBlockDetection | null {
   if (!node || !isSuperBlock(node)) return null
@@ -197,31 +180,20 @@ export function detectListSuperBlock(node: ISiYuanBlockNode): IListSuperBlockDet
   if (!extracted) return null
 
   const { items, nestedSuperBlocks } = extracted
-  if (items.length !== 2 && items.length !== 3) {
+  if (items.length < 2 || items.length > 6) {
     return null
   }
 
   const detectedRatio = extractSuperBlockWidthRatios(node) || undefined
-
-  if (items.length === 2) {
-    return {
-      superBlockNode: node,
-      nestedSuperBlocks,
-      count: 2,
-      layout: "two-cols-header",
-      items,
-      slots: ["left", "right"],
-      ratio: detectedRatio,
-    }
-  }
+  const count = items.length
 
   return {
     superBlockNode: node,
     nestedSuperBlocks,
-    count: 3,
-    layout: "three-cols-header",
+    count,
+    layout: "cols-header",
     items,
-    slots: ["col-1", "col-2", "col-3"],
+    slots: items.map((_, i) => `col-${i + 1}`),
     ratio: detectedRatio,
   }
 }
@@ -250,7 +222,7 @@ export function collectAllLeafListItems(node: ISiYuanBlockNode): ISiYuanBlockNod
 }
 
 /**
- * 检测是否为非 2~3 项的列表超级块（例如拖出后变 1 项，或拖入后变 4+ 项）
+ * 检测是否为非 2~6 项的列表超级块（例如拖出后仅剩 1 项，或超出 6 栏）
  */
 export function isInvalidListSuperBlock(
   node: ISiYuanBlockNode,
@@ -262,8 +234,8 @@ export function isInvalidListSuperBlock(
   const leaves = collectAllLeafListItems(node)
   if (!leaves || leaves.length === 0) return null
 
-  // 有效项数为 2 或 3 时不属于无效超级块
-  if (leaves.length === 2 || leaves.length === 3) {
+  // 有效项数为 2 到 6 栏时属于有效分栏超级块
+  if (leaves.length >= 2 && leaves.length <= 6) {
     return null
   }
 
@@ -279,7 +251,7 @@ export interface ITrackedListSuperBlock {
   pageTargetId: string
   headerId?: string
   itemIds: string[]
-  layout: "two-cols-header" | "three-cols-header"
+  layout: "cols-header" | "two-cols-header" | "three-cols-header"
 }
 
 export interface IListSuperBlockTagChange {
@@ -535,7 +507,7 @@ export function scanAndTagListSuperBlocks(
       }
 
       const currentLayout = pageTargetNode?.ial?.[ATTR_PAGE_LAYOUT] || ""
-      const isMultiColLayout = currentLayout === "two-cols-header" || currentLayout === "three-cols-header"
+      const isMultiColLayout = isColsHeaderLayout(currentLayout)
 
       if (prevTracked || (hasInvalidListSb && isMultiColLayout)) {
         recordChange(pageTargetId, { [ATTR_PAGE_LAYOUT]: "" }, { [ATTR_PAGE_LAYOUT]: currentLayout })

@@ -280,9 +280,9 @@ export interface IThreeColsDistribution<T = any> {
 }
 
 /**
- * 健壮的多模式三栏内容分配器
+ * 通用多模式 N 栏内容分配器 (支持 2 ~ N 栏)
  */
-export function distributeThreeColumns<
+export function distributeNColumns<
   T extends {
     slot?: string
     type?: string
@@ -292,82 +292,88 @@ export function distributeThreeColumns<
     id?: string
     children?: any[]
   }
->(rem: T[]): IThreeColsDistribution<T> {
+>(rem: T[], targetCols = 2): T[][] {
+  const n = Math.max(2, targetCols)
   if (!rem || rem.length === 0) {
-    return { col1: [], col2: [], col3: [] }
+    return Array.from({ length: n }, () => [])
   }
 
   // 1. 检查是否存在超级块且具有子块 (在单块包裹场景下自动解包)
   if (rem.length === 1 && rem[0].children && rem[0].children.length >= 2) {
     const ch = rem[0].children as T[]
-    if (ch.length >= 3) {
-      const c1 = Math.ceil(ch.length / 3)
-      const c2 = Math.ceil((ch.length - c1) / 2)
-      return {
-        col1: ch.slice(0, c1),
-        col2: ch.slice(c1, c1 + c2),
-        col3: ch.slice(c1 + c2),
-      }
-    } else {
-      return { col1: [ch[0]], col2: [ch[1]], col3: [] }
+    const cols: T[][] = Array.from({ length: n }, () => [])
+    const actualN = Math.min(n, ch.length)
+    const baseSize = Math.floor(ch.length / actualN)
+    const extra = ch.length % actualN
+    let cur = 0
+    for (let i = 0; i < actualN; i++) {
+      const take = baseSize + (i < extra ? 1 : 0)
+      cols[i] = ch.slice(cur, cur + take)
+      cur += take
     }
+    return cols
   }
 
-  const getColNum = (b: T): 1 | 2 | 3 | null => {
-    const s = b.slot || ""
-    if (s === "col-1" || s === "left") return 1
-    if (s === "col-2" || s === "center") return 2
-    if (s === "col-3" || s === "right") return 3
+  const getColIndex = (b: T): number | null => {
+    const s = (b.slot || "").trim()
+    if (!s) return null
+    if (s === "left") return 1
+    if (s === "center") return 2
+    if (s === "right") return n === 2 ? 2 : n
+    const match = s.match(/^col-(\d+)$/i)
+    if (match) {
+      const idx = parseInt(match[1], 10)
+      if (idx >= 1 && idx <= n) return idx
+    }
     return null
   }
 
-  const explicitCols = rem.map(getColNum)
+  const explicitCols = rem.map(getColIndex)
   const hasExplicitCols = explicitCols.some(c => c !== null)
 
   // 2. 显式插槽分配
   if (hasExplicitCols) {
-    const hasCol2 = explicitCols.includes(2)
-    const hasCol3 = explicitCols.includes(3)
-
-    if (hasCol2 || hasCol3) {
-      const col1: T[] = []
-      const col2: T[] = []
-      const col3: T[] = []
-      let currentCol: 1 | 2 | 3 = 1
-
+    const hasCol2OrMore = explicitCols.some(c => c !== null && c >= 2)
+    if (hasCol2OrMore) {
+      const cols: T[][] = Array.from({ length: n }, () => [])
+      let currentIdx = 1
       for (const b of rem) {
-        const directCol = getColNum(b)
+        const directCol = getColIndex(b)
         if (directCol !== null) {
-          currentCol = directCol
+          currentIdx = directCol
         }
-        if (currentCol === 1) col1.push(b)
-        else if (currentCol === 2) col2.push(b)
-        else col3.push(b)
+        cols[currentIdx - 1].push(b)
       }
-      return { col1, col2, col3 }
+      return cols
     }
 
-    const col1 = rem.filter(b => getColNum(b) === 1)
-    const untagged = rem.filter(b => getColNum(b) === null)
-    if (untagged.length >= 2) {
-      const mid = Math.ceil(untagged.length / 2)
-      return {
-        col1,
-        col2: untagged.slice(0, mid),
-        col3: untagged.slice(mid),
+    // 若仅指定了第 1 栏，剩余未标注块自动均分至后续各栏
+    const col1 = rem.filter(b => getColIndex(b) === 1)
+    const untagged = rem.filter(b => getColIndex(b) === null)
+    const remainingCols = n - 1
+    if (untagged.length >= remainingCols) {
+      const base = Math.floor(untagged.length / remainingCols)
+      const extra = untagged.length % remainingCols
+      const cols: T[][] = [col1]
+      let cur = 0
+      for (let i = 0; i < remainingCols; i++) {
+        const take = base + (i < extra ? 1 : 0)
+        cols.push(untagged.slice(cur, cur + take))
+        cur += take
       }
-    } else if (untagged.length === 1) {
-      return {
-        col1,
-        col2: untagged,
-        col3: [],
+      return cols
+    } else if (untagged.length > 0) {
+      const cols: T[][] = [col1]
+      for (let i = 0; i < remainingCols; i++) {
+        cols.push(i < untagged.length ? [untagged[i]] : [])
       }
+      return cols
     } else {
-      return { col1, col2: [], col3: [] }
+      return [col1, ...Array.from({ length: remainingCols }, () => [])]
     }
   }
 
-  // 3. 检查大纲标题自动分组 (若存在 >= 3 个标题行，按标题分组)
+  // 3. 检查大纲标题自动分组 (若存在 >= n 个标题行，按标题分组)
   const isHeading = (b: T) => {
     if (b.type === "h") return true
     if (b.subType && /^h[1-6]$/i.test(b.subType)) return true
@@ -375,32 +381,37 @@ export function distributeThreeColumns<
     return /^#{1,6}\s+/.test(md)
   }
   const headingIndices = rem.map((b, idx) => (isHeading(b) ? idx : -1)).filter(idx => idx !== -1)
-  if (headingIndices.length >= 3) {
-    return {
-      col1: rem.slice(0, headingIndices[1]),
-      col2: rem.slice(headingIndices[1], headingIndices[2]),
-      col3: rem.slice(headingIndices[2]),
+  if (headingIndices.length >= n) {
+    const cols: T[][] = Array.from({ length: n }, () => [])
+    for (let i = 0; i < n; i++) {
+      const start = headingIndices[i]
+      const end = i + 1 < n ? headingIndices[i + 1] : rem.length
+      cols[i] = rem.slice(start, end)
     }
+    return cols
   }
 
-  // 4. 多块列表/段落均分 (rem.length >= 3)
-  if (rem.length >= 3) {
-    const c1Count = Math.ceil(rem.length / 3)
-    const c2Count = Math.ceil((rem.length - c1Count) / 2)
-    return {
-      col1: rem.slice(0, c1Count),
-      col2: rem.slice(c1Count, c1Count + c2Count),
-      col3: rem.slice(c1Count + c2Count),
+  // 4. 多块列表/段落均分 (rem.length >= n)
+  if (rem.length >= n) {
+    const cols: T[][] = Array.from({ length: n }, () => [])
+    let cur = 0
+    for (let i = 0; i < n; i++) {
+      const remainingCols = n - i
+      const remainingItems = rem.length - cur
+      const take = Math.ceil(remainingItems / remainingCols)
+      cols[i] = rem.slice(cur, cur + take)
+      cur += take
     }
+    return cols
   }
 
-  // 5. 2 个内容块分配
-  if (rem.length === 2) {
-    return {
-      col1: [rem[0]],
-      col2: [rem[1]],
-      col3: [],
+  // 5. 内容块数小于 n 时 (例如 2 个块分给 3 栏)
+  if (rem.length > 1 && rem.length < n) {
+    const cols: T[][] = Array.from({ length: n }, () => [])
+    for (let i = 0; i < rem.length; i++) {
+      cols[i] = [rem[i]]
     }
+    return cols
   }
 
   // 6. 仅 1 个内容块时的细粒度拆分
@@ -414,46 +425,93 @@ export function distributeThreeColumns<
     for (let i = 0; i < lines.length; i++) {
       if (/^[ \t]*[-*+]\s+|^[ \t]*\d+\.\s+/.test(lines[i])) itemStartIndices.push(i)
     }
-    if (itemStartIndices.length >= 3) {
-      const c1 = Math.ceil(itemStartIndices.length / 3)
-      const c2 = Math.ceil((itemStartIndices.length - c1) / 2)
-      const items1 = lines.slice(itemStartIndices[0], itemStartIndices[c1]).join("\n")
-      const items2 = lines.slice(itemStartIndices[c1], itemStartIndices[c1 + c2]).join("\n")
-      const items3 = lines.slice(itemStartIndices[c1 + c2]).join("\n")
-      return {
-        col1: [{ ...single, rawMarkdown: items1, content: items1 }],
-        col2: [{ ...single, id: `${single.id}-col2`, rawMarkdown: items2, content: items2 }],
-        col3: [{ ...single, id: `${single.id}-col3`, rawMarkdown: items3, content: items3 }],
+    if (itemStartIndices.length >= n) {
+      const cols: T[][] = Array.from({ length: n }, () => [])
+      let cur = 0
+      for (let i = 0; i < n; i++) {
+        const remainingCols = n - i
+        const remainingItems = itemStartIndices.length - cur
+        const take = Math.ceil(remainingItems / remainingCols)
+        const start = itemStartIndices[cur]
+        const end = cur + take < itemStartIndices.length ? itemStartIndices[cur + take] : lines.length
+        const itemsText = lines.slice(start, end).join("\n")
+        cols[i] = [{
+          ...single,
+          id: i === 0 ? single.id : `${single.id}-col${i + 1}`,
+          rawMarkdown: itemsText,
+          content: itemsText,
+        }]
+        cur += take
       }
+      return cols
     }
 
     // 6.2 HTML 列表项
     const liMatches = text.match(/<li[\s\S]*?<\/li>/gi)
-    if (liMatches && liMatches.length >= 3) {
-      const c1 = Math.ceil(liMatches.length / 3)
-      const c2 = Math.ceil((liMatches.length - c1) / 2)
-      const ul1 = `<ul>\n${liMatches.slice(0, c1).join("\n")}\n</ul>`
-      const ul2 = `<ul>\n${liMatches.slice(c1, c1 + c2).join("\n")}\n</ul>`
-      const ul3 = `<ul>\n${liMatches.slice(c1 + c2).join("\n")}\n</ul>`
-      return {
-        col1: [{ ...single, rawMarkdown: ul1, content: ul1 }],
-        col2: [{ ...single, id: `${single.id}-col2`, rawMarkdown: ul2, content: ul2 }],
-        col3: [{ ...single, id: `${single.id}-col3`, rawMarkdown: ul3, content: ul3 }],
+    if (liMatches && liMatches.length >= n) {
+      const cols: T[][] = Array.from({ length: n }, () => [])
+      let cur = 0
+      for (let i = 0; i < n; i++) {
+        const remainingCols = n - i
+        const remainingItems = liMatches.length - cur
+        const take = Math.ceil(remainingItems / remainingCols)
+        const ul = `<ul>\n${liMatches.slice(cur, cur + take).join("\n")}\n</ul>`
+        cols[i] = [{
+          ...single,
+          id: i === 0 ? single.id : `${single.id}-col${i + 1}`,
+          rawMarkdown: ul,
+          content: ul,
+        }]
+        cur += take
       }
+      return cols
     }
 
     // 6.3 纯文本多段落
     const paras = text.split(/\r?\n\s*\r?\n/).filter(p => p.trim() !== "")
-    if (paras.length >= 3) {
-      const c1 = Math.ceil(paras.length / 3)
-      const c2 = Math.ceil((paras.length - c1) / 2)
-      return {
-        col1: [{ ...single, rawMarkdown: paras.slice(0, c1).join("\n\n"), content: paras.slice(0, c1).join("\n\n") }],
-        col2: [{ ...single, id: `${single.id}-col2`, rawMarkdown: paras.slice(c1, c1 + c2).join("\n\n"), content: paras.slice(c1, c1 + c2).join("\n\n") }],
-        col3: [{ ...single, id: `${single.id}-col3`, rawMarkdown: paras.slice(c1 + c2).join("\n\n"), content: paras.slice(c1 + c2).join("\n\n") }],
+    if (paras.length >= n) {
+      const cols: T[][] = Array.from({ length: n }, () => [])
+      let cur = 0
+      for (let i = 0; i < n; i++) {
+        const remainingCols = n - i
+        const remainingItems = paras.length - cur
+        const take = Math.ceil(remainingItems / remainingCols)
+        const pText = paras.slice(cur, cur + take).join("\n\n")
+        cols[i] = [{
+          ...single,
+          id: i === 0 ? single.id : `${single.id}-col${i + 1}`,
+          rawMarkdown: pText,
+          content: pText,
+        }]
+        cur += take
       }
+      return cols
     }
   }
 
-  return { col1: rem, col2: [], col3: [] }
+  const cols: T[][] = Array.from({ length: n }, () => [])
+  cols[0] = rem
+  return cols
+}
+
+/**
+ * 健壮的多模式三栏内容分配器（基于通用 distributeNColumns 的兼容门面）
+ */
+export function distributeThreeColumns<
+  T extends {
+    slot?: string
+    type?: string
+    subType?: string
+    content?: string
+    rawMarkdown?: string
+    id?: string
+    children?: any[]
+  }
+>(rem: T[]): IThreeColsDistribution<T> {
+  const cols = distributeNColumns(rem, 3)
+  return {
+    col1: cols[0] || [],
+    col2: cols[1] || [],
+    col3: cols[2] || [],
+  }
 }

@@ -309,8 +309,8 @@
       <line x1="14.5" y1="15.5" x2="18" y2="15.5" />
     </g>
 
-    <!-- 5. 版式：表头三栏 (three-cols-header) -->
-    <g v-else-if="name === 'layout-three-cols-header' || name === 'three-cols-header'">
+    <!-- 5. 版式：表头多栏 / 表头三栏 (cols-header / three-cols-header) -->
+    <g v-else-if="name === 'layout-cols-header' || name === 'cols-header' || name === 'layout-three-cols-header' || name === 'three-cols-header'">
       <rect x="2" y="4" width="20" height="16" rx="2" />
       <line x1="5" y1="7.5" x2="13" y2="7.5" />
       <line x1="9.3" y1="10.5" x2="9.3" y2="18.5" stroke-dasharray="1.5 1.5" />

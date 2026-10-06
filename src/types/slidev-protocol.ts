@@ -53,6 +53,7 @@ export type TSlideLayout =
   | "default"
   | "cover"
   | "two-cols"
+  | "cols-header"
   | "two-cols-header"
   | "three-cols-header"
   | "image-right"
@@ -63,6 +64,13 @@ export type TSlideLayout =
   | "quote"
   | "statement"
   | string
+
+/**
+ * 判断指定版式是否属于表头多栏版式体系（统一 cols-header 或历史兼容 two-cols-header / three-cols-header）
+ */
+export function isColsHeaderLayout(layout?: string): boolean {
+  return layout === "cols-header" || layout === "two-cols-header" || layout === "three-cols-header"
+}
 
 /** 页面 Frontmatter 配置元数据 */
 export interface ISlidePageFrontmatter {

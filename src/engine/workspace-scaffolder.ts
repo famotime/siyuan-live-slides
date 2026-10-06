@@ -30,6 +30,86 @@ export function sayHello() {
 `,
 }
 
+export const COLS_HEADER_LAYOUT_VUE = `<script setup lang="ts">
+import { computed, useSlots } from 'vue'
+
+const props = defineProps({
+  layoutRatio: {
+    type: String,
+    default: '',
+  },
+  cols: {
+    type: [Number, String],
+    default: 0,
+  },
+})
+
+const slots = useSlots()
+
+const detectedColsCount = computed(() => {
+  const explicitCols = Number(props.cols)
+  if (explicitCols >= 2 && explicitCols <= 6) return explicitCols
+  const r = (props.layoutRatio || '').trim()
+  if (r.includes(':')) {
+    const parts = r.split(':').map(p => parseFloat(p.trim())).filter(n => !isNaN(n) && n > 0)
+    if (parts.length >= 2) return Math.min(parts.length, 6)
+  }
+  const tokens = r.split(/\\s+/).filter(Boolean)
+  if (tokens.length >= 2) return Math.min(tokens.length, 6)
+  for (let i = 6; i >= 3; i--) {
+    if (slots[\`col-\${i}\`]) return i
+  }
+  if (slots['col-2'] || slots['right']) return 2
+  return 2
+})
+
+const gridStyle = computed(() => {
+  const r = props.layoutRatio || ''
+  if (r) {
+    if (r.includes(':')) {
+      const parts = r.split(':').map(p => parseFloat(p.trim())).filter(n => !isNaN(n) && n > 0)
+      if (parts.length >= 2) {
+        return { gridTemplateColumns: parts.map(n => \`\${n}fr\`).join(' ') }
+      }
+    }
+    const tokens = r.split(/\\s+/).filter(Boolean)
+    if (tokens.length >= 2) {
+      return { gridTemplateColumns: tokens.join(' ') }
+    }
+  }
+  return { gridTemplateColumns: \`repeat(\${detectedColsCount.value}, minmax(0, 1fr))\` }
+})
+</script>
+
+<template>
+  <div class="slidev-layout cols-header w-full h-full flex flex-col">
+    <div class="header-section mb-4 w-full">
+      <slot />
+    </div>
+    <div class="grid gap-6 flex-1 items-stretch" :style="gridStyle">
+      <div v-if="detectedColsCount >= 1" class="col-1 min-w-0 h-full max-h-full overflow-hidden break-words [overflow-wrap:break-word] [word-break:break-word]">
+        <slot name="col-1"><slot name="left" /></slot>
+      </div>
+      <div v-if="detectedColsCount >= 2" class="col-2 min-w-0 h-full max-h-full overflow-hidden break-words [overflow-wrap:break-word] [word-break:break-word]">
+        <slot name="col-2"><slot v-if="detectedColsCount === 2" name="right" /></slot>
+      </div>
+      <div v-if="detectedColsCount >= 3" class="col-3 min-w-0 h-full max-h-full overflow-hidden break-words [overflow-wrap:break-word] [word-break:break-word]">
+        <slot name="col-3" />
+      </div>
+      <div v-if="detectedColsCount >= 4" class="col-4 min-w-0 h-full max-h-full overflow-hidden break-words [overflow-wrap:break-word] [word-break:break-word]">
+        <slot name="col-4" />
+      </div>
+      <div v-if="detectedColsCount >= 5" class="col-5 min-w-0 h-full max-h-full overflow-hidden break-words [overflow-wrap:break-word] [word-break:break-word]">
+        <slot name="col-5" />
+      </div>
+      <div v-if="detectedColsCount >= 6" class="col-6 min-w-0 h-full max-h-full overflow-hidden break-words [overflow-wrap:break-word] [word-break:break-word]">
+        <slot name="col-6" />
+      </div>
+    </div>
+  </div>
+</template>
+`
+
 export const THREE_COLS_HEADER_LAYOUT_VUE = `<script setup lang="ts">
 import { computed } from 'vue'
 
@@ -281,13 +361,17 @@ html.dark *::-webkit-scrollbar-thumb:hover {
   border-radius: 8px !important;
 }
 
-/* 两栏与三栏（超级块分栏）布局：紧凑自然行距，子列表保留圆点与层级缩进 */
+/* 两栏与多栏（超级块分栏）布局：紧凑自然行距，子列表保留圆点与层级缩进 */
+.cols-header ul,
 .three-cols-header ul,
 .two-cols-header ul,
 .two-cols ul,
 .col-1 ul,
 .col-2 ul,
 .col-3 ul,
+.col-4 ul,
+.col-5 ul,
+.col-6 ul,
 .grid-cols-2 ul,
 .grid-cols-3 ul {
   list-style: disc !important;
@@ -300,12 +384,16 @@ html.dark *::-webkit-scrollbar-thumb:hover {
   height: auto !important;
   display: block !important;
 }
+.cols-header ol,
 .three-cols-header ol,
 .two-cols-header ol,
 .two-cols ol,
 .col-1 ol,
 .col-2 ol,
 .col-3 ol,
+.col-4 ol,
+.col-5 ol,
+.col-6 ol,
 .grid-cols-2 ol,
 .grid-cols-3 ol {
   list-style: decimal !important;
@@ -318,12 +406,16 @@ html.dark *::-webkit-scrollbar-thumb:hover {
   height: auto !important;
   display: block !important;
 }
+.cols-header li,
 .three-cols-header li,
 .two-cols-header li,
 .two-cols li,
 .col-1 li,
 .col-2 li,
 .col-3 li,
+.col-4 li,
+.col-5 li,
+.col-6 li,
 .grid-cols-2 li,
 .grid-cols-3 li {
   padding-left: 0.2em !important;
@@ -334,12 +426,16 @@ html.dark *::-webkit-scrollbar-thumb:hover {
   display: list-item !important;
   line-height: 1.6 !important;
 }
+.cols-header ul ul,
 .three-cols-header ul ul,
 .two-cols-header ul ul,
 .two-cols ul ul,
 .col-1 ul ul,
 .col-2 ul ul,
-.col-3 ul ul {
+.col-3 ul ul,
+.col-4 ul ul,
+.col-5 ul ul,
+.col-6 ul ul {
   list-style: circle !important;
   list-style-type: circle !important;
   padding-left: 1.25em !important;
@@ -473,6 +569,12 @@ export class WorkspaceScaffolder {
     for (const snippetRel of referencedSnippets) {
       const content = DEFAULT_STARTER_SNIPPETS[snippetRel] || `// Auto-generated snippet placeholder for SiYuan Slidev\n// #region snippet\n// ${snippetRel}\n// #endregion snippet\n`
       snippetsMap.set(snippetRel, content)
+    }
+
+    // 若幻灯片包含 cols-header 布局，自动注入官方 Slidev 自定义布局文件 layouts/cols-header.vue
+    const hasColsHeader = doc.slides.some(s => s.frontmatter?.layout === "cols-header")
+    if (hasColsHeader) {
+      snippetsMap.set("layouts/cols-header.vue", COLS_HEADER_LAYOUT_VUE)
     }
 
     // 若幻灯片包含 three-cols-header 布局，自动注入官方 Slidev 自定义布局文件 layouts/three-cols-header.vue
