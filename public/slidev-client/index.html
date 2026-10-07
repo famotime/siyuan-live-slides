@@ -547,7 +547,7 @@
       flex: 1 1 0% !important;
       align-items: stretch !important;
       box-sizing: border-box !important;
-      overflow: hidden !important;
+      overflow: visible !important;
     }
 
     .layout-three-cols {
@@ -563,7 +563,7 @@
       flex: 1 1 0% !important;
       align-items: stretch !important;
       box-sizing: border-box !important;
-      overflow: hidden !important;
+      overflow: visible !important;
     }
 
     .layout-cols-grid {
@@ -579,7 +579,7 @@
       flex: 1 1 0% !important;
       align-items: stretch !important;
       box-sizing: border-box !important;
-      overflow: hidden !important;
+      overflow: visible !important;
     }
 
     .two-cols-left,
@@ -595,8 +595,9 @@
       display: flex !important;
       flex-direction: column !important;
       justify-content: flex-start !important;
+      padding: 2px 4px !important;
       box-sizing: border-box !important;
-      overflow: hidden !important;
+      overflow: visible !important;
       overflow-wrap: break-word !important;
       word-break: break-word !important;
       white-space: normal !important;
@@ -613,6 +614,13 @@
       width: 100% !important;
       height: 100% !important;
       box-sizing: border-box !important;
+    }
+
+    .two-cols-left > .slide-block:first-child,
+    .two-cols-right > .slide-block:first-child,
+    .three-cols-col > .slide-block:first-child,
+    .col > .slide-block:first-child {
+      margin-top: 2px !important;
     }
 
     .three-cols-col .slide-block,
@@ -817,37 +825,16 @@
       margin-bottom: 6px !important;
     }
 
-    /* 表头多栏内超级块子块首个列表项去圆点后居中显示标题/首行文本 */
-    .layout-cols-grid .col .slide-block:first-child .slide-list-item-title,
-    .layout-cols-grid .col .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
-    .layout-cols-grid .col .slide-block:first-child p.slide-list-item-title,
-    .layout-cols-grid .col .slide-block:first-child p:first-of-type,
-    .layout-cols-grid .col .slide-block:first-child p:first-child,
-    .layout-cols-grid .col .slide-block:first-child :is(ul, ol) > li:first-child,
-    .layout-cols-grid .col .slide-block:first-child .slide-list > .slide-list-item:first-child,
-    .two-cols-left .slide-block:first-child .slide-list-item-title,
-    .two-cols-left .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
-    .two-cols-left .slide-block:first-child p.slide-list-item-title,
-    .two-cols-left .slide-block:first-child p:first-of-type,
-    .two-cols-left .slide-block:first-child p:first-child,
-    .two-cols-left .slide-block:first-child :is(ul, ol) > li:first-child,
-    .two-cols-left .slide-block:first-child .slide-list > .slide-list-item:first-child,
-    .two-cols-right .slide-block:first-child .slide-list-item-title,
-    .two-cols-right .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
-    .two-cols-right .slide-block:first-child p.slide-list-item-title,
-    .two-cols-right .slide-block:first-child p:first-of-type,
-    .two-cols-right .slide-block:first-child p:first-child,
-    .two-cols-right .slide-block:first-child :is(ul, ol) > li:first-child,
-    .two-cols-right .slide-block:first-child .slide-list > .slide-list-item:first-child,
-    .three-cols-col .slide-block:first-child .slide-list-item-title,
-    .three-cols-col .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
-    .three-cols-col .slide-block:first-child p.slide-list-item-title,
-    .three-cols-col .slide-block:first-child p:first-of-type,
-    .three-cols-col .slide-block:first-child p:first-child,
-    .three-cols-col .slide-block:first-child :is(ul, ol) > li:first-child,
-    .three-cols-col .slide-block:first-child .slide-list > .slide-list-item:first-child,
-    .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    /* 表头多栏内超级块子块首个列表项去圆点后居中显示标题/首行文本 (仅在存在超级块分栏时生效) */
+    .layout-cols-grid.has-superblock-cols .col .slide-block:first-child .slide-list-item-title,
+    .layout-cols-grid.has-superblock-cols .col .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .layout-cols-grid.has-superblock-cols .col .slide-block:first-child p.slide-list-item-title,
+    .layout-cols-grid.has-superblock-cols .col .slide-block:first-child p:first-of-type,
+    .layout-cols-grid.has-superblock-cols .col .slide-block:first-child p:first-child,
+    .layout-cols-grid.has-superblock-cols .col .slide-block:first-child :is(ul, ol) > li:first-child,
+    .layout-cols-grid.has-superblock-cols .col .slide-block:first-child .slide-list > .slide-list-item:first-child,
+    .has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    .has-superblock-cols .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       list-style: none !important;
       list-style-type: none !important;
       text-align: center !important;
@@ -856,32 +843,20 @@
       width: 100% !important;
     }
 
-    /* 彻底清除首个列表项的原生圆点 Marker */
-    .layout-cols-grid .col .slide-block:first-child :is(ul, ol) > li:first-child::marker,
-    .two-cols-left .slide-block:first-child :is(ul, ol) > li:first-child::marker,
-    .two-cols-right .slide-block:first-child :is(ul, ol) > li:first-child::marker,
-    .three-cols-col .slide-block:first-child :is(ul, ol) > li:first-child::marker {
+    /* 彻底清除首个列表项的原生圆点 Marker (仅在存在超级块分栏时生效) */
+    .layout-cols-grid.has-superblock-cols .col .slide-block:first-child :is(ul, ol) > li:first-child::marker {
       content: "" !important;
       display: none !important;
     }
 
-    /* 确保首个列表项内部内联与块级元素居中 */
-    .layout-cols-grid .col .slide-block:first-child :is(ul, ol) > li:first-child *,
-    .two-cols-left .slide-block:first-child :is(ul, ol) > li:first-child *,
-    .two-cols-right .slide-block:first-child :is(ul, ol) > li:first-child *,
-    .three-cols-col .slide-block:first-child :is(ul, ol) > li:first-child * {
+    /* 确保首个列表项内部内联与块级元素居中 (仅在存在超级块分栏时生效) */
+    .layout-cols-grid.has-superblock-cols .col .slide-block:first-child :is(ul, ol) > li:first-child * {
       text-align: center !important;
     }
 
     /* 栏内说明段落与列表项：左对齐，自然阅读排版 */
-    .layout-cols-grid .col .slide-list-item-desc,
-    .two-cols-left .slide-list-item-desc,
-    .two-cols-right .slide-list-item-desc,
-    .three-cols-col .slide-list-item-desc,
-    .layout-cols-grid .col li:not(:first-child),
-    .two-cols-left li:not(:first-child),
-    .two-cols-right li:not(:first-child),
-    .three-cols-col li:not(:first-child) {
+    .layout-cols-grid.has-superblock-cols .col .slide-list-item-desc,
+    .layout-cols-grid.has-superblock-cols .col li:not(:first-child) {
       text-align: left !important;
     }
 
@@ -897,17 +872,19 @@
       margin-bottom: 10px !important;
     }
 
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .layout-cols-grid .col .slide-block:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) :is(.layout-cols-grid, .two-cols-left, .two-cols-right, .three-cols-col, .col, .pdf-col) .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) :is(.two-cols-left, .two-cols-right, .three-cols-col, .col, .pdf-col) .slide-block:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) :is(.two-cols-left, .two-cols-right, .three-cols-col, .col, .pdf-col) > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .has-superblock-cols.layout-cols-grid .col .slide-block:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .has-superblock-cols .col .slide-block:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       font-size: 1.3rem !important;
       font-weight: 600 !important;
       line-height: 1.3 !important;
       margin-bottom: 8px !important;
       text-align: center !important;
+    }
+
+    /* 图左与图右版式完全保留用户原始标题大小，不受规范化影响 */
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) :is(.layout-image-left, .layout-image-right, .image-left-content, .image-right-content) :is(h1, h2, h3, h4, h5, h6) {
+      text-align: left !important;
     }
 
     /* 列内媒体容器：填满标题下方所有剩余垂直空间，纵向有空间时默认顶部对齐，横向居中对齐 */
@@ -1109,14 +1086,21 @@
     }
 
     .slide-block.highlighted {
-      outline: 2px solid var(--slide-accent);
-      background: rgba(59, 130, 246, 0.15);
-      animation: pulse 1s infinite alternate;
+      position: relative !important;
+      z-index: 20 !important;
+      outline: 2px solid var(--slide-accent) !important;
+      outline-offset: 0 !important;
+      background: rgba(59, 130, 246, 0.15) !important;
+      animation: pulse 1s infinite alternate !important;
     }
 
     @keyframes pulse {
-      from { box-shadow: 0 0 4px var(--slide-accent); }
-      to { box-shadow: 0 0 16px var(--slide-accent); }
+      from {
+        box-shadow: 0 0 4px var(--slide-accent), inset 0 0 2px rgba(59, 130, 246, 0.2);
+      }
+      to {
+        box-shadow: 0 0 14px var(--slide-accent), inset 0 0 4px rgba(59, 130, 246, 0.35);
+      }
     }
 
     .slide-block h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 12px; }
@@ -1477,11 +1461,9 @@
       margin-bottom: 10px !important;
     }
 
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) :is(.layout-cols-grid, .two-cols-left, .two-cols-right, .three-cols-col, .col, .pdf-col) .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) :is(.two-cols-left, .two-cols-right, .three-cols-col, .col, .pdf-col) .slide-block:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) :is(.two-cols-left, .two-cols-right, .three-cols-col, .col, .pdf-col) > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .has-superblock-cols.layout-cols-grid .col .slide-block:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .has-superblock-cols .col .slide-block:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       font-size: 1.3rem !important;
       font-weight: 600 !important;
       line-height: 1.3 !important;
@@ -2313,6 +2295,7 @@
                 :class="[
                   dynamicColsCount === 2 ? 'layout-two-cols' : '',
                   dynamicColsCount === 3 ? 'layout-three-cols' : '',
+                  isSuperBlockColsHeader ? 'has-superblock-cols' : '',
                 ]"
                 :style="getLayoutGridStyle(currentSlide, dynamicColsCount)"
                 style="flex: 1;"
@@ -3491,6 +3474,14 @@
           return { col1: cols[0] || [], col2: cols[1] || [], col3: cols[2] || [] };
         }
 
+        const isSuperBlockColsHeader = computed(() => {
+          if (!currentSlide.value) return false;
+          const fm = currentSlide.value.frontmatter || {};
+          if (!isColsHeader(fm.layout)) return false;
+          const blocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right");
+          return blocks.some(b => b.slot && /^col-\d+$/i.test(b.slot));
+        });
+
         const multiColBlocks = computed(() => {
           if (!currentSlide.value) return [];
           const headers = headerBlocks.value;
@@ -3498,6 +3489,9 @@
           const rem = blocks.filter(b => !headers.includes(b));
           const colsCount = dynamicColsCount.value;
           const cols = distributeNColumns(rem, colsCount);
+          if (!isSuperBlockColsHeader.value) {
+            return cols;
+          }
           return cols.map(colList => {
             const valid = (colList || []).filter(b => Boolean((b.rawMarkdown || b.content || "").trim()));
             if (valid.length === 0) return valid;
@@ -3532,7 +3526,7 @@
         const pageFirstHeadingBlockId = computed(() => {
           if (!currentSlide.value) return null;
           const fm = currentSlide.value.frontmatter || {};
-          if (fm.layout === "cover") return null;
+          if (fm.layout === "cover" || fm.layout === "image-left" || fm.layout === "image-right") return null;
 
           if (isColsHeader(fm.layout)) {
             if (headerBlocks.value.length > 0) {
@@ -3549,12 +3543,10 @@
         const colFirstHeadingBlockIds = computed(() => {
           const ids = new Set();
           if (!currentSlide.value) return ids;
-          const fm = currentSlide.value.frontmatter || {};
-          if (fm.layout === "cover") return ids;
+          if (!isSuperBlockColsHeader.value) return ids;
 
-          const cols = multiColBlocks.value.length >= 2 ? multiColBlocks.value : (fm.layout === "two-cols" ? [leftBlocks.value, rightBlocks.value] : (isColsHeader(fm.layout) ? multiColBlocks.value : []));
-          for (const col of cols) {
-            const h = col.find(isHeadingBlock) || col[0];
+          for (const col of multiColBlocks.value) {
+            const h = col.find(isHeadingBlock);
             if (h) ids.add(h.id);
           }
           return ids;
@@ -3564,7 +3556,7 @@
           if (!config.value?.normalizeHeadingSizes) return "";
           if (!block || !currentSlide.value) return "";
           const fm = currentSlide.value.frontmatter || {};
-          if (fm.layout === "cover") return "";
+          if (fm.layout === "cover" || fm.layout === "image-left" || fm.layout === "image-right") return "";
 
           if (block.id === pageFirstHeadingBlockId.value) {
             return "slidev-page-first-heading-block";
@@ -4340,7 +4332,7 @@
           const hMatch = md.match(/^(#{1,6})\s+(.*)$/)
           if (hMatch) {
             const level = hMatch[1].length
-            const hClass = (block?.type === 'i' || block?.isColFirst) ? ' class="slide-list-item-title"' : ''
+            const hClass = (block?.isColFirst) ? ' class="slide-list-item-title"' : ''
             return `<h${level}${hClass}>${formatInlineMarkdown(hMatch[2])}</h${level}>`
           }
 
@@ -4501,8 +4493,8 @@
             }
           }
 
-          // 11. 普通段落 (若为列表项或分栏首项，赋予 slide-list-item-title 类名居中显示)
-          const pClass = (block?.type === 'i' || block?.isColFirst) ? ' class="slide-list-item-title"' : ''
+          // 11. 普通段落 (若为分栏首项，赋予 slide-list-item-title 类名居中显示)
+          const pClass = (block?.isColFirst) ? ' class="slide-list-item-title"' : ''
           return `<p${pClass}>${formatInlineMarkdown(md)}</p>`
         }
 
@@ -5257,6 +5249,7 @@
           col2Blocks,
           col3Blocks,
           isColsHeader,
+          isSuperBlockColsHeader,
           dynamicColsCount,
           multiColBlocks,
           normalBlocks,
