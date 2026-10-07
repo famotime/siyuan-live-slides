@@ -361,6 +361,7 @@ export function buildSlidevDocument(
       const isColContext = Boolean(
         elemAttrs.slot ||
         inheritedContext?.defaultSlot ||
+        currentPage.frontmatter.layout === "clover" ||
         isColsHeaderLayout(currentPage.frontmatter.layout) ||
         currentPage.frontmatter.layout === "two-cols"
       )
@@ -628,6 +629,7 @@ export function buildSlidevDocument(
         shikiLines: elemAttrs.shikiLines,
         slot: effectiveSlot,
         attributes: effectiveAttrs,
+        rawNode: itemNode,
       }
 
       currentPage.blocks.push(blockItem)
@@ -722,7 +724,7 @@ export function buildSlidevDocument(
 
     const layout = page.frontmatter.layout || "default"
 
-    if (isColsHeaderLayout(layout)) {
+    if (layout === "clover" || isColsHeaderLayout(layout)) {
       let headerList: ISlidevBlockItem[] = []
       const explicitHeader = contentBlocks.filter(b => b.slot === "header")
       if (explicitHeader.length > 0) {
@@ -736,9 +738,11 @@ export function buildSlidevDocument(
 
       const rem = contentBlocks.filter(b => !headerList.includes(b))
 
-      // 确定栏数 targetCols (自适应 2~N 栏)
+      // 确定栏数 targetCols (自适应 2~N 栏，四叶草固定为 4 象限)
       let targetCols = 2
-      if (layout === "three-cols-header") {
+      if (layout === "clover") {
+        targetCols = 4
+      } else if (layout === "three-cols-header") {
         targetCols = 3
       } else if (layout === "two-cols-header") {
         targetCols = 2

@@ -681,6 +681,7 @@ const {
   saveAttr,
   savePageAttr,
   applyPageLayoutAndRatio,
+  applyCloverLayout,
   resetSuperBlockWidth,
   saveDocAttr,
   onToggleVideoAutoplay,
@@ -737,8 +738,15 @@ const {
 })
 
 // 场景 A 事件
-function onLayoutChange(val: string) {
-  saveAttr(ATTR_PAGE_LAYOUT, val)
+async function onLayoutChange(val: string) {
+  if (val === 'clover') {
+    const success = await applyCloverLayout()
+    if (!success) {
+      return
+    }
+  } else {
+    saveAttr(ATTR_PAGE_LAYOUT, val)
+  }
 }
 
 function onLayoutRatioChange(val: string) {

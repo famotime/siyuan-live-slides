@@ -384,8 +384,8 @@ export function getStandaloneClientRuntimeScript(): string {
               div.classList.add("slide-media-container", "slide-media-block", "slide-block--image");
               div.innerHTML = '<img alt="' + imgMatch[1] + '" src="' + imgMatch[2] + '" class="slide-media-img" />';
             } else {
-              let html = md.replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
-              const pCls = (block && (block.type === "i" || block.isColFirst)) ? ' class="slide-list-item-title"' : '';
+              let html = md.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+              const pCls = (block && block.isColFirst) ? ' class="slide-list-item-title"' : '';
               div.innerHTML = "<p" + pCls + ">" + html + "</p>";
             }
           }

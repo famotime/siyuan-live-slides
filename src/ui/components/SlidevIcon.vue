@@ -326,6 +326,20 @@
       <line x1="16" y1="15.5" x2="18.5" y2="15.5" />
     </g>
 
+    <!-- 5.5 版式：四叶草 / 田字型 (clover) -->
+    <g v-else-if="name === 'layout-clover' || name === 'clover'">
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <line x1="5" y1="7" x2="13" y2="7" />
+      <!-- 田字型水平与垂直虚线分割 -->
+      <line x1="4.5" y1="13.5" x2="19.5" y2="13.5" stroke-dasharray="1.5 1.5" />
+      <line x1="12" y1="9" x2="12" y2="18.5" stroke-dasharray="1.5 1.5" />
+      <!-- 四象限条目内容 -->
+      <line x1="5" y1="11" x2="9.5" y2="11" />
+      <line x1="14.5" y1="11" x2="19" y2="11" />
+      <line x1="5" y1="16" x2="9.5" y2="16" />
+      <line x1="14.5" y1="16" x2="19" y2="16" />
+    </g>
+
     <!-- 6. 版式：图右 (image-right) -->
     <g v-else-if="name === 'layout-image-right' || name === 'image-right'">
       <rect x="2" y="4" width="20" height="16" rx="2" />

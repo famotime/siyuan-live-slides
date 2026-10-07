@@ -61,18 +61,8 @@ export function renderSlideBlocksToHtml(
     cleanFirstList(leftBlocks)
     cleanFirstList(rightBlocks)
 
-    const leftFirstH = leftBlocks.find(isHeadingBlock)
-    const rightFirstH = rightBlocks.find(isHeadingBlock)
-
-    const leftHtml = leftBlocks.map(b => {
-      const extraClass = b === leftFirstH ? "slidev-col-first-heading-block" : ""
-      return convertBlockToHtml(b, { ...options, extraClassName: extraClass })
-    }).join("\n")
-
-    const rightHtml = rightBlocks.map(b => {
-      const extraClass = b === rightFirstH ? "slidev-col-first-heading-block" : ""
-      return convertBlockToHtml(b, { ...options, extraClassName: extraClass })
-    }).join("\n")
+    const leftHtml = leftBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
+    const rightHtml = rightBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
 
     const wrapperClass = options?.twoColsWrapperClass || "pdf-two-cols-wrapper layout-two-cols-grid"
     const layoutClass = slide.frontmatter?.layoutClass ? ` ${slide.frontmatter.layoutClass}` : ""
@@ -89,8 +79,9 @@ export function renderSlideBlocksToHtml(
     `
   }
 
-  // 2. 带表头的多栏布局 (通用 cols-header 与历史兼容 two-cols-header, three-cols-header)
-  if (isColsHeaderLayout(layout)) {
+  // 2. 带表头的多栏布局 (通用 cols-header 与历史兼容 two-cols-header, three-cols-header，以及四叶草 2x2 clover)
+  if (layout === "clover" || isColsHeaderLayout(layout)) {
+    const isClover = layout === "clover"
     let headerBlocks: ISlidevBlockItem[] = []
     const explicitHeader = blocks.filter(b => b.slot === "header")
     if (explicitHeader.length > 0) {
@@ -104,9 +95,11 @@ export function renderSlideBlocksToHtml(
 
     const rem = blocks.filter(b => !headerBlocks.includes(b))
 
-    // 确定栏数 targetCols (自适应 2~N 栏)
+    // 确定栏数 targetCols (自适应 2~N 栏，四叶草固定为 4 象限)
     let targetCols = 2
-    if (layout === "three-cols-header") {
+    if (isClover) {
+      targetCols = 4
+    } else if (layout === "three-cols-header") {
       targetCols = 3
     } else if (layout === "two-cols-header") {
       targetCols = 2
@@ -134,9 +127,16 @@ export function renderSlideBlocksToHtml(
 
     const cols = distributeNColumns(rem, targetCols)
 
+    const hasColSlots = rem.some(b => b.slot && /^(?:col-\d+|left|right)$/i.test(b.slot))
+    const isSuperBlockCols =
+      layout === "clover" ||
+      layout === "two-cols-header" ||
+      layout === "three-cols-header" ||
+      (isColsHeaderLayout(layout) && hasColSlots)
+
     const renderColBlockToHtml = (colBlocks: ISlidevBlockItem[]) => {
       const validBlocks = colBlocks.filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
-      if (validBlocks.length > 0) {
+      if (isSuperBlockCols && validBlocks.length > 0) {
         const first = validBlocks[0]
         const md = (first.rawMarkdown || first.content || "").trim()
         const isList = isListItemNode(first) || /^(?:[-*+]|\d+\.)\s+/.test(md)
@@ -144,8 +144,9 @@ export function renderSlideBlocksToHtml(
           first.rawMarkdown = cleanCardListItemMarkdown(first.rawMarkdown || first.content || "")
           first.content = first.rawMarkdown
         }
+        first.isColFirst = true
       }
-      const colFirstH = validBlocks.find(isHeadingBlock)
+      const colFirstH = isSuperBlockCols ? validBlocks.find(isHeadingBlock) : null
       return validBlocks.map(b => {
         const extraClass = b === colFirstH ? "slidev-col-first-heading-block" : ""
         return convertBlockToHtml(b, { ...options, extraClassName: extraClass })
@@ -157,21 +158,26 @@ export function renderSlideBlocksToHtml(
       const extraClass = b === headerFirstH ? "slidev-page-first-heading-block" : ""
       return convertBlockToHtml(b, { ...options, extraClassName: extraClass })
     }).join("\n")
-    const gridCols = parseRatioToGridCols(slide.frontmatter?.layoutRatio, targetCols)
-    const gridStyle = `style="grid-template-columns: ${gridCols};"`
+    const gridCols = isClover
+      ? "repeat(2, minmax(0, 1fr))"
+      : parseRatioToGridCols(slide.frontmatter?.layoutRatio, targetCols)
+    const gridStyle = isClover
+      ? `style="grid-template-columns: ${gridCols}; grid-template-rows: repeat(2, minmax(0, 1fr));"`
+      : `style="grid-template-columns: ${gridCols};"`
 
     const containerClasses = [
-      "layout-cols-header-container",
+      isClover ? "layout-clover-container" : "layout-cols-header-container",
       targetCols === 2 ? "layout-two-cols-header-container" : "",
       targetCols === 3 ? "layout-three-cols-header-container" : "",
       `layout-${layout}-container`,
+      isSuperBlockCols ? "has-superblock-cols" : "",
     ].filter(Boolean).join(" ")
 
     const wrapperClasses = [
-      "layout-cols-wrapper",
-      "layout-cols-grid",
+      isClover ? "layout-clover-grid pdf-clover-wrapper" : "layout-cols-wrapper layout-cols-grid",
       targetCols === 2 ? "pdf-two-cols-wrapper layout-two-cols-grid" : "",
       targetCols === 3 ? "pdf-three-cols-wrapper layout-three-cols-grid" : "",
+      isSuperBlockCols ? "has-superblock-cols" : "",
     ].filter(Boolean).join(" ")
 
     const colsHtml = cols.map((colBlocks, idx) => {

@@ -47,8 +47,8 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
   describe("2. 单文件导出与 PDF 导出中的 CSS 规则注入", () => {
     it("generateStandaloneExportStyles 应包含表头多栏内首个列表项去圆点后居中显示的样式规则", () => {
       const css = generateStandaloneExportStyles()
-      expect(css).toContain("/* 表头多栏内超级块子块首个列表项去圆点后居中显示标题/首行文本 */")
-      expect(css).toContain(".layout-cols-wrapper .pdf-col > *:first-child .slide-list-item-title")
+      expect(css).toContain("/* 表头多栏内超级块子块首个列表项去圆点后居中显示标题/首行文本 (仅在存在超级块分栏时生效) */")
+      expect(css).toContain(".has-superblock-cols .pdf-col > *:first-child .slide-list-item-title")
       expect(css).toContain("text-align: center !important;")
     })
 
@@ -61,7 +61,7 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
 
     it("generatePdfExportStyles 应包含特定标题大小固定与多栏居中规则", () => {
       const css = generatePdfExportStyles({ pageRatio: "16:9" })
-      expect(css).toContain("/* 表头多栏内超级块子块首个列表项去圆点后居中显示标题/首行文本 */")
+      expect(css).toContain("/* 表头多栏内超级块子块首个列表项去圆点后居中显示标题/首行文本 (仅在存在超级块分栏时生效) */")
       expect(css).toContain('[data-normalize-headings="true"]')
       expect(css).toContain("font-size: 1.7rem !important;")
       expect(css).toContain("font-size: 1.3rem !important;")
@@ -120,18 +120,20 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
       expect(html).toMatch(/class="[^"]*slidev-page-first-heading-block[^"]*"[^>]*><h4/)
     })
 
-    it("renderSlideBlocksToHtml 应为多栏布局各栏首个标题标记 slidev-col-first-heading-block", () => {
+    it("renderSlideBlocksToHtml 应为存在超级块的表头多栏布局各栏首个标题标记 slidev-col-first-heading-block", () => {
       const slide = {
         pageIndex: 3,
-        frontmatter: { layout: "two-cols" },
+        frontmatter: { layout: "cols-header" },
         blocks: [
-          { id: "b1", type: "h", content: "## 左栏首个标题", rawMarkdown: "## 左栏首个标题", slot: "left" },
-          { id: "b2", type: "h", content: "#### 右栏首个标题", rawMarkdown: "#### 右栏首个标题", slot: "right" },
+          { id: "h1", type: "h", content: "# 顶栏大标题", slot: "header" },
+          { id: "b1", type: "h", content: "## 左栏首个标题", rawMarkdown: "## 左栏首个标题", slot: "col-1" },
+          { id: "b2", type: "h", content: "#### 右栏首个标题", rawMarkdown: "#### 右栏首个标题", slot: "col-2" },
         ],
       }
       const html = renderSlideBlocksToHtml(slide as any)
       expect(html).toContain("slidev-col-first-heading-block")
       expect(html).toMatch(/class="[^"]*slidev-col-first-heading-block[^"]*"[^>]*><h4/)
+      expect(html).toContain("has-superblock-cols")
     })
   })
 
@@ -144,29 +146,29 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
       expect(html).toContain('<p class="slide-list-item-desc">零网络依赖极速离线放映</p>')
     })
 
-    it("单文件导出样式包含表头多栏首个列表项去圆点、清除 marker 与居中声明，且排除首项左对齐", async () => {
+    it("单文件导出样式包含表头多栏超级块首个列表项去圆点、清除 marker 与居中声明 (限定在 has-superblock-cols 范围)", async () => {
       const { generateStandaloneExportStyles } = await import("../src/export/standalone-template-styles")
       const css = generateStandaloneExportStyles()
 
       // 首个列表项去圆点与居中
-      expect(css).toContain(".layout-cols-wrapper .pdf-col > *:first-child :is(ul, ol) > li:first-child")
+      expect(css).toContain(".has-superblock-cols .pdf-col > *:first-child :is(ul, ol) > li:first-child")
       expect(css).toContain("list-style: none !important")
       expect(css).toContain("text-align: center !important")
       // marker 清除
       expect(css).toContain("li:first-child::marker")
       // 左对齐明确排除首项
-      expect(css).toContain(".layout-cols-wrapper .pdf-col li:not(:first-child)")
+      expect(css).toContain(".has-superblock-cols .pdf-col li:not(:first-child)")
     })
 
-    it("PDF 导出样式同样包含表头多栏首个列表项去圆点、清除 marker 与居中声明", async () => {
+    it("PDF 导出样式同样包含表头多栏超级块首个列表项去圆点、清除 marker 与居中声明 (限定在 has-superblock-cols 范围)", async () => {
       const { generatePdfExportStyles } = await import("../src/export/pdf-template-styles")
       const css = generatePdfExportStyles()
 
-      expect(css).toContain(".layout-cols-wrapper .pdf-col > *:first-child :is(ul, ol) > li:first-child")
+      expect(css).toContain(".has-superblock-cols .pdf-col > *:first-child :is(ul, ol) > li:first-child")
       expect(css).toContain("list-style: none !important")
       expect(css).toContain("text-align: center !important")
       expect(css).toContain("li:first-child::marker")
-      expect(css).toContain(".layout-cols-wrapper .pdf-col li:not(:first-child)")
+      expect(css).toContain(".has-superblock-cols .pdf-col li:not(:first-child)")
     })
 
     it("当列表项内容为以 # 开头的标题时，自动赋予 slide-list-item-title 类名", async () => {
@@ -189,22 +191,22 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
       expect(html).toContain('<h3 class="slide-list-item-title">分栏首标题</h3>')
     })
 
-    it("单文件导出样式与 PDF 样式中的标题选择器为后代选择器并包含 h1~h6 强制居中", async () => {
+    it("单文件导出样式与 PDF 样式中的标题选择器为后代选择器并包含 h1~h6 强制居中 (限定在 has-superblock-cols 范围)", async () => {
       const { generateStandaloneExportStyles } = await import("../src/export/standalone-template-styles")
       const { generatePdfExportStyles } = await import("../src/export/pdf-template-styles")
 
       const htmlCss = generateStandaloneExportStyles()
       const pdfCss = generatePdfExportStyles()
 
-      // 后代选择器包含 h1~h6 居中
-      expect(htmlCss).toContain(".layout-cols-wrapper .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6)")
-      expect(htmlCss).toContain(".slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title)")
-      expect(pdfCss).toContain(".layout-cols-wrapper .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6)")
-      expect(pdfCss).toContain(".slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title)")
+      // 后代选择器包含 h1~h6 居中，且限定在 has-superblock-cols 范围
+      expect(htmlCss).toContain(".has-superblock-cols .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6)")
+      expect(htmlCss).toContain(".has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title)")
+      expect(pdfCss).toContain(".has-superblock-cols .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6)")
+      expect(pdfCss).toContain(".has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title)")
 
       // 固定特定标题大小选项中同样包含居中声明，两者协同无冲突
-      expect(htmlCss).toContain("data-normalize-headings=\"true\"] .slidev-col-first-heading-block")
-      expect(pdfCss).toContain("data-normalize-headings=\"true\"] .slidev-col-first-heading-block")
+      expect(htmlCss).toContain('data-normalize-headings="true"] .has-superblock-cols .slidev-col-first-heading-block')
+      expect(pdfCss).toContain('data-normalize-headings="true"] .has-superblock-cols .slidev-col-first-heading-block')
     })
   })
 
@@ -273,6 +275,79 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
       const script = getStandaloneClientRuntimeScript()
       expect(script).toContain("const hMatch = md.match(/^(#{1,6})\\s+(.*)$/);")
       expect(script).toContain("div.innerHTML = \"<h\" + level + \">\" + th + \"</h\" + level + \">\";")
+    })
+
+    it("convertBlockToHtml 对作为分栏首块的列表项块赋予 slide-list-item-title 类名，普通列表项不赋予", async () => {
+      const { convertBlockToHtml } = await import("../src/export/markdown-renderer")
+      const colFirstBlock = {
+        id: "b-h",
+        type: "i",
+        content: "### 分栏首标题",
+        rawMarkdown: "### 分栏首标题",
+        isColFirst: true,
+      }
+      const html1 = convertBlockToHtml(colFirstBlock as any, { extraClassName: "slidev-col-first-heading-block" })
+      expect(html1).toContain('<h3 class="slide-list-item-title">分栏首标题</h3>')
+
+      const normalListBlock = {
+        id: "b-normal",
+        type: "i",
+        content: "### 普通列表标题",
+        rawMarkdown: "### 普通列表标题",
+      }
+      const html2 = convertBlockToHtml(normalListBlock as any)
+      expect(html2).toContain('<h3>普通列表标题</h3>')
+      expect(html2).not.toContain('slide-list-item-title')
+    })
+
+    it("单文件导出样式与 PDF 样式中的标题选择器仅对 has-superblock-cols 强制居中，且图左图右被排除", async () => {
+      const { generateStandaloneExportStyles } = await import("../src/export/standalone-template-styles")
+      const { generatePdfExportStyles } = await import("../src/export/pdf-template-styles")
+
+      const htmlCss = generateStandaloneExportStyles()
+      const pdfCss = generatePdfExportStyles()
+
+      // 居中与标题规格化限定在 has-superblock-cols 范围
+      expect(htmlCss).toContain(".has-superblock-cols .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6)")
+      expect(htmlCss).toContain(".has-superblock-cols .slidev-col-first-heading-block")
+      expect(pdfCss).toContain(".has-superblock-cols .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6)")
+      expect(pdfCss).toContain(".has-superblock-cols .slidev-col-first-heading-block")
+
+      // 图左与图右完全排除在规范化与居中之外
+      expect(htmlCss).toContain("layout-image-left, .layout-image-right")
+      expect(pdfCss).toContain("layout-image-left, .layout-image-right")
+    })
+
+    it("renderSlideBlocksToHtml 在存在超级块插槽时添加 has-superblock-cols，普通列表时不添加", async () => {
+      const { renderSlideBlocksToHtml } = await import("../src/export/slide-layout-renderer")
+
+      // 场景 1: 带超级块分栏插槽 (col-1, col-2) 的 cols-header 页面
+      const sbSlide = {
+        pageIndex: 2,
+        frontmatter: { layout: "cols-header" },
+        blocks: [
+          { id: "h1", type: "h", content: "# 页面总标题", slot: "header" },
+          { id: "b1", type: "i", content: "- # 栏目 1", slot: "col-1" },
+          { id: "b2", type: "i", content: "- # 栏目 2", slot: "col-2" },
+        ],
+      }
+      const sbHtml = renderSlideBlocksToHtml(sbSlide as any)
+      expect(sbHtml).toContain("has-superblock-cols")
+      expect(sbHtml).toContain("slidev-col-first-heading-block")
+
+      // 场景 2: 无超级块分栏插槽的普通列表页面（即便是 cols-header 版式）
+      const normalListSlide = {
+        pageIndex: 3,
+        frontmatter: { layout: "cols-header" },
+        blocks: [
+          { id: "h1", type: "h", content: "# 页面总标题", slot: "header" },
+          { id: "b1", type: "i", content: "- 普通列表项 1" },
+          { id: "b2", type: "i", content: "- 普通列表项 2" },
+        ],
+      }
+      const normalHtml = renderSlideBlocksToHtml(normalListSlide as any)
+      expect(normalHtml).not.toContain("has-superblock-cols")
+      expect(normalHtml).not.toContain("slidev-col-first-heading-block")
     })
   })
 })

@@ -251,7 +251,115 @@ export interface ITrackedListSuperBlock {
   pageTargetId: string
   headerId?: string
   itemIds: string[]
-  layout: "cols-header" | "two-cols-header" | "three-cols-header"
+  layout: "cols-header" | "two-cols-header" | "three-cols-header" | "clover"
+}
+
+export interface IFourComponentSuperBlockMatch {
+  superBlockNode: ISiYuanBlockNode
+  items: ISiYuanBlockNode[]
+  headerNode?: ISiYuanBlockNode
+}
+
+/**
+ * 提取超级块中包含的 4 个组件（优先列表项，兼容直接子块）
+ */
+export function extractFourComponentSuperBlock(node: ISiYuanBlockNode): ISiYuanBlockNode[] | null {
+  if (!node || !isSuperBlock(node)) return null
+  if (!isHorizontalSuperBlock(node)) return null
+  if (detectSuperBlockImageLayout(node)) return null
+
+  // 1. 优先检查列表分栏项 (包括扁平 4 栏及嵌套 2x2 等展开形态)
+  const listItemsRes = extractListSuperBlockItems(node)
+  if (listItemsRes && listItemsRes.items.length === 4) {
+    return listItemsRes.items
+  }
+
+  // 2. 检查收集的所有叶子列表项
+  const leaves = collectAllLeafListItems(node)
+  if (leaves && leaves.length === 4) {
+    return leaves
+  }
+
+  // 3. 兼容直接包含 4 个有效内容子块的超级块（段落、卡片等）
+  const contentChildren = getContentChildren(node)
+  if (contentChildren.length === 4) {
+    return contentChildren
+  }
+
+  return null
+}
+
+/**
+ * 在给定的页面块列表（或当前幻灯片）中搜索符合条件的“包含 4 个组件的超级块”
+ * 优先级：
+ * 1. 优先匹配当前焦点所在的超级块 (preferredBlockId)
+ * 2. 否则按文档顺序取页面内的第一个匹配项
+ */
+export function findFourComponentSuperBlockInPage(
+  blocks: ISiYuanBlockNode[],
+  preferredBlockId?: string,
+): IFourComponentSuperBlockMatch | null {
+  if (!blocks || blocks.length === 0) return null
+
+  interface ICandidate {
+    sbNode: ISiYuanBlockNode
+    items: ISiYuanBlockNode[]
+    topLevelIndex: number
+  }
+
+  const candidates: ICandidate[] = []
+
+  function searchSuperBlocks(node: ISiYuanBlockNode, topIndex: number) {
+    if (isSuperBlock(node)) {
+      const items = extractFourComponentSuperBlock(node)
+      if (items && items.length === 4) {
+        candidates.push({ sbNode: node, items, topLevelIndex: topIndex })
+      }
+    }
+    if (node.children && node.children.length > 0) {
+      for (const child of node.children) {
+        searchSuperBlocks(child, topIndex)
+      }
+    }
+  }
+
+  for (let i = 0; i < blocks.length; i++) {
+    searchSuperBlocks(blocks[i], i)
+  }
+
+  if (candidates.length === 0) return null
+
+  // 1. 若指定了 preferredBlockId，检查是否有候选超级块包含该 ID
+  let selectedCandidate: ICandidate | null = null
+  if (preferredBlockId) {
+    selectedCandidate = candidates.find(c => {
+      if (c.sbNode.id === preferredBlockId) return true
+      if (c.items.some(it => it.id === preferredBlockId)) return true
+      const checkDescendant = (n: ISiYuanBlockNode): boolean => {
+        if (n.id === preferredBlockId) return true
+        if (n.children) {
+          return n.children.some(checkDescendant)
+        }
+        return false
+      }
+      return checkDescendant(c.sbNode)
+    }) || null
+  }
+
+  // 2. 若无焦点匹配，取文档顺序第一个
+  if (!selectedCandidate) {
+    selectedCandidate = candidates[0]
+  }
+
+  // 寻找该超级块之前的第一条标题作为表头
+  const preBlocks = blocks.slice(0, selectedCandidate.topLevelIndex)
+  const headerNode = preBlocks.slice().reverse().find(b => isHeadingBlock(b))
+
+  return {
+    superBlockNode: selectedCandidate.sbNode,
+    items: selectedCandidate.items,
+    headerNode,
+  }
 }
 
 export interface IListSuperBlockTagChange {
@@ -400,11 +508,13 @@ export function scanAndTagListSuperBlocks(
 
       // 2.1 检查并配置页面版式 custom-slidev-layout
       const currentLayout = pageTargetNode?.ial?.[ATTR_PAGE_LAYOUT] || ""
-      if (currentLayout !== layout) {
-        recordChange(pageTargetId, { [ATTR_PAGE_LAYOUT]: layout }, { [ATTR_PAGE_LAYOUT]: currentLayout })
+      const isCurrentClover = currentLayout === "clover"
+      const targetLayout = isCurrentClover ? "clover" : layout
+      if (currentLayout !== targetLayout) {
+        recordChange(pageTargetId, { [ATTR_PAGE_LAYOUT]: targetLayout }, { [ATTR_PAGE_LAYOUT]: currentLayout })
         if (pageTargetNode) {
           if (!pageTargetNode.ial) pageTargetNode.ial = {}
-          pageTargetNode.ial[ATTR_PAGE_LAYOUT] = layout
+          pageTargetNode.ial[ATTR_PAGE_LAYOUT] = targetLayout
         }
       }
 
@@ -476,7 +586,7 @@ export function scanAndTagListSuperBlocks(
         pageTargetId,
         headerId,
         itemIds: currentItemIds,
-        layout,
+        layout: isCurrentClover ? "clover" : layout,
       })
     } else {
       // 当前页未匹配到 2~3 项列表超级块

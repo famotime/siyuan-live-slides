@@ -57,6 +57,7 @@ export type TSlideLayout =
   | "cols-header"
   | "two-cols-header"
   | "three-cols-header"
+  | "clover"
   | "image-right"
   | "image-left"
   | "center"
@@ -111,6 +112,8 @@ export interface ISlidevBlockItem {
   attrs?: Record<string, string>
   ial?: Record<string, string>
   children?: ISlidevBlockItem[] | any[]
+  rawNode?: ISiYuanBlockNode
+  isColFirst?: boolean
 }
 
 export type ISlidevBlock = ISlidevBlockItem

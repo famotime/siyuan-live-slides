@@ -348,13 +348,16 @@ export function isHeadingBlock(node: ISiYuanBlockNode): boolean {
 import {
   collectAllLeafListItems,
   detectListSuperBlock,
+  extractFourComponentSuperBlock,
   extractListSuperBlockItems,
   extractListUnits,
+  findFourComponentSuperBlockInPage,
   isInvalidListSuperBlock,
   scanAndTagListSuperBlocks,
 } from "./list-column-scanner"
 import type {
   IExtractedListColumns,
+  IFourComponentSuperBlockMatch,
   IListSuperBlockDetection,
   IListSuperBlockTagChange,
   IScanListSuperBlocksResult,
@@ -364,13 +367,16 @@ import type {
 export {
   collectAllLeafListItems,
   detectListSuperBlock,
+  extractFourComponentSuperBlock,
   extractListSuperBlockItems,
   extractListUnits,
+  findFourComponentSuperBlockInPage,
   isInvalidListSuperBlock,
   scanAndTagListSuperBlocks,
 }
 export type {
   IExtractedListColumns,
+  IFourComponentSuperBlockMatch,
   IListSuperBlockDetection,
   IListSuperBlockTagChange,
   IScanListSuperBlocksResult,

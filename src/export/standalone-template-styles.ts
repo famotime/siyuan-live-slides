@@ -226,7 +226,8 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     }
     .layout-cols-header-container,
     .layout-two-cols-header-container,
-    .layout-three-cols-header-container {
+    .layout-three-cols-header-container,
+    .layout-clover-container {
       display: flex;
       flex-direction: column;
       width: 100%;
@@ -260,6 +261,26 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       box-sizing: border-box;
       overflow: hidden !important;
     }
+    .pdf-clover-wrapper,
+    .layout-clover-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+      gap: 20px;
+      width: 100%;
+      height: 100%;
+      min-height: 0 !important;
+      max-height: 100% !important;
+      flex: 1 1 0%;
+      align-items: stretch;
+      box-sizing: border-box;
+      overflow: hidden !important;
+    }
+    .layout-clover-grid .pdf-col {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
     .pdf-col {
       display: flex;
       flex-direction: column;
@@ -282,33 +303,17 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       word-break: break-word;
       box-sizing: border-box;
     }
-    /* 表头多栏内超级块子块首个列表项去圆点后居中显示标题/首行文本 */
-    .layout-cols-wrapper .pdf-col > *:first-child .slide-list-item-title,
-    .layout-cols-wrapper .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6),
-    .layout-cols-wrapper .pdf-col > *:first-child p.slide-list-item-title,
-    .layout-cols-wrapper .pdf-col > *:first-child p:first-of-type,
-    .layout-cols-wrapper .pdf-col > *:first-child p:first-child,
-    .layout-cols-wrapper .pdf-col > *:first-child :is(ul, ol) > li:first-child,
-    .layout-cols-wrapper .pdf-col > *:first-child .slide-list > .slide-list-item:first-child,
-    .layout-cols-wrapper .pdf-col > *:first-child .pdf-list > li:first-child,
-    .layout-cols-header-container .pdf-col > *:first-child .slide-list-item-title,
-    .layout-cols-header-container .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6),
-    .layout-cols-header-container .pdf-col > *:first-child p.slide-list-item-title,
-    .layout-cols-header-container .pdf-col > *:first-child p:first-of-type,
-    .layout-cols-header-container .pdf-col > *:first-child p:first-child,
-    .layout-cols-header-container .pdf-col > *:first-child :is(ul, ol) > li:first-child,
-    .layout-cols-header-container .pdf-col > *:first-child .slide-list > .slide-list-item:first-child,
-    .layout-cols-header-container .pdf-col > *:first-child .pdf-list > li:first-child,
-    .two-cols-left > *:first-child .slide-list-item-title,
-    .two-cols-left > *:first-child :is(h1, h2, h3, h4, h5, h6),
-    .two-cols-left > *:first-child p:first-of-type,
-    .two-cols-left > *:first-child :is(ul, ol) > li:first-child,
-    .two-cols-right > *:first-child .slide-list-item-title,
-    .two-cols-right > *:first-child :is(h1, h2, h3, h4, h5, h6),
-    .two-cols-right > *:first-child p:first-of-type,
-    .two-cols-right > *:first-child :is(ul, ol) > li:first-child,
-    .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    /* 表头多栏内超级块子块首个列表项去圆点后居中显示标题/首行文本 (仅在存在超级块分栏时生效) */
+    .has-superblock-cols .pdf-col > *:first-child .slide-list-item-title,
+    .has-superblock-cols .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6),
+    .has-superblock-cols .pdf-col > *:first-child p.slide-list-item-title,
+    .has-superblock-cols .pdf-col > *:first-child p:first-of-type,
+    .has-superblock-cols .pdf-col > *:first-child p:first-child,
+    .has-superblock-cols .pdf-col > *:first-child :is(ul, ol) > li:first-child,
+    .has-superblock-cols .pdf-col > *:first-child .slide-list > .slide-list-item:first-child,
+    .has-superblock-cols .pdf-col > *:first-child .pdf-list > li:first-child,
+    .has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    .has-superblock-cols .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       list-style: none !important;
       list-style-type: none !important;
       text-align: center !important;
@@ -317,30 +322,20 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       width: 100% !important;
     }
 
-    /* 彻底清除首个列表项的原生圆点 Marker */
-    :is(.layout-cols-wrapper, .layout-cols-header-container) .pdf-col > *:first-child :is(ul, ol) > li:first-child::marker,
-    .two-cols-left > *:first-child :is(ul, ol) > li:first-child::marker,
-    .two-cols-right > *:first-child :is(ul, ol) > li:first-child::marker {
+    /* 彻底清除首个列表项的原生圆点 Marker (仅在存在超级块分栏时生效) */
+    .has-superblock-cols .pdf-col > *:first-child :is(ul, ol) > li:first-child::marker {
       content: "" !important;
       display: none !important;
     }
 
-    /* 确保首个列表项内部内联与块级元素居中 */
-    :is(.layout-cols-wrapper, .layout-cols-header-container) .pdf-col > *:first-child :is(ul, ol) > li:first-child *,
-    .two-cols-left > *:first-child :is(ul, ol) > li:first-child *,
-    .two-cols-right > *:first-child :is(ul, ol) > li:first-child * {
+    /* 确保首个列表项内部内联与块级元素居中 (仅在存在超级块分栏时生效) */
+    .has-superblock-cols .pdf-col > *:first-child :is(ul, ol) > li:first-child * {
       text-align: center !important;
     }
 
     /* 栏内说明段落与列表项：左对齐，自然阅读排版 */
-    .layout-cols-wrapper .pdf-col .slide-list-item-desc,
-    .layout-cols-header-container .pdf-col .slide-list-item-desc,
-    .two-cols-left .slide-list-item-desc,
-    .two-cols-right .slide-list-item-desc,
-    .layout-cols-wrapper .pdf-col li:not(:first-child),
-    .layout-cols-header-container .pdf-col li:not(:first-child),
-    .two-cols-left li:not(:first-child),
-    .two-cols-right li:not(:first-child) {
+    .has-superblock-cols .pdf-col .slide-list-item-desc,
+    .has-superblock-cols .pdf-col li:not(:first-child) {
       text-align: left !important;
     }
 
@@ -356,15 +351,19 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       margin-bottom: 10px !important;
     }
 
-    [data-normalize-headings="true"] .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    [data-normalize-headings="true"] .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    [data-normalize-headings="true"] :is(.layout-cols-wrapper, .pdf-two-cols-wrapper, .layout-cols-header-container, .layout-cols-grid) .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    [data-normalize-headings="true"] :is(.two-cols-left, .two-cols-right, .pdf-col, .col) > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    [data-normalize-headings="true"] .has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .has-superblock-cols .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .has-superblock-cols .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       font-size: 1.3rem !important;
       font-weight: 600 !important;
       line-height: 1.3 !important;
       margin-bottom: 8px !important;
       text-align: center !important;
+    }
+
+    /* 图左与图右版式标题完全保留用户原始字号与默认排版，不进行任何固定大小规范化 */
+    [data-normalize-headings="true"] :is(.layout-image-left, .layout-image-right, .image-left-content, .image-right-content) :is(h1, h2, h3, h4, h5, h6) {
+      text-align: left !important;
     }
     .pdf-col pre,
     .two-cols-left pre,

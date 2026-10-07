@@ -472,8 +472,11 @@ export function convertBlockToHtml(
   if (hMatch) {
     const level = hMatch[1].length
     const titleText = formatInlineMarkdown(hMatch[2])
-    const isList = block.type === "i"
-    const hClass = isList ? ' class="slide-list-item-title"' : ""
+    const isColFirstHeading = Boolean(
+      block.isColFirst ||
+      (block.type === "i" && options?.extraClassName?.includes("slidev-col-first-heading-block"))
+    )
+    const hClass = isColFirstHeading ? ' class="slide-list-item-title"' : ""
     return `<div class="${containerClass}"${motionStyle}><h${level}${hClass}>${titleText}</h${level}></div>`
   }
 
@@ -637,9 +640,9 @@ export function convertBlockToHtml(
     }
   }
 
-  // 11. 普通段落
-  const isList = block.type === "i"
-  const pClass = isList ? ' class="slide-list-item-title"' : ""
+  // 11. 普通段落 (仅当作为超级块分栏首项时赋予 slide-list-item-title)
+  const isColFirst = Boolean(block.isColFirst)
+  const pClass = isColFirst ? ' class="slide-list-item-title"' : ""
   return `<div class="${containerClass}"${motionStyle}><p${pClass}>${formatInlineMarkdown(md)}</p></div>`
 }
 

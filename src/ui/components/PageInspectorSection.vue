@@ -12,7 +12,7 @@
 
     <!-- 智能分栏提示 (当默认版式下检测到横向超级块) -->
     <div
-      v-if="!isMultiColLayout && detectedSbRatio"
+      v-if="!isMultiColLayout && pageLayout !== 'clover' && detectedSbRatio"
       class="spm-card-control"
       style="border-left: 3px solid var(--b3-theme-primary); background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.06); padding: 8px 12px; margin-top: 6px;"
     >

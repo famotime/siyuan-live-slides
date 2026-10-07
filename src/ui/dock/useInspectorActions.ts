@@ -12,7 +12,7 @@ import {
 import { generateSpeakerNotesWithAIDetailed } from "@/ai/notes-generator"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
 import { extractCleanNoteText } from "@/compiler/slidev-ast-builder"
-import { extractImageUrl } from "@/compiler/superblock-scanner"
+import { extractImageUrl, findFourComponentSuperBlockInPage } from "@/compiler/superblock-scanner"
 import { triggerPdfExport } from "@/export/pdf-exporter"
 import { buildStandaloneHtml, downloadHtmlFile } from "@/export/single-html-exporter"
 import { syncDomBlockAttrs } from "@/sync/dom-attr-sync"
@@ -951,12 +951,193 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     }
   }
 
+  async function applyCloverLayout(): Promise<boolean> {
+    try {
+      interface IFourCandidate {
+        sbId: string
+        itemIds: string[]
+        headerId?: string
+      }
+      let found: IFourCandidate | null = null
+
+      // 1. DOM 优先搜索（若在浏览器 Protyle 环境下）
+      if (typeof document !== "undefined") {
+        const divId = ctx.currentPageDividerId.value || (ctx.activeBlockType.value === "hr" || ctx.activeBlockType.value === "NodeThematicBreak" ? ctx.activeBlockId.value : "")
+        const activeId = ctx.activeBlockId.value
+        let scopeElements: Element[] = []
+
+        if (divId) {
+          const divEl = document.querySelector(`.protyle-wysiwyg [data-node-id="${divId}"]`)
+          if (divEl) {
+            let sibling = divEl.nextElementSibling
+            while (sibling) {
+              if (sibling.getAttribute("data-type") === "NodeThematicBreak" || sibling.classList?.contains("protyle-wysiwyg__block--hr")) {
+                break
+              }
+              scopeElements.push(sibling)
+              sibling = sibling.nextElementSibling
+            }
+          }
+        } else {
+          // 首页
+          const firstDivider = document.querySelector('.protyle-wysiwyg [data-type="NodeThematicBreak"], .protyle-wysiwyg .protyle-wysiwyg__block--hr')
+          const allWysiwygChildren = Array.from(document.querySelectorAll('.protyle-wysiwyg > [data-node-id]'))
+          for (const el of allWysiwygChildren) {
+            if (!firstDivider || (el.compareDocumentPosition(firstDivider) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+              scopeElements.push(el)
+            } else {
+              break
+            }
+          }
+        }
+
+        const candidates: IFourCandidate[] = []
+        let lastHeaderId: string | undefined = undefined
+
+        for (const el of scopeElements) {
+          const dt = el.getAttribute("data-type")
+          if (dt === "NodeHeading") {
+            lastHeaderId = el.getAttribute("data-node-id") || undefined
+          }
+
+          const sbs: Element[] = []
+          if (dt === "NodeSuperBlock") {
+            sbs.push(el)
+          } else {
+            sbs.push(...Array.from(el.querySelectorAll('[data-type="NodeSuperBlock"]')))
+          }
+
+          for (const sb of sbs) {
+            const sbLayout = (sb.getAttribute("data-sb-layout") || "").toLowerCase()
+            if (sbLayout === "row") continue
+
+            const sbId = sb.getAttribute("data-node-id") || ""
+            let candidateItemIds: string[] = []
+
+            // A: 优先检查内部列表项 (4 个列表项)
+            const listItems = Array.from(sb.querySelectorAll('[data-type="NodeListItem"]'))
+            if (listItems.length === 4) {
+              candidateItemIds = listItems.map(li => li.getAttribute("data-node-id")).filter(Boolean) as string[]
+            }
+
+            // B: 兼容直接 4 个内容子块
+            if (candidateItemIds.length !== 4) {
+              const directChildren = Array.from(sb.querySelectorAll(':scope > [data-node-id]'))
+              if (directChildren.length === 4) {
+                candidateItemIds = directChildren.map(c => c.getAttribute("data-node-id")).filter(Boolean) as string[]
+              }
+            }
+
+            if (candidateItemIds.length === 4) {
+              candidates.push({
+                sbId,
+                itemIds: candidateItemIds,
+                headerId: lastHeaderId,
+              })
+            }
+          }
+        }
+
+        if (candidates.length > 0) {
+          if (activeId) {
+            found = candidates.find(c => {
+              if (c.sbId === activeId) return true
+              if (c.itemIds.includes(activeId)) return true
+              const el = document.querySelector(`.protyle-wysiwyg [data-node-id="${c.sbId}"]`)
+              const activeEl = document.querySelector(`.protyle-wysiwyg [data-node-id="${activeId}"]`)
+              return Boolean(el && activeEl && el.contains(activeEl))
+            }) || null
+          }
+          if (!found) {
+            found = candidates[0]
+          }
+        }
+      }
+
+      // 2. AST 回退（若 DOM 搜索未找到或在测试/无 DOM 环境）
+      if (!found && ctx.targetSlide.value?.blocks) {
+        const slide = ctx.targetSlide.value
+        const astBlocks: any[] = []
+        for (const b of slide.blocks) {
+          if (b.rawNode) {
+            astBlocks.push(b.rawNode)
+          } else {
+            astBlocks.push({
+              id: b.id,
+              type: b.type,
+              content: b.content,
+              markdown: b.rawMarkdown,
+              children: b.children,
+              ial: b.attributes || b.ial || {},
+            })
+          }
+        }
+        const astMatch = findFourComponentSuperBlockInPage(astBlocks, ctx.activeBlockId.value)
+        if (astMatch && astMatch.items.length === 4) {
+          found = {
+            sbId: astMatch.superBlockNode.id,
+            itemIds: astMatch.items.map(it => it.id),
+            headerId: astMatch.headerNode?.id,
+          }
+        }
+      }
+
+      // 3. 若未找到符合条件的 4 组件超级块，友好提示并阻止切换
+      if (!found || found.itemIds.length !== 4) {
+        showMessage("当前页面未找到包含 4 个组件的超级块（需包含 4 个列表项或 4 个子块）", 4000, "info")
+        return false
+      }
+
+      // 4. 执行设置：配置 clover 版式与 col-1 ~ col-4 插槽
+      const pageTargetId = ctx.currentPageDividerId.value || ctx.currentDocId.value
+      if (pageTargetId) {
+        ctx.currentPageDividerLayout.value = "clover"
+        if (ctx.targetSlide.value) {
+          if (!ctx.targetSlide.value.frontmatter) {
+            ctx.targetSlide.value.frontmatter = {}
+          }
+          ctx.targetSlide.value.frontmatter.layout = "clover"
+        }
+        globalDocumentCompiler.setBlockAttrOverride(pageTargetId, { [ATTR_PAGE_LAYOUT]: "clover" })
+        syncDomBlockAttrs(pageTargetId, { [ATTR_PAGE_LAYOUT]: "clover" })
+        await setBlockAttrs(pageTargetId, { [ATTR_PAGE_LAYOUT]: "clover" }).catch(() => {})
+      }
+
+      // 配置表头（若有）
+      if (found.headerId) {
+        globalDocumentCompiler.setBlockAttrOverride(found.headerId, { [ATTR_ELEM_SLOT]: "header" })
+        syncDomBlockAttrs(found.headerId, { [ATTR_ELEM_SLOT]: "header" })
+        await setBlockAttrs(found.headerId, { [ATTR_ELEM_SLOT]: "header" }).catch(() => {})
+      }
+
+      // 配置 4 个组件的插槽 col-1 ~ col-4
+      for (let i = 0; i < 4; i++) {
+        const itemId = found.itemIds[i]
+        const slotName = `col-${i + 1}`
+        globalDocumentCompiler.setBlockAttrOverride(itemId, { [ATTR_ELEM_SLOT]: slotName })
+        syncDomBlockAttrs(itemId, { [ATTR_ELEM_SLOT]: slotName })
+        await setBlockAttrs(itemId, { [ATTR_ELEM_SLOT]: slotName }).catch(() => {})
+      }
+
+      showMessage("已将本页版式设为四叶草（田字型）布局")
+      if (ctx.plugin) {
+        await ctx.plugin.compileCurrentDocument()
+      }
+      return true
+    } catch (e) {
+      console.error("[useInspectorActions] applyCloverLayout error:", e)
+      showMessage("配置四叶草布局失败", 4000, "error")
+      return false
+    }
+  }
+
   return {
     triggerSaveNotice,
     saveAttrs,
     saveAttr,
     savePageAttr,
     applyPageLayoutAndRatio,
+    applyCloverLayout,
     resetSuperBlockWidth,
     saveDocAttr,
     onToggleVideoAutoplay,
