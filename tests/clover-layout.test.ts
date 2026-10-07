@@ -399,4 +399,25 @@ describe("Clover Layout (四叶草 2x2 田字型布局规范测试)", () => {
       expect(showMessageSpy).toHaveBeenCalledWith("已将本页版式设为四叶草（田字型）布局")
     })
   })
+
+  describe("5. Web 沙箱与离线客户端运行时中的 clover 布局支持", () => {
+    it("getStandaloneClientRuntimeScript 应包含 clover 布局分支与 4 栏田字格渲染", async () => {
+      const { getStandaloneClientRuntimeScript } = await import("../src/export/standalone-client-runtime")
+      const script = getStandaloneClientRuntimeScript()
+      expect(script).toContain('slide.frontmatter?.layout === "clover"')
+      expect(script).toContain('layout-clover-container')
+      expect(script).toContain('layout-clover-grid pdf-clover-wrapper')
+      expect(script).toContain('repeat(2, minmax(0, 1fr))')
+    })
+
+    it("public/slidev-client/index.html 应支持 clover 布局与田字型 2x2 网格样式", async () => {
+      const fs = await import("fs")
+      const path = await import("path")
+      const html = fs.readFileSync(path.resolve(__dirname, "../public/slidev-client/index.html"), "utf-8")
+      expect(html).toContain(".layout-clover-grid")
+      expect(html).toContain("repeat(2, minmax(0, 1fr))")
+      expect(html).toContain("layout === 'clover'")
+      expect(html).toContain("currentSlide.frontmatter.layout === 'clover' ? 'layout-clover-grid' : ''")
+    })
+  })
 })

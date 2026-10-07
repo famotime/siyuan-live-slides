@@ -582,6 +582,29 @@
       overflow: visible !important;
     }
 
+    .pdf-clover-wrapper,
+    .layout-clover-grid,
+    .layout-cols-grid.layout-clover-grid {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+      gap: 20px !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 0 !important;
+      max-height: 100% !important;
+      flex: 1 1 0% !important;
+      align-items: stretch !important;
+      box-sizing: border-box !important;
+      overflow: visible !important;
+    }
+
+    .layout-clover-grid .col {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
     .two-cols-left,
     .two-cols-right,
     .three-cols-col,
@@ -2295,9 +2318,10 @@
                 :class="[
                   dynamicColsCount === 2 ? 'layout-two-cols' : '',
                   dynamicColsCount === 3 ? 'layout-three-cols' : '',
+                  currentSlide.frontmatter.layout === 'clover' ? 'layout-clover-grid' : '',
                   isSuperBlockColsHeader ? 'has-superblock-cols' : '',
                 ]"
-                :style="getLayoutGridStyle(currentSlide, dynamicColsCount)"
+                :style="currentSlide.frontmatter.layout === 'clover' ? {} : getLayoutGridStyle(currentSlide, dynamicColsCount)"
                 style="flex: 1;"
               >
                 <div
@@ -2310,6 +2334,7 @@
                     dynamicColsCount === 2 && colIdx === 0 ? 'two-cols-left' : '',
                     dynamicColsCount === 2 && colIdx === 1 ? 'two-cols-right' : '',
                     dynamicColsCount === 3 ? 'three-cols-col three-cols-col--' + (colIdx + 1) : '',
+                    currentSlide.frontmatter.layout === 'clover' ? 'clover-col clover-col--' + (colIdx + 1) : '',
                     currentSlide.frontmatter.class,
                   ]"
                 >
@@ -3331,12 +3356,13 @@
         })
 
         function isColsHeader(layout) {
-          return layout === 'cols-header' || layout === 'two-cols-header' || layout === 'three-cols-header';
+          return layout === 'cols-header' || layout === 'two-cols-header' || layout === 'three-cols-header' || layout === 'clover';
         }
 
         const dynamicColsCount = computed(() => {
           if (!currentSlide.value) return 2;
           const layout = currentSlide.value.frontmatter?.layout;
+          if (layout === 'clover') return 4;
           if (layout === 'three-cols-header') return 3;
           if (layout === 'two-cols-header') return 2;
           const blocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right");
@@ -3477,6 +3503,7 @@
         const isSuperBlockColsHeader = computed(() => {
           if (!currentSlide.value) return false;
           const fm = currentSlide.value.frontmatter || {};
+          if (fm.layout === "clover") return true;
           if (!isColsHeader(fm.layout)) return false;
           const blocks = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right");
           return blocks.some(b => b.slot && /^col-\d+$/i.test(b.slot));

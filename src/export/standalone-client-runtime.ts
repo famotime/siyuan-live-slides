@@ -439,8 +439,9 @@ export function getStandaloneClientRuntimeScript(): string {
           for (const b of rightList) rightCol.appendChild(renderBlock(b, b === rightFirstH ? "slidev-col-first-heading-block" : ""));
           container.appendChild(leftCol);
           container.appendChild(rightCol);
-        } else if (slide.frontmatter?.layout === "cols-header" || slide.frontmatter?.layout === "two-cols-header" || slide.frontmatter?.layout === "three-cols-header") {
+        } else if (slide.frontmatter?.layout === "cols-header" || slide.frontmatter?.layout === "two-cols-header" || slide.frontmatter?.layout === "three-cols-header" || slide.frontmatter?.layout === "clover") {
           const isCover = slide.frontmatter?.layout === "cover";
+          const isClover = slide.frontmatter?.layout === "clover";
           const blocks = (slide.blocks || []).filter(b => b.slot !== "slot-divider-right");
           let headerBlocks = blocks.filter(b => b.slot === "header");
           if (headerBlocks.length === 0 && blocks.length > 0) {
@@ -449,8 +450,10 @@ export function getStandaloneClientRuntimeScript(): string {
           }
           const rem = blocks.filter(b => !headerBlocks.includes(b));
 
-          let targetCols = 2;
-          if (slide.frontmatter?.layout === "three-cols-header") {
+          let targetCols = isClover ? 4 : 2;
+          if (isClover) {
+            targetCols = 4;
+          } else if (slide.frontmatter?.layout === "three-cols-header") {
             targetCols = 3;
           } else if (slide.frontmatter?.layout === "two-cols-header") {
             targetCols = 2;
@@ -471,15 +474,19 @@ export function getStandaloneClientRuntimeScript(): string {
             }
           }
 
+          const hasColSlots = rem.some(b => b.slot && /^col-\d+$/i.test(b.slot));
+          const isSuperBlockCols = isClover || hasColSlots;
+
           const containerDiv = document.createElement("div");
-          containerDiv.className = "layout-cols-header-container " + (targetCols === 2 ? "layout-two-cols-header-container" : (targetCols === 3 ? "layout-three-cols-header-container" : ""));
+          containerDiv.className = (isClover ? "layout-clover-container" : ("layout-cols-header-container " + (targetCols === 2 ? "layout-two-cols-header-container" : (targetCols === 3 ? "layout-three-cols-header-container" : "")))) + (isSuperBlockCols ? " has-superblock-cols" : "");
           const headerDiv = document.createElement("div");
           headerDiv.className = "layout-header-section";
           const gridDiv = document.createElement("div");
-          gridDiv.className = "layout-cols-wrapper layout-cols-grid " + (targetCols === 2 ? "pdf-two-cols-wrapper layout-two-cols-grid" : (targetCols === 3 ? "pdf-three-cols-wrapper layout-three-cols-grid" : ""));
+          gridDiv.className = (isClover ? "layout-clover-grid pdf-clover-wrapper" : ("layout-cols-wrapper layout-cols-grid " + (targetCols === 2 ? "pdf-two-cols-wrapper layout-two-cols-grid" : (targetCols === 3 ? "pdf-three-cols-wrapper layout-three-cols-grid" : "")))) + (isSuperBlockCols ? " has-superblock-cols" : "");
 
-          const gridCols = parseRatioToGridCols(slide.frontmatter?.layoutRatio, targetCols);
+          const gridCols = isClover ? "repeat(2, minmax(0, 1fr))" : parseRatioToGridCols(slide.frontmatter?.layoutRatio, targetCols);
           if (gridCols) gridDiv.style.gridTemplateColumns = gridCols;
+          if (isClover) gridDiv.style.gridTemplateRows = "repeat(2, minmax(0, 1fr))";
 
           let colsList = [];
           for (let i = 0; i < targetCols; i++) colsList.push([]);
