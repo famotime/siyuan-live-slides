@@ -85,6 +85,25 @@ export function isDesktopEnvironment(): boolean {
 }
 
 /**
+ * 判断当前思源宿主是否连接远程内核（桌面端 ←→ 远程/容器内核）
+ *
+ * 桌面端在远程内核模式下的主窗体 URL 会附带 remote=1（app/electron/main.js 的
+ * appURL.searchParams.set("remote", "1")），且该模式下主窗体 webPreferences 为
+ * webviewTag: false 并注册了 will-attach-webview 拦截，<webview> 元素完全失效。
+ * 判定方式与思源前端 app/src/util/hostCapabilities.ts 的 hasRemoteQuery 保持一致。
+ */
+export function isRemoteKernelHost(): boolean {
+  if (typeof window === "undefined" || !window.location) {
+    return false
+  }
+  try {
+    return new URLSearchParams(window.location.search).get("remote") === "1"
+  } catch {
+    return false
+  }
+}
+
+/**
  * 获取操作系统平台标识 (win32 | darwin | linux | web)
  */
 export function getPlatform(): string {

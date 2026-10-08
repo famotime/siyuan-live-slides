@@ -4997,6 +4997,31 @@
           syncAutoplayVideos()
         }
 
+        // 本地 HTML 链接（思源资产 / 工作区文件 / 绝对文件路径）速览判定
+        // 注意：需与 src/engine/workspace-scaffolder.ts 中生成的拦截器保持同步
+        function isPeekableLocalHtml(href) {
+          const clean = (href || '').trim()
+          if (!clean || clean.startsWith('#') || clean.startsWith('//')) return false
+          if (!/\.html?($|[?#])/i.test(clean)) return false
+          if (/^https?:\/\//i.test(clean)) return false
+          const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(clean)
+          if (!scheme) return true
+          const schemeName = scheme[1].toLowerCase()
+          if (schemeName === 'file') return true
+          // Windows 盘符路径（D:\docs\demo.html）并非协议前缀
+          return schemeName.length === 1 && /^[a-zA-Z]:[\\/]/.test(clean)
+        }
+
+        // 本地 HTML 链接预处理：思源资产统一指向内核 /assets/ 静态服务，其余原样转交宿主归一化
+        // 不基于 location 绝对化，保证沙箱模式与 Pro 模式（Slidev dev server）行为完全一致
+        function resolvePeekHref(href) {
+          const clean = (href || '').trim()
+          if (/^(?:\.\/|\/)?assets\//.test(clean)) {
+            return '/' + clean.replace(/^(?:\.\/|\/)/, '')
+          }
+          return clean
+        }
+
         // 全局拦截思源块引用与网页链接点击，转由宿主原位浮层呈现；并在未点中页面组件的空白区域响应鼠标左键左右侧翻页
         function onDocumentClick(e) {
           if (e.button !== 0) return
@@ -5066,6 +5091,19 @@
                 payload: {
                   peekType: "web",
                   url: href,
+                  title: (linkEl.innerText || linkEl.title || '').trim()
+                }
+              }, "*")
+              return
+            } else if (isPeekableLocalHtml(href)) {
+              e.preventDefault()
+              e.stopPropagation()
+              window.parent.postMessage({
+                source: "siyuan-slidev-client",
+                action: "OPEN_PEEK_DRAWER",
+                payload: {
+                  peekType: "web",
+                  url: resolvePeekHref(href),
                   title: (linkEl.innerText || linkEl.title || '').trim()
                 }
               }, "*")

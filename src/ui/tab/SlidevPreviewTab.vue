@@ -178,6 +178,8 @@ import ProtylePeekDrawer from '@/ui/components/peek/ProtylePeekDrawer.vue'
 import WebviewPeekDrawer from '@/ui/components/peek/WebviewPeekDrawer.vue'
 import { CursorTracker } from '@/sync/cursor-tracker'
 import { mirrorBlockSelection } from '@/sync/selection-mirror'
+import { getRuntimeModule } from '@/engine/runtime-node'
+import { resolvePeekUrl, fileUrlToPath } from '@/utils/peek-url'
 import { buildStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'
 import { triggerPdfExport } from '@/export/pdf-exporter'
 import { getRuntimeSettings, buildSiYuanWebUrl } from '@/settings'
@@ -288,9 +290,15 @@ onMounted(() => {
         peekBlockId.value = detail.target
         drawerTitle.value = detail.title || `块速览: ${detail.target.slice(0, 8)}`
       } else {
+        // 本地 HTML 链接归一化：工作区内的文件交由内核 HTTP 伺服，工作区外的文件则外跳系统浏览器
+        const resolution = resolvePeekUrl(detail.target)
+        if (resolution.external) {
+          openLocalFileExternally(detail.target)
+          return
+        }
         hasOpenedWeb.value = true
-        peekUrl.value = detail.target
-        drawerTitle.value = detail.title || detail.target
+        peekUrl.value = resolution.url
+        drawerTitle.value = detail.title || resolution.url
       }
       isDrawerOpen.value = true
       sandboxBridge.freezeKeyboardNav(true)
@@ -425,6 +433,32 @@ function onDrawerClose() {
 function onExternalJump() {
   // 外跳至系统默认浏览器后，自动收起当前速览抽屉，同时保持全屏放映
   onDrawerClose()
+}
+
+/**
+ * 工作区之外的本地文件无法由思源内核 HTTP 伺服，交由系统默认浏览器打开
+ */
+function openLocalFileExternally(rawUrl: string) {
+  const isFileUrl = /^file:/i.test(rawUrl)
+  const isFilePath = isFileUrl || /^[a-zA-Z]:[\\/]/.test(rawUrl)
+  const electron = getRuntimeModule('electron')
+
+  if (isFilePath && typeof electron?.shell?.openPath === 'function') {
+    electron.shell.openPath(isFileUrl ? fileUrlToPath(rawUrl) : rawUrl)
+    showMessage('本地文件不在思源工作区内，已交由系统默认浏览器打开')
+    return
+  }
+
+  if (typeof electron?.shell?.openExternal === 'function') {
+    electron.shell.openExternal(rawUrl).catch(() => {
+      if (typeof window !== 'undefined') {
+        window.open(rawUrl, '_blank')
+      }
+    })
+  } else if (typeof window !== 'undefined') {
+    window.open(rawUrl, '_blank')
+  }
+  showMessage('该地址无法在速览抽屉内加载，已交由系统默认浏览器打开')
 }
 
 function onFullscreenChange() {

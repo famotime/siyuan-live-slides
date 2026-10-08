@@ -71,13 +71,16 @@ Stack: Vue 3, TypeScript, Vite, Vitest, Sass, SiYuan Plugin API.
 
 重要：在涉及解析思源笔记文档块结构和内容、确认API时，务必查看developer_docs目录下开发者文档 和 siyuan-note 项目源码确认，不要凭猜测开发和测试。
 
-siyuan-note（思源笔记本体项目源码）: D:\MyCodingProjects\siyuan-note
+路径按开发机器取用其一（两套路径指向同一批参考工程，不同机器布局不同）：
 
-/developer_docs：思源笔记插件开发者文档
+| 参考工程 | Windows 开发机 | Linux 开发机（本机） |
+| --- | --- | --- |
+| siyuan-note（思源笔记本体项目源码） | `D:\MyCodingProjects\siyuan-note` | `../siyuan` |
+| siyuan-property-manager | `D:\MyCodingProjects\siyuan-property-manager` | — |
+| Slidev | `D:\MyCodingProjects\slidev` | — |
+| Slidev Templates | `D:\MyCodingProjects\slidev-templates` | — |
 
-Slidev: D:\MyCodingProjects\slidev
+- `developer_docs/`：思源笔记插件开发者文档。本机已从 `../siyuan-table-master/developer_docs` 复制到仓库根目录，并已列入 `.gitignore`（仅本机参考，不入库、不推送）。
+- 核对内核行为时以 `../siyuan` 的 Go 源码为准（`kernel/server/serve.go`、`kernel/model/assets.go`），`app/src` 为前端实现参考；developer_docs 未覆盖的细节不要凭猜测推断。
 
-Slidev Templates: D:\MyCodingProjects\slidev-templates
-
-siyuan-property-manager: D:\MyCodingProjects\siyuan-property-manager
 

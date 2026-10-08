@@ -187,7 +187,8 @@ export function saveViewMode(mode: TViewMode) {
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import SlidevIcon from '@/ui/components/SlidevIcon.vue'
-import { isDesktopEnvironment, getRuntimeModule } from '@/engine/runtime-node'
+import { isDesktopEnvironment, isRemoteKernelHost, getRuntimeModule } from '@/engine/runtime-node'
+import { resolvePeekUrl } from '@/utils/peek-url'
 
 const emit = defineEmits<{
   (e: 'external-jump', url: string): void
@@ -204,7 +205,9 @@ const props = withDefaults(
   }
 )
 
-const isDesktop = ref(isDesktopEnvironment())
+// 远程内核模式下宿主主窗体禁用 webviewTag 并拦截 will-attach-webview，<webview> 元素完全失效，
+// 必须降级走 iframe 分支，否则抽屉恒为空白
+const isDesktop = ref(isDesktopEnvironment() && !isRemoteKernelHost())
 const currentUrl = ref(props.url)
 const urlInputValue = ref(props.url)
 const isLoading = ref(false)
@@ -480,15 +483,20 @@ function reload() {
 }
 
 function navigateToUrl() {
-  let target = urlInputValue.value.trim()
-  if (!target) return
-  if (!/^https?:\/\//i.test(target)) {
-    target = `https://${target}`
+  const resolution = resolvePeekUrl(urlInputValue.value)
+  if (!resolution.url) return
+
+  // 工作区之外的本地文件无法在微型浏览器内加载，就地外跳系统浏览器
+  if (resolution.external) {
+    currentUrl.value = resolution.url
+    openInSystemBrowser()
+    return
   }
-  currentUrl.value = target
-  urlInputValue.value = target
+
+  currentUrl.value = resolution.url
+  urlInputValue.value = resolution.url
   if (webviewRef.value && typeof webviewRef.value.loadURL === 'function') {
-    webviewRef.value.loadURL(target)
+    webviewRef.value.loadURL(resolution.url)
   }
 }
 
