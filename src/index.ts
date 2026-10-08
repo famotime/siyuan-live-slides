@@ -25,6 +25,7 @@ import type { ISlidevPluginHost } from "@/plugin/command-registry"
 import { globalInspectorSyncCoordinator } from "@/sync/inspector-sync-coordinator"
 import { globalCompileConsumerGate } from "@/sync/compile-consumer-gate"
 import { CompileScheduler } from "@/sync/compile-scheduler"
+import { InspectorSyncThrottle } from "@/sync/inspector-sync-cache"
 import type { ISlidevDocument } from "@/types/slidev-protocol"
 import "@/index.scss"
 
@@ -60,6 +61,8 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
   // P0 优化：编译消费者门闩 + 脏文档 + 单飞/代际调度
   private compileScheduler = new CompileScheduler()
   private dirtyDocId: string | null = null
+  /** 光标联动节流：同一块的重复触发在时间窗内只同步一次 */
+  private inspectorSyncThrottle = new InspectorSyncThrottle()
 
   private onSwitchProtyleBound = this.onSwitchProtyle.bind(this)
   private onWsMainBound = this.onWsMain.bind(this)
@@ -212,6 +215,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
       this.debounceTimer = null
     }
     this.compileScheduler.reset()
+    this.inspectorSyncThrottle.reset()
     this.dirtyDocId = null
     globalCompileConsumerGate.clear()
     this.eventBus.off("switch-protyle", this.onSwitchProtyleBound)
@@ -561,6 +565,11 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
   }
 
   private async syncInspectorBlock(blockEl: HTMLElement, blockId: string, blockType: string) {
+    // P1 优化：同一块在短时间窗内的重复联动（敲字时 selectionchange 逐字符触发）只处理一次，
+    // 避免每字符都走一轮属性解析与 DOM 同步
+    if (this.inspectorSyncThrottle.shouldSkip(blockId)) {
+      return
+    }
     await globalInspectorSyncCoordinator.syncInspectorBlock(
       blockEl,
       blockId,

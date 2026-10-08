@@ -123,6 +123,85 @@ describe("P0 优化：编译消费者门闩（无可见消费者时不编译）"
     expect(isElementVisible(null)).toBe(false)
   })
 
+  it("挂载点为零尺寸外壳时应检查首层子元素（兼容宿主结构差异）", () => {
+    const wrapper = {
+      isConnected: true,
+      getClientRects: () => [],
+      offsetWidth: 0,
+      offsetHeight: 0,
+      firstElementChild: fakeElement({ rects: 1 }),
+    } as unknown as HTMLElement
+    expect(isElementVisible(wrapper)).toBe(true)
+
+    const emptyWrapper = {
+      isConnected: true,
+      getClientRects: () => [],
+      offsetWidth: 0,
+      offsetHeight: 0,
+      firstElementChild: null,
+    } as unknown as HTMLElement
+    expect(isElementVisible(emptyWrapper)).toBe(false)
+  })
+
+  it("观察器持续误报不可见时应由低频兜底校验纠正，恢复自动编译", () => {
+    const originalIO = (globalThis as any).IntersectionObserver
+    let observerCallback: ((entries: any[]) => void) | null = null
+    class SilentIntersectionObserver {
+      constructor(cb: (entries: any[]) => void) {
+        observerCallback = cb
+      }
+      observe() {}
+      disconnect() {}
+    }
+    ;(globalThis as any).IntersectionObserver = SilentIntersectionObserver as any
+
+    vi.useFakeTimers()
+    try {
+      const gate = new CompileConsumerGate()
+      let flushCount = 0
+      // 元素实际可见（有布局盒），但观察器始终不汇报相交
+      gate.register("preview", fakeElement({ rects: 1 }), () => {
+        flushCount++
+      })
+      expect(observerCallback).not.toBeNull()
+      expect(gate.hasVisibleConsumer()).toBe(false)
+
+      // 兜底校验在 ~2 秒后纠正误报并触发补跑
+      vi.advanceTimersByTime(2100)
+      expect(gate.hasVisibleConsumer()).toBe(true)
+      expect(flushCount).toBe(1)
+    } finally {
+      vi.useRealTimers()
+      ;(globalThis as any).IntersectionObserver = originalIO
+    }
+  })
+
+  it("元素确实不可见时兜底校验不得产生误判与常态开销", () => {
+    const originalIO = (globalThis as any).IntersectionObserver
+    class SilentIntersectionObserver {
+      observe() {}
+      disconnect() {}
+    }
+    ;(globalThis as any).IntersectionObserver = SilentIntersectionObserver as any
+
+    vi.useFakeTimers()
+    try {
+      const gate = new CompileConsumerGate()
+      let flushCount = 0
+      // 后台页签：无布局盒
+      gate.register("preview", fakeElement({ rects: 0, width: 0 }), () => {
+        flushCount++
+      })
+      expect(gate.hasVisibleConsumer()).toBe(false)
+      vi.advanceTimersByTime(5000)
+      expect(gate.hasVisibleConsumer()).toBe(false)
+      expect(flushCount).toBe(0)
+    } finally {
+      vi.useRealTimers()
+      ;(globalThis as any).IntersectionObserver = originalIO
+    }
+  })
+
   it("有 IntersectionObserver 时应异步上报可见性，且不强制同步布局", () => {
     const originalIO = (globalThis as any).IntersectionObserver
     const callbacks: Array<(entries: any[]) => void> = []

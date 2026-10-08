@@ -40,6 +40,112 @@ export interface IDocumentCompilerDeps {
   getInlineStyles?: () => Promise<any>
 }
 
+/** 标题块类型判定（内核索引 parent_id 覆写规则的依据） */
+function isHeadingRow(row: any): boolean {
+  const t = String(row?.type || "").toLowerCase()
+  return t === "h" || t === "nodeheading"
+}
+
+/**
+ * 容器块判定：与既有逐容器 getChildBlocks 递归保持完全一致的判定集合
+ * 表格（t）、标题（h）等不在其中，故其子块不会被挂载，避免改变既有渲染结构
+ */
+function isContainerNode(node: ISiYuanBlockNode): boolean {
+  return (
+    isSuperBlock(node) ||
+    node.type === "l" ||
+    node.type === "NodeList" ||
+    node.type === "i" ||
+    node.type === "NodeListItem" ||
+    node.type === "b" ||
+    node.type === "NodeBlockquote"
+  )
+}
+
+export interface IIndexTreeResult {
+  topLevel: ISiYuanBlockNode[]
+  byId: Map<string, ISiYuanBlockNode>
+}
+
+/**
+ * 由整篇文档的 SQL 索引行一次性构建块树（取代逐容器 getChildBlocks 的 N+1 内核往返）
+ *
+ * 层级语义对齐说明：内核索引（kernel/sql/database.go 的 buildBlockFromNode）会把处于标题块下方的块
+ * 的 parent_id 覆写为最近的标题祖先（treenode.HeadingParent），而 getChildBlocks 对非标题容器返回的是
+ * AST 直接子节点。此处按"沿标题父级上提"还原，使标题章节内的块与其兄弟一样归属到标题的父级，
+ * 与既有结构完全一致（标题不被当作容器）。
+ */
+export function buildBlockTreeFromIndex(
+  docId: string,
+  rows: any[],
+  resolveIal: (id: string, rowIal?: string) => Record<string, string>,
+  maxDepth = 8,
+): IIndexTreeResult {
+  const rowById = new Map<string, any>()
+  for (const row of rows) {
+    if (row?.id) {
+      rowById.set(row.id, row)
+    }
+  }
+
+  const makeNode = (row: any): ISiYuanBlockNode => ({
+    id: row.id,
+    parent_id: row.parent_id,
+    root_id: row.root_id || docId,
+    type: row.type,
+    // 内核 blocks 表列名为 subtype（kernel/sql/database.go），此处兼容 API 侧的 subType
+    subType: row.subtype ?? row.subType ?? "",
+    content: row.content || "",
+    markdown: row.markdown || "",
+    ial: resolveIal(row.id, row.ial),
+    children: [],
+  })
+
+  const effectiveParentId = (row: any): string => {
+    let parentId = row.parent_id
+    let guard = 0
+    while (parentId && parentId !== docId && guard++ < 16) {
+      const parentRow = rowById.get(parentId)
+      if (!parentRow || !isHeadingRow(parentRow)) {
+        return parentId
+      }
+      parentId = parentRow.parent_id
+    }
+    return parentId || docId
+  }
+
+  const childrenByParent = new Map<string, any[]>()
+  for (const row of rows) {
+    if (!row?.id || row.id === docId) {
+      continue
+    }
+    const parentId = effectiveParentId(row)
+    const bucket = childrenByParent.get(parentId)
+    if (bucket) {
+      bucket.push(row)
+    } else {
+      childrenByParent.set(parentId, [row])
+    }
+  }
+
+  const byId = new Map<string, ISiYuanBlockNode>()
+  const attach = (row: any, depth: number): ISiYuanBlockNode => {
+    const node = makeNode(row)
+    byId.set(node.id, node)
+    if (depth >= maxDepth || !isContainerNode(node)) {
+      return node
+    }
+    const childRows = childrenByParent.get(node.id)
+    if (childRows && childRows.length > 0) {
+      node.children = childRows.map((child) => attach(child, depth + 1))
+    }
+    return node
+  }
+
+  const topRows = childrenByParent.get(docId) || []
+  return { topLevel: topRows.map((row) => attach(row, 0)), byId }
+}
+
 const defaultDeps: IDocumentCompilerDeps = {
   getBlockAttrs,
   getChildBlocks,
@@ -141,22 +247,26 @@ export class DocumentCompilerService {
         Object.assign(docAttrs, docOverride)
       }
 
-      // 2. 优先通过 getChildBlocks 获取按思源文档真实排版顺序排列的所有子块
-      let rawBlocks: any[] = await this.deps.getChildBlocks(docId).catch(() => [])
+      // 2. 获取文档顶层块：getChildBlocks 返回实时、权威的顶层顺序（1 次内核调用）
+      const liveTopBlocks: any[] = (await this.deps.getChildBlocks(docId).catch(() => [])) || []
 
-      // 3. 批量检索当前文档所有块的 IAL 属性字典 (显式添加 LIMIT 99999 突破默认 search.limit 截断)
-      const ialQuery = `SELECT id, ial FROM blocks WHERE root_id = '${docId}' LIMIT 99999`
-      const ialRows = (await this.deps.sql(ialQuery).catch(() => [])) || []
+      // 3. P1 优化：一次性拉取整篇文档的块索引行（含结构所需的 parent_id/type/subtype 与 IAL），
+      //    取代此前对每个容器块逐次调用 getChildBlocks 的 N+1 内核往返（单次编译由 O(容器数) 次降为常数次）
+      //    列名以 kernel/sql/database.go 的 blocks 表定义为准（subtype）
+      const indexQuery = `SELECT id, parent_id, root_id, type, subtype, content, markdown, ial, sort, created FROM blocks WHERE root_id = '${docId}' AND id != '${docId}' ORDER BY sort ASC, created ASC LIMIT 99999`
+      const indexRows = (await this.deps.sql(indexQuery).catch(() => [])) || []
+
+      // 3.1 由索引行构建 IAL 字典
       const ialMapById = new Map<string, Record<string, string>>()
-      if (Array.isArray(ialRows)) {
-        for (const row of ialRows) {
+      if (Array.isArray(indexRows)) {
+        for (const row of indexRows) {
           if (row.id && row.ial) {
             ialMapById.set(row.id, parseIALString(row.ial))
           }
         }
       }
 
-      // 3.1 联合查询 attributes 表：仅检索块级自定义属性 (type = 'b')，严禁混入行内标记属性 (type = 's')
+      // 3.2 联合查询 attributes 表：仅检索块级自定义属性 (type = 'b')，严禁混入行内标记属性 (type = 's')
       const attrQuery = `SELECT block_id, name, value FROM attributes WHERE root_id = '${docId}' AND type = 'b' LIMIT 99999`
       const attrRows = (await this.deps.sql(attrQuery).catch(() => [])) || []
       if (Array.isArray(attrRows)) {
@@ -172,20 +282,55 @@ export class DocumentCompilerService {
         }
       }
 
-      // 4. 容错降级：如果 getChildBlocks 为空，从 SQL 回退检索
-      if (!rawBlocks || rawBlocks.length === 0) {
-        const fallbackSql = `SELECT id, parent_id, root_id, type, sub_type as subType, content, markdown, ial FROM blocks WHERE root_id = '${docId}' AND id != '${docId}' ORDER BY created ASC LIMIT 99999`
-        rawBlocks = (await this.deps.sql(fallbackSql).catch(() => [])) || []
-      }
-
-      // 5. 将 IAL 挂载到对应块节点上 (优先应用即时覆盖层)
-      const blockNodes: ISiYuanBlockNode[] = (rawBlocks || []).map((r: any) => {
-        const ialMap = ialMapById.get(r.id) || (r.ial ? parseIALString(r.ial) : {})
-        const override = this.attrOverrides.get(r.id)
+      // 4. 解析单个块的 IAL（数据库 IAL + 即时覆盖层）
+      const resolveIal = (id: string, rowIal?: string): Record<string, string> => {
+        const ialMap: Record<string, string> = {
+          ...(ialMapById.get(id) || (rowIal ? parseIALString(rowIal) : {})),
+        }
+        const override = this.attrOverrides.get(id)
         if (override) {
           Object.assign(ialMap, override)
         }
-        return {
+        return ialMap
+      }
+
+      // 5. 建树：优先用索引树（0 次额外内核调用），并与实时顶层块集合做一致性校验；
+      //    索引滞后或结构不一致时回退到逐容器 getChildBlocks 的既有路径，保证预览内容不缺失
+      const indexTree = Array.isArray(indexRows) && indexRows.length > 0
+        ? buildBlockTreeFromIndex(docId, indexRows, resolveIal)
+        : null
+
+      const liveTopIds = liveTopBlocks.map((b: any) => b.id).filter(Boolean)
+      const indexTopIds = new Set((indexTree?.topLevel || []).map((n) => n.id))
+      // 索引行必须覆盖实时顶层块且携带结构所需字段（type），否则视为索引滞后/数据不全而回退
+      const indexRowById = new Map<string, any>()
+      for (const row of indexRows) {
+        if (row?.id) {
+          indexRowById.set(row.id, row)
+        }
+      }
+      const indexTreeUsable = Boolean(
+        indexTree &&
+        liveTopIds.length > 0 &&
+        liveTopIds.length === indexTopIds.size &&
+        liveTopIds.every((id: string) => {
+          const row = indexRowById.get(id)
+          return indexTopIds.has(id) && Boolean(row && row.type)
+        }),
+      )
+
+      let blockNodes: ISiYuanBlockNode[] = []
+      let usedLegacyWalk = false
+
+      if (indexTree && indexTreeUsable) {
+        // 快速路径：按实时顶层顺序重排索引树顶层节点
+        blockNodes = liveTopIds
+          .map((id: string) => indexTree.byId.get(id))
+          .filter((n): n is ISiYuanBlockNode => Boolean(n))
+      } else if (liveTopIds.length > 0) {
+        // 兜底路径：保留既有逐容器 getChildBlocks 递归（索引未覆盖实时结构时使用）
+        usedLegacyWalk = true
+        const legacyNodes: ISiYuanBlockNode[] = liveTopBlocks.map((r: any) => ({
           id: r.id,
           parent_id: r.parent_id,
           root_id: r.root_id || docId,
@@ -193,27 +338,24 @@ export class DocumentCompilerService {
           subType: r.subType,
           content: r.content || "",
           markdown: r.markdown || "",
-          ial: ialMap,
+          ial: resolveIal(r.id, r.ial),
           children: r.children,
-        }
-      })
+        }))
+        blockNodes = legacyNodes
+      } else if (indexTree) {
+        // 极端兜底：getChildBlocks 无返回（只读/受限环境）时直接采用索引树顶层
+        blockNodes = indexTree.topLevel
+      }
 
-      // 5.5 递归补全超级块与列表容器/列表项的子节点 (支持官方缩写 's'、'sb'、'l'、'i' 与降级 SQL 查询)
+      // 5.5 兜底路径下递归补全超级块与列表容器/列表项的子节点
       const populateChildrenRecursively = async (nodes: ISiYuanBlockNode[], depth = 0) => {
         if (!nodes || nodes.length === 0 || depth > 8) return
         for (const node of nodes) {
-          const isContainer =
-            isSuperBlock(node) ||
-            node.type === "l" ||
-            node.type === "NodeList" ||
-            node.type === "i" ||
-            node.type === "NodeListItem" ||
-            node.type === "b" ||
-            node.type === "NodeBlockquote"
+          const isContainer = isContainerNode(node)
           if (isContainer && (!node.children || node.children.length === 0)) {
             let rawChildren = await this.deps.getChildBlocks(node.id).catch(() => [])
             if (!rawChildren || rawChildren.length === 0) {
-              const childSql = `SELECT id, parent_id, root_id, type, sub_type as subType, content, markdown, ial FROM blocks WHERE parent_id = '${node.id}' ORDER BY sort ASC, created ASC`
+              const childSql = `SELECT id, parent_id, root_id, type, subtype as subType, content, markdown, ial FROM blocks WHERE parent_id = '${node.id}' ORDER BY sort ASC, created ASC`
               rawChildren = (await this.deps.sql(childSql).catch(() => [])) || []
             }
             if (Array.isArray(rawChildren) && rawChildren.length > 0) {
@@ -246,7 +388,10 @@ export class DocumentCompilerService {
         }
       }
 
-      await populateChildrenRecursively(blockNodes)
+      // 仅兜底路径需要逐容器补全子节点；快速路径的层级已由索引树一次性构建完成
+      if (usedLegacyWalk) {
+        await populateChildrenRecursively(blockNodes)
+      }
 
       // 5.6 递归冒泡与双向同步多媒体播放控制属性 (custom-slidev-autoplay, custom-slidev-muted 等)
       const syncMediaAttrsInTree = (nodes: ISiYuanBlockNode[]) => {

@@ -6,6 +6,7 @@ import {
 } from "@/main"
 import { purgeStaleDomSlidevAttrs as purgeStaleDomAttrs, syncDomBlockAttrs } from "@/sync/dom-attr-sync"
 import { mirrorBlockSelection } from "@/sync/selection-mirror"
+import { BlockAttrCache, buildCompiledIalIndex } from "@/sync/inspector-sync-cache"
 import type { ISlidevDocument } from "@/types/slidev-protocol"
 import {
   ATTR_ELEM_NOTE,
@@ -16,6 +17,58 @@ import {
 } from "@/types/slidev-protocol"
 
 export class InspectorSyncCoordinator {
+  private attrCache = new BlockAttrCache()
+  private compiledIalIndex: { doc: ISlidevDocument | null; map: Map<string, Record<string, string>> } = {
+    doc: null,
+    map: new Map(),
+  }
+
+  /**
+   * 解析块属性：即时覆盖层 → 编译模型 IAL → 带 TTL 的内核查询
+   *
+   * 光标联动（selectionchange）在敲字时逐字符触发，此前每次都会直接打内核；
+   * 大文档下这会形成稳定的内核 CPU 背景负载。前两级均为内存命中，第三级合并短时间内的重复查询。
+   */
+  private async resolveBlockAttrs(
+    id: string,
+    latestCompiledDoc: ISlidevDocument | null,
+  ): Promise<Record<string, string>> {
+    if (!id) return {}
+    const override = globalDocumentCompiler.getBlockAttrOverride(id)
+    const compiled = this.getCompiledIal(latestCompiledDoc, id)
+
+    if (override || compiled) {
+      // 覆盖层优先级最高（属性变更经 ws 事务即时写入覆盖层）
+      return { ...(compiled || {}), ...(override || {}) }
+    }
+
+    const cached = this.attrCache.get(id)
+    if (cached) {
+      return cached
+    }
+
+    const attrs = (await getBlockAttrs(id).catch(() => ({}))) || {}
+    this.attrCache.set(id, attrs)
+    return attrs
+  }
+
+  /** 从编译模型取块 IAL（同一文档对象只构建一次索引） */
+  private getCompiledIal(
+    doc: ISlidevDocument | null,
+    id: string,
+  ): Record<string, string> | undefined {
+    if (!doc) return undefined
+    if (this.compiledIalIndex.doc !== doc) {
+      this.compiledIalIndex = { doc, map: buildCompiledIalIndex(doc) }
+    }
+    return this.compiledIalIndex.map.get(id)
+  }
+
+  /** 清空属性缓存（编译完成或卸载时调用） */
+  public invalidateAttrCache(id?: string): void {
+    this.attrCache.invalidate(id)
+  }
+
   /**
    * 自动探测当前工作空间活跃主编辑区的文档 ID
    */
@@ -83,7 +136,7 @@ export class InspectorSyncCoordinator {
       content = titleInput?.innerText?.trim() || ""
     }
 
-    const attrs = await getBlockAttrs(docId).catch(() => ({}))
+    const attrs = await this.resolveBlockAttrs(docId, null)
     updateInspectorCurrentBlock({
       id: docId,
       rootId: docId,
@@ -135,13 +188,13 @@ export class InspectorSyncCoordinator {
           pageDividerLayout = matched.frontmatter.layout
         }
       }
-      getBlockAttrs(blockId).then(async attrs => {
+      this.resolveBlockAttrs(blockId, latestCompiledDoc).then(async attrs => {
         if (pageDividerId && !pageDividerLayout) {
           const cachedOverride = globalDocumentCompiler.getBlockAttrOverride(pageDividerId)
           if (cachedOverride?.[ATTR_PAGE_LAYOUT] || cachedOverride?.["custom-slidev-layout"]) {
             pageDividerLayout = cachedOverride[ATTR_PAGE_LAYOUT] || cachedOverride["custom-slidev-layout"] || ""
           } else {
-            const dividerAttrs = (await getBlockAttrs(pageDividerId).catch(() => ({}))) || {}
+            const dividerAttrs = await this.resolveBlockAttrs(pageDividerId, latestCompiledDoc)
             pageDividerLayout = dividerAttrs[ATTR_PAGE_LAYOUT] || dividerAttrs["custom-slidev-layout"] || ""
             if (dividerAttrs && Object.keys(dividerAttrs).length > 0) {
               globalDocumentCompiler.setBlockAttrOverride(pageDividerId, dividerAttrs)
@@ -181,7 +234,7 @@ export class InspectorSyncCoordinator {
     if (calloutEl && calloutEl !== blockEl) {
       const calloutId = calloutEl.getAttribute("data-node-id")
       if (calloutId) {
-        const calloutAttrs = (await getBlockAttrs(calloutId).catch(() => ({}))) || {}
+        const calloutAttrs = await this.resolveBlockAttrs(calloutId, latestCompiledDoc)
         const override = globalDocumentCompiler.getBlockAttrOverride(calloutId) || {}
         const mergedAttrs = { ...calloutAttrs, ...override }
         if (mergedAttrs[ATTR_ELEM_NOTE] || mergedAttrs["slidev-note"]) {
@@ -205,7 +258,7 @@ export class InspectorSyncCoordinator {
       Boolean(topBlockEl?.classList?.contains("hr"))
     const isCode = effectiveType === "NodeCodeBlock"
     const contentText = effectiveEl.innerText?.trim() || ""
-    const attrs = (await getBlockAttrs(effectiveId).catch(() => ({}))) || {}
+    const attrs = await this.resolveBlockAttrs(effectiveId, latestCompiledDoc)
     const override = globalDocumentCompiler.getBlockAttrOverride(effectiveId) || {}
     const finalAttrs = { ...attrs, ...override }
 
@@ -270,7 +323,7 @@ export class InspectorSyncCoordinator {
         }
       }
       if (!pageDividerLayout) {
-        const dividerAttrs = (await getBlockAttrs(pageDividerId).catch(() => ({}))) || {}
+        const dividerAttrs = await this.resolveBlockAttrs(pageDividerId, latestCompiledDoc)
         pageDividerLayout = dividerAttrs[ATTR_PAGE_LAYOUT] || dividerAttrs["custom-slidev-layout"] || ""
         if (dividerAttrs && Object.keys(dividerAttrs).length > 0) {
           globalDocumentCompiler.setBlockAttrOverride(pageDividerId, dividerAttrs)
@@ -309,7 +362,7 @@ export class InspectorSyncCoordinator {
       const parentLiId = parentLiEl.getAttribute("data-node-id")
       if (parentLiId) {
         parentContainerId = parentLiId
-        const parentAttrs = (await getBlockAttrs(parentLiId).catch(() => ({}))) || {}
+        const parentAttrs = await this.resolveBlockAttrs(parentLiId, latestCompiledDoc)
         const parentOverride = globalDocumentCompiler.getBlockAttrOverride(parentLiId) || {}
         const parentFinalAttrs = { ...parentAttrs, ...parentOverride }
         parentContainerSlot = parentFinalAttrs[ATTR_ELEM_SLOT] || ""

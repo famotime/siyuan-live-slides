@@ -13,6 +13,9 @@
 
 export type TCompileConsumerKind = "preview" | "dock"
 
+/** 观察器误报时的低频兜底校验间隔（仅在判定为不可见时运行） */
+const VERIFY_INTERVAL_MS = 2000
+
 /** 消费者宿主（插件实例）在消费者重新可见时补跑积压编译 */
 export interface ICompileConsumerHost {
   flushDirtyCompile?: () => void
@@ -31,11 +34,18 @@ interface IConsumerRecord {
 
 /**
  * 元素是否真实可见：已挂载 + 拥有布局盒
- * display:none（后台页签 / 折叠 Dock 使用思源的 .fn__none）、脱离文档的节点均判为不可见
+ * display:none（后台页签 / 折叠 Dock 使用思源的 .fn__none）、脱离文档的节点均判为不可见。
+ * 同时检查首层子元素，兼容"挂载点是零尺寸外壳、真实内容在其子节点"的宿主结构。
  */
 export function isElementVisible(el: HTMLElement | null | undefined): boolean {
   if (!el) return false
   if (typeof el.isConnected === "boolean" && !el.isConnected) return false
+  if (hasLayoutBox(el)) return true
+  const child = el.firstElementChild as HTMLElement | null
+  return Boolean(child && hasLayoutBox(child))
+}
+
+function hasLayoutBox(el: HTMLElement): boolean {
   if (typeof el.getClientRects === "function" && el.getClientRects().length > 0) return true
   // 兜底：部分容器（如 fixed 定位的 Dock）矩形测量异常时用尺寸判定
   return typeof el.offsetWidth === "number" && el.offsetWidth > 0 && el.offsetHeight > 0
@@ -49,6 +59,7 @@ function getIntersectionObserver(): typeof IntersectionObserver | undefined {
 export class CompileConsumerGate {
   private consumers = new Map<number, IConsumerRecord>()
   private seq = 0
+  private verifyTimer: ReturnType<typeof setInterval> | null = null
 
   /**
    * 注册一个消费者，返回注销函数
@@ -94,6 +105,9 @@ export class CompileConsumerGate {
     return () => {
       record.observer?.disconnect()
       this.consumers.delete(id)
+      if (this.consumers.size === 0) {
+        this.stopVerifyTimer()
+      }
     }
   }
 
@@ -102,6 +116,7 @@ export class CompileConsumerGate {
       record.observer?.disconnect()
     }
     this.consumers.clear()
+    this.stopVerifyTimer()
   }
 
   public get size(): number {
@@ -124,7 +139,45 @@ export class CompileConsumerGate {
         return true
       }
     }
+    // 曾注册且当前判定为不可见：启动低频校验，防止观察器误报导致预览永久停更
+    this.ensureVerifyTimer()
     return false
+  }
+
+  /**
+   * 低频兜底校验：仅在"已注册消费者但判定为不可见"时运行，
+   * 用一次布局盒测量纠正可能的观察器误报（判定失败时最多 ~2 秒内自动恢复自动编译）
+   */
+  private ensureVerifyTimer(): void {
+    if (this.verifyTimer !== null) return
+    if (typeof setTimeout !== "function") return
+    // 仅在缓存判定模式（存在 IntersectionObserver）下需要兜底；实时测量模式不会误报
+    let hasCachedRecord = false
+    for (const record of this.consumers.values()) {
+      if (!record.measureOnDemand) {
+        hasCachedRecord = true
+        break
+      }
+    }
+    if (!hasCachedRecord) return
+
+    this.verifyTimer = setTimeout(() => {
+      this.verifyTimer = null
+      for (const record of this.consumers.values()) {
+        if (!record.visible && isElementVisible(record.element)) {
+          record.visible = true
+          record.onVisible?.()
+          return
+        }
+      }
+    }, VERIFY_INTERVAL_MS)
+  }
+
+  private stopVerifyTimer(): void {
+    if (this.verifyTimer !== null) {
+      clearTimeout(this.verifyTimer as any)
+      this.verifyTimer = null
+    }
   }
 }
 
