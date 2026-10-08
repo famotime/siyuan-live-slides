@@ -275,6 +275,18 @@ export async function getChildBlocks(
   return request(url, data)
 }
 
+/**
+ * 获取文档内所有块 id 的**文档顺序**列表
+ *
+ * 内核实现见 kernel/model/blockinfo.go 的 getDocBlocksOrdersInTree：以 ast.Walk 前序遍历实时块树，
+ * 因而结果是权威的文档序。注意 SQL blocks 表的 sort 列并非位置（kernel/sql/database.go 的 nSort
+ * 返回的是块类型权重），不可用于排序。
+ */
+export async function getDocBlocksOrders(id: BlockId): Promise<string[]> {
+  const url = "/api/block/getDocBlocksOrders"
+  return request(url, { id })
+}
+
 export async function transferBlockRef(
   fromID: BlockId,
   toID: BlockId,

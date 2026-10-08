@@ -1,4 +1,4 @@
-import { getBlockAttrs, getChildBlocks, getInlineStyles, setBlockAttrs, sql } from "../api"
+import { getBlockAttrs, getChildBlocks, getDocBlocksOrders, getInlineStyles, setBlockAttrs, sql } from "../api"
 import { extractBlockRefs } from "./block-ref-resolver"
 import { buildSlidevDocument } from "./slidev-ast-builder"
 import { generateCompleteSiYuanThemeCss } from "./theme-styles-generator"
@@ -31,9 +31,84 @@ export function parseIALString(ialStr: string): Record<string, string> {
   return result
 }
 
+/** 索引行是否为容器块（其 content/markdown 为整棵子树的序列化） */
+function isContainerRow(row: any): boolean {
+  const t = String(row?.type || "").toLowerCase()
+  return (
+    t === "s" || t === "sb" || t === "nodesuperblock" ||
+    t === "l" || t === "nodelist" ||
+    t === "i" || t === "nodelistitem" ||
+    t === "b" || t === "nodeblockquote"
+  )
+}
+
+/**
+ * 索引内容可用性判定（不涉及顺序：同层顺序一律由实时文档序决定）
+ *
+ * 背景：内核 SQL 索引异步落库（kernel/sql/queue.go 的 time.AfterFunc(50ms) + 索引队列），
+ * 会短暂滞后于实时块树；且容器块的 content/markdown 是整棵子树的序列化，容器行滞后即意味着
+ * 该子树的内容不可信。
+ *
+ * 处置原则：只重建"确实滞后"的子树，而不是整体放弃索引——
+ * - 叶子顶层块滞后 → 用实时值就地修正（其下无子树）
+ * - 容器顶层块滞后 → 仅对该子树递归走实时 getChildBlocks 重建（代价 = 该子树的容器数）
+ * - 实时顶层块不在索引中 → 由调用方按实时数据补齐（新增块）
+ * 这样单次编译的内核往返仍为常数级 + 变更子树的容器数，而非全文档容器数。
+ */
+export interface IIndexContentDecision {
+  /** false 表示索引完全不可用（如无行），调用方应回退全量实时路径 */
+  usable: boolean
+  reason: string
+  /** 叶子顶层块的实时内容修正 */
+  leafPatch: Map<string, { content: string; markdown: string }>
+  /** 内容滞后、需按子树实时重建的顶层容器块 id */
+  rebuildRoots: string[]
+}
+
+export function analyzeIndexContent(
+  liveTopBlocks: any[],
+  indexRows: any[],
+): IIndexContentDecision {
+  const leafPatch = new Map<string, { content: string; markdown: string }>()
+  const rebuildRoots: string[] = []
+  if (!Array.isArray(indexRows) || indexRows.length === 0) {
+    return { usable: false, reason: "索引无行", leafPatch, rebuildRoots }
+  }
+
+  const rowById = new Map<string, any>()
+  for (const row of indexRows) {
+    if (row?.id) {
+      rowById.set(row.id, row)
+    }
+  }
+
+  for (const live of liveTopBlocks || []) {
+    if (!live?.id) continue
+    const row = rowById.get(live.id)
+    if (!row) {
+      // 索引中缺失（新增块）：由调用方按实时数据补齐，不属于陈旧
+      continue
+    }
+    const liveContent = live.content ?? ""
+    const liveMarkdown = live.markdown ?? ""
+    if ((row.content ?? "") === liveContent && (row.markdown ?? "") === liveMarkdown) {
+      continue
+    }
+    if (isContainerRow(row)) {
+      rebuildRoots.push(live.id)
+    } else {
+      leafPatch.set(live.id, { content: liveContent, markdown: liveMarkdown })
+    }
+  }
+
+  return { usable: true, reason: "", leafPatch, rebuildRoots }
+}
+
 export interface IDocumentCompilerDeps {
   getBlockAttrs: (id: string) => Promise<Record<string, string>>
   getChildBlocks: (id: string) => Promise<any[]>
+  /** 文档内块 id 的文档顺序（实时，来自 /api/block/getDocBlocksOrders） */
+  getDocBlocksOrders?: (id: string) => Promise<string[]>
   setBlockAttrs?: (id: string, attrs: Record<string, string>) => Promise<any>
   sql: (query: string) => Promise<any[]>
   getBaseUrl?: () => string
@@ -80,6 +155,7 @@ export function buildBlockTreeFromIndex(
   rows: any[],
   resolveIal: (id: string, rowIal?: string) => Record<string, string>,
   maxDepth = 8,
+  orderIndex?: Map<string, number>,
 ): IIndexTreeResult {
   const rowById = new Map<string, any>()
   for (const row of rows) {
@@ -119,12 +195,27 @@ export function buildBlockTreeFromIndex(
     if (!row?.id || row.id === docId) {
       continue
     }
+    // 实时文档序可用时以其为成员权威：不在其中的行是索引残留（已删除块），必须剔除
+    if (orderIndex && orderIndex.size > 0 && !orderIndex.has(row.id)) {
+      continue
+    }
     const parentId = effectiveParentId(row)
     const bucket = childrenByParent.get(parentId)
     if (bucket) {
       bucket.push(row)
     } else {
       childrenByParent.set(parentId, [row])
+    }
+  }
+
+  // 同层兄弟顺序以实时文档序为准（SQL 的 sort 列是块类型权重、created 为秒级，均不可作位置）
+  if (orderIndex && orderIndex.size > 0) {
+    for (const bucket of childrenByParent.values()) {
+      bucket.sort(
+        (a, b) =>
+          (orderIndex.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
+          (orderIndex.get(b.id) ?? Number.MAX_SAFE_INTEGER),
+      )
     }
   }
 
@@ -149,6 +240,7 @@ export function buildBlockTreeFromIndex(
 const defaultDeps: IDocumentCompilerDeps = {
   getBlockAttrs,
   getChildBlocks,
+  getDocBlocksOrders,
   setBlockAttrs,
   sql,
   getBaseUrl: () => (typeof location !== "undefined" ? location.origin : ""),
@@ -162,6 +254,8 @@ export class DocumentCompilerService {
   private deps: IDocumentCompilerDeps
   private attrOverrides = new Map<string, Record<string, string>>()
   private trackedListSuperBlocks = new Map<string, ITrackedListSuperBlock[]>()
+  /** 诊断：已提示过"索引树回退"的文档 id，避免持续编辑时刷屏 */
+  private fallbackWarnedDocId = ""
 
   constructor(deps?: Partial<IDocumentCompilerDeps>) {
     this.deps = {
@@ -250,11 +344,33 @@ export class DocumentCompilerService {
       // 2. 获取文档顶层块：getChildBlocks 返回实时、权威的顶层顺序（1 次内核调用）
       const liveTopBlocks: any[] = (await this.deps.getChildBlocks(docId).catch(() => [])) || []
 
+      // 2.1 获取文档内块 id 的实时文档序（1 次内核调用）
+      //     同层兄弟顺序必须以此为准：SQL blocks 表的 sort 是块类型权重、created 为秒级，均非位置，
+      //     直接按它们排序会导致超级块分栏等内容错位（编辑时还会因索引行重写而跳变）
+      const liveOrders: string[] = this.deps.getDocBlocksOrders
+        ? ((await this.deps.getDocBlocksOrders(docId).catch(() => [])) || [])
+        : []
+      const orderIndex = new Map<string, number>()
+      for (let i = 0; i < liveOrders.length; i++) {
+        if (liveOrders[i]) {
+          orderIndex.set(liveOrders[i], i)
+        }
+      }
+      const orderIndexReady = orderIndex.size > 0
+
       // 3. P1 优化：一次性拉取整篇文档的块索引行（含结构所需的 parent_id/type/subtype 与 IAL），
       //    取代此前对每个容器块逐次调用 getChildBlocks 的 N+1 内核往返（单次编译由 O(容器数) 次降为常数次）
       //    列名以 kernel/sql/database.go 的 blocks 表定义为准（subtype）
+      //
+      //    关键约束：内核 SQL 索引是**异步批量落库**的（kernel/sql/queue.go 中 time.AfterFunc(50ms) +
+      //    索引队列），即最终一致，会短暂滞后于实时块树。若直接采用索引行渲染，编辑后首帧会拿到旧内容
+      //    （表现为预览"慢一步"）。因此这里做内容级新鲜度校验：任一顶层块的实时 content/markdown 与
+      //    索引行不一致即判定滞后——容器的 markdown 为其整棵子树的序列化，故文档内任何改动都必然
+      //    反映到某个顶层块上，该校验可覆盖嵌套改动。
+      //    滞后时先重试索引（代价远低于逐容器查询），仍滞后才回退实时路径，保证正确性不依赖索引。
       const indexQuery = `SELECT id, parent_id, root_id, type, subtype, content, markdown, ial, sort, created FROM blocks WHERE root_id = '${docId}' AND id != '${docId}' ORDER BY sort ASC, created ASC LIMIT 99999`
-      const indexRows = (await this.deps.sql(indexQuery).catch(() => [])) || []
+      const indexRows: any[] = (await this.deps.sql(indexQuery).catch(() => [])) || []
+      const decision = analyzeIndexContent(liveTopBlocks, indexRows)
 
       // 3.1 由索引行构建 IAL 字典
       const ialMapById = new Map<string, Record<string, string>>()
@@ -294,54 +410,111 @@ export class DocumentCompilerService {
         return ialMap
       }
 
-      // 5. 建树：优先用索引树（0 次额外内核调用），并与实时顶层块集合做一致性校验；
-      //    索引滞后或结构不一致时回退到逐容器 getChildBlocks 的既有路径，保证预览内容不缺失
+      // 5. 建树：结构（父子关系）取自索引行，同层顺序取自实时文档序；
+      //    索引滞后的部分只重建对应子树（见 analyzeIndexContent），不做全量回退
       const indexTree = Array.isArray(indexRows) && indexRows.length > 0
-        ? buildBlockTreeFromIndex(docId, indexRows, resolveIal)
+        ? buildBlockTreeFromIndex(docId, indexRows, resolveIal, 8, orderIndex)
         : null
 
       const liveTopIds = liveTopBlocks.map((b: any) => b.id).filter(Boolean)
-      const indexTopIds = new Set((indexTree?.topLevel || []).map((n) => n.id))
-      // 索引行必须覆盖实时顶层块且携带结构所需字段（type），否则视为索引滞后/数据不全而回退
-      const indexRowById = new Map<string, any>()
-      for (const row of indexRows) {
-        if (row?.id) {
-          indexRowById.set(row.id, row)
+
+      /** 由实时顶层块数据构建节点（保留宿主已内联的 children，交由兜底递归按需补全） */
+      const makeLiveNode = (live: any): ISiYuanBlockNode => ({
+        id: live.id,
+        parent_id: live.parent_id,
+        root_id: live.root_id || docId,
+        type: live.type,
+        subType: live.subType,
+        content: live.content || "",
+        markdown: live.markdown || "",
+        ial: resolveIal(live.id, live.ial),
+        children: live.children,
+      })
+
+      /** 按实时 getChildBlocks 递归重建一棵子树（代价 = 该子树的容器数，而非全文档） */
+      const rebuildSubtreeLive = async (node: ISiYuanBlockNode | undefined, depth = 0): Promise<void> => {
+        if (!node || depth > 8 || !isContainerNode(node)) return
+        const children = (await this.deps.getChildBlocks(node.id).catch(() => [])) || []
+        if (!Array.isArray(children) || children.length === 0) return
+        node.children = children
+          .filter((c: any) => c?.id)
+          .map((c: any) => ({
+            id: c.id,
+            parent_id: node.id,
+            root_id: docId,
+            type: c.type,
+            subType: c.subType,
+            content: c.content || "",
+            markdown: c.markdown || "",
+            ial: resolveIal(c.id, c.ial),
+            children: [],
+          }))
+        for (const child of node.children) {
+          await rebuildSubtreeLive(child, depth + 1)
         }
       }
-      const indexTreeUsable = Boolean(
-        indexTree &&
-        liveTopIds.length > 0 &&
-        liveTopIds.length === indexTopIds.size &&
-        liveTopIds.every((id: string) => {
-          const row = indexRowById.get(id)
-          return indexTopIds.has(id) && Boolean(row && row.type)
-        }),
-      )
+
+      // 结构完整性：实时顶层块对应的索引行必须携带结构所需字段（type），否则无法判定容器性
+      const indexRowById = new Map<string, any>()
+      for (const row of indexRows) {
+        if (row?.id) indexRowById.set(row.id, row)
+      }
+      const structureComplete = liveTopIds.every((id: string) => {
+        const row = indexRowById.get(id)
+        // 索引中缺失的顶层块由实时数据补齐（见 5.3），不参与该完整性校验
+        return !row || Boolean(row.type)
+      })
 
       let blockNodes: ISiYuanBlockNode[] = []
       let usedLegacyWalk = false
 
-      if (indexTree && indexTreeUsable) {
-        // 快速路径：按实时顶层顺序重排索引树顶层节点
-        blockNodes = liveTopIds
-          .map((id: string) => indexTree.byId.get(id))
-          .filter((n): n is ISiYuanBlockNode => Boolean(n))
+      if (indexTree && decision.usable && orderIndexReady && structureComplete) {
+        this.fallbackWarnedDocId = ""
+        // 5.1 叶子顶层块内容滞后 → 就地修正
+        for (const [id, live] of decision.leafPatch) {
+          const node = indexTree.byId.get(id)
+          if (node) {
+            node.content = live.content
+            node.markdown = live.markdown
+          }
+        }
+        // 5.2 容器顶层块内容滞后 → 刷新其自身内容并仅重建这些子树
+        const liveById = new Map<string, any>()
+        for (const live of liveTopBlocks) {
+          if (live?.id) liveById.set(live.id, live)
+        }
+        for (const rootId of decision.rebuildRoots) {
+          const node = indexTree.byId.get(rootId)
+          const live = liveById.get(rootId)
+          if (node && live) {
+            node.content = live.content || ""
+            node.markdown = live.markdown || ""
+          }
+          await rebuildSubtreeLive(node)
+        }
+        // 5.3 索引缺失的实时顶层块（新增）→ 按实时数据补齐并重建其子树
+        for (const live of liveTopBlocks) {
+          if (!live?.id || indexTree.byId.has(live.id)) continue
+          const node = makeLiveNode(live)
+          await rebuildSubtreeLive(node)
+          indexTree.byId.set(node.id, node)
+          indexTree.topLevel.push(node)
+        }
+        // 5.4 顶层成员与顺序以实时文档序为权威（不在其中即为已删除）
+        blockNodes = indexTree.topLevel
+          .filter((n) => orderIndex.has(n.id))
+          .sort((a, b) => (orderIndex.get(a.id) ?? 0) - (orderIndex.get(b.id) ?? 0))
       } else if (liveTopIds.length > 0) {
-        // 兜底路径：保留既有逐容器 getChildBlocks 递归（索引未覆盖实时结构时使用）
+        // 兜底路径：索引完全不可用或缺少实时文档序时，走既有逐容器 getChildBlocks 递归
         usedLegacyWalk = true
-        const legacyNodes: ISiYuanBlockNode[] = liveTopBlocks.map((r: any) => ({
-          id: r.id,
-          parent_id: r.parent_id,
-          root_id: r.root_id || docId,
-          type: r.type,
-          subType: r.subType,
-          content: r.content || "",
-          markdown: r.markdown || "",
-          ial: resolveIal(r.id, r.ial),
-          children: r.children,
-        }))
-        blockNodes = legacyNodes
+        // 诊断埋点：该路径为 O(容器数) 次内核往返，明显慢于索引树路径，按文档去重提示一次
+        if (this.fallbackWarnedDocId !== docId) {
+          this.fallbackWarnedDocId = docId
+          console.warn(
+            `[DocumentCompiler] 索引结构不可用，回退逐容器查询（较慢）doc=${docId} 实时顶层=${liveTopIds.length} 索引行=${indexRows.length} 文档序=${liveOrders.length} 原因=${decision.reason || "缺少实时文档序"}`,
+          )
+        }
+        blockNodes = liveTopBlocks.map((r: any) => makeLiveNode(r))
       } else if (indexTree) {
         // 极端兜底：getChildBlocks 无返回（只读/受限环境）时直接采用索引树顶层
         blockNodes = indexTree.topLevel

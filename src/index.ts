@@ -23,7 +23,7 @@ import {
 import { registerPluginCommands } from "@/plugin/command-registry"
 import type { ISlidevPluginHost } from "@/plugin/command-registry"
 import { globalInspectorSyncCoordinator } from "@/sync/inspector-sync-coordinator"
-import { globalCompileConsumerGate } from "@/sync/compile-consumer-gate"
+import { globalCompileConsumerGate, HIDDEN_CONSUMER_COMPILE_DELAY_MS } from "@/sync/compile-consumer-gate"
 import { CompileScheduler } from "@/sync/compile-scheduler"
 import { InspectorSyncThrottle } from "@/sync/inspector-sync-cache"
 import type { ISlidevDocument } from "@/types/slidev-protocol"
@@ -413,7 +413,10 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
   }
 
   /**
-   * 排程脏文档编译：消费者可见时才真正设置定时器，保证"编辑器静默 AUTO_COMPILE_DEBOUNCE_MS 后"才编译
+   * 排程脏文档编译：消费者可见性决定延迟
+   * - 消费者全部关闭（none）：只保留脏标记，不发请求
+   * - 消费者被宿主隐藏（hidden）：有界低频编译，保证同步不会长时间停摆
+   * - 消费者可见（visible）：编辑器静默 AUTO_COMPILE_DEBOUNCE_MS 后编译
    */
   private scheduleDirtyCompile(delay: number = AUTO_COMPILE_DEBOUNCE_MS) {
     if (this.debounceTimer) {
@@ -421,10 +424,14 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
       this.debounceTimer = null
     }
     if (!this.dirtyDocId) return
-    if (!globalCompileConsumerGate.hasVisibleConsumer()) {
-      // 消费者全部关闭/不可见：只保留脏标记，待预览页签或 Dock 重新可见时补跑
+
+    const visibility = globalCompileConsumerGate.getVisibility()
+    if (visibility === "none") {
+      // 预览页签与 Dock 均已关闭：只保留脏标记，待消费者重新挂载时补跑
       return
     }
+    const effectiveDelay = visibility === "visible" ? delay : Math.max(delay, HIDDEN_CONSUMER_COMPILE_DELAY_MS)
+
     this.debounceTimer = window.setTimeout(() => {
       this.debounceTimer = null
       const docId = this.dirtyDocId
@@ -432,7 +439,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
       if (docId) {
         void this.compileCurrentDocument(docId, { reason: "auto" })
       }
-    }, delay)
+    }, effectiveDelay)
   }
 
   /**
@@ -605,8 +612,8 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
       }
     }
 
-    // P0-1：自动编译在无可见消费者时只登记脏文档，不向内核发起请求
-    if (reason === "auto" && !globalCompileConsumerGate.hasVisibleConsumer()) {
+    // P0-1：自动编译在消费者全部关闭时只登记脏文档，不向内核发起请求
+    if (reason === "auto" && globalCompileConsumerGate.getVisibility() === "none") {
       this.dirtyDocId = docId
       return
     }

@@ -16,6 +16,24 @@ export type TCompileConsumerKind = "preview" | "dock"
 /** 观察器误报时的低频兜底校验间隔（仅在判定为不可见时运行） */
 const VERIFY_INTERVAL_MS = 2000
 
+/** 消费者存在但被宿主隐藏时的有界编译延迟：保证同步不会因可见性误判而长时间停摆 */
+export const HIDDEN_CONSUMER_COMPILE_DELAY_MS = 600
+
+/** 消费者可见性判定结果 */
+export type TConsumerVisibility = "none" | "hidden" | "visible"
+
+/**
+ * 宿主是否已把该节点隐藏
+ *
+ * 思源隐藏后台页签/折叠面板的方式是直接在面板元素上加 `.fn__none`
+ * （app/src/layout/Wnd.ts 的 panelElement.classList.add("fn__none")），
+ * 而插件 addTab/addDock 拿到的正是该面板元素。类名检查不触发布局，可作为零成本的可信信号。
+ */
+export function isHostHiddenElement(el: HTMLElement | null | undefined): boolean {
+  if (!el || typeof el.closest !== "function") return false
+  return Boolean(el.closest(".fn__none"))
+}
+
 /** 消费者宿主（插件实例）在消费者重新可见时补跑积压编译 */
 export interface ICompileConsumerHost {
   flushDirtyCompile?: () => void
@@ -124,24 +142,44 @@ export class CompileConsumerGate {
   }
 
   /**
-   * 是否存在可见消费者（纯缓存读取，不触发强制布局）
-   * 宿主窗口整体不可见时同样视为无消费者，避免后台空转
+   * 消费者可见性三态判定（读取路径不触发强制布局）
+   * - none：所有消费者均未挂载（预览页签与 Dock 都已关闭）→ 调用方应完全跳过编译
+   * - hidden：消费者已挂载但被宿主隐藏（后台页签/折叠面板）→ 调用方应降级为有界低频编译
+   * - visible：至少一个消费者真实可见
    */
-  public hasVisibleConsumer(): boolean {
+  public getVisibility(): TConsumerVisibility {
     if (this.consumers.size === 0) {
-      return false
+      return "none"
     }
     if (typeof document !== "undefined" && document.visibilityState === "hidden") {
-      return false
+      return "hidden"
     }
     for (const record of this.consumers.values()) {
-      if (record.measureOnDemand ? isElementVisible(record.element) : record.visible) {
-        return true
+      if (record.measureOnDemand ? isElementVisible(record.element) : this.isRecordVisible(record)) {
+        return "visible"
       }
     }
-    // 曾注册且当前判定为不可见：启动低频校验，防止观察器误报导致预览永久停更
+    // 已挂载但判定不可见：启动低频兜底校验，防止观察器误报导致预览永久停更
     this.ensureVerifyTimer()
-    return false
+    return "hidden"
+  }
+
+  public hasVisibleConsumer(): boolean {
+    return this.getVisibility() === "visible"
+  }
+
+  /**
+   * 单个消费者是否可见：观察器上报 ∪ 宿主未标记隐藏
+   *
+   * 两者取"或"是刻意为之——宿主类名信号零成本且与思源的隐藏机制同源，
+   * 观察器仅作为补充（覆盖非 fn__none 方式隐藏的情形），任何一侧判定可见即视为可见，
+   * 使误判方向偏向"继续编译"（保证预览同步即时），而非偏向"停止编译"。
+   */
+  private isRecordVisible(record: IConsumerRecord): boolean {
+    if (record.visible) {
+      return true
+    }
+    return !isHostHiddenElement(record.element)
   }
 
   /**

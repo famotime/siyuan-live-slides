@@ -9,13 +9,17 @@ import { CompileScheduler } from "../src/sync/compile-scheduler"
 
 const PROJECT_ROOT = path.resolve(__dirname, "..")
 
-function fakeElement(options: { connected?: boolean; rects?: number; width?: number } = {}): HTMLElement {
-  const { connected = true, rects = 1, width = 320 } = options
+function fakeElement(
+  options: { connected?: boolean; rects?: number; width?: number; hostHidden?: boolean } = {},
+): HTMLElement {
+  const { connected = true, rects = 1, width = 320, hostHidden = false } = options
   return {
     isConnected: connected,
     getClientRects: () => Array.from({ length: rects }, () => ({}) as DOMRect),
     offsetWidth: width,
     offsetHeight: width > 0 ? 200 : 0,
+    // 模拟宿主隐藏：思源在面板元素上加 .fn__none
+    closest: (selector: string) => (hostHidden && selector === ".fn__none" ? ({} as Element) : null),
   } as unknown as HTMLElement
 }
 
@@ -117,6 +121,39 @@ describe("P0 优化：编译消费者门闩（无可见消费者时不编译）"
     expect(gate.hasVisibleConsumer()).toBe(false)
   })
 
+  it("getVisibility 三态：未挂载为 none、宿主隐藏为 hidden、其余为 visible", () => {
+    const gate = new CompileConsumerGate()
+    // 未注册任何消费者：调用侧应完全跳过编译
+    expect(gate.getVisibility()).toBe("none")
+
+    // 宿主在面板元素上加了 .fn__none（后台页签/折叠面板）→ hidden（有界低频编译而非停摆）
+    const disposeHidden = gate.register("preview", fakeElement({ rects: 0, width: 0, hostHidden: true }))
+    expect(gate.getVisibility()).toBe("hidden")
+    disposeHidden()
+
+    // 未被宿主隐藏 → visible
+    const disposeVisible = gate.register("dock", fakeElement({ hostHidden: false }))
+    expect(gate.getVisibility()).toBe("visible")
+    disposeVisible()
+  })
+
+  it("宿主类名信号零成本：不得因此触发同步布局", () => {
+    const gate = new CompileConsumerGate()
+    // 用无 IntersectionObserver 的真实测量模式，确认 hasVisibleConsumer 不因类名检查而额外布局
+    let rectCalls = 0
+    const el = fakeElement({ rects: 0, width: 320 })
+    const originalRects = el.getClientRects
+    ;(el as any).getClientRects = () => {
+      rectCalls++
+      return originalRects.call(el)
+    }
+    gate.register("dock", el)
+    const before = rectCalls
+    gate.getVisibility()
+    // 实时测量模式下每次判定调用一次测量属预期；此处确认调用次数有界（非按块/按事务放大）
+    expect(rectCalls - before).toBeLessThanOrEqual(2)
+  })
+
   it("isElementVisible 应对矩形测量异常的 fixed 容器回退到尺寸判定", () => {
     expect(isElementVisible(fakeElement({ rects: 0, width: 0 }))).toBe(false)
     expect(isElementVisible(fakeElement({ rects: 0, width: 320 }))).toBe(true)
@@ -159,8 +196,8 @@ describe("P0 优化：编译消费者门闩（无可见消费者时不编译）"
     try {
       const gate = new CompileConsumerGate()
       let flushCount = 0
-      // 元素实际可见（有布局盒），但观察器始终不汇报相交
-      gate.register("preview", fakeElement({ rects: 1 }), () => {
+      // 矛盾信号：宿主标记了隐藏（.fn__none）但元素实际有布局盒，且观察器静默
+      gate.register("preview", fakeElement({ rects: 1, hostHidden: true }), () => {
         flushCount++
       })
       expect(observerCallback).not.toBeNull()
@@ -188,8 +225,8 @@ describe("P0 优化：编译消费者门闩（无可见消费者时不编译）"
     try {
       const gate = new CompileConsumerGate()
       let flushCount = 0
-      // 后台页签：无布局盒
-      gate.register("preview", fakeElement({ rects: 0, width: 0 }), () => {
+      // 后台页签：既被宿主标记隐藏，也无布局盒
+      gate.register("preview", fakeElement({ rects: 0, width: 0, hostHidden: true }), () => {
         flushCount++
       })
       expect(gate.hasVisibleConsumer()).toBe(false)
@@ -230,10 +267,11 @@ describe("P0 优化：编译消费者门闩（无可见消费者时不编译）"
 
       expect(observeCalls).toBe(1)
       expect(rectSpy).not.toHaveBeenCalled()
-      // 初始为不可见，等待观察器上报
-      expect(gate.hasVisibleConsumer()).toBe(false)
+      // 宿主未标记隐藏（无 .fn__none）→ 观察器即便静默也判定可见（宁可多编译，不可停更）
+      expect(gate.getVisibility()).toBe("visible")
+      expect(gate.hasVisibleConsumer()).toBe(true)
 
-      // 观察器上报进入视口 → 可见，并触发补跑回调
+      // 观察器上报进入视口 → 触发补跑回调
       callbacks[0]([{ isIntersecting: true }])
       expect(gate.hasVisibleConsumer()).toBe(true)
       expect(flushCount).toBe(1)
@@ -242,9 +280,9 @@ describe("P0 优化：编译消费者门闩（无可见消费者时不编译）"
       callbacks[0]([{ isIntersecting: true }])
       expect(flushCount).toBe(1)
 
-      // 切到后台页签（不再相交）→ 不可见
+      // 观察器报不相交但无 .fn__none：仍按可见处理（本用例元素未被宿主隐藏）
       callbacks[0]([{ isIntersecting: false }])
-      expect(gate.hasVisibleConsumer()).toBe(false)
+      expect(gate.hasVisibleConsumer()).toBe(true)
 
       // 读路径全程不触发强制布局
       expect(rectSpy).not.toHaveBeenCalled()
@@ -273,9 +311,12 @@ describe("P0 优化：插件接线契约", () => {
   })
 
   it("P0-1：自动编译必须经过消费者门闩，并在消费者可见时补跑脏文档", () => {
-    expect(indexSource).toContain("globalCompileConsumerGate.hasVisibleConsumer()")
-    expect(indexSource).toContain('reason === "auto" && !globalCompileConsumerGate.hasVisibleConsumer()')
+    expect(indexSource).toContain("globalCompileConsumerGate.getVisibility()")
+    expect(indexSource).toContain('reason === "auto" && globalCompileConsumerGate.getVisibility() === "none"')
     expect(indexSource).toContain("flushDirtyCompile")
+    // 消费者被宿主隐藏时必须有界低频编译，避免可见性误判导致同步长时间停摆
+    expect(indexSource).toContain('const effectiveDelay = visibility === "visible" ? delay : Math.max(delay, HIDDEN_CONSUMER_COMPILE_DELAY_MS)')
+    expect(indexSource).toContain("HIDDEN_CONSUMER_COMPILE_DELAY_MS")
     expect(indexSource).toContain('document.addEventListener("visibilitychange"')
     expect(indexSource).toContain('document.removeEventListener("visibilitychange"')
     expect(indexSource).toContain("globalCompileConsumerGate.clear()")
