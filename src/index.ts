@@ -23,8 +23,13 @@ import {
 import { registerPluginCommands } from "@/plugin/command-registry"
 import type { ISlidevPluginHost } from "@/plugin/command-registry"
 import { globalInspectorSyncCoordinator } from "@/sync/inspector-sync-coordinator"
+import { globalCompileConsumerGate } from "@/sync/compile-consumer-gate"
+import { CompileScheduler } from "@/sync/compile-scheduler"
 import type { ISlidevDocument } from "@/types/slidev-protocol"
 import "@/index.scss"
+
+/** 自动编译防抖时长：编辑器事务停歇该时长后才向内核发起编译 */
+const AUTO_COMPILE_DEBOUNCE_MS = 150
 
 // 专属 SVG 幻灯片放映图标
 const ICON_SLIDEV_SVG = `<symbol id="iconSlidev" viewBox="0 0 1024 1024">
@@ -52,6 +57,9 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
   public cliBridge = new CliDevServerBridge()
   private debounceTimer: number | null = null
   private activeCursorBlockId = ""
+  // P0 优化：编译消费者门闩 + 脏文档 + 单飞/代际调度
+  private compileScheduler = new CompileScheduler()
+  private dirtyDocId: string | null = null
 
   private onSwitchProtyleBound = this.onSwitchProtyle.bind(this)
   private onWsMainBound = this.onWsMain.bind(this)
@@ -60,6 +68,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
   private onEditorClickBound = this.onEditorClick.bind(this)
   private onSelectionChangeBound = this.onSelectionChange.bind(this)
   private onClickEditorContentBound = this.onClickEditorContent.bind(this)
+  private onVisibilityChangeBound = this.onVisibilityChange.bind(this)
 
   async onload() {
     const frontEnd = getFrontend()
@@ -136,6 +145,8 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
     if (typeof document !== "undefined") {
       document.addEventListener("click", this.onEditorClickBound, true)
       document.addEventListener("selectionchange", this.onSelectionChangeBound)
+      // 宿主窗口重新可见时补跑期间积压的脏文档编译
+      document.addEventListener("visibilitychange", this.onVisibilityChangeBound)
     }
 
     // 8. 插件启动/重启时自动检测当前主编辑区文档并即时编译
@@ -147,7 +158,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
             this.currentDocId = docId
           }
           if (!this.latestCompiledDoc) {
-            this.compileCurrentDocument(docId)
+            this.markCompileDirty(docId)
           }
         }
       }
@@ -159,9 +170,9 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
   async onDataChanged(reason?: "sync" | "overwrite") {
     // 跨端同步或外部配置更新时重新载入全局配置
     await this.loadGlobalSettings()
-    // 跨端同步或外部文件覆写时轻量重新编译，避免宿主触发全量重载
+    // 跨端同步或外部文件覆写时轻量重新编译，避免宿主触发全量重载（交由门闩与防抖决定是否真正编译）
     if (this.currentDocId) {
-      await this.compileCurrentDocument(this.currentDocId)
+      this.markCompileDirty(this.currentDocId)
     }
   }
 
@@ -190,7 +201,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
     }
     const docId = this.currentDocId || this.getActiveDocumentId()
     if (docId) {
-      await this.compileCurrentDocument(docId)
+      this.markCompileDirty(docId)
     }
     return updated
   }
@@ -200,6 +211,9 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
       window.clearTimeout(this.debounceTimer)
       this.debounceTimer = null
     }
+    this.compileScheduler.reset()
+    this.dirtyDocId = null
+    globalCompileConsumerGate.clear()
     this.eventBus.off("switch-protyle", this.onSwitchProtyleBound)
     this.eventBus.off("ws-main", this.onWsMainBound)
     this.eventBus.off("click-editortitleicon", this.onClickEditorTitleIconBound)
@@ -207,8 +221,18 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
     if (typeof document !== "undefined") {
       document.removeEventListener("click", this.onEditorClickBound, true)
       document.removeEventListener("selectionchange", this.onSelectionChangeBound)
+      document.removeEventListener("visibilitychange", this.onVisibilityChangeBound)
     }
     globalSandboxBridge.detach()
+  }
+
+  /**
+   * 宿主窗口可见性变化：重新可见时补跑期间积压的脏文档编译
+   */
+  private onVisibilityChange() {
+    if (typeof document !== "undefined" && document.visibilityState === "visible") {
+      this.flushDirtyCompile()
+    }
   }
 
   /**
@@ -320,7 +344,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
         type: "doc",
         attrs,
       })
-      this.compileCurrentDocument(docId)
+      this.markCompileDirty(docId)
     }
   }
 
@@ -355,20 +379,64 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
   }
 
   /**
-   * WebSocket 事务流监听（150ms 增量防抖）
+   * WebSocket 事务流监听（150ms 增量防抖 + 消费者门闩 + 单飞合并）
+   *
+   * P0 优化：内核会把所有推送（transactions / savedoc / progress / readystate ...）原样转发给插件，
+   * 此前任何一条消息都会触发一次全量编译。这里只对携带内容变更的 transactions 事务做处理，
+   * 其余高频非内容消息（尤其每次保存后的 savedoc）一律忽略。
    */
   private onWsMain(event: CustomEvent<any>) {
     const data = event.detail
     if (!data) return
+    if (data.cmd !== "transactions") return
 
     globalInspectorSyncCoordinator.patchThematicBreakTransactions(data)
+    this.markCompileDirty()
+  }
 
+  /**
+   * 登记脏文档并排程一次自动编译（消费者不可见时仅登记，不发请求）
+   */
+  private markCompileDirty(docId?: string) {
+    const target = docId || this.currentDocId || this.getActiveDocumentId()
+    if (!target) return
+    // 首次编译阶段 currentDocId 可能为空：此处补齐，避免后续结果因 id 缺失被判定为过期
+    if (!this.currentDocId) {
+      this.currentDocId = target
+    }
+    this.dirtyDocId = target
+    this.scheduleDirtyCompile()
+  }
+
+  /**
+   * 排程脏文档编译：消费者可见时才真正设置定时器，保证"编辑器静默 AUTO_COMPILE_DEBOUNCE_MS 后"才编译
+   */
+  private scheduleDirtyCompile(delay: number = AUTO_COMPILE_DEBOUNCE_MS) {
     if (this.debounceTimer) {
       window.clearTimeout(this.debounceTimer)
+      this.debounceTimer = null
+    }
+    if (!this.dirtyDocId) return
+    if (!globalCompileConsumerGate.hasVisibleConsumer()) {
+      // 消费者全部关闭/不可见：只保留脏标记，待预览页签或 Dock 重新可见时补跑
+      return
     }
     this.debounceTimer = window.setTimeout(() => {
-      this.compileCurrentDocument()
-    }, 150)
+      this.debounceTimer = null
+      const docId = this.dirtyDocId
+      this.dirtyDocId = null
+      if (docId) {
+        void this.compileCurrentDocument(docId, { reason: "auto" })
+      }
+    }, delay)
+  }
+
+  /**
+   * 消费者重新可见（预览页签/Dock 挂载、窗口恢复可见）时立即补跑积压编译
+   */
+  public flushDirtyCompile() {
+    if (!this.dirtyDocId) return
+    this.scheduleDirtyCompile(0)
   }
 
   /**
@@ -430,7 +498,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
         this.currentDocId = this.resolveDocIdFromElement(target) || ""
       }
       if (this.currentDocId && !this.latestCompiledDoc) {
-        this.compileCurrentDocument(this.currentDocId)
+        this.markCompileDirty(this.currentDocId)
       }
       if (blockId !== this.activeCursorBlockId) {
         this.activeCursorBlockId = blockId
@@ -482,7 +550,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
         this.currentDocId = this.resolveDocIdFromElement(el) || ""
       }
       if (this.currentDocId && !this.latestCompiledDoc) {
-        this.compileCurrentDocument(this.currentDocId)
+        this.markCompileDirty(this.currentDocId)
       }
       if (blockId !== this.activeCursorBlockId) {
         this.activeCursorBlockId = blockId
@@ -505,7 +573,18 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
   /**
    * 提取并编译当前文档为 Slidev 演示模型，推送给 Dock
    */
-  public async compileCurrentDocument(targetDocId?: string): Promise<void> {
+  /**
+   * 编译指定文档为 Slidev 演示模型，推送给 Dock 与预览页签
+   *
+   * @param targetDocId 目标文档 id，缺省取当前文档
+   * @param options.reason "auto" 表示由编辑器事件驱动，需要经过消费者门闩与单飞合并；
+   *                       "explicit"（默认）表示用户显式发起（命令、刷新按钮、设置变更），不受门闩限制
+   */
+  public async compileCurrentDocument(
+    targetDocId?: string,
+    options?: { reason?: "auto" | "explicit" },
+  ): Promise<void> {
+    const reason = options?.reason ?? "explicit"
     let docId = targetDocId || this.currentDocId
     if (!docId) {
       const inferredId = this.getActiveDocumentId()
@@ -517,15 +596,44 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
       }
     }
 
+    // P0-1：自动编译在无可见消费者时只登记脏文档，不向内核发起请求
+    if (reason === "auto" && !globalCompileConsumerGate.hasVisibleConsumer()) {
+      this.dirtyDocId = docId
+      return
+    }
+
+    // P0-3：单飞合并——已有编译在执行时只登记最新待编译文档，杜绝编译重叠叠加
+    const generation = this.compileScheduler.tryBegin(docId)
+    if (generation === null) {
+      return
+    }
+    if (this.dirtyDocId === docId) {
+      this.dirtyDocId = null
+    }
+
     try {
       const slidevDoc = await globalDocumentCompiler.compile(docId)
-      this.latestCompiledDoc = slidevDoc
-      updateDockDocument(slidevDoc, docId)
+      // P0-3：代际校验——期间有更新的编译请求时丢弃过期结果；
+      // 仅当明确知道用户已切到其它文档时（currentDocId 非空且不一致）才不回写，避免首编译阶段空 id 导致结果被误丢
+      const docSwitchedAway = Boolean(this.currentDocId) && docId !== this.currentDocId
+      if (!this.compileScheduler.isStale(generation) && !docSwitchedAway) {
+        if (!this.currentDocId) {
+          this.currentDocId = docId
+        }
+        this.latestCompiledDoc = slidevDoc
+        updateDockDocument(slidevDoc, docId)
 
-      // 全量巡检并清除 Protyle 编辑区中的陈旧/残留 Slidev DOM 属性与角标
-      this.purgeStaleDomSlidevAttrs(slidevDoc)
+        // 全量巡检并清除 Protyle 编辑区中的陈旧/残留 Slidev DOM 属性与角标
+        this.purgeStaleDomSlidevAttrs(slidevDoc)
+      }
     } catch (err) {
       console.error("[SiYuanSlidev] Failed to compile document:", err)
+    } finally {
+      const pendingDocId = this.compileScheduler.finish()
+      // 补跑被合并的请求：重新走脏标记与防抖，保证"编辑器静默后才编译"
+      if (pendingDocId) {
+        this.markCompileDirty(pendingDocId)
+      }
     }
   }
 

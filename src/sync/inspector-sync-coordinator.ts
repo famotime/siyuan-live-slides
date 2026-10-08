@@ -354,7 +354,12 @@ export class InspectorSyncCoordinator {
    * 针对思源前端忽略 NodeThematicBreak updateAttrs 的底层缺陷进行防御性补丁同步
    */
   public patchThematicBreakTransactions(data: any): void {
-    if (data?.cmd === "transactions" && Array.isArray(data.data)) {
+    // 仅内容事务需要同步属性覆盖层；savedoc/progress/readystate 等高频非内容消息直接跳过，
+    // 避免每次内核推送都做一轮 DOM 写入
+    if (data?.cmd !== "transactions") {
+      return
+    }
+    if (Array.isArray(data.data)) {
       for (const tx of data.data) {
         if (Array.isArray(tx?.doOperations)) {
           for (const op of tx.doOperations) {
