@@ -113,7 +113,13 @@
         class="spm-webview-viewport"
         :class="{ 'is-mobile': viewMode === 'mobile' }"
       >
-        <!-- 桌面端 (Electron 原生 webview) -->
+        <!-- 桌面端 (Electron 原生 webview)
+             注意：此处刻意不声明 partition 属性，强制复用宿主默认 Session。
+             原因：思源桌面端在本地内核模式下会以 --no-proxy-server 启动（app/electron/main.js），
+             随后仅对主窗体 Session 调用 setProxy 下发「设置 → 网络代理」的代理配置；
+             Electron 的 session.setProxy 是按 Session 生效的，一旦使用 partition="persist:xxx"
+             就会落到一个从未配置代理的独立 Session，外网地址（GitHub 等）在公司代理环境下恒为空白页。
+             复用默认 Session 同时可继承内核访问授权码 Cookie，保证带锁屏密码时 /assets 本地资源仍可加载。 -->
         <webview
           v-if="isDesktop"
           ref="webviewRef"
@@ -121,7 +127,6 @@
           :src="currentUrl"
           :useragent="currentUserAgent"
           allowpopups="true"
-          partition="persist:slidev-peek"
           style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: inline-flex;"
         ></webview>
 
@@ -143,6 +148,43 @@
               @click="openInSystemBrowser"
             >
               在新标签页中打开 ↗
+            </button>
+          </div>
+        </div>
+
+        <!-- 加载失败诊断卡片：Electron 内核的代理/证书/DNS 类失败不会自曝错误码，这里显式呈现，
+             并把「网络代理」这一内网环境最常见成因直接指出来 -->
+        <div
+          v-if="loadError"
+          class="spm-load-error"
+        >
+          <SlidevIcon
+            name="alert"
+            class="spm-load-error__icon"
+          />
+          <div class="spm-load-error__title">页面加载失败</div>
+          <div class="spm-load-error__code">
+            {{ loadError.description }}
+            <span class="spm-load-error__code-num">({{ loadError.errorCode }})</span>
+          </div>
+          <div class="spm-load-error__url">{{ loadError.validatedURL }}</div>
+          <p class="spm-load-error__hint">{{ loadError.hint }}</p>
+          <div class="spm-load-error__actions">
+            <button
+              class="spm-icon-btn"
+              aria-label="重试"
+              @click="retryAfterError"
+            >
+              <SlidevIcon name="refresh" />
+              <span>重试</span>
+            </button>
+            <button
+              class="spm-icon-btn is-primary"
+              aria-label="用系统浏览器打开"
+              @click="openInSystemBrowser"
+            >
+              <SlidevIcon name="external-link" />
+              <span>用系统浏览器打开 ↗</span>
             </button>
           </div>
         </div>
@@ -182,6 +224,46 @@ export function saveViewMode(mode: TViewMode) {
     } catch {}
   }
 }
+
+export interface IPeekLoadError {
+  errorCode: number
+  description: string
+  validatedURL: string
+  hint: string
+}
+
+/**
+ * 将 Chromium 网络错误描述翻译为可操作的中文排查提示
+ *
+ * 错误描述由 Electron did-fail-load / did-fail-provisional-load 事件给出（如 ERR_PROXY_CONNECTION_FAILED），
+ * 未覆盖的错误码回退到内网环境最常见的「网络代理未配置」提示，不做臆测。
+ */
+export function describePeekNetError(errorDescription: string): string {
+  switch ((errorDescription || '').toUpperCase()) {
+    case 'ERR_PROXY_CONNECTION_FAILED':
+      return '无法连接到代理服务器：请在思源「设置 → 网络代理」中填写公司代理地址，或切换为「使用系统代理」。'
+    case 'ERR_TUNNEL_CONNECTION_FAILED':
+      return 'HTTPS 代理隧道建立失败：请将思源「网络代理」的类型设为 HTTPS 并确认地址正确。'
+    case 'ERR_MANDATORY_PROXY_CONFIGURATION_FAILED':
+      return '强制代理配置获取失败：公司 PAC 脚本不可用，请在思源「网络代理」中改为手动填写代理地址。'
+    case 'ERR_NAME_NOT_RESOLVED':
+    case 'ERR_NAME_RESOLUTION_FAILED':
+      return '域名解析失败：内网环境访问外网通常需要配置代理或 DNS。'
+    case 'ERR_INTERNET_DISCONNECTED':
+      return '当前网络不可用：请检查网络连接。'
+    case 'ERR_CONNECTION_TIMED_OUT':
+    case 'ERR_TIMED_OUT':
+      return '连接超时：该地址可能需要通过代理才能访问。'
+    case 'ERR_CONNECTION_REFUSED':
+      return '连接被拒绝：目标服务未在监听，或思源本地内核尚未启动。'
+    case 'ERR_CERT_AUTHORITY_INVALID':
+    case 'ERR_CERT_COMMON_NAME_INVALID':
+    case 'ERR_CERT_DATE_INVALID':
+      return '证书校验失败：若公司网络使用 TLS 拦截，需将根证书导入思源所用系统的证书库。'
+    default:
+      return '若处于公司内网，请优先检查思源「设置 → 网络代理」是否已配置为可用代理（支持「使用系统代理」）。'
+  }
+}
 </script>
 
 <script setup lang="ts">
@@ -211,6 +293,7 @@ const isDesktop = ref(isDesktopEnvironment() && !isRemoteKernelHost())
 const currentUrl = ref(props.url)
 const urlInputValue = ref(props.url)
 const isLoading = ref(false)
+const loadError = ref<IPeekLoadError | null>(null)
 const canGoBack = ref(false)
 const canGoForward = ref(false)
 const zoomFactor = ref(1.0)
@@ -347,6 +430,9 @@ function setupWebviewListeners() {
   wv.addEventListener('did-navigate-in-page', onDidNavigateInPage)
   // 关键：拦截 target="_blank" 与 window.open，原地重定向加载
   wv.addEventListener('new-window', onNewWindow)
+  // 加载失败诊断：常规失败走 did-fail-load，证书/代理等提交前失败走 did-fail-provisional-load
+  wv.addEventListener('did-fail-load', onDidFailLoad)
+  wv.addEventListener('did-fail-provisional-load', onDidFailLoad)
 }
 
 function cleanupWebviewListeners() {
@@ -360,6 +446,8 @@ function cleanupWebviewListeners() {
     wv.removeEventListener('did-navigate', onDidNavigate)
     wv.removeEventListener('did-navigate-in-page', onDidNavigateInPage)
     wv.removeEventListener('new-window', onNewWindow)
+    wv.removeEventListener('did-fail-load', onDidFailLoad)
+    wv.removeEventListener('did-fail-provisional-load', onDidFailLoad)
   } catch (e) {
     // 忽略卸载时的异常
   }
@@ -413,6 +501,29 @@ function applyViewMode(forceReload = false) {
 
 function onDidStartLoading() {
   isLoading.value = true
+  loadError.value = null
+}
+
+/**
+ * 加载失败处理：区分主框架与子资源失败，忽略主动打断（ERR_ABORTED = -3）
+ */
+function onDidFailLoad(e: any) {
+  if (e && e.isMainFrame === false) return
+  if (e && Number(e.errorCode) === -3) return
+
+  const description = String(e?.errorDescription || 'ERR_FAILED')
+  loadError.value = {
+    errorCode: Number(e?.errorCode ?? 0),
+    description,
+    validatedURL: String(e?.validatedURL || currentUrl.value),
+    hint: describePeekNetError(description),
+  }
+  isLoading.value = false
+}
+
+function retryAfterError() {
+  loadError.value = null
+  reload()
 }
 
 function onDidStopLoading() {
@@ -759,6 +870,73 @@ webview.spm-webview-frame {
   border-top: 1px solid var(--b3-border-color, #e2e8f0);
   color: var(--b3-theme-on-surface, #64748b);
   flex-shrink: 0;
+}
+
+.spm-load-error {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  background: var(--b3-theme-background, #ffffff);
+
+  &__icon {
+    width: 32px;
+    height: 32px;
+    color: var(--b3-theme-error, #ef4444);
+  }
+
+  &__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--b3-theme-on-background, #1e293b);
+  }
+
+  &__code {
+    font-size: 12px;
+    font-family: var(--b3-font-family-code, monospace);
+    color: var(--b3-theme-error, #ef4444);
+    word-break: break-all;
+  }
+
+  &__code-num {
+    color: var(--b3-theme-on-surface, #64748b);
+  }
+
+  &__url {
+    max-width: 100%;
+    font-size: 11px;
+    color: var(--b3-theme-on-surface, #94a3b8);
+    word-break: break-all;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  &__hint {
+    max-width: 420px;
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--b3-theme-on-surface, #475569);
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
 }
 
 :global(webview.spm-webview-frame) {
