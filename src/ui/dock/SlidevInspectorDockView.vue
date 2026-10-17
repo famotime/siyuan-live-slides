@@ -65,6 +65,10 @@
         v-if="isDivider"
         :page-layout="pageLayout"
         :page-layout-ratio="pageLayoutRatio"
+        :page-mask="pageMask"
+        :page-mask-ratio="pageMaskRatio"
+        :page-mask-style="pageMaskStyle"
+        :page-mask-initial="pageMaskInitial"
         :detected-sb-ratio="detectedSbRatio"
         :detected-sb-info="detectedSbInfo"
         :page-transition="pageTransition"
@@ -75,6 +79,10 @@
         :page-index="targetPageIndex"
         @update:page-layout="onLayoutChange"
         @update:page-layout-ratio="onLayoutRatioChange"
+        @update:page-mask="onMaskChange"
+        @update:page-mask-ratio="onMaskRatioChange"
+        @update:page-mask-style="onMaskStyleChange"
+        @update:page-mask-initial="onMaskInitialChange"
         @apply-super-block-layout="onApplySuperBlockLayout"
         @reset-superblock-ratio="onResetSuperBlockRatio"
         @update:page-transition="onTransitionChange"
@@ -191,6 +199,10 @@ import {
   ATTR_DOC_SPACING,
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_LAYOUT_RATIO,
+  ATTR_PAGE_MASK,
+  ATTR_PAGE_MASK_RATIO,
+  ATTR_PAGE_MASK_STYLE,
+  ATTR_PAGE_MASK_INITIAL,
   ATTR_PAGE_TRANSITION,
   ATTR_PAGE_BACKGROUND,
   ATTR_PAGE_IMAGE,
@@ -403,6 +415,58 @@ const pageLayoutRatio = computed(() => {
     }
   }
   return targetSlide.value?.frontmatter?.layoutRatio || ''
+})
+
+const pageMask = computed(() => {
+  if (isDivider.value) {
+    const direct = activeBlockAttrs.value[ATTR_PAGE_MASK] || activeBlockAttrs.value['custom-slidev-mask']
+    if (direct !== undefined) return direct
+  }
+  const divId = currentPageDividerId.value || (isDivider.value ? activeBlockId.value : '')
+  if (divId) {
+    const override = globalDocumentCompiler.getBlockAttrOverride(divId)
+    if (override?.[ATTR_PAGE_MASK] !== undefined) return override[ATTR_PAGE_MASK]
+  }
+  return targetSlide.value?.frontmatter?.mask || ''
+})
+
+const pageMaskRatio = computed(() => {
+  if (isDivider.value) {
+    const direct = activeBlockAttrs.value[ATTR_PAGE_MASK_RATIO] || activeBlockAttrs.value['custom-slidev-mask-ratio']
+    if (direct !== undefined) return direct
+  }
+  const divId = currentPageDividerId.value || (isDivider.value ? activeBlockId.value : '')
+  if (divId) {
+    const override = globalDocumentCompiler.getBlockAttrOverride(divId)
+    if (override?.[ATTR_PAGE_MASK_RATIO] !== undefined) return override[ATTR_PAGE_MASK_RATIO]
+  }
+  return targetSlide.value?.frontmatter?.maskRatio || ''
+})
+
+const pageMaskStyle = computed(() => {
+  if (isDivider.value) {
+    const direct = activeBlockAttrs.value[ATTR_PAGE_MASK_STYLE] || activeBlockAttrs.value['custom-slidev-mask-style']
+    if (direct !== undefined) return direct
+  }
+  const divId = currentPageDividerId.value || (isDivider.value ? activeBlockId.value : '')
+  if (divId) {
+    const override = globalDocumentCompiler.getBlockAttrOverride(divId)
+    if (override?.[ATTR_PAGE_MASK_STYLE] !== undefined) return override[ATTR_PAGE_MASK_STYLE]
+  }
+  return targetSlide.value?.frontmatter?.maskStyle || 'solid'
+})
+
+const pageMaskInitial = computed(() => {
+  if (isDivider.value) {
+    const direct = activeBlockAttrs.value[ATTR_PAGE_MASK_INITIAL] || activeBlockAttrs.value['custom-slidev-mask-initial']
+    if (direct !== undefined) return direct
+  }
+  const divId = currentPageDividerId.value || (isDivider.value ? activeBlockId.value : '')
+  if (divId) {
+    const override = globalDocumentCompiler.getBlockAttrOverride(divId)
+    if (override?.[ATTR_PAGE_MASK_INITIAL] !== undefined) return override[ATTR_PAGE_MASK_INITIAL]
+  }
+  return targetSlide.value?.frontmatter?.maskInitial || 'hidden'
 })
 
 export interface IDetectedSuperBlockInfo {
@@ -751,6 +815,22 @@ async function onLayoutChange(val: string) {
 
 function onLayoutRatioChange(val: string) {
   savePageAttr(ATTR_PAGE_LAYOUT_RATIO, val)
+}
+
+function onMaskChange(val: string) {
+  savePageAttr(ATTR_PAGE_MASK, val)
+}
+
+function onMaskRatioChange(val: string) {
+  savePageAttr(ATTR_PAGE_MASK_RATIO, val)
+}
+
+function onMaskStyleChange(val: string) {
+  savePageAttr(ATTR_PAGE_MASK_STYLE, val)
+}
+
+function onMaskInitialChange(val: string) {
+  savePageAttr(ATTR_PAGE_MASK_INITIAL, val)
 }
 
 function onApplySuperBlockLayout(info: any) {

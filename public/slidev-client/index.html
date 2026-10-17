@@ -2262,11 +2262,80 @@
       border-bottom: 1.5px solid var(--slide-accent, #3b82f6);
     }
 
-    /* Attributify fallbacks */
-    [hover\:bg~="white"][hover\:bg~="op-10"]:hover,
-    [hover\:bg="white op-10"]:hover {
-      background: rgba(255, 255, 255, 0.1) !important;
-      border-radius: 4px;
+    /* 页面动态蒙版 (Dynamic Mask) 极致硬件加速规范 */
+    .slidev-mask-body-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      contain: layout paint;
+      isolation: isolate;
+    }
+    .slidev-mask-body-container--has-mask {
+      overflow: hidden !important;
+    }
+    .slidev-mask-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 50;
+      will-change: clip-path, opacity;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      transition: clip-path 0.42s cubic-bezier(0.2, 0, 0, 1),
+                  -webkit-clip-path 0.42s cubic-bezier(0.2, 0, 0, 1),
+                  opacity 0.42s cubic-bezier(0.2, 0, 0, 1);
+    }
+    .slidev-mask-overlay--solid {
+      background: var(--slide-bg, #ffffff);
+    }
+    [data-theme="dark"] .slidev-mask-overlay--solid {
+      background: var(--slide-bg, #121214);
+    }
+    .slidev-mask-overlay--blur {
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      background: color-mix(in srgb, var(--slide-bg, #ffffff) 65%, transparent);
+    }
+    [data-theme="dark"] .slidev-mask-overlay--blur {
+      background: color-mix(in srgb, var(--slide-bg, #121214) 65%, transparent);
+    }
+    /* 动态展露分界提示线 */
+    .slidev-mask-divider-line {
+      position: absolute;
+      pointer-events: none;
+      z-index: 51;
+      opacity: 0;
+      will-change: top, left, opacity;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      transition: top 0.42s cubic-bezier(0.2, 0, 0, 1),
+                  left 0.42s cubic-bezier(0.2, 0, 0, 1),
+                  opacity 0.42s cubic-bezier(0.2, 0, 0, 1);
+    }
+    .slidev-mask-divider-line--down {
+      left: 0;
+      right: 0;
+      height: 2.5px;
+      transform: translateY(-50%) translate3d(0, 0, 0);
+      background: linear-gradient(90deg, transparent 0%, var(--slide-accent, #3b82f6) 6%, var(--slide-accent, #3b82f6) 94%, transparent 100%);
+      box-shadow: 0 0 10px var(--slide-accent, #3b82f6), 0 0 4px var(--slide-accent, #3b82f6);
+    }
+    .slidev-mask-divider-line--right {
+      top: 0;
+      bottom: 0;
+      width: 2.5px;
+      transform: translateX(-50%) translate3d(0, 0, 0);
+      background: linear-gradient(180deg, transparent 0%, var(--slide-accent, #3b82f6) 6%, var(--slide-accent, #3b82f6) 94%, transparent 100%);
+      box-shadow: 0 0 10px var(--slide-accent, #3b82f6), 0 0 4px var(--slide-accent, #3b82f6);
     }
   </style>
   <script src="./assets/vue.global.prod.js"></script>
@@ -2320,6 +2389,7 @@
                   dynamicColsCount === 3 ? 'layout-three-cols' : '',
                   currentSlide.frontmatter.layout === 'clover' ? 'layout-clover-grid' : '',
                   isSuperBlockColsHeader ? 'has-superblock-cols' : '',
+                  currentSlideMaskConfig ? 'slidev-mask-body-container slidev-mask-body-container--has-mask' : '',
                 ]"
                 :style="currentSlide.frontmatter.layout === 'clover' ? {} : getLayoutGridStyle(currentSlide, dynamicColsCount)"
                 style="flex: 1;"
@@ -2350,12 +2420,19 @@
                     <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
                   </div>
                 </div>
+
+                <div v-if="currentSlideMaskConfig" class="slidev-mask-overlay" :class="['slidev-mask-overlay--' + currentSlideMaskConfig.style]" :style="maskOverlayStyle"></div>
+                <div v-if="currentSlideMaskConfig" class="slidev-mask-divider-line" :class="['slidev-mask-divider-line--' + currentSlideMaskConfig.direction]" :style="maskDividerStyle"></div>
               </div>
             </template>
 
             <!-- 双栏布局 -->
             <template v-else-if="currentSlide.frontmatter.layout === 'two-cols'">
-              <div class="layout-two-cols" :style="getLayoutGridStyle(currentSlide, 2)" :class="currentSlide.frontmatter.layoutClass">
+              <div
+                class="layout-two-cols"
+                :style="getLayoutGridStyle(currentSlide, 2)"
+                :class="[currentSlide.frontmatter.layoutClass, currentSlideMaskConfig ? 'slidev-mask-body-container slidev-mask-body-container--has-mask' : '']"
+              >
                 <div class="two-cols-left" :class="currentSlide.frontmatter.class">
                   <div
                     v-for="block in leftBlocks"
@@ -2382,12 +2459,19 @@
                     <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
                   </div>
                 </div>
+
+                <div v-if="currentSlideMaskConfig" class="slidev-mask-overlay" :class="['slidev-mask-overlay--' + currentSlideMaskConfig.style]" :style="maskOverlayStyle"></div>
+                <div v-if="currentSlideMaskConfig" class="slidev-mask-divider-line" :class="['slidev-mask-divider-line--' + currentSlideMaskConfig.direction]" :style="maskDividerStyle"></div>
               </div>
             </template>
 
             <!-- 右侧图片布局 image-right -->
             <template v-else-if="currentSlide.frontmatter.layout === 'image-right'">
-              <div class="layout-image-right" :style="getLayoutGridStyle(currentSlide, 2)">
+              <div
+                class="layout-image-right"
+                :style="getLayoutGridStyle(currentSlide, 2)"
+                :class="[currentSlideMaskConfig ? 'slidev-mask-body-container slidev-mask-body-container--has-mask' : '']"
+              >
                 <div class="image-right-content" :class="currentSlide.frontmatter.class">
                   <div
                     v-for="block in normalBlocks"
@@ -2415,12 +2499,19 @@
                     <span class="image-fallback-badge">Slidev Cover</span>
                   </div>
                 </div>
+
+                <div v-if="currentSlideMaskConfig" class="slidev-mask-overlay" :class="['slidev-mask-overlay--' + currentSlideMaskConfig.style]" :style="maskOverlayStyle"></div>
+                <div v-if="currentSlideMaskConfig" class="slidev-mask-divider-line" :class="['slidev-mask-divider-line--' + currentSlideMaskConfig.direction]" :style="maskDividerStyle"></div>
               </div>
             </template>
 
             <!-- 左侧图片布局 image-left -->
             <template v-else-if="currentSlide.frontmatter.layout === 'image-left'">
-              <div class="layout-image-left" :style="getLayoutGridStyle(currentSlide, 2)">
+              <div
+                class="layout-image-left"
+                :style="getLayoutGridStyle(currentSlide, 2)"
+                :class="[currentSlideMaskConfig ? 'slidev-mask-body-container slidev-mask-body-container--has-mask' : '']"
+              >
                 <div class="image-left-img-container">
                   <img
                     v-if="currentSlideImageUrl"
@@ -2448,22 +2539,76 @@
                     <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
                   </div>
                 </div>
+
+                <div v-if="currentSlideMaskConfig" class="slidev-mask-overlay" :class="['slidev-mask-overlay--' + currentSlideMaskConfig.style]" :style="maskOverlayStyle"></div>
+                <div v-if="currentSlideMaskConfig" class="slidev-mask-divider-line" :class="['slidev-mask-divider-line--' + currentSlideMaskConfig.direction]" :style="maskDividerStyle"></div>
               </div>
             </template>
 
             <!-- 常规布局 -->
             <template v-else>
-              <div
-                v-for="block in normalBlocks"
-                :key="block.id"
-                class="slide-block"
-                :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
-                :style="getBlockMotionStyle(block)"
-                :data-block-id="block.id"
-                @click="onBlockClick(block.id, $event)"
-              >
-                <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+              <!-- 若启用动态蒙版且存在顶部主标题，主标题常显，正文包裹在蒙版容器内 -->
+              <template v-if="currentSlideMaskConfig && pageFirstHeadingBlock">
+                <div
+                  class="slidev-page-first-heading-block slide-block"
+                  :class="[getBlockClickClass(pageFirstHeadingBlock), getBlockMotionClass(pageFirstHeadingBlock), getHeadingNormalizeClass(pageFirstHeadingBlock), { highlighted: pageFirstHeadingBlock.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(pageFirstHeadingBlock) }]"
+                  :style="getBlockMotionStyle(pageFirstHeadingBlock)"
+                  :data-block-id="pageFirstHeadingBlock.id"
+                  @click="onBlockClick(pageFirstHeadingBlock.id, $event)"
+                >
+                  <slide-block-renderer :block="pageFirstHeadingBlock" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                </div>
+
+                <div class="slidev-mask-body-container slidev-mask-body-container--has-mask">
+                  <div
+                    v-for="block in bodyBlocksWithoutFirstHeading"
+                    :key="block.id"
+                    class="slide-block"
+                    :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :style="getBlockMotionStyle(block)"
+                    :data-block-id="block.id"
+                    @click="onBlockClick(block.id, $event)"
+                  >
+                    <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                  </div>
+
+                  <div class="slidev-mask-overlay" :class="['slidev-mask-overlay--' + currentSlideMaskConfig.style]" :style="maskOverlayStyle"></div>
+                  <div class="slidev-mask-divider-line" :class="['slidev-mask-divider-line--' + currentSlideMaskConfig.direction]" :style="maskDividerStyle"></div>
+                </div>
+              </template>
+
+              <!-- 启用动态蒙版但无主标题：整体作为正文包裹蒙版 -->
+              <div v-else-if="currentSlideMaskConfig" class="slidev-mask-body-container slidev-mask-body-container--has-mask">
+                <div
+                  v-for="block in normalBlocks"
+                  :key="block.id"
+                  class="slide-block"
+                  :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                  :style="getBlockMotionStyle(block)"
+                  :data-block-id="block.id"
+                  @click="onBlockClick(block.id, $event)"
+                >
+                  <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                </div>
+
+                <div class="slidev-mask-overlay" :class="['slidev-mask-overlay--' + currentSlideMaskConfig.style]" :style="maskOverlayStyle"></div>
+                <div class="slidev-mask-divider-line" :class="['slidev-mask-divider-line--' + currentSlideMaskConfig.direction]" :style="maskDividerStyle"></div>
               </div>
+
+              <!-- 未启用动态蒙版的标准渲染 -->
+              <template v-else>
+                <div
+                  v-for="block in normalBlocks"
+                  :key="block.id"
+                  class="slide-block"
+                  :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                  :style="getBlockMotionStyle(block)"
+                  :data-block-id="block.id"
+                  @click="onBlockClick(block.id, $event)"
+                >
+                  <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                </div>
+              </template>
             </template>
 
             <!-- 无块占位 -->
@@ -3609,9 +3754,15 @@
           return String(img).trim()
         })
 
-        // 监听页码与步骤变动，自动同步新页面上的视频播放设置与自动播放
+        // 监听页码与步骤变动，自动同步新页面上的视频播放设置与自动播放，并预热动态蒙版 GPU 合成图层
         watch(currentPageIndex, () => {
           syncAutoplayVideos()
+          if (currentSlideMaskConfig.value) {
+            requestAnimationFrame(() => {
+              const overlay = document.querySelector(".slidev-mask-overlay")
+              if (overlay) void overlay.offsetHeight
+            })
+          }
         })
         watch(currentStep, () => {
           syncAutoplayVideos()
@@ -3809,10 +3960,148 @@
           }
         })
 
-        // 获取当前页最大 v-click 步数
+        function parseMaskRatio(ratioStr) {
+          if (!ratioStr || typeof ratioStr !== "string") {
+            return { steps: 2, breakpoints: [50, 100] };
+          }
+          const clean = ratioStr.trim();
+          if (!clean) return { steps: 2, breakpoints: [50, 100] };
+          const parts = clean.split(":").map(p => parseFloat(p.trim())).filter(n => !isNaN(n) && n > 0);
+          if (parts.length === 0) return { steps: 2, breakpoints: [50, 100] };
+          if (parts.length === 1) {
+            const val = Math.min(100, Math.max(1, parts[0]));
+            if (val === 100) return { steps: 1, breakpoints: [100] };
+            return { steps: 2, breakpoints: [Math.round(val * 100) / 100, 100] };
+          }
+          const isMonotonic = parts.every((val, idx) => idx === 0 || val > parts[idx - 1]);
+          const maxVal = parts[parts.length - 1];
+          if (isMonotonic && (maxVal === 100 || parts.some(p => p > 10))) {
+            const bps = parts.map(p => Math.min(100, Math.round(p * 100) / 100));
+            if (bps[bps.length - 1] < 100) bps.push(100);
+            return { steps: bps.length, breakpoints: bps };
+          }
+          const totalWeight = parts.reduce((acc, cur) => acc + cur, 0);
+          if (totalWeight <= 0) return { steps: 2, breakpoints: [50, 100] };
+          let accumulated = 0;
+          const bps = [];
+          for (let i = 0; i < parts.length; i++) {
+            accumulated += parts[i];
+            if (i === parts.length - 1) {
+              bps.push(100);
+            } else {
+              bps.push(Math.round((accumulated / totalWeight) * 10000) / 100);
+            }
+          }
+          return { steps: bps.length, breakpoints: bps };
+        }
+
+        const pageFirstHeadingBlock = computed(() => {
+          if (!currentSlide.value) return null;
+          if (currentSlide.value.frontmatter?.layout === 'cover') return null;
+          const hid = pageFirstHeadingBlockId.value;
+          if (!hid) return null;
+          return (currentSlide.value.blocks || []).find(b => b.id === hid) || null;
+        });
+
+        const bodyBlocksWithoutFirstHeading = computed(() => {
+          const firstH = pageFirstHeadingBlock.value;
+          if (!firstH) return normalBlocks.value;
+          return normalBlocks.value.filter(b => b.id !== firstH.id);
+        });
+
+        const currentSlideMaskConfig = computed(() => {
+          if (!currentSlide.value?.frontmatter?.mask) return null;
+          const maskDir = currentSlide.value.frontmatter.mask;
+          if (maskDir !== "down" && maskDir !== "right") return null;
+          const ratioInfo = parseMaskRatio(currentSlide.value.frontmatter.maskRatio);
+          const style = currentSlide.value.frontmatter.maskStyle || "solid";
+          const isInitialRevealed = currentSlide.value.frontmatter.maskInitial === "revealed";
+          const maskSteps = isInitialRevealed ? Math.max(0, ratioInfo.steps - 1) : ratioInfo.steps;
+          return {
+            direction: maskDir,
+            steps: maskSteps,
+            totalSteps: ratioInfo.steps,
+            breakpoints: ratioInfo.breakpoints,
+            style,
+            isInitialRevealed,
+          };
+        });
+
+        const maskRevealedPercent = computed(() => {
+          const maskCfg = currentSlideMaskConfig.value;
+          if (!maskCfg) return 100;
+          const step = currentStep.value;
+          if (step <= 0) {
+            return maskCfg.isInitialRevealed ? maskCfg.breakpoints[0] : 0;
+          }
+          const effectiveIdx = maskCfg.isInitialRevealed ? step : (step - 1);
+          if (effectiveIdx >= maskCfg.breakpoints.length) {
+            return 100;
+          }
+          return maskCfg.breakpoints[effectiveIdx] || 100;
+        });
+
+        const maskOverlayStyle = computed(() => {
+          const maskCfg = currentSlideMaskConfig.value;
+          if (!maskCfg) return { display: "none" };
+          const p = maskRevealedPercent.value;
+          const isDown = maskCfg.direction === "down";
+          if (p >= 100) {
+            return {
+              clipPath: isDown ? "inset(100% 0 0 0)" : "inset(0 0 0 100%)",
+              WebkitClipPath: isDown ? "inset(100% 0 0 0)" : "inset(0 0 0 100%)",
+              opacity: 0,
+              pointerEvents: "none",
+            };
+          }
+          if (isDown) {
+            return {
+              clipPath: `inset(${p}% 0 0 0)`,
+              WebkitClipPath: `inset(${p}% 0 0 0)`,
+              opacity: 1,
+            };
+          } else {
+            return {
+              clipPath: `inset(0 0 0 ${p}%)`,
+              WebkitClipPath: `inset(0 0 0 ${p}%)`,
+              opacity: 1,
+            };
+          }
+        });
+
+        const maskDividerStyle = computed(() => {
+          const maskCfg = currentSlideMaskConfig.value;
+          if (!maskCfg) return { display: "none" };
+          const p = maskRevealedPercent.value;
+          const isDown = maskCfg.direction === "down";
+          if (p <= 0) {
+            return {
+              opacity: 0,
+              top: isDown ? "0%" : undefined,
+              left: !isDown ? "0%" : undefined,
+            };
+          }
+          if (p >= 100) {
+            return {
+              opacity: 0,
+              top: isDown ? "100%" : undefined,
+              left: !isDown ? "100%" : undefined,
+            };
+          }
+          return {
+            opacity: 1,
+            top: isDown ? `${p}%` : undefined,
+            left: !isDown ? `${p}%` : undefined,
+          };
+        });
+
+        // 获取当前页最大步数 (综合考虑 v-click 与动态蒙版展露步进)
         const maxStepInCurrentSlide = computed(() => {
-          return slideClicksPlan.value.maxStep || 0
-        })
+          const clicksMax = slideClicksPlan.value.maxStep || 0;
+          const maskCfg = currentSlideMaskConfig.value;
+          if (!maskCfg) return clicksMax;
+          return Math.max(clicksMax, maskCfg.steps);
+        });
 
         const isMaxStep = computed(() => currentStep.value >= maxStepInCurrentSlide.value)
 
@@ -5338,7 +5627,12 @@
           activeLightbox,
           openLightbox,
           closeLightbox,
-          getHeadingNormalizeClass
+          getHeadingNormalizeClass,
+          currentSlideMaskConfig,
+          maskOverlayStyle,
+          maskDividerStyle,
+          pageFirstHeadingBlock,
+          bodyBlocksWithoutFirstHeading
         }
       }
     })

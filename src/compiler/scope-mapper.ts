@@ -27,6 +27,10 @@ import {
   ATTR_PAGE_IMAGE,
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_LAYOUT_RATIO,
+  ATTR_PAGE_MASK,
+  ATTR_PAGE_MASK_RATIO,
+  ATTR_PAGE_MASK_STYLE,
+  ATTR_PAGE_MASK_INITIAL,
   ATTR_PAGE_NOTES,
   ATTR_PAGE_SLIDE,
   ATTR_PAGE_TRANSITION,
@@ -133,6 +137,22 @@ export function parsePageAttrs(
     frontmatter.layoutRatio = attrs[ATTR_PAGE_LAYOUT_RATIO].trim()
   }
 
+  if (attrs[ATTR_PAGE_MASK]) {
+    frontmatter.mask = attrs[ATTR_PAGE_MASK].trim()
+  }
+
+  if (attrs[ATTR_PAGE_MASK_RATIO]) {
+    frontmatter.maskRatio = attrs[ATTR_PAGE_MASK_RATIO].trim()
+  }
+
+  if (attrs[ATTR_PAGE_MASK_STYLE]) {
+    frontmatter.maskStyle = attrs[ATTR_PAGE_MASK_STYLE].trim()
+  }
+
+  if (attrs[ATTR_PAGE_MASK_INITIAL]) {
+    frontmatter.maskInitial = attrs[ATTR_PAGE_MASK_INITIAL].trim()
+  }
+
   if (attrs[ATTR_PAGE_NOTES]) {
     notes = attrs[ATTR_PAGE_NOTES].trim()
   }
@@ -144,6 +164,10 @@ export function parsePageAttrs(
       ![
         ATTR_PAGE_LAYOUT,
         ATTR_PAGE_LAYOUT_RATIO,
+        ATTR_PAGE_MASK,
+        ATTR_PAGE_MASK_RATIO,
+        ATTR_PAGE_MASK_STYLE,
+        ATTR_PAGE_MASK_INITIAL,
         ATTR_PAGE_TRANSITION,
         ATTR_PAGE_BACKGROUND,
         ATTR_PAGE_IMAGE,

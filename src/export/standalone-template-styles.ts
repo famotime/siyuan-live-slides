@@ -1116,5 +1116,81 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     }
     .slidev-block-ref:hover {
       background: color-mix(in srgb, var(--slide-accent) 15%, transparent);
+    }
+
+    /* 页面动态蒙版 (Dynamic Mask) 极致硬件加速规范 */
+    .slidev-mask-body-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      contain: layout paint;
+      isolation: isolate;
+    }
+    .slidev-mask-body-container--has-mask {
+      overflow: hidden !important;
+    }
+    .slidev-mask-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 50;
+      will-change: clip-path, opacity;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      transition: clip-path 0.42s cubic-bezier(0.2, 0, 0, 1),
+                  -webkit-clip-path 0.42s cubic-bezier(0.2, 0, 0, 1),
+                  opacity 0.42s cubic-bezier(0.2, 0, 0, 1);
+    }
+    .slidev-mask-overlay--solid {
+      background: var(--slide-bg, #ffffff);
+    }
+    [data-theme="dark"] .slidev-mask-overlay--solid {
+      background: var(--slide-bg, #121214);
+    }
+    .slidev-mask-overlay--blur {
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      background: color-mix(in srgb, var(--slide-bg, #ffffff) 65%, transparent);
+    }
+    [data-theme="dark"] .slidev-mask-overlay--blur {
+      background: color-mix(in srgb, var(--slide-bg, #121214) 65%, transparent);
+    }
+    /* 动态展露分界提示线 */
+    .slidev-mask-divider-line {
+      position: absolute;
+      pointer-events: none;
+      z-index: 51;
+      opacity: 0;
+      will-change: top, left, opacity;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      transition: top 0.42s cubic-bezier(0.2, 0, 0, 1),
+                  left 0.42s cubic-bezier(0.2, 0, 0, 1),
+                  opacity 0.42s cubic-bezier(0.2, 0, 0, 1);
+    }
+    .slidev-mask-divider-line--down {
+      left: 0;
+      right: 0;
+      height: 2.5px;
+      transform: translateY(-50%) translate3d(0, 0, 0);
+      background: linear-gradient(90deg, transparent 0%, var(--slide-accent, #3b82f6) 6%, var(--slide-accent, #3b82f6) 94%, transparent 100%);
+      box-shadow: 0 0 10px var(--slide-accent, #3b82f6), 0 0 4px var(--slide-accent, #3b82f6);
+    }
+    .slidev-mask-divider-line--right {
+      top: 0;
+      bottom: 0;
+      width: 2.5px;
+      transform: translateX(-50%) translate3d(0, 0, 0);
+      background: linear-gradient(180deg, transparent 0%, var(--slide-accent, #3b82f6) 6%, var(--slide-accent, #3b82f6) 94%, transparent 100%);
+      box-shadow: 0 0 10px var(--slide-accent, #3b82f6), 0 0 4px var(--slide-accent, #3b82f6);
     }`;
 }

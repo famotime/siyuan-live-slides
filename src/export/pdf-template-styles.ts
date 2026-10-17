@@ -720,6 +720,17 @@ export function generatePdfExportStyles(options?: {
         opacity: 1 !important;
         transform: none !important;
       }
+      /* PDF 打印讲义下禁用动态蒙版遮挡，保证内容 100% 完整可见 */
+      .slidev-mask-overlay,
+      .slidev-mask-divider-line {
+        display: none !important;
+        opacity: 0 !important;
+      }
+      .slidev-mask-body-container {
+        clip-path: none !important;
+        -webkit-clip-path: none !important;
+        overflow: visible !important;
+      }
     }
   `
 }

@@ -21,6 +21,10 @@ export const ATTR_PAGE_NOTES = "custom-slidev-notes"
 export const ATTR_PAGE_CLASS = "custom-slidev-class"
 export const ATTR_PAGE_SPACING = "custom-slidev-spacing"
 export const ATTR_PAGE_LAYOUT_RATIO = "custom-slidev-layout-ratio"
+export const ATTR_PAGE_MASK = "custom-slidev-mask"
+export const ATTR_PAGE_MASK_RATIO = "custom-slidev-mask-ratio"
+export const ATTR_PAGE_MASK_STYLE = "custom-slidev-mask-style"
+export const ATTR_PAGE_MASK_INITIAL = "custom-slidev-mask-initial"
 
 // 3. 元素动效级与内容属性常量 (Element Scope)
 export const ATTR_ELEM_CLICK = "custom-slidev-click"
@@ -83,7 +87,67 @@ export interface ISlidePageFrontmatter {
   class?: string
   clicks?: number
   layoutRatio?: string
+  mask?: "down" | "right" | string
+  maskRatio?: string
+  maskStyle?: "solid" | "blur" | string
+  maskInitial?: "hidden" | "revealed" | string
   [key: string]: any
+}
+
+/**
+ * 解析动态蒙版分段比例或断点
+ * 支持形式：
+ * 1. 权重比例：如 "1:1" -> [50, 100], "1:1:1" -> [33.33, 66.67, 100], "1:2:1" -> [25, 75, 100]
+ * 2. 绝对累计百分比断点：如 "25:75:100" -> [25, 75, 100], "30:80" -> [30, 80, 100]
+ * 默认回退：[50, 100]
+ */
+export function parseMaskRatio(ratioStr?: string): { steps: number; breakpoints: number[] } {
+  if (!ratioStr || typeof ratioStr !== "string") {
+    return { steps: 2, breakpoints: [50, 100] }
+  }
+  const clean = ratioStr.trim()
+  if (!clean) {
+    return { steps: 2, breakpoints: [50, 100] }
+  }
+  const parts = clean.split(":").map(p => parseFloat(p.trim())).filter(n => !isNaN(n) && n > 0)
+  if (parts.length === 0) {
+    return { steps: 2, breakpoints: [50, 100] }
+  }
+  if (parts.length === 1) {
+    const val = Math.min(100, Math.max(1, parts[0]))
+    if (val === 100) return { steps: 1, breakpoints: [100] }
+    return { steps: 2, breakpoints: [Math.round(val * 100) / 100, 100] }
+  }
+
+  // 判断是否为直接的百分比断点列表：
+  const isMonotonic = parts.every((val, idx) => idx === 0 || val > parts[idx - 1])
+  const maxVal = parts[parts.length - 1]
+  const isLikelyPercentBreakpoints = isMonotonic && (maxVal === 100 || parts.some(p => p > 10))
+
+  if (isLikelyPercentBreakpoints) {
+    const bps = parts.map(p => Math.min(100, Math.round(p * 100) / 100))
+    if (bps[bps.length - 1] < 100) {
+      bps.push(100)
+    }
+    return { steps: bps.length, breakpoints: bps }
+  }
+
+  // 否则作为权重计算累计百分比（如 1:2:1 或 1:1:1）
+  const totalWeight = parts.reduce((acc, cur) => acc + cur, 0)
+  if (totalWeight <= 0) {
+    return { steps: 2, breakpoints: [50, 100] }
+  }
+  let accumulated = 0
+  const bps: number[] = []
+  for (let i = 0; i < parts.length; i++) {
+    accumulated += parts[i]
+    if (i === parts.length - 1) {
+      bps.push(100)
+    } else {
+      bps.push(Math.round((accumulated / totalWeight) * 10000) / 100)
+    }
+  }
+  return { steps: bps.length, breakpoints: bps }
 }
 
 /** 元素微动效配置结构 */

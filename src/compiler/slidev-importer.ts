@@ -8,6 +8,10 @@ import {
   ATTR_PAGE_CLASS,
   ATTR_PAGE_IMAGE,
   ATTR_PAGE_LAYOUT,
+  ATTR_PAGE_MASK,
+  ATTR_PAGE_MASK_RATIO,
+  ATTR_PAGE_MASK_STYLE,
+  ATTR_PAGE_MASK_INITIAL,
   ATTR_PAGE_NOTES,
   ATTR_PAGE_TRANSITION,
 } from "../types/slidev-protocol"
@@ -324,9 +328,16 @@ export function parseSlidevPresentation(
     if (frontmatter.background) pageAttrs[ATTR_PAGE_BACKGROUND] = String(frontmatter.background)
     if (frontmatter.image) pageAttrs[ATTR_PAGE_IMAGE] = String(frontmatter.image)
     if (frontmatter.class) pageAttrs[ATTR_PAGE_CLASS] = String(frontmatter.class)
+    if (frontmatter.mask) pageAttrs[ATTR_PAGE_MASK] = String(frontmatter.mask)
+    if (frontmatter.maskRatio || frontmatter["mask-ratio"]) pageAttrs[ATTR_PAGE_MASK_RATIO] = String(frontmatter.maskRatio || frontmatter["mask-ratio"])
+    if (frontmatter.maskStyle || frontmatter["mask-style"]) pageAttrs[ATTR_PAGE_MASK_STYLE] = String(frontmatter.maskStyle || frontmatter["mask-style"])
+    if (frontmatter.maskInitial || frontmatter["mask-initial"]) pageAttrs[ATTR_PAGE_MASK_INITIAL] = String(frontmatter.maskInitial || frontmatter["mask-initial"])
 
     for (const [k, v] of Object.entries(frontmatter)) {
-      if (!["layout", "transition", "background", "image", "class"].includes(k)) {
+      if (![
+        "layout", "transition", "background", "image", "class",
+        "mask", "maskRatio", "mask-ratio", "maskStyle", "mask-style", "maskInitial", "mask-initial"
+      ].includes(k)) {
         pageAttrs[`custom-slidev-${k}`] = typeof v === "object" ? JSON.stringify(v) : String(v)
       }
     }

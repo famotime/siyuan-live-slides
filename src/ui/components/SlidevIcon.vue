@@ -516,6 +516,13 @@
       <line x1="5" y1="16" x2="9" y2="16" />
     </g>
 
+    <!-- 帮助 / 问号 (Help / Info) -->
+    <g v-else-if="name === 'help' || name === 'question' || name === 'info'">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </g>
+
     <!-- 默认兜底图标 (幻灯片画板) -->
     <g v-else>
       <rect x="2" y="3" width="20" height="14" rx="2" />

@@ -44,6 +44,114 @@ export function getStandaloneClientRuntimeScript(): string {
       window.addEventListener("resize", updateScale);
       document.addEventListener("fullscreenchange", updateScale);
 
+      function parseMaskRatio(ratioStr) {
+        if (!ratioStr || typeof ratioStr !== "string") {
+          return { steps: 2, breakpoints: [50, 100] };
+        }
+        const clean = ratioStr.trim();
+        if (!clean) return { steps: 2, breakpoints: [50, 100] };
+        const parts = clean.split(":").map(p => parseFloat(p.trim())).filter(n => !isNaN(n) && n > 0);
+        if (parts.length === 0) return { steps: 2, breakpoints: [50, 100] };
+        if (parts.length === 1) {
+          const val = Math.min(100, Math.max(1, parts[0]));
+          if (val === 100) return { steps: 1, breakpoints: [100] };
+          return { steps: 2, breakpoints: [Math.round(val * 100) / 100, 100] };
+        }
+        const isMonotonic = parts.every((val, idx) => idx === 0 || val > parts[idx - 1]);
+        const maxVal = parts[parts.length - 1];
+        if (isMonotonic && (maxVal === 100 || parts.some(p => p > 10))) {
+          const bps = parts.map(p => Math.min(100, Math.round(p * 100) / 100));
+          if (bps[bps.length - 1] < 100) bps.push(100);
+          return { steps: bps.length, breakpoints: bps };
+        }
+        const totalWeight = parts.reduce((acc, cur) => acc + cur, 0);
+        if (totalWeight <= 0) return { steps: 2, breakpoints: [50, 100] };
+        let accumulated = 0;
+        const bps = [];
+        for (let i = 0; i < parts.length; i++) {
+          accumulated += parts[i];
+          if (i === parts.length - 1) {
+            bps.push(100);
+          } else {
+            bps.push(Math.round((accumulated / totalWeight) * 10000) / 100);
+          }
+        }
+        return { steps: bps.length, breakpoints: bps };
+      }
+
+      let currentMaskStep = 0;
+      let currentMaskConfig = null;
+      let maskOverlayEl = null;
+      let maskDividerEl = null;
+
+      function updateMaskVisual() {
+        if (!currentMaskConfig || !maskOverlayEl) return;
+        const p = (currentMaskStep <= 0)
+          ? (currentMaskConfig.isInitialRevealed ? currentMaskConfig.breakpoints[0] : 0)
+          : (currentMaskStep >= currentMaskConfig.totalSteps
+              ? 100
+              : currentMaskConfig.breakpoints[currentMaskConfig.isInitialRevealed ? currentMaskStep : (currentMaskStep - 1)]);
+
+        const isDown = currentMaskConfig.direction === "down";
+        if (isDown) {
+          maskOverlayEl.style.clipPath = "inset(" + p + "% 0 0 0)";
+          maskOverlayEl.style.webkitClipPath = "inset(" + p + "% 0 0 0)";
+        } else {
+          maskOverlayEl.style.clipPath = "inset(0 0 0 " + p + "%)";
+          maskOverlayEl.style.webkitClipPath = "inset(0 0 0 " + p + "%)";
+        }
+        if (p >= 100) {
+          maskOverlayEl.style.opacity = "0";
+          maskOverlayEl.style.pointerEvents = "none";
+        } else {
+          maskOverlayEl.style.opacity = "1";
+          maskOverlayEl.style.pointerEvents = "none";
+        }
+
+        if (maskDividerEl) {
+          if (p <= 0) {
+            maskDividerEl.style.opacity = "0";
+            if (isDown) {
+              maskDividerEl.style.top = "0%";
+            } else {
+              maskDividerEl.style.left = "0%";
+            }
+          } else if (p >= 100) {
+            maskDividerEl.style.opacity = "0";
+            if (isDown) {
+              maskDividerEl.style.top = "100%";
+            } else {
+              maskDividerEl.style.left = "100%";
+            }
+          } else {
+            maskDividerEl.style.opacity = "1";
+            if (isDown) {
+              maskDividerEl.style.top = p + "%";
+            } else {
+              maskDividerEl.style.left = p + "%";
+            }
+          }
+        }
+      }
+
+      function goNext() {
+        if (currentMaskConfig && currentMaskStep < currentMaskConfig.totalSteps) {
+          currentMaskStep++;
+          updateMaskVisual();
+          return;
+        }
+        renderSlide(currentIndex + 1);
+      }
+
+      function goPrev() {
+        if (currentMaskConfig && currentMaskStep > (currentMaskConfig.isInitialRevealed ? 1 : 0)) {
+          currentMaskStep--;
+          updateMaskVisual();
+          return;
+        }
+        renderSlide(currentIndex - 1);
+      }
+
       function cleanCardListItemMarkdown(rawMarkdown) {
         if (!rawMarkdown) return "";
         let cleaned = rawMarkdown.replace(/^[ \t]*[-*+]\s+|^[ \t]*\d+\.\s+/, "");
@@ -415,9 +523,52 @@ export function getStandaloneClientRuntimeScript(): string {
           container.style.width = "100%";
           container.style.height = "100%";
           container.style.transform = "none";
+        maskOverlayEl = null;
+        maskDividerEl = null;
+        const maskDir = slide.frontmatter?.mask;
+        if (maskDir === "down" || maskDir === "right") {
+          const ratioInfo = parseMaskRatio(slide.frontmatter.maskRatio);
+          const isInitRev = slide.frontmatter.maskInitial === "revealed";
+          currentMaskConfig = {
+            direction: maskDir,
+            totalSteps: isInitRev ? Math.max(0, ratioInfo.steps - 1) : ratioInfo.steps,
+            rawSteps: ratioInfo.steps,
+            breakpoints: ratioInfo.breakpoints,
+            isInitialRevealed: isInitRev,
+            style: slide.frontmatter.maskStyle || "solid",
+          };
+          currentMaskStep = 0;
+        } else {
+          currentMaskConfig = null;
+          currentMaskStep = 0;
+        }
+
+        function createMaskElements() {
+          if (!currentMaskConfig) return null;
+          const overlay = document.createElement("div");
+          overlay.className = "slidev-mask-overlay slidev-mask-overlay--" + currentMaskConfig.style;
+          const divider = document.createElement("div");
+          divider.className = "slidev-mask-divider-line slidev-mask-divider-line--" + currentMaskConfig.direction;
+          if (currentMaskConfig.direction === "down") {
+            divider.style.top = "0%";
+          } else {
+            divider.style.left = "0%";
+          }
+          divider.style.opacity = "0";
+          maskOverlayEl = overlay;
+          maskDividerEl = divider;
+          return { overlay, divider };
         }
 
         if (slide.frontmatter?.layout === "two-cols") {
+          const bodyWrap = document.createElement("div");
+          bodyWrap.className = "slidev-mask-body-container" + (currentMaskConfig ? " slidev-mask-body-container--has-mask" : "");
+          bodyWrap.style.display = "flex";
+          bodyWrap.style.flexDirection = "row";
+          bodyWrap.style.gap = "2rem";
+          bodyWrap.style.width = "100%";
+          bodyWrap.style.height = "100%";
+
           const leftCol = document.createElement("div");
           leftCol.className = "two-cols-left";
           const rightCol = document.createElement("div");
@@ -437,8 +588,15 @@ export function getStandaloneClientRuntimeScript(): string {
           const rightFirstH = !isCover ? rightList.find(isHeadingBlock) : null;
           for (const b of leftList) leftCol.appendChild(renderBlock(b, b === leftFirstH ? "slidev-col-first-heading-block" : ""));
           for (const b of rightList) rightCol.appendChild(renderBlock(b, b === rightFirstH ? "slidev-col-first-heading-block" : ""));
-          container.appendChild(leftCol);
-          container.appendChild(rightCol);
+          bodyWrap.appendChild(leftCol);
+          bodyWrap.appendChild(rightCol);
+
+          const maskEls = createMaskElements();
+          if (maskEls) {
+            bodyWrap.appendChild(maskEls.overlay);
+            bodyWrap.appendChild(maskEls.divider);
+          }
+          container.appendChild(bodyWrap);
         } else if (slide.frontmatter?.layout === "cols-header" || slide.frontmatter?.layout === "two-cols-header" || slide.frontmatter?.layout === "three-cols-header" || slide.frontmatter?.layout === "clover") {
           const isCover = slide.frontmatter?.layout === "cover";
           const isClover = slide.frontmatter?.layout === "clover";
@@ -482,7 +640,7 @@ export function getStandaloneClientRuntimeScript(): string {
           const headerDiv = document.createElement("div");
           headerDiv.className = "layout-header-section";
           const gridDiv = document.createElement("div");
-          gridDiv.className = (isClover ? "layout-clover-grid pdf-clover-wrapper" : ("layout-cols-wrapper layout-cols-grid " + (targetCols === 2 ? "pdf-two-cols-wrapper layout-two-cols-grid" : (targetCols === 3 ? "pdf-three-cols-wrapper layout-three-cols-grid" : "")))) + (isSuperBlockCols ? " has-superblock-cols" : "");
+          gridDiv.className = (isClover ? "layout-clover-grid pdf-clover-wrapper" : ("layout-cols-wrapper layout-cols-grid " + (targetCols === 2 ? "pdf-two-cols-wrapper layout-two-cols-grid" : (targetCols === 3 ? "pdf-three-cols-wrapper layout-three-cols-grid" : "")))) + (isSuperBlockCols ? " has-superblock-cols" : "") + (currentMaskConfig ? " slidev-mask-body-container slidev-mask-body-container--has-mask" : "");
 
           const gridCols = isClover ? "repeat(2, minmax(0, 1fr))" : parseRatioToGridCols(slide.frontmatter?.layoutRatio, targetCols);
           if (gridCols) gridDiv.style.gridTemplateColumns = gridCols;
@@ -526,17 +684,41 @@ export function getStandaloneClientRuntimeScript(): string {
             for (const b of cleaned) colDiv.appendChild(renderBlock(b, b === colFirstH ? "slidev-col-first-heading-block" : ""));
             gridDiv.appendChild(colDiv);
           });
+
+          const maskEls = createMaskElements();
+          if (maskEls) {
+            gridDiv.appendChild(maskEls.overlay);
+            gridDiv.appendChild(maskEls.divider);
+          }
+
           containerDiv.appendChild(gridDiv);
           container.appendChild(containerDiv);
         } else if (slide.frontmatter?.layout === "image-right" || slide.frontmatter?.layout === "image-left") {
           const isImageRight = slide.frontmatter?.layout === "image-right";
+          const isCover = slide.frontmatter?.layout === "cover";
+          const allBlocks = slide.blocks || [];
+          const pageFirstH = !isCover ? allBlocks.find(isHeadingBlock) : null;
+
+          if (pageFirstH) {
+            container.appendChild(renderBlock(pageFirstH, "slidev-page-first-heading-block"));
+          }
+
+          const bodyWrap = document.createElement("div");
+          bodyWrap.className = "slidev-mask-body-container" + (currentMaskConfig ? " slidev-mask-body-container--has-mask" : "");
+          bodyWrap.style.display = "flex";
+          bodyWrap.style.flexDirection = isImageRight ? "row" : "row-reverse";
+          bodyWrap.style.gap = "2rem";
+          bodyWrap.style.width = "100%";
+          bodyWrap.style.height = "100%";
+          bodyWrap.style.minHeight = "0";
+          bodyWrap.style.flex = "1";
+
           const contentCol = document.createElement("div");
           contentCol.className = isImageRight ? "image-right-content" : "image-left-content";
 
-          const isCover = slide.frontmatter?.layout === "cover";
-          const pageFirstH = !isCover ? (slide.blocks || []).find(isHeadingBlock) : null;
-          for (const block of (slide.blocks || [])) {
-            contentCol.appendChild(renderBlock(block, block === pageFirstH ? "slidev-page-first-heading-block" : ""));
+          for (const block of allBlocks) {
+            if (block === pageFirstH) continue;
+            contentCol.appendChild(renderBlock(block, ""));
           }
 
           const imgCol = document.createElement("div");
@@ -550,20 +732,45 @@ export function getStandaloneClientRuntimeScript(): string {
           };
           imgCol.appendChild(img);
 
-          if (isImageRight) {
-            container.appendChild(contentCol);
-            container.appendChild(imgCol);
-          } else {
-            container.appendChild(imgCol);
-            container.appendChild(contentCol);
+          bodyWrap.appendChild(contentCol);
+          bodyWrap.appendChild(imgCol);
+
+          const maskEls = createMaskElements();
+          if (maskEls) {
+            bodyWrap.appendChild(maskEls.overlay);
+            bodyWrap.appendChild(maskEls.divider);
           }
+          container.appendChild(bodyWrap);
         } else {
           const isCover = slide.frontmatter?.layout === "cover";
           const validBlocks = (slide.blocks || []).filter(b => b.slot !== "slot-divider-right");
           const pageFirstH = !isCover ? validBlocks.find(isHeadingBlock) : null;
-          for (const block of (slide.blocks || [])) {
-            container.appendChild(renderBlock(block, block === pageFirstH ? "slidev-page-first-heading-block" : ""));
+
+          if (pageFirstH) {
+            container.appendChild(renderBlock(pageFirstH, "slidev-page-first-heading-block"));
           }
+
+          const bodyWrap = document.createElement("div");
+          bodyWrap.className = "slidev-mask-body-container" + (currentMaskConfig ? " slidev-mask-body-container--has-mask" : "");
+
+          for (const block of validBlocks) {
+            if (block === pageFirstH) continue;
+            bodyWrap.appendChild(renderBlock(block, ""));
+          }
+
+          const maskEls = createMaskElements();
+          if (maskEls) {
+            bodyWrap.appendChild(maskEls.overlay);
+            bodyWrap.appendChild(maskEls.divider);
+          }
+          container.appendChild(bodyWrap);
+        }
+
+        updateMaskVisual();
+        if (currentMaskConfig && maskOverlayEl) {
+          requestAnimationFrame(() => {
+            if (maskOverlayEl) void maskOverlayEl.offsetHeight;
+          });
         }
 
         function syncAutoplayVideos() {
@@ -658,8 +865,8 @@ export function getStandaloneClientRuntimeScript(): string {
         });
       }
 
-      btnPrev.addEventListener("click", () => renderSlide(currentIndex - 1));
-      btnNext.addEventListener("click", () => renderSlide(currentIndex + 1));
+      btnPrev.addEventListener("click", () => goPrev());
+      btnNext.addEventListener("click", () => goNext());
       btnFullscreen.addEventListener("click", () => {
         if (!document.fullscreenElement) {
           document.documentElement.requestFullscreen().then(() => updateScale()).catch(() => {});
@@ -677,8 +884,8 @@ export function getStandaloneClientRuntimeScript(): string {
           }
         }
         if (isLightboxOpen) return;
-        if (e.key === "ArrowRight" || e.key === " ") renderSlide(currentIndex + 1);
-        if (e.key === "ArrowLeft") renderSlide(currentIndex - 1);
+        if (e.key === "ArrowRight" || e.key === " " || e.key === "ArrowDown") goNext();
+        if (e.key === "ArrowLeft" || e.key === "ArrowUp") goPrev();
         if (e.key === "f" || e.key === "F") btnFullscreen.click();
       });
 
@@ -721,9 +928,9 @@ export function getStandaloneClientRuntimeScript(): string {
         lastWheelTime = now;
 
         if (e.deltaY > 0) {
-          renderSlide(currentIndex + 1);
+          goNext();
         } else {
-          renderSlide(currentIndex - 1);
+          goPrev();
         }
       }, { passive: false });
 
@@ -772,9 +979,9 @@ export function getStandaloneClientRuntimeScript(): string {
 
         const isLeft = e.clientX < window.innerWidth / 2;
         if (isLeft) {
-          renderSlide(currentIndex - 1);
+          goPrev();
         } else {
-          renderSlide(currentIndex + 1);
+          goNext();
         }
       });
 

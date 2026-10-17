@@ -120,6 +120,133 @@
       @change="$emit('update:pageTransition', $event)"
     />
 
+    <!-- 页面动态蒙版 (Dynamic Mask) -->
+    <div class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div class="spm-control-title">
+            <SlidevIcon name="sparkles" />
+            <span>页面动态蒙版 (Dynamic Mask)</span>
+          </div>
+          <span class="spm-control-desc">随着点击操作分段展露正文内容</span>
+        </div>
+      </div>
+
+      <!-- 方向分段切换 -->
+      <div class="spm-segmented-group">
+        <button
+          class="spm-segmented-item"
+          :class="{ active: !pageMask }"
+          @click="$emit('update:pageMask', '')"
+        >
+          关闭
+        </button>
+        <button
+          class="spm-segmented-item"
+          :class="{ active: pageMask === 'down' }"
+          @click="$emit('update:pageMask', 'down')"
+        >
+          从上至下
+        </button>
+        <button
+          class="spm-segmented-item"
+          :class="{ active: pageMask === 'right' }"
+          @click="$emit('update:pageMask', 'right')"
+        >
+          从左至右
+        </button>
+      </div>
+
+      <!-- 启用蒙版时的扩展配置 -->
+      <div v-if="pageMask" style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+        <!-- 比例预设与输入 -->
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-size: 11px; opacity: 0.85; font-weight: 500;">展露比例 / 断点</div>
+          <span
+            class="b3-tooltips b3-tooltips__w"
+            aria-label="输入规则：&#10;• 权重比例（项数决定步数）：如 1:1 (2步等分)、1:1:1 (3步等分)、1:2:1 (按权重累计分段)&#10;• 绝对百分比：如 25:75:100 或 30:80 (指定每步展开的累计百分比)&#10;• 每次点击或按空格/向右键展露下一段，全部揭开后翻页"
+            style="cursor: help; opacity: 0.75; display: inline-flex; align-items: center; gap: 3px; font-size: 11px;"
+          >
+            <SlidevIcon name="help" />
+            <span>输入规则</span>
+          </span>
+        </div>
+        <div class="spm-quick-chips">
+          <button
+            v-for="preset in maskRatioPresets"
+            :key="preset.value"
+            class="spm-chip"
+            :class="{ active: (pageMaskRatio || '1:1') === preset.value }"
+            @click="$emit('update:pageMaskRatio', preset.value)"
+          >
+            {{ preset.label }}
+          </button>
+        </div>
+        <div
+          class="b3-tooltips b3-tooltips__n"
+          style="width: 100%; display: block;"
+          aria-label="输入权重比例（如 1:2:1）或绝对累计百分比断点（如 25:75:100），冒号项数决定点击步数"
+        >
+          <input
+            :value="pageMaskRatio || '1:1'"
+            class="spm-input"
+            style="width: 100%;"
+            placeholder="自定义比例或断点（如 1:2:1 或 25:75:100）"
+            @input="$emit('update:pageMaskRatio', ($event.target as HTMLInputElement).value)"
+            @change="$emit('update:pageMaskRatio', ($event.target as HTMLInputElement).value)"
+          />
+        </div>
+        <div style="font-size: 10.5px; opacity: 0.6; line-height: 1.35; margin-top: -2px;">
+          提示：支持权重比（如 1:2:1）或绝对断点（如 25:75:100），冒号项数决定点击步数
+        </div>
+
+        <!-- 遮盖样式与初始状态行 -->
+        <div style="display: flex; gap: 8px; margin-top: 2px;">
+          <!-- 遮盖样式 -->
+          <div style="flex: 1;">
+            <div style="font-size: 11px; opacity: 0.85; margin-bottom: 4px;">遮盖质感</div>
+            <div class="spm-segmented-group">
+              <button
+                class="spm-segmented-item"
+                :class="{ active: !pageMaskStyle || pageMaskStyle === 'solid' }"
+                @click="$emit('update:pageMaskStyle', 'solid')"
+              >
+                背景同色
+              </button>
+              <button
+                class="spm-segmented-item"
+                :class="{ active: pageMaskStyle === 'blur' }"
+                @click="$emit('update:pageMaskStyle', 'blur')"
+              >
+                磨砂毛玻璃
+              </button>
+            </div>
+          </div>
+
+          <!-- 初始状态 -->
+          <div style="flex: 1;">
+            <div style="font-size: 11px; opacity: 0.85; margin-bottom: 4px;">初始展露</div>
+            <div class="spm-segmented-group">
+              <button
+                class="spm-segmented-item"
+                :class="{ active: !pageMaskInitial || pageMaskInitial === 'hidden' }"
+                @click="$emit('update:pageMaskInitial', 'hidden')"
+              >
+                完全遮盖
+              </button>
+              <button
+                class="spm-segmented-item"
+                :class="{ active: pageMaskInitial === 'revealed' }"
+                @click="$emit('update:pageMaskInitial', 'revealed')"
+              >
+                首段可见
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 页面间距风格 (Spacing) -->
     <div class="spm-card-control">
       <div class="spm-control-header">
@@ -361,6 +488,10 @@ const props = defineProps<{
   pageNotes?: string
   pageIndex?: number
   pageLayoutRatio?: string
+  pageMask?: string
+  pageMaskRatio?: string
+  pageMaskStyle?: string
+  pageMaskInitial?: string
   detectedSbRatio?: string
   detectedSbInfo?: any
   isBatchProcessing?: boolean
@@ -373,6 +504,10 @@ const emit = defineEmits<{
   (e: 'update:pageSpacing', val: string): void
   (e: 'update:pageImage', val: string): void
   (e: 'update:pageLayoutRatio', val: string): void
+  (e: 'update:pageMask', val: string): void
+  (e: 'update:pageMaskRatio', val: string): void
+  (e: 'update:pageMaskStyle', val: string): void
+  (e: 'update:pageMaskInitial', val: string): void
   (e: 'applySuperBlockLayout', info: any): void
   (e: 'resetSuperblockRatio'): void
   (e: 'addNoteBlock'): void
@@ -383,6 +518,13 @@ const emit = defineEmits<{
   (e: 'insertDividerAfter'): void
   (e: 'deleteDivider'): void
 }>()
+
+const maskRatioPresets = [
+  { label: '1:1 (2步)', value: '1:1' },
+  { label: '1:1:1 (3步)', value: '1:1:1' },
+  { label: '1:2:1 (非等宽)', value: '1:2:1' },
+  { label: '1:1:1:1 (4步)', value: '1:1:1:1' },
+]
 
 const isMultiColLayout = computed(() => {
   return ['two-cols', 'cols-header', 'two-cols-header', 'three-cols-header', 'image-left', 'image-right'].includes(props.pageLayout)
