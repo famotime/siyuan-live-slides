@@ -611,8 +611,9 @@ defineExpose({
 }
 
 .spm-btn-icon:hover:not(:disabled) {
-  background: var(--b3-theme-surface-hover, #e2e8f0);
-  border-color: var(--b3-border-color, #cbd5e1);
+  background: var(--b3-theme-primary-lightest, var(--b3-list-hover, rgba(59, 130, 246, 0.08)));
+  border-color: var(--b3-theme-primary, #3b82f6);
+  color: var(--b3-theme-primary, #3b82f6);
 }
 
 .spm-btn-icon:disabled {

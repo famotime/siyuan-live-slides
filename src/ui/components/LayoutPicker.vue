@@ -86,13 +86,19 @@ function selectLayout(name: string) {
   border-radius: 6px;
   border: 1px solid var(--b3-border-color, #e2e8f0);
   background: var(--b3-theme-background, #ffffff);
+  color: var(--b3-theme-on-surface, #475569);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .spm-layout-item:hover {
-  background: var(--b3-theme-surface-hover, #f1f5f9);
+  background: var(--b3-theme-primary-lightest, var(--b3-list-hover, rgba(59, 130, 246, 0.08)));
   border-color: var(--b3-theme-primary, #3b82f6);
+  color: var(--b3-theme-primary, #3b82f6);
+}
+
+.spm-layout-item:hover .spm-layout-label {
+  color: var(--b3-theme-primary, #3b82f6);
 }
 
 .spm-layout-item.active {
@@ -103,9 +109,21 @@ function selectLayout(name: string) {
   box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
 }
 
-.spm-layout-item.active .spm-layout-icon {
+.spm-layout-item.active:hover {
+  background: var(--b3-theme-primary, #3b82f6);
+  color: #ffffff !important;
+}
+
+.spm-layout-item.active .spm-layout-icon,
+.spm-layout-item.active:hover .spm-layout-icon {
   color: #ffffff !important;
   opacity: 1;
+  transform: none;
+}
+
+.spm-layout-item.active .spm-layout-label,
+.spm-layout-item.active:hover .spm-layout-label {
+  color: #ffffff !important;
 }
 
 .spm-layout-icon {
@@ -132,13 +150,10 @@ function selectLayout(name: string) {
   transform: translateY(-1px);
 }
 
-.spm-layout-item.active:hover .spm-layout-icon {
-  color: #ffffff !important;
-  transform: none;
-}
-
 .spm-layout-label {
   font-size: 11px;
   line-height: 1.2;
+  color: inherit;
+  transition: color 0.15s ease;
 }
 </style>

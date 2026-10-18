@@ -79,19 +79,35 @@ function selectTransition(name: string) {
   cursor: pointer;
   border: 1px solid var(--b3-border-color, #e2e8f0);
   background: var(--b3-theme-background, #ffffff);
+  color: var(--b3-theme-on-surface, #475569);
   transition: all 0.15s ease;
 }
 
 .spm-transition-item:hover {
-  background: var(--b3-theme-surface-hover, #f1f5f9);
-  border-color: #3b82f6;
+  background: var(--b3-theme-primary-lightest, var(--b3-list-hover, rgba(59, 130, 246, 0.08)));
+  border-color: var(--b3-theme-primary, #3b82f6);
+  color: var(--b3-theme-primary, #3b82f6);
+}
+
+.spm-transition-item:hover .spm-transition-label,
+.spm-transition-item:hover .spm-transition-name {
+  color: var(--b3-theme-primary, #3b82f6);
+}
+
+.spm-transition-item:hover .spm-transition-name {
+  opacity: 0.85;
 }
 
 .spm-transition-item.active {
-  background: rgba(59, 130, 246, 0.08);
-  border-color: #3b82f6;
-  color: #3b82f6;
+  background: var(--b3-theme-primary-lightest, rgba(59, 130, 246, 0.12));
+  border-color: var(--b3-theme-primary, #3b82f6);
+  color: var(--b3-theme-primary, #3b82f6);
   font-weight: 600;
+}
+
+.spm-transition-item.active .spm-transition-label,
+.spm-transition-item.active .spm-transition-name {
+  color: var(--b3-theme-primary, #3b82f6);
 }
 
 .spm-transition-meta {
@@ -101,9 +117,16 @@ function selectTransition(name: string) {
   font-size: 12px;
 }
 
+.spm-transition-label {
+  color: inherit;
+  transition: color 0.15s ease;
+}
+
 .spm-transition-name {
   font-size: 10px;
   opacity: 0.6;
+  color: inherit;
+  transition: all 0.15s ease;
 }
 
 .spm-transition-preview-box {

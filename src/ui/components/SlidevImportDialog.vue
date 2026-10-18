@@ -298,7 +298,7 @@ function onClose() {
   border-radius: 6px;
   padding: 4px 8px;
   &:hover {
-    background: var(--b3-theme-surface-hover, rgba(0, 0, 0, 0.05));
+    background: var(--b3-list-hover, rgba(0, 0, 0, 0.05));
     color: var(--b3-theme-on-surface, #111827);
   }
 }
@@ -580,8 +580,11 @@ function onClose() {
   background: var(--b3-theme-surface, #ffffff);
   border: 1px solid var(--b3-border-color, #d1d5db);
   color: var(--b3-theme-on-surface, #374151);
+  transition: all 0.15s ease;
   &:hover:not(:disabled) {
-    background: var(--b3-theme-surface-hover, #f3f4f6);
+    background: var(--b3-theme-primary-lightest, var(--b3-list-hover, #f3f4f6));
+    border-color: var(--b3-theme-primary, #3b82f6);
+    color: var(--b3-theme-primary, #3b82f6);
   }
 }
 
