@@ -81,11 +81,12 @@ export function getStandaloneClientRuntimeScript(): string {
 
       let currentMaskStep = 0;
       let currentMaskConfig = null;
+      let maskLayerEl = null;
       let maskOverlayEl = null;
       let maskDividerEl = null;
 
       function updateMaskVisual() {
-        if (!currentMaskConfig || !maskOverlayEl) return;
+        if (!currentMaskConfig || !maskLayerEl) return;
         const p = (currentMaskStep <= 0)
           ? (currentMaskConfig.isInitialRevealed ? currentMaskConfig.breakpoints[0] : 0)
           : (currentMaskStep >= currentMaskConfig.totalSteps
@@ -93,43 +94,17 @@ export function getStandaloneClientRuntimeScript(): string {
               : currentMaskConfig.breakpoints[currentMaskConfig.isInitialRevealed ? currentMaskStep : (currentMaskStep - 1)]);
 
         const isDown = currentMaskConfig.direction === "down";
-        if (isDown) {
-          maskOverlayEl.style.clipPath = "inset(" + p + "% 0 0 0)";
-          maskOverlayEl.style.webkitClipPath = "inset(" + p + "% 0 0 0)";
-        } else {
-          maskOverlayEl.style.clipPath = "inset(0 0 0 " + p + "%)";
-          maskOverlayEl.style.webkitClipPath = "inset(0 0 0 " + p + "%)";
-        }
         if (p >= 100) {
-          maskOverlayEl.style.opacity = "0";
-          maskOverlayEl.style.pointerEvents = "none";
+          maskLayerEl.style.transform = isDown ? "translate3d(0, 100%, 0)" : "translate3d(100%, 0, 0)";
+          maskLayerEl.style.opacity = "0";
+          maskLayerEl.style.pointerEvents = "none";
+          if (maskDividerEl) maskDividerEl.style.opacity = "0";
         } else {
-          maskOverlayEl.style.opacity = "1";
-          maskOverlayEl.style.pointerEvents = "none";
-        }
-
-        if (maskDividerEl) {
-          if (p <= 0) {
-            maskDividerEl.style.opacity = "0";
-            if (isDown) {
-              maskDividerEl.style.top = "0%";
-            } else {
-              maskDividerEl.style.left = "0%";
-            }
-          } else if (p >= 100) {
-            maskDividerEl.style.opacity = "0";
-            if (isDown) {
-              maskDividerEl.style.top = "100%";
-            } else {
-              maskDividerEl.style.left = "100%";
-            }
-          } else {
-            maskDividerEl.style.opacity = "1";
-            if (isDown) {
-              maskDividerEl.style.top = p + "%";
-            } else {
-              maskDividerEl.style.left = p + "%";
-            }
+          maskLayerEl.style.transform = isDown ? ("translate3d(0, " + p + "%, 0)") : ("translate3d(" + p + "%, 0, 0)");
+          maskLayerEl.style.opacity = "1";
+          maskLayerEl.style.pointerEvents = "none";
+          if (maskDividerEl) {
+            maskDividerEl.style.opacity = (p <= 0) ? "0" : "1";
           }
         }
       }
@@ -545,19 +520,19 @@ export function getStandaloneClientRuntimeScript(): string {
 
         function createMaskElements() {
           if (!currentMaskConfig) return null;
+          const layer = document.createElement("div");
+          layer.className = "slidev-mask-layer slidev-mask-layer--" + currentMaskConfig.style + " slidev-mask-layer--" + currentMaskConfig.direction;
           const overlay = document.createElement("div");
-          overlay.className = "slidev-mask-overlay slidev-mask-overlay--" + currentMaskConfig.style;
+          overlay.className = "slidev-mask-overlay";
           const divider = document.createElement("div");
-          divider.className = "slidev-mask-divider-line slidev-mask-divider-line--" + currentMaskConfig.direction;
-          if (currentMaskConfig.direction === "down") {
-            divider.style.top = "0%";
-          } else {
-            divider.style.left = "0%";
-          }
+          divider.className = "slidev-mask-divider-line";
           divider.style.opacity = "0";
+          layer.appendChild(overlay);
+          layer.appendChild(divider);
+          maskLayerEl = layer;
           maskOverlayEl = overlay;
           maskDividerEl = divider;
-          return { overlay, divider };
+          return { layer, overlay, divider };
         }
 
         if (slide.frontmatter?.layout === "two-cols") {
@@ -593,8 +568,7 @@ export function getStandaloneClientRuntimeScript(): string {
 
           const maskEls = createMaskElements();
           if (maskEls) {
-            bodyWrap.appendChild(maskEls.overlay);
-            bodyWrap.appendChild(maskEls.divider);
+            bodyWrap.appendChild(maskEls.layer);
           }
           container.appendChild(bodyWrap);
         } else if (slide.frontmatter?.layout === "cols-header" || slide.frontmatter?.layout === "two-cols-header" || slide.frontmatter?.layout === "three-cols-header" || slide.frontmatter?.layout === "clover") {
@@ -687,8 +661,7 @@ export function getStandaloneClientRuntimeScript(): string {
 
           const maskEls = createMaskElements();
           if (maskEls) {
-            gridDiv.appendChild(maskEls.overlay);
-            gridDiv.appendChild(maskEls.divider);
+            gridDiv.appendChild(maskEls.layer);
           }
 
           containerDiv.appendChild(gridDiv);
@@ -737,8 +710,7 @@ export function getStandaloneClientRuntimeScript(): string {
 
           const maskEls = createMaskElements();
           if (maskEls) {
-            bodyWrap.appendChild(maskEls.overlay);
-            bodyWrap.appendChild(maskEls.divider);
+            bodyWrap.appendChild(maskEls.layer);
           }
           container.appendChild(bodyWrap);
         } else {
@@ -760,16 +732,15 @@ export function getStandaloneClientRuntimeScript(): string {
 
           const maskEls = createMaskElements();
           if (maskEls) {
-            bodyWrap.appendChild(maskEls.overlay);
-            bodyWrap.appendChild(maskEls.divider);
+            bodyWrap.appendChild(maskEls.layer);
           }
           container.appendChild(bodyWrap);
         }
 
         updateMaskVisual();
-        if (currentMaskConfig && maskOverlayEl) {
+        if (currentMaskConfig && maskLayerEl) {
           requestAnimationFrame(() => {
-            if (maskOverlayEl) void maskOverlayEl.offsetHeight;
+            if (maskLayerEl) void maskLayerEl.offsetHeight;
           });
         }
 

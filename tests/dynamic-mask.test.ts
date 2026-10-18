@@ -155,13 +155,13 @@ maskInitial: hidden
       expect(css).toContain(".slidev-mask-body-container--has-mask")
       expect(css).toContain("contain: layout paint;")
       expect(css).toContain("isolation: isolate;")
+      expect(css).toContain(".slidev-mask-layer")
       expect(css).toContain(".slidev-mask-overlay")
-      expect(css).toContain(".slidev-mask-overlay--solid")
-      expect(css).toContain(".slidev-mask-overlay--blur")
-      expect(css).toContain("clip-path 0.42s cubic-bezier(0.2, 0, 0, 1)")
-      expect(css).toContain(".slidev-mask-divider-line")
-      expect(css).toContain(".slidev-mask-divider-line--down")
-      expect(css).toContain(".slidev-mask-divider-line--right")
+      expect(css).toContain("margin-left: calc(-1 * var(--slidev-padding-x, 48px))")
+      expect(css).toContain("margin-bottom: calc(-1 * var(--slidev-padding-y, 32px))")
+      expect(css).toContain("width: calc(100% + 2 * var(--slidev-padding-x, 48px))")
+      expect(css).toContain("backdrop-filter: blur(30px) saturate(180%);")
+      expect(css).toContain("background: color-mix(in srgb, var(--slide-bg, #ffffff) 90%, transparent);")
     })
 
     it("getStandaloneClientRuntimeScript 应包含蒙版解析算法与步进状态调度，并在就绪时进行 GPU 预热", () => {
@@ -170,7 +170,7 @@ maskInitial: hidden
       expect(js).toContain("currentMaskConfig")
       expect(js).toContain("updateMaskVisual")
       expect(js).toContain("requestAnimationFrame")
-      expect(js).toContain("slidev-mask-body-container")
+      expect(js).toContain("slidev-mask-layer")
       expect(js).toContain("slidev-mask-overlay")
       expect(js).toContain("slidev-mask-divider-line")
       expect(js).toContain("goNext")
@@ -181,6 +181,7 @@ maskInitial: hidden
   describe("4. PDF 打印讲义导出规则", () => {
     it("generatePdfExportStyles 应在 @media print 中强制隐藏蒙版，保证内容完整可见", () => {
       const pdfCss = generatePdfExportStyles()
+      expect(pdfCss).toContain(".slidev-mask-layer")
       expect(pdfCss).toContain(".slidev-mask-overlay")
       expect(pdfCss).toContain(".slidev-mask-divider-line")
       expect(pdfCss).toContain("display: none !important;")

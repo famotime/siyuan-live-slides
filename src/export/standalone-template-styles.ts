@@ -1118,7 +1118,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       background: color-mix(in srgb, var(--slide-accent) 15%, transparent);
     }
 
-    /* 页面动态蒙版 (Dynamic Mask) 极致硬件加速规范 */
+    /* 页面动态蒙版 (Dynamic Mask) GPU 合成器硬件加速体系 */
     .slidev-mask-body-container {
       position: relative;
       width: 100%;
@@ -1127,69 +1127,103 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       flex: 1;
       display: flex;
       flex-direction: column;
-      transform: translate3d(0, 0, 0);
-      backface-visibility: hidden;
+      overflow: hidden !important;
       contain: layout paint;
       isolation: isolate;
     }
     .slidev-mask-body-container--has-mask {
       overflow: hidden !important;
+      /* 向左右、向下突破父容器内边距，完全贴合幻灯片视口边缘 */
+      margin-left: calc(-1 * var(--slidev-padding-x, 48px)) !important;
+      margin-right: calc(-1 * var(--slidev-padding-x, 48px)) !important;
+      margin-bottom: calc(-1 * var(--slidev-padding-y, 32px)) !important;
+      padding-left: var(--slidev-padding-x, 48px) !important;
+      padding-right: var(--slidev-padding-x, 48px) !important;
+      padding-bottom: var(--slidev-padding-y, 32px) !important;
+      width: calc(100% + 2 * var(--slidev-padding-x, 48px)) !important;
+      box-sizing: border-box !important;
     }
+    /* 无标题且首个元素即为蒙版正文容器时，向上同步扩展至顶部边缘 */
+    .slide-content-wrapper > .slidev-mask-body-container--has-mask:first-child,
+    .slide-content > .slidev-mask-body-container--has-mask:first-child {
+      margin-top: calc(-1 * var(--slidev-padding-y, 32px)) !important;
+      padding-top: var(--slidev-padding-y, 32px) !important;
+    }
+    /* 针对全屏零内边距特殊布局（如 image-right/image-left），重置内边距变量避免越界 */
+    .slide-content-wrapper.layout-image-right,
+    .slide-content-wrapper.layout-image-left,
+    .slide-content.layout-image-right,
+    .slide-content.layout-image-left {
+      --slidev-padding-x: 0px !important;
+      --slidev-padding-y: 0px !important;
+    }
+    /* 蒙版运动总图层：纯 GPU Compositor 硬件加速 translate3d */
+    .slidev-mask-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 50;
+      will-change: transform, opacity;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      transition: transform 0.42s cubic-bezier(0.2, 0, 0, 1),
+                  opacity 0.42s cubic-bezier(0.2, 0, 0, 1);
+    }
+    /* 蒙版内部遮罩层：纯色或磨砂玻璃 */
     .slidev-mask-overlay {
       position: absolute;
       top: 0;
       left: 0;
-      right: 0;
-      bottom: 0;
+      width: 100%;
+      height: 100%;
       pointer-events: none;
-      z-index: 50;
-      will-change: clip-path, opacity;
-      transform: translate3d(0, 0, 0);
-      backface-visibility: hidden;
-      transition: clip-path 0.42s cubic-bezier(0.2, 0, 0, 1),
-                  -webkit-clip-path 0.42s cubic-bezier(0.2, 0, 0, 1),
-                  opacity 0.42s cubic-bezier(0.2, 0, 0, 1);
     }
+    .slidev-mask-layer--solid .slidev-mask-overlay,
     .slidev-mask-overlay--solid {
       background: var(--slide-bg, #ffffff);
     }
+    [data-theme="dark"] .slidev-mask-layer--solid .slidev-mask-overlay,
     [data-theme="dark"] .slidev-mask-overlay--solid {
       background: var(--slide-bg, #121214);
     }
+    .slidev-mask-layer--blur .slidev-mask-overlay,
     .slidev-mask-overlay--blur {
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      background: color-mix(in srgb, var(--slide-bg, #ffffff) 65%, transparent);
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      background: color-mix(in srgb, var(--slide-bg, #ffffff) 90%, transparent);
     }
+    [data-theme="dark"] .slidev-mask-layer--blur .slidev-mask-overlay,
     [data-theme="dark"] .slidev-mask-overlay--blur {
-      background: color-mix(in srgb, var(--slide-bg, #121214) 65%, transparent);
+      background: color-mix(in srgb, var(--slide-bg, #121214) 90%, transparent);
     }
-    /* 动态展露分界提示线 */
+    /* 动态展露分界提示线：物理内嵌于蒙版边缘，相对坐标永为 0，绝对物理同步 */
     .slidev-mask-divider-line {
       position: absolute;
       pointer-events: none;
       z-index: 51;
       opacity: 0;
-      will-change: top, left, opacity;
-      transform: translate3d(0, 0, 0);
-      backface-visibility: hidden;
-      transition: top 0.42s cubic-bezier(0.2, 0, 0, 1),
-                  left 0.42s cubic-bezier(0.2, 0, 0, 1),
-                  opacity 0.42s cubic-bezier(0.2, 0, 0, 1);
+      transition: opacity 0.3s ease;
     }
+    .slidev-mask-layer--down .slidev-mask-divider-line,
     .slidev-mask-divider-line--down {
+      top: 0;
       left: 0;
       right: 0;
       height: 2.5px;
-      transform: translateY(-50%) translate3d(0, 0, 0);
+      transform: translateY(-50%);
       background: linear-gradient(90deg, transparent 0%, var(--slide-accent, #3b82f6) 6%, var(--slide-accent, #3b82f6) 94%, transparent 100%);
       box-shadow: 0 0 10px var(--slide-accent, #3b82f6), 0 0 4px var(--slide-accent, #3b82f6);
     }
+    .slidev-mask-layer--right .slidev-mask-divider-line,
     .slidev-mask-divider-line--right {
       top: 0;
       bottom: 0;
+      left: 0;
       width: 2.5px;
-      transform: translateX(-50%) translate3d(0, 0, 0);
+      transform: translateX(-50%);
       background: linear-gradient(180deg, transparent 0%, var(--slide-accent, #3b82f6) 6%, var(--slide-accent, #3b82f6) 94%, transparent 100%);
       box-shadow: 0 0 10px var(--slide-accent, #3b82f6), 0 0 4px var(--slide-accent, #3b82f6);
     }`;

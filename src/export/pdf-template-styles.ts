@@ -721,6 +721,7 @@ export function generatePdfExportStyles(options?: {
         transform: none !important;
       }
       /* PDF 打印讲义下禁用动态蒙版遮挡，保证内容 100% 完整可见 */
+      .slidev-mask-layer,
       .slidev-mask-overlay,
       .slidev-mask-divider-line {
         display: none !important;
