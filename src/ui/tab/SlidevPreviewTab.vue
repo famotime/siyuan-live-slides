@@ -1,15 +1,9 @@
 <template>
   <div class="spm-slidev-preview-tab">
-    <!-- 顶栏工具条 -->
+    <!-- 顶栏工具条：左右分栏，去除冗余标题文本 -->
     <div class="spm-slidev-tab__toolbar">
-      <div class="spm-slidev-tab__title">
-        <svg class="spm-slidev-tab__icon" aria-hidden="true">
-          <use xlink:href="#iconSlidev"></use>
-        </svg>
-        <span>Slidev 演示预览</span>
-      </div>
-
-      <div class="spm-slidev-tab__actions">
+      <!-- 左侧：翻页导航与状态控制 -->
+      <div class="spm-slidev-tab__nav">
         <!-- 翻页控制 -->
         <button
           class="spm-icon-btn b3-tooltips b3-tooltips__s"
@@ -50,9 +44,10 @@
           <SlidevIcon name="rocket" />
           <span>{{ engineMode === 'pro-cli' ? 'Pro (' + activeProPort + ')' : '沙箱' }}</span>
         </button>
+      </div>
 
-        <span class="spm-toolbar-divider"></span>
-
+      <!-- 右侧：全局演示工具操作 -->
+      <div class="spm-slidev-tab__tools">
         <!-- 大纲缩略图 -->
         <button
           class="spm-icon-btn b3-tooltips b3-tooltips__s"
@@ -363,9 +358,15 @@ function togglePin() {
   isPinned.value = !isPinned.value
   if (isPinned.value) {
     pinnedDocId.value = latestDoc?.docId || ''
+    if (plugin && typeof (plugin as any).updatePreviewTabHeader === 'function') {
+      ;(plugin as any).updatePreviewTabHeader('', pinnedDocId.value)
+    }
   } else {
     pinnedDocId.value = ''
     onRefresh()
+    if (plugin && typeof (plugin as any).updatePreviewTabHeader === 'function') {
+      ;(plugin as any).updatePreviewTabHeader()
+    }
   }
 }
 
@@ -531,6 +532,10 @@ defineExpose({
     } else {
       sandboxBridge.updateSlides(doc.slides, doc.config, doc.fullMarkdown, doc.customThemeCss)
     }
+
+    if (plugin && typeof (plugin as any).updatePreviewTabHeader === 'function') {
+      ;(plugin as any).updatePreviewTabHeader('', doc.docId)
+    }
   },
   navigateToBlock(blockId: string) {
     cursorTracker.onCursorFocusBlock(blockId)
@@ -566,20 +571,8 @@ defineExpose({
   flex-shrink: 0;
 }
 
-.spm-slidev-tab__title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface, #334155);
-}
-
-.spm-slidev-tab__icon {
-  width: 16px;
-  height: 16px;
-}
-
-.spm-slidev-tab__actions {
+.spm-slidev-tab__nav,
+.spm-slidev-tab__tools {
   display: flex;
   align-items: center;
   gap: 6px;

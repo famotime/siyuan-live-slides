@@ -7,12 +7,13 @@ import {
   Plugin as SyPlugin,
   showMessage,
 } from "siyuan"
-import { getBlockAttrs, setBlockAttrs } from "@/api"
+import { getBlockAttrs, setBlockAttrs, sql } from "@/api"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
 import { CliDevServerBridge } from "@/engine/cli-devserver-bridge"
 import {
   globalSandboxBridge,
   mountInspectorDock,
+  getPreviewTabInstance,
   mountPreviewTab,
   navigateDockToBlock,
   unmountInspectorDock,
@@ -54,6 +55,7 @@ const STORAGE_NAME = SETTINGS_STORAGE_NAME
 export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPluginHost {
   public isMobile = false
   public currentDocId = ""
+  public previewTab: any = null
   public latestCompiledDoc: ISlidevDocument | null = null
   public cliBridge = new CliDevServerBridge()
   private debounceTimer: number | null = null
@@ -101,11 +103,17 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
     const self = this
     this.addTab({
       type: TAB_TYPE,
-      init() {
-        mountPreviewTab(this.element as HTMLElement, self)
+      init(custom) {
+        const customObj = this || custom
+        self.previewTab = (customObj as any)?.tab || null
+        mountPreviewTab((customObj as any).element as HTMLElement, self)
+        void self.updatePreviewTabHeader()
       },
       destroy() {
-        unmountPreviewTab(this.element as HTMLElement)
+        if (self.previewTab === (this as any)?.tab) {
+          self.previewTab = null
+        }
+        unmountPreviewTab((this as any).element as HTMLElement)
       },
     })
 
@@ -159,6 +167,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
         if (docId) {
           if (docId !== this.currentDocId) {
             this.currentDocId = docId
+            void this.updatePreviewTabHeader("", docId)
           }
           if (!this.latestCompiledDoc) {
             this.markCompileDirty(docId)
@@ -246,11 +255,13 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
     if (!this.currentDocId) {
       this.currentDocId = this.getActiveDocumentId()
     }
+    const initialDocTitle = this.currentDocId ? await this.fetchDocumentTitle(this.currentDocId) : ""
+    const initialTitle = this.buildPreviewTabTitle(initialDocTitle)
     await openTab({
       app: this.app,
       custom: {
         id: this.name + TAB_TYPE,
-        title: "Slidev 演示预览",
+        title: initialTitle,
         icon: "iconSlidev",
         data: { docId: this.currentDocId },
       },
@@ -259,6 +270,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
     if (this.currentDocId) {
       this.compileCurrentDocument(this.currentDocId)
     }
+    void this.updatePreviewTabHeader(initialDocTitle, this.currentDocId)
   }
 
   /**
@@ -338,6 +350,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
   private async onSwitchProtyle(event: CustomEvent<{ protyle: Protyle }>) {
     const protyle = event.detail?.protyle
     const docId = (protyle as any)?.block?.rootID
+    const docTitle = (protyle as any)?.title?.editElement?.textContent?.trim() || ""
     if (docId && docId !== this.currentDocId) {
       this.currentDocId = docId
       this.activeCursorBlockId = docId
@@ -349,6 +362,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
         attrs,
       })
       this.markCompileDirty(docId)
+      void this.updatePreviewTabHeader(docTitle, docId)
     }
   }
 
@@ -364,6 +378,103 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
     }
     if (detail.event) {
       this.onEditorClick(detail.event)
+    }
+  }
+
+  /**
+   * 构造预览页签标题
+   * 规范：即现（当前文档名称）；文档名称为空时显示“即现”
+   */
+  public buildPreviewTabTitle(docTitle?: string): string {
+    const trimmed = (docTitle || "").trim()
+    return trimmed ? `即现（${trimmed}）` : "即现"
+  }
+
+  /**
+   * 获取指定文档的标题内容
+   */
+  public async fetchDocumentTitle(docId: string): Promise<string> {
+    if (!docId) return ""
+
+    // 1. 优先从 DOM 活跃编辑区或特定文档标题容器提取
+    if (typeof document !== "undefined") {
+      const titleInput = (
+        document.querySelector(`.protyle-title[data-node-id="${docId}"] .protyle-title__input`) ||
+        document.querySelector(`.protyle[data-doc-id="${docId}"] .protyle-title__input`) ||
+        (this.getActiveDocumentId() === docId ? document.querySelector(".layout__wnd--active .protyle-title__input") : null) ||
+        document.querySelector(".protyle-title__input")
+      ) as HTMLElement | null
+      const domTitle = (titleInput?.innerText || titleInput?.textContent || "").trim()
+      if (domTitle) {
+        return domTitle
+      }
+    }
+
+    // 2. 从已编译的当前文档模型提取（若匹配）
+    if (this.latestCompiledDoc && this.latestCompiledDoc.docId === docId) {
+      const firstSlide = this.latestCompiledDoc.slides?.[0]
+      const firstH1 = firstSlide?.blocks?.find((b: any) => b.type === "h" || b.type === "NodeHeading")
+      if (firstH1?.content) {
+        return firstH1.content.trim()
+      }
+    }
+
+    // 3. 降级通过内核 SQL 查询 blocks 表文档根块 content
+    try {
+      const rows = await sql(`SELECT content FROM blocks WHERE id = '${docId}' AND type = 'd' LIMIT 1`).catch(() => [])
+      if (Array.isArray(rows) && rows.length > 0 && rows[0]?.content) {
+        return String(rows[0].content).trim()
+      }
+    } catch {}
+
+    return ""
+  }
+
+  /**
+   * 动态更新预览窗口思源 Tab 页签标题
+   */
+  public async updatePreviewTabHeader(docTitle?: string, targetDocId?: string): Promise<void> {
+    // 若预览窗口处于 Pin 锁定状态，非锁定文档的切换不应修改 Tab 标题
+    const previewInstance = getPreviewTabInstance()
+    const isPinned = Boolean(previewInstance?.isPinned?.value)
+    const pinnedId = String(previewInstance?.pinnedDocId?.value || "")
+    if (isPinned && pinnedId && targetDocId && targetDocId !== pinnedId) {
+      return
+    }
+
+    const docId = targetDocId || (isPinned && pinnedId ? pinnedId : this.currentDocId || this.getActiveDocumentId())
+    let titleText = (docTitle || "").trim()
+    if (!titleText && docId) {
+      titleText = await this.fetchDocumentTitle(docId)
+    }
+    const tabTitle = this.buildPreviewTabTitle(titleText)
+
+    // 1. 调用思源 Tab 官方 API 更新标题
+    if (this.previewTab && typeof this.previewTab.updateTitle === "function") {
+      this.previewTab.updateTitle(tabTitle)
+      if (this.previewTab.headElement) {
+        this.previewTab.headElement.setAttribute("title", tabTitle)
+      }
+      return
+    }
+
+    // 2. DOM 兜底更新（遍历思源页签栏）
+    if (typeof document !== "undefined") {
+      const tabHeaders = Array.from(document.querySelectorAll('.layout-tab-bar .item[data-type="tab-header"]'))
+      for (const header of tabHeaders) {
+        const textEl = header.querySelector(".item__text")
+        const currentText = textEl?.textContent?.trim() || ""
+        if (
+          currentText.includes("Slidev 演示预览") ||
+          currentText.startsWith("即现")
+        ) {
+          if (textEl) {
+            textEl.textContent = tabTitle
+          }
+          header.setAttribute("title", tabTitle)
+          break
+        }
+      }
     }
   }
 
@@ -638,6 +749,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
         }
         this.latestCompiledDoc = slidevDoc
         updateDockDocument(slidevDoc, docId)
+        void this.updatePreviewTabHeader("", docId)
 
         // 全量巡检并清除 Protyle 编辑区中的陈旧/残留 Slidev DOM 属性与角标
         this.purgeStaleDomSlidevAttrs(slidevDoc)

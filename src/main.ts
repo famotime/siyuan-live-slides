@@ -33,6 +33,10 @@ let previewTabApp: VueApp | null = null
 let previewTabInstance: any = null
 let disposePreviewConsumer: (() => void) | null = null
 
+export function getPreviewTabInstance(): any {
+  return previewTabInstance
+}
+
 export function mountPreviewTab(element: HTMLElement, pluginInstance: Plugin): any {
   if (previewTabApp) {
     unmountPreviewTab(element)

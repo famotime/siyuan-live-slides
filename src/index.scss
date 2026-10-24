@@ -602,25 +602,11 @@ body[data-theme-mode="dark"] .spm-segmented-item.active,
   border-bottom: 1px solid var(--b3-border-color, #e2e8f0);
   flex-shrink: 0;
 
-  .spm-slidev-tab__title {
+  .spm-slidev-tab__nav,
+  .spm-slidev-tab__tools {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--b3-theme-on-surface, #1e293b);
-
-    .slidev-icon {
-      width: 16px;
-      height: 16px;
-      color: var(--b3-theme-primary, #3b82f6);
-    }
-  }
-
-  .spm-slidev-tab__actions {
-    display: flex;
-    align-items: center;
-    gap: 4px;
+    gap: 6px;
   }
 }
 
