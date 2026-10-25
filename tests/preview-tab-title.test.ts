@@ -121,7 +121,7 @@ describe("Preview Tab Title & Header Layout (预览页签标题与工具栏精�
       await plugin.updatePreviewTabHeader("新文档标题", "doc-other")
       expect(mockTab.updateTitle).not.toHaveBeenCalled()
 
-      // 为被锁定的文档更新，应正常放行
+      // 为被锁定的文档更新，应正常放行（宿主钩子 fetchDocumentTitle 可被实例级打桩）
       vi.spyOn(plugin, "fetchDocumentTitle").mockResolvedValueOnce("锁定文档原标题")
       await plugin.updatePreviewTabHeader("", "locked-doc-id")
       expect(mockTab.updateTitle).toHaveBeenCalledWith("即现（锁定文档原标题）")
@@ -139,6 +139,50 @@ describe("Preview Tab Title & Header Layout (预览页签标题与工具栏精�
       // 2. 工具栏左右分栏
       expect(tabSource).toContain("spm-slidev-tab__nav")
       expect(tabSource).toContain("spm-slidev-tab__tools")
+    })
+  })
+
+  describe("5. preview-tab-title 服务模块直测 (RF-019)", () => {
+    it("buildPreviewTabTitle 纯函数应独立于插件实例工作", async () => {
+      const { buildPreviewTabTitle } = await import("../src/plugin/preview-tab-title")
+      expect(buildPreviewTabTitle("模块直测")).toBe("即现（模块直测）")
+      expect(buildPreviewTabTitle("  ")).toBe("即现")
+    })
+
+    it("fetchDocumentTitle 应从已编译模型提取一级标题", async () => {
+      const { fetchDocumentTitle } = await import("../src/plugin/preview-tab-title")
+      const host = {
+        currentDocId: "doc-x",
+        latestCompiledDoc: {
+          docId: "doc-x",
+          slides: [{ blocks: [{ type: "h", content: " 编译模型标题 " }] }],
+        },
+        previewTab: null,
+        getActiveDocumentId: () => "",
+      }
+      const title = await fetchDocumentTitle(host as any, "doc-x")
+      expect(title).toBe("编译模型标题")
+    })
+
+    it("updatePreviewTabHeader 无 previewTab 实例时应走 DOM 兜底路径", async () => {
+      const { updatePreviewTabHeader } = await import("../src/plugin/preview-tab-title")
+      const textEl = { textContent: "即现（旧标题）" }
+      const headerEl = { querySelector: vi.fn().mockReturnValue(textEl), setAttribute: vi.fn() }
+      ;(globalThis as any).document = {
+        querySelectorAll: vi.fn().mockReturnValue([headerEl]),
+      }
+      const host = {
+        currentDocId: "doc-y",
+        latestCompiledDoc: null,
+        previewTab: null,
+        getActiveDocumentId: () => "doc-y",
+      }
+
+      await updatePreviewTabHeader(host as any, "DOM 兜底标题")
+
+      expect(textEl.textContent).toBe("即现（DOM 兜底标题）")
+      expect(headerEl.setAttribute).toHaveBeenCalledWith("title", "即现（DOM 兜底标题）")
+      delete (globalThis as any).document
     })
   })
 })

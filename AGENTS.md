@@ -55,7 +55,7 @@ Stack: Vue 3, TypeScript, Vite, Vitest, Sass, SiYuan Plugin API.
   - `components/DocInspectorSection.vue`: Presentation theme, aspect ratio, AI toolbar, quick actions.
   - `tab/SlidevPreviewTab.vue`: Split-screen live preview tab.
 - **Testing & Mocks**: `tests/`
-  - 49 test suites (374 tests) covering compiler, cleaner, renderer, inspector state, actions, coordinator, engine, export, import composable, and synergy.
+  - 67 test suites (608 tests) covering compiler, cleaner, renderer, inspector state, actions (facade + domain modules), coordinator, engine, export runtime sections, import composable, peek, and synergy.
   - `tests/mocks/siyuan.ts`: Host plugin mock aliased in `vitest.config.ts` for running tests in pure Node environments.
 
 ---

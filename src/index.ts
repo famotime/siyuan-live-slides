@@ -5,15 +5,13 @@ import {
   getFrontend,
   openTab,
   Plugin as SyPlugin,
-  showMessage,
 } from "siyuan"
-import { getBlockAttrs, setBlockAttrs, sql } from "@/api"
+import { getBlockAttrs } from "@/api"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
 import { CliDevServerBridge } from "@/engine/cli-devserver-bridge"
 import {
   globalSandboxBridge,
   mountInspectorDock,
-  getPreviewTabInstance,
   mountPreviewTab,
   navigateDockToBlock,
   unmountInspectorDock,
@@ -23,6 +21,11 @@ import {
 } from "@/main"
 import { registerPluginCommands } from "@/plugin/command-registry"
 import type { ISlidevPluginHost } from "@/plugin/command-registry"
+import {
+  buildPreviewTabTitle as buildTabTitle,
+  fetchDocumentTitle as fetchDocTitle,
+  updatePreviewTabHeader as updateTabHeader,
+} from "@/plugin/preview-tab-title"
 import { globalInspectorSyncCoordinator } from "@/sync/inspector-sync-coordinator"
 import { globalCompileConsumerGate, HIDDEN_CONSUMER_COMPILE_DELAY_MS } from "@/sync/compile-consumer-gate"
 import { CompileScheduler } from "@/sync/compile-scheduler"
@@ -69,7 +72,6 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
   private onSwitchProtyleBound = this.onSwitchProtyle.bind(this)
   private onWsMainBound = this.onWsMain.bind(this)
   private onBlockClickedBound = this.onBlockClickedFromSlide.bind(this)
-  private onClickEditorTitleIconBound = this.onClickEditorTitleIcon.bind(this)
   private onEditorClickBound = this.onEditorClick.bind(this)
   private onSelectionChangeBound = this.onSelectionChange.bind(this)
   private onClickEditorContentBound = this.onClickEditorContent.bind(this)
@@ -149,7 +151,6 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
     this.eventBus.on("ws-main", this.onWsMainBound)
     this.eventBus.on("slidev:request-compile" as any, () => this.compileCurrentDocument())
     this.eventBus.on("slidev:block-clicked" as any, this.onBlockClickedBound)
-    this.eventBus.on("click-editortitleicon", this.onClickEditorTitleIconBound)
     this.eventBus.on("click-editorcontent" as any, this.onClickEditorContentBound)
 
     // 7. 监听编辑器选区变动与点击（双向光标联动中枢）
@@ -229,7 +230,6 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
     globalCompileConsumerGate.clear()
     this.eventBus.off("switch-protyle", this.onSwitchProtyleBound)
     this.eventBus.off("ws-main", this.onWsMainBound)
-    this.eventBus.off("click-editortitleicon", this.onClickEditorTitleIconBound)
     this.eventBus.off("click-editorcontent" as any, this.onClickEditorContentBound)
     if (typeof document !== "undefined") {
       document.removeEventListener("click", this.onEditorClickBound, true)
@@ -274,77 +274,6 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
   }
 
   /**
-   * 监听文档大标题块标菜单，注入全局演示配置项
-   */
-  private onClickEditorTitleIcon(event: CustomEvent<any>) {
-    const detail = event.detail
-    const menu = detail?.menu
-    const docId = detail?.data?.id || this.currentDocId
-    if (!menu || !docId) return
-
-    menu.addItem({
-      icon: "iconSlidev",
-      label: "Slidev 全局演示配置",
-      submenu: [
-        {
-          label: "初始化演示属性 (custom-slidev-*)",
-          click: async () => {
-            await setBlockAttrs(docId, {
-              "custom-slidev-theme": "default",
-              "custom-slidev-aspect-ratio": "16/9",
-              "custom-slidev-default-transition": "slide-left",
-            })
-            showMessage("已为当前文档初始化 Slidev 演示属性")
-            this.compileCurrentDocument(docId)
-          },
-        },
-        { type: "separator" },
-        {
-          label: "主题: 默认 (default)",
-          click: async () => {
-            await setBlockAttrs(docId, { "custom-slidev-theme": "default" })
-            showMessage("已切换为 default 主题")
-            this.compileCurrentDocument(docId)
-          },
-        },
-        {
-          label: "主题: 优雅衬线 (seriph)",
-          click: async () => {
-            await setBlockAttrs(docId, { "custom-slidev-theme": "seriph" })
-            showMessage("已切换为 seriph 主题")
-            this.compileCurrentDocument(docId)
-          },
-        },
-        {
-          label: "主题: 苹果极简 (apple-basic)",
-          click: async () => {
-            await setBlockAttrs(docId, { "custom-slidev-theme": "apple-basic" })
-            showMessage("已切换为 apple-basic 主题")
-            this.compileCurrentDocument(docId)
-          },
-        },
-        { type: "separator" },
-        {
-          label: "画幅: 16 / 9 (宽屏)",
-          click: async () => {
-            await setBlockAttrs(docId, { "custom-slidev-aspect-ratio": "16/9" })
-            showMessage("已切换画幅为 16/9")
-            this.compileCurrentDocument(docId)
-          },
-        },
-        {
-          label: "画幅: 4 / 3 (标屏)",
-          click: async () => {
-            await setBlockAttrs(docId, { "custom-slidev-aspect-ratio": "4/3" })
-            showMessage("已切换画幅为 4/3")
-            this.compileCurrentDocument(docId)
-          },
-        },
-      ],
-    })
-  }
-
-  /**
    * 文档切换钩子
    */
   private async onSwitchProtyle(event: CustomEvent<{ protyle: Protyle }>) {
@@ -382,100 +311,24 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
   }
 
   /**
-   * 构造预览页签标题
-   * 规范：即现（当前文档名称）；文档名称为空时显示“即现”
+   * 构造预览页签标题（委托 preview-tab-title 服务）
    */
   public buildPreviewTabTitle(docTitle?: string): string {
-    const trimmed = (docTitle || "").trim()
-    return trimmed ? `即现（${trimmed}）` : "即现"
+    return buildTabTitle(docTitle)
   }
 
   /**
-   * 获取指定文档的标题内容
+   * 获取指定文档的标题内容（委托 preview-tab-title 服务）
    */
   public async fetchDocumentTitle(docId: string): Promise<string> {
-    if (!docId) return ""
-
-    // 1. 优先从 DOM 活跃编辑区或特定文档标题容器提取
-    if (typeof document !== "undefined") {
-      const titleInput = (
-        document.querySelector(`.protyle-title[data-node-id="${docId}"] .protyle-title__input`) ||
-        document.querySelector(`.protyle[data-doc-id="${docId}"] .protyle-title__input`) ||
-        (this.getActiveDocumentId() === docId ? document.querySelector(".layout__wnd--active .protyle-title__input") : null) ||
-        document.querySelector(".protyle-title__input")
-      ) as HTMLElement | null
-      const domTitle = (titleInput?.innerText || titleInput?.textContent || "").trim()
-      if (domTitle) {
-        return domTitle
-      }
-    }
-
-    // 2. 从已编译的当前文档模型提取（若匹配）
-    if (this.latestCompiledDoc && this.latestCompiledDoc.docId === docId) {
-      const firstSlide = this.latestCompiledDoc.slides?.[0]
-      const firstH1 = firstSlide?.blocks?.find((b: any) => b.type === "h" || b.type === "NodeHeading")
-      if (firstH1?.content) {
-        return firstH1.content.trim()
-      }
-    }
-
-    // 3. 降级通过内核 SQL 查询 blocks 表文档根块 content
-    try {
-      const rows = await sql(`SELECT content FROM blocks WHERE id = '${docId}' AND type = 'd' LIMIT 1`).catch(() => [])
-      if (Array.isArray(rows) && rows.length > 0 && rows[0]?.content) {
-        return String(rows[0].content).trim()
-      }
-    } catch {}
-
-    return ""
+    return fetchDocTitle(this, docId)
   }
 
   /**
-   * 动态更新预览窗口思源 Tab 页签标题
+   * 动态更新预览窗口思源 Tab 页签标题（委托 preview-tab-title 服务）
    */
   public async updatePreviewTabHeader(docTitle?: string, targetDocId?: string): Promise<void> {
-    // 若预览窗口处于 Pin 锁定状态，非锁定文档的切换不应修改 Tab 标题
-    const previewInstance = getPreviewTabInstance()
-    const isPinned = Boolean(previewInstance?.isPinned?.value)
-    const pinnedId = String(previewInstance?.pinnedDocId?.value || "")
-    if (isPinned && pinnedId && targetDocId && targetDocId !== pinnedId) {
-      return
-    }
-
-    const docId = targetDocId || (isPinned && pinnedId ? pinnedId : this.currentDocId || this.getActiveDocumentId())
-    let titleText = (docTitle || "").trim()
-    if (!titleText && docId) {
-      titleText = await this.fetchDocumentTitle(docId)
-    }
-    const tabTitle = this.buildPreviewTabTitle(titleText)
-
-    // 1. 调用思源 Tab 官方 API 更新标题
-    if (this.previewTab && typeof this.previewTab.updateTitle === "function") {
-      this.previewTab.updateTitle(tabTitle)
-      if (this.previewTab.headElement) {
-        this.previewTab.headElement.setAttribute("title", tabTitle)
-      }
-      return
-    }
-
-    // 2. DOM 兜底更新（遍历思源页签栏）
-    if (typeof document !== "undefined") {
-      const tabHeaders = Array.from(document.querySelectorAll('.layout-tab-bar .item[data-type="tab-header"]'))
-      for (const header of tabHeaders) {
-        const textEl = header.querySelector(".item__text")
-        const currentText = textEl?.textContent?.trim() || ""
-        if (
-          currentText.includes("Slidev 演示预览") ||
-          currentText.startsWith("即现")
-        ) {
-          if (textEl) {
-            textEl.textContent = tabTitle
-          }
-          header.setAttribute("title", tabTitle)
-          break
-        }
-      }
-    }
+    return updateTabHeader(this, docTitle, targetDocId)
   }
 
   public getActiveDocumentId(): string {

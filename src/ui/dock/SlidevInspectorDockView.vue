@@ -188,6 +188,7 @@ import {
 } from '@/compiler/superblock-scanner'
 import { resolveTargetSlide, isDividerBlockType } from '@/sync/inspector-slide-resolver'
 import { useInspectorActions } from '@/ui/dock/useInspectorActions'
+import { createPageAttrResolver } from '@/ui/dock/useInspectorPageOverrides'
 import type {
   IActiveBlockInfo,
   ISlidevDocument,
@@ -402,71 +403,33 @@ const currentSlideLayout = computed(() => {
   return 'default'
 })
 
-const pageLayoutRatio = computed(() => {
-  if (isDivider.value) {
-    const directRatio = activeBlockAttrs.value[ATTR_PAGE_LAYOUT_RATIO] || activeBlockAttrs.value['custom-slidev-layout-ratio']
-    if (directRatio) return directRatio
-  }
-  const divId = currentPageDividerId.value || (isDivider.value ? activeBlockId.value : '')
-  if (divId) {
-    const override = globalDocumentCompiler.getBlockAttrOverride(divId)
-    if (override?.[ATTR_PAGE_LAYOUT_RATIO]) {
-      return override[ATTR_PAGE_LAYOUT_RATIO]
-    }
-  }
-  return targetSlide.value?.frontmatter?.layoutRatio || ''
+// 分页符页面属性统一走三级查找工厂（直接属性 → 编译器覆写层 → frontmatter 回退）
+const pageAttrResolver = createPageAttrResolver({
+  activeBlockId,
+  activeBlockType,
+  activeBlockAttrs,
+  currentPageDividerId,
 })
-
-const pageMask = computed(() => {
-  if (isDivider.value) {
-    const direct = activeBlockAttrs.value[ATTR_PAGE_MASK] || activeBlockAttrs.value['custom-slidev-mask']
-    if (direct !== undefined) return direct
-  }
-  const divId = currentPageDividerId.value || (isDivider.value ? activeBlockId.value : '')
-  if (divId) {
-    const override = globalDocumentCompiler.getBlockAttrOverride(divId)
-    if (override?.[ATTR_PAGE_MASK] !== undefined) return override[ATTR_PAGE_MASK]
-  }
-  return targetSlide.value?.frontmatter?.mask || ''
+const pageLayoutRatio = pageAttrResolver.resolvePageAttr({
+  attrKey: ATTR_PAGE_LAYOUT_RATIO,
+  mode: 'truthy',
+  fallback: () => targetSlide.value?.frontmatter?.layoutRatio || '',
 })
-
-const pageMaskRatio = computed(() => {
-  if (isDivider.value) {
-    const direct = activeBlockAttrs.value[ATTR_PAGE_MASK_RATIO] || activeBlockAttrs.value['custom-slidev-mask-ratio']
-    if (direct !== undefined) return direct
-  }
-  const divId = currentPageDividerId.value || (isDivider.value ? activeBlockId.value : '')
-  if (divId) {
-    const override = globalDocumentCompiler.getBlockAttrOverride(divId)
-    if (override?.[ATTR_PAGE_MASK_RATIO] !== undefined) return override[ATTR_PAGE_MASK_RATIO]
-  }
-  return targetSlide.value?.frontmatter?.maskRatio || ''
+const pageMask = pageAttrResolver.resolvePageAttr({
+  attrKey: ATTR_PAGE_MASK,
+  fallback: () => targetSlide.value?.frontmatter?.mask || '',
 })
-
-const pageMaskStyle = computed(() => {
-  if (isDivider.value) {
-    const direct = activeBlockAttrs.value[ATTR_PAGE_MASK_STYLE] || activeBlockAttrs.value['custom-slidev-mask-style']
-    if (direct !== undefined) return direct
-  }
-  const divId = currentPageDividerId.value || (isDivider.value ? activeBlockId.value : '')
-  if (divId) {
-    const override = globalDocumentCompiler.getBlockAttrOverride(divId)
-    if (override?.[ATTR_PAGE_MASK_STYLE] !== undefined) return override[ATTR_PAGE_MASK_STYLE]
-  }
-  return targetSlide.value?.frontmatter?.maskStyle || 'solid'
+const pageMaskRatio = pageAttrResolver.resolvePageAttr({
+  attrKey: ATTR_PAGE_MASK_RATIO,
+  fallback: () => targetSlide.value?.frontmatter?.maskRatio || '',
 })
-
-const pageMaskInitial = computed(() => {
-  if (isDivider.value) {
-    const direct = activeBlockAttrs.value[ATTR_PAGE_MASK_INITIAL] || activeBlockAttrs.value['custom-slidev-mask-initial']
-    if (direct !== undefined) return direct
-  }
-  const divId = currentPageDividerId.value || (isDivider.value ? activeBlockId.value : '')
-  if (divId) {
-    const override = globalDocumentCompiler.getBlockAttrOverride(divId)
-    if (override?.[ATTR_PAGE_MASK_INITIAL] !== undefined) return override[ATTR_PAGE_MASK_INITIAL]
-  }
-  return targetSlide.value?.frontmatter?.maskInitial || 'hidden'
+const pageMaskStyle = pageAttrResolver.resolvePageAttr({
+  attrKey: ATTR_PAGE_MASK_STYLE,
+  fallback: () => targetSlide.value?.frontmatter?.maskStyle || 'solid',
+})
+const pageMaskInitial = pageAttrResolver.resolvePageAttr({
+  attrKey: ATTR_PAGE_MASK_INITIAL,
+  fallback: () => targetSlide.value?.frontmatter?.maskInitial || 'hidden',
 })
 
 export interface IDetectedSuperBlockInfo {

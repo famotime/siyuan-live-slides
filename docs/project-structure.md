@@ -1,16 +1,18 @@
 # 项目架构与目录结构 (Project Structure)
 
+> 最近刷新：2026-10-25（Phase 3 重构 RF-016 ~ RF-020 完成后）
+
 ## 1. 架构概览
 
 `siyuan-slidev` 是专为思源笔记 (SiYuan Note) 打造的现代化幻灯片演示插件。
-项目核心架构遵循“**数据单向编排、业务高度解耦、视图轻量装配、测试优先保障**”的设计哲学：
-- **插件入口与命令调度层 (`src/index.ts`, `src/plugin/`)**：轻量生命周期管理，解耦 12 项命令注册与 Protyle 事件分发。
+项目核心架构遵循"**数据单向编排、业务高度解耦、视图轻量装配、测试优先保障**"的设计哲学：
+- **插件入口与命令调度层 (`src/index.ts`, `src/plugin/`)**：轻量生命周期管理，解耦 12+ 项命令注册、Protyle 事件分发与预览页签标题服务。
 - **编译器管线 (`src/compiler/`)**：负责思源块 AST、IAL 自定义属性字典、双向块引用与 Slidev Markdown 规范之间的双向转换与编排。
-- **双向联动与状态同步中枢 (`src/sync/`)**：高内聚协调 Protyle DOM 选区跟踪、前置分页符反查、列表属性自愈与双向毫秒级光标定位。
+- **双向联动与状态同步中枢 (`src/sync/`)**：高内聚协调 Protyle DOM 选区跟踪、前置分页符反查、列表属性自愈、双向毫秒级光标定位与编译消费者门闩（预览页签与 Dock 面板全部不可见时自动暂停编译请求）。
 - **双模渲染引擎 (`src/engine/`)**：封装内置纯前端 Web 沙箱（零依赖开箱即用）与本地 Slidev Pro CLI 桥接引擎。
-- **导出管线 (`src/export/`)**：模板样式生成器、离线播放器客户端运行时与轻量 Markdown 块级渲染器高度模块化解耦，支持单文件离线 HTML 与 16:9 PDF 演示讲义导出。
-- **视图展示层 (`src/ui/`)**：采用组合式架构，将演示配置面板拆解为页面、块、全局三大高内聚子组件，并通过 `useInspectorActions` 统一沉淀异步内核操作。
-- **通用工具层 (`src/utils/`)**：规范统一导出 Markdown 提取、列表项清洗与类型判定纯函数，杜绝跨子系统深层侵入式依赖。
+- **导出管线 (`src/export/`)**：模板样式生成器、按功能分节的离线播放器客户端运行时与轻量 Markdown 块级渲染器高度模块化解耦，支持单文件离线 HTML 与 16:9 PDF 演示讲义导出。
+- **视图展示层 (`src/ui/`)**：采用组合式架构，演示配置面板拆解为页面、块、全局三大高内聚子组件；Actions 业务按领域（属性持久化 / 备注与 AI / 版式与元素指令）分层装配；并包含沉浸速览 (peek) 子系统的 Webview / Protyle 双抽屉组件。
+- **通用工具层 (`src/utils/`)**：规范统一导出 Markdown 提取、列表项清洗、类型判定与 peek URL 解析纯函数，杜绝跨子系统深层侵入式依赖。
 
 ---
 
@@ -20,18 +22,19 @@
 d:\MyCodingProjects\siyuan-slidev
 ├── docs/                                   # 项目文档与技术规格书
 │   ├── project-structure.md                # 项目最新架构与模块映射（本文件）
-│   ├── refactor-plan.md                    # 重构计划与执行日志 (RF-001 ~ RF-010)
+│   ├── refactor-plan.md                    # 重构计划与执行日志 (RF-001 ~ RF-020)
 │   ├── USER-GUIDE.zh-CN.md                 # 详细中文使用指南
 │   └── USER-GUIDE.md                       # 详细英文使用指南
 ├── src/                                    # 插件源码目录
-│   ├── index.ts                            # [RF-007] 插件入口主类（聚焦生命周期、Dock/Tab 挂载与顶层协调）
-│   ├── main.ts                             # 前端挂载辅助入口
-│   ├── api.ts                              # 思源内核 API 封装调用
-│   ├── kernel.ts                           # 插件内核通信与服务桥接
+│   ├── index.ts                            # [RF-007, RF-019] 插件入口主类（聚焦生命周期、编译调度与顶层协调，624 行）
+│   ├── main.ts                             # 前端挂载辅助入口（预览页签与 Dock 面板实例管理、编译消费者注册）
+│   ├── api.ts                              # [RF-020] 思源内核 API 精简封装（仅保留 16 个在用接口，215 行）
+│   ├── settings.ts                         # 全局设置读写与运行时配置
 │   ├── index.scss                          # 全局样式（含 spm 与 slidev 视觉变量）
 │   │
 │   ├── plugin/                             # 插件扩展服务层
-│   │   └── command-registry.ts             # [RF-007] 插件命令注册表（集中调度 12+ 项指令与快捷操作回调）
+│   │   ├── command-registry.ts             # [RF-007] 插件命令注册表（集中调度 12+ 项指令与快捷操作回调）
+│   │   └── preview-tab-title.ts            # [RF-019] 预览页签标题服务（即现标题构造、文档标题三级解析、Pin 联动更新）
 │   │
 │   ├── compiler/                           # 编译与导入管线
 │   │   ├── document-compiler.ts            # [RF-001] 文档编译编排服务（AST 获取、IAL 解析、块引解析、沙箱推送）
@@ -52,6 +55,9 @@ d:\MyCodingProjects\siyuan-slidev
 │   ├── sync/                               # 双向毫秒级联动与 DOM 协调
 │   │   ├── inspector-sync-coordinator.ts   # [RF-007] 编辑器选区探测、前置分页符反查、属性自愈与 Inspector 同步协调器
 │   │   ├── inspector-slide-resolver.ts     # 当前激活块所属幻灯片页码与父级容器推断
+│   │   ├── inspector-sync-cache.ts         # Inspector 同步节流缓存
+│   │   ├── compile-scheduler.ts            # 编译排程器（单飞合并与过期结果丢弃）
+│   │   ├── compile-consumer-gate.ts        # 编译消费者门闩（预览页签/Dock 可见性决定是否发起编译请求）
 │   │   ├── cursor-tracker.ts               # 编辑器光标定位跟踪与幻灯片翻页联动
 │   │   ├── selection-mirror.ts             # 幻灯片点击反向高亮笔记块
 │   │   ├── dom-attr-sync.ts                # Protyle 编辑器 DOM 自定义属性轻量同步
@@ -61,6 +67,7 @@ d:\MyCodingProjects\siyuan-slidev
 │   │   ├── engine-manager.ts               # 双模引擎统一调度中枢（高保真沙箱 vs. 原生 Pro CLI）
 │   │   ├── env-detector.ts                 # 跨平台环境探测器（检测 Node.js 与全局 Slidev CLI）
 │   │   ├── process-manager.ts              # 桌面端 Node 子进程生命周期守护、端口分配与健康探活
+│   │   ├── runtime-node.ts                 # 宿主 Node 运行时探测与桥接
 │   │   ├── workspace-scaffolder.ts         # 官方 Slidev 临时工程脚手架自动编排器
 │   │   ├── native-slidev-bridge.ts         # 官方 Slidev 原生通信适配桥接器（基于 ?embedded=true 规范）
 │   │   ├── web-sandbox-bridge.ts           # 内置 Web 沙箱通信桥接器（postMessage 双向通信）
@@ -72,15 +79,30 @@ d:\MyCodingProjects\siyuan-slidev
 │   │   ├── visual-list-renderer.ts         # [RF-012] 卡片网格、时间线、步骤等富列表渲染器
 │   │   ├── slide-layout-renderer.ts        # [RF-012] 幻灯片页面版式容器分发器（两栏/三栏/图文/全屏等）
 │   │   ├── single-html-exporter.ts         # [RF-006] 离线单文件 HTML 打包导出中枢（专注于 Base64 资产内联与骨架装配）
-│   │   ├── standalone-template-styles.ts   # [RF-006] 独立单文件 HTML 样式生成器（~1000 行内联 CSS 与主题样式封装）
-│   │   ├── standalone-client-runtime.ts    # [RF-006] 离线播放器客户端 JavaScript 运行时脚本模板（~700 行）
+│   │   ├── standalone-template-styles.ts   # [RF-006] 独立单文件 HTML 样式生成器（内联 CSS 与主题样式封装）
+│   │   ├── standalone-client-runtime.ts    # [RF-006, RF-018] 离线播放器运行时拼装入口（29 行，按分节拼装）
+│   │   ├── standalone-runtime-sections/    # [RF-018] 播放器运行时功能分节（输出与拆分前字节级一致，快照基线保障）
+│   │   │   ├── core-state.ts               # IIFE 开启、播放数据与核心 DOM 引用、跳页角标样式注入
+│   │   │   ├── overview-dom.ts             # 缩略图总览层 DOM 骨架与常量
+│   │   │   ├── navigation-helpers.ts       # 缩放适配、遮罩比例解析与翻页导航助手
+│   │   │   ├── block-rendering.ts          # 块级 Markdown 清洗与单块 HTML 渲染
+│   │   │   ├── slide-rendering.ts          # 整页幻灯片装配渲染与版式容器分发
+│   │   │   ├── lightbox.ts                 # 图片/视频灯箱放大与关闭
+│   │   │   ├── jump-badge.ts               # 「数字+回车」跳页角标状态机
+│   │   │   ├── overview-layer.ts           # 缩略图总览层构建、焦点导航与键盘交互
+│   │   │   └── keyboard-scroll-init.ts     # 滚轮/键盘事件处理与启动初始化
 │   │   ├── pdf-exporter.ts                 # [RF-004, RF-011] 16:9 横版高分辨率打印与 PDF 导出器
 │   │   └── pdf-template-styles.ts          # [RF-011] 独立 PDF 打印样式表与 @page 纸张规则生成器
 │   │
 │   ├── ui/                                 # 用户界面组件层 (Vue 3)
 │   │   ├── dock/
-│   │   │   ├── SlidevInspectorDockView.vue # [RF-002, RF-008] 演示配置主容器 Dock 视图（精炼至 ~430 行视图编排）
-│   │   │   └── useInspectorActions.ts      # [RF-008] 演示配置 Actions 业务编排 Composable（600+ 行 API 异步操作）
+│   │   │   ├── SlidevInspectorDockView.vue # [RF-002, RF-008, RF-017] 演示配置主容器 Dock 视图（903 行）
+│   │   │   ├── useInspectorActions.ts      # [RF-008, RF-016] Actions 统一门面（装配三领域模块，86 行）
+│   │   │   ├── useInspectorPageOverrides.ts # [RF-017] 分页符页面属性三级查找工厂（直接属性 → 覆写层 → frontmatter）
+│   │   │   └── actions/                    # [RF-016] Inspector Actions 领域模块
+│   │   │       ├── attr-persistence.ts     # 属性持久化（saveAttrs/savePageAttr/saveDocAttr + 父容器联动 + frontmatter 即时更新）
+│   │   │       ├── notes-actions.ts        # 备注与 AI（讲稿块创建/转换/定位、AI 提词、批量追加/删除）
+│   │   │       └── layout-actions.ts       # 版式与元素指令（视频开关、图片角色、slot/Shiki、分割线、四叶草）
 │   │   ├── components/
 │   │   │   ├── PageInspectorSection.vue    # [RF-002] 页面级配置子面板（版式九宫格、转场效果、演讲备注、背景图）
 │   │   │   ├── BlockInspectorSection.vue   # [RF-002] 块级配置子面板（v-click 渐进动效、双栏 slot、代码逐行聚光）
@@ -91,14 +113,21 @@ d:\MyCodingProjects\siyuan-slidev
 │   │   │   ├── ElementAnimBar.vue          # 元素级动画快捷操作条
 │   │   │   ├── QuickDividerPopover.vue     # 原生分割线悬浮快捷菜单
 │   │   │   ├── SlidevImportDialog.vue      # [RF-015] Slidev 项目导入对话框（精简聚焦 UI 交互与预检卡片）
-│   │   │   └── useSlidevImport.ts          # [RF-015] 导入编排 Composable（资产上传、新建文档、属性注入与分屏联动）
+│   │   │   ├── useSlidevImport.ts          # [RF-015] 导入编排 Composable（资产上传、新建文档、属性注入与分屏联动）
+│   │   │   ├── SlidevIcon.vue              # 幻灯片 SVG 图标组件
+│   │   │   └── peek/                       # 沉浸速览子系统（外链/文档原位速览）
+│   │   │       ├── WebviewPeekDrawer.vue   # 网页 Webview 速览抽屉（导航、缩放、视图模式、错误重试）
+│   │   │       ├── ProtylePeekDrawer.vue   # 思源文档 Protyle 原位速览抽屉
+│   │   │       └── ImmersionDrawerContainer.vue # 沉浸抽屉容器（遮罩与滚动锁定）
 │   │   ├── tab/
-│   │   │   └── SlidevPreviewTab.vue        # 下方分屏实时演示放映页签
+│   │   │   ├── SlidevPreviewTab.vue        # 下方分屏实时演示放映页签（引擎切换、总览、全屏、导出入口）
+│   │   │   └── page-jump-input.ts          # 「数字+回车」跳页输入状态机
 │   │   └── popover-manager.ts              # 悬浮弹层与气泡位置计算管理
 │   │
 │   ├── utils/                              # [RF-010] 通用跨域工具函数层
-│   │   ├── index.ts                        # [RF-010] 工具层统一出口门面
-│   │   └── markdown-utils.ts               # [RF-010] Markdown 纯文本提取（图片 URL、列表项前缀清洗、列表节点类型判定）
+│   │   ├── index.ts                        # 工具层统一出口门面
+│   │   ├── markdown-utils.ts               # Markdown 纯文本提取（图片 URL、列表项前缀清洗、列表节点类型判定）
+│   │   └── peek-url.ts                     # peek 速览 URL 解析、本地 HTML 与代理会话判定
 │   │
 │   ├── ai/                                 # AI 智能演示增强
 │   │   ├── auto-splitter.ts                # AI 智能长文档分页切片建议
@@ -115,41 +144,26 @@ d:\MyCodingProjects\siyuan-slidev
 │       ├── api.d.ts                        # 思源内核响应数据类型
 │       └── index.d.ts                      # 全局环境与插件对象类型
 │
-├── tests/                                  # 自动化测试套件 (Vitest, 49 个测试文件，374 项用例全绿)
+├── tests/                                  # 自动化测试套件 (Vitest, 67 个测试文件，608 项用例全绿)
 │   ├── mocks/
 │   │   └── siyuan.ts                       # 思源插件宿主环境轻量 Mock（支持纯 Node 离线测试）
+│   ├── __fixtures__/
+│   │   └── standalone-runtime-baseline.txt # [RF-018] 离线播放器运行时字节级快照基线
 │   ├── command-registry.test.ts            # [RF-007] 插件命令注册表独立单测
 │   ├── inspector-sync-coordinator.test.ts  # [RF-007] 前置分页符反查与属性自愈独立单测
-│   ├── inspector-actions.test.ts           # [RF-008] Inspector Actions 异步业务编排单测
-│   ├── directive-wrapper.test.ts           # [RF-009] Frontmatter 与动画指令包装纯函数单测
-│   ├── utils.test.ts                       # [RF-010] 通用 Markdown 与工具函数单测
-│   ├── export.test.ts                      # [RF-006] 离线单文件导出、样式与客户端运行时隔离测试
-│   ├── pdf-template-styles.test.ts         # [RF-011] PDF 打印样式表与 @page 纸张尺寸单测
-│   ├── visual-list-renderer.test.ts        # [RF-012] 卡片、时间线、步骤等富列表渲染单测
-│   ├── slide-layout-renderer.test.ts       # [RF-012] 双栏、三栏、图文等版式容器分发单测
-│   ├── markdown-renderer.test.ts           # [RF-004, RF-012] 导出 Markdown 块级渲染器通用单测
-│   ├── frontmatter-parser.test.ts          # [RF-013] YAML Frontmatter 状态机与代码切片单测
-│   ├── list-column-scanner.test.ts         # [RF-014] 多栏列表超级块扫描与分栏解析单测
-│   ├── use-slidev-import.test.ts           # [RF-015] Slidev 导入 Composable 业务与回填逻辑单测
-│   ├── document-compiler.test.ts           # [RF-001] 文档编译编排与 IAL 解析独立单测
-│   ├── inspector-state.test.ts             # [RF-002] Inspector 三态切换与数据模型单测
-│   ├── clean-markdown.test.ts              # [RF-003] HTML 容器转换与标签清洗边界单测
-│   ├── compiler.test.ts                    # AST 构建器与 IAL 解析单测
-│   ├── compiler-importer.test.ts           # Slidev Markdown 导入综合集成测试
-│   ├── asset-importer.test.ts              # 外部资源提取与解压测试
-│   ├── engine.test.ts                      # 双模渲染引擎调度与模式切换测试
-│   ├── env-detector.test.ts                # Node.js 与 Slidev CLI 环境探测测试
-│   ├── process-manager.test.ts             # 官方 Slidev 子进程守护与端口分配测试
-│   ├── workspace-scaffolder.test.ts        # 官方 Pro 临时工程自动编排测试
-│   ├── native-slidev-bridge.test.ts        # 官方 Slidev 协议 postMessage 桥接测试
-│   ├── sync.test.ts                        # 光标联动与防抖控制测试
-│   ├── synergy.test.ts                     # 属性管家桥接测试
-│   ├── ai.test.ts                          # AI 分页与提词生成逻辑测试
-│   ├── ui-lifecycle.test.ts                # 顶层生命周期冒烟测试
-│   └── ...                                 # 其余 20+ 个专项领域回归测试用例
+│   ├── inspector-actions.test.ts           # [RF-008] Inspector Actions 门面级回归
+│   ├── inspector-actions-domains.test.ts   # [RF-016] 三大领域模块（属性持久化/备注/版式）直接单测
+│   ├── inspector-page-overrides.test.ts    # [RF-017] 分页符属性三级查找工厂单测
+│   ├── standalone-runtime-sections.test.ts # [RF-018] 运行时分节快照基线与拼装一致性测试
+│   ├── preview-tab-title.test.ts           # [RF-019] 预览页签标题服务（门面委托 + 模块直测）
+│   ├── peek-proxy-session.test.ts / peek-local-html.test.ts / immersion-peek.test.ts # peek 速览子系统
+│   ├── export.test.ts / pdf-template-styles.test.ts # 导出管线
+│   ├── compiler*.test.ts / list-*.test.ts / superblock-*.test.ts # 编译器管线
+│   ├── engine.test.ts / process-manager.test.ts / native-slidev-bridge.test.ts # 双模引擎
+│   └── ...                                 # 其余 40+ 个专项领域回归测试用例
 │
 ├── package.json                            # 项目配置与 npm scripts
-├── vite.config.ts                          # Vite 打包配置（构建多产物并打包 zip）
+├── vite.config.ts                          # Vite 打包配置（单入口构建并打包 zip）
 ├── vitest.config.ts                        # Vitest 测试配置（集成 siyuan mock 别名）
 ├── tsconfig.json                           # TypeScript 配置
 └── release.js                              # 插件发版辅助脚本
@@ -157,7 +171,7 @@ d:\MyCodingProjects\siyuan-slidev
 
 ---
 
-## 3. 重构演进对照表 (RF-001 ~ RF-015)
+## 3. 重构演进对照表 (RF-001 ~ RF-020)
 
 | 模块 | 重构前状况 | 重构后演进 | 收益 |
 | :--- | :--- | :--- | :--- |
@@ -176,3 +190,8 @@ d:\MyCodingProjects\siyuan-slidev
 | **YAML 解析与代码切片展开 (RF-013)** | `slidev-importer.ts` (877 行) 混杂 210 行 YAML 状态机与切片展开器 | 抽离 `src/compiler/frontmatter-parser.ts`，主导入器精简至 494 行 | YAML 状态机纯函数隔离并具备全方位边界测试，代码切片提取解耦 |
 | **多栏列表超级块扫描解耦 (RF-014)** | `superblock-scanner.ts` (789 行) 混杂图文扫描与复杂列表分栏状态机 | 抽离 `src/compiler/list-column-scanner.ts`，原文件保留图文扫描与门面 | 列表超级块槽位分配与图文角色推断独立解耦，单向依赖清晰 |
 | **Slidev 导入弹窗业务解耦 (RF-015)** | `SlidevImportDialog.vue` (875 行) `<script setup>` 堆叠 300+ 行内核调用 | 抽取 `src/ui/components/useSlidevImport.ts`，对话框精简至仅负责 UI | 业务编排与 Vue 视图完全解耦，支持 Composable 级与端到端自动化测试 |
+| **Inspector Actions 领域分层 (RF-016)** | `useInspectorActions.ts` (1170 行) 三大领域 30 个函数挤在单一作用域 | 拆分为 `actions/attr-persistence.ts`、`actions/notes-actions.ts`、`actions/layout-actions.ts` + 86 行统一门面 | 各领域可独立演进与单测；saveAttr/saveAttrs 逐行等价逻辑合并为薄包装 |
+| **Dock 视图覆写查询收敛 (RF-017)** | `SlidevInspectorDockView.vue` 中三级属性查找模式重复 7 处（5 个 computed 各 ~20 行） | 抽取 `useInspectorPageOverrides.ts` computed 工厂，视图精简至 903 行 | 查找优先级（defined/truthy 两模式）单点维护，新增页面属性只需 4 行声明 |
+| **离线播放器运行时分节 (RF-018)** | `standalone-client-runtime.ts` (1434 行) 单模板字符串内嵌 35 个 JS 函数，不可测 | 拆分为 9 个功能分节模块 + 29 行拼装入口，快照基线证明输出字节级一致 | 运行时功能（总览/跳页/灯箱/渲染）可独立维护，回归有 golden master 保障 |
+| **预览页签标题服务 (RF-019)** | 标题构造/解析/更新 ~110 行内联在插件入口类中 | 抽离 `src/plugin/preview-tab-title.ts`（宿主接口 + 纯函数），入口精简至 624 行 | 标题三级解析（DOM → 编译模型 → SQL）独立可测，入口回归生命周期编排 |
+| **内核 API 死代码清理 (RF-020)** | `api.ts` (622 行) 含 46 个官方模板残留零引用导出；`kernel.ts` (221 行) echo 示例挂在构建入口 | 精简至 215 行 / 16 个在用接口；删除 `kernel.ts` 并清理 vite 入口 | API 门面检索零噪音，构建产物仅 index.js，消除示例代码误用风险 |
