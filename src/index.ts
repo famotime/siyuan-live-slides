@@ -89,7 +89,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
     this.addTopBar({
       id: "slidev-topbar-play",
       icon: "iconSlidev",
-      title: "Slidev 演示 (下方分屏)",
+      title: "即现演示",
       position: "right",
       callback: () => {
         this.openBottomPreviewTab()

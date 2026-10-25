@@ -60,7 +60,7 @@
         <div class="spm-control-title-group">
           <div class="spm-control-title">
             <SlidevIcon name="presenter" />
-            <span>设为讲稿备注 (slidev-note)</span>
+            <span>设为讲稿备注</span>
           </div>
           <span class="spm-control-desc">作为当前页演讲提词，不在幻灯片中渲染</span>
         </div>
