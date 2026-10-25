@@ -22,6 +22,7 @@
 | [12. Git Worktree 并发开发规范与操作指南](./Git%20Worktree%20并发开发规范与操作指南.md) | 并发开发与分支隔离 | 详细指导如何利用 Git Worktree 实现多功能分支并发开发与独立调试，保障代码质量与规范。 |
 | [13. Slidev 演示文档导入方案与架构设计规范](./Slidev%20演示文档导入方案与架构设计规范.md) | 外部 Markdown 导入与清洗 | 系统详解解析外部 Slidev Markdown 并清洗、转换 HTML 容器与网格版式导入思源的规范与架构实现。 |
 | [14. 项目架构与目录结构说明](./project-structure.md) | 模块分层与工程目录 | 详细介绍 siyuan-slidev 项目的代码组织架构、核心模块职责分工与底层管道通信设计。 |
+| [15. 速览微浏览器 SPA 跳页 404 案例分析与 Webview src 绑定避坑指南](./速览微浏览器%20SPA%20跳页%20404%20案例分析与%20Webview%20src%20绑定避坑指南.md) | 隐藏 bug 复盘与契约速查 | 复盘"SPA 站点次级页短暂显示后变 Netlify 404"的三重根因（响应式 src 绑定 × Electron src 属性契约 × 站点无 SPA fallback），沉淀 webview 导航契约速查表。 |
 
 ---
 

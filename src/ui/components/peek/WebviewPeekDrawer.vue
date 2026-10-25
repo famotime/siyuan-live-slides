@@ -114,17 +114,20 @@
         :class="{ 'is-mobile': viewMode === 'mobile' }"
       >
         <!-- 桌面端 (Electron 原生 webview)
-             注意：此处刻意不声明 partition 属性，强制复用宿主默认 Session。
+             注意 1：此处刻意不声明 partition 属性，强制复用宿主默认 Session。
              原因：思源桌面端在本地内核模式下会以 --no-proxy-server 启动（app/electron/main.js），
              随后仅对主窗体 Session 调用 setProxy 下发「设置 → 网络代理」的代理配置；
              Electron 的 session.setProxy 是按 Session 生效的，一旦使用 partition="persist:xxx"
              就会落到一个从未配置代理的独立 Session，外网地址（GitHub 等）在公司代理环境下恒为空白页。
-             复用默认 Session 同时可继承内核访问授权码 Cookie，保证带锁屏密码时 /assets 本地资源仍可加载。 -->
+             复用默认 Session 同时可继承内核访问授权码 Cookie，保证带锁屏密码时 /assets 本地资源仍可加载。
+             注意 2：src 仅绑定挂载时的初始值（initialUrl），严禁改绑 currentUrl——
+             Electron 中 webview 的 src 属性一变即强制 loadURL() 整页重载，会把 SPA 站点
+             的页内路由（pushState 已渲染的新页面）顶掉，未配置 SPA fallback 的托管站直接落到 404。 -->
         <webview
           v-if="isDesktop"
           ref="webviewRef"
           class="spm-webview-frame"
-          :src="currentUrl"
+          :src="initialUrl"
           :useragent="currentUserAgent"
           allowpopups="true"
           style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: inline-flex;"
@@ -292,6 +295,12 @@ const props = withDefaults(
 const isDesktop = ref(isDesktopEnvironment() && !isRemoteKernelHost())
 const currentUrl = ref(props.url)
 const urlInputValue = ref(props.url)
+// webview 的 src 属性只在挂载时取一次初始值，此后永不回写（见模板中「注意 2」）：
+// currentUrl 会随 did-navigate / did-navigate-in-page 持续更新为 webview 的实时地址，
+// 若把 :src 绑到它上面，SPA 站点页内路由（pushState）会经由 Vue 改写 src 属性，
+// 触发 Electron 强制 loadURL() 整页重载，把已渲染的路由页顶成托管站的 404 页。
+// 因此 currentUrl / urlInputValue 在桌面端仅作地址栏展示，导航一律走 loadURL()。
+const initialUrl = props.url
 const isLoading = ref(false)
 const loadError = ref<IPeekLoadError | null>(null)
 const canGoBack = ref(false)
