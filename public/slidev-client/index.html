@@ -2104,6 +2104,41 @@
       margin: 0 4px;
     }
 
+    /* 「数字+回车」跳页输入角标：放映中敲数字实时显示，回车确认跳转 */
+    .jump-page-indicator {
+      position: absolute;
+      right: 16px;
+      bottom: 12px;
+      z-index: 100;
+      min-width: 40px;
+      padding: 4px 12px;
+      border-radius: 18px;
+      background: rgba(24, 24, 27, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #f4f4f5;
+      font-size: 0.85rem;
+      font-variant-numeric: tabular-nums;
+      text-align: center;
+      pointer-events: none;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    }
+
+    .jump-page-indicator.is-invalid {
+      background: rgba(153, 27, 27, 0.85);
+      border-color: rgba(248, 113, 113, 0.5);
+      color: #fecaca;
+      animation: jump-indicator-shake 0.4s ease;
+    }
+
+    @keyframes jump-indicator-shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      50% { transform: translateX(4px); }
+      75% { transform: translateX(-2px); }
+    }
+
     /* Empty state */
     .empty-state {
       display: flex;
@@ -2753,6 +2788,9 @@
           </svg>
         </button>
       </div>
+
+      <!-- 「数字+回车」跳页输入角标 -->
+      <div class="jump-page-indicator" v-show="jumpDisplay" :class="{ 'is-invalid': jumpInvalid }">{{ jumpDisplay }}</div>
 
       <!-- 全屏媒体灯箱 (Lightbox) 模态窗口 -->
       <transition name="fade">
@@ -5283,6 +5321,39 @@
           window.open("presenter.html", "SlidevPresenter", "width=1200,height=800")
         }
 
+        // 「数字+回车」跳页输入状态：右下角角标实时回显，Esc/超时清空
+        const JUMP_IDLE_CLEAR_MS = 1500
+        const JUMP_INVALID_FLASH_MS = 500
+        const jumpDisplay = ref("")
+        const jumpInvalid = ref(false)
+        let jumpIdleTimer = null
+        let jumpFlashTimer = null
+
+        function hideJumpIndicator() {
+          jumpDisplay.value = ""
+          jumpInvalid.value = false
+          if (jumpIdleTimer) { clearTimeout(jumpIdleTimer); jumpIdleTimer = null }
+          if (jumpFlashTimer) { clearTimeout(jumpFlashTimer); jumpFlashTimer = null }
+        }
+
+        function armJumpIdleTimer() {
+          if (jumpIdleTimer) clearTimeout(jumpIdleTimer)
+          jumpIdleTimer = setTimeout(hideJumpIndicator, JUMP_IDLE_CLEAR_MS)
+        }
+
+        function flashJumpInvalid() {
+          if (jumpIdleTimer) { clearTimeout(jumpIdleTimer); jumpIdleTimer = null }
+          jumpInvalid.value = true
+          if (jumpFlashTimer) clearTimeout(jumpFlashTimer)
+          jumpFlashTimer = setTimeout(hideJumpIndicator, JUMP_INVALID_FLASH_MS)
+        }
+
+        function isEditableKeyTarget(e) {
+          const t = e.target
+          if (!t || !t.tagName) return false
+          return t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable === true
+        }
+
         // 监听键盘快捷键
         function onKeyDown(e) {
           if (activeLightbox.value) {
@@ -5294,6 +5365,36 @@
           }
           if (isKeyboardFrozen.value) {
             return
+          }
+          // 「数字+回车」跳页：可输入元素、修饰键、IME 组合输入中不拦截
+          if (!e.ctrlKey && !e.metaKey && !e.altKey && !e.isComposing && !isEditableKeyTarget(e)) {
+            if (/^[0-9]$/.test(e.key)) {
+              if (!jumpInvalid.value && jumpDisplay.value.length < 4) {
+                jumpDisplay.value += e.key
+                armJumpIdleTimer()
+                e.preventDefault()
+              }
+              return
+            }
+            if (e.key === "Enter" && jumpDisplay.value) {
+              if (!jumpInvalid.value) {
+                const page = parseInt(jumpDisplay.value, 10)
+                const total = totalPages.value || 0
+                if (!isNaN(page) && page >= 1 && page <= total) {
+                  hideJumpIndicator()
+                  slidevContext.nav.go(page)
+                } else {
+                  flashJumpInvalid()
+                }
+              }
+              e.preventDefault()
+              return
+            }
+            if (e.key === "Escape" && (jumpDisplay.value || jumpInvalid.value)) {
+              hideJumpIndicator()
+              e.preventDefault()
+              return
+            }
           }
           if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") {
             e.preventDefault()
@@ -5651,6 +5752,8 @@
           totalPages,
           currentSlide,
           currentStep,
+          jumpDisplay,
+          jumpInvalid,
           highlightedBlockId,
           stageContainerRef,
           slideScale,

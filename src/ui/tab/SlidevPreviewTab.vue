@@ -1,5 +1,5 @@
 <template>
-  <div class="spm-slidev-preview-tab">
+  <div class="spm-slidev-preview-tab" @keydown="onTabKeydown">
     <!-- 顶栏工具条：左右分栏，去除冗余标题文本 -->
     <div class="spm-slidev-tab__toolbar">
       <!-- 左侧：翻页导航与状态控制 -->
@@ -145,6 +145,13 @@
           @external-jump="onExternalJump"
         />
       </ImmersionDrawerContainer>
+
+      <!-- 「数字+回车」跳页输入角标：页签聚焦（iframe 未聚焦）时敲数字实时显示，回车跳转 -->
+      <div
+        v-show="jumpDisplay"
+        class="spm-jump-badge"
+        :class="{ 'is-invalid': jumpInvalid }"
+      >{{ jumpDisplay }}</div>
     </div>
 
     <!-- 底部大纲检查器 -->
@@ -178,6 +185,7 @@ import { resolvePeekUrl, fileUrlToPath } from '@/utils/peek-url'
 import { buildStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'
 import { triggerPdfExport } from '@/export/pdf-exporter'
 import { getRuntimeSettings, buildSiYuanWebUrl } from '@/settings'
+import { createPageJumpInput } from './page-jump-input'
 import type { ISlidevDocument, ISlidevVirtualPage } from '@/types/slidev-protocol'
 
 const plugin = inject<Plugin>('plugin')
@@ -208,6 +216,38 @@ const hasOpenedWeb = ref(false)
 // Pin 图钉锁定状态
 const isPinned = ref(false)
 const pinnedDocId = ref('')
+
+// 「数字+回车」跳页输入状态（角标展示）
+const jumpDisplay = ref('')
+const jumpInvalid = ref(false)
+const pageJumpInput = createPageJumpInput({
+  getTotalPages: () => totalPages.value,
+  // 速览抽屉打开（键盘冻结）期间不拦截任何按键
+  isEnabled: () => !isDrawerOpen.value,
+  onJump: (page) => jumpToPage(page),
+  onStateChange: (state) => {
+    jumpDisplay.value = state.display
+    jumpInvalid.value = state.invalid
+  },
+})
+
+// 页签聚焦（iframe 未聚焦）时的按键补位入口：消费成功才 preventDefault
+function onTabKeydown(e: KeyboardEvent) {
+  if (pageJumpInput.handleKeydown(e)) {
+    e.preventDefault()
+  }
+}
+
+// 「数字+回车」跳页统一分流：按引擎模式派发跳页指令，并把焦点交还 iframe
+function jumpToPage(page: number) {
+  currentPage.value = page
+  if (engineMode.value === 'pro-cli') {
+    engineManager.nativeBridge.navigateToPage(page)
+  } else {
+    sandboxBridge.navigatePage(page)
+  }
+  sandboxIframeRef.value?.focus()
+}
 
 const iframeSrc = ref('/plugins/siyuan-slidev/slidev-client/index.html')
 
@@ -320,6 +360,7 @@ onUnmounted(() => {
   if (unbindOpenInEditor) unbindOpenInEditor()
   if (unbindNativePageChanged) unbindNativePageChanged()
   sandboxBridge.detach()
+  pageJumpInput.clear()
   cursorTracker.destroy()
   engineManager.destroy()
 })
@@ -675,6 +716,49 @@ defineExpose({
   height: 100%;
   border: none;
   display: block;
+}
+
+/* 「数字+回车」跳页输入角标：样式对齐沙箱底部控制条质感 */
+.spm-jump-badge {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 900;
+  min-width: 40px;
+  padding: 4px 12px;
+  border-radius: 18px;
+  background: rgba(24, 24, 27, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f4f4f5;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+
+  &.is-invalid {
+    background: rgba(153, 27, 27, 0.85);
+    border-color: rgba(248, 113, 113, 0.5);
+    color: #fecaca;
+    animation: spm-jump-shake 0.4s ease;
+  }
+}
+
+@keyframes spm-jump-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+  75% {
+    transform: translateX(-2px);
+  }
 }
 
 .spm-web-placeholder {

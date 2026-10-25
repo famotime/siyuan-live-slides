@@ -13,6 +13,15 @@ export function getStandaloneClientRuntimeScript(): string {
       const btnNext = document.getElementById("btn-next");
       const btnFullscreen = document.getElementById("btn-fullscreen");
 
+      // 「数字+回车」跳页输入角标：右下角悬浮显示，独立于缩放视口
+      const jumpBadge = document.createElement("div");
+      jumpBadge.className = "jump-page-indicator";
+      jumpBadge.style.display = "none";
+      document.body.appendChild(jumpBadge);
+      const jumpStyle = document.createElement("style");
+      jumpStyle.textContent = ".jump-page-indicator{position:fixed;right:16px;bottom:16px;z-index:1000;min-width:40px;padding:4px 12px;border-radius:18px;background:rgba(24,24,27,0.8);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.12);color:#f4f4f5;font-size:14px;font-variant-numeric:tabular-nums;text-align:center;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,0.35);}.jump-page-indicator.is-invalid{background:rgba(153,27,27,0.85);border-color:rgba(248,113,113,0.5);color:#fecaca;animation:jump-indicator-shake 0.4s ease;}@keyframes jump-indicator-shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}50%{transform:translateX(4px);}75%{transform:translateX(-2px);}}";
+      document.head.appendChild(jumpStyle);
+
       const baseWidth = 980;
       const aspectStr = (data.config && data.config.aspectRatio) || "16/9";
       let ratioNum = 16 / 9;
@@ -846,6 +855,45 @@ export function getStandaloneClientRuntimeScript(): string {
         }
       });
 
+      // 「数字+回车」跳页输入状态：数字缓冲实时回显，Esc/超时清空，越界红色抖动提示
+      let jumpDisplay = "";
+      let jumpInvalid = false;
+      let jumpIdleTimer = null;
+      let jumpFlashTimer = null;
+
+      function hideJumpIndicator() {
+        jumpDisplay = "";
+        jumpInvalid = false;
+        jumpBadge.style.display = "none";
+        jumpBadge.classList.remove("is-invalid");
+        if (jumpIdleTimer) { clearTimeout(jumpIdleTimer); jumpIdleTimer = null; }
+        if (jumpFlashTimer) { clearTimeout(jumpFlashTimer); jumpFlashTimer = null; }
+      }
+
+      function renderJumpBadge() {
+        jumpBadge.textContent = jumpDisplay;
+        jumpBadge.style.display = jumpDisplay ? "block" : "none";
+        jumpBadge.classList.toggle("is-invalid", jumpInvalid);
+      }
+
+      function armJumpIdleTimer() {
+        if (jumpIdleTimer) clearTimeout(jumpIdleTimer);
+        jumpIdleTimer = setTimeout(hideJumpIndicator, 1500);
+      }
+
+      function flashJumpInvalid() {
+        if (jumpIdleTimer) { clearTimeout(jumpIdleTimer); jumpIdleTimer = null; }
+        jumpInvalid = true;
+        renderJumpBadge();
+        if (jumpFlashTimer) clearTimeout(jumpFlashTimer);
+        jumpFlashTimer = setTimeout(hideJumpIndicator, 500);
+      }
+
+      function isEditableKeyTarget(t) {
+        if (!t || !t.tagName) return false;
+        return t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable === true;
+      }
+
       window.addEventListener("keydown", (e) => {
         if (e.key === "Escape" || e.key === "Esc") {
           if (isLightboxOpen) {
@@ -855,6 +903,36 @@ export function getStandaloneClientRuntimeScript(): string {
           }
         }
         if (isLightboxOpen) return;
+        // 「数字+回车」跳页：可输入元素、修饰键、IME 组合输入中不拦截
+        if (!e.ctrlKey && !e.metaKey && !e.altKey && !e.isComposing && !isEditableKeyTarget(e.target)) {
+          if (/^[0-9]$/.test(e.key)) {
+            if (!jumpInvalid && jumpDisplay.length < 4) {
+              jumpDisplay += e.key;
+              renderJumpBadge();
+              armJumpIdleTimer();
+            }
+            e.preventDefault();
+            return;
+          }
+          if (e.key === "Enter" && jumpDisplay) {
+            if (!jumpInvalid) {
+              const page = parseInt(jumpDisplay, 10);
+              if (!isNaN(page) && page >= 1 && page <= slides.length) {
+                hideJumpIndicator();
+                renderSlide(page - 1);
+              } else {
+                flashJumpInvalid();
+              }
+            }
+            e.preventDefault();
+            return;
+          }
+          if ((e.key === "Escape" || e.key === "Esc") && (jumpDisplay || jumpInvalid)) {
+            hideJumpIndicator();
+            e.preventDefault();
+            return;
+          }
+        }
         if (e.key === "ArrowRight" || e.key === " " || e.key === "ArrowDown") goNext();
         if (e.key === "ArrowLeft" || e.key === "ArrowUp") goPrev();
         if (e.key === "f" || e.key === "F") btnFullscreen.click();
