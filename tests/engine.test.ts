@@ -65,6 +65,41 @@ describe("WebSandboxBridge (沙箱通信管道)", () => {
     bridge.detach()
   })
 
+  it("toggleOverview 应发送 TOGGLE_OVERVIEW 消息切换缩略图总览", () => {
+    const bridge = new WebSandboxBridge()
+    const mockPostMessage = vi.fn()
+    const mockIframe = {
+      contentWindow: {
+        postMessage: mockPostMessage,
+      },
+    } as unknown as HTMLIFrameElement
+
+    bridge.attach(mockIframe)
+
+    // 模拟沙箱就绪
+    window.dispatchEvent(
+      new MessageEvent("message", {
+        data: {
+          source: "siyuan-slidev-client",
+          action: "CLIENT_READY",
+          payload: {},
+        },
+      }),
+    )
+
+    bridge.toggleOverview()
+    bridge.detach()
+
+    expect(mockPostMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: "siyuan-slidev-host",
+        action: "TOGGLE_OVERVIEW",
+        payload: {},
+      }),
+      "*",
+    )
+  })
+
   it("就绪后应立即发送 updateSlides 消息", () => {
     const bridge = new WebSandboxBridge()
     const mockPostMessage = vi.fn()

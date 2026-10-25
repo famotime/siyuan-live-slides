@@ -44,7 +44,8 @@ export interface IPageJumpInput {
 
 const EDITABLE_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT"])
 
-function isEditableTarget(target: EventTarget | null): boolean {
+/** 判断事件目标是否处于可输入元素内（供宿主侧其它按键守卫复用） */
+export function isEditableTarget(target: EventTarget | null): boolean {
   const el = target as HTMLElement | null
   if (!el || !el.tagName) return false
   return EDITABLE_TAGS.has(el.tagName) || el.isContentEditable === true

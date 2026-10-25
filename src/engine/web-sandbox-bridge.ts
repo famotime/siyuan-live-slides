@@ -133,6 +133,13 @@ export class WebSandboxBridge {
     this.postMessage("FREEZE_KEYBOARD_NAV", { frozen })
   }
 
+  /**
+   * 切换缩略图总览层显隐（o 键 / 工具栏按钮入口）
+   */
+  public toggleOverview(): void {
+    this.postMessage("TOGGLE_OVERVIEW", {})
+  }
+
   public onSlideChanged(handler: TSlideChangedHandler): () => void {
     this.slideChangedHandlers.push(handler)
     return () => {

@@ -15,6 +15,7 @@ export type THostToSlidevAction =
   | "PREV_STEP"
   | "FREEZE_KEYBOARD_NAV"
   | "FULLSCREEN_CHANGED"
+  | "TOGGLE_OVERVIEW"
 
 export interface IHostToSlidevMessage {
   source: "siyuan-slidev-host"

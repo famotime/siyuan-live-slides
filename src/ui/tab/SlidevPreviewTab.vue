@@ -58,6 +58,15 @@
           <SlidevIcon name="outline" />
         </button>
 
+        <!-- 缩略图总览 -->
+        <button
+          class="spm-icon-btn b3-tooltips b3-tooltips__s"
+          aria-label="缩略图总览 (O)"
+          @click="onToggleOverview"
+        >
+          <SlidevIcon name="columns" />
+        </button>
+
         <!-- 双屏演讲者视图 -->
         <button
           class="spm-icon-btn b3-tooltips b3-tooltips__s"
@@ -185,7 +194,7 @@ import { resolvePeekUrl, fileUrlToPath } from '@/utils/peek-url'
 import { buildStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'
 import { triggerPdfExport } from '@/export/pdf-exporter'
 import { getRuntimeSettings, buildSiYuanWebUrl } from '@/settings'
-import { createPageJumpInput } from './page-jump-input'
+import { createPageJumpInput, isEditableTarget } from './page-jump-input'
 import type { ISlidevDocument, ISlidevVirtualPage } from '@/types/slidev-protocol'
 
 const plugin = inject<Plugin>('plugin')
@@ -233,9 +242,27 @@ const pageJumpInput = createPageJumpInput({
 
 // 页签聚焦（iframe 未聚焦）时的按键补位入口：消费成功才 preventDefault
 function onTabKeydown(e: KeyboardEvent) {
+  // o 键呼出缩略图总览：转发给沙箱并把焦点移交 iframe，后续键盘全由总览层接管
+  if (e.key === 'o' || e.key === 'O') {
+    if (isDrawerOpen.value || e.isComposing || e.ctrlKey || e.metaKey || e.altKey || isEditableTarget(e.target)) return
+    e.preventDefault()
+    onToggleOverview()
+    return
+  }
   if (pageJumpInput.handleKeydown(e)) {
     e.preventDefault()
   }
+}
+
+// 缩略图总览入口：沙箱引擎转发 TOGGLE_OVERVIEW，Pro 引擎提示使用官方原生总览
+function onToggleOverview() {
+  if (engineMode.value === 'pro-cli') {
+    sandboxIframeRef.value?.focus()
+    showMessage('Pro 模式使用官方原生总览：在画面内按 O 呼出')
+    return
+  }
+  sandboxBridge.toggleOverview()
+  sandboxIframeRef.value?.focus()
 }
 
 // 「数字+回车」跳页统一分流：按引擎模式派发跳页指令，并把焦点交还 iframe
