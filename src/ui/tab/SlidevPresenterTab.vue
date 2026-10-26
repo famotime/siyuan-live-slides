@@ -24,27 +24,89 @@
 
     <!-- 主展示网格 -->
     <main v-if="totalPages > 0" class="presenter-grid">
-      <!-- 左侧：当前幻灯片与下一页预览 -->
+      <!-- 左侧：当前幻灯片与下一页完整缩略图预览 -->
       <section class="slide-panels">
         <div class="panel-box current-slide-panel">
           <div class="panel-header">
             <span>当前大屏放映 (Page {{ currentPage }})</span>
             <span>布局: {{ currentSlide?.frontmatter?.layout || 'default' }}</span>
           </div>
-          <div class="panel-preview">
-            <h2>{{ currentSlideTitle }}</h2>
-            <p>{{ currentSlideSnippet }}</p>
+          <div
+            ref="currentPreviewRef"
+            class="panel-preview"
+            :aria-label="currentSlideTitle"
+          >
+            <div
+              v-if="currentSlide"
+              class="presenter-thumb-box"
+              :style="{
+                width: currentThumbMetrics.boxWidth + 'px',
+                height: currentThumbMetrics.boxHeight + 'px',
+              }"
+            >
+              <div
+                class="presenter-thumb-viewport slide-viewport"
+                :class="'slidev-theme-' + activeSlidevTheme"
+                :data-theme="activeColorSchema"
+                :data-slidev-theme="activeSlidevTheme"
+                :data-normalize-headings="isNormalizeHeadings ? 'true' : 'false'"
+                :style="{
+                  width: slideAspect.baseWidth + 'px',
+                  height: slideAspect.baseHeight + 'px',
+                  transform: 'scale(' + currentThumbMetrics.scale + ')',
+                }"
+                v-html="currentSlideHtml"
+              ></div>
+            </div>
+            <div v-else class="panel-fallback">
+              <h2>{{ currentSlideTitle }}</h2>
+              <p>{{ currentSlideSnippet }}</p>
+            </div>
           </div>
         </div>
 
-        <div class="panel-box next-slide-panel">
+        <div
+          class="panel-box next-slide-panel"
+          :class="{ 'is-clickable': Boolean(nextSlide) }"
+          :title="nextSlide ? '点击翻至下一页' : ''"
+          @click="nextSlide && goNextSlide()"
+        >
           <div class="panel-header">
             <span>下一页预告 (Page {{ currentPage + 1 }})</span>
             <span v-if="currentPage >= totalPages">已到达最后一页</span>
+            <span v-else-if="nextSlide">布局: {{ nextSlide.frontmatter?.layout || 'default' }}</span>
           </div>
-          <div class="panel-preview panel-preview--dim">
-            <h2>{{ nextSlideTitle }}</h2>
-            <p>{{ nextSlideSnippet }}</p>
+          <div
+            ref="nextPreviewRef"
+            class="panel-preview panel-preview--dim"
+            :aria-label="nextSlideTitle"
+          >
+            <div
+              v-if="nextSlide"
+              class="presenter-thumb-box"
+              :style="{
+                width: nextThumbMetrics.boxWidth + 'px',
+                height: nextThumbMetrics.boxHeight + 'px',
+              }"
+            >
+              <div
+                class="presenter-thumb-viewport slide-viewport"
+                :class="'slidev-theme-' + activeSlidevTheme"
+                :data-theme="activeColorSchema"
+                :data-slidev-theme="activeSlidevTheme"
+                :data-normalize-headings="isNormalizeHeadings ? 'true' : 'false'"
+                :style="{
+                  width: slideAspect.baseWidth + 'px',
+                  height: slideAspect.baseHeight + 'px',
+                  transform: 'scale(' + nextThumbMetrics.scale + ')',
+                }"
+                v-html="nextSlideHtml"
+              ></div>
+            </div>
+            <div v-else class="panel-fallback">
+              <h2>{{ nextSlideTitle }}</h2>
+              <p>{{ nextSlideSnippet }}</p>
+            </div>
           </div>
         </div>
       </section>
@@ -88,19 +150,105 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, inject } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted, inject } from 'vue'
 import type { Plugin } from 'siyuan'
 import { WebSandboxBridge } from '@/engine/web-sandbox-bridge'
-import type { ISlidevDocument, ISlidevVirtualPage, ISlidevBlockItem } from '@/types/slidev-protocol'
+import type {
+  ISlidevDocument,
+  ISlidevPluginConfig,
+  ISlidevVirtualPage,
+  ISlidevBlockItem,
+} from '@/types/slidev-protocol'
+import {
+  computeThumbnailScale,
+  parseSlideAspectRatio,
+  renderPresenterSlideThumbnailHtml,
+} from './presenter-slide-thumbnail'
 
 const plugin = inject<Plugin>('plugin')
 const sandboxBridge = inject<WebSandboxBridge>('sandboxBridge', new WebSandboxBridge())
 
 const slides = ref<ISlidevVirtualPage[]>([])
+const docConfig = ref<Partial<ISlidevPluginConfig>>({})
 const currentPage = ref(1)
 // 桥接侧上报的总页数兜底：幻灯片数据未到位时也能显示正确页数并解锁翻页
 const bridgeTotal = ref(0)
 const totalPages = computed(() => slides.value.length || bridgeTotal.value)
+
+// 缩略图画布容器引用与实时测量尺寸
+const currentPreviewRef = ref<HTMLElement | null>(null)
+const nextPreviewRef = ref<HTMLElement | null>(null)
+const currentContainerSize = ref({ width: 0, height: 0 })
+const nextContainerSize = ref({ width: 0, height: 0 })
+
+const slideAspect = computed(() => parseSlideAspectRatio(docConfig.value?.aspectRatio))
+const activeSlidevTheme = computed(() => docConfig.value?.theme || 'default')
+const activeColorSchema = computed(() => (docConfig.value?.colorSchema === 'light' ? 'light' : 'dark'))
+const isNormalizeHeadings = computed(() => Boolean(docConfig.value?.normalizeHeadingSizes))
+
+const currentThumbMetrics = computed(() =>
+  computeThumbnailScale(
+    currentContainerSize.value.width,
+    currentContainerSize.value.height,
+    slideAspect.value.baseWidth,
+    slideAspect.value.baseHeight,
+    14,
+  ),
+)
+
+const nextThumbMetrics = computed(() =>
+  computeThumbnailScale(
+    nextContainerSize.value.width,
+    nextContainerSize.value.height,
+    slideAspect.value.baseWidth,
+    slideAspect.value.baseHeight,
+    14,
+  ),
+)
+
+function measurePreviewContainers() {
+  if (currentPreviewRef.value) {
+    currentContainerSize.value = {
+      width: currentPreviewRef.value.clientWidth,
+      height: currentPreviewRef.value.clientHeight,
+    }
+  }
+  if (nextPreviewRef.value) {
+    nextContainerSize.value = {
+      width: nextPreviewRef.value.clientWidth,
+      height: nextPreviewRef.value.clientHeight,
+    }
+  }
+}
+
+let previewResizeObserver: ResizeObserver | null = null
+
+function attachResizeObserver() {
+  if (typeof window === 'undefined' || typeof window.ResizeObserver !== 'function') return
+  if (!previewResizeObserver) {
+    previewResizeObserver = new window.ResizeObserver(() => {
+      measurePreviewContainers()
+    })
+  }
+  previewResizeObserver.disconnect()
+  if (currentPreviewRef.value) {
+    previewResizeObserver.observe(currentPreviewRef.value)
+  }
+  if (nextPreviewRef.value) {
+    previewResizeObserver.observe(nextPreviewRef.value)
+  }
+}
+
+watch(
+  [currentPreviewRef, nextPreviewRef, totalPages],
+  () => {
+    void nextTick(() => {
+      attachResizeObserver()
+      measurePreviewContainers()
+    })
+  },
+  { flush: 'post' },
+)
 
 // 计时器状态
 const elapsedSeconds = ref(0)
@@ -131,6 +279,22 @@ const nextSlide = computed(() => {
   if (currentPage.value >= slides.value.length) return null
   return slides.value[currentPage.value] || null
 })
+
+const currentSlideHtml = computed(() =>
+  renderPresenterSlideThumbnailHtml(currentSlide.value, {
+    config: docConfig.value,
+    allSlides: slides.value,
+    pageIndex: currentPage.value,
+  }),
+)
+
+const nextSlideHtml = computed(() =>
+  renderPresenterSlideThumbnailHtml(nextSlide.value, {
+    config: docConfig.value,
+    allSlides: slides.value,
+    pageIndex: currentPage.value + 1,
+  }),
+)
 
 const currentSlideTitle = computed(() => {
   if (!currentSlide.value) return '无内容'
@@ -188,6 +352,9 @@ try {
     }
     if (data.type === 'SYNC_SLIDES' && Array.isArray(data.slides)) {
       slides.value = data.slides
+      if (data.config && typeof data.config === 'object') {
+        docConfig.value = data.config
+      }
     }
   }
 } catch (e) {
@@ -292,7 +459,18 @@ onMounted(() => {
   const latestDoc = (plugin as any)?.latestCompiledDoc as ISlidevDocument | null | undefined
   if (latestDoc?.slides?.length) {
     slides.value = latestDoc.slides
+    if (latestDoc.config) {
+      docConfig.value = latestDoc.config
+    }
   }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', measurePreviewContainers)
+  }
+  void nextTick(() => {
+    attachResizeObserver()
+    measurePreviewContainers()
+  })
 })
 
 onUnmounted(() => {
@@ -301,6 +479,13 @@ onUnmounted(() => {
     timerInterval = null
   }
   if (unbindSlideChanged) unbindSlideChanged()
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', measurePreviewContainers)
+  }
+  if (previewResizeObserver) {
+    previewResizeObserver.disconnect()
+    previewResizeObserver = null
+  }
   try {
     broadcastChannel?.close()
   } catch (e) {}
@@ -312,6 +497,9 @@ defineExpose({
   updateDocument(doc: ISlidevDocument) {
     if (doc?.slides?.length) {
       slides.value = doc.slides
+    }
+    if (doc?.config) {
+      docConfig.value = doc.config
     }
   },
 })
@@ -463,6 +651,15 @@ defineExpose({
   flex: 1;
 }
 
+.next-slide-panel.is-clickable {
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.next-slide-panel.is-clickable:hover {
+  border-color: var(--accent-color);
+}
+
 .panel-header {
   padding: 8px 14px;
   font-size: 12px;
@@ -489,19 +686,47 @@ defineExpose({
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 20px;
-  text-align: center;
-  background: #181920;
+  padding: 7px;
+  background: #12141b;
   overflow: hidden;
+  position: relative;
 }
 
 .panel-preview--dim {
-  opacity: 0.75;
+  opacity: 0.88;
 }
 
-.panel-preview h2 {
-  font-size: 1.8rem;
-  font-size: clamp(1.05rem, 4cqi, 1.8rem);
+.presenter-thumb-box {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+}
+
+.presenter-thumb-viewport {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+  pointer-events: none;
+  user-select: none;
+  overflow: hidden;
+}
+
+.panel-fallback {
+  width: 100%;
+  padding: 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.panel-fallback h2 {
+  font-size: clamp(1.05rem, 4cqi, 1.6rem);
   margin-bottom: 8px;
   color: #60a5fa;
   width: 100%;
@@ -510,9 +735,8 @@ defineExpose({
   white-space: nowrap;
 }
 
-.panel-preview p {
-  font-size: 1.1rem;
-  font-size: clamp(0.8rem, 2.6cqi, 1.1rem);
+.panel-fallback p {
+  font-size: clamp(0.8rem, 2.6cqi, 1.05rem);
   opacity: 0.8;
   width: 100%;
   overflow: hidden;
@@ -645,8 +869,8 @@ defineExpose({
   min-width: 0;
 }
 
-/* 窄容器（右侧 Dock 栏 / 窄独立窗口）：切换为纵向单列布局，
-   备注面板置于下方并占据主导高度，保证提词内容始终可见 */
+/* 窄容器（右侧 Dock 栏 / 窄独立窗口）：切换为纵向布局，
+   上方双卡并排呈现当前页与下一页 16:9 缩略图，下方备注面板占据主导高度 */
 @container (max-width: 719px) {
   .presenter-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -656,24 +880,21 @@ defineExpose({
   }
 
   .slide-panels {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
     gap: 10px;
+    align-items: stretch;
   }
 
   .current-slide-panel,
   .next-slide-panel {
-    flex: 0 0 auto;
-  }
-
-  .current-slide-panel {
-    min-height: 118px;
-  }
-
-  .next-slide-panel {
-    min-height: 92px;
+    flex: none;
+    min-height: 0;
   }
 
   .panel-preview {
-    padding: 12px;
+    aspect-ratio: 16 / 9;
+    padding: 6px;
   }
 
   .panel-header {
@@ -700,6 +921,608 @@ defineExpose({
   .btn-nav {
     padding: 6px 10px;
     font-size: 13px;
+  }
+}
+
+@container (max-width: 420px) {
+  .slide-panels {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panel-preview {
+    max-height: 150px;
+  }
+}
+</style>
+
+<style lang="scss">
+/* 演讲者视图内嵌幻灯片缩略图沙箱样式（严格约束在 .spm-presenter-tab .presenter-thumb-viewport 作用域下，零全局泄漏） */
+.spm-presenter-tab .presenter-thumb-viewport {
+  --slide-bg: #121214;
+  --slide-text: #e2e8f0;
+  --slide-accent: #10b981;
+  --slide-code-bg: #1e1e24;
+  --slide-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+
+  &[data-theme="light"] {
+    --slide-bg: #ffffff;
+    --slide-text: #1e293b;
+    --slide-accent: #059669;
+    --slide-code-bg: #f8fafc;
+  }
+
+  &[data-theme="dark"] {
+    --slide-bg: #121214;
+    --slide-text: #e2e8f0;
+    --slide-accent: #34d399;
+    --slide-code-bg: #1e1e24;
+  }
+
+  &.slidev-theme-seriph {
+    --slide-font: "PT Serif", "Charter", "Georgia", "Cambria", "Times New Roman", "Source Han Serif SC", "Noto Serif SC", "Songti SC", "SimSun", serif;
+    --slide-accent: #f59e0b;
+    &[data-theme="light"] {
+      --slide-bg: #fdfbf7;
+      --slide-text: #2a2521;
+      --slide-accent: #b45309;
+      --slide-code-bg: #f4efe6;
+    }
+    &[data-theme="dark"] {
+      --slide-bg: #1c1a17;
+      --slide-text: #e8e3d9;
+      --slide-accent: #f59e0b;
+      --slide-code-bg: #26231f;
+    }
+  }
+
+  &.slidev-theme-apple-basic {
+    --slide-font: -apple-system, "SF Pro Display", "SF Pro Text", BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+    --slide-accent: #2997ff;
+    &[data-theme="light"] {
+      --slide-bg: #ffffff;
+      --slide-text: #1d1d1f;
+      --slide-accent: #0071e3;
+    }
+    &[data-theme="dark"] {
+      --slide-bg: #000000;
+      --slide-text: #f5f5f7;
+      --slide-accent: #2997ff;
+    }
+  }
+
+  background: var(--slide-bg);
+  color: var(--slide-text);
+  font-family: var(--slide-font);
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  box-sizing: border-box;
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  .slide-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    flex: 1 1 0%;
+    padding: var(--slidev-padding-y, 32px) var(--slidev-padding-x, 48px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  .slide-content.spacing-compact {
+    --slidev-padding-y: 20px;
+    --slidev-padding-x: 36px;
+    --slidev-header-gap: 10px;
+    --slidev-title-margin-bottom: 6px;
+  }
+
+  .slide-content.spacing-normal {
+    --slidev-padding-y: 32px;
+    --slidev-padding-x: 48px;
+    --slidev-header-gap: 16px;
+    --slidev-title-margin-bottom: 10px;
+  }
+
+  .slide-content.spacing-loose {
+    --slidev-padding-y: 48px;
+    --slidev-padding-x: 56px;
+    --slidev-header-gap: 24px;
+    --slidev-title-margin-bottom: 16px;
+  }
+
+  /* Cover, Center, Fact 版式 */
+  .layout-cover,
+  .layout-center,
+  .layout-fact,
+  .layout-cover-container,
+  .layout-fact-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    flex: 1;
+  }
+
+  .layout-cover h1,
+  .layout-cover .slide-block h1 {
+    font-size: 3.8rem !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    letter-spacing: -0.025em !important;
+    margin-bottom: 16px !important;
+  }
+
+  &.slidev-theme-default .layout-cover h1,
+  &.slidev-theme-default .layout-cover .slide-block h1 {
+    background: linear-gradient(135deg, #10b981, #06b6d4) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+  }
+
+  .layout-cover h2,
+  .layout-cover .slide-block h2 {
+    font-size: 1.85rem !important;
+    font-weight: 600 !important;
+    opacity: 0.85 !important;
+    margin-bottom: 12px !important;
+  }
+
+  .layout-cover p,
+  .layout-cover .slide-block p {
+    font-size: 1.45rem !important;
+    line-height: 1.5 !important;
+    opacity: 0.85 !important;
+  }
+
+  .layout-fact h1 {
+    font-size: 4.5rem !important;
+    font-weight: 900 !important;
+    color: var(--slide-accent) !important;
+  }
+
+  /* 多栏与四叶草网格布局 */
+  .layout-cols-header-container,
+  .layout-two-cols-header-container,
+  .layout-three-cols-header-container,
+  .layout-clover-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .layout-header-section {
+    width: 100%;
+    margin-bottom: var(--slidev-header-gap, 16px) !important;
+    flex-shrink: 0;
+  }
+
+  .layout-header-section h1,
+  .layout-header-section h2,
+  .layout-header-section h3 {
+    margin-bottom: var(--slidev-title-margin-bottom, 10px) !important;
+  }
+
+  .pdf-two-cols-wrapper,
+  .layout-two-cols-grid,
+  .layout-cols-wrapper,
+  .layout-cols-grid {
+    display: grid;
+    grid-template-columns: var(--slide-grid-cols, minmax(0, 1fr) minmax(0, 1fr));
+    grid-template-rows: minmax(0, 1fr) !important;
+    gap: 28px;
+    width: 100%;
+    height: 100%;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    flex: 1 1 0%;
+    align-items: stretch;
+    overflow: hidden !important;
+  }
+
+  .pdf-three-cols-wrapper,
+  .layout-three-cols-grid {
+    display: grid;
+    grid-template-columns: var(--slide-grid-cols, repeat(3, minmax(0, 1fr)));
+    grid-template-rows: minmax(0, 1fr) !important;
+    gap: 24px;
+    width: 100%;
+    height: 100%;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    flex: 1 1 0%;
+    align-items: stretch;
+    overflow: hidden !important;
+  }
+
+  .pdf-clover-wrapper,
+  .layout-clover-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+    gap: 20px;
+    width: 100%;
+    height: 100%;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    flex: 1 1 0%;
+    align-items: stretch;
+    overflow: hidden !important;
+  }
+
+  .pdf-col,
+  .two-cols-left,
+  .two-cols-right {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    justify-content: flex-start;
+    overflow: hidden;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+  }
+
+  /* 基础块与排版 */
+  .slide-block,
+  .pdf-block {
+    margin-bottom: 12px;
+    line-height: 1.6;
+  }
+
+  .slide-styled-block {
+    border-radius: 6px;
+    padding: 8px 14px;
+    margin: 6px 0;
+  }
+
+  span[style*="background-color"],
+  span[style*="background:"] {
+    border-radius: 3px;
+    padding: 1px 5px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  .slide-block h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 12px; }
+  .slide-block h2 { font-size: 1.7rem; font-weight: 600; margin-bottom: 10px; }
+  .slide-block h3 { font-size: 1.3rem; font-weight: 600; margin-bottom: 8px; }
+  .slide-block h4 { font-size: 1.15rem; font-weight: 600; margin-bottom: 6px; }
+  .slide-block p { font-size: 1.15rem; line-height: 1.6; }
+
+  /* 列表与多栏列表项 */
+  div.pdf-list-item {
+    display: flex !important;
+    flex-direction: column !important;
+    list-style: none !important;
+    padding-left: 0 !important;
+  }
+
+  .slide-block ul,
+  .slide-block ol,
+  .pdf-list {
+    padding-left: 1.35em;
+    margin: 6px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .slide-block ul,
+  .pdf-list--unordered {
+    list-style: disc !important;
+    list-style-type: disc !important;
+  }
+
+  .slide-block ol,
+  .pdf-list--ordered {
+    list-style: decimal !important;
+    list-style-type: decimal !important;
+  }
+
+  .slide-block li,
+  .pdf-list li {
+    font-size: 1.15rem;
+    line-height: 1.6;
+    display: list-item;
+  }
+
+  .pdf-task-item {
+    list-style: none !important;
+    margin-left: -1.1em;
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .slide-list-item-title,
+  .pdf-list li > h1,
+  .pdf-list li > h2,
+  .pdf-list li > h3,
+  .pdf-list li > h4 {
+    margin-top: 2px !important;
+    margin-bottom: 6px !important;
+    line-height: 1.35 !important;
+    font-weight: 700 !important;
+  }
+
+  .slide-list-item-desc,
+  .pdf-list li > p {
+    margin-top: 4px !important;
+    margin-bottom: 6px !important;
+    font-size: 1.05rem;
+    line-height: 1.55;
+    opacity: 0.92;
+  }
+
+  /* 超级块分栏首行标题去圆点居中 */
+  .has-superblock-cols .pdf-col > *:first-child .slide-list-item-title,
+  .has-superblock-cols .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6),
+  .has-superblock-cols .pdf-col > *:first-child p.slide-list-item-title,
+  .has-superblock-cols .pdf-col > *:first-child p:first-of-type,
+  .has-superblock-cols .pdf-col > *:first-child :is(ul, ol) > li:first-child,
+  .has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    list-style: none !important;
+    list-style-type: none !important;
+    text-align: center !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .has-superblock-cols .pdf-col > *:first-child :is(ul, ol) > li:first-child::marker {
+    content: "" !important;
+    display: none !important;
+  }
+
+  /* 全局标题字号规范化 */
+  &[data-normalize-headings="true"] .slidev-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+  &[data-normalize-headings="true"] .slide-content:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6) {
+    font-size: 1.7rem !important;
+    font-weight: 600 !important;
+    line-height: 1.25 !important;
+    margin-bottom: 10px !important;
+  }
+
+  &[data-normalize-headings="true"] .has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+  &[data-normalize-headings="true"] .has-superblock-cols .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    font-size: 1.3rem !important;
+    font-weight: 600 !important;
+    line-height: 1.3 !important;
+    margin-bottom: 8px !important;
+    text-align: center !important;
+  }
+
+  /* 多媒体自适应约束 */
+  .slide-media-block,
+  .slide-media-container,
+  .slide-video-container,
+  .slide-block--image,
+  .slide-block--video {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+    margin: 4px 0 !important;
+  }
+
+  .pdf-col > .slide-block:has(img),
+  .pdf-col > .slide-block:has(video),
+  .pdf-col > .slide-block:has(.slide-list-media),
+  .pdf-col > .slide-block:has(.slide-media-container) {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    margin-bottom: 0 !important;
+  }
+
+  .slide-list-media {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    margin-top: 6px !important;
+    overflow: hidden !important;
+  }
+
+  .slide-block img,
+  .slide-media-img,
+  .slide-video-player,
+  .slide-block video,
+  .slide-list-media img,
+  .slide-list-media video {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    width: auto !important;
+    height: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    object-fit: contain !important;
+    display: block !important;
+    margin: 0 auto !important;
+    border-radius: 6px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.16);
+  }
+
+  li:has(.slide-list-media) .slide-list-media img,
+  li:has(.slide-list-media) .slide-list-media video {
+    max-height: 330px !important;
+  }
+
+  /* 代码块、表格、引用框、Callout、链接与块引用标签 */
+  pre,
+  .shiki-container {
+    position: relative;
+    background: var(--slide-code-bg);
+    padding: 14px 18px;
+    border-radius: 8px;
+    font-family: "JetBrains Mono", Consolas, monospace;
+    font-size: 0.92rem;
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+    overflow-wrap: anywhere !important;
+    overflow: hidden !important;
+    max-width: 100% !important;
+    border: 1px solid rgba(125, 125, 125, 0.15);
+  }
+
+  .lang-badge {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    opacity: 0.5;
+  }
+
+  .code-line {
+    display: flex !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+    line-height: 1.55;
+  }
+
+  .code-line .line-no {
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+    min-width: 2.2em !important;
+    text-align: right !important;
+    margin-right: 12px !important;
+    opacity: 0.45 !important;
+  }
+
+  .code-line.shiki-dimmed {
+    opacity: 0.25;
+  }
+
+  .token-comment { color: #6b7280; font-style: italic; }
+  .token-keyword { color: #10b981; font-weight: 500; }
+  .token-string { color: #f59e0b; }
+  .token-number { color: #f97316; }
+  .token-type { color: #3b82f6; }
+
+  blockquote,
+  .pdf-quote {
+    border-left: 4px solid var(--slide-accent);
+    background: rgba(16, 185, 129, 0.08);
+    padding: 10px 16px;
+    border-radius: 0 6px 6px 0;
+    font-style: italic;
+    margin: 8px 0;
+  }
+
+  table,
+  .pdf-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 0.95rem;
+  }
+
+  table th,
+  table td,
+  .pdf-table th,
+  .pdf-table td {
+    border: 1px solid rgba(125, 125, 125, 0.22);
+    padding: 8px 12px;
+  }
+
+  table th,
+  .pdf-table th {
+    background: rgba(125, 125, 125, 0.12);
+    font-weight: 600;
+  }
+
+  .pdf-callout,
+  .slide-callout {
+    border-left: 4px solid var(--slide-accent);
+    background: rgba(59, 130, 246, 0.08);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 10px 0;
+  }
+
+  .pdf-callout-title,
+  .slide-callout-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+    color: var(--slide-accent);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px dashed currentColor;
+  }
+
+  .slidev-ref-tag,
+  a.slidev-ref-tag {
+    display: inline-flex;
+    align-items: center;
+    background: color-mix(in srgb, var(--slide-accent) 12%, transparent);
+    color: var(--slide-accent);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 0.88em;
+    border: 1px solid color-mix(in srgb, var(--slide-accent) 25%, transparent);
+    margin: 2px 4px 2px 0;
+  }
+
+  .slidev-block-ref {
+    display: block;
+    padding: 10px 14px;
+    background: color-mix(in srgb, var(--slide-accent) 8%, transparent);
+    border-left: 3px solid var(--slide-accent);
+    border-radius: 0 6px 6px 0;
+    margin: 8px 0;
+  }
+
+  kbd {
+    display: inline-block;
+    padding: 2px 7px;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 0.85em;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 5px;
+    margin: 0 2px;
   }
 }
 </style>
