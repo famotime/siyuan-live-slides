@@ -1,5 +1,7 @@
 # Slidev 演示文档导入方案与架构设计规范
 
+> 状态：**已交付**（`slidev-importer.ts` + `frontmatter-parser.ts` + `html-cleaner.ts` + `asset-importer.ts` 管线，UI 编排见 `useSlidevImport.ts`；实现随 RF-013 / RF-015 进一步解耦，模块映射见 [project-structure](./project-structure.md)）
+
 ## 1. 需求背景与设计目标
 
 Slidev 是一款面向开发者的基于 Markdown 的下一代演示文稿工具。随着思源笔记在个人知识库和结构化文档管理中的深入应用，用户期望将网络上分享或团队协同产出的 Slidev 演示文档快速引入思源笔记，实现：

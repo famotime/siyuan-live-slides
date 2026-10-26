@@ -49,11 +49,11 @@
 | ID | 开始日期 | 结束日期 | 验证命令 | 结果 | 已刷新文档 | 备注 |
 | --- | --- | --- | --- | --- | --- | --- |
 | 基线 | 2026-10-25 | 2026-10-25 | `npm test` | pass (581/581, 64 文件) | — | Phase 3 重构前基线已固化 |
-| RF-016 | 2026-10-25 | 2026-10-25 | `npm test -- tests/inspector-actions-domains.test.ts tests/inspector-actions.test.ts tests/clover-layout.test.ts` + 全量 `npm test` + `npm run typecheck` | pass (595/595, 65 文件) | 待最终统一刷新 | 门面从 1170 行精简至 97 行；saveAttr 与 saveAttrs 逻辑逐行等价，合并为薄包装；三领域模块均具备直接单测 |
-| RF-017 | 2026-10-25 | 2026-10-25 | `npm test -- tests/inspector-page-overrides.test.ts tests/inspector-state.test.ts tests/dom-attr-sync.test.ts` + 全量 `npm test` + `npm run typecheck` + `npm run build` | pass (602/602, 66 文件) | 待最终统一刷新 | 新增 `useInspectorPageOverrides.ts` 三级查找工厂；视图中 5 处重复 computed（~110 行）收敛为工厂调用；保留 currentSlideLayout 的长链回退不动以避免行为漂移 |
-| RF-018 | 2026-10-25 | 2026-10-25 | `npm test -- tests/standalone-runtime-sections.test.ts tests/export.test.ts` + 全量 `npm test` + `npm run typecheck` | pass (605/605, 67 文件) | 待最终统一刷新 | 主文件 1434 → 29 行；9 个功能分节模块（core-state/overview-dom/navigation-helpers/block-rendering/slide-rendering/lightbox/jump-badge/overview-layer/keyboard-scroll-init），输出字节级一致由快照基线证明 |
-| RF-019 | 2026-10-25 | 2026-10-25 | `npm test -- tests/preview-tab-title.test.ts tests/ui-lifecycle.test.ts` + 全量 `npm test` + `npm run typecheck` | pass (608/608, 67 文件) | 待最终统一刷新 | 入口 771 → 624 行；新增 `plugin/preview-tab-title.ts`（宿主接口 + 3 项模块直测）；插件类保留薄委托维护对外 API 兼容 |
-| RF-020 | 2026-10-25 | 2026-10-25 | `npm run typecheck` + 全量 `npm test` + `npm run build` | pass (608/608, 67 文件；dist 仅 index.js 无 kernel 残留) | 待最终统一刷新 | `api.ts` 622 → 230 行（62 导出精简至 16 个在用）；`kernel.ts` 已删除并清理 vite 入口 |
+| RF-016 | 2026-10-25 | 2026-10-25 | `npm test -- tests/inspector-actions-domains.test.ts tests/inspector-actions.test.ts tests/clover-layout.test.ts` + 全量 `npm test` + `npm run typecheck` | pass (595/595, 65 文件) | 已刷新（见 §6） | 门面从 1170 行精简至 97 行；saveAttr 与 saveAttrs 逻辑逐行等价，合并为薄包装；三领域模块均具备直接单测 |
+| RF-017 | 2026-10-25 | 2026-10-25 | `npm test -- tests/inspector-page-overrides.test.ts tests/inspector-state.test.ts tests/dom-attr-sync.test.ts` + 全量 `npm test` + `npm run typecheck` + `npm run build` | pass (602/602, 66 文件) | 已刷新（见 §6） | 新增 `useInspectorPageOverrides.ts` 三级查找工厂；视图中 5 处重复 computed（~110 行）收敛为工厂调用；保留 currentSlideLayout 的长链回退不动以避免行为漂移 |
+| RF-018 | 2026-10-25 | 2026-10-25 | `npm test -- tests/standalone-runtime-sections.test.ts tests/export.test.ts` + 全量 `npm test` + `npm run typecheck` | pass (605/605, 67 文件) | 已刷新（见 §6） | 主文件 1434 → 29 行；9 个功能分节模块（core-state/overview-dom/navigation-helpers/block-rendering/slide-rendering/lightbox/jump-badge/overview-layer/keyboard-scroll-init），输出字节级一致由快照基线证明 |
+| RF-019 | 2026-10-25 | 2026-10-25 | `npm test -- tests/preview-tab-title.test.ts tests/ui-lifecycle.test.ts` + 全量 `npm test` + `npm run typecheck` | pass (608/608, 67 文件) | 已刷新（见 §6） | 入口 771 → 624 行；新增 `plugin/preview-tab-title.ts`（宿主接口 + 3 项模块直测）；插件类保留薄委托维护对外 API 兼容 |
+| RF-020 | 2026-10-25 | 2026-10-25 | `npm run typecheck` + 全量 `npm test` + `npm run build` | pass (608/608, 67 文件；dist 仅 index.js 无 kernel 残留) | 已刷新（见 §6） | `api.ts` 622 → 230 行（62 导出精简至 16 个在用）；`kernel.ts` 已删除并清理 vite 入口 |
 
 ## 5. 决策与确认
 

@@ -1,6 +1,6 @@
 /**
  * 思源 Slidev 块属性协议字典与虚拟 AST 类型定义
- * 依据 docs/technical-specification-and-roadmap.md 规格实现
+ * 依据 docs/技术规格定义.md 规格实现
  */
 
 // 1. 文档全局级属性常量 (Document Scope)

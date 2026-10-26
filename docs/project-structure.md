@@ -1,6 +1,6 @@
 # 项目架构与目录结构 (Project Structure)
 
-> 最近刷新：2026-10-25（Phase 3 重构 RF-016 ~ RF-020 完成后）
+> 最近刷新：2026-10-26（Phase 3 重构 RF-016 ~ RF-020 完成后，随 docs 文档库整体刷新同步核对）
 
 ## 1. 架构概览
 
@@ -20,11 +20,13 @@
 
 ```text
 d:\MyCodingProjects\siyuan-slidev
-├── docs/                                   # 项目文档与技术规格书
+├── docs/                                   # 项目文档库（三类：现行文档 / 设计存档 / 规划期存档，索引见 docs/README.md）
 │   ├── project-structure.md                # 项目最新架构与模块映射（本文件）
+│   ├── 技术规格定义.md                      # custom-slidev-* 块属性协议字典（与 types/slidev-protocol.ts 对齐）
+│   ├── 思源笔记 Slidev 演示插件详细方案、实施进展与下一步研发计划.md   # 交付进展总览与研发排期
 │   ├── refactor-plan.md                    # 重构计划与执行日志 (RF-001 ~ RF-020)
-│   ├── USER-GUIDE.zh-CN.md                 # 详细中文使用指南
-│   └── USER-GUIDE.md                       # 详细英文使用指南
+│   ├── USER-GUIDE.zh-CN.md / USER-GUIDE.md # 中英文用户使用指南
+│   └── ...                                 # 其余设计存档与规划期存档（完整索引见 docs/README.md）
 ├── src/                                    # 插件源码目录
 │   ├── index.ts                            # [RF-007, RF-019] 插件入口主类（聚焦生命周期、编译调度与顶层协调，624 行）
 │   ├── main.ts                             # 前端挂载辅助入口（预览页签与 Dock 面板实例管理、编译消费者注册）
