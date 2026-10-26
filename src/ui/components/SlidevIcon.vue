@@ -215,13 +215,6 @@
       <line x1="12" y1="17" x2="12.01" y2="17" />
     </g>
 
-    <!-- 大纲缩略抽屉 (Outline) -->
-    <g v-else-if="name === 'outline'">
-      <line x1="3" y1="6" x2="21" y2="6" />
-      <line x1="3" y1="12" x2="21" y2="12" />
-      <line x1="3" y1="18" x2="21" y2="18" />
-    </g>
-
     <!-- 前后箭头 -->
     <g v-else-if="name === 'chevron-left'">
       <polyline points="15 18 9 12 15 6" />

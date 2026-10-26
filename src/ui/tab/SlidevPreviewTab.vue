@@ -48,16 +48,6 @@
 
       <!-- 右侧：全局演示工具操作 -->
       <div class="spm-slidev-tab__tools">
-        <!-- 大纲缩略图 -->
-        <button
-          class="spm-icon-btn b3-tooltips b3-tooltips__s"
-          aria-label="切换幻灯片大纲抽屉"
-          :class="{ 'is-primary': showOutline }"
-          @click="showOutline = !showOutline"
-        >
-          <SlidevIcon name="outline" />
-        </button>
-
         <!-- 缩略图总览 -->
         <button
           class="spm-icon-btn b3-tooltips b3-tooltips__s"
@@ -163,14 +153,6 @@
       >{{ jumpDisplay }}</div>
     </div>
 
-    <!-- 底部大纲检查器 -->
-    <SlideInspector
-      v-if="showOutline && currentSlides.length > 0"
-      :slides="currentSlides"
-      :current-active-page="currentPage"
-      @navigate="onNavigateOutline"
-      @refresh="onRefresh"
-    />
   </div>
 </template>
 
@@ -182,7 +164,6 @@ import { putFile, sql } from '@/api'
 import { EngineManager } from '@/engine/engine-manager'
 import { WebSandboxBridge } from '@/engine/web-sandbox-bridge'
 import type { IOpenPeekDrawerDetail } from '@/engine/web-sandbox-bridge'
-import SlideInspector from '@/ui/components/SlideInspector.vue'
 import SlidevIcon from '@/ui/components/SlidevIcon.vue'
 import ImmersionDrawerContainer from '@/ui/components/peek/ImmersionDrawerContainer.vue'
 import ProtylePeekDrawer from '@/ui/components/peek/ProtylePeekDrawer.vue'
@@ -195,7 +176,7 @@ import { buildStandaloneHtml, downloadHtmlFile } from '@/export/single-html-expo
 import { triggerPdfExport } from '@/export/pdf-exporter'
 import { getRuntimeSettings, buildSiYuanWebUrl } from '@/settings'
 import { createPageJumpInput, isEditableTarget } from './page-jump-input'
-import type { ISlidevDocument, ISlidevVirtualPage } from '@/types/slidev-protocol'
+import type { ISlidevDocument } from '@/types/slidev-protocol'
 
 const plugin = inject<Plugin>('plugin')
 const sandboxBridge = inject<WebSandboxBridge>('sandboxBridge', new WebSandboxBridge())
@@ -210,8 +191,6 @@ const isFullscreen = ref(false)
 const sandboxIframeRef = ref<HTMLIFrameElement | null>(null)
 const currentPage = ref(1)
 const totalPages = ref(1)
-const currentSlides = ref<ISlidevVirtualPage[]>([])
-const showOutline = ref(false)
 
 // 沉浸式速览抽屉状态
 const isDrawerOpen = ref(false)
@@ -484,15 +463,6 @@ function onNextPage() {
   }
 }
 
-function onNavigateOutline(pageIndex: number) {
-  currentPage.value = pageIndex
-  if (engineMode.value === 'pro-cli') {
-    engineManager.nativeBridge.navigateToPage(pageIndex)
-  } else {
-    sandboxBridge.navigatePage(pageIndex)
-  }
-}
-
 function onRefresh() {
   if (plugin && typeof (plugin as any).compileCurrentDocument === 'function') {
     ;(plugin as any).compileCurrentDocument()
@@ -602,7 +572,6 @@ defineExpose({
       pinnedDocId.value = doc.docId
     }
 
-    currentSlides.value = doc.slides
     totalPages.value = doc.slides.length
     cursorTracker.setDocId(doc.docId)
     cursorTracker.updateSlidesIndex(doc.slides)
