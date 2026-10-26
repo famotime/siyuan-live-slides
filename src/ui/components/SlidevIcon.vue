@@ -230,6 +230,31 @@
       <polyline points="9 18 15 12 9 6" />
     </g>
 
+    <!-- 连续快进/快退箭头 (Chevrons Left / Right) -->
+    <g v-else-if="name === 'chevrons-left'">
+      <polyline points="11 17 6 12 11 7" />
+      <polyline points="18 17 13 12 18 7" />
+    </g>
+    <g v-else-if="name === 'chevrons-right'">
+      <polyline points="13 17 18 12 13 7" />
+      <polyline points="6 17 11 12 6 7" />
+    </g>
+
+    <!-- 播放与暂停 (Play / Pause) -->
+    <g v-else-if="name === 'play'">
+      <polygon points="6 3 20 12 6 21 6 3" />
+    </g>
+    <g v-else-if="name === 'pause'">
+      <line x1="10" y1="4" x2="10" y2="20" />
+      <line x1="14" y1="4" x2="14" y2="20" />
+    </g>
+
+    <!-- 时钟 (Clock) -->
+    <g v-else-if="name === 'clock'">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </g>
+
     <!-- 复制 ID -->
     <g v-else-if="name === 'copy'">
       <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />

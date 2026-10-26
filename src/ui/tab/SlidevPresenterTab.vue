@@ -7,27 +7,53 @@
   >
     <!-- 顶栏状态 -->
     <header class="presenter-header">
-      <div class="presenter-title">
-        <span class="title-name">🎤 Slidev 演讲者控制台</span>
-        <span class="title-divider">|</span>
-        <span>第 {{ currentPage }} / {{ totalPages || 1 }} 页</span>
-        <span v-if="currentMaxStep > 0" class="header-step-badge">
-          ⚡ 步进 {{ currentStep }} / {{ currentMaxStep }}
-        </span>
+      <div class="presenter-title-area">
+        <div class="presenter-brand">
+          <SlidevIcon name="presenter" class="brand-icon" />
+          <span class="title-name">演讲者控制台</span>
+        </div>
+        <div class="header-pills">
+          <span class="pill pill-page">P.{{ currentPage }} / {{ totalPages || 1 }}</span>
+          <span v-if="currentMaxStep > 0" class="pill pill-step">
+            <SlidevIcon name="step" class="pill-icon" />
+            步进 {{ currentStep }} / {{ currentMaxStep }}
+          </span>
+        </div>
       </div>
 
-      <div class="header-timer">
+      <div class="header-toolbar">
         <button
-          class="btn-popout-window"
-          title="将大屏放映弹出为 16:9 独立窗口，便于会议软件按窗口共享或双屏扩展投屏"
+          class="btn-tool b3-tooltips b3-tooltips__s"
+          aria-label="弹出大屏放映独立窗口 (16:9)"
           @click="openStandaloneWindow"
         >
-          🗗 弹出独立放映窗口
+          <SlidevIcon name="window" />
+          <span class="btn-tool-label">独立放映</span>
         </button>
-        <div class="timer-badge">⏱ 已演讲: {{ formattedTime }}</div>
-        <div class="timer-controls">
-          <button @click="toggleTimer">{{ isTimerRunning ? '暂停' : '开始' }}</button>
-          <button @click="resetTimer">重置</button>
+
+        <div class="timer-capsule">
+          <SlidevIcon name="clock" class="timer-icon" />
+          <span class="timer-digits">{{ formattedTime }}</span>
+          <div class="timer-actions">
+            <button
+              class="timer-btn b3-tooltips b3-tooltips__s"
+              :aria-label="isTimerRunning ? '暂停计时' : '继续计时'"
+              @click="toggleTimer"
+            >
+              <SlidevIcon :name="isTimerRunning ? 'pause' : 'play'" />
+            </button>
+            <button
+              class="timer-btn b3-tooltips b3-tooltips__s"
+              aria-label="重置计时"
+              @click="resetTimer"
+            >
+              <SlidevIcon name="reset" />
+            </button>
+          </div>
+        </div>
+
+        <div class="wall-clock b3-tooltips b3-tooltips__sw" aria-label="系统当前时间">
+          <span>{{ wallClockTime }}</span>
         </div>
       </div>
     </header>
@@ -38,12 +64,15 @@
       <section class="slide-panels">
         <div class="panel-box current-slide-panel">
           <div class="panel-header">
-            <span>当前大屏放映 (Page {{ currentPage }})</span>
+            <div class="panel-header-left">
+              <span class="panel-tag is-current">当前放映</span>
+              <span class="panel-page-num">P.{{ currentPage }}</span>
+            </div>
             <div class="panel-header-meta">
               <span v-if="currentMaxStep > 0" class="panel-step-pill">
-                步进: {{ currentStep }} / {{ currentMaxStep }}
+                步进 {{ currentStep }} / {{ currentMaxStep }}
               </span>
-              <span>布局: {{ currentSlide?.frontmatter?.layout || 'default' }}</span>
+              <span class="panel-layout-pill">{{ currentSlide?.frontmatter?.layout || 'default' }}</span>
             </div>
           </div>
           <div
@@ -82,14 +111,19 @@
 
         <div
           class="panel-box next-slide-panel"
-          :class="{ 'is-clickable': Boolean(nextSlide) }"
-          :title="nextSlide ? '点击直接跳至下一页' : ''"
+          :class="{ 'is-clickable': Boolean(nextSlide), 'b3-tooltips b3-tooltips__n': Boolean(nextSlide) }"
+          :aria-label="nextSlide ? '点击直接跳至下一页' : ''"
           @click="nextSlide && goNextSlide()"
         >
           <div class="panel-header">
-            <span>下一页预告 (Page {{ currentPage + 1 }})</span>
-            <span v-if="currentPage >= totalPages">已到达最后一页</span>
-            <span v-else-if="nextSlide">布局: {{ nextSlide.frontmatter?.layout || 'default' }}</span>
+            <div class="panel-header-left">
+              <span class="panel-tag">下一页预告</span>
+              <span v-if="currentPage < totalPages" class="panel-page-num">P.{{ currentPage + 1 }}</span>
+            </div>
+            <div class="panel-header-meta">
+              <span v-if="currentPage >= totalPages" class="panel-end-pill">已到尾页</span>
+              <span v-else-if="nextSlide" class="panel-layout-pill">{{ nextSlide.frontmatter?.layout || 'default' }}</span>
+            </div>
           </div>
           <div
             ref="nextPreviewRef"
@@ -126,32 +160,66 @@
         </div>
       </section>
 
-      <!-- 右侧：演讲者提词卡 (Notes) -->
+      <!-- 右侧：演讲者私有讲稿备忘卡 (Notes) -->
       <section class="notes-panel">
         <div class="panel-header">
-          <span>📝 演讲者私有备忘录 (Speaker Notes)</span>
+          <div class="panel-header-left">
+            <SlidevIcon name="notes" class="panel-title-icon" />
+            <span>讲稿备忘</span>
+          </div>
           <div class="notes-size-controls">
-            <button @click="decreaseFontSize">A-</button>
+            <button
+              class="notes-btn b3-tooltips b3-tooltips__w"
+              aria-label="减小字体"
+              :disabled="notesFontSize <= 14"
+              @click="decreaseFontSize"
+            >
+              <SlidevIcon name="minus" />
+            </button>
             <span class="notes-size-value">{{ notesFontSize }}px</span>
-            <button @click="increaseFontSize">A+</button>
+            <button
+              class="notes-btn b3-tooltips b3-tooltips__w"
+              aria-label="增大字体"
+              :disabled="notesFontSize >= 36"
+              @click="increaseFontSize"
+            >
+              <SlidevIcon name="plus" />
+            </button>
           </div>
         </div>
-        <div class="notes-content" :style="{ fontSize: notesFontSize + 'px' }">
+        <div
+          class="notes-content"
+          :class="{ 'is-empty': !currentNotes }"
+          :style="{ fontSize: notesFontSize + 'px' }"
+        >
           {{ currentNotes || '（本页未设置演讲者备忘录）' }}
         </div>
       </section>
     </main>
 
-    <!-- 空数据等待态：显式给出原因与自救入口，替代无声占位符 -->
+    <!-- 空数据等待态：显式给出原因与自救入口 -->
     <main v-else class="presenter-empty">
-      <div class="empty-icon">📡</div>
-      <h2>等待大屏放映数据…</h2>
-      <p>演讲者控制台需要「演示预览」页签（大屏放映端）提供幻灯片数据。</p>
-      <p class="empty-hint">若预览页签在另一窗口放映，本控制台将自动通过广播信道接入。</p>
+      <div class="empty-icon-wrap">
+        <SlidevIcon name="refresh" class="empty-icon" />
+      </div>
+      <h2>等待大屏放映数据</h2>
+      <p>未检测到活跃的幻灯片数据，请先开启大屏放映端。</p>
       <div class="empty-actions">
-        <button class="btn-empty-action" @click="openBigScreen">打开大屏放映页签</button>
-        <button class="btn-empty-action btn-empty-action--popout" @click="openStandaloneWindow">
-          🗗 弹出独立放映窗口
+        <button
+          class="btn-empty-action b3-tooltips b3-tooltips__n"
+          aria-label="在思源中打开底部演示预览页签"
+          @click="openBigScreen"
+        >
+          <SlidevIcon name="presenter" />
+          <span>打开大屏放映页签</span>
+        </button>
+        <button
+          class="btn-empty-action btn-empty-action--popout b3-tooltips b3-tooltips__n"
+          aria-label="将放映端弹出为独立窗口 (16:9)"
+          @click="openStandaloneWindow"
+        >
+          <SlidevIcon name="window" />
+          <span>弹出独立放映窗口</span>
         </button>
       </div>
     </main>
@@ -160,48 +228,71 @@
     <footer class="presenter-actions">
       <div class="nav-btn-group">
         <button
-          class="btn-nav-slide"
+          class="btn-nav btn-nav--slide b3-tooltips b3-tooltips__ne"
           :disabled="currentPage <= 1"
-          title="跳过本页步进，直接返回上一页 (Shift+Left)"
+          aria-label="快速返回上一页 (Shift + ←)"
           @click="goPrevSlide"
         >
-          ⏮ 上一页
+          <SlidevIcon name="chevrons-left" />
+          <span>上一页</span>
         </button>
         <button
-          class="btn-nav"
+          class="btn-nav btn-nav--step b3-tooltips b3-tooltips__n"
           :disabled="!canGoPrevStep"
-          title="回退一步或返回上一页 (Left)"
+          aria-label="回退一步 (←)"
           @click="goPrevStep"
         >
-          ◀ 上一步 (Left)
+          <SlidevIcon name="chevron-left" />
+          <span>上一步</span>
         </button>
       </div>
 
       <div class="actions-center">
-        <span>进度: {{ progressPercent }}%</span>
-        <span v-if="currentMaxStep > 0" class="step-progress-text">
-          步进: {{ currentStep }} / {{ currentMaxStep }}
-        </span>
-        <span class="hint-text">空格/方向键逐步触发，Shift+方向键整页快跳</span>
-        <button class="btn-ghost" @click="restartPresentation">⏮ 重头放映</button>
+        <div class="center-meta">
+          <span class="progress-pill">{{ progressPercent }}%</span>
+        </div>
+        <button
+          class="btn-restart b3-tooltips b3-tooltips__n"
+          aria-label="从第一页重新放映 (Home)"
+          @click="restartPresentation"
+        >
+          <SlidevIcon name="reset" />
+          <span>重头放映</span>
+        </button>
       </div>
 
       <div class="nav-btn-group">
+        <!-- 步进点阵指示器：紧邻下一步按钮左侧，就近感知 -->
+        <div
+          v-if="currentMaxStep > 0"
+          class="step-dots-bar b3-tooltips b3-tooltips__n"
+          :aria-label="`步进进度: ${currentStep} / ${currentMaxStep}`"
+        >
+          <span
+            v-for="idx in currentMaxStep"
+            :key="idx"
+            class="step-dot"
+            :class="{ 'is-active': idx <= currentStep }"
+          />
+          <span class="step-dots-text">{{ currentStep }}/{{ currentMaxStep }}</span>
+        </div>
         <button
-          class="btn-nav"
+          class="btn-nav btn-nav--step btn-nav--primary b3-tooltips b3-tooltips__n"
           :disabled="!canGoNextStep"
-          title="触发下一个 v-click 对象显示或进入下一页 (Right / Space)"
+          aria-label="触发下一步骤或进入下一页 (Space / →)"
           @click="goNextStep"
         >
-          {{ currentStep < currentMaxStep ? `下一步 (${currentStep + 1}/${currentMaxStep}) ▶` : '下一步 (Right) ▶' }}
+          <span>下一步</span>
+          <SlidevIcon name="chevron-right" />
         </button>
         <button
-          class="btn-nav-slide"
+          class="btn-nav btn-nav--slide b3-tooltips b3-tooltips__nw"
           :disabled="currentPage >= totalPages"
-          title="跳过本页剩余步进，直接进入下一页 (Shift+Right)"
+          aria-label="跳过本页剩余步骤，直接进入下一页 (Shift + →)"
           @click="goNextSlide"
         >
-          下一页 ⏭
+          <span>下一页</span>
+          <SlidevIcon name="chevrons-right" />
         </button>
       </div>
     </footer>
@@ -211,6 +302,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted, inject } from 'vue'
 import type { Plugin } from 'siyuan'
+import SlidevIcon from '@/ui/components/SlidevIcon.vue'
 import { WebSandboxBridge } from '@/engine/web-sandbox-bridge'
 import type {
   ISlidevDocument,
@@ -312,7 +404,7 @@ watch(
   { flush: 'post' },
 )
 
-// 计时器状态
+// 演讲时长计时器
 const elapsedSeconds = ref(0)
 const isTimerRunning = ref(true)
 let timerInterval: number | null = null
@@ -329,6 +421,17 @@ function toggleTimer() {
 
 function resetTimer() {
   elapsedSeconds.value = 0
+}
+
+// 现实时间时钟 (Wall Clock)
+const wallClockTime = ref('')
+let clockInterval: number | null = null
+
+function updateWallClock() {
+  const now = new Date()
+  const h = String(now.getHours()).padStart(2, '0')
+  const m = String(now.getMinutes()).padStart(2, '0')
+  wallClockTime.value = `${h}:${m}`
 }
 
 // 当前页与下一页计算
@@ -407,7 +510,7 @@ function increaseFontSize() {
   if (notesFontSize.value < 36) notesFontSize.value += 2
 }
 function decreaseFontSize() {
-  if (notesFontSize.value > 12) notesFontSize.value -= 2
+  if (notesFontSize.value > 14) notesFontSize.value -= 2
 }
 
 const progressPercent = computed(() => {
@@ -415,7 +518,7 @@ const progressPercent = computed(() => {
   return Math.round((currentPage.value / totalPages.value) * 100)
 })
 
-// 跨窗口广播信道：与预览沙盒（可能在另一思源窗口）双向同步页码、步进与数据
+// 跨窗口广播信道：与预览沙盒双向同步页码、步进与数据
 let broadcastChannel: BroadcastChannel | null = null
 try {
   broadcastChannel = new BroadcastChannel('siyuan-slidev-sync')
@@ -455,11 +558,6 @@ try {
   broadcastChannel = null
 }
 
-/**
- * 翻页与步进动作双通道幂等下发：
- * - 宿主桥接 navigatePage(page, step)：同窗口预览沙盒的权威通路
- * - BroadcastChannel SYNC_PAGE { page, step }：预览沙盒位于另一独立窗口时的跨窗口通路
- */
 function syncToMain(page: number, step = 0) {
   const pageNum = Number(page) || 1
   const stepNum = Math.max(0, Number(step) || 0)
@@ -474,9 +572,6 @@ function syncToMain(page: number, step = 0) {
   } catch (e) {}
 }
 
-/**
- * 步进优先向后：先走完当前页内的 v-click / 动态蒙版步进，全部触发后再进入下一页
- */
 function goNextStep() {
   if (currentStep.value < currentMaxStep.value) {
     currentStep.value++
@@ -490,9 +585,6 @@ function goNextStep() {
   }
 }
 
-/**
- * 步进优先向前：当前页已触发步进时先回退一步，步进归零后再返回上一页
- */
 function goPrevStep() {
   if (currentStep.value > 0) {
     currentStep.value--
@@ -506,9 +598,6 @@ function goPrevStep() {
   }
 }
 
-/**
- * 整页快跳向后：直接跳过当前页剩余步进，进入下一页
- */
 function goNextSlide() {
   if (currentPage.value < totalPages.value) {
     currentPage.value++
@@ -517,9 +606,6 @@ function goNextSlide() {
   }
 }
 
-/**
- * 整页快跳向前：直接返回上一页起始态
- */
 function goPrevSlide() {
   if (currentPage.value > 1) {
     currentPage.value--
@@ -550,10 +636,8 @@ function openStandaloneWindow() {
 }
 
 function onKeyDown(e: KeyboardEvent) {
-  // 焦点落在按钮上时空格交给原生点击，避免与翻页双触发
   if (e.key === ' ' && (e.target as HTMLElement)?.closest?.('button')) return
 
-  // Shift + 左右方向键 或 上下方向键：直接整页快跳
   if ((e.shiftKey && e.key === 'ArrowRight') || e.key === 'ArrowDown') {
     e.preventDefault()
     goNextSlide()
@@ -565,7 +649,6 @@ function onKeyDown(e: KeyboardEvent) {
     return
   }
 
-  // 默认左右方向键 / 空格 / PageDown / PageUp：步进优先
   if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
     e.preventDefault()
     goNextStep()
@@ -575,7 +658,6 @@ function onKeyDown(e: KeyboardEvent) {
   }
 }
 
-// 滚轮翻页/步进（备注区可滚动时优先滚动备注）
 let lastWheelTime = 0
 const WHEEL_COOLDOWN_MS = 280
 const WHEEL_DELTA_THRESHOLD = 15
@@ -606,7 +688,9 @@ onMounted(() => {
     }
   }, 1000)
 
-  // 同窗口权威通路：沙盒每次翻页或步进都经宿主桥接上报 SLIDE_CHANGED
+  updateWallClock()
+  clockInterval = window.setInterval(updateWallClock, 1000)
+
   unbindSlideChanged = sandboxBridge.onSlideChanged((page, total, _blockId, step, maxStep) => {
     currentPage.value = page
     if (total > 0) bridgeTotal.value = total
@@ -614,12 +698,10 @@ onMounted(() => {
     if (typeof maxStep === 'number') bridgeMaxStep.value = Math.max(0, maxStep)
   })
 
-  // 广播信道：请求任何窗口中的预览沙盒立即回放当前页码与数据
   try {
     broadcastChannel?.postMessage({ type: 'REQUEST_SYNC' })
   } catch (e) {}
 
-  // 宿主侧兜底：本窗口已编译过文档时直接取用，避免等待广播应答
   const latestDoc = (plugin as any)?.latestCompiledDoc as ISlidevDocument | null | undefined
   if (latestDoc?.slides?.length) {
     slides.value = latestDoc.slides
@@ -642,6 +724,10 @@ onUnmounted(() => {
     window.clearInterval(timerInterval)
     timerInterval = null
   }
+  if (clockInterval) {
+    window.clearInterval(clockInterval)
+    clockInterval = null
+  }
   if (unbindSlideChanged) unbindSlideChanged()
   if (typeof window !== 'undefined') {
     window.removeEventListener('resize', measurePreviewContainers)
@@ -657,7 +743,6 @@ onUnmounted(() => {
 })
 
 defineExpose({
-  /** 宿主推送全量文档数据（与 Dock 面板同源的直连通路） */
   updateDocument(doc: ISlidevDocument) {
     if (doc?.slides?.length) {
       slides.value = doc.slides
@@ -670,73 +755,119 @@ defineExpose({
 </script>
 
 <style scoped>
+/* ==========================================================================
+   演讲者视图语义化 Token 体系（自动适配思源亮色与暗色模式）
+   ========================================================================== */
 .spm-presenter-tab {
-  --bg-dark: #0f1117;
-  --card-bg: #1a1d26;
-  --border-color: #2e3346;
-  --text-main: #f1f5f9;
-  --text-muted: #94a3b8;
-  --accent-color: #3b82f6;
-  --accent-green: #10b981;
+  /* 基础表面与背景 */
+  --pres-bg: var(--b3-theme-background, #ffffff);
+  --pres-surface: var(--b3-theme-surface, #f8fafc);
+  --pres-surface-card: var(--b3-theme-surface, #ffffff);
+  --pres-surface-hover: var(--b3-list-hover, rgba(0, 0, 0, 0.04));
+  --pres-border: var(--b3-border-color, rgba(0, 0, 0, 0.09));
+  --pres-border-subtle: rgba(140, 140, 140, 0.16);
+
+  /* 文本层次：严格满足 WCAG AAA 对比度 */
+  --pres-text-primary: var(--b3-theme-on-background, #1e293b);
+  --pres-text-secondary: var(--b3-theme-on-surface, #475569);
+  --pres-text-muted: var(--b3-theme-on-surface-light, #94a3b8);
+
+  /* 品牌色与状态色 */
+  --pres-primary: var(--b3-theme-primary, #3b82f6);
+  --pres-primary-rgb: var(--b3-theme-primary-rgb, 59, 130, 246);
+  --pres-primary-bg: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.1);
+  --pres-primary-border: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.32);
+  --pres-primary-hover: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.18);
+
+  --pres-success: #10b981;
+  --pres-success-bg: rgba(16, 185, 129, 0.12);
+  --pres-success-border: rgba(16, 185, 129, 0.3);
+
+  /* 幻灯片缩略图外托盘底色与阴影 */
+  --pres-preview-tray: rgba(0, 0, 0, 0.035);
+  --pres-preview-border: rgba(0, 0, 0, 0.08);
+  --pres-preview-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   user-select: none;
-  background: var(--bg-dark);
-  color: var(--text-main);
-  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--pres-bg);
+  color: var(--pres-text-primary);
+  font-family: var(--b3-font-family, system-ui, -apple-system, sans-serif);
   outline: none;
-  /* 以容器宽度驱动响应式：页签可能停靠右侧窄栏、主窗口或独立窗口，媒体查询无法感知 */
   container-type: inline-size;
+}
+
+/* 暗色主题增强优化 */
+:global(.body--dark) .spm-presenter-tab,
+:global([data-theme-mode="dark"]) .spm-presenter-tab {
+  --pres-preview-tray: #0e1017;
+  --pres-preview-border: rgba(255, 255, 255, 0.1);
+  --pres-preview-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --pres-border-subtle: rgba(255, 255, 255, 0.08);
 }
 
 .spm-presenter-tab * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  /* 关键防线：杜绝 flex/grid 子项以内容最小宽度撑破容器导致整栏被挤出屏幕 */
   min-width: 0;
 }
 
-/* Top Bar */
+/* ==========================================================================
+   Header: 顶栏状态与工具条 (确保 overflow: visible 防止 tooltip 被裁剪)
+   ========================================================================== */
 .presenter-header {
-  height: 52px;
+  height: 48px;
   flex-shrink: 0;
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--border-color);
+  background: var(--pres-surface);
+  border-bottom: 1px solid var(--pres-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 0 20px;
+  gap: 12px;
+  padding: 0 16px;
+  overflow: visible;
+  position: relative;
+  z-index: 10;
 }
 
-.presenter-title {
-  font-size: 14px;
-  font-weight: 700;
+.presenter-title-area {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
 }
 
-.title-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
+.presenter-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pres-text-primary);
+  flex-shrink: 0;
 }
 
-.title-divider {
-  opacity: 0.5;
+.brand-icon {
+  font-size: 16px;
+  color: var(--pres-primary);
 }
 
-.header-step-badge {
-  background: rgba(59, 130, 246, 0.18);
-  color: #60a5fa;
-  border: 1px solid rgba(59, 130, 246, 0.38);
+.header-pills {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 2px 8px;
   border-radius: 999px;
   font-size: 11px;
@@ -744,124 +875,161 @@ defineExpose({
   white-space: nowrap;
 }
 
-.header-timer {
+.pill-page {
+  background: var(--pres-surface-hover);
+  color: var(--pres-text-secondary);
+  border: 1px solid var(--pres-border-subtle);
+}
+
+.pill-step {
+  background: var(--pres-primary-bg);
+  color: var(--pres-primary);
+  border: 1px solid var(--pres-primary-border);
+}
+
+.pill-icon {
+  font-size: 11px;
+}
+
+.header-toolbar {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
-  font-family: "JetBrains Mono", Consolas, monospace;
-  font-size: 15px;
 }
 
-.btn-popout-window {
-  background: rgba(59, 130, 246, 0.14);
-  border: 1px solid rgba(59, 130, 246, 0.45);
-  color: #60a5fa;
+.btn-tool {
+  background: var(--pres-primary-bg);
+  border: 1px solid var(--pres-primary-border);
+  color: var(--pres-primary);
   padding: 4px 10px;
-  border-radius: 5px;
+  border-radius: 6px;
   font-size: 12px;
-  font-weight: 600;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-weight: 500;
   cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-}
-
-.btn-popout-window:hover {
-  background: rgba(59, 130, 246, 0.28);
-  border-color: #60a5fa;
-  color: #ffffff;
-}
-
-.timer-badge {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--accent-green);
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.timer-controls {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-}
-
-.timer-controls button,
-.notes-size-controls button,
-.btn-ghost,
-.btn-empty-action {
-  background: transparent;
-  border: 1px solid var(--border-color);
-  color: var(--text-muted);
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  cursor: pointer;
   white-space: nowrap;
+  transition: all 0.15s ease;
 }
 
-.timer-controls button:hover,
-.notes-size-controls button:hover,
-.btn-ghost:hover,
-.btn-empty-action:hover {
-  background: var(--border-color);
-  color: var(--text-main);
+.btn-tool:hover {
+  background: var(--pres-primary-hover);
+  border-color: var(--pres-primary);
 }
 
-/* Main Grid */
+.timer-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--pres-success-bg);
+  border: 1px solid var(--pres-success-border);
+  color: var(--pres-success);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.timer-icon {
+  font-size: 14px;
+}
+
+.timer-digits {
+  letter-spacing: 0.5px;
+}
+
+.timer-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 2px;
+}
+
+.timer-btn {
+  background: transparent;
+  border: none;
+  color: var(--pres-success);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.timer-btn:hover {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.wall-clock {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 13px;
+  color: var(--pres-text-muted);
+  font-weight: 500;
+  padding: 0 4px;
+}
+
+/* ==========================================================================
+   Main Grid: 左右主网格布局
+   ========================================================================== */
 .presenter-grid {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-  gap: 16px;
-  padding: 16px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+  gap: 14px;
+  padding: 14px;
   overflow: hidden;
 }
 
 .slide-panels {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   min-height: 0;
 }
 
 .panel-box {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
+  background: var(--pres-surface-card);
+  border: 1px solid var(--pres-border);
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   min-height: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .current-slide-panel {
-  flex: 1.4;
+  flex: 1.35;
 }
 
 .next-slide-panel {
   flex: 1;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .next-slide-panel.is-clickable {
   cursor: pointer;
-  transition: border-color 0.15s ease;
 }
 
 .next-slide-panel.is-clickable:hover {
-  border-color: var(--accent-color);
+  border-color: var(--pres-primary);
+  box-shadow: 0 2px 8px rgba(var(--pres-primary-rgb), 0.15);
 }
 
 .panel-header {
-  padding: 8px 14px;
+  padding: 6px 12px;
   font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  background: rgba(0, 0, 0, 0.2);
-  border-bottom: 1px solid var(--border-color);
+  font-weight: 500;
+  color: var(--pres-text-secondary);
+  background: var(--pres-surface);
+  border-bottom: 1px solid var(--pres-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -870,26 +1038,66 @@ defineExpose({
   white-space: nowrap;
 }
 
-.panel-header span {
-  overflow: hidden;
-  text-overflow: ellipsis;
+.panel-header-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.panel-title-icon {
+  font-size: 14px;
+  color: var(--pres-primary);
+}
+
+.panel-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--pres-surface-hover);
+  color: var(--pres-text-secondary);
+}
+
+.panel-tag.is-current {
+  background: var(--pres-primary-bg);
+  color: var(--pres-primary);
+}
+
+.panel-page-num {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 11px;
+  color: var(--pres-text-muted);
 }
 
 .panel-header-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
 .panel-step-pill {
-  background: rgba(59, 130, 246, 0.18);
-  color: #60a5fa;
-  border: 1px solid rgba(59, 130, 246, 0.4);
-  padding: 1px 7px;
+  background: var(--pres-primary-bg);
+  color: var(--pres-primary);
+  border: 1px solid var(--pres-primary-border);
+  padding: 1px 6px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
+}
+
+.panel-layout-pill {
+  font-size: 10px;
+  color: var(--pres-text-muted);
+  border: 1px solid var(--pres-border-subtle);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.panel-end-pill {
+  font-size: 11px;
+  color: var(--pres-text-muted);
 }
 
 .panel-preview {
@@ -899,22 +1107,22 @@ defineExpose({
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 7px;
-  background: #12141b;
+  padding: 8px;
+  background: var(--pres-preview-tray);
   overflow: hidden;
   position: relative;
 }
 
 .panel-preview--dim {
-  opacity: 0.88;
+  opacity: 0.92;
 }
 
 .presenter-thumb-box {
   position: relative;
   overflow: hidden;
   border-radius: 6px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: var(--pres-preview-shadow);
+  border: 1px solid var(--pres-preview-border);
   flex-shrink: 0;
 }
 
@@ -939,9 +1147,9 @@ defineExpose({
 }
 
 .panel-fallback h2 {
-  font-size: clamp(1.05rem, 4cqi, 1.6rem);
-  margin-bottom: 8px;
-  color: #60a5fa;
+  font-size: clamp(1rem, 3.6cqi, 1.4rem);
+  margin-bottom: 6px;
+  color: var(--pres-primary);
   width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -949,55 +1157,89 @@ defineExpose({
 }
 
 .panel-fallback p {
-  font-size: clamp(0.8rem, 2.6cqi, 1.05rem);
-  opacity: 0.8;
+  font-size: clamp(0.78rem, 2.4cqi, 0.95rem);
+  color: var(--pres-text-muted);
   width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Notes Panel */
+/* ==========================================================================
+   Notes Panel: 讲稿备忘区
+   ========================================================================== */
 .notes-panel {
   min-height: 0;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
+  background: var(--pres-surface-card);
+  border: 1px solid var(--pres-border);
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .notes-size-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-shrink: 0;
 }
 
-.notes-size-controls button {
-  padding: 1px 6px;
+.notes-btn {
+  background: transparent;
+  border: 1px solid var(--pres-border);
+  color: var(--pres-text-secondary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.notes-btn:hover:not(:disabled) {
+  background: var(--pres-surface-hover);
+  color: var(--pres-text-primary);
+}
+
+.notes-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .notes-size-value {
+  font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 11px;
-  opacity: 0.8;
+  color: var(--pres-text-muted);
+  min-width: 32px;
+  text-align: center;
 }
 
 .notes-content {
   flex: 1;
   min-height: 0;
   padding: 20px;
-  font-size: 1.25rem;
   line-height: 1.8;
   overflow-y: auto;
   overflow-x: hidden;
   white-space: pre-wrap;
   word-break: break-word;
-  color: #e2e8f0;
+  color: var(--pres-text-primary);
+  user-select: text;
 }
 
-/* Empty state */
+.notes-content.is-empty {
+  color: var(--pres-text-muted);
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Empty State: 空数据引导态
+   ========================================================================== */
 .presenter-empty {
   flex: 1;
   min-height: 0;
@@ -1005,64 +1247,96 @@ defineExpose({
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   padding: 40px;
   text-align: center;
-  background: #181920;
+  background: var(--pres-surface);
+}
+
+.empty-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--pres-primary-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .empty-icon {
-  font-size: 42px;
+  font-size: 26px;
+  color: var(--pres-primary);
 }
 
 .presenter-empty h2 {
-  font-size: 1.5rem;
-  color: #60a5fa;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--pres-text-primary);
 }
 
 .presenter-empty p {
-  font-size: 1rem;
-  color: var(--text-muted);
-}
-
-.empty-hint {
-  opacity: 0.75;
-  font-size: 0.85rem !important;
+  font-size: 0.95rem;
+  color: var(--pres-text-muted);
+  max-width: 420px;
+  line-height: 1.6;
 }
 
 .empty-actions {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
   margin-top: 10px;
 }
 
 .btn-empty-action {
-  padding: 6px 18px;
+  padding: 6px 16px;
   font-size: 13px;
-  border-color: var(--accent-color);
-  color: var(--accent-color);
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid var(--pres-border);
+  background: var(--pres-surface-card);
+  color: var(--pres-text-primary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn-empty-action:hover {
+  background: var(--pres-surface-hover);
+  border-color: var(--pres-primary);
 }
 
 .btn-empty-action--popout {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
-  font-weight: 600;
+  background: var(--pres-primary-bg);
+  border-color: var(--pres-primary-border);
+  color: var(--pres-primary);
 }
 
-/* Bottom Action Bar */
+.btn-empty-action--popout:hover {
+  background: var(--pres-primary-hover);
+  border-color: var(--pres-primary);
+}
+
+/* ==========================================================================
+   Bottom Action Bar: 底栏控制 (确保 overflow: visible 防止 tooltip 被截断)
+   ========================================================================== */
 .presenter-actions {
   min-height: 48px;
   flex-shrink: 0;
-  background: var(--card-bg);
-  border-top: 1px solid var(--border-color);
+  background: var(--pres-surface);
+  border-top: 1px solid var(--pres-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 6px 20px;
+  padding: 6px 16px;
+  overflow: visible;
+  position: relative;
+  z-index: 10;
 }
 
 .nav-btn-group {
@@ -1073,73 +1347,127 @@ defineExpose({
 }
 
 .btn-nav {
-  background: var(--accent-color);
-  color: white;
-  border: none;
-  padding: 6px 14px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.btn-nav:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.btn-nav-slide {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-main);
-  border: 1px solid var(--border-color);
-  padding: 6px 10px;
+  padding: 6px 12px;
   border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  border: 1px solid var(--pres-border);
+  background: var(--pres-surface-card);
+  color: var(--pres-text-primary);
+  transition: all 0.15s ease;
 }
 
-.btn-nav-slide:hover:not(:disabled) {
-  background: rgba(59, 130, 246, 0.2);
-  border-color: var(--accent-color);
+.btn-nav:hover:not(:disabled) {
+  background: var(--pres-surface-hover);
+  border-color: var(--pres-primary);
 }
 
-.btn-nav-slide:disabled {
+.btn-nav:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
 
-.step-progress-text {
-  color: #60a5fa;
-  font-weight: 600;
+.btn-nav--primary {
+  background: var(--pres-primary);
+  color: #ffffff;
+  border-color: var(--pres-primary);
+}
+
+.btn-nav--primary:hover:not(:disabled) {
+  opacity: 0.9;
+  background: var(--pres-primary);
+}
+
+.btn-restart {
+  background: transparent;
+  border: 1px solid var(--pres-border);
+  color: var(--pres-text-muted);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btn-restart:hover {
+  background: var(--pres-surface-hover);
+  color: var(--pres-text-primary);
 }
 
 .actions-center {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 10px 14px;
-  font-size: 13px;
-  color: var(--text-muted);
+  gap: 12px;
   min-width: 0;
 }
 
-/* 窄容器（右侧 Dock 栏 / 窄独立窗口）：切换为纵向布局，
-   上方双卡并排呈现当前页与下一页 16:9 缩略图，下方备注面板占据主导高度 */
+.center-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-pill {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 12px;
+  color: var(--pres-text-secondary);
+  font-weight: 600;
+}
+
+.step-dots-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--pres-primary-bg);
+  padding: 3px 8px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--pres-primary-border);
+  flex-shrink: 0;
+}
+
+.step-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(var(--pres-primary-rgb), 0.3);
+  transition: all 0.15s ease;
+}
+
+.step-dot.is-active {
+  background: var(--pres-primary);
+  transform: scale(1.15);
+}
+
+.step-dots-text {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--pres-primary);
+  margin-left: 2px;
+}
+
+/* ==========================================================================
+   Container Queries: 窄栏与侧边栏响应式自适应
+   ========================================================================== */
 @container (max-width: 719px) {
   .presenter-grid {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, auto) minmax(0, 1fr);
-    gap: 12px;
-    padding: 12px;
+    gap: 10px;
+    padding: 10px;
   }
 
   .slide-panels {
@@ -1161,45 +1489,40 @@ defineExpose({
   }
 
   .panel-header {
-    padding: 6px 10px;
+    padding: 5px 8px;
   }
 
   .notes-content {
-    padding: 14px;
+    padding: 12px;
     font-size: 1.05rem;
   }
 
   .presenter-header {
-    padding: 0 12px;
+    padding: 0 10px;
   }
 
   .presenter-actions {
-    padding: 6px 12px;
+    padding: 5px 10px;
   }
 
-  .hint-text,
-  .header-step-badge {
+  .btn-tool-label,
+  .wall-clock {
     display: none;
   }
 
   .btn-nav {
-    padding: 6px 10px;
-    font-size: 13px;
-  }
-
-  .btn-nav-slide {
-    padding: 6px 8px;
+    padding: 5px 8px;
     font-size: 11px;
   }
 }
 
-@container (max-width: 420px) {
+@container (max-width: 440px) {
   .slide-panels {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .panel-preview {
-    max-height: 150px;
+    max-height: 140px;
   }
 }
 </style>
