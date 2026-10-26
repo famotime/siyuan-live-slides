@@ -251,6 +251,7 @@ export interface IBlockRenderOptions {
   calloutClassName?: string
   listClassName?: string
   extraClassName?: string
+  blockClassResolver?: (block: ISlidevBlockItem) => string
   highlight?: boolean
   allSlides?: ISlidevVirtualPage[]
   currentPageIndex?: number
@@ -449,7 +450,9 @@ export function convertBlockToHtml(
 
   const baseContainerClass = options?.containerClassName || "pdf-block"
   const extraClass = options?.extraClassName ? ` ${options.extraClassName}` : ""
-  const containerClass = `${baseContainerClass}${motionClass}${styledClass}${extraClass}`
+  const resolvedBlockClass = options?.blockClassResolver ? options.blockClassResolver(block) : ""
+  const resolvedClassPart = resolvedBlockClass ? ` ${resolvedBlockClass}` : ""
+  const containerClass = `${baseContainerClass}${motionClass}${styledClass}${extraClass}${resolvedClassPart}`
   const md = (block.rawMarkdown || block.content || "").trim()
 
   if (!md) {

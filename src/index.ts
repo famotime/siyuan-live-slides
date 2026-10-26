@@ -4,6 +4,7 @@ import type {
 import {
   getFrontend,
   openTab,
+  openWindow,
   Plugin as SyPlugin,
 } from "siyuan"
 import { getBlockAttrs } from "@/api"
@@ -317,6 +318,61 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
       },
       position: "right",
     })
+  }
+
+  /**
+   * 一键将大屏放映页签弹出为 16:9 独立窗口（1280×760），便于单屏线上会议按窗口共享或双屏扩展投屏
+   */
+  public async openStandalonePreviewWindow(): Promise<void> {
+    if (!this.currentDocId) {
+      this.currentDocId = this.getActiveDocumentId()
+    }
+    if (this.currentDocId && !this.latestCompiledDoc) {
+      await this.compileCurrentDocument(this.currentDocId, { reason: "explicit" })
+    }
+
+    const frontEnd = getFrontend()
+    if (frontEnd === "browser-desktop" || frontEnd === "browser-mobile") {
+      if (typeof window !== "undefined" && typeof window.open === "function") {
+        window.open(
+          "/plugins/siyuan-slidev/slidev-client/index.html",
+          "SlidevBigScreenWindow",
+          "width=1280,height=760,menubar=no,toolbar=no,location=no,status=no",
+        )
+      }
+      return
+    }
+
+    let targetTab = this.previewTab
+    if (!targetTab) {
+      const initialDocTitle = this.currentDocId ? await this.fetchDocumentTitle(this.currentDocId) : ""
+      const initialTitle = this.buildPreviewTabTitle(initialDocTitle)
+      const opened = await openTab({
+        app: this.app,
+        custom: {
+          id: this.name + TAB_TYPE,
+          title: initialTitle,
+          icon: "iconSlidev",
+          data: { docId: this.currentDocId },
+        },
+        position: "bottom",
+      })
+      targetTab = this.previewTab || (opened as any)
+    }
+
+    if (targetTab) {
+      if (this.currentDocId && (targetTab as any).model) {
+        ;(targetTab as any).model.data = {
+          ...((targetTab as any).model.data || {}),
+          docId: this.currentDocId,
+        }
+      }
+      openWindow({
+        tab: targetTab,
+        width: 1280,
+        height: 760,
+      })
+    }
   }
 
   /**

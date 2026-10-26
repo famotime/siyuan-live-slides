@@ -5412,14 +5412,21 @@
             payload: {
               currentPage: currentPageIndex.value,
               totalPages: totalPages.value,
+              currentStep: currentStep.value,
+              maxStep: maxStepInCurrentSlide.value,
               currentBlockId: currentSlide.value?.startBlockId || ""
             }
           }, "*")
-          // 双屏跨窗口同步：向广播频道同步当前页码（BroadcastChannel 不回环至发送者自身；
+          // 双屏跨窗口同步：向广播频道同步当前页码与步进（BroadcastChannel 不回环至发送者自身；
           // try/catch 兼顾频道尚未初始化的时序窗口）
           try {
             if (broadcastChannel) {
-              broadcastChannel.postMessage({ type: "SYNC_PAGE", page: currentPageIndex.value })
+              broadcastChannel.postMessage({
+                type: "SYNC_PAGE",
+                page: currentPageIndex.value,
+                step: currentStep.value,
+                maxStep: maxStepInCurrentSlide.value
+              })
             }
           } catch (e) {}
         }
@@ -5431,13 +5438,24 @@
           broadcastChannel.onmessage = (e) => {
             if (e.data?.type === "SYNC_PAGE" && typeof e.data.page === "number") {
               currentPageIndex.value = Math.max(1, Math.min(e.data.page, totalPages.value || 1))
-              currentStep.value = 0
+              currentStep.value = typeof e.data.step === "number" ? Math.max(0, e.data.step) : 0
               notifySlideChanged()
+              nextTick(() => {
+                syncAutoplayVideos()
+              })
+            } else if (e.data?.type === "NEXT_STEP") {
+              nextStepOrSlide()
+              syncAutoplayVideos()
+            } else if (e.data?.type === "PREV_STEP") {
+              prevStepOrSlide()
+              syncAutoplayVideos()
             } else if (e.data?.type === "SYNC_SLIDES") {
               if (e.data.slides) slides.value = e.data.slides
               if (e.data.config) config.value = { ...config.value, ...e.data.config }
             } else if (e.data?.type === "REQUEST_SYNC") {
-              broadcastSync()
+              if (slides.value && slides.value.length > 0) {
+                broadcastSync()
+              }
             }
           }
         } catch (e) {}
@@ -5448,7 +5466,9 @@
           try {
             broadcastChannel.postMessage({
               type: "SYNC_PAGE",
-              page: currentPageIndex.value
+              page: currentPageIndex.value,
+              step: currentStep.value,
+              maxStep: maxStepInCurrentSlide.value
             })
             // 通过 JSON 序列化脱敏 Vue 响应式 Proxy 对象，防止 BroadcastChannel 抛出 DataCloneError
             const plainSlides = JSON.parse(JSON.stringify(slides.value || []))
@@ -6077,7 +6097,7 @@
             case "NAVIGATE_PAGE":
               if (typeof data.payload.pageIndex === "number") {
                 currentPageIndex.value = Math.max(1, Math.min(data.payload.pageIndex, totalPages.value || 1))
-                currentStep.value = 0
+                currentStep.value = typeof data.payload.step === "number" ? Math.max(0, data.payload.step) : 0
                 notifySlideChanged()
                 broadcastSync()
                 nextTick(() => {
@@ -6181,6 +6201,12 @@
             }
           }, "*")
           notifySlideChanged()
+          // 独立弹出窗口或跨窗口恢复时，主动向广播信道请求在播数据与步进状态
+          try {
+            if (broadcastChannel && (!slides.value || slides.value.length === 0)) {
+              broadcastChannel.postMessage({ type: "REQUEST_SYNC" })
+            }
+          } catch (e) {}
         })
 
         onUnmounted(() => {

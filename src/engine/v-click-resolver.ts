@@ -29,6 +29,12 @@ export function computeSlideClicksPlan(blocks?: ISlidevBlock[]): ISlideClicksPla
   const containerBaseStepMap = new Map<string, number>()
   let stepCounter = 0
 
+  const setRule = (b: ISlidevBlock, rule: IBlockClickRule) => {
+    blockMap.set(b, rule)
+    const bid = b.id || (b as any).blockId
+    if (bid) idMap.set(bid, rule)
+  }
+
   // 按页面内块的顺序遍历 (排除纯插槽分界块)
   const validBlocks = blocks.filter(b => b.slot !== "slot-divider-right")
 
@@ -55,13 +61,9 @@ export function computeSlideClicksPlan(blocks?: ISlidevBlock[]): ISlideClicksPla
       // 若其所属容器已获得基础步长，则作为基础层共享该步长同时呈现；否则始终可见
       if (b.parentContainerId && containerBaseStepMap.has(b.parentContainerId)) {
         const baseStep = containerBaseStepMap.get(b.parentContainerId)!
-        const rule: IBlockClickRule = { type: "step", step: baseStep }
-        blockMap.set(b, rule)
-        if (b.id) idMap.set(b.id, rule)
+        setRule(b, { type: "step", step: baseStep })
       } else {
-        const rule: IBlockClickRule = { type: "always" }
-        blockMap.set(b, rule)
-        if (b.id) idMap.set(b.id, rule)
+        setRule(b, { type: "always" })
       }
       continue
     }
@@ -70,9 +72,7 @@ export function computeSlideClicksPlan(blocks?: ISlidevBlock[]): ISlideClicksPla
     if (!rawStr) {
       // 空字符串但配置了 clicks 属性：等同于顺延 +1
       stepCounter += 1
-      const rule: IBlockClickRule = { type: "step", step: stepCounter }
-      blockMap.set(b, rule)
-      if (b.id) idMap.set(b.id, rule)
+      setRule(b, { type: "step", step: stepCounter })
       continue
     }
 
@@ -85,9 +85,7 @@ export function computeSlideClicksPlan(blocks?: ISlidevBlock[]): ISlideClicksPla
           const max = Math.max(Number(arr[0]), Number(arr[1]))
           if (!isNaN(min) && !isNaN(max)) {
             stepCounter = Math.max(stepCounter, max)
-            const rule: IBlockClickRule = { type: "range", min, max }
-            blockMap.set(b, rule)
-            if (b.id) idMap.set(b.id, rule)
+            setRule(b, { type: "range", min, max })
             continue
           }
         }
@@ -97,9 +95,7 @@ export function computeSlideClicksPlan(blocks?: ISlidevBlock[]): ISlideClicksPla
     // 2. 隐藏指令 hide
     if (rawStr.toLowerCase() === "hide") {
       stepCounter += 1
-      const rule: IBlockClickRule = { type: "hide", step: stepCounter }
-      blockMap.set(b, rule)
-      if (b.id) idMap.set(b.id, rule)
+      setRule(b, { type: "hide", step: stepCounter })
       continue
     }
 
@@ -107,9 +103,7 @@ export function computeSlideClicksPlan(blocks?: ISlidevBlock[]): ISlideClicksPla
     if (/^\+\d+$/.test(rawStr) || rawStr === "true") {
       const delta = rawStr === "true" ? 1 : (parseInt(rawStr.slice(1), 10) || 1)
       stepCounter += delta
-      const rule: IBlockClickRule = { type: "step", step: stepCounter }
-      blockMap.set(b, rule)
-      if (b.id) idMap.set(b.id, rule)
+      setRule(b, { type: "step", step: stepCounter })
       continue
     }
 
@@ -117,9 +111,7 @@ export function computeSlideClicksPlan(blocks?: ISlidevBlock[]): ISlideClicksPla
     if (/^-\d+$/.test(rawStr)) {
       const delta = parseInt(rawStr.slice(1), 10) || 1
       stepCounter = Math.max(1, stepCounter - delta)
-      const rule: IBlockClickRule = { type: "step", step: stepCounter }
-      blockMap.set(b, rule)
-      if (b.id) idMap.set(b.id, rule)
+      setRule(b, { type: "step", step: stepCounter })
       continue
     }
 
@@ -128,9 +120,7 @@ export function computeSlideClicksPlan(blocks?: ISlidevBlock[]): ISlideClicksPla
       const target = parseInt(rawStr, 10)
       if (!isNaN(target)) {
         stepCounter = Math.max(stepCounter, target)
-        const rule: IBlockClickRule = { type: "step", step: target }
-        blockMap.set(b, rule)
-        if (b.id) idMap.set(b.id, rule)
+        setRule(b, { type: "step", step: target })
         continue
       }
     }
@@ -139,15 +129,11 @@ export function computeSlideClicksPlan(blocks?: ISlidevBlock[]): ISlideClicksPla
     const parsedNum = parseInt(rawStr, 10)
     if (!isNaN(parsedNum) && parsedNum > 0) {
       stepCounter = Math.max(stepCounter, parsedNum)
-      const rule: IBlockClickRule = { type: "step", step: parsedNum }
-      blockMap.set(b, rule)
-      if (b.id) idMap.set(b.id, rule)
+      setRule(b, { type: "step", step: parsedNum })
     } else {
       // 无法解析的非空字符，默认作为顺延一步处理
       stepCounter += 1
-      const rule: IBlockClickRule = { type: "step", step: stepCounter }
-      blockMap.set(b, rule)
-      if (b.id) idMap.set(b.id, rule)
+      setRule(b, { type: "step", step: stepCounter })
     }
   }
 
@@ -167,7 +153,8 @@ export function getBlockClickStatus(
   plan: ISlideClicksPlan,
 ): "v-click-visible" | "v-click-hidden" {
   if (!block) return "v-click-visible"
-  const rule = plan.blockMap.get(block) || (block.id ? plan.idMap.get(block.id) : null)
+  const bid = block.id || (block as any).blockId
+  const rule = plan.blockMap.get(block) || (bid ? plan.idMap.get(bid) : null)
   if (!rule || rule.type === "always") {
     return "v-click-visible"
   }

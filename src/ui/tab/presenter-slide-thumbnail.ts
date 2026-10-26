@@ -1,4 +1,6 @@
 import type { ISlidevPluginConfig, ISlidevVirtualPage } from "@/types/slidev-protocol"
+import { parseMaskRatio } from "@/types/slidev-protocol"
+import { computeSlideClicksPlan, getBlockClickStatus } from "@/engine/v-click-resolver"
 import { escapeHtml, renderSlideBlocksToHtml } from "@/export/markdown-renderer"
 
 export const PRESENTER_THUMB_BASE_WIDTH = 980
@@ -19,6 +21,30 @@ export interface IRenderPresenterThumbOptions {
   config?: (Partial<ISlidevPluginConfig> & { image?: string }) | null
   allSlides?: ISlidevVirtualPage[]
   pageIndex?: number
+  /**
+   * 当前已触发的页内步进数 (0-based)。
+   * - 传入数字时（如「当前大屏放映」缩略图）：已触发块正常显示，尚未触发的 v-click 块附加 `presenter-v-click-pending` 半透明剧透类；
+   * - 不传或 undefined 时（如「下一页预告」缩略图）：整页全部内容 100% 完整可见。
+   */
+  currentStep?: number
+}
+
+/**
+ * 计算单页幻灯片的最大步进数（综合 v-click 步进计划与页面动态蒙版步数）
+ */
+export function computeSlideMaxStep(slide: ISlidevVirtualPage | null | undefined): number {
+  if (!slide) return 0
+  const clicksPlan = computeSlideClicksPlan((slide.blocks || []) as any)
+  const clicksMax = clicksPlan.maxStep || 0
+  const fm = slide.frontmatter || {}
+  const maskDir = fm.mask
+  if (maskDir !== "down" && maskDir !== "right") {
+    return clicksMax
+  }
+  const ratioInfo = parseMaskRatio(fm.maskRatio)
+  const isInitialRevealed = fm.maskInitial === "revealed"
+  const maskSteps = isInitialRevealed ? Math.max(0, ratioInfo.steps - 1) : ratioInfo.steps
+  return Math.max(clicksMax, maskSteps)
 }
 
 /**
@@ -133,6 +159,10 @@ export function renderPresenterSlideThumbnailHtml(
     fm.image = config.image
   }
 
+  const hasStepTracking = typeof options?.currentStep === "number"
+  const stepValue = hasStepTracking ? Math.max(0, options!.currentStep!) : 0
+  const clicksPlan = hasStepTracking ? computeSlideClicksPlan((slideClone.blocks || []) as any) : null
+
   const rawBlocksHtml = renderSlideBlocksToHtml(slideClone, {
     containerClassName: "slide-block",
     leftColClass: "pdf-col pdf-col--left two-cols-left",
@@ -140,6 +170,25 @@ export function renderPresenterSlideThumbnailHtml(
     allSlides: options?.allSlides || [],
     currentPageIndex: options?.pageIndex || slideClone.pageIndex || 1,
     highlight: true,
+    blockClassResolver: clicksPlan
+      ? (block) => {
+          const status = getBlockClickStatus(block as any, stepValue, clicksPlan)
+          if (status === "v-click-hidden") {
+            return "presenter-v-click-pending"
+          }
+          if (stepValue > 0) {
+            const bid = block.id || (block as any).blockId
+            const rule = clicksPlan.blockMap.get(block as any) || (bid ? clicksPlan.idMap.get(bid) : undefined)
+            if (
+              (rule?.type === "step" && rule.step === stepValue) ||
+              (rule?.type === "range" && rule.min === stepValue)
+            ) {
+              return "presenter-v-click-active"
+            }
+          }
+          return ""
+        }
+      : undefined,
   })
 
   // 缩略图内的视频统一强制静音并移除原生控制条干扰，避免与主放映端产生双重音轨

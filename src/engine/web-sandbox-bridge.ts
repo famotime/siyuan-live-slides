@@ -6,7 +6,13 @@ import type {
 } from "../types/ipc-messages"
 import type { ISlidevPluginConfig, ISlidevVirtualPage } from "../types/slidev-protocol"
 
-export type TSlideChangedHandler = (currentPage: number, totalPages: number, currentBlockId: string) => void
+export type TSlideChangedHandler = (
+  currentPage: number,
+  totalPages: number,
+  currentBlockId: string,
+  currentStep?: number,
+  maxStep?: number,
+) => void
 export type TBlockClickedHandler = (clickedBlockId: string, currentPage: number) => void
 export type TOpenInEditorHandler = (blockId: string, currentPage: number) => void
 export type TClientReadyHandler = () => void
@@ -101,10 +107,14 @@ export class WebSandboxBridge {
   }
 
   /**
-   * 请求跳转至指定页码
+   * 请求跳转至指定页码（可选指定页内步进 step）
    */
-  public navigatePage(pageIndex: number): void {
-    this.postMessage("NAVIGATE_PAGE", { pageIndex })
+  public navigatePage(pageIndex: number, step?: number): void {
+    const payload: IHostToSlidevMessage["payload"] = { pageIndex }
+    if (typeof step === "number") {
+      payload.step = step
+    }
+    this.postMessage("NAVIGATE_PAGE", payload)
   }
 
   /**
@@ -218,11 +228,21 @@ export class WebSandboxBridge {
       case "SLIDE_CHANGED":
         if (data.payload.currentPage !== undefined) {
           for (const handler of this.slideChangedHandlers) {
-            handler(
-              data.payload.currentPage,
-              data.payload.totalPages || 1,
-              data.payload.currentBlockId || "",
-            )
+            if (data.payload.currentStep !== undefined || data.payload.maxStep !== undefined) {
+              handler(
+                data.payload.currentPage,
+                data.payload.totalPages || 1,
+                data.payload.currentBlockId || "",
+                data.payload.currentStep,
+                data.payload.maxStep,
+              )
+            } else {
+              handler(
+                data.payload.currentPage,
+                data.payload.totalPages || 1,
+                data.payload.currentBlockId || "",
+              )
+            }
           }
         }
         break

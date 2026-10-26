@@ -11,9 +11,19 @@
         <span class="title-name">🎤 Slidev 演讲者控制台</span>
         <span class="title-divider">|</span>
         <span>第 {{ currentPage }} / {{ totalPages || 1 }} 页</span>
+        <span v-if="currentMaxStep > 0" class="header-step-badge">
+          ⚡ 步进 {{ currentStep }} / {{ currentMaxStep }}
+        </span>
       </div>
 
       <div class="header-timer">
+        <button
+          class="btn-popout-window"
+          title="将大屏放映弹出为 16:9 独立窗口，便于会议软件按窗口共享或双屏扩展投屏"
+          @click="openStandaloneWindow"
+        >
+          🗗 弹出独立放映窗口
+        </button>
         <div class="timer-badge">⏱ 已演讲: {{ formattedTime }}</div>
         <div class="timer-controls">
           <button @click="toggleTimer">{{ isTimerRunning ? '暂停' : '开始' }}</button>
@@ -29,7 +39,12 @@
         <div class="panel-box current-slide-panel">
           <div class="panel-header">
             <span>当前大屏放映 (Page {{ currentPage }})</span>
-            <span>布局: {{ currentSlide?.frontmatter?.layout || 'default' }}</span>
+            <div class="panel-header-meta">
+              <span v-if="currentMaxStep > 0" class="panel-step-pill">
+                步进: {{ currentStep }} / {{ currentMaxStep }}
+              </span>
+              <span>布局: {{ currentSlide?.frontmatter?.layout || 'default' }}</span>
+            </div>
           </div>
           <div
             ref="currentPreviewRef"
@@ -68,7 +83,7 @@
         <div
           class="panel-box next-slide-panel"
           :class="{ 'is-clickable': Boolean(nextSlide) }"
-          :title="nextSlide ? '点击翻至下一页' : ''"
+          :title="nextSlide ? '点击直接跳至下一页' : ''"
           @click="nextSlide && goNextSlide()"
         >
           <div class="panel-header">
@@ -133,18 +148,62 @@
       <h2>等待大屏放映数据…</h2>
       <p>演讲者控制台需要「演示预览」页签（大屏放映端）提供幻灯片数据。</p>
       <p class="empty-hint">若预览页签在另一窗口放映，本控制台将自动通过广播信道接入。</p>
-      <button class="btn-empty-action" @click="openBigScreen">打开大屏放映页签</button>
+      <div class="empty-actions">
+        <button class="btn-empty-action" @click="openBigScreen">打开大屏放映页签</button>
+        <button class="btn-empty-action btn-empty-action--popout" @click="openStandaloneWindow">
+          🗗 弹出独立放映窗口
+        </button>
+      </div>
     </main>
 
-    <!-- 底栏翻页 -->
+    <!-- 底栏翻页与步进控制 -->
     <footer class="presenter-actions">
-      <button class="btn-nav" :disabled="currentPage <= 1" @click="goPrevSlide">◀ 上一页 (Left)</button>
+      <div class="nav-btn-group">
+        <button
+          class="btn-nav-slide"
+          :disabled="currentPage <= 1"
+          title="跳过本页步进，直接返回上一页 (Shift+Left)"
+          @click="goPrevSlide"
+        >
+          ⏮ 上一页
+        </button>
+        <button
+          class="btn-nav"
+          :disabled="!canGoPrevStep"
+          title="回退一步或返回上一页 (Left)"
+          @click="goPrevStep"
+        >
+          ◀ 上一步 (Left)
+        </button>
+      </div>
+
       <div class="actions-center">
         <span>进度: {{ progressPercent }}%</span>
-        <span class="hint-text">按空格/方向键翻页，大屏联动</span>
+        <span v-if="currentMaxStep > 0" class="step-progress-text">
+          步进: {{ currentStep }} / {{ currentMaxStep }}
+        </span>
+        <span class="hint-text">空格/方向键逐步触发，Shift+方向键整页快跳</span>
         <button class="btn-ghost" @click="restartPresentation">⏮ 重头放映</button>
       </div>
-      <button class="btn-nav" :disabled="currentPage >= totalPages" @click="goNextSlide">下一页 (Right) ▶</button>
+
+      <div class="nav-btn-group">
+        <button
+          class="btn-nav"
+          :disabled="!canGoNextStep"
+          title="触发下一个 v-click 对象显示或进入下一页 (Right / Space)"
+          @click="goNextStep"
+        >
+          {{ currentStep < currentMaxStep ? `下一步 (${currentStep + 1}/${currentMaxStep}) ▶` : '下一步 (Right) ▶' }}
+        </button>
+        <button
+          class="btn-nav-slide"
+          :disabled="currentPage >= totalPages"
+          title="跳过本页剩余步进，直接进入下一页 (Shift+Right)"
+          @click="goNextSlide"
+        >
+          下一页 ⏭
+        </button>
+      </div>
     </footer>
   </div>
 </template>
@@ -160,6 +219,7 @@ import type {
   ISlidevBlockItem,
 } from '@/types/slidev-protocol'
 import {
+  computeSlideMaxStep,
   computeThumbnailScale,
   parseSlideAspectRatio,
   renderPresenterSlideThumbnailHtml,
@@ -171,8 +231,10 @@ const sandboxBridge = inject<WebSandboxBridge>('sandboxBridge', new WebSandboxBr
 const slides = ref<ISlidevVirtualPage[]>([])
 const docConfig = ref<Partial<ISlidevPluginConfig>>({})
 const currentPage = ref(1)
-// 桥接侧上报的总页数兜底：幻灯片数据未到位时也能显示正确页数并解锁翻页
+const currentStep = ref(0)
+// 桥接侧上报的总页数与最大步数兜底：幻灯片数据未到位时也能显示正确页数/步数并解锁控制
 const bridgeTotal = ref(0)
+const bridgeMaxStep = ref(0)
 const totalPages = computed(() => slides.value.length || bridgeTotal.value)
 
 // 缩略图画布容器引用与实时测量尺寸
@@ -280,11 +342,24 @@ const nextSlide = computed(() => {
   return slides.value[currentPage.value] || null
 })
 
+const currentMaxStep = computed(() => {
+  if (currentSlide.value) {
+    return computeSlideMaxStep(currentSlide.value)
+  }
+  return bridgeMaxStep.value
+})
+
+const canGoPrevStep = computed(() => currentPage.value > 1 || currentStep.value > 0)
+const canGoNextStep = computed(
+  () => currentPage.value < totalPages.value || currentStep.value < currentMaxStep.value,
+)
+
 const currentSlideHtml = computed(() =>
   renderPresenterSlideThumbnailHtml(currentSlide.value, {
     config: docConfig.value,
     allSlides: slides.value,
     pageIndex: currentPage.value,
+    currentStep: currentStep.value,
   }),
 )
 
@@ -340,7 +415,7 @@ const progressPercent = computed(() => {
   return Math.round((currentPage.value / totalPages.value) * 100)
 })
 
-// 跨窗口广播信道：与预览沙盒（可能在另一思源窗口）双向同步页码与数据
+// 跨窗口广播信道：与预览沙盒（可能在另一思源窗口）双向同步页码、步进与数据
 let broadcastChannel: BroadcastChannel | null = null
 try {
   broadcastChannel = new BroadcastChannel('siyuan-slidev-sync')
@@ -349,6 +424,10 @@ try {
     if (!data) return
     if (data.type === 'SYNC_PAGE' && typeof data.page === 'number') {
       currentPage.value = data.page
+      currentStep.value = typeof data.step === 'number' ? Math.max(0, data.step) : 0
+      if (typeof data.maxStep === 'number') {
+        bridgeMaxStep.value = Math.max(0, data.maxStep)
+      }
     }
     if (data.type === 'SYNC_SLIDES' && Array.isArray(data.slides)) {
       slides.value = data.slides
@@ -356,42 +435,104 @@ try {
         docConfig.value = data.config
       }
     }
+    if (data.type === 'REQUEST_SYNC' && slides.value.length > 0) {
+      try {
+        broadcastChannel?.postMessage({
+          type: 'SYNC_SLIDES',
+          slides: JSON.parse(JSON.stringify(slides.value)),
+          config: JSON.parse(JSON.stringify(docConfig.value || {})),
+        })
+        broadcastChannel?.postMessage({
+          type: 'SYNC_PAGE',
+          page: currentPage.value,
+          step: currentStep.value,
+          maxStep: currentMaxStep.value,
+        })
+      } catch (e) {}
+    }
   }
 } catch (e) {
   broadcastChannel = null
 }
 
 /**
- * 翻页动作双通道下发：
- * - 宿主桥接 navigatePage：同窗口预览沙盒的权威通路（与 Dock 面板同源）
- * - BroadcastChannel SYNC_PAGE：预览沙盒位于另一思源窗口时的跨窗口通路
+ * 翻页与步进动作双通道幂等下发：
+ * - 宿主桥接 navigatePage(page, step)：同窗口预览沙盒的权威通路
+ * - BroadcastChannel SYNC_PAGE { page, step }：预览沙盒位于另一独立窗口时的跨窗口通路
  */
-function syncToMain(page: number) {
+function syncToMain(page: number, step = 0) {
   const pageNum = Number(page) || 1
-  sandboxBridge.navigatePage(pageNum)
+  const stepNum = Math.max(0, Number(step) || 0)
+  sandboxBridge.navigatePage(pageNum, stepNum)
   try {
-    broadcastChannel?.postMessage({ type: 'SYNC_PAGE', page: pageNum })
+    broadcastChannel?.postMessage({
+      type: 'SYNC_PAGE',
+      page: pageNum,
+      step: stepNum,
+      maxStep: currentMaxStep.value,
+    })
   } catch (e) {}
 }
 
-function goNextSlide() {
+/**
+ * 步进优先向后：先走完当前页内的 v-click / 动态蒙版步进，全部触发后再进入下一页
+ */
+function goNextStep() {
+  if (currentStep.value < currentMaxStep.value) {
+    currentStep.value++
+    syncToMain(currentPage.value, currentStep.value)
+    return
+  }
   if (currentPage.value < totalPages.value) {
     currentPage.value++
-    syncToMain(currentPage.value)
+    currentStep.value = 0
+    syncToMain(currentPage.value, 0)
   }
 }
 
+/**
+ * 步进优先向前：当前页已触发步进时先回退一步，步进归零后再返回上一页
+ */
+function goPrevStep() {
+  if (currentStep.value > 0) {
+    currentStep.value--
+    syncToMain(currentPage.value, currentStep.value)
+    return
+  }
+  if (currentPage.value > 1) {
+    currentPage.value--
+    currentStep.value = 0
+    syncToMain(currentPage.value, 0)
+  }
+}
+
+/**
+ * 整页快跳向后：直接跳过当前页剩余步进，进入下一页
+ */
+function goNextSlide() {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+    currentStep.value = 0
+    syncToMain(currentPage.value, 0)
+  }
+}
+
+/**
+ * 整页快跳向前：直接返回上一页起始态
+ */
 function goPrevSlide() {
   if (currentPage.value > 1) {
     currentPage.value--
-    syncToMain(currentPage.value)
+    currentStep.value = 0
+    syncToMain(currentPage.value, 0)
   }
 }
 
 function restartPresentation() {
   currentPage.value = 1
+  currentStep.value = 0
   resetTimer()
-  syncToMain(1)
+  syncToMain(1, 0)
 }
 
 function openBigScreen() {
@@ -401,19 +542,40 @@ function openBigScreen() {
   }
 }
 
-function onKeyDown(e: KeyboardEvent) {
-  // 焦点落在按钮上时空格交给原生点击，避免与翻页双触发
-  if (e.key === ' ' && (e.target as HTMLElement)?.closest?.('button')) return
-  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
-    e.preventDefault()
-    goNextSlide()
-  } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-    e.preventDefault()
-    goPrevSlide()
+function openStandaloneWindow() {
+  const host = plugin as any
+  if (typeof host?.openStandalonePreviewWindow === 'function') {
+    void host.openStandalonePreviewWindow()
   }
 }
 
-// 滚轮翻页（备注区可滚动时优先滚动备注）
+function onKeyDown(e: KeyboardEvent) {
+  // 焦点落在按钮上时空格交给原生点击，避免与翻页双触发
+  if (e.key === ' ' && (e.target as HTMLElement)?.closest?.('button')) return
+
+  // Shift + 左右方向键 或 上下方向键：直接整页快跳
+  if ((e.shiftKey && e.key === 'ArrowRight') || e.key === 'ArrowDown') {
+    e.preventDefault()
+    goNextSlide()
+    return
+  }
+  if ((e.shiftKey && e.key === 'ArrowLeft') || e.key === 'ArrowUp') {
+    e.preventDefault()
+    goPrevSlide()
+    return
+  }
+
+  // 默认左右方向键 / 空格 / PageDown / PageUp：步进优先
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+    e.preventDefault()
+    goNextStep()
+  } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+    e.preventDefault()
+    goPrevStep()
+  }
+}
+
+// 滚轮翻页/步进（备注区可滚动时优先滚动备注）
 let lastWheelTime = 0
 const WHEEL_COOLDOWN_MS = 280
 const WHEEL_DELTA_THRESHOLD = 15
@@ -431,8 +593,8 @@ function onWheel(e: WheelEvent) {
   const now = Date.now()
   if (now - lastWheelTime < WHEEL_COOLDOWN_MS) return
   lastWheelTime = now
-  if (e.deltaY > 0) goNextSlide()
-  else goPrevSlide()
+  if (e.deltaY > 0) goNextStep()
+  else goPrevStep()
 }
 
 let unbindSlideChanged: (() => void) | null = null
@@ -444,10 +606,12 @@ onMounted(() => {
     }
   }, 1000)
 
-  // 同窗口权威通路：沙盒每次翻页都经宿主桥接上报 SLIDE_CHANGED
-  unbindSlideChanged = sandboxBridge.onSlideChanged((page, total) => {
+  // 同窗口权威通路：沙盒每次翻页或步进都经宿主桥接上报 SLIDE_CHANGED
+  unbindSlideChanged = sandboxBridge.onSlideChanged((page, total, _blockId, step, maxStep) => {
     currentPage.value = page
     if (total > 0) bridgeTotal.value = total
+    if (typeof step === 'number') currentStep.value = Math.max(0, step)
+    if (typeof maxStep === 'number') bridgeMaxStep.value = Math.max(0, maxStep)
   })
 
   // 广播信道：请求任何窗口中的预览沙盒立即回放当前页码与数据
@@ -569,13 +733,44 @@ defineExpose({
   opacity: 0.5;
 }
 
+.header-step-badge {
+  background: rgba(59, 130, 246, 0.18);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.38);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .header-timer {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-shrink: 0;
   font-family: "JetBrains Mono", Consolas, monospace;
   font-size: 15px;
+}
+
+.btn-popout-window {
+  background: rgba(59, 130, 246, 0.14);
+  border: 1px solid rgba(59, 130, 246, 0.45);
+  color: #60a5fa;
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: system-ui, -apple-system, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-popout-window:hover {
+  background: rgba(59, 130, 246, 0.28);
+  border-color: #60a5fa;
+  color: #ffffff;
 }
 
 .timer-badge {
@@ -669,6 +864,7 @@ defineExpose({
   border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 8px;
   flex-shrink: 0;
   white-space: nowrap;
@@ -677,6 +873,23 @@ defineExpose({
 .panel-header span {
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.panel-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.panel-step-pill {
+  background: rgba(59, 130, 246, 0.18);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .panel-preview {
@@ -817,12 +1030,26 @@ defineExpose({
   font-size: 0.85rem !important;
 }
 
-.btn-empty-action {
+.empty-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
   margin-top: 10px;
+}
+
+.btn-empty-action {
   padding: 6px 18px;
   font-size: 13px;
   border-color: var(--accent-color);
   color: var(--accent-color);
+}
+
+.btn-empty-action--popout {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  font-weight: 600;
 }
 
 /* Bottom Action Bar */
@@ -836,6 +1063,13 @@ defineExpose({
   justify-content: space-between;
   gap: 10px;
   padding: 6px 20px;
+}
+
+.nav-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .btn-nav {
@@ -856,6 +1090,35 @@ defineExpose({
 .btn-nav:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.btn-nav-slide {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-nav-slide:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: var(--accent-color);
+}
+
+.btn-nav-slide:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.step-progress-text {
+  color: #60a5fa;
+  font-weight: 600;
 }
 
 .actions-center {
@@ -914,13 +1177,19 @@ defineExpose({
     padding: 6px 12px;
   }
 
-  .hint-text {
+  .hint-text,
+  .header-step-badge {
     display: none;
   }
 
   .btn-nav {
     padding: 6px 10px;
     font-size: 13px;
+  }
+
+  .btn-nav-slide {
+    padding: 6px 8px;
+    font-size: 11px;
   }
 }
 
@@ -1523,6 +1792,24 @@ defineExpose({
     border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 5px;
     margin: 0 2px;
+  }
+
+  /* 当前页尚未触发的 v-click 块：半透明剧透态（25% 透明度 + 虚线轮廓） */
+  .slide-block.presenter-v-click-pending {
+    opacity: 0.25;
+    outline: 1.5px dashed rgba(59, 130, 246, 0.65);
+    outline-offset: 3px;
+    border-radius: 6px;
+    filter: grayscale(30%);
+    transition: opacity 0.2s ease, outline-color 0.2s ease;
+  }
+
+  /* 当前步刚刚触发显示的 v-click 块：高亮轮廓提示 */
+  .slide-block.presenter-v-click-active {
+    outline: 2px solid rgba(59, 130, 246, 0.75);
+    outline-offset: 3px;
+    border-radius: 6px;
+    transition: outline-color 0.2s ease;
   }
 }
 </style>
