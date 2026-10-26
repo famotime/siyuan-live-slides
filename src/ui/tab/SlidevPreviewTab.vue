@@ -284,6 +284,7 @@ let unbindOpenInEditor: (() => void) | null = null
 let unbindNativePageChanged: (() => void) | null = null
 let unbindOpenPeekDrawer: (() => void) | null = null
 let unbindToggleFullscreen: (() => void) | null = null
+let unbindOpenPresenter: (() => void) | null = null
 let latestDoc: ISlidevDocument | null = null
 
 onMounted(() => {
@@ -371,6 +372,11 @@ onMounted(() => {
     onFullscreen()
   })
 
+  // 沙盒内按 P / 工具栏按钮请求打开演讲者控制台：由宿主以思源页签承载
+  unbindOpenPresenter = sandboxBridge.onOpenPresenter(() => {
+    onOpenPresenter()
+  })
+
   if (typeof document !== 'undefined') {
     document.addEventListener('fullscreenchange', onFullscreenChange)
   }
@@ -382,6 +388,7 @@ onUnmounted(() => {
   }
   if (unbindOpenPeekDrawer) unbindOpenPeekDrawer()
   if (unbindToggleFullscreen) unbindToggleFullscreen()
+  if (unbindOpenPresenter) unbindOpenPresenter()
   if (unbindSlideChanged) unbindSlideChanged()
   if (unbindBlockClicked) unbindBlockClicked()
   if (unbindOpenInEditor) unbindOpenInEditor()
@@ -553,7 +560,11 @@ function onFullscreen() {
 }
 
 function onOpenPresenter() {
-  window.open('/plugins/siyuan-slidev/slidev-client/presenter.html', 'SlidevPresenter', 'width=1200,height=800')
+  // 以思源页签承载演讲者控制台：桌面端 window.open 会被宿主甩给系统浏览器，
+  // 广播信道跨进程失效；页签内 iframe 与本沙箱同源同会话，BroadcastChannel 可直达
+  if (plugin && typeof (plugin as any).openPresenterTab === 'function') {
+    void (plugin as any).openPresenterTab()
+  }
 }
 
 function onExportHtml() {

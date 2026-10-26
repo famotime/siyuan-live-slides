@@ -23,6 +23,7 @@ export interface ISlidevPluginHost extends Plugin {
   latestCompiledDoc: ISlidevDocument | null
   cliBridge: CliDevServerBridge
   openBottomPreviewTab(): Promise<void>
+  openPresenterTab(): Promise<void>
   compileCurrentDocument(docId?: string): Promise<void>
 }
 
@@ -229,20 +230,14 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
     },
   })
 
-  // 9. 打开双屏演讲者控制台
+  // 9. 打开双屏演讲者控制台（以思源页签承载，避免桌面端 window.open 被甩至系统浏览器）
   plugin.addCommand({
     langKey: "slidevPresenterMode",
     langText: "Slidev: 打开双屏演讲者控制台 (Presenter Mode)",
     hotkey: "⌥M",
     enabled: () => true,
     execute: () => {
-      if (typeof window !== "undefined") {
-        window.open(
-          "/plugins/siyuan-slidev/slidev-client/presenter.html",
-          "SlidevPresenter",
-          "width=1200,height=800",
-        )
-      }
+      plugin.openPresenterTab()
     },
   })
 

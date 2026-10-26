@@ -2,6 +2,7 @@ import type { App as VueApp } from 'vue'
 import { createApp } from 'vue'
 import type { Plugin } from 'siyuan'
 import SlidevPreviewTab from './ui/tab/SlidevPreviewTab.vue'
+import SlidevPresenterTab from './ui/tab/SlidevPresenterTab.vue'
 import SlidevInspectorDockView from './ui/dock/SlidevInspectorDockView.vue'
 import { WebSandboxBridge } from './engine/web-sandbox-bridge'
 import { globalCompileConsumerGate } from './sync/compile-consumer-gate'
@@ -66,6 +67,28 @@ export function unmountPreviewTab(element: HTMLElement): void {
 
 export function isPreviewTabMounted(): boolean {
   return previewTabInstance !== null
+}
+
+// 1.5 演讲者控制台页签 (SlidevPresenterTab) 实例管理
+// 注意：演讲者页签不是编译消费者，其数据由 presenter.html 内部的
+//       BroadcastChannel 协议直接从预览沙箱同步，不经宿主桥接器
+let presenterTabApp: VueApp | null = null
+
+export function mountPresenterTab(element: HTMLElement, pluginInstance: Plugin): any {
+  if (presenterTabApp) {
+    unmountPresenterTab(element)
+  }
+
+  presenterTabApp = createApp(SlidevPresenterTab)
+  presenterTabApp.provide('plugin', pluginInstance)
+  return presenterTabApp.mount(element)
+}
+
+export function unmountPresenterTab(element: HTMLElement): void {
+  if (presenterTabApp) {
+    presenterTabApp.unmount()
+    presenterTabApp = null
+  }
 }
 
 // 2. 右侧演示配置 Dock 面板 (SlidevInspectorDockView) 实例管理

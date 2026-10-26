@@ -854,8 +854,9 @@ function onOpenBottomPreview() {
 }
 
 function onOpenPresenter() {
-  if (typeof window !== 'undefined') {
-    window.open('/plugins/siyuan-slidev/slidev-client/presenter.html', 'SlidevPresenter', 'width=1200,height=800')
+  // 以思源页签承载演讲者控制台：桌面端 window.open 会被宿主甩给系统浏览器导致同步失效
+  if (plugin?.openPresenterTab) {
+    void plugin.openPresenterTab()
   }
 }
 

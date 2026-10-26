@@ -5458,6 +5458,17 @@
 
         function openPresenter() {
           broadcastSync()
+          // 桌面端思源会拦截 window.open 并甩给系统浏览器，演讲者视图与沙箱跨进程隔离后
+          // BroadcastChannel 完全失效；嵌入宿主时改为请求宿主在思源内打开演讲者页签
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+              source: "siyuan-slidev-client",
+              action: "OPEN_PRESENTER",
+              payload: {}
+            }, "*")
+            return
+          }
+          // 独立浏览器打开（无宿主）时退回原行为
           window.open("presenter.html", "SlidevPresenter", "width=1200,height=800")
         }
 

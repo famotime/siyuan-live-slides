@@ -11,10 +11,13 @@ import { globalDocumentCompiler } from "@/compiler/document-compiler"
 import { CliDevServerBridge } from "@/engine/cli-devserver-bridge"
 import {
   globalSandboxBridge,
+  isPreviewTabMounted,
   mountInspectorDock,
+  mountPresenterTab,
   mountPreviewTab,
   navigateDockToBlock,
   unmountInspectorDock,
+  unmountPresenterTab,
   unmountPreviewTab,
   updateDockDocument,
   updateInspectorCurrentBlock,
@@ -53,6 +56,7 @@ import type { ISlidevGlobalSettings } from "./settings"
 
 const DOCK_TYPE = "slidev-dock"
 const TAB_TYPE = "slidev-preview-tab"
+const PRESENTER_TAB_TYPE = "slidev-presenter-tab"
 const STORAGE_NAME = SETTINGS_STORAGE_NAME
 
 export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPluginHost {
@@ -116,6 +120,18 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
           self.previewTab = null
         }
         unmountPreviewTab((this as any).element as HTMLElement)
+      },
+    })
+
+    // 4.5 注册演讲者控制台页签（内嵌同源 presenter.html，经 BroadcastChannel 与预览沙箱双屏同步）
+    this.addTab({
+      type: PRESENTER_TAB_TYPE,
+      init(custom) {
+        const customObj = this || custom
+        mountPresenterTab((customObj as any).element as HTMLElement, self)
+      },
+      destroy() {
+        unmountPresenterTab((this as any).element as HTMLElement)
       },
     })
 
@@ -271,6 +287,29 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
       this.compileCurrentDocument(this.currentDocId)
     }
     void this.updatePreviewTabHeader(initialDocTitle, this.currentDocId)
+  }
+
+  /**
+   * 打开演讲者控制台页签（双屏演讲的提词端）
+   *
+   * 桌面端宿主会拦截 window.open 并甩给系统浏览器，导致演讲者视图与思源内
+   * 沙箱跨进程隔离、BroadcastChannel 失效，因此必须以思源页签形态承载。
+   * 若预览页签（大屏放映端）尚未开启，则顺带拉起，保证有应答 SYNC 的沙箱。
+   */
+  public async openPresenterTab(): Promise<void> {
+    if (!isPreviewTabMounted()) {
+      await this.openBottomPreviewTab()
+    }
+    await openTab({
+      app: this.app,
+      custom: {
+        id: this.name + PRESENTER_TAB_TYPE,
+        title: "演讲者控制台",
+        icon: "iconSlidev",
+        data: {},
+      },
+      position: "right",
+    })
   }
 
   /**

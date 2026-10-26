@@ -10,6 +10,7 @@ export type TSlideChangedHandler = (currentPage: number, totalPages: number, cur
 export type TBlockClickedHandler = (clickedBlockId: string, currentPage: number) => void
 export type TOpenInEditorHandler = (blockId: string, currentPage: number) => void
 export type TClientReadyHandler = () => void
+export type TOpenPresenterHandler = () => void
 
 export interface IOpenPeekDrawerDetail {
   peekType: "siyuan" | "web"
@@ -30,6 +31,7 @@ export class WebSandboxBridge {
   private clientReadyHandlers: TClientReadyHandler[] = []
   private openPeekDrawerHandlers: TOpenPeekDrawerHandler[] = []
   private toggleFullscreenHandlers: (() => void)[] = []
+  private openPresenterHandlers: TOpenPresenterHandler[] = []
 
   constructor() {
     this.handleWindowMessage = this.handleWindowMessage.bind(this)
@@ -175,6 +177,13 @@ export class WebSandboxBridge {
     }
   }
 
+  public onOpenPresenter(handler: TOpenPresenterHandler): () => void {
+    this.openPresenterHandlers.push(handler)
+    return () => {
+      this.openPresenterHandlers = this.openPresenterHandlers.filter(h => h !== handler)
+    }
+  }
+
   public onClientReady(handler: TClientReadyHandler): () => void {
     this.clientReadyHandlers.push(handler)
     return () => {
@@ -251,6 +260,12 @@ export class WebSandboxBridge {
 
       case "REQUEST_TOGGLE_FULLSCREEN":
         for (const handler of this.toggleFullscreenHandlers) {
+          handler()
+        }
+        break
+
+      case "OPEN_PRESENTER":
+        for (const handler of this.openPresenterHandlers) {
           handler()
         }
         break

@@ -52,6 +52,7 @@ export type TSlidevToHostAction =
   | "CLIENT_READY"
   | "OPEN_PEEK_DRAWER"
   | "REQUEST_TOGGLE_FULLSCREEN"
+  | "OPEN_PRESENTER"
 
 export interface ISlidevToHostMessage {
   source: "siyuan-slidev-client"
