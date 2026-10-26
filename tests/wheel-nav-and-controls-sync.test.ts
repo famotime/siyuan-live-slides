@@ -88,8 +88,8 @@ describe("Wheel Navigation, Auto-hidden Controls Bar & Page Number Strong Sync",
     it("双屏演讲者 presenter.html 应包含滚轮上下翻页支持，并排除演讲者笔记区域正常滚动", () => {
       expect(presenterHtml).toContain("function onWheel(e)")
       expect(presenterHtml).toContain(".presenter-notes, .presenter-sidebar")
-      expect(presenterHtml).toContain("nextSlide()")
-      expect(presenterHtml).toContain("prevSlide()")
+      expect(presenterHtml).toContain("goNextSlide()")
+      expect(presenterHtml).toContain("goPrevSlide()")
       expect(presenterHtml).toContain('window.addEventListener("wheel", onWheel, { passive: false })')
       expect(presenterHtml).toContain('window.removeEventListener("wheel", onWheel)')
     })

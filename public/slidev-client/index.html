@@ -5415,6 +5415,13 @@
               currentBlockId: currentSlide.value?.startBlockId || ""
             }
           }, "*")
+          // 双屏跨窗口同步：向广播频道同步当前页码（BroadcastChannel 不回环至发送者自身；
+          // try/catch 兼顾频道尚未初始化的时序窗口）
+          try {
+            if (broadcastChannel) {
+              broadcastChannel.postMessage({ type: "SYNC_PAGE", page: currentPageIndex.value })
+            }
+          } catch (e) {}
         }
 
         // 双向广播频道用于双屏演讲者模式同步

@@ -113,6 +113,13 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
         const customObj = this || custom
         self.previewTab = (customObj as any)?.tab || null
         mountPreviewTab((customObj as any).element as HTMLElement, self)
+        // 跨窗口恢复：页签被「移动到新窗口」后，新窗口内无编辑器、常规管线不会编译，
+        // 依据页签序列化数据携带的 docId 主动编译，为大屏窗口自行喂数据；
+        // 主窗口（存在活动编辑文档）仍走常规管线，避免重复编译
+        const restoreDocId = (customObj as any)?.data?.docId
+        if (restoreDocId && !self.getActiveDocumentId()) {
+          void self.compileCurrentDocument(restoreDocId, { reason: "explicit" })
+        }
         void self.updatePreviewTabHeader()
       },
       destroy() {

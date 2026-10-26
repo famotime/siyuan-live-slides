@@ -280,13 +280,13 @@
 
     <!-- 底栏翻页 -->
     <footer class="presenter-actions">
-      <button class="btn-nav" :disabled="currentPage <= 1" @click="prevSlide">◀ 上一页 (Left)</button>
+      <button class="btn-nav" :disabled="currentPage <= 1" @click="goPrevSlide">◀ 上一页 (Left)</button>
       <div style="display: flex; align-items: center; gap: 14px; font-size: 13px; color: var(--text-muted);">
         <span>进度: {{ progressPercent }}%</span>
         <span>按空格/方向键翻页，大屏联动</span>
         <button style="background:transparent;border:1px solid var(--border-color);color:var(--text-muted);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:12px;" @click="restartPresentation">⏮ 重头放映</button>
       </div>
-      <button class="btn-nav" :disabled="currentPage >= totalPages" @click="nextSlide">下一页 (Right) ▶</button>
+      <button class="btn-nav" :disabled="currentPage >= totalPages" @click="goNextSlide">下一页 (Right) ▶</button>
     </footer>
 
   </div>
@@ -394,14 +394,14 @@
           }
         }
 
-        function nextSlide() {
+        function goNextSlide() {
           if (currentPage.value < totalPages.value) {
             currentPage.value++
             syncToMain(currentPage.value)
           }
         }
 
-        function prevSlide() {
+        function goPrevSlide() {
           if (currentPage.value > 1) {
             currentPage.value--
             syncToMain(currentPage.value)
@@ -411,10 +411,10 @@
         function onKeyDown(e) {
           if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") {
             e.preventDefault()
-            nextSlide()
+            goNextSlide()
           } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
             e.preventDefault()
-            prevSlide()
+            goPrevSlide()
           }
         }
 
@@ -443,9 +443,9 @@
           lastWheelTime = now
 
           if (e.deltaY > 0) {
-            nextSlide()
+            goNextSlide()
           } else {
-            prevSlide()
+            goPrevSlide()
           }
         }
 
@@ -522,7 +522,8 @@
           decreaseFontSize,
           progressPercent,
           restartPresentation,
-          prevSlide
+          goPrevSlide,
+          goNextSlide
         }
       }
     }).mount("#presenter-app")

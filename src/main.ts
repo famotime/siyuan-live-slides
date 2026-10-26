@@ -70,9 +70,10 @@ export function isPreviewTabMounted(): boolean {
 }
 
 // 1.5 演讲者控制台页签 (SlidevPresenterTab) 实例管理
-// 注意：演讲者页签不是编译消费者，其数据由 presenter.html 内部的
-//       BroadcastChannel 协议直接从预览沙箱同步，不经宿主桥接器
+// 注意：演讲者页签不是编译消费者，其数据由宿主 updateDockDocument 直连推送，
+//       跨窗口（页签被移动到其它思源窗口）时经 BroadcastChannel 兜底同步
 let presenterTabApp: VueApp | null = null
+let presenterTabInstance: any = null
 
 export function mountPresenterTab(element: HTMLElement, pluginInstance: Plugin): any {
   if (presenterTabApp) {
@@ -81,13 +82,35 @@ export function mountPresenterTab(element: HTMLElement, pluginInstance: Plugin):
 
   presenterTabApp = createApp(SlidevPresenterTab)
   presenterTabApp.provide('plugin', pluginInstance)
-  return presenterTabApp.mount(element)
+  presenterTabApp.provide('sandboxBridge', globalSandboxBridge)
+  presenterTabInstance = presenterTabApp.mount(element)
+  return presenterTabInstance
 }
 
 export function unmountPresenterTab(element: HTMLElement): void {
   if (presenterTabApp) {
     presenterTabApp.unmount()
     presenterTabApp = null
+    presenterTabInstance = null
+  }
+}
+
+/**
+ * 跨窗口幻灯片数据广播：预览页签被「移动到新窗口」后，本窗口已无沙盒 iframe
+ * 可投递，改由广播信道把最新编译结果推给远端窗口中的沙盒（其 BC 监听器接收
+ * SYNC_SLIDES 后自行更新），保证大屏窗口持续获得编辑刷新
+ */
+function broadcastDocToRemoteSandbox(doc: ISlidevDocument): void {
+  try {
+    const channel = new BroadcastChannel('siyuan-slidev-sync')
+    channel.postMessage({
+      type: 'SYNC_SLIDES',
+      slides: JSON.parse(JSON.stringify(doc.slides || [])),
+      config: JSON.parse(JSON.stringify(doc.config || {})),
+    })
+    channel.close()
+  } catch (err) {
+    // 广播失败不影响同窗口数据流
   }
 }
 
@@ -134,12 +157,18 @@ export function updateDockDocument(doc: ISlidevDocument, targetDocId?: string): 
     inspectorDockInstance.updateDocument(doc)
   }
 
-  // 更新下方分屏预览页签
+  // 更新下方分屏预览页签；页签被移动到其它窗口时经广播信道推送远端沙盒
   if (previewTabInstance?.updateDocument) {
     previewTabInstance.updateDocument(doc, targetDocId)
   } else {
     // 即使页签未挂载，沙箱桥接器也自动缓存当前文档数据
     globalSandboxBridge.updateSlides(doc.slides, doc.config, doc.fullMarkdown)
+    broadcastDocToRemoteSandbox(doc)
+  }
+
+  // 更新演讲者控制台页签（同窗口宿主直连，与 Dock 同源通路）
+  if (presenterTabInstance?.updateDocument) {
+    presenterTabInstance.updateDocument(doc)
   }
 }
 
