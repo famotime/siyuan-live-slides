@@ -13,7 +13,7 @@
  * 而覆盖层在合并时优先级高于缓存与编译模型，故缓存不会掩盖真实变更。
  */
 
-import type { ISlidevDocument } from "../types/slidev-protocol"
+import type { ISlidesDocument } from "../types/slides-protocol"
 
 export interface IBlockAttrCacheEntry {
   attrs: Record<string, string>
@@ -58,7 +58,7 @@ export class BlockAttrCache {
 /**
  * 由编译模型构建 块 ID → IAL 索引（同一文档对象只构建一次由调用方负责）
  */
-export function buildCompiledIalIndex(doc: ISlidevDocument | null | undefined): Map<string, Record<string, string>> {
+export function buildCompiledIalIndex(doc: ISlidesDocument | null | undefined): Map<string, Record<string, string>> {
   const index = new Map<string, Record<string, string>>()
   if (!doc?.slides) return index
 

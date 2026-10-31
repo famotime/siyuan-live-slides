@@ -5,7 +5,7 @@
       <div class="spm-dialog-header">
         <div class="spm-dialog-title">
           <svg class="spm-dialog-icon" aria-hidden="true">
-            <use xlink:href="#iconSlidev"></use>
+            <use xlink:href="#iconSlides"></use>
           </svg>
           <span>导入 Slidev 演示文档</span>
         </div>
@@ -19,7 +19,7 @@
           :class="{ active: inputMode === 'file' }"
           @click="inputMode = 'file'"
         >
-          <SlidevIcon name="package" />
+          <SlidesIcon name="package" />
           <span>文件 / 压缩包导入 (.zip / .md)</span>
         </button>
         <button
@@ -27,7 +27,7 @@
           :class="{ active: inputMode === 'text' }"
           @click="inputMode = 'text'"
         >
-          <SlidevIcon name="notes" />
+          <SlidesIcon name="notes" />
           <span>粘贴 Markdown 源码</span>
         </button>
       </div>
@@ -51,14 +51,14 @@
               @change="onFileSelected"
             />
             <div v-if="!selectedFileName" class="spm-dropzone-prompt">
-              <span class="spm-dropzone-icon"><SlidevIcon name="folder" style="font-size: 32px;" /></span>
+              <span class="spm-dropzone-icon"><SlidesIcon name="folder" style="font-size: 32px;" /></span>
               <p class="spm-dropzone-text">点击选择文件，或直接拖拽文件至此处</p>
               <p class="spm-dropzone-hint">
                 支持 Slidev 完整工程 <strong>.zip</strong>（自动解包 public/ 静态素材）或单文件 <strong>.md</strong>
               </p>
             </div>
             <div v-else class="spm-dropzone-active">
-              <span class="spm-file-badge"><SlidevIcon name="notes" /> {{ selectedFileName }}</span>
+              <span class="spm-file-badge"><SlidesIcon name="notes" /> {{ selectedFileName }}</span>
               <span class="spm-file-size">({{ formattedFileSize }})</span>
               <button class="spm-btn-text" @click.stop="clearFile">更换文件</button>
             </div>
@@ -84,7 +84,7 @@
         <!-- 解析预检摘要卡片 -->
         <div v-if="parsedPresentation" class="spm-preview-card">
           <div class="spm-preview-card__header">
-            <span style="display: inline-flex; align-items: center; gap: 4px;"><SlidevIcon name="sparkles" /> 演示解析摘要</span>
+            <span style="display: inline-flex; align-items: center; gap: 4px;"><SlidesIcon name="sparkles" /> 演示解析摘要</span>
             <span class="spm-badge-success">预检就绪</span>
           </div>
 
@@ -169,8 +169,8 @@
           :disabled="!parsedPresentation || isImporting"
           @click="onConfirmImport"
         >
-          <span v-if="isImporting" style="display: inline-flex; align-items: center; gap: 4px;"><SlidevIcon name="refresh" /> 正在导入生成中...</span>
-          <span v-else style="display: inline-flex; align-items: center; gap: 4px;"><SlidevIcon name="rocket" /> 确认导入思源笔记</span>
+          <span v-if="isImporting" style="display: inline-flex; align-items: center; gap: 4px;"><SlidesIcon name="refresh" /> 正在导入生成中...</span>
+          <span v-else style="display: inline-flex; align-items: center; gap: 4px;"><SlidesIcon name="rocket" /> 确认导入思源笔记</span>
         </button>
       </div>
     </div>
@@ -179,8 +179,8 @@
 
 <script setup lang="ts">
 import { inject, onMounted } from 'vue'
-import SlidevIcon from '@/ui/components/SlidevIcon.vue'
-import { useSlidevImport } from './useSlidevImport'
+import SlidesIcon from '@/ui/components/SlidesIcon.vue'
+import { useSlidesImport } from './useSlidesImport'
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -217,7 +217,7 @@ const {
   onTextChange,
   reprocessCurrentInput,
   handleConfirmImport,
-} = useSlidevImport(plugin)
+} = useSlidesImport(plugin)
 
 onMounted(async () => {
   await fetchNotebooks()

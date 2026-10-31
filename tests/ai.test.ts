@@ -3,7 +3,7 @@ import { generateAutoAnimations } from "../src/ai/auto-animator"
 import { analyzeSlideSplits } from "../src/ai/auto-splitter"
 import { generateSpeakerNotes } from "../src/ai/notes-generator"
 import { extractBlockRefs, resolveBlockRefsSync } from "../src/compiler/block-ref-resolver"
-import type { ISiYuanBlockNode, ISlidevVirtualPage } from "../src/types/slidev-protocol"
+import type { ISiYuanBlockNode, ISlidesVirtualPage } from "../src/types/slides-protocol"
 
 describe("BlockRefResolver (块引用与块嵌入动态展开)", () => {
   it("应准确抽取思源块引用标记", () => {
@@ -21,7 +21,7 @@ describe("BlockRefResolver (块引用与块嵌入动态展开)", () => {
     const resolved = resolveBlockRefsSync(text, {
       "ref-1": "这是引用的真实最新内容",
     })
-    expect(resolved).toContain("slidev-block-ref")
+    expect(resolved).toContain("slides-block-ref")
     expect(resolved).toContain("这是引用的真实最新内容")
     expect(resolved).toContain("data-ref-id=\"ref-1\"")
   })
@@ -58,7 +58,7 @@ describe("AI Modules (智能断页、动效注入与提词卡)", () => {
   })
 
   it("NotesGenerator 应从幻灯片块提取大纲并生成口播提词", () => {
-    const slide: ISlidevVirtualPage = {
+    const slide: ISlidesVirtualPage = {
       pageIndex: 1,
       startBlockId: "start-1",
       frontmatter: { layout: "default" },
@@ -78,7 +78,7 @@ describe("AI Modules (智能断页、动效注入与提词卡)", () => {
 
   it("generateSpeakerNotesWithAI 应优先使用 AI 返回结果并在异常时降级", async () => {
     const { generateSpeakerNotesWithAI } = await import("../src/ai/notes-generator")
-    const slide: ISlidevVirtualPage = {
+    const slide: ISlidesVirtualPage = {
       pageIndex: 1,
       startBlockId: "start-1",
       frontmatter: { layout: "default" },
@@ -103,7 +103,7 @@ describe("AI Modules (智能断页、动效注入与提词卡)", () => {
 
   it("generateSpeakerNotesWithAIDetailed 应明确区分 AI 生成与模板降级", async () => {
     const { generateSpeakerNotesWithAIDetailed } = await import("../src/ai/notes-generator")
-    const slide: ISlidevVirtualPage = {
+    const slide: ISlidesVirtualPage = {
       pageIndex: 1,
       startBlockId: "start-1",
       frontmatter: { layout: "default" },

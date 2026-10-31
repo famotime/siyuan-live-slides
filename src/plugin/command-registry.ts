@@ -15,13 +15,13 @@ import { globalDocumentCompiler } from "@/compiler/document-compiler"
 import { openDockImportDialog } from "@/main"
 import { mirrorBlockSelection } from "@/sync/selection-mirror"
 import { PropertyManagerBridge } from "@/synergy/property-manager-bridge"
-import type { ISiYuanBlockNode, ISlidevDocument } from "@/types/slidev-protocol"
+import type { ISiYuanBlockNode, ISlidesDocument } from "@/types/slides-protocol"
 import type { CliDevServerBridge } from "@/engine/cli-devserver-bridge"
 import { runHeadlessImageExport, resolveDocumentTitle } from "@/export/image-exporter"
 
-export interface ISlidevPluginHost extends Plugin {
+export interface ISlidesPluginHost extends Plugin {
   currentDocId: string
-  latestCompiledDoc: ISlidevDocument | null
+  latestCompiledDoc: ISlidesDocument | null
   cliBridge: CliDevServerBridge
   openBottomPreviewTab(): Promise<void>
   openPresenterTab(): Promise<void>
@@ -29,13 +29,13 @@ export interface ISlidevPluginHost extends Plugin {
 }
 
 /**
- * 集中注册 Slidev 插件的所有快捷指令与动作回调
+ * 集中注册即现演示插件的所有快捷指令与动作回调
  */
-export function registerPluginCommands(plugin: ISlidevPluginHost): void {
+export function registerPluginCommands(plugin: ISlidesPluginHost): void {
   // 1. 下方分屏演示预览
   plugin.addCommand({
-    langKey: "slidevPresentation",
-    langText: "Slidev: 在文档下方开启分屏演示预览",
+    langKey: "slidesPresentation",
+    langText: "即现: 在文档下方开启分屏演示预览",
     hotkey: "⌥P",
     enabled: () => true,
     execute: () => {
@@ -45,22 +45,22 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
 
   // 2. 导入演示文档
   plugin.addCommand({
-    langKey: "slidevImport",
-    langText: "Slidev: 导入 Slidev 演示文档 (.md / .zip)",
+    langKey: "slidesImport",
+    langText: "即现: 导入 Slidev 演示文档 (.md / .zip)",
     hotkey: "⌥I",
     enabled: () => true,
     execute: () => {
       const opened = openDockImportDialog()
       if (!opened) {
-        showMessage("请先在右侧栏打开「Slidev 演示配置」Dock 面板以呼起导入窗口")
+        showMessage("请先在右侧栏打开「即现演示配置」Dock 面板以呼起导入窗口")
       }
     },
   })
 
   // 3. 初始化当前文档演示属性
   plugin.addCommand({
-    langKey: "slidevInitAttrs",
-    langText: "Slidev: 初始化当前文档演示属性",
+    langKey: "slidesInitAttrs",
+    langText: "即现: 初始化当前文档演示属性",
     hotkey: "",
     enabled: () => true,
     execute: async () => {
@@ -70,11 +70,11 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
       }
       if (plugin.currentDocId) {
         await setBlockAttrs(plugin.currentDocId, {
-          "custom-slidev-theme": "default",
-          "custom-slidev-aspect-ratio": "16/9",
-          "custom-slidev-default-transition": "slide-left",
+          "custom-slides-theme": "default",
+          "custom-slides-aspect-ratio": "16/9",
+          "custom-slides-default-transition": "slide-left",
         })
-        showMessage("已为当前文档初始化 Slidev 演示属性")
+        showMessage("已为当前文档初始化即现演示属性")
         plugin.compileCurrentDocument(plugin.currentDocId)
       }
     },
@@ -82,8 +82,8 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
 
   // 4. AI 智能大纲断页建议与自动分页
   plugin.addCommand({
-    langKey: "slidevAiSplit",
-    langText: "Slidev AI: 智能大纲断页建议与自动分页",
+    langKey: "slidesAiSplit",
+    langText: "即现 AI: 智能大纲断页建议与自动分页",
     hotkey: "",
     enabled: () => true,
     execute: async () => {
@@ -121,7 +121,7 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
       for (const sug of suggestions) {
         try {
           await insertBlock("markdown", "---", undefined, sug.blockId)
-          await setBlockAttrs(sug.blockId, { "custom-slidev-layout": sug.recommendedLayout })
+          await setBlockAttrs(sug.blockId, { "custom-slides-layout": sug.recommendedLayout })
           inserted++
         } catch (e) {
           console.warn("Failed to insert divider:", e)
@@ -134,8 +134,8 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
 
   // 5. AI 自动为当前文档生成演讲者提词卡
   plugin.addCommand({
-    langKey: "slidevAiNotes",
-    langText: "Slidev AI: 自动为当前文档生成演讲者提词卡 (Notes)",
+    langKey: "slidesAiNotes",
+    langText: "即现 AI: 自动为当前文档生成演讲者提词卡 (Notes)",
     hotkey: "",
     enabled: () => true,
     execute: async () => {
@@ -166,12 +166,12 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
 
       const notes = await generateSpeakerNotesWithAI(dummySlide, chatAI)
       const noteLines = notes.split(/\r?\n/).map((l: string) => `> ${l}`).join("\n")
-      const noteMd = `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slidev-note="true"}`
+      const noteMd = `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slides-note="true"}`
       const appendRes: any = await appendBlock("markdown", noteMd, plugin.currentDocId).catch(() => null)
       const newBlockId = appendRes?.[0]?.doOperations?.[0]?.id || appendRes?.[0]?.id
       if (newBlockId) {
-        await setBlockAttrs(newBlockId, { "custom-slidev-note": "true" })
-        globalDocumentCompiler.setBlockAttrOverride(newBlockId, { "custom-slidev-note": "true" })
+        await setBlockAttrs(newBlockId, { "custom-slides-note": "true" })
+        globalDocumentCompiler.setBlockAttrOverride(newBlockId, { "custom-slides-note": "true" })
         mirrorBlockSelection(newBlockId, plugin.app)
       }
       showMessage("已成功生成口播提词卡并插入为正文讲稿备注块")
@@ -181,8 +181,8 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
 
   // 6. 统计全库转场效果分布
   plugin.addCommand({
-    langKey: "slidevBatchTransitions",
-    langText: "Slidev 协同: 统计全库转场效果分布",
+    langKey: "slidesBatchTransitions",
+    langText: "即现协同: 统计全库转场效果分布",
     hotkey: "",
     enabled: () => true,
     execute: async () => {
@@ -194,10 +194,10 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
     },
   })
 
-  // 7. 复制 Slidev 预设属性模板至剪贴板
+  // 7. 复制即现预设属性模板至剪贴板
   plugin.addCommand({
-    langKey: "slidevExportTemplates",
-    langText: "Slidev 协同: 复制 Slidev 预设属性模板至剪贴板",
+    langKey: "slidesExportTemplates",
+    langText: "即现协同: 复制即现预设属性模板至剪贴板",
     hotkey: "",
     enabled: () => true,
     execute: async () => {
@@ -205,7 +205,7 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
       const json = pmBridge.exportTemplatesJson()
       if (typeof navigator !== "undefined" && navigator.clipboard) {
         await navigator.clipboard.writeText(json)
-        showMessage("已将 Slidev 属性模板 JSON 复制至剪贴板，可直接导入属性管家")
+        showMessage("已将即现属性模板 JSON 复制至剪贴板，可直接导入属性管家")
       } else {
         showMessage("已生成模板数据（请在控制台查看）：\n" + json)
       }
@@ -214,8 +214,8 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
 
   // 8. 批量替换全库淡入淡出转场为滑动
   plugin.addCommand({
-    langKey: "slidevBatchReplaceTransition",
-    langText: "Slidev 协同: 批量替换全库淡入淡出转场为滑动 (fade -> slide-left)",
+    langKey: "slidesBatchReplaceTransition",
+    langText: "即现协同: 批量替换全库淡入淡出转场为滑动 (fade -> slide-left)",
     hotkey: "",
     enabled: () => true,
     execute: async () => {
@@ -233,8 +233,8 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
 
   // 9. 打开双屏演讲者控制台（以思源页签承载，避免桌面端 window.open 被甩至系统浏览器）
   plugin.addCommand({
-    langKey: "slidevPresenterMode",
-    langText: "Slidev: 打开双屏演讲者控制台 (Presenter Mode)",
+    langKey: "slidesPresenterMode",
+    langText: "即现: 打开双屏演讲者控制台 (Presenter Mode)",
     hotkey: "⌥M",
     enabled: () => true,
     execute: () => {
@@ -244,8 +244,8 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
 
   // 10. 导出 Slidev 标准 slides.md 文档 (下载到本地)
   plugin.addCommand({
-    langKey: "slidevExportCliMd",
-    langText: "Slidev Pro: 导出 Slidev 标准 slides.md 文档 (下载到本地)",
+    langKey: "slidesExportCliMd",
+    langText: "即现 Pro: 导出 Slidev 标准 slides.md 文档 (下载到本地)",
     hotkey: "",
     enabled: () => true,
     execute: async () => {
@@ -268,8 +268,8 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
 
   // 11. 检测本地 Slidev CLI DevServer 状态
   plugin.addCommand({
-    langKey: "slidevProbeCliDevServer",
-    langText: "Slidev Pro: 检测本地 Slidev CLI DevServer 状态 (localhost:3030)",
+    langKey: "slidesProbeCliDevServer",
+    langText: "即现 Pro: 检测本地 Slidev CLI DevServer 状态 (localhost:3030)",
     hotkey: "",
     enabled: () => true,
     execute: async () => {
@@ -285,8 +285,8 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
 
   // 12. 同步 slides.md 至思源工作空间存储目录
   plugin.addCommand({
-    langKey: "slidevSyncToCliWorkspace",
-    langText: "Slidev Pro: 同步 slides.md 至思源工作空间存储目录",
+    langKey: "slidesSyncToCliWorkspace",
+    langText: "即现 Pro: 同步 slides.md 至思源工作空间存储目录",
     hotkey: "",
     enabled: () => true,
     execute: async () => {
@@ -299,7 +299,7 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
       }
       const res = await plugin.cliBridge.syncToWorkspaceFile(
         plugin.latestCompiledDoc,
-        "/data/storage/petal/siyuan-slidev/slides.md",
+        "/data/storage/petal/siyuan-live-slides/slides.md",
         putFile,
       )
       if (res.success) {
@@ -312,8 +312,8 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
 
   // 13. 导出幻灯片为图片包 (ZIP)
   plugin.addCommand({
-    langKey: "slidevExportImagesZip",
-    langText: "Slidev: 逐页导出幻灯片为高清图片包 (ZIP)",
+    langKey: "slidesExportImagesZip",
+    langText: "即现: 逐页导出幻灯片为高清图片包 (ZIP)",
     hotkey: "",
     enabled: () => true,
     execute: async () => {

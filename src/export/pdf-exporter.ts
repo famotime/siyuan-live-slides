@@ -1,4 +1,4 @@
-import type { ISlidevBlock, ISlidevDocument, ISlidevVirtualPage } from "../types/slidev-protocol"
+import type { ISlidesBlock, ISlidesDocument, ISlidesVirtualPage } from "../types/slides-protocol"
 import {
   convertBlockToHtml,
   escapeHtml,
@@ -26,8 +26,8 @@ export interface IPdfExportOptions {
 /**
  * 构建高保真可打印 / 导出 PDF 的独立 HTML 结构
  */
-export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOptions): string {
-  const title = options?.title || "Slidev 演示讲义"
+export function buildPrintableHtml(doc: ISlidesDocument, options?: IPdfExportOptions): string {
+  const title = options?.title || "即现演示讲义"
   const pageRatio = options?.pageRatio || "16:9"
   const showNotes = options?.showNotes ?? true
   const showPageNumber = options?.showPageNumber ?? true
@@ -76,7 +76,7 @@ export function buildPrintableHtml(doc: ISlidevDocument, options?: IPdfExportOpt
 /**
  * 触发打印窗口或调用系统打印机导出为 PDF
  */
-export function triggerPdfExport(doc: ISlidevDocument, options?: IPdfExportOptions): boolean {
+export function triggerPdfExport(doc: ISlidesDocument, options?: IPdfExportOptions): boolean {
   if (typeof window === "undefined" || typeof document === "undefined") {
     return false
   }

@@ -1,14 +1,14 @@
 import { describe, expect, it, vi } from "vitest"
-import { NativeSlidevProcessManager } from "../src/engine/process-manager"
+import { NativeSlidesProcessManager } from "../src/engine/process-manager"
 
-describe("NativeSlidevProcessManager (官方进程生命周期与探活管理)", () => {
+describe("NativeSlidesProcessManager (官方进程生命周期与探活管理)", () => {
   it("allocPort 应能动态避开已占用端口", async () => {
     // 模拟 3030 被占用，3031 可用
     const customPortChecker = vi.fn().mockImplementation((port: number) => {
       return Promise.resolve(port !== 3030)
     })
 
-    const manager = new NativeSlidevProcessManager({
+    const manager = new NativeSlidesProcessManager({
       defaultPort: 3030,
       customPortChecker,
     })
@@ -28,7 +28,7 @@ describe("NativeSlidevProcessManager (官方进程生命周期与探活管理)",
     }
     const customSpawner = vi.fn().mockReturnValue(mockProcess)
 
-    const manager = new NativeSlidevProcessManager({
+    const manager = new NativeSlidesProcessManager({
       defaultPort: 3030,
       customSpawner,
       customPortChecker: () => Promise.resolve(true),

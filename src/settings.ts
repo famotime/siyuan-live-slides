@@ -1,28 +1,28 @@
 import { reactive } from 'vue'
 
-export interface ISlidevGlobalSettings {
+export interface ISlidesGlobalSettings {
   enableWebServeJump: boolean
   webServeUrl: string
   normalizeHeadingSizes: boolean
 }
 
-export const SETTINGS_STORAGE_NAME = 'slidev-config.json'
+export const SETTINGS_STORAGE_NAME = 'slides-config.json'
 
-export const DEFAULT_GLOBAL_SETTINGS: ISlidevGlobalSettings = {
+export const DEFAULT_GLOBAL_SETTINGS: ISlidesGlobalSettings = {
   enableWebServeJump: false,
   webServeUrl: 'http://127.0.0.1:6806',
   normalizeHeadingSizes: false,
 }
 
-export const globalSettingsState = reactive<ISlidevGlobalSettings>({
+export const globalSettingsState = reactive<ISlidesGlobalSettings>({
   ...DEFAULT_GLOBAL_SETTINGS,
 })
 
-export function normalizeGlobalSettings(val: unknown): ISlidevGlobalSettings {
+export function normalizeGlobalSettings(val: unknown): ISlidesGlobalSettings {
   if (!val || typeof val !== 'object') {
     return { ...DEFAULT_GLOBAL_SETTINGS }
   }
-  const s = val as Partial<ISlidevGlobalSettings>
+  const s = val as Partial<ISlidesGlobalSettings>
   return {
     enableWebServeJump: Boolean(s.enableWebServeJump),
     webServeUrl:
@@ -33,11 +33,11 @@ export function normalizeGlobalSettings(val: unknown): ISlidevGlobalSettings {
   }
 }
 
-export function setRuntimeSettings(val: Partial<ISlidevGlobalSettings> | unknown): ISlidevGlobalSettings {
+export function setRuntimeSettings(val: Partial<ISlidesGlobalSettings> | unknown): ISlidesGlobalSettings {
   if (!val || typeof val !== 'object') {
     return { ...globalSettingsState }
   }
-  const s = val as Partial<ISlidevGlobalSettings>
+  const s = val as Partial<ISlidesGlobalSettings>
   if (s.enableWebServeJump !== undefined) {
     globalSettingsState.enableWebServeJump = Boolean(s.enableWebServeJump)
   }
@@ -50,7 +50,7 @@ export function setRuntimeSettings(val: Partial<ISlidevGlobalSettings> | unknown
   return { ...globalSettingsState }
 }
 
-export function getRuntimeSettings(): ISlidevGlobalSettings {
+export function getRuntimeSettings(): ISlidesGlobalSettings {
   return { ...globalSettingsState }
 }
 

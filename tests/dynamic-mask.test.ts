@@ -5,10 +5,10 @@ import {
   ATTR_PAGE_MASK_RATIO,
   ATTR_PAGE_MASK_STYLE,
   ATTR_PAGE_MASK_INITIAL,
-} from "../src/types/slidev-protocol"
+} from "../src/types/slides-protocol"
 import { parsePageAttrs } from "../src/compiler/scope-mapper"
-import { parseSlidevPresentation } from "../src/compiler/slidev-importer"
-import { buildSlidevDocument } from "../src/compiler/slidev-ast-builder"
+import { parseSlidesPresentation } from "../src/compiler/slides-importer"
+import { buildSlidesDocument } from "../src/compiler/slides-ast-builder"
 import { generateStandaloneExportStyles } from "../src/export/standalone-template-styles"
 import { getStandaloneClientRuntimeScript } from "../src/export/standalone-client-runtime"
 import { generatePdfExportStyles } from "../src/export/pdf-template-styles"
@@ -69,7 +69,7 @@ describe("Dynamic Mask (页面动态蒙版功能测试)", () => {
   })
 
   describe("2. AST 编译器与 Frontmatter 往返解析", () => {
-    it("parsePageAttrs 应正确将 custom-slidev-mask-* 属性映射到 frontmatter", () => {
+    it("parsePageAttrs 应正确将 custom-slides-mask-* 属性映射到 frontmatter", () => {
       const ial = {
         [ATTR_PAGE_MASK]: "down",
         [ATTR_PAGE_MASK_RATIO]: "1:2:1",
@@ -99,7 +99,7 @@ maskInitial: hidden
 
 正文段落第二段
 `
-      const imported = parseSlidevPresentation(md)
+      const imported = parseSlidesPresentation(md)
       expect(imported.slides.length).toBe(1)
       const pageAttrs = imported.slides[0].pageAttrs
 
@@ -109,8 +109,8 @@ maskInitial: hidden
       expect(pageAttrs[ATTR_PAGE_MASK_INITIAL]).toBe("hidden")
     })
 
-    it("buildSlidevDocument 应支持生成包含 mask 的 Frontmatter", () => {
-      const doc = buildSlidevDocument(
+    it("buildSlidesDocument 应支持生成包含 mask 的 Frontmatter", () => {
+      const doc = buildSlidesDocument(
         "doc-mask-test",
         {},
         [
@@ -151,15 +151,15 @@ maskInitial: hidden
   describe("3. 单文件 HTML 导出集成支持", () => {
     it("generateStandaloneExportStyles 应包含动态蒙版完整 CSS 规则与过渡样式", () => {
       const css = generateStandaloneExportStyles()
-      expect(css).toContain(".slidev-mask-body-container")
-      expect(css).toContain(".slidev-mask-body-container--has-mask")
+      expect(css).toContain(".slides-mask-body-container")
+      expect(css).toContain(".slides-mask-body-container--has-mask")
       expect(css).toContain("contain: layout paint;")
       expect(css).toContain("isolation: isolate;")
-      expect(css).toContain(".slidev-mask-layer")
-      expect(css).toContain(".slidev-mask-overlay")
-      expect(css).toContain("margin-left: calc(-1 * var(--slidev-padding-x, 48px))")
-      expect(css).toContain("margin-bottom: calc(-1 * var(--slidev-padding-y, 32px))")
-      expect(css).toContain("width: calc(100% + 2 * var(--slidev-padding-x, 48px))")
+      expect(css).toContain(".slides-mask-layer")
+      expect(css).toContain(".slides-mask-overlay")
+      expect(css).toContain("margin-left: calc(-1 * var(--slides-padding-x, 48px))")
+      expect(css).toContain("margin-bottom: calc(-1 * var(--slides-padding-y, 32px))")
+      expect(css).toContain("width: calc(100% + 2 * var(--slides-padding-x, 48px))")
       expect(css).toContain("backdrop-filter: blur(30px) saturate(180%);")
       expect(css).toContain("background: color-mix(in srgb, var(--slide-bg, #ffffff) 90%, transparent);")
     })
@@ -170,9 +170,9 @@ maskInitial: hidden
       expect(js).toContain("currentMaskConfig")
       expect(js).toContain("updateMaskVisual")
       expect(js).toContain("requestAnimationFrame")
-      expect(js).toContain("slidev-mask-layer")
-      expect(js).toContain("slidev-mask-overlay")
-      expect(js).toContain("slidev-mask-divider-line")
+      expect(js).toContain("slides-mask-layer")
+      expect(js).toContain("slides-mask-overlay")
+      expect(js).toContain("slides-mask-divider-line")
       expect(js).toContain("goNext")
       expect(js).toContain("goPrev")
     })
@@ -181,9 +181,9 @@ maskInitial: hidden
   describe("4. PDF 打印讲义导出规则", () => {
     it("generatePdfExportStyles 应在 @media print 中强制隐藏蒙版，保证内容完整可见", () => {
       const pdfCss = generatePdfExportStyles()
-      expect(pdfCss).toContain(".slidev-mask-layer")
-      expect(pdfCss).toContain(".slidev-mask-overlay")
-      expect(pdfCss).toContain(".slidev-mask-divider-line")
+      expect(pdfCss).toContain(".slides-mask-layer")
+      expect(pdfCss).toContain(".slides-mask-overlay")
+      expect(pdfCss).toContain(".slides-mask-divider-line")
       expect(pdfCss).toContain("display: none !important;")
       expect(pdfCss).toContain("clip-path: none !important;")
     })

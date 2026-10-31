@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { WebSandboxBridge } from "../src/engine/web-sandbox-bridge"
 import type {
-  ISlidevDocument,
+  ISlidesDocument,
   IActiveBlockInfo,
-} from "../src/types/slidev-protocol"
+} from "../src/types/slides-protocol"
 
 class MockWindow extends EventTarget {
   postMessage = vi.fn()
@@ -34,22 +34,22 @@ describe("Preview & Inspector Protocol & State Coordination", () => {
       type: "NodeParagraph",
       content: "测试段落内容",
       attrs: {
-        "custom-slidev-click": "+1",
-        "custom-slidev-slot": "left",
+        "custom-slides-click": "+1",
+        "custom-slides-slot": "left",
       },
       isDivider: false,
       isCode: false,
     }
 
     expect(blockInfo.id).toBe("block-item-1")
-    expect(blockInfo.attrs["custom-slidev-click"]).toBe("+1")
-    expect(blockInfo.attrs["custom-slidev-slot"]).toBe("left")
+    expect(blockInfo.attrs["custom-slides-click"]).toBe("+1")
+    expect(blockInfo.attrs["custom-slides-slot"]).toBe("left")
     expect(blockInfo.isDivider).toBe(false)
   })
 
   it("WebSandboxBridge 状态桥接器应正确缓存并向沙箱投递更新", () => {
     const bridge = new WebSandboxBridge()
-    const mockDoc: ISlidevDocument = {
+    const mockDoc: ISlidesDocument = {
       docId: "doc-123",
       config: {
         theme: "default",
@@ -90,7 +90,7 @@ describe("Preview & Inspector Protocol & State Coordination", () => {
     window.dispatchEvent(
       new (globalThis as any).MessageEvent("message", {
         data: {
-          source: "siyuan-slidev-client",
+          source: "siyuan-slides-client",
           action: "CLIENT_READY",
         },
       }),

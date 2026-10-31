@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest"
 import { renderSlideBlocksToHtml } from "../src/export/slide-layout-renderer"
-import type { ISlidevVirtualPage } from "../src/types/slidev-protocol"
+import type { ISlidesVirtualPage } from "../src/types/slides-protocol"
 
 describe("SlideLayoutRenderer (幻灯片版式容器渲染器)", () => {
   it("应支持 two-cols 自动二分或显式 right 插槽分栏", () => {
-    const page: ISlidevVirtualPage = {
+    const page: ISlidesVirtualPage = {
       pageIndex: 1,
       frontmatter: { layout: "two-cols" },
       blocks: [
@@ -22,7 +22,7 @@ describe("SlideLayoutRenderer (幻灯片版式容器渲染器)", () => {
   })
 
   it("应支持 two-cols-header 表头与双栏网格组合", () => {
-    const page: ISlidevVirtualPage = {
+    const page: ISlidesVirtualPage = {
       pageIndex: 2,
       frontmatter: { layout: "two-cols-header" },
       blocks: [
@@ -41,7 +41,7 @@ describe("SlideLayoutRenderer (幻灯片版式容器渲染器)", () => {
   })
 
   it("应支持 image-right 与 image-left 图文版式", () => {
-    const page: ISlidevVirtualPage = {
+    const page: ISlidesVirtualPage = {
       pageIndex: 3,
       frontmatter: { layout: "image-right", image: "https://example.com/cover.png" },
       blocks: [
@@ -57,7 +57,7 @@ describe("SlideLayoutRenderer (幻灯片版式容器渲染器)", () => {
   })
 
   it("应支持 cover 与 fact 专属展示版式", () => {
-    const coverPage: ISlidevVirtualPage = {
+    const coverPage: ISlidesVirtualPage = {
       pageIndex: 4,
       frontmatter: { layout: "cover" },
       blocks: [{ id: "c", rawMarkdown: "# 封面大字" }],
@@ -65,7 +65,7 @@ describe("SlideLayoutRenderer (幻灯片版式容器渲染器)", () => {
     }
     expect(renderSlideBlocksToHtml(coverPage)).toContain("layout-cover-container")
 
-    const factPage: ISlidevVirtualPage = {
+    const factPage: ISlidesVirtualPage = {
       pageIndex: 5,
       frontmatter: { layout: "fact" },
       blocks: [{ id: "f", rawMarkdown: "# 关键数据 99%" }],

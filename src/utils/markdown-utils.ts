@@ -1,4 +1,4 @@
-import type { ISiYuanBlockNode } from "../types/slidev-protocol"
+import type { ISiYuanBlockNode } from "../types/slides-protocol"
 
 /**
  * 从块的 Markdown 文本或纯文本中提取第一张图片的 URL

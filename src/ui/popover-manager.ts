@@ -59,7 +59,7 @@ export function openQuickDividerPopover(
   closeCurrentPopover()
 
   const container = document.createElement('div')
-  container.className = 'slidev-floating-popover-container'
+  container.className = 'slides-floating-popover-container'
   document.body.appendChild(container)
   currentPopoverContainer = container
 
@@ -105,7 +105,7 @@ export function openElementAnimBar(
   closeCurrentPopover()
 
   const container = document.createElement('div')
-  container.className = 'slidev-floating-animbar-container'
+  container.className = 'slides-floating-animbar-container'
   document.body.appendChild(container)
   currentPopoverContainer = container
 

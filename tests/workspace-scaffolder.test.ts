@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest"
 import { extractSnippetPaths, WorkspaceScaffolder } from "../src/engine/workspace-scaffolder"
-import type { ISlidevDocument } from "../src/types/slidev-protocol"
+import type { ISlidesDocument } from "../src/types/slides-protocol"
 
 describe("WorkspaceScaffolder (官方 Pro 临时工程自动编排器)", () => {
-  const sampleDoc: ISlidevDocument = {
+  const sampleDoc: ISlidesDocument = {
     docId: "doc-test-1",
     config: {
       theme: "seriph",
@@ -32,7 +32,7 @@ describe("WorkspaceScaffolder (官方 Pro 临时工程自动编排器)", () => {
     const pkgStr = scaffolder.generatePackageJson("seriph")
     const pkg = JSON.parse(pkgStr)
 
-    expect(pkg.name).toBe("siyuan-slidev-pro-workspace")
+    expect(pkg.name).toBe("siyuan-live-slides-pro-workspace")
     expect(pkg.dependencies["@slidev/theme-seriph"]).toBe("latest")
   })
 
@@ -77,12 +77,12 @@ describe("WorkspaceScaffolder (官方 Pro 临时工程自动编排器)", () => {
 
   it("默认构造函数应将工作目录设置在系统临时目录下，且能自动将旧版 /data/ 路径重定向至安全独立目录", () => {
     const scaffolderDefault = new WorkspaceScaffolder()
-    expect(scaffolderDefault.getWorkspacePath()).toContain("siyuan-slidev-pro")
+    expect(scaffolderDefault.getWorkspacePath()).toContain("siyuan-live-slides-pro")
 
     const scaffolderLegacy = new WorkspaceScaffolder({
-      workspacePath: "/data/storage/petal/siyuan-slidev/pro-workspace",
+      workspacePath: "/data/storage/petal/siyuan-live-slides/pro-workspace",
     })
-    expect(scaffolderLegacy.getWorkspacePath()).toContain("siyuan-slidev-pro")
+    expect(scaffolderLegacy.getWorkspacePath()).toContain("siyuan-live-slides-pro")
     expect(scaffolderLegacy.getWorkspacePath()).not.toContain("/data/storage")
   })
 

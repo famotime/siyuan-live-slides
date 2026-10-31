@@ -17,24 +17,24 @@ import {
   parsePageAttrs,
 } from "../src/compiler/scope-mapper"
 import {
-  buildSlidevDocument,
+  buildSlidesDocument,
   extractCleanNoteText,
   getMotionDirectives,
   injectShikiSpotlight,
   stringifyFrontmatter,
   wrapElementDirectives,
   wrapVClickDirective,
-} from "../src/compiler/slidev-ast-builder"
+} from "../src/compiler/slides-ast-builder"
 
 describe("Scope Mapper (三层作用域解析)", () => {
   it("应该正确解析文档全局属性 (Document Scope)", () => {
     const docAttrs = {
-      "custom-slidev-theme": "seriph",
-      "custom-slidev-aspect-ratio": "4/3",
-      "custom-slidev-highlighter": "shiki",
-      "custom-slidev-default-transition": "fade",
-      "custom-slidev-color-schema": "dark",
-      "custom-slidev-spacing": "compact",
+      "custom-slides-theme": "seriph",
+      "custom-slides-aspect-ratio": "4/3",
+      "custom-slides-highlighter": "shiki",
+      "custom-slides-default-transition": "fade",
+      "custom-slides-color-schema": "dark",
+      "custom-slides-spacing": "compact",
     }
     const config = parseDocumentConfig(docAttrs)
     expect(config.theme).toBe("seriph")
@@ -55,7 +55,7 @@ describe("Scope Mapper (三层作用域解析)", () => {
   it("应该准确识别水平分割线与分页标记", () => {
     expect(isPageBreak({ id: "1", type: "thematic-break" })).toBe(true)
     expect(isPageBreak({ id: "2", type: "b", markdown: "---" })).toBe(true)
-    expect(isPageBreak({ id: "3", type: "p", ial: { "custom-slidev-slide": "true" } })).toBe(true)
+    expect(isPageBreak({ id: "3", type: "p", ial: { "custom-slides-slide": "true" } })).toBe(true)
     expect(isPageBreak({ id: "4", type: "p", markdown: "普通段落" })).toBe(false)
     expect(isPageBreak({ id: "5", type: "tb", markdown: "---" })).toBe(true)
     expect(isPageBreak({ id: "6", type: "NodeThematicBreak" })).toBe(true)
@@ -64,11 +64,11 @@ describe("Scope Mapper (三层作用域解析)", () => {
 
   it("应该正确解析页面级属性 (Page Scope)", () => {
     const pageAttrs = {
-      "custom-slidev-layout": "two-cols",
-      "custom-slidev-transition": "slide-up",
-      "custom-slidev-background": "assets/bg.jpg",
-      "custom-slidev-notes": "这是演讲备忘录",
-      "custom-slidev-spacing": "loose",
+      "custom-slides-layout": "two-cols",
+      "custom-slides-transition": "slide-up",
+      "custom-slides-background": "assets/bg.jpg",
+      "custom-slides-notes": "这是演讲备忘录",
+      "custom-slides-spacing": "loose",
     }
     const { frontmatter, notes } = parsePageAttrs(pageAttrs)
     expect(frontmatter.layout).toBe("two-cols")
@@ -80,10 +80,10 @@ describe("Scope Mapper (三层作用域解析)", () => {
 
   it("应该正确解析元素动效级属性 (Element Scope)", () => {
     const elemAttrs = {
-      "custom-slidev-click": "+1",
-      "custom-slidev-motion": JSON.stringify({ preset: "fade-in", duration: 300 }),
-      "custom-slidev-shiki-lines": "1-3|5",
-      "custom-slidev-slot": "right",
+      "custom-slides-click": "+1",
+      "custom-slides-motion": JSON.stringify({ preset: "fade-in", duration: 300 }),
+      "custom-slides-shiki-lines": "1-3|5",
+      "custom-slides-slot": "right",
     }
     const parsed = parseElementAttrs(elemAttrs)
     expect(parsed.clicks).toBe("+1")
@@ -120,10 +120,10 @@ describe("Assets Rewriter (本地资产代理重写器)", () => {
 
 describe("AST Crawler & Kramdown Parser", () => {
   it("应该正确解析 Kramdown IAL 属性", () => {
-    const ial = '{: id="20261003-abc" custom-slidev-layout="cover" updated="20261003"}'
+    const ial = '{: id="20261003-abc" custom-slides-layout="cover" updated="20261003"}'
     const attrs = parseKramdownIAL(ial)
     expect(attrs.id).toBe("20261003-abc")
-    expect(attrs["custom-slidev-layout"]).toBe("cover")
+    expect(attrs["custom-slides-layout"]).toBe("cover")
     expect(attrs.updated).toBe("20261003")
   })
 
@@ -207,7 +207,7 @@ describe("Slidev AST Builder (核心虚拟文档构建器)", () => {
         type: "thematic-break",
         markdown: "---",
         ial: {
-          "custom-slidev-layout": "two-cols",
+          "custom-slides-layout": "two-cols",
         },
       },
       {
@@ -215,7 +215,7 @@ describe("Slidev AST Builder (核心虚拟文档构建器)", () => {
         type: "p",
         markdown: "第二页正文内容",
         ial: {
-          "custom-slidev-click": "+1",
+          "custom-slides-click": "+1",
         },
       },
       {
@@ -223,12 +223,12 @@ describe("Slidev AST Builder (核心虚拟文档构建器)", () => {
         type: "b",
         markdown: "> 💡 **演讲备注**\n> 第二页讲师提示",
         ial: {
-          "custom-slidev-note": "true",
+          "custom-slides-note": "true",
         },
       },
     ]
 
-    const doc = buildSlidevDocument("doc-1", { "custom-slidev-theme": "apple-basic" }, blocks)
+    const doc = buildSlidesDocument("doc-1", { "custom-slides-theme": "apple-basic" }, blocks)
 
     expect(doc.slides.length).toBe(2)
     // 第一页为封面
@@ -262,7 +262,7 @@ describe("Slidev AST Builder (核心虚拟文档构建器)", () => {
       { id: "p-4", type: "p", content: "测试", markdown: "测试" },
     ]
 
-    const doc = buildSlidevDocument("doc-test", null, blocks)
+    const doc = buildSlidesDocument("doc-test", null, blocks)
 
     expect(doc.slides.length).toBe(4)
     expect(doc.slides[0].pageIndex).toBe(1)
@@ -285,7 +285,7 @@ describe("Slidev AST Builder (核心虚拟文档构建器)", () => {
     }
   })
 
-  it("buildSlidevDocument 应在提供 refContentMap 时成功展开块引用 ((block-id))", () => {
+  it("buildSlidesDocument 应在提供 refContentMap 时成功展开块引用 ((block-id))", () => {
     const blocks = [
       {
         id: "b-ref-test",
@@ -294,7 +294,7 @@ describe("Slidev AST Builder (核心虚拟文档构建器)", () => {
       },
     ]
 
-    const doc = buildSlidevDocument("doc-ref", {}, blocks, {
+    const doc = buildSlidesDocument("doc-ref", {}, blocks, {
       refContentMap: {
         "target-block-1": "这是引用的真实实时内容",
       },
@@ -302,18 +302,18 @@ describe("Slidev AST Builder (核心虚拟文档构建器)", () => {
 
     const slideContent = doc.slides[0].rawMarkdown
     // 已提供的 target-block-1 展开为卡片
-    expect(slideContent).toContain('class="slidev-block-ref"')
+    expect(slideContent).toContain('class="slides-block-ref"')
     expect(slideContent).toContain("这是引用的真实实时内容")
     expect(slideContent).toContain('data-ref-id="target-block-1"')
 
     // 未提供的 target-block-2 降级为 tag 标签
-    expect(slideContent).toContain('class="slidev-ref-tag"')
+    expect(slideContent).toContain('class="slides-ref-tag"')
     expect(slideContent).toContain('data-ref-id="target-block-2"')
   })
 
   it("extractCleanNoteText 应准确剥离提示块、引述块、列表项的前缀修饰与 IAL 属性", () => {
     // 提示块剥离
-    const calloutMd = "> 💡 **演讲备注**\n> 请引导大家回顾上一页的要点。\n{: custom-slidev-note=\"true\"}"
+    const calloutMd = "> 💡 **演讲备注**\n> 请引导大家回顾上一页的要点。\n{: custom-slides-note=\"true\"}"
     expect(extractCleanNoteText(calloutMd)).toBe("请引导大家回顾上一页的要点。")
 
     // 带冒号的提示块前缀
@@ -333,26 +333,26 @@ describe("Slidev AST Builder (核心虚拟文档构建器)", () => {
     expect(extractCleanNoteText(orderedListMd)).toBe("第一点核心结论")
   })
 
-  it("buildSlidevDocument 应支持在同页内包含提示块、引用块及列表项多个备注块，并自动合并为讲稿且排除渲染", () => {
+  it("buildSlidesDocument 应支持在同页内包含提示块、引用块及列表项多个备注块，并自动合并为讲稿且排除渲染", () => {
     const blocks = [
       { id: "h1", type: "h", content: "页标题", markdown: "# 页标题" },
       { id: "p1", type: "p", content: "常规段落内容", markdown: "常规段落内容" },
       {
         id: "note-1",
         type: "b",
-        markdown: "> 💡 **演讲备注**\n> 这是第一条提词要点\n{: custom-slidev-note=\"true\"}",
-        ial: { "custom-slidev-note": "true" },
+        markdown: "> 💡 **演讲备注**\n> 这是第一条提词要点\n{: custom-slides-note=\"true\"}",
+        ial: { "custom-slides-note": "true" },
       },
       {
         id: "note-2",
         type: "i",
         markdown: "* 这是第二条列表形式的提词要点",
-        ial: { "slidev-note": "true" }, // 兼容 slidev-note
+        ial: { "slides-note": "true" }, // 兼容 slidev-note
       },
       { id: "p2", type: "p", content: "末尾常规段落", markdown: "末尾常规段落" },
     ]
 
-    const doc = buildSlidevDocument("doc-multi-notes", null, blocks)
+    const doc = buildSlidesDocument("doc-multi-notes", null, blocks)
 
     expect(doc.slides.length).toBe(1)
     const slide = doc.slides[0]
@@ -378,7 +378,7 @@ describe("Slidev AST Builder (核心虚拟文档构建器)", () => {
 
   it("extractCleanNoteText 应准确剥离思源原生 Callout 提示块 ([!NOTE] / [!TIP]) 及各种前缀", () => {
     // 1. 标准 Callout 提示块带标题
-    const callout1 = `> [!NOTE] 💡 演讲备注\n> 这里是纯净的提词内容第一行\n> 这里是第二行\n{: custom-slidev-note="true"}`
+    const callout1 = `> [!NOTE] 💡 演讲备注\n> 这里是纯净的提词内容第一行\n> 这里是第二行\n{: custom-slides-note="true"}`
     expect(extractCleanNoteText(callout1)).toBe("这里是纯净的提词内容第一行\n这里是第二行")
 
     // 2. 带 Tip 提示块及 Obsidian 风格

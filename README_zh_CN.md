@@ -1,4 +1,4 @@
-# 思源笔记 即现演示插件 (SiYuan Slidev)
+# 思源笔记即现演示插件 (SiYuan Live Slides)
 
 [English](./README_EN.md) | [简体中文](./README.md) | [📖 详细使用指南](./docs/USER-GUIDE.zh-CN.md) | [🏗️ 项目架构与结构](./docs/project-structure.md)
 
@@ -110,17 +110,17 @@
 
 | 作用级别 | 属性名称 (`Attribute Key`) | 取值示例 | 说明 |
 | :--- | :--- | :--- | :--- |
-| **文档全局** | `custom-slidev-theme` | `"default"` \| `"seriph"` \| `"apple-basic"` | 全局演示主题 |
-| **文档全局** | `custom-slidev-aspect-ratio`| `"16/9"` \| `"4/3"` | 画面宽高比例 |
-| **文档全局** | `custom-slidev-default-transition` | `"slide-left"` \| `"fade"` | 全局默认转场效果 |
-| **页面级** | `custom-slidev-slide` | `"true"` | 显式标记开启新幻灯片 |
-| **页面级** | `custom-slidev-layout` | `"cover"` \| `"default"` \| `"two-cols"` \| `"fact"` | 幻灯片版式 |
-| **页面级** | `custom-slidev-transition` | `"slide-left"` \| `"fade"` \| `"slide-up"` \| `"zoom"` | 页面切换转场动效 |
-| **页面级** | `custom-slidev-notes` | 文本字符串 | 演讲者私有备忘录 |
-| **页面级** | `custom-slidev-background` | `"assets/bg.jpg"` 或颜色值 | 页面自定义背景图/色 |
-| **元素级** | `custom-slidev-click` | `"+1"` \| `"1"` \| `"hide"` | 逐步出现步进动画 (`v-click`) |
-| **元素级** | `custom-slidev-shiki-lines`| `"1-3\|5\|all"` | 代码块逐行聚光高亮 |
-| **元素级** | `custom-slidev-slot` | `"left"` \| `"right"` | 双栏分栏插槽归属 |
+| **文档全局** | `custom-slides-theme` | `"default"` \| `"seriph"` \| `"apple-basic"` | 全局演示主题 |
+| **文档全局** | `custom-slides-aspect-ratio`| `"16/9"` \| `"4/3"` | 画面宽高比例 |
+| **文档全局** | `custom-slides-default-transition` | `"slide-left"` \| `"fade"` | 全局默认转场效果 |
+| **页面级** | `custom-slides-slide` | `"true"` | 显式标记开启新幻灯片 |
+| **页面级** | `custom-slides-layout` | `"cover"` \| `"default"` \| `"two-cols"` \| `"fact"` | 幻灯片版式 |
+| **页面级** | `custom-slides-transition` | `"slide-left"` \| `"fade"` \| `"slide-up"` \| `"zoom"` | 页面切换转场动效 |
+| **页面级** | `custom-slides-notes` | 文本字符串 | 演讲者私有备忘录 |
+| **页面级** | `custom-slides-background` | `"assets/bg.jpg"` 或颜色值 | 页面自定义背景图/色 |
+| **元素级** | `custom-slides-click` | `"+1"` \| `"1"` \| `"hide"` | 逐步出现步进动画 (`v-click`) |
+| **元素级** | `custom-slides-shiki-lines`| `"1-3\|5\|all"` | 代码块逐行聚光高亮 |
+| **元素级** | `custom-slides-slot` | `"left"` \| `"right"` | 双栏分栏插槽归属 |
 
 ---
 
@@ -175,7 +175,7 @@
 
 <details>
 <summary><b>Q2: 插件会在我的笔记正文里添加奇怪的标记或代码吗？</b></summary>
-<b>绝对不会。</b> 「正文零污染」是本插件的核心设计原则。所有动画、版式、演讲提词均写入思源原生的 IAL 块属性字典（<code>custom-slidev-*</code>）和分割线中。您的 Markdown 正文保持 100% 纯净，导出或同步到手机端阅读时绝无任何乱码。
+<b>绝对不会。</b> 「正文零污染」是本插件的核心设计原则。所有动画、版式、演讲提词均写入思源原生的 IAL 块属性字典（<code>custom-slides-*</code>）和分割线中。您的 Markdown 正文保持 100% 纯净，导出或同步到手机端阅读时绝无任何乱码。
 </details>
 
 <details>
@@ -214,4 +214,4 @@ npm run build
 
 ## 📄 开源许可证
 
-本项目基于 [MIT License](./LICENSE) 开源发布。欢迎在 [GitHub Issues](https://github.com/famotime/siyuan-slidev/issues) 提出宝贵建议或功能诉求！
+本项目基于 [MIT License](./LICENSE) 开源发布。欢迎在 [GitHub Issues](https://github.com/famotime/siyuan-live-slides/issues) 提出宝贵建议或功能诉求！

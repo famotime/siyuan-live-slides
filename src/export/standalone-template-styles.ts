@@ -20,25 +20,25 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     }
 
     /* 1. 默认科技主题 Default */
-    [data-slidev-theme="default"],
-    .slidev-theme-default {
+    [data-slides-theme="default"],
+    .slides-theme-default {
       --slide-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
       --slide-accent: #10b981;
     }
-    [data-theme="light"][data-slidev-theme="default"],
-    [data-theme="light"] .slidev-theme-default {
+    [data-theme="light"][data-slides-theme="default"],
+    [data-theme="light"] .slides-theme-default {
       --slide-bg: #ffffff;
       --slide-text: #1e293b;
       --slide-accent: #059669;
     }
-    [data-theme="dark"][data-slidev-theme="default"],
-    [data-theme="dark"] .slidev-theme-default {
+    [data-theme="dark"][data-slides-theme="default"],
+    [data-theme="dark"] .slides-theme-default {
       --slide-bg: #121214;
       --slide-text: #e2e8f0;
       --slide-accent: #34d399;
     }
-    .slidev-theme-default .layout-cover h1,
-    .slidev-theme-default .layout-cover .slide-block h1 {
+    .slides-theme-default .layout-cover h1,
+    .slides-theme-default .layout-cover .slide-block h1 {
       font-size: 3.8rem !important;
       font-weight: 800 !important;
       line-height: 1.15 !important;
@@ -48,52 +48,52 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       -webkit-background-clip: text !important;
       -webkit-text-fill-color: transparent !important;
     }
-    .slidev-theme-default .layout-cover h2,
-    .slidev-theme-default .layout-cover .slide-block h2 {
+    .slides-theme-default .layout-cover h2,
+    .slides-theme-default .layout-cover .slide-block h2 {
       font-size: 1.85rem !important;
       font-weight: 600 !important;
       opacity: 0.85 !important;
       margin-bottom: 12px !important;
     }
-    .slidev-theme-default .layout-cover p,
-    .slidev-theme-default .layout-cover .slide-block p {
+    .slides-theme-default .layout-cover p,
+    .slides-theme-default .layout-cover .slide-block p {
       font-size: 1.45rem !important;
       line-height: 1.5 !important;
       opacity: 0.85 !important;
     }
 
     /* 2. 优雅衬线主题 Seriph */
-    [data-slidev-theme="seriph"],
-    .slidev-theme-seriph {
+    [data-slides-theme="seriph"],
+    .slides-theme-seriph {
       --slide-font: "PT Serif", "Charter", "Georgia", "Cambria", "Times New Roman", "Source Han Serif SC", "Noto Serif SC", "Songti SC", "SimSun", serif;
       --slide-accent: #b45309;
       letter-spacing: 0.015em;
     }
-    [data-theme="light"][data-slidev-theme="seriph"],
-    [data-theme="light"] .slidev-theme-seriph {
+    [data-theme="light"][data-slides-theme="seriph"],
+    [data-theme="light"] .slides-theme-seriph {
       --slide-bg: #fdfbf7;
       --slide-text: #2a2521;
       --slide-accent: #b45309;
     }
-    [data-theme="dark"][data-slidev-theme="seriph"],
-    [data-theme="dark"] .slidev-theme-seriph {
+    [data-theme="dark"][data-slides-theme="seriph"],
+    [data-theme="dark"] .slides-theme-seriph {
       --slide-bg: #1c1a17;
       --slide-text: #e8e3d9;
       --slide-accent: #f59e0b;
     }
-    .slidev-theme-seriph,
-    .slidev-theme-seriph .slide-content {
+    .slides-theme-seriph,
+    .slides-theme-seriph .slide-content {
       font-family: var(--slide-font) !important;
       line-height: 1.72;
     }
-    .slidev-theme-seriph h1,
-    .slidev-theme-seriph h2,
-    .slidev-theme-seriph h3 {
+    .slides-theme-seriph h1,
+    .slides-theme-seriph h2,
+    .slides-theme-seriph h3 {
       font-family: var(--slide-font) !important;
       letter-spacing: 0.025em;
       font-weight: 700;
     }
-    .slidev-theme-seriph .layout-cover h1 {
+    .slides-theme-seriph .layout-cover h1 {
       background: none !important;
       -webkit-background-clip: initial !important;
       -webkit-text-fill-color: initial !important;
@@ -105,34 +105,34 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     }
 
     /* 3. 极简发布会主题 Apple Basic */
-    [data-slidev-theme="apple-basic"],
-    .slidev-theme-apple-basic {
+    [data-slides-theme="apple-basic"],
+    .slides-theme-apple-basic {
       --slide-font: -apple-system, "SF Pro Display", "SF Pro Text", BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
       --slide-accent: #0071e3;
     }
-    [data-theme="light"][data-slidev-theme="apple-basic"],
-    [data-theme="light"] .slidev-theme-apple-basic {
+    [data-theme="light"][data-slides-theme="apple-basic"],
+    [data-theme="light"] .slides-theme-apple-basic {
       --slide-bg: #ffffff;
       --slide-text: #1d1d1f;
       --slide-accent: #0071e3;
     }
-    [data-theme="dark"][data-slidev-theme="apple-basic"],
-    [data-theme="dark"] .slidev-theme-apple-basic {
+    [data-theme="dark"][data-slides-theme="apple-basic"],
+    [data-theme="dark"] .slides-theme-apple-basic {
       --slide-bg: #000000;
       --slide-text: #f5f5f7;
       --slide-accent: #2997ff;
     }
-    .slidev-theme-apple-basic,
-    .slidev-theme-apple-basic .slide-content {
+    .slides-theme-apple-basic,
+    .slides-theme-apple-basic .slide-content {
       font-family: var(--slide-font) !important;
     }
-    .slidev-theme-apple-basic h1,
-    .slidev-theme-apple-basic h2,
-    .slidev-theme-apple-basic h3 {
+    .slides-theme-apple-basic h1,
+    .slides-theme-apple-basic h2,
+    .slides-theme-apple-basic h3 {
       letter-spacing: -0.035em;
       font-weight: 800;
     }
-    .slidev-theme-apple-basic .layout-cover h1 {
+    .slides-theme-apple-basic .layout-cover h1 {
       background: none !important;
       -webkit-background-clip: initial !important;
       -webkit-text-fill-color: initial !important;
@@ -140,7 +140,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       font-size: 3.8rem !important;
       letter-spacing: -0.04em !important;
     }
-    .slidev-theme-apple-basic .layout-cover p {
+    .slides-theme-apple-basic .layout-cover p {
       color: #86868b !important;
       font-size: 1.35rem !important;
     }
@@ -157,7 +157,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       background: var(--slide-bg); color: var(--slide-text);
       box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-radius: 8px; overflow: hidden;
       display: flex; flex-direction: column; flex-shrink: 0;
-      transform: translate(-50%, -50%) scale(var(--slidev-slide-scale, 1));
+      transform: translate(-50%, -50%) scale(var(--slides-slide-scale, 1));
       transform-origin: center center; will-change: transform;
       transition: background 0.3s ease, color 0.3s ease, border-radius 0.2s ease, box-shadow 0.2s ease;
     }
@@ -170,7 +170,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       height: 100%;
       min-height: 100%;
       flex: 1 1 0%;
-      padding: var(--slidev-padding-y, 32px) var(--slidev-padding-x, 48px);
+      padding: var(--slides-padding-y, 32px) var(--slides-padding-x, 48px);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -180,27 +180,27 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     /* 间距预设风格 */
     .slide-content.spacing-compact,
     .slide-viewport[data-spacing="compact"] .slide-content,
-    [data-slidev-spacing="compact"] {
-      --slidev-padding-y: 20px;
-      --slidev-padding-x: 36px;
-      --slidev-header-gap: 10px;
-      --slidev-title-margin-bottom: 6px;
+    [data-slides-spacing="compact"] {
+      --slides-padding-y: 20px;
+      --slides-padding-x: 36px;
+      --slides-header-gap: 10px;
+      --slides-title-margin-bottom: 6px;
     }
     .slide-content.spacing-normal,
     .slide-viewport[data-spacing="normal"] .slide-content,
-    [data-slidev-spacing="normal"] {
-      --slidev-padding-y: 32px;
-      --slidev-padding-x: 48px;
-      --slidev-header-gap: 16px;
-      --slidev-title-margin-bottom: 10px;
+    [data-slides-spacing="normal"] {
+      --slides-padding-y: 32px;
+      --slides-padding-x: 48px;
+      --slides-header-gap: 16px;
+      --slides-title-margin-bottom: 10px;
     }
     .slide-content.spacing-loose,
     .slide-viewport[data-spacing="loose"] .slide-content,
-    [data-slidev-spacing="loose"] {
-      --slidev-padding-y: 48px;
-      --slidev-padding-x: 56px;
-      --slidev-header-gap: 24px;
-      --slidev-title-margin-bottom: 16px;
+    [data-slides-spacing="loose"] {
+      --slides-padding-y: 48px;
+      --slides-padding-x: 56px;
+      --slides-header-gap: 24px;
+      --slides-title-margin-bottom: 16px;
     }
 
     .layout-cover { justify-content: center; align-items: center; text-align: center; }
@@ -238,13 +238,13 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     }
     .layout-header-section {
       width: 100%;
-      margin-bottom: var(--slidev-header-gap, 16px) !important;
+      margin-bottom: var(--slides-header-gap, 16px) !important;
       flex-shrink: 0;
     }
     .layout-header-section h1,
     .layout-header-section h2,
     .layout-header-section h3 {
-      margin-bottom: var(--slidev-title-margin-bottom, 10px) !important;
+      margin-bottom: var(--slides-title-margin-bottom, 10px) !important;
     }
     .pdf-three-cols-wrapper,
     .layout-three-cols-grid {
@@ -312,8 +312,8 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     .has-superblock-cols .pdf-col > *:first-child :is(ul, ol) > li:first-child,
     .has-superblock-cols .pdf-col > *:first-child .slide-list > .slide-list-item:first-child,
     .has-superblock-cols .pdf-col > *:first-child .pdf-list > li:first-child,
-    .has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    .has-superblock-cols .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    .has-superblock-cols .slides-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    .has-superblock-cols .slides-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       list-style: none !important;
       list-style-type: none !important;
       text-align: center !important;
@@ -340,8 +340,8 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     }
 
     /* 全局特定标题大小规范化 (除封面外页首首个标题按 H2 1.7rem，表头多栏内首个标题按 H3 1.3rem) */
-    [data-normalize-headings="true"] .slidev-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    [data-normalize-headings="true"] .slidev-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .slides-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
     [data-normalize-headings="true"] .slide-content:not(.layout-cover) > :is(.pdf-block, .slide-block):first-child :is(h1, h2, h3, h4, h5, h6),
     [data-normalize-headings="true"] .slide-content:not(.layout-cover) > .layout-header-section :is(.pdf-block, .slide-block):first-child :is(h1, h2, h3, h4, h5, h6),
     [data-normalize-headings="true"] .slide-content:not(.layout-cover) > :not(.layout-cols-wrapper):not(.pdf-two-cols-wrapper):not(.layout-image-cols-grid):first-child :is(h1, h2, h3, h4, h5, h6) {
@@ -351,8 +351,8 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       margin-bottom: 10px !important;
     }
 
-    [data-normalize-headings="true"] .has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    [data-normalize-headings="true"] .has-superblock-cols .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .has-superblock-cols .slides-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .has-superblock-cols .slides-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
     [data-normalize-headings="true"] .has-superblock-cols .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       font-size: 1.3rem !important;
       font-weight: 600 !important;
@@ -553,15 +553,15 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     .pdf-list li > h4, li > h4.slide-list-item-title { font-size: 1.1rem !important; }
 
     /* 全局特定标题大小规范化后置强力锁定 (防止被列表项内部字号覆盖) */
-    [data-normalize-headings="true"] .slidev-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    [data-normalize-headings="true"] .slidev-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    [data-normalize-headings="true"] .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .slides-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       font-size: 1.7rem !important;
       font-weight: 600 !important;
       line-height: 1.25 !important;
       margin-bottom: 10px !important;
     }
-    [data-normalize-headings="true"] .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    [data-normalize-headings="true"] .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .slides-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .slides-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
     [data-normalize-headings="true"] :is(.layout-cols-wrapper, .pdf-two-cols-wrapper, .layout-cols-header-container, .layout-cols-grid) .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
     [data-normalize-headings="true"] :is(.two-cols-left, .two-cols-right, .pdf-col, .col) > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       font-size: 1.3rem !important;
@@ -817,7 +817,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     }
 
     /* Lightbox 大图与视频灯箱模态窗口 */
-    .slidev-lightbox {
+    .slides-lightbox {
       position: fixed;
       top: 0;
       left: 0;
@@ -833,11 +833,11 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       opacity: 0;
       transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .slidev-lightbox.active {
+    .slides-lightbox.active {
       display: flex;
       opacity: 1;
     }
-    .slidev-lightbox-content {
+    .slides-lightbox-content {
       position: relative;
       max-width: 92vw;
       max-height: 92vh;
@@ -846,7 +846,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       justify-content: center;
       cursor: default;
     }
-    .slidev-lightbox-img {
+    .slides-lightbox-img {
       max-width: 92vw;
       max-height: 92vh;
       object-fit: contain;
@@ -856,13 +856,13 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       -webkit-user-drag: none;
       touch-action: none;
     }
-    .slidev-lightbox-video {
+    .slides-lightbox-video {
       max-width: 92vw;
       max-height: 92vh;
       border-radius: 8px;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
     }
-    .slidev-lightbox-close {
+    .slides-lightbox-close {
       position: absolute;
       top: 24px;
       right: 28px;
@@ -880,7 +880,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       transition: background 0.2s, transform 0.2s;
       z-index: 1000000;
     }
-    .slidev-lightbox-close:hover {
+    .slides-lightbox-close:hover {
       background: rgba(255, 255, 255, 0.35);
       transform: scale(1.05);
     }
@@ -984,25 +984,25 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       background: rgba(255, 255, 255, 0.45);
     }
     /* Slidev Micro-motion Keyframes & Presets */
-    @keyframes slidevMotionFadeIn { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes slidevMotionSlideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes slidevMotionSlideDown { from { opacity: 0; transform: translateY(-40px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes slidevMotionSlideLeft { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
-    @keyframes slidevMotionSlideRight { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
-    @keyframes slidevMotionZoomIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
-    @keyframes slidevMotionBounce {
+    @keyframes slidesMotionFadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slidesMotionSlideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slidesMotionSlideDown { from { opacity: 0; transform: translateY(-40px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slidesMotionSlideLeft { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes slidesMotionSlideRight { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes slidesMotionZoomIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+    @keyframes slidesMotionBounce {
       0% { opacity: 0; transform: translateY(40px); }
       60% { opacity: 1; transform: translateY(-8px); }
       80% { transform: translateY(4px); }
       100% { transform: translateY(0); }
     }
-    .slidev-motion-fade-in { animation: slidevMotionFadeIn var(--motion-duration, 0.4s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both; }
-    .slidev-motion-slide-up { animation: slidevMotionSlideUp var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both; }
-    .slidev-motion-slide-down { animation: slidevMotionSlideDown var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both; }
-    .slidev-motion-slide-left { animation: slidevMotionSlideLeft var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both; }
-    .slidev-motion-slide-right { animation: slidevMotionSlideRight var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both; }
-    .slidev-motion-zoom-in, .slidev-motion-pop { animation: slidevMotionZoomIn var(--motion-duration, 0.4s) cubic-bezier(0.34, 1.56, 0.64, 1) var(--motion-delay, 0s) both; }
-    .slidev-motion-bounce { animation: slidevMotionBounce var(--motion-duration, 0.6s) cubic-bezier(0.34, 1.56, 0.64, 1) var(--motion-delay, 0s) both; }
+    .slides-motion-fade-in { animation: slidesMotionFadeIn var(--motion-duration, 0.4s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both; }
+    .slides-motion-slide-up { animation: slidesMotionSlideUp var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both; }
+    .slides-motion-slide-down { animation: slidesMotionSlideDown var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both; }
+    .slides-motion-slide-left { animation: slidesMotionSlideLeft var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both; }
+    .slides-motion-slide-right { animation: slidesMotionSlideRight var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both; }
+    .slides-motion-zoom-in, .slides-motion-pop { animation: slidesMotionZoomIn var(--motion-duration, 0.4s) cubic-bezier(0.34, 1.56, 0.64, 1) var(--motion-delay, 0s) both; }
+    .slides-motion-bounce { animation: slidesMotionBounce var(--motion-duration, 0.6s) cubic-bezier(0.34, 1.56, 0.64, 1) var(--motion-delay, 0s) both; }
     .controls {
       position: absolute; bottom: 16px; display: flex; gap: 12px; align-items: center;
       background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(8px);
@@ -1035,7 +1035,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     .slide-block div:has(> .slidev-icon-btn),
     .slide-block div:has(> button),
     .slide-block [class*="abs-"],
-    .slidev-btn-row {
+    .slides-btn-row {
       display: inline-flex !important;
       flex-direction: row !important;
       align-items: center !important;
@@ -1068,9 +1068,9 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     [hover\\:bg="white op-10"]:hover { background: rgba(255, 255, 255, 0.1) !important; border-radius: 4px; }
     .cursor-pointer, [data-clickable] { cursor: pointer; }
     /* Slidev 规范链接排版 (继承正文颜色，虚线底边，Hover 时平滑点亮为主题色并转为实线) */
-    .slide-content a:not(.slidev-ref-tag):not(.slidev-icon-btn):not(.slidev-toc-link),
-    .slide-block a:not(.slidev-ref-tag):not(.slidev-icon-btn):not(.slidev-toc-link),
-    a.slidev-link {
+    .slide-content a:not(.slides-ref-tag):not(.slidev-icon-btn):not(.slides-toc-link),
+    .slide-block a:not(.slides-ref-tag):not(.slidev-icon-btn):not(.slides-toc-link),
+    a.slides-link {
       color: inherit;
       text-decoration: none;
       border-bottom: 1px dashed currentColor;
@@ -1079,14 +1079,14 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
                   border-bottom-style 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: pointer;
     }
-    .slide-content a:not(.slidev-ref-tag):not(.slidev-icon-btn):not(.slidev-toc-link):hover,
-    .slide-block a:not(.slidev-ref-tag):not(.slidev-icon-btn):not(.slidev-toc-link):hover,
-    a.slidev-link:hover {
+    .slide-content a:not(.slides-ref-tag):not(.slidev-icon-btn):not(.slides-toc-link):hover,
+    .slide-block a:not(.slides-ref-tag):not(.slidev-icon-btn):not(.slides-toc-link):hover,
+    a.slides-link:hover {
       color: var(--slide-accent);
       border-bottom-style: solid;
       border-bottom-color: var(--slide-accent);
     }
-    .slidev-ref-tag, a.slidev-ref-tag {
+    .slides-ref-tag, a.slides-ref-tag {
       display: inline-flex;
       align-items: center;
       background: color-mix(in srgb, var(--slide-accent) 12%, transparent);
@@ -1100,14 +1100,14 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       border: 1px solid color-mix(in srgb, var(--slide-accent) 25%, transparent);
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .slidev-ref-tag:hover, a.slidev-ref-tag:hover {
+    .slides-ref-tag:hover, a.slides-ref-tag:hover {
       background: color-mix(in srgb, var(--slide-accent) 22%, transparent);
       color: var(--slide-accent);
       border-color: color-mix(in srgb, var(--slide-accent) 55%, transparent);
       transform: translateY(-1px);
       box-shadow: 0 2px 8px color-mix(in srgb, var(--slide-accent) 20%, transparent);
     }
-    .slidev-block-ref {
+    .slides-block-ref {
       display: block;
       padding: 10px 14px;
       background: color-mix(in srgb, var(--slide-accent) 8%, transparent);
@@ -1117,12 +1117,12 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       cursor: pointer;
       transition: background 0.2s ease;
     }
-    .slidev-block-ref:hover {
+    .slides-block-ref:hover {
       background: color-mix(in srgb, var(--slide-accent) 15%, transparent);
     }
 
     /* 页面动态蒙版 (Dynamic Mask) GPU 合成器硬件加速体系 */
-    .slidev-mask-body-container {
+    .slides-mask-body-container {
       position: relative;
       width: 100%;
       height: 100%;
@@ -1134,34 +1134,34 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       contain: layout paint;
       isolation: isolate;
     }
-    .slidev-mask-body-container--has-mask {
+    .slides-mask-body-container--has-mask {
       overflow: hidden !important;
       /* 向左右、向下突破父容器内边距，完全贴合幻灯片视口边缘 */
-      margin-left: calc(-1 * var(--slidev-padding-x, 48px)) !important;
-      margin-right: calc(-1 * var(--slidev-padding-x, 48px)) !important;
-      margin-bottom: calc(-1 * var(--slidev-padding-y, 32px)) !important;
-      padding-left: var(--slidev-padding-x, 48px) !important;
-      padding-right: var(--slidev-padding-x, 48px) !important;
-      padding-bottom: var(--slidev-padding-y, 32px) !important;
-      width: calc(100% + 2 * var(--slidev-padding-x, 48px)) !important;
+      margin-left: calc(-1 * var(--slides-padding-x, 48px)) !important;
+      margin-right: calc(-1 * var(--slides-padding-x, 48px)) !important;
+      margin-bottom: calc(-1 * var(--slides-padding-y, 32px)) !important;
+      padding-left: var(--slides-padding-x, 48px) !important;
+      padding-right: var(--slides-padding-x, 48px) !important;
+      padding-bottom: var(--slides-padding-y, 32px) !important;
+      width: calc(100% + 2 * var(--slides-padding-x, 48px)) !important;
       box-sizing: border-box !important;
     }
     /* 无标题且首个元素即为蒙版正文容器时，向上同步扩展至顶部边缘 */
-    .slide-content-wrapper > .slidev-mask-body-container--has-mask:first-child,
-    .slide-content > .slidev-mask-body-container--has-mask:first-child {
-      margin-top: calc(-1 * var(--slidev-padding-y, 32px)) !important;
-      padding-top: var(--slidev-padding-y, 32px) !important;
+    .slide-content-wrapper > .slides-mask-body-container--has-mask:first-child,
+    .slide-content > .slides-mask-body-container--has-mask:first-child {
+      margin-top: calc(-1 * var(--slides-padding-y, 32px)) !important;
+      padding-top: var(--slides-padding-y, 32px) !important;
     }
     /* 针对全屏零内边距特殊布局（如 image-right/image-left），重置内边距变量避免越界 */
     .slide-content-wrapper.layout-image-right,
     .slide-content-wrapper.layout-image-left,
     .slide-content.layout-image-right,
     .slide-content.layout-image-left {
-      --slidev-padding-x: 0px !important;
-      --slidev-padding-y: 0px !important;
+      --slides-padding-x: 0px !important;
+      --slides-padding-y: 0px !important;
     }
     /* 蒙版运动总图层：纯 GPU Compositor 硬件加速 translate3d */
-    .slidev-mask-layer {
+    .slides-mask-layer {
       position: absolute;
       top: 0;
       left: 0;
@@ -1176,7 +1176,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
                   opacity 0.42s cubic-bezier(0.2, 0, 0, 1);
     }
     /* 蒙版内部遮罩层：纯色或磨砂玻璃 */
-    .slidev-mask-overlay {
+    .slides-mask-overlay {
       position: absolute;
       top: 0;
       left: 0;
@@ -1184,34 +1184,34 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       height: 100%;
       pointer-events: none;
     }
-    .slidev-mask-layer--solid .slidev-mask-overlay,
-    .slidev-mask-overlay--solid {
+    .slides-mask-layer--solid .slides-mask-overlay,
+    .slides-mask-overlay--solid {
       background: var(--slide-bg, #ffffff);
     }
-    [data-theme="dark"] .slidev-mask-layer--solid .slidev-mask-overlay,
-    [data-theme="dark"] .slidev-mask-overlay--solid {
+    [data-theme="dark"] .slides-mask-layer--solid .slides-mask-overlay,
+    [data-theme="dark"] .slides-mask-overlay--solid {
       background: var(--slide-bg, #121214);
     }
-    .slidev-mask-layer--blur .slidev-mask-overlay,
-    .slidev-mask-overlay--blur {
+    .slides-mask-layer--blur .slides-mask-overlay,
+    .slides-mask-overlay--blur {
       backdrop-filter: blur(30px) saturate(180%);
       -webkit-backdrop-filter: blur(30px) saturate(180%);
       background: color-mix(in srgb, var(--slide-bg, #ffffff) 90%, transparent);
     }
-    [data-theme="dark"] .slidev-mask-layer--blur .slidev-mask-overlay,
-    [data-theme="dark"] .slidev-mask-overlay--blur {
+    [data-theme="dark"] .slides-mask-layer--blur .slides-mask-overlay,
+    [data-theme="dark"] .slides-mask-overlay--blur {
       background: color-mix(in srgb, var(--slide-bg, #121214) 90%, transparent);
     }
     /* 动态展露分界提示线：物理内嵌于蒙版边缘，相对坐标永为 0，绝对物理同步 */
-    .slidev-mask-divider-line {
+    .slides-mask-divider-line {
       position: absolute;
       pointer-events: none;
       z-index: 51;
       opacity: 0;
       transition: opacity 0.3s ease;
     }
-    .slidev-mask-layer--down .slidev-mask-divider-line,
-    .slidev-mask-divider-line--down {
+    .slides-mask-layer--down .slides-mask-divider-line,
+    .slides-mask-divider-line--down {
       top: 0;
       left: 0;
       right: 0;
@@ -1220,8 +1220,8 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       background: linear-gradient(90deg, transparent 0%, var(--slide-accent, #3b82f6) 6%, var(--slide-accent, #3b82f6) 94%, transparent 100%);
       box-shadow: 0 0 10px var(--slide-accent, #3b82f6), 0 0 4px var(--slide-accent, #3b82f6);
     }
-    .slidev-mask-layer--right .slidev-mask-divider-line,
-    .slidev-mask-divider-line--right {
+    .slides-mask-layer--right .slides-mask-divider-line,
+    .slides-mask-divider-line--right {
       top: 0;
       bottom: 0;
       left: 0;

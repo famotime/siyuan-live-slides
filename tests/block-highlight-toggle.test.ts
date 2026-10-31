@@ -5,13 +5,13 @@ import { InspectorSyncCoordinator } from "../src/sync/inspector-sync-coordinator
 import * as mainModule from "../src/main"
 import * as selectionMirrorModule from "../src/sync/selection-mirror"
 import { mirrorBlockSelection, clearBlockSelectionHighlight } from "../src/sync/selection-mirror"
-import type { ISlidevDocument } from "../src/types/slidev-protocol"
+import type { ISlidesDocument } from "../src/types/slides-protocol"
 
 describe("Block Selection Highlight Toggle (演示与预览界面块级蓝色边框切换与取消)", () => {
-  const indexHtmlPath = path.resolve(__dirname, "../public/slidev-client/index.html")
+  const indexHtmlPath = path.resolve(__dirname, "../public/slides-client/index.html")
   const indexHtml = fs.readFileSync(indexHtmlPath, "utf-8")
 
-  describe("1. 内置沙箱播放器交互 (public/slidev-client/index.html)", () => {
+  describe("1. 内置沙箱播放器交互 (public/slides-client/index.html)", () => {
     it("再次点击同一个对象时应清空 highlightedBlockId 并通知宿主 clickedBlockId 为空", () => {
       expect(indexHtml).toContain("if (highlightedBlockId.value && highlightedBlockId.value === blockId)")
       expect(indexHtml).toMatch(/highlightedBlockId\.value\s*=\s*""[\s\S]*?action:\s*"BLOCK_CLICKED"[\s\S]*?clickedBlockId:\s*""/)
@@ -42,7 +42,7 @@ describe("Block Selection Highlight Toggle (演示与预览界面块级蓝色边
       vi.restoreAllMocks()
     })
 
-    const dummyDoc: ISlidevDocument = {
+    const dummyDoc: ISlidesDocument = {
       docId: "doc-toggle-test",
       config: { theme: "default", aspectRatio: "16/9", highlighter: "shiki" } as any,
       slides: [

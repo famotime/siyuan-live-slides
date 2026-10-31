@@ -3,7 +3,7 @@ import fs from 'fs'
 import path from 'path'
 
 describe('Presenter Tab UX & Accessibility Standards (演讲者视图设计与无障碍规范)', () => {
-  const presenterVuePath = path.resolve(__dirname, '../src/ui/tab/SlidevPresenterTab.vue')
+  const presenterVuePath = path.resolve(__dirname, '../src/ui/tab/SlidesPresenterTab.vue')
   const content = fs.readFileSync(presenterVuePath, 'utf8')
 
   it('严禁使用 HTML 原生 title 属性，彻底根除定制与原生双重 Tooltip 重叠冲突', () => {
@@ -33,8 +33,8 @@ describe('Presenter Tab UX & Accessibility Standards (演讲者视图设计与�
     }
   })
 
-  it('必须引入标准 Lucide 线性图标并使用 SlidevIcon 组件', () => {
-    expect(content).toContain("import SlidevIcon from '@/ui/components/SlidevIcon.vue'")
+  it('必须引入标准 Lucide 线性图标并使用 SlidesIcon 组件', () => {
+    expect(content).toContain("import SlidesIcon from '@/ui/components/SlidesIcon.vue'")
     expect(content).toContain('name="presenter"')
     expect(content).toContain('name="window"')
     expect(content).toContain('name="clock"')

@@ -10,13 +10,13 @@ import {
   scanAndTagSuperBlocks,
 } from "../src/compiler/superblock-scanner"
 import { DocumentCompilerService } from "../src/compiler/document-compiler"
-import { buildSlidevDocument } from "../src/compiler/slidev-ast-builder"
+import { buildSlidesDocument } from "../src/compiler/slides-ast-builder"
 import {
   renderMarkdownList,
   renderSlideBlocksToHtml,
 } from "../src/export/markdown-renderer"
-import type { ISiYuanBlockNode } from "../src/types/slidev-protocol"
-import { ATTR_PAGE_LAYOUT, ATTR_ELEM_SLOT } from "../src/types/slidev-protocol"
+import type { ISiYuanBlockNode } from "../src/types/slides-protocol"
+import { ATTR_PAGE_LAYOUT, ATTR_ELEM_SLOT } from "../src/types/slides-protocol"
 
 describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
   describe("1. cleanCardListItemMarkdown 首层列表圆点清洗算法", () => {
@@ -507,7 +507,7 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
 
       // 用户拖入 it-3 与原 sb-inner 组成 sb-outer
       const blocks: ISiYuanBlockNode[] = [
-        { id: "h-title", type: "h", markdown: "# 核心架构体系", ial: { "custom-slidev-slot": "header" } },
+        { id: "h-title", type: "h", markdown: "# 核心架构体系", ial: { "custom-slides-slot": "header" } },
         {
           id: "sb-outer",
           type: "s",
@@ -518,8 +518,8 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
               type: "s",
               subType: "col",
               children: [
-                { id: "it-1", type: "i", markdown: "- 模块 1", ial: { "custom-slidev-slot": "col-1" } },
-                { id: "it-2", type: "i", markdown: "- 模块 2", ial: { "custom-slidev-slot": "col-2" } },
+                { id: "it-1", type: "i", markdown: "- 模块 1", ial: { "custom-slides-slot": "col-1" } },
+                { id: "it-2", type: "i", markdown: "- 模块 2", ial: { "custom-slides-slot": "col-2" } },
               ],
             },
             { id: "it-3", type: "i", markdown: "- 模块 3", ial: {} },
@@ -530,19 +530,19 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       const docNode: ISiYuanBlockNode = {
         id: docId,
         type: "d",
-        ial: { "custom-slidev-layout": "cols-header" },
+        ial: { "custom-slides-layout": "cols-header" },
         children: blocks,
       }
 
       const result = scanAndTagListSuperBlocks(docId, [docNode, ...blocks], { tracked: trackedInit })
-      expect(docNode.ial["custom-slidev-layout"]).toBe("cols-header")
+      expect(docNode.ial["custom-slides-layout"]).toBe("cols-header")
       const it1 = blocks[1].children![0].children![0]
       const it2 = blocks[1].children![0].children![1]
       const it3 = blocks[1].children![1]
 
-      expect(it1.ial?.["custom-slidev-slot"]).toBe("col-1")
-      expect(it2.ial?.["custom-slidev-slot"]).toBe("col-2")
-      expect(it3.ial?.["custom-slidev-slot"]).toBe("col-3")
+      expect(it1.ial?.["custom-slides-slot"]).toBe("col-1")
+      expect(it2.ial?.["custom-slides-slot"]).toBe("col-2")
+      expect(it3.ial?.["custom-slides-slot"]).toBe("col-3")
       expect(result.newTracked[0].layout).toBe("cols-header")
       expect(result.newTracked[0].itemIds).toEqual(["it-1", "it-2", "it-3"])
     })
@@ -565,17 +565,17 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
         id: "it-3",
         type: "i",
         markdown: "- 独立列表项 3",
-        ial: { "custom-slidev-slot": "col-3" },
+        ial: { "custom-slides-slot": "col-3" },
       }
       const blocks: ISiYuanBlockNode[] = [
-        { id: "h-title", type: "h", markdown: "# 核心架构体系", ial: { "custom-slidev-slot": "header" } },
+        { id: "h-title", type: "h", markdown: "# 核心架构体系", ial: { "custom-slides-slot": "header" } },
         {
           id: "sb-inner",
           type: "s",
           subType: "col",
           children: [
-            { id: "it-1", type: "i", markdown: "- 模块 1", ial: { "custom-slidev-slot": "col-1" } },
-            { id: "it-2", type: "i", markdown: "- 模块 2", ial: { "custom-slidev-slot": "col-2" } },
+            { id: "it-1", type: "i", markdown: "- 模块 1", ial: { "custom-slides-slot": "col-1" } },
+            { id: "it-2", type: "i", markdown: "- 模块 2", ial: { "custom-slides-slot": "col-2" } },
           ],
         },
         it3Node,
@@ -584,18 +584,18 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       const docNode: ISiYuanBlockNode = {
         id: docId,
         type: "d",
-        ial: { "custom-slidev-layout": "cols-header" },
+        ial: { "custom-slides-layout": "cols-header" },
         children: blocks,
       }
 
       const result = scanAndTagListSuperBlocks(docId, [docNode, ...blocks], { tracked: trackedInit })
-      expect(docNode.ial["custom-slidev-layout"]).toBe("cols-header")
+      expect(docNode.ial["custom-slides-layout"]).toBe("cols-header")
       const it1 = blocks[1].children![0]
       const it2 = blocks[1].children![1]
 
-      expect(it1.ial?.["custom-slidev-slot"]).toBe("col-1")
-      expect(it2.ial?.["custom-slidev-slot"]).toBe("col-2")
-      expect(it3Node.ial?.["custom-slidev-slot"]).toBe("")
+      expect(it1.ial?.["custom-slides-slot"]).toBe("col-1")
+      expect(it2.ial?.["custom-slides-slot"]).toBe("col-2")
+      expect(it3Node.ial?.["custom-slides-slot"]).toBe("")
       expect(result.newTracked[0].layout).toBe("cols-header")
       expect(result.newTracked[0].itemIds).toEqual(["it-1", "it-2"])
     })
@@ -713,18 +713,18 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
 
       // 2. scanAndTagSuperBlocks 标记图片
       scanAndTagSuperBlocks([outerImgSb])
-      expect(imgBlock.ial?.["custom-slidev-layout"]).toBe("image-left")
+      expect(imgBlock.ial?.["custom-slides-layout"]).toBe("image-left")
 
       // 3. scanAndTagListSuperBlocks 进行仲裁：检测到顶层图文版式，不会覆盖页面为 two-cols-header
       const docNode: ISiYuanBlockNode = {
         id: docId,
         type: "d",
-        ial: { "custom-slidev-layout": "image-left" },
+        ial: { "custom-slides-layout": "image-left" },
         children: [outerImgSb],
       }
 
       const listRes = scanAndTagListSuperBlocks(docId, [docNode, outerImgSb])
-      expect(docNode.ial["custom-slidev-layout"]).toBe("image-left")
+      expect(docNode.ial["custom-slides-layout"]).toBe("image-left")
       expect(listRes.newTracked.length).toBe(0)
     })
   })
@@ -1020,7 +1020,7 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
     })
 
     it("三栏表头排版中应正确剥离各栏首项圆点并保留其下子列表圆点及紧凑行距", async () => {
-      const { buildSlidevDocument } = await import("../src/compiler/slidev-ast-builder")
+      const { buildSlidesDocument } = await import("../src/compiler/slides-ast-builder")
       const { renderSlideBlocksToHtml } = await import("../src/export/markdown-renderer")
 
       const mockBlocks: any[] = [
@@ -1030,34 +1030,34 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
           content: "表头说明",
           markdown: "# 表头说明",
           subType: "h1",
-          ial: { "custom-slidev-slot": "header" },
+          ial: { "custom-slides-slot": "header" },
         },
         {
           id: "col-1",
           type: "i",
           content: "* ### 栏目一\n  * 子项 1.1\n  * 子项 1.2",
           markdown: "* ### 栏目一\n  * 子项 1.1\n  * 子项 1.2",
-          ial: { "custom-slidev-slot": "col-1" },
+          ial: { "custom-slides-slot": "col-1" },
         },
         {
           id: "col-2",
           type: "i",
           content: "* 普通文字标题二\n  * 子项 2.1",
           markdown: "* 普通文字标题二\n  * 子项 2.1",
-          ial: { "custom-slidev-slot": "col-2" },
+          ial: { "custom-slides-slot": "col-2" },
         },
         {
           id: "col-3",
           type: "i",
           content: "* ### 栏目三\n  * 子项 3.1",
           markdown: "* ### 栏目三\n  * 子项 3.1",
-          ial: { "custom-slidev-slot": "col-3" },
+          ial: { "custom-slides-slot": "col-3" },
         },
       ]
 
-      const doc = buildSlidevDocument(
+      const doc = buildSlidesDocument(
         "doc-three-cols-test",
-        { "custom-slidev-layout": "three-cols-header" },
+        { "custom-slides-layout": "three-cols-header" },
         mockBlocks,
       )
       expect(doc.slides.length).toBeGreaterThan(0)
@@ -1085,7 +1085,7 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
     })
 
     it("三栏列表容器内放置图片和视频且混入空块时，标题正确渲染为标题标签且首项圆点完全去除", async () => {
-      const { buildSlidevDocument } = await import("../src/compiler/slidev-ast-builder")
+      const { buildSlidesDocument } = await import("../src/compiler/slides-ast-builder")
       const { renderSlideBlocksToHtml } = await import("../src/export/markdown-renderer")
       const { buildStandaloneHtml } = await import("../src/export/single-html-exporter")
 
@@ -1096,28 +1096,28 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
           content: "我的代表作品",
           markdown: "## 我的代表作品",
           subType: "h2",
-          ial: { "custom-slidev-slot": "header" },
+          ial: { "custom-slides-slot": "header" },
         },
         {
           id: "col-1-list",
           type: "i",
           content: "- #### AI 摄影师 PoseDirector\n\n  <video controls=\"controls\" src=\"assets/demo.mp4\"></video>",
           markdown: "- #### AI 摄影师 PoseDirector\n\n  <video controls=\"controls\" src=\"assets/demo.mp4\"></video>",
-          ial: { "custom-slidev-slot": "col-1" },
+          ial: { "custom-slides-slot": "col-1" },
         },
         {
           id: "col-2-list",
           type: "i",
           content: "- #### 订阅管家 SubManage\n\n  ![](assets/sub.png)",
           markdown: "- #### 订阅管家 SubManage\n\n  ![](assets/sub.png)",
-          ial: { "custom-slidev-slot": "col-2" },
+          ial: { "custom-slides-slot": "col-2" },
         },
         {
           id: "col-3-list",
           type: "i",
           content: "- #### 方块射手 BlockShooter\n\n  休闲益智小游戏",
           markdown: "- #### 方块射手 BlockShooter\n\n  休闲益智小游戏",
-          ial: { "custom-slidev-slot": "col-3" },
+          ial: { "custom-slides-slot": "col-3" },
         },
         // 混入历史空段落块
         {
@@ -1125,20 +1125,20 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
           type: "p",
           content: "",
           markdown: "",
-          ial: { "custom-slidev-slot": "col-3" },
+          ial: { "custom-slides-slot": "col-3" },
         },
         {
           id: "empty-p-2",
           type: "p",
           content: "   ",
           markdown: "   ",
-          ial: { "custom-slidev-slot": "col-3" },
+          ial: { "custom-slides-slot": "col-3" },
         },
       ]
 
-      const doc = buildSlidevDocument(
+      const doc = buildSlidesDocument(
         "doc-media-compound-test",
-        { "custom-slidev-layout": "three-cols-header" },
+        { "custom-slides-layout": "three-cols-header" },
         mockBlocks,
       )
       expect(doc.slides.length).toBeGreaterThan(0)

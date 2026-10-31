@@ -1,8 +1,8 @@
 import type {
   ISiYuanBlockNode,
-  ISlidevBlockItem,
-  ISlidevMotionConfig,
-} from "../types/slidev-protocol"
+  ISlidesBlockItem,
+  ISlidesMotionConfig,
+} from "../types/slides-protocol"
 
 /**
  * 序列化 Frontmatter 对象为 YAML 字符串
@@ -75,7 +75,7 @@ export function wrapVClickDirective(markdown: string, clicks?: string): string {
 /**
  * 转换预设动效名称与参数为 Slidev / VueUse Motion 的 initial 与 enter 配置
  */
-export function getMotionDirectives(motion?: ISlidevMotionConfig): {
+export function getMotionDirectives(motion?: ISlidesMotionConfig): {
   initial: Record<string, any>
   enter: Record<string, any>
 } | null {
@@ -149,12 +149,12 @@ export function getMotionDirectives(motion?: ISlidevMotionConfig): {
 }
 
 /**
- * 包装带有 v-click、custom-slidev-motion 以及块级 style 样式的块
+ * 包装带有 v-click、custom-slides-motion 以及块级 style 样式的块
  */
 export function wrapElementDirectives(
   markdown: string,
   clicks?: string,
-  motion?: ISlidevMotionConfig,
+  motion?: ISlidesMotionConfig,
   style?: string,
 ): string {
   const hasClicks = clicks !== undefined && clicks !== null && clicks.trim() !== ""

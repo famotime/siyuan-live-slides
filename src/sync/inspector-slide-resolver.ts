@@ -1,5 +1,5 @@
-import type { ISlidevVirtualPage } from "../types/slidev-protocol"
-import { ATTR_ELEM_SLOT } from "../types/slidev-protocol"
+import type { ISlidesVirtualPage } from "../types/slides-protocol"
+import { ATTR_ELEM_SLOT } from "../types/slides-protocol"
 
 export interface IInspectorSlideContext {
   activeBlockId: string
@@ -27,9 +27,9 @@ export function isDividerBlockType(blockType?: string): boolean {
  * 3. 兜底降级为首页。
  */
 export function resolveTargetSlide(
-  slides: ISlidevVirtualPage[] | undefined | null,
+  slides: ISlidesVirtualPage[] | undefined | null,
   context: IInspectorSlideContext,
-): ISlidevVirtualPage | null {
+): ISlidesVirtualPage | null {
   if (!slides || slides.length === 0) return null
 
   const aid = context.activeBlockId || ""

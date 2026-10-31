@@ -1,4 +1,4 @@
-# 思源笔记 Slidev 演示插件 (SiYuan Slidev)
+# 思源笔记即现演示插件 (SiYuan Live Slides)
 
 [简体中文](./README.md) | [📖 详细使用指南](./docs/USER-GUIDE.zh-CN.md) | [📖 User Guide (EN)](./docs/USER-GUIDE.md) | [📚 文档库索引](./docs/README.md) | [🏗️ 项目架构与结构](./docs/project-structure.md)
 
@@ -9,11 +9,11 @@
 
 ---
 
-## 🌟 为什么选择「思源 Slidev」？
+## 🌟 为什么选择「即现」？
 
 在日常工作与学习中，制作演示文稿往往伴随着痛苦的割裂感：
 
-| 真实痛点 | 传统演示方案（PowerPoint / 传统 Markdown 幻灯片） | 「思源 Slidev」的解法 |
+| 真实痛点 | 传统演示方案（PowerPoint / 传统 Markdown 幻灯片） | 「即现」的解法 |
 | :--- | :--- | :--- |
 | **笔记与 PPT 严重割裂** | 每次汇报都要从笔记重新复制粘贴到 PPT 里排版几个小时；笔记更新后 PPT 沦为过时孤岛 | **笔记即是演示**：直接在思源笔记中开启演示，内容天然同源；块引用动态联动，源笔记修改幻灯片自动同步 |
 | **正文被宏代码严重污染** | 传统 Markdown 演示插件（如 Marp、Reveal、Obsidian Adv Slides）必须在正文中插入大量 `<!-- .slide: class="xxx" -->` 等脏代码 | **正文绝对零污染**：所有版式、动画、转场、演讲备注均保存在思源块属性（IAL）与分割线中，导出的 Markdown 依然纯净整洁 |
@@ -168,8 +168,8 @@
 
 ### 1. 开启下方分屏预览与右侧配置面板
 - 打开思源笔记中的任意文档。
-- 点击顶栏右上角的 **「Slidev 演示」** 图标（或使用快捷键 `Alt+P` / `⌥P`），当前文档正下方即刻开启宽屏实时分屏预览页签。
-- 右侧 Dock 栏展开 **「Slidev 演示配置」** 面板，随编辑光标实时聚焦当前块。
+- 点击顶栏右上角的 **「即现演示」** 图标（或使用快捷键 `Alt+P` / `⌥P`），当前文档正下方即刻开启宽屏实时分屏预览页签。
+- 右侧 Dock 栏展开 **「即现演示配置」** 面板，随编辑光标实时聚焦当前块。
 
 ### 2. 插入分页与配置版式
 - 在笔记需要分页的地方，输入 `---`（水平分割线），或在右侧面板点击「➕ 插入分页符」。
@@ -195,13 +195,13 @@
 ## ❓ 常见问题 (FAQ)
 
 <details>
-<summary><b>Q1: 使用思源 Slidev 需要先在电脑上安装 Node.js 或 Slidev 命令行工具吗？</b></summary>
+<summary><b>Q1: 使用即现演示 需要先在电脑上安装 Node.js 或 Slidev 命令行工具吗？</b></summary>
 <b>完全不需要！</b> 插件内置了独立的纯前端 Web 沙箱渲染引擎，安装插件后即可开箱即用，零环境依赖，即使在未配置开发环境的电脑上也能流畅使用。如果您是资深开发者且需要使用 npm 自定义 Vue 组件，可以在设置中开启「Pro 模式」桥接本地 Slidev CLI 端口。
 </details>
 
 <details>
 <summary><b>Q2: 插件会在我的笔记正文里添加奇怪的标记或代码吗？</b></summary>
-<b>绝对不会。</b> 「正文零污染」是本插件的核心设计原则。所有动画、版式、演讲提词均写入思源原生的 IAL 块属性字典（<code>custom-slidev-*</code>）和分割线中。您的 Markdown 正文保持 100% 纯净，导出或同步到手机端阅读时绝无任何乱码。
+<b>绝对不会。</b> 「正文零污染」是本插件的核心设计原则。所有动画、版式、演讲提词均写入思源原生的 IAL 块属性字典（<code>custom-slides-*</code>）和分割线中。您的 Markdown 正文保持 100% 纯净，导出或同步到手机端阅读时绝无任何乱码。
 </details>
 
 <details>
@@ -240,4 +240,4 @@ npm run build
 
 ## 📄 开源许可证
 
-本项目基于 [MIT License](./LICENSE) 开源发布。欢迎在 [GitHub Issues](https://github.com/famotime/siyuan-slidev/issues) 提出宝贵建议或功能诉求！
+本项目基于 [MIT License](./LICENSE) 开源发布。欢迎在 [GitHub Issues](https://github.com/famotime/siyuan-live-slides/issues) 提出宝贵建议或功能诉求！

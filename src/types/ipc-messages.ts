@@ -1,12 +1,12 @@
 import type {
-  ISlidevPluginConfig,
-  ISlidevVirtualPage,
-} from "./slidev-protocol"
+  ISlidesPluginConfig,
+  ISlidesVirtualPage,
+} from "./slides-protocol"
 
 /**
  * 主进程宿主 -> 渲染沙箱 (Host to Sandboxed Slidev) 消息
  */
-export type THostToSlidevAction =
+export type THostToSlidesAction =
   | "UPDATE_SLIDES"
   | "NAVIGATE_PAGE"
   | "HIGHLIGHT_ELEMENT"
@@ -19,12 +19,12 @@ export type THostToSlidevAction =
   | "START_IMAGE_EXPORT"
   | "CANCEL_IMAGE_EXPORT"
 
-export interface IHostToSlidevMessage {
-  source: "siyuan-slidev-host"
-  action: THostToSlidevAction
+export interface IHostToSlidesMessage {
+  source: "siyuan-slides-host"
+  action: THostToSlidesAction
   payload: {
     // 全量或增量幻灯片数据载荷
-    slides?: ISlidevVirtualPage[]
+    slides?: ISlidesVirtualPage[]
     // 目标跳转页码 (1-based)
     pageIndex?: number
     // 目标页内步进 (0-based, v-click / mask step)
@@ -32,7 +32,7 @@ export interface IHostToSlidevMessage {
     // 目标高亮聚焦的块 ID
     targetBlockId?: string
     // 全局演示配置 (主题、字体、宽高比)
-    config?: ISlidevPluginConfig
+    config?: ISlidesPluginConfig
     // 完整 Slidev Markdown (用于 Pro 模式或源码预览)
     fullMarkdown?: string
     // 是否冻结幻灯片沙箱键盘翻页
@@ -53,7 +53,7 @@ export interface IHostToSlidevMessage {
 /**
  * 渲染沙箱 -> 主进程宿主 (Sandboxed Slidev to Host) 消息
  */
-export type TSlidevToHostAction =
+export type TSlidesToHostAction =
   | "SLIDE_CHANGED"
   | "BLOCK_CLICKED"
   | "OPEN_IN_EDITOR"
@@ -68,9 +68,9 @@ export type TSlidevToHostAction =
   | "CAPTURE_COMPLETE"
   | "CAPTURE_ERROR"
 
-export interface ISlidevToHostMessage {
-  source: "siyuan-slidev-client"
-  action: TSlidevToHostAction
+export interface ISlidesToHostMessage {
+  source: "siyuan-slides-client"
+  action: TSlidesToHostAction
   payload: {
     // 当前激活页码 (1-based)
     currentPage?: number

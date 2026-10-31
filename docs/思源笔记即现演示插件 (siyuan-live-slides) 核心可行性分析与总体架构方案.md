@@ -1,4 +1,4 @@
-# 思源笔记 Slidev 插件核心可行性分析与总体架构方案
+# 思源笔记即现演示插件核心可行性分析与总体架构方案
 
 ---
 
@@ -30,7 +30,7 @@ flowchart TD
     subgraph Solutions[突破性解决方案]
         S1[双模渲染引擎: 内置轻量 Web 运行时 + Pro CLI DevServer]
         S2[AST 编译转换管道: SiYuan Block Tree 动态编译为 Slidev AST]
-        S3[零污染元数据设计: 全部动效/版式持久化于 custom-slidev-* 块属性]
+        S3[零污染元数据设计: 全部动效/版式持久化于 custom-slides-* 块属性]
         S4[双向光标状态机: ws-main 事务流监听 + Block ID 双向精准寻址]
         S5[本地资产虚拟代理: 拦截 assets 路由并映射至思源内核静态服务]
     end
@@ -52,7 +52,7 @@ flowchart TD
 - **现象**：竞品为实现分步动画或分栏，通常强行插入 `<!-- .element ... -->` 或专用标记，污染笔记正文，严重破坏纯净笔记的阅读和归档价值。
 - **破解方案：块属性零侵入（Zero-Pollution Metadata via Block Attributes）**：
   - 充分利用思源笔记的结构化特性，每个块都有唯一的 Block ID 和属性集（Inline Attribute List）。
-  - 将所有版式（Layout）、动画序列（Click）、过渡特效（Transition）、演讲提词（Notes）以 `custom-slidev-*` 的命名空间存入块属性中；
+  - 将所有版式（Layout）、动画序列（Click）、过渡特效（Transition）、演讲提词（Notes）以 `custom-slides-*` 的命名空间存入块属性中；
   - 笔记正文保持 100% 原生纯净，日常阅读毫无杂质，进入演示时动态装配成 Slidev 规范。
 
 #### 瓶颈 3：编辑时实时渲染与光标位置保持
@@ -65,14 +65,14 @@ flowchart TD
 
 ## 2. 系统总体架构设计
 
-SiYuan Slidev 采用清晰的四层分层架构，确保高内聚、低耦合，具备极高的扩展性。
+SiYuan Live Slides 采用清晰的四层分层架构，确保高内聚、低耦合，具备极高的扩展性。
 
 ```mermaid
 graph TD
     subgraph UI_Layer[1. 交互与表现层 Presentation & UI]
         ToolbarBtn[顶部栏一键演示按钮]
-        BottomTab[下方分屏预览页签 (SlidevPreviewTab)]
-        InspectorDock[右侧演示配置面板 (SlidevInspectorDockView)]
+        BottomTab[下方分屏预览页签 (SlidesPreviewTab)]
+        InspectorDock[右侧演示配置面板 (SlidesInspectorDockView)]
         PresenterWin[独立全屏/双屏演讲者窗口]
         AIAssistant[AI 智能演示编排助手面板]
     end
@@ -85,7 +85,7 @@ graph TD
 
     subgraph Compiler_Layer[3. 编译器与数据转换层 AST & Data Pipeline]
         BlockCrawler[思源块结构遍历器 (Block Tree)]
-        AttrParser[块属性解析器 (custom-slidev-* Mapper)]
+        AttrParser[块属性解析器 (custom-slides-* Mapper)]
         SlidevAST[Slidev 虚拟 AST 生成器]
         ZeroConfigFallback[智能默认规则兜底 (H1/H2 自动断页)]
     end
@@ -124,19 +124,19 @@ graph TD
 
 ### 3.1 核心块属性字段定义
 
-所有幻灯片相关配置均存储在思源块的属性中，属性名以 `custom-slidev-` 为前缀：
+所有幻灯片相关配置均存储在思源块的属性中，属性名以 `custom-slides-` 为前缀：
 
 | 属性名称 (`Attribute Key`) | 作用级别 | 取值类型与范例 | 对应 Slidev 规范与行为 |
 | :--- | :--- | :--- | :--- |
-| `custom-slidev-slide` | 容器/标题块 | `"true"` / `"page"` | **标记当前块为一个新的幻灯片页（显式分页）** |
-| `custom-slidev-layout` | 幻灯片起始块 | `"default" \| "cover" \| "two-cols" \| "center" \| "fact" \| "intro"` | 映射为该页 Frontmatter 中的 `layout: xxx` 页面布局 |
-| `custom-slidev-transition` | 幻灯片起始块 | `"slide-left" \| "slide-up" \| "fade" \| "view-transition"` | 映射为 Frontmatter 中的 `transition: xxx` 转场动画 |
-| `custom-slidev-background` | 幻灯片起始块 | `"assets/cover.png" \| "linear-gradient(...)"` | 映射为页面背景图或背景样式 |
-| `custom-slidev-class` | 幻灯片起始块 | `"text-center p-8"` | 注入到该页根容器的 UnoCSS / CSS 样式类名 |
-| `custom-slidev-clicks` | 列表/段落/代码块 | `""` / `"1"` / `"+1"` / `"2"` | **逐步出现动效**：包装为 `<v-click>` 或 `v-click="n"` |
-| `custom-slidev-motion` | 任意叶子块 | JSON 字符串：`{"type":"fadeIn","delay":200}` | 映射为 `@vueuse/motion` 驱动的微动效指令 |
-| `custom-slidev-notes` | 幻灯片起始块 | 纯文本提词字符串 | **演讲者私有备注**：映射为演讲者视图中可见的口播词 |
-| `custom-slidev-slot` | 子块（分栏场景） | `"left"` / `"right"` / `"default"` | 多栏布局时指示当前块归属的插槽容器（Slot） |
+| `custom-slides-slide` | 容器/标题块 | `"true"` / `"page"` | **标记当前块为一个新的幻灯片页（显式分页）** |
+| `custom-slides-layout` | 幻灯片起始块 | `"default" \| "cover" \| "two-cols" \| "center" \| "fact" \| "intro"` | 映射为该页 Frontmatter 中的 `layout: xxx` 页面布局 |
+| `custom-slides-transition` | 幻灯片起始块 | `"slide-left" \| "slide-up" \| "fade" \| "view-transition"` | 映射为 Frontmatter 中的 `transition: xxx` 转场动画 |
+| `custom-slides-background` | 幻灯片起始块 | `"assets/cover.png" \| "linear-gradient(...)"` | 映射为页面背景图或背景样式 |
+| `custom-slides-class` | 幻灯片起始块 | `"text-center p-8"` | 注入到该页根容器的 UnoCSS / CSS 样式类名 |
+| `custom-slides-clicks` | 列表/段落/代码块 | `""` / `"1"` / `"+1"` / `"2"` | **逐步出现动效**：包装为 `<v-click>` 或 `v-click="n"` |
+| `custom-slides-motion` | 任意叶子块 | JSON 字符串：`{"type":"fadeIn","delay":200}` | 映射为 `@vueuse/motion` 驱动的微动效指令 |
+| `custom-slides-notes` | 幻灯片起始块 | 纯文本提词字符串 | **演讲者私有备注**：映射为演讲者视图中可见的口播词 |
+| `custom-slides-slot` | 子块（分栏场景） | `"left"` / `"right"` / `"default"` | 多栏布局时指示当前块归属的插槽容器（Slot） |
 
 ### 3.2 智能兜底机制（Zero-Configuration Fallback）
 
@@ -159,18 +159,18 @@ graph TD
 ```mermaid
 graph TD
     subgraph Layer1[1. 文档全局配置 Document Scope]
-        DocBlock[文档根块 NodeDocument / docId] -->|保存| DocAttrs["custom-slidev-theme: 主题名称<br>custom-slidev-aspect-ratio: 16/9<br>custom-slidev-highlighter: 代码高亮器<br>custom-slidev-default-transition: 默认转场"]
+        DocBlock[文档根块 NodeDocument / docId] -->|保存| DocAttrs["custom-slides-theme: 主题名称<br>custom-slides-aspect-ratio: 16/9<br>custom-slides-highlighter: 代码高亮器<br>custom-slides-default-transition: 默认转场"]
     end
 
     subgraph Layer2[2. 幻灯片页面级配置 Page Scope]
-        DividerBlock["水平分割线块 NodeThematicBreak (---)"] -->|纯净承载| PageAttrs["custom-slidev-layout: two-cols / cover<br>custom-slidev-background: 背景图/色<br>custom-slidev-transition: 本页转场<br>custom-slidev-notes: 演讲者提词备忘"]
+        DividerBlock["水平分割线块 NodeThematicBreak (---)"] -->|纯净承载| PageAttrs["custom-slides-layout: two-cols / cover<br>custom-slides-background: 背景图/色<br>custom-slides-transition: 本页转场<br>custom-slides-notes: 演讲者提词备忘"]
         CoverBlock["第一页封面: 由文档根块或首个分割线兼任"]
     end
 
     subgraph Layer3[3. 元素与动效级配置 Element Scope]
-        ParaBlock[普通段落块] -->|自身属性| ParaAttr["custom-slidev-click: 逐步出现步骤<br>custom-slidev-motion: 飞入动效"]
-        CodeBlock[代码块] -->|自身属性| CodeAttr["custom-slidev-shiki-lines: 代码分步高亮行号"]
-        ListBlock[列表项] -->|自身属性| ListAttr["custom-slidev-click: 逐步呈现序列"]
+        ParaBlock[普通段落块] -->|自身属性| ParaAttr["custom-slides-click: 逐步出现步骤<br>custom-slides-motion: 飞入动效"]
+        CodeBlock[代码块] -->|自身属性| CodeAttr["custom-slides-shiki-lines: 代码分步高亮行号"]
+        ListBlock[列表项] -->|自身属性| ListAttr["custom-slides-click: 逐步呈现序列"]
     end
 
     Layer1 --> Layer2
@@ -203,11 +203,11 @@ graph TD
 思源中的每一个文档其根节点本身就是一个独立的块（Block），其 `Block ID` 即是该文档的 `docId`。
 - **配置位置**：直接写入该文档根块的属性字典（可通过思源大标题菜单或插件顶部“文档演示设置”直接修改，调用 `/api/attr/setBlockAttrs`）。
 - **属性字段规范**：
-  - `custom-slidev-theme`：演示主题包名称（如 `"default"`、`"seriph"`、`"apple-basic"` 等）；
-  - `custom-slidev-aspect-ratio`：幻灯片画面宽高比（如 `"16/9"`、`"4/3"`）；
-  - `custom-slidev-highlighter`：代码高亮引擎（如 `"shiki"` 或 `"prism"`）；
-  - `custom-slidev-default-transition`：未单独指定转场时整套幻灯片的默认切换效果（如 `"slide-left"`）；
-  - `custom-slidev-color-schema`：颜色模式偏好（`"auto"` \| `"dark"` \| `"light"`）。
+  - `custom-slides-theme`：演示主题包名称（如 `"default"`、`"seriph"`、`"apple-basic"` 等）；
+  - `custom-slides-aspect-ratio`：幻灯片画面宽高比（如 `"16/9"`、`"4/3"`）；
+  - `custom-slides-highlighter`：代码高亮引擎（如 `"shiki"` 或 `"prism"`）；
+  - `custom-slides-default-transition`：未单独指定转场时整套幻灯片的默认切换效果（如 `"slide-left"`）；
+  - `custom-slides-color-schema`：颜色模式偏好（`"auto"` \| `"dark"` \| `"light"`）。
 - **核心价值**：**属性内聚于文档**！当该笔记被导出、同步、备份或分享给他人时，演示主题与配置完全不丢，具备 100% 的可移植性。
 
 ##### (2) 插件全局用户偏好（全局默认）—— 保存在插件 `config.json`
@@ -239,7 +239,7 @@ sequenceDiagram
     Plugin->>Plugin: 启动 150ms 防抖计时器 (Debounce)
     Note over Plugin: 避免每次按键触发无效重算
     Plugin->>Compiler: 请求当前文档 AST 增量编译
-    Compiler->>Compiler: 注入 custom-slidev-* 属性并生成 Slides 结构
+    Compiler->>Compiler: 注入 custom-slides-* 属性并生成 Slides 结构
     Compiler-->>SlidevClient: 通过 postMessage 传递变更页数据 (Patch Update)
     SlidevClient->>SlidevClient: 局部响应式刷新，保持当前页码与动效步数
 ```
@@ -286,7 +286,7 @@ sequenceDiagram
 | **开箱即用性** | ❌ **差**。强依赖外部插件；未安装属性管家的用户无法图形化配置演示，破坏独立分发体验。 | ✅ **极好**。零外部依赖，安装即用。 | ✅ **极好**。未安装管家时体验完整；安装管家时自动激活高级协同特性。 |
 | **演示专精交互体验** | ❌ **弱**。属性管家定位为“通用键值对管理”；无法提供九宫格布局缩略图、实时动效预览、行高亮滑块等深度交互。 | ✅ **极强**。量身定做针对 `layout`、`transition`、`v-click` 的可视化微交互。 | ✅ **极强**。内置微交互组件提供极致的即时编辑与所见即所得体验。 |
 | **全库宏观治理能力** | ❌ 仅局限在属性管家自身。 | ❌ **无**。无法统计全库有哪些幻灯片，无法批量替换全库动画。 | ✅ **极强**。借助属性管家的**全库统计、批量重命名、模板库**成为强大的后台治理中心。 |
-| **架构耦合与稳定性** | ⚠️ 高耦合，受跨插件通讯接口变动影响。 | ✅ 零外部耦合，高内聚。 | ✅ **松耦合**。基于思源内核通用 `custom-slidev-*` 块属性作为协议数据载体，无硬编码强绑定。 |
+| **架构耦合与稳定性** | ⚠️ 高耦合，受跨插件通讯接口变动影响。 | ✅ 零外部耦合，高内聚。 | ✅ **松耦合**。基于思源内核通用 `custom-slides-*` 块属性作为协议数据载体，无硬编码强绑定。 |
 
 ---
 
@@ -294,7 +294,7 @@ sequenceDiagram
 
 ```mermaid
 graph TD
-    subgraph SlidevPlugin[SiYuan Slidev 演示插件]
+    subgraph SlidevPlugin[SiYuan Live Slides 演示插件]
         subgraph BuiltinUI[内置演示专精 UI (微观/即时)]
             InspectorDock[右侧 Dock 演示配置面板: 动态情境卡片与快捷操作]
             BottomPreview[下方独立分屏预览页签: 宽屏沙箱与 Pin 锁定]
@@ -303,15 +303,15 @@ graph TD
     end
 
     subgraph KernelData[思源内核块属性系统 (公共中枢数据载体)]
-        DocBlock[文档根块: custom-slidev-theme ...]
-        DividerBlock[分割线块: custom-slidev-layout / transition ...]
-        ContentBlock[内容块: custom-slidev-click ...]
+        DocBlock[文档根块: custom-slides-theme ...]
+        DividerBlock[分割线块: custom-slides-layout / transition ...]
+        ContentBlock[内容块: custom-slides-click ...]
     end
 
     subgraph PropertyManager[属性管家插件 siyuan-property-manager]
         subgraph MacroGov[宏观资产治理与批量运维 (宏观/批量)]
             TemplateLib[Slidev 预置模板库: 一键套用整套演示版式]
-            GlobalStats[全库/当前文档 custom-slidev-* 属性分布统计]
+            GlobalStats[全库/当前文档 custom-slides-* 属性分布统计]
             BatchOps[批量重命名与重构: 一键全局替换转场/主题]
             AVBuilder[智能建库: 将特定幻灯片聚合为属性视图]
         end
@@ -339,8 +339,8 @@ graph TD
        - `[模板] 幻灯片-数据事实大字报`（预设 `layout: fact`）；
      - 用户在使用“属性管家”时，点击模板直接一键灌注整套属性。
   2. **全库幻灯片资产全景统计与批量运维（Global Stats & Batch Refactor）**：
-     - 用户可直接在“属性管家”的统计面板中，查阅全笔记本中到底有多少块被标记为了幻灯片（检索 `custom-slidev-slide`）；
+     - 用户可直接在“属性管家”的统计面板中，查阅全笔记本中到底有多少块被标记为了幻灯片（检索 `custom-slides-slide`）；
      - 当用户希望将整库数十篇演示文稿的默认转场从 `"fade"` 统一改成 `"slide-left"` 时，直接利用属性管家的**“批量重命名”**功能，10 秒内完成全库批量重构！
   3. **生态互相引流与快速联动（Bridge & Deep Link）**：
      - 在 Slidev 插件设置中显示：“已检测到【属性管家】，支持在属性管家中进行全库幻灯片属性批量统计与重构”，点击直达；
-     - 在属性管家中识别到 `custom-slidev-*` 前缀属性时，提供“在 Slidev 中演示”的快捷动作按钮。
+     - 在属性管家中识别到 `custom-slides-*` 前缀属性时，提供“在 Slidev 中演示”的快捷动作按钮。

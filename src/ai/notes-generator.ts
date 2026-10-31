@@ -1,4 +1,4 @@
-import type { ISlidevVirtualPage } from "../types/slidev-protocol"
+import type { ISlidesVirtualPage } from "../types/slides-protocol"
 
 export interface INotesGenerationResult {
   notes: string
@@ -10,7 +10,7 @@ export interface INotesGenerationResult {
  * 依据幻灯片内容智能提炼演讲者口播提词卡 (Notes)
  */
 export function generateSpeakerNotes(
-  slide: ISlidevVirtualPage,
+  slide: ISlidesVirtualPage,
   customPromptFn?: (pageContent: string) => Promise<string>,
 ): string {
   const blocks = (slide.blocks || []).filter(b => {
@@ -56,7 +56,7 @@ export function generateSpeakerNotes(
  * 优先调用思源内核 AI 提炼演讲者口播提词卡，附带生成元信息（区分真实 AI 结果与预设降级模板）
  */
 export async function generateSpeakerNotesWithAIDetailed(
-  slide: ISlidevVirtualPage,
+  slide: ISlidesVirtualPage,
   aiChatFn?: (prompt: string) => Promise<string | null>,
 ): Promise<INotesGenerationResult> {
   const slideContent = (slide.blocks && slide.blocks.length > 0)
@@ -95,7 +95,7 @@ export async function generateSpeakerNotesWithAIDetailed(
  * 优先调用思源内核 AI 提炼演讲者口播提词卡，若 AI 未配置或异常自动回退到规则生成
  */
 export async function generateSpeakerNotesWithAI(
-  slide: ISlidevVirtualPage,
+  slide: ISlidesVirtualPage,
   aiChatFn?: (prompt: string) => Promise<string | null>,
 ): Promise<string> {
   const res = await generateSpeakerNotesWithAIDetailed(slide, aiChatFn)

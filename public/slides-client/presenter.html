@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Slidev 演讲者专业视图 (Presenter Mode)</title>
+  <title>即现演讲者专业视图 (Presenter Mode)</title>
   <style>
     :root {
       --bg-dark: #0f1117;
@@ -219,7 +219,7 @@
     <!-- 顶栏状态 -->
     <header class="presenter-header">
       <div class="presenter-title">
-        <span>🎤 Slidev 演讲者控制台</span>
+        <span>🎤 即现演讲者控制台</span>
         <span style="opacity: 0.5;">|</span>
         <span>第 {{ currentPage }} / {{ totalPages || 1 }} 页</span>
       </div>
@@ -361,7 +361,7 @@
         // 双向广播信道
         let broadcastChannel = null
         try {
-          broadcastChannel = new BroadcastChannel("siyuan-slidev-sync")
+          broadcastChannel = new BroadcastChannel("siyuan-slides-sync")
           broadcastChannel.onmessage = (event) => {
             const data = event.data
             if (!data) return
@@ -384,13 +384,13 @@
             }
             if (window.opener) {
               window.opener.postMessage({
-                source: "siyuan-slidev-presenter",
+                source: "siyuan-slides-presenter",
                 action: "NAVIGATE_PAGE",
                 payload: { pageIndex: pageNum }
               }, "*")
             }
           } catch (e) {
-            console.warn("[Slidev Presenter] sync error:", e)
+            console.warn("[Live Slides Presenter] sync error:", e)
           }
         }
 
@@ -487,7 +487,7 @@
           // 尝试从 opener 拉取当前状态
           if (window.opener) {
             window.opener.postMessage({
-              source: "siyuan-slidev-presenter",
+              source: "siyuan-slides-presenter",
               action: "REQUEST_SYNC",
               payload: {}
             }, "*")

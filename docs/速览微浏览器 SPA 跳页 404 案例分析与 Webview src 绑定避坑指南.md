@@ -1,6 +1,6 @@
 # 速览微浏览器 SPA 跳页 404 案例分析与 Webview src 绑定避坑指南
 
-> 适用版本：`siyuan-slidev` v0.9.0+
+> 适用版本：`siyuan-live-slides` v0.9.0+
 > 状态：已修复（67 套件 / 608 测试全绿，typecheck 与构建通过）
 > 最后更新：2026-10-25
 > 关联改动：`src/ui/components/peek/WebviewPeekDrawer.vue`（webview `src` 属性与响应式状态解耦）
@@ -93,7 +93,7 @@ const initialUrl = props.url
 
 `currentUrl` / `urlInputValue` 在桌面端仅作地址栏展示；`did-navigate` / `did-navigate-in-page` / `did-stop-loading` 的事件处理器**无需任何改动**——它们更新 `currentUrl` 从此只是纯赋值，不再有 DOM 副作用。既有导航路径（`watch(props.url)` 与地址栏回车 `navigateToUrl()`）原本就已调用 `wv.loadURL()`，天然适配。
 
-组件由 `SlidevPreviewTab.vue` 以 `v-if="hasOpenedWeb"` 常驻挂载一次、`v-show` 切换可见性；`hasOpenedWeb` 与 `peekUrl` 在同一同步代码块赋值，Vue 批量渲染后挂载时 `props.url` 必为真实地址，`initialUrl` 取值可靠。
+组件由 `SlidesPreviewTab.vue` 以 `v-if="hasOpenedWeb"` 常驻挂载一次、`v-show` 切换可见性；`hasOpenedWeb` 与 `peekUrl` 在同一同步代码块赋值，Vue 批量渲染后挂载时 `props.url` 必为真实地址，`initialUrl` 取值可靠。
 
 ### 3.3 iframe 降级分支为何刻意不改
 

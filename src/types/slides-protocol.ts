@@ -4,46 +4,46 @@
  */
 
 // 1. 文档全局级属性常量 (Document Scope)
-export const ATTR_DOC_THEME = "custom-slidev-theme"
-export const ATTR_DOC_ASPECT_RATIO = "custom-slidev-aspect-ratio"
-export const ATTR_DOC_HIGHLIGHTER = "custom-slidev-highlighter"
-export const ATTR_DOC_DEFAULT_TRANSITION = "custom-slidev-default-transition"
-export const ATTR_DOC_COLOR_SCHEMA = "custom-slidev-color-schema"
-export const ATTR_DOC_SPACING = "custom-slidev-spacing"
+export const ATTR_DOC_THEME = "custom-slides-theme"
+export const ATTR_DOC_ASPECT_RATIO = "custom-slides-aspect-ratio"
+export const ATTR_DOC_HIGHLIGHTER = "custom-slides-highlighter"
+export const ATTR_DOC_DEFAULT_TRANSITION = "custom-slides-default-transition"
+export const ATTR_DOC_COLOR_SCHEMA = "custom-slides-color-schema"
+export const ATTR_DOC_SPACING = "custom-slides-spacing"
 
 // 2. 幻灯片页面级属性常量 (Page Scope，承载于水平分割线或根块)
-export const ATTR_PAGE_SLIDE = "custom-slidev-slide"
-export const ATTR_PAGE_LAYOUT = "custom-slidev-layout"
-export const ATTR_PAGE_TRANSITION = "custom-slidev-transition"
-export const ATTR_PAGE_BACKGROUND = "custom-slidev-background"
-export const ATTR_PAGE_IMAGE = "custom-slidev-image"
-export const ATTR_PAGE_NOTES = "custom-slidev-notes"
-export const ATTR_PAGE_CLASS = "custom-slidev-class"
-export const ATTR_PAGE_SPACING = "custom-slidev-spacing"
-export const ATTR_PAGE_LAYOUT_RATIO = "custom-slidev-layout-ratio"
-export const ATTR_PAGE_MASK = "custom-slidev-mask"
-export const ATTR_PAGE_MASK_RATIO = "custom-slidev-mask-ratio"
-export const ATTR_PAGE_MASK_STYLE = "custom-slidev-mask-style"
-export const ATTR_PAGE_MASK_INITIAL = "custom-slidev-mask-initial"
+export const ATTR_PAGE_SLIDE = "custom-slides-slide"
+export const ATTR_PAGE_LAYOUT = "custom-slides-layout"
+export const ATTR_PAGE_TRANSITION = "custom-slides-transition"
+export const ATTR_PAGE_BACKGROUND = "custom-slides-background"
+export const ATTR_PAGE_IMAGE = "custom-slides-image"
+export const ATTR_PAGE_NOTES = "custom-slides-notes"
+export const ATTR_PAGE_CLASS = "custom-slides-class"
+export const ATTR_PAGE_SPACING = "custom-slides-spacing"
+export const ATTR_PAGE_LAYOUT_RATIO = "custom-slides-layout-ratio"
+export const ATTR_PAGE_MASK = "custom-slides-mask"
+export const ATTR_PAGE_MASK_RATIO = "custom-slides-mask-ratio"
+export const ATTR_PAGE_MASK_STYLE = "custom-slides-mask-style"
+export const ATTR_PAGE_MASK_INITIAL = "custom-slides-mask-initial"
 
 // 3. 元素动效级与内容属性常量 (Element Scope)
-export const ATTR_ELEM_CLICK = "custom-slidev-click"
-export const ATTR_ELEM_MOTION = "custom-slidev-motion"
-export const ATTR_ELEM_SHIKI_LINES = "custom-slidev-shiki-lines"
-export const ATTR_ELEM_SLOT = "custom-slidev-slot"
-export const ATTR_ELEM_NOTE = "custom-slidev-note"
-export const ATTR_ELEM_ROLE = "custom-slidev-role"
-export const ATTR_ELEM_MAX_HEIGHT = "custom-slidev-max-height"
-export const ATTR_VIDEO_AUTOPLAY = "custom-slidev-autoplay"
-export const ATTR_VIDEO_LOOP = "custom-slidev-loop"
-export const ATTR_VIDEO_MUTED = "custom-slidev-muted"
-export const ATTR_VIDEO_CONTROLS = "custom-slidev-controls"
+export const ATTR_ELEM_CLICK = "custom-slides-click"
+export const ATTR_ELEM_MOTION = "custom-slides-motion"
+export const ATTR_ELEM_SHIKI_LINES = "custom-slides-shiki-lines"
+export const ATTR_ELEM_SLOT = "custom-slides-slot"
+export const ATTR_ELEM_NOTE = "custom-slides-note"
+export const ATTR_ELEM_ROLE = "custom-slides-role"
+export const ATTR_ELEM_MAX_HEIGHT = "custom-slides-max-height"
+export const ATTR_VIDEO_AUTOPLAY = "custom-slides-autoplay"
+export const ATTR_VIDEO_LOOP = "custom-slides-loop"
+export const ATTR_VIDEO_MUTED = "custom-slides-muted"
+export const ATTR_VIDEO_CONTROLS = "custom-slides-controls"
 export const ROLE_BACKGROUND = "background"
 export const ROLE_IMAGE_LEFT = "image-left"
 export const ROLE_IMAGE_RIGHT = "image-right"
 
 /** 全局演示文档配置 */
-export interface ISlidevPluginConfig {
+export interface ISlidesPluginConfig {
   theme: string
   aspectRatio: "16/9" | "4/3" | "16/10" | string
   highlighter: "shiki" | "prism"
@@ -152,7 +152,7 @@ export function parseMaskRatio(ratioStr?: string): { steps: number; breakpoints:
 }
 
 /** 元素微动效配置结构 */
-export interface ISlidevMotionConfig {
+export interface ISlidesMotionConfig {
   preset: string
   delay?: number
   duration?: number
@@ -160,13 +160,13 @@ export interface ISlidevMotionConfig {
 }
 
 /** 单个元素块的数据项 */
-export interface ISlidevBlockItem {
+export interface ISlidesBlockItem {
   id: string
   type: string
   content: string
   rawMarkdown: string
   clicks?: string
-  motion?: ISlidevMotionConfig
+  motion?: ISlidesMotionConfig
   shikiLines?: string
   maxHeight?: string
   slot?: "header" | "left" | "right" | "col-1" | "col-2" | "col-3" | "default" | string
@@ -176,31 +176,31 @@ export interface ISlidevBlockItem {
   attributes?: Record<string, string>
   attrs?: Record<string, string>
   ial?: Record<string, string>
-  children?: ISlidevBlockItem[] | any[]
+  children?: ISlidesBlockItem[] | any[]
   rawNode?: ISiYuanBlockNode
   isColFirst?: boolean
 }
 
-export type ISlidevBlock = ISlidevBlockItem
+export type ISlidesBlock = ISlidesBlockItem
 
 
 /** 虚拟幻灯片单页模型 (Virtual Slide Page) */
-export interface ISlidevVirtualPage {
+export interface ISlidesVirtualPage {
   pageIndex: number // 1-based
   startBlockId: string
   frontmatter: ISlidePageFrontmatter
   notes: string
-  noteBlocks?: ISlidevBlockItem[]
-  blocks: ISlidevBlockItem[]
+  noteBlocks?: ISlidesBlockItem[]
+  blocks: ISlidesBlockItem[]
   rawMarkdown: string
   allBlockIds?: string[]
 }
 
 /** 整个文档解析后生成的虚拟 Slidev 文档模型 */
-export interface ISlidevDocument {
+export interface ISlidesDocument {
   docId: string
-  config: ISlidevPluginConfig
-  slides: ISlidevVirtualPage[]
+  config: ISlidesPluginConfig
+  slides: ISlidesVirtualPage[]
   fullMarkdown: string
   customThemeCss?: string
 }

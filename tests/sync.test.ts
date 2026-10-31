@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest"
 import { CursorTracker } from "../src/sync/cursor-tracker"
 import { DebounceController } from "../src/sync/debounce-controller"
 import { mirrorBlockSelection } from "../src/sync/selection-mirror"
-import type { ISlidevVirtualPage } from "../src/types/slidev-protocol"
+import type { ISlidesVirtualPage } from "../src/types/slides-protocol"
 
 describe("DebounceController (防抖控制器)", () => {
   it("应在延迟指定毫秒后执行最后一次任务", async () => {
@@ -52,7 +52,7 @@ describe("CursorTracker (双向光标联动中枢)", () => {
 
     const tracker = new CursorTracker(mockBridge)
 
-    const slides: ISlidevVirtualPage[] = [
+    const slides: ISlidesVirtualPage[] = [
       {
         pageIndex: 1,
         startBlockId: "start-1",

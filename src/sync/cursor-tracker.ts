@@ -1,5 +1,5 @@
 import type { WebSandboxBridge } from "../engine/web-sandbox-bridge"
-import type { ISlidevVirtualPage } from "../types/slidev-protocol"
+import type { ISlidesVirtualPage } from "../types/slides-protocol"
 import { DebounceController } from "./debounce-controller"
 
 export class CursorTracker {
@@ -27,7 +27,7 @@ export class CursorTracker {
   /**
    * 重建 Block ID 到 Page Index (1-based) 的映射索引字典
    */
-  public updateSlidesIndex(slides: ISlidevVirtualPage[]): void {
+  public updateSlidesIndex(slides: ISlidesVirtualPage[]): void {
     this.blockToPageMap.clear()
 
     for (const slide of slides) {

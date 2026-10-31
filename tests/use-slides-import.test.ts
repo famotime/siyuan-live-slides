@@ -2,15 +2,15 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   backfillDividerAttributes,
   backfillSlotAttributes,
-  executeSlidevImport,
+  executeSlidesImport,
   isDividerBlock,
   sanitizeDocTitle,
   uploadAndRewriteAssets,
-  useSlidevImport,
-} from '@/ui/components/useSlidevImport'
-import type { IParsedSlidevPresentation } from '@/compiler/slidev-importer'
+  useSlidesImport,
+} from '@/ui/components/useSlidesImport'
+import type { IParsedSlidesPresentation } from '@/compiler/slides-importer'
 
-describe('useSlidevImport 业务逻辑与 Composable 测试', () => {
+describe('useSlidesImport 业务逻辑与 Composable 测试', () => {
   describe('isDividerBlock (水平分割线识别)', () => {
     it('应正确识别各类思源水平分割线与 Markdown 分隔符', () => {
       expect(isDividerBlock({ type: 'tb' })).toBe(true)
@@ -49,8 +49,8 @@ describe('useSlidevImport 业务逻辑与 Composable 测试', () => {
         { id: 'tb-1', type: 'tb' },
       ]
       const slides = [
-        { pageAttrs: { 'custom-slidev-layout': 'cover' } },
-        { pageAttrs: { 'custom-slidev-layout': 'two-cols' } },
+        { pageAttrs: { 'custom-slides-layout': 'cover' } },
+        { pageAttrs: { 'custom-slides-layout': 'two-cols' } },
       ]
 
       const setAttrsRecord: Record<string, any> = {}
@@ -60,8 +60,8 @@ describe('useSlidevImport 业务逻辑与 Composable 测试', () => {
 
       const count = await backfillDividerAttributes(blocks, slides, setAttrsMock as any)
       expect(count).toBe(2)
-      expect(setAttrsRecord['tb-0']).toEqual({ 'custom-slidev-layout': 'cover' })
-      expect(setAttrsRecord['tb-1']).toEqual({ 'custom-slidev-layout': 'two-cols' })
+      expect(setAttrsRecord['tb-0']).toEqual({ 'custom-slides-layout': 'cover' })
+      expect(setAttrsRecord['tb-1']).toEqual({ 'custom-slides-layout': 'two-cols' })
     })
 
     it('当第 1 页无独立分割线时，降级从第 2 页开始绑定第 1 条分割线', async () => {
@@ -70,8 +70,8 @@ describe('useSlidevImport 业务逻辑与 Composable 测试', () => {
         { id: 'tb-1', type: 'tb' },
       ]
       const slides = [
-        { pageAttrs: { 'custom-slidev-layout': 'cover' } },
-        { pageAttrs: { 'custom-slidev-layout': 'image-right' } },
+        { pageAttrs: { 'custom-slides-layout': 'cover' } },
+        { pageAttrs: { 'custom-slides-layout': 'image-right' } },
       ]
 
       const setAttrsRecord: Record<string, any> = {}
@@ -81,12 +81,12 @@ describe('useSlidevImport 业务逻辑与 Composable 测试', () => {
 
       const count = await backfillDividerAttributes(blocks, slides, setAttrsMock as any)
       expect(count).toBe(1)
-      expect(setAttrsRecord['tb-1']).toEqual({ 'custom-slidev-layout': 'image-right' })
+      expect(setAttrsRecord['tb-1']).toEqual({ 'custom-slides-layout': 'image-right' })
     })
   })
 
   describe('backfillSlotAttributes (插槽属性回填)', () => {
-    it('应将 ::right:: 之后的块打上 custom-slidev-slot="right" 并在遇到下一个分割线时重置', async () => {
+    it('应将 ::right:: 之后的块打上 custom-slides-slot="right" 并在遇到下一个分割线时重置', async () => {
       const blocks = [
         { id: 'p-left-1', type: 'p', content: '左侧内容' },
         { id: 'slot-marker', type: 'p', markdown: '::right::' },
@@ -103,21 +103,21 @@ describe('useSlidevImport 业务逻辑与 Composable 测试', () => {
 
       const count = await backfillSlotAttributes(blocks, setAttrsMock as any)
       expect(count).toBe(2)
-      expect(updatedMap['p-right-1']).toEqual({ 'custom-slidev-slot': 'right' })
-      expect(updatedMap['p-right-2']).toEqual({ 'custom-slidev-slot': 'right' })
+      expect(updatedMap['p-right-1']).toEqual({ 'custom-slides-slot': 'right' })
+      expect(updatedMap['p-right-2']).toEqual({ 'custom-slides-slot': 'right' })
       expect(updatedMap['p-next-page']).toBeUndefined()
     })
   })
 
-  describe('executeSlidevImport (端到端导入编排服务)', () => {
+  describe('executeSlidesImport (端到端导入编排服务)', () => {
     it('应完整协调创建文档、合并根属性、回填分割线与打开分屏', async () => {
-      const mockPresentation: IParsedSlidevPresentation = {
+      const mockPresentation: IParsedSlidesPresentation = {
         docTitle: '我的年度汇报',
-        docRootAttrs: { 'custom-slidev-theme': 'seriph' },
+        docRootAttrs: { 'custom-slides-theme': 'seriph' },
         slides: [
           {
             pageIndex: 1,
-            pageAttrs: { 'custom-slidev-layout': 'cover' },
+            pageAttrs: { 'custom-slides-layout': 'cover' },
             notes: '',
             rawMarkdown: '# 封面标题',
             hasVueComponent: false,
@@ -126,7 +126,7 @@ describe('useSlidevImport 业务逻辑与 Composable 测试', () => {
           },
           {
             pageIndex: 2,
-            pageAttrs: { 'custom-slidev-layout': 'two-cols' },
+            pageAttrs: { 'custom-slides-layout': 'two-cols' },
             notes: '',
             rawMarkdown: '## 内容页\n\n::right::\n\n右栏段落',
             hasVueComponent: false,
@@ -161,7 +161,7 @@ describe('useSlidevImport 业务逻辑与 Composable 测试', () => {
         openBottomPreviewTab: vi.fn(),
       }
 
-      const docId = await executeSlidevImport({
+      const docId = await executeSlidesImport({
         presentation: mockPresentation,
         notebookId: 'nb-123',
         docTitle: '我的年度汇报',
@@ -183,16 +183,16 @@ describe('useSlidevImport 业务逻辑与 Composable 测试', () => {
       expect(docId).toBe('doc-new-456')
       // 验证文档根属性合并了第 1 页的 pageAttrs 和 docRootAttrs
       expect(setAttrsMap['doc-new-456']).toEqual({
-        'custom-slidev-layout': 'cover',
-        'custom-slidev-theme': 'seriph',
+        'custom-slides-layout': 'cover',
+        'custom-slides-theme': 'seriph',
       })
       // 验证分割线绑定了第 2 页属性
       expect(setAttrsMap['b-tb1']).toEqual({
-        'custom-slidev-layout': 'two-cols',
+        'custom-slides-layout': 'two-cols',
       })
       // 验证右插槽块属性注入
       expect(setAttrsMap['b-right-p']).toEqual({
-        'custom-slidev-slot': 'right',
+        'custom-slides-slot': 'right',
       })
       // 验证提示消息与自动分屏开启
       expect(showMsgMock).toHaveBeenCalledWith('🎉 成功导入 Slidev 演示文档《我的年度汇报》！')
@@ -202,9 +202,9 @@ describe('useSlidevImport 业务逻辑与 Composable 测试', () => {
     })
   })
 
-  describe('useSlidevImport Composable 响应式状态管理', () => {
+  describe('useSlidesImport Composable 响应式状态管理', () => {
     it('应当正确初始化与更新输入状态', () => {
-      const composable = useSlidevImport()
+      const composable = useSlidesImport()
       expect(composable.inputMode.value).toBe('file')
       expect(composable.isImporting.value).toBe(false)
       expect(composable.parsedPresentation.value).toBeNull()

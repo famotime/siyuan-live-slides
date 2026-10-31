@@ -6,17 +6,17 @@ import {
   InspectorSyncThrottle,
   buildCompiledIalIndex,
 } from "../src/sync/inspector-sync-cache"
-import type { ISlidevDocument } from "../src/types/slidev-protocol"
+import type { ISlidesDocument } from "../src/types/slides-protocol"
 
 const PROJECT_ROOT = path.resolve(__dirname, "..")
 
 describe("P1-2：块属性短 TTL 缓存", () => {
   it("TTL 内命中缓存，超时后失效并重新查询", () => {
     const cache = new BlockAttrCache(400)
-    cache.set("b1", { "custom-slidev-layout": "cover" }, 1000)
+    cache.set("b1", { "custom-slides-layout": "cover" }, 1000)
 
-    expect(cache.get("b1", 1200)).toEqual({ "custom-slidev-layout": "cover" })
-    expect(cache.get("b1", 1400)).toEqual({ "custom-slidev-layout": "cover" })
+    expect(cache.get("b1", 1200)).toEqual({ "custom-slides-layout": "cover" })
+    expect(cache.get("b1", 1400)).toEqual({ "custom-slides-layout": "cover" })
     // 超出 TTL 窗口
     expect(cache.get("b1", 1401)).toBeUndefined()
     expect(cache.size).toBe(0)
@@ -48,28 +48,28 @@ describe("P1-2：编译模型 IAL 索引", () => {
     const doc = {
       slides: [
         {
-          blocks: [{ id: "b1", ial: { "custom-slidev-layout": "cover" } }],
-          noteBlocks: [{ id: "n1", ial: { "custom-slidev-note": "true" } }],
+          blocks: [{ id: "b1", ial: { "custom-slides-layout": "cover" } }],
+          noteBlocks: [{ id: "n1", ial: { "custom-slides-note": "true" } }],
         },
         {
-          blocks: [{ id: "b2", ial: { "custom-slidev-slot": "left" } }],
+          blocks: [{ id: "b2", ial: { "custom-slides-slot": "left" } }],
         },
       ],
-    } as unknown as ISlidevDocument
+    } as unknown as ISlidesDocument
 
     const index = buildCompiledIalIndex(doc)
-    expect(index.get("b1")).toEqual({ "custom-slidev-layout": "cover" })
-    expect(index.get("n1")).toEqual({ "custom-slidev-note": "true" })
-    expect(index.get("b2")).toEqual({ "custom-slidev-slot": "left" })
+    expect(index.get("b1")).toEqual({ "custom-slides-layout": "cover" })
+    expect(index.get("n1")).toEqual({ "custom-slides-note": "true" })
+    expect(index.get("b2")).toEqual({ "custom-slides-slot": "left" })
     expect(index.size).toBe(3)
   })
 
   it("空文档与缺字段块应安全跳过", () => {
     expect(buildCompiledIalIndex(null).size).toBe(0)
-    expect(buildCompiledIalIndex({ slides: [] } as unknown as ISlidevDocument).size).toBe(0)
+    expect(buildCompiledIalIndex({ slides: [] } as unknown as ISlidesDocument).size).toBe(0)
     const index = buildCompiledIalIndex({
       slides: [{ blocks: [{ id: "b1" }, { ial: { a: "1" } } as any] }],
-    } as unknown as ISlidevDocument)
+    } as unknown as ISlidesDocument)
     expect(index.size).toBe(0)
   })
 })

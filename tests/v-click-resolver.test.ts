@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest"
 import { computeSlideClicksPlan, getBlockClickStatus } from "../src/engine/v-click-resolver"
-import type { ISlidevBlock } from "../src/types/slidev-protocol"
+import type { ISlidesBlock } from "../src/types/slides-protocol"
 
 describe("v-click Resolver (逐步呈现调度计划解析器)", () => {
   it("应该正确让连续顺延 (+1) 部件依次递增呈现，而不是随上一个部件一起出现", () => {
-    const blocks: ISlidevBlock[] = [
+    const blocks: ISlidesBlock[] = [
       { id: "b1", type: "p", content: "第一条论点", rawMarkdown: "第一条论点", clicks: "+1" },
       { id: "b2", type: "p", content: "第二条论点", rawMarkdown: "第二条论点", clicks: "+1" },
       { id: "b3", type: "p", content: "第三条论点", rawMarkdown: "第三条论点", clicks: "+1" },
@@ -42,7 +42,7 @@ describe("v-click Resolver (逐步呈现调度计划解析器)", () => {
   })
 
   it("当包含无动效的静态标题与后续顺延部件时，静态标题始终可见且顺延部件从第 1 步起算", () => {
-    const blocks: ISlidevBlock[] = [
+    const blocks: ISlidesBlock[] = [
       { id: "title", type: "h", content: "大标题", rawMarkdown: "# 大标题" },
       { id: "item1", type: "p", content: "项目 1", rawMarkdown: "项目 1", clicks: "+1" },
       { id: "item2", type: "p", content: "项目 2", rawMarkdown: "项目 2", clicks: "+1" },
@@ -65,7 +65,7 @@ describe("v-click Resolver (逐步呈现调度计划解析器)", () => {
   })
 
   it("显式绝对步数与顺延混合时，顺延部件应在绝对步数之后顺延呈现", () => {
-    const blocks: ISlidevBlock[] = [
+    const blocks: ISlidesBlock[] = [
       { id: "b1", type: "p", content: "第 1 步部件", rawMarkdown: "第 1 步部件", clicks: "1" },
       { id: "b2", type: "p", content: "顺延部件", rawMarkdown: "顺延部件", clicks: "+1" },
     ]
@@ -85,7 +85,7 @@ describe("v-click Resolver (逐步呈现调度计划解析器)", () => {
   })
 
   it("绝对步数为 2 与后续顺延混合时，顺延部件应在第 3 步呈现", () => {
-    const blocks: ISlidevBlock[] = [
+    const blocks: ISlidesBlock[] = [
       { id: "b1", type: "p", content: "第 2 步部件", rawMarkdown: "第 2 步部件", clicks: "2" },
       { id: "b2", type: "p", content: "顺延部件", rawMarkdown: "顺延部件", clicks: "+1" },
     ]
@@ -107,7 +107,7 @@ describe("v-click Resolver (逐步呈现调度计划解析器)", () => {
   })
 
   it("支持区间 [min, max] 语法并在区间外隐藏", () => {
-    const blocks: ISlidevBlock[] = [
+    const blocks: ISlidesBlock[] = [
       { id: "b1", type: "p", content: "区间部件", rawMarkdown: "区间部件", clicks: "[2, 4]" },
       { id: "b2", type: "p", content: "顺延部件", rawMarkdown: "顺延部件", clicks: "+1" },
     ]
@@ -129,7 +129,7 @@ describe("v-click Resolver (逐步呈现调度计划解析器)", () => {
   })
 
   it("支持 hide 隐藏指令（初始可见，点击到达时隐藏）", () => {
-    const blocks: ISlidevBlock[] = [
+    const blocks: ISlidesBlock[] = [
       { id: "b1", type: "p", content: "临时提醒", rawMarkdown: "临时提醒", clicks: "hide" },
       { id: "b2", type: "p", content: "替代内容", rawMarkdown: "替代内容", clicks: "+1" },
     ]
@@ -148,7 +148,7 @@ describe("v-click Resolver (逐步呈现调度计划解析器)", () => {
   })
 
   it("忽略 slot-divider-right 虚拟分栏块", () => {
-    const blocks: ISlidevBlock[] = [
+    const blocks: ISlidesBlock[] = [
       { id: "left1", type: "p", content: "左栏", rawMarkdown: "左栏", clicks: "+1" },
       { id: "div", type: "p", content: ":::", rawMarkdown: ":::", slot: "slot-divider-right" },
       { id: "right1", type: "p", content: "右栏", rawMarkdown: "右栏", clicks: "+1" },

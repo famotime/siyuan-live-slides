@@ -14,7 +14,7 @@ import {
   ATTR_PAGE_MASK_INITIAL,
   ATTR_PAGE_NOTES,
   ATTR_PAGE_TRANSITION,
-} from "../types/slidev-protocol"
+} from "../types/slides-protocol"
 import {
   extractSlideMatter,
   parseYamlFrontmatter,
@@ -43,7 +43,7 @@ export interface IParsedSlideItem {
   assetReferences: string[]
 }
 
-export interface IParsedSlidevPresentation {
+export interface IParsedSlidesPresentation {
   docTitle: string
   docRootAttrs: Record<string, string>
   slides: IParsedSlideItem[]
@@ -75,7 +75,7 @@ export interface IImportOptions {
 /**
  * 依循 Slidev 官方词法状态机切分幻灯片
  */
-export function splitSlidevMarkdownChunks(markdown: string): string[] {
+export function splitSlidesMarkdownChunks(markdown: string): string[] {
   const lines = markdown.split(/\r?\n/)
   const rawSlides: string[] = []
 
@@ -151,10 +151,10 @@ export { convertHtmlToCleanMarkdown }
 /**
  * 核心解析入口：将 Slidev Markdown 完整解析为结构化思源演示包
  */
-export function parseSlidevPresentation(
+export function parseSlidesPresentation(
   content: string,
   options: IImportOptions = {},
-): IParsedSlidevPresentation {
+): IParsedSlidesPresentation {
   const {
     stripNotesFromMarkdown = true,
     cleanVClicks = true,
@@ -172,7 +172,7 @@ export function parseSlidevPresentation(
     normalizedContent = `---\n\n${normalizedContent.trimStart()}`
   }
 
-  const rawSlides = splitSlidevMarkdownChunks(normalizedContent)
+  const rawSlides = splitSlidesMarkdownChunks(normalizedContent)
 
   const docRootAttrs: Record<string, string> = {}
   let docTitle = ""
@@ -226,7 +226,7 @@ export function parseSlidevPresentation(
           "class",
         ].includes(k)
       ) {
-        docRootAttrs[`custom-slidev-${k}`] = typeof v === "object" ? JSON.stringify(v) : String(v)
+        docRootAttrs[`custom-slides-${k}`] = typeof v === "object" ? JSON.stringify(v) : String(v)
       }
     }
   }
@@ -291,12 +291,12 @@ export function parseSlidevPresentation(
       if (frontmatter.class) inheritedAttrs[ATTR_PAGE_CLASS] = String(frontmatter.class)
       for (const [k, v] of Object.entries(frontmatter)) {
         if (!["src", "layout", "transition", "background", "image", "class"].includes(k)) {
-          inheritedAttrs[`custom-slidev-${k}`] = typeof v === "object" ? JSON.stringify(v) : String(v)
+          inheritedAttrs[`custom-slides-${k}`] = typeof v === "object" ? JSON.stringify(v) : String(v)
         }
       }
 
       if (subContent) {
-        const subParsed = parseSlidevPresentation(subContent, { ...options, virtualFiles })
+        const subParsed = parseSlidesPresentation(subContent, { ...options, virtualFiles })
         for (const subSlide of subParsed.slides) {
           subSlide.pageIndex = pageIndex++
           subSlide.pageAttrs = { ...inheritedAttrs, ...subSlide.pageAttrs }
@@ -309,7 +309,7 @@ export function parseSlidevPresentation(
         // 未提供子页面实体时，生成规范提示占位，防止出现空白黑洞页
         slides.push({
           pageIndex: pageIndex++,
-          pageAttrs: { ...inheritedAttrs, "custom-slidev-src": subPath },
+          pageAttrs: { ...inheritedAttrs, "custom-slides-src": subPath },
           notes: "",
           rawMarkdown: `> 📄 **引入外部幻灯片页面**: \`${subPath}\`\n>\n> *提示：如需展示该页面完整内容，请将关联子页面一同打包为 .zip 或通过本地工程导入。*`,
           hasVueComponent: false,
@@ -338,7 +338,7 @@ export function parseSlidevPresentation(
         "layout", "transition", "background", "image", "class",
         "mask", "maskRatio", "mask-ratio", "maskStyle", "mask-style", "maskInitial", "mask-initial"
       ].includes(k)) {
-        pageAttrs[`custom-slidev-${k}`] = typeof v === "object" ? JSON.stringify(v) : String(v)
+        pageAttrs[`custom-slides-${k}`] = typeof v === "object" ? JSON.stringify(v) : String(v)
       }
     }
 
@@ -393,9 +393,9 @@ export function parseSlidevPresentation(
       for (let i = 0; i < codeTokens.length; i++) {
         pageNotes = pageNotes.replace(`__CODE_TOKEN_NOTE_${i}__`, codeTokens[i])
       }
-      // 转换为正文讲稿备注提示块 (NodeCallout)，并绑定 custom-slidev-note="true"
+      // 转换为正文讲稿备注提示块 (NodeCallout)，并绑定 custom-slides-note="true"
       const noteLines = pageNotes.split(/\r?\n/).map(l => `> ${l}`).join("\n")
-      const noteBlockMd = `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slidev-note="true"}`
+      const noteBlockMd = `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slides-note="true"}`
       body = body ? `${body}\n\n${noteBlockMd}` : noteBlockMd
     }
 
@@ -471,7 +471,7 @@ export function parseSlidevPresentation(
       ) {
         const imgUrl = String(frontmatter.image).trim()
         const layoutAttr = frontmatter.layout === "image-left" ? "image-left" : "image-right"
-        const imgBlockMd = `![配图](${imgUrl})\n{: custom-slidev-layout="${layoutAttr}" }`
+        const imgBlockMd = `![配图](${imgUrl})\n{: custom-slides-layout="${layoutAttr}" }`
         if (frontmatter.layout === "image-left") {
           contentBody = `{{{col\n\n${imgBlockMd}\n\n${contentBody}\n\n}}}`
         } else {
@@ -481,7 +481,7 @@ export function parseSlidevPresentation(
 
       if (frontmatter.background) {
         const bgImg = String(frontmatter.background).trim()
-        const bgBlockMd = `![背景图](${bgImg})\n{: custom-slidev-role="background" }`
+        const bgBlockMd = `![背景图](${bgImg})\n{: custom-slides-role="background" }`
         contentBody = contentBody ? `${bgBlockMd}\n\n${contentBody}` : bgBlockMd
       }
 
@@ -523,7 +523,7 @@ export function parseSlidevPresentation(
   }
 
   if (customCssCollected) {
-    docRootAttrs["custom-slidev-custom-css"] = customCssCollected
+    docRootAttrs["custom-slides-custom-css"] = customCssCollected
   }
 
   let flattenedMarkdown = slides.map((s) => {

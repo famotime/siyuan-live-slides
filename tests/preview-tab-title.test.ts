@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import SiYuanSlidevPlugin from "../src/index"
+import SiYuanLiveSlidesPlugin from "../src/index"
 import * as mainModule from "../src/main"
 import * as apiModule from "../src/api"
 import fs from "fs"
 import path from "path"
 
 describe("Preview Tab Title & Header Layout (预览页签标题与工具栏精简)", () => {
-  let plugin: SiYuanSlidevPlugin
+  let plugin: SiYuanLiveSlidesPlugin
 
   beforeEach(() => {
     vi.restoreAllMocks()
@@ -16,8 +16,8 @@ describe("Preview Tab Title & Header Layout (预览页签标题与工具栏精�
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     }
-    plugin = new SiYuanSlidevPlugin({
-      name: "siyuan-slidev",
+    plugin = new SiYuanLiveSlidesPlugin({
+      name: "siyuan-live-slides",
       displayName: "Slidev",
       app: {} as any,
     } as any)
@@ -128,17 +128,17 @@ describe("Preview Tab Title & Header Layout (预览页签标题与工具栏精�
     })
   })
 
-  describe("4. SlidevPreviewTab 内层工具栏精简结构验证", () => {
+  describe("4. SlidesPreviewTab 内层工具栏精简结构验证", () => {
     it("源码中应彻底移除重复的『Slidev 演示预览』文本，并采用左右分栏排布", () => {
-      const tabSource = fs.readFileSync(path.resolve(__dirname, "../src/ui/tab/SlidevPreviewTab.vue"), "utf-8")
+      const tabSource = fs.readFileSync(path.resolve(__dirname, "../src/ui/tab/SlidesPreviewTab.vue"), "utf-8")
 
       // 1. 不再包含重复的文本
       expect(tabSource).not.toContain("<span>Slidev 演示预览</span>")
-      expect(tabSource).not.toContain("spm-slidev-tab__title")
+      expect(tabSource).not.toContain("spm-slides-tab__title")
 
       // 2. 工具栏左右分栏
-      expect(tabSource).toContain("spm-slidev-tab__nav")
-      expect(tabSource).toContain("spm-slidev-tab__tools")
+      expect(tabSource).toContain("spm-slides-tab__nav")
+      expect(tabSource).toContain("spm-slides-tab__tools")
     })
   })
 

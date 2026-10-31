@@ -7,7 +7,7 @@ import {
   renderPresenterSlideThumbnailHtml,
 } from "../src/ui/tab/presenter-slide-thumbnail"
 import { WebSandboxBridge } from "../src/engine/web-sandbox-bridge"
-import type { ISlidevVirtualPage } from "../src/types/slidev-protocol"
+import type { ISlidesVirtualPage } from "../src/types/slides-protocol"
 
 describe("presenter-slide-thumbnail", () => {
   describe("parseSlideAspectRatio", () => {
@@ -57,7 +57,7 @@ describe("presenter-slide-thumbnail", () => {
 
   describe("computeSlideMaxStep", () => {
     it("computes max step from v-click blocks and dynamic mask configuration", () => {
-      const slideWithClicks: ISlidevVirtualPage = {
+      const slideWithClicks: ISlidesVirtualPage = {
         pageIndex: 1,
         frontmatter: { layout: "default" },
         blocks: [
@@ -68,7 +68,7 @@ describe("presenter-slide-thumbnail", () => {
       }
       expect(computeSlideMaxStep(slideWithClicks)).toBe(2)
 
-      const slideWithMask: ISlidevVirtualPage = {
+      const slideWithMask: ISlidesVirtualPage = {
         pageIndex: 2,
         frontmatter: {
           layout: "default",
@@ -90,7 +90,7 @@ describe("presenter-slide-thumbnail", () => {
     })
 
     it("renders full multi-column cols-header slide with heading, text, video, and image without mutating source slide", () => {
-      const slide: ISlidevVirtualPage = {
+      const slide: ISlidesVirtualPage = {
         pageIndex: 1,
         frontmatter: {
           layout: "cols-header",
@@ -165,7 +165,7 @@ describe("presenter-slide-thumbnail", () => {
     })
 
     it("renders v-click spoiler states (presenter-v-click-pending / presenter-v-click-active) when currentStep is provided, and full visibility when omitted", () => {
-      const slide: ISlidevVirtualPage = {
+      const slide: ISlidesVirtualPage = {
         pageIndex: 1,
         frontmatter: { layout: "default" },
         blocks: [
@@ -194,7 +194,7 @@ describe("presenter-slide-thumbnail", () => {
 
       // Step 0: 两个 v-click 块均处于半透明剧透态 (presenter-v-click-pending)
       const htmlStep0 = renderPresenterSlideThumbnailHtml(slide, { currentStep: 0 })
-      expect(htmlStep0).toContain('<div class="slide-block slidev-page-first-heading-block"><h2>常显标题</h2></div>')
+      expect(htmlStep0).toContain('<div class="slide-block slides-page-first-heading-block"><h2>常显标题</h2></div>')
       expect(htmlStep0).toContain('<div class="slide-block presenter-v-click-pending"><p>第一步要点</p></div>')
       expect(htmlStep0).toContain('<div class="slide-block presenter-v-click-pending"><p>第二步要点</p></div>')
 
@@ -216,7 +216,7 @@ describe("presenter-slide-thumbnail", () => {
     })
 
     it("inherits global config image on image-right layout when slide has no local image", () => {
-      const slide: ISlidevVirtualPage = {
+      const slide: ISlidesVirtualPage = {
         pageIndex: 2,
         frontmatter: {
           layout: "image-right",
@@ -264,7 +264,7 @@ describe("presenter-slide-thumbnail", () => {
       // Simulate CLIENT_READY
       ;(bridge as any).handleWindowMessage({
         data: {
-          source: "siyuan-slidev-client",
+          source: "siyuan-slides-client",
           action: "CLIENT_READY",
           payload: { currentPage: 1, totalPages: 5 },
         },
@@ -273,7 +273,7 @@ describe("presenter-slide-thumbnail", () => {
       bridge.navigatePage(2, 3)
       expect(postMessageSpy).toHaveBeenCalledWith(
         {
-          source: "siyuan-slidev-host",
+          source: "siyuan-slides-host",
           action: "NAVIGATE_PAGE",
           payload: { pageIndex: 2, step: 3 },
         },
@@ -285,7 +285,7 @@ describe("presenter-slide-thumbnail", () => {
 
       ;(bridge as any).handleWindowMessage({
         data: {
-          source: "siyuan-slidev-client",
+          source: "siyuan-slides-client",
           action: "SLIDE_CHANGED",
           payload: {
             currentPage: 2,

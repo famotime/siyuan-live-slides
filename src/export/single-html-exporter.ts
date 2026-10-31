@@ -1,4 +1,4 @@
-import type { ISlidevDocument } from "../types/slidev-protocol"
+import type { ISlidesDocument } from "../types/slides-protocol"
 import { escapeHtml } from "./markdown-renderer"
 import { generateStandaloneExportStyles } from "./standalone-template-styles"
 import { getStandaloneClientRuntimeScript } from "./standalone-client-runtime"
@@ -14,10 +14,10 @@ export interface IStandaloneHtmlOptions {
  * 构建无外部依赖的离线单文件独立 HTML 演示包（支持 Base64 资产内联）
  */
 export function buildStandaloneHtml(
-  doc: ISlidevDocument,
+  doc: ISlidesDocument,
   options?: IStandaloneHtmlOptions,
 ): string {
-  const title = options?.title || "Slidev 演示文稿"
+  const title = options?.title || "即现演示文稿"
   let processedSlides = doc.slides
 
   // 若提供 Base64 字典，将各块中匹配到的本地资产 URL 替换为 Base64
@@ -57,7 +57,7 @@ ${generateStandaloneExportStyles(options?.customInlineStyles)}
   </style>
   <script>
     // 注入演示数据载荷
-    window.__SLIDEV_DATA__ = {
+    window.__SLIDES_DATA__ = {
       docId: ${JSON.stringify(doc.docId)},
       slides: ${slidesJson},
       config: ${configJson}
@@ -66,7 +66,7 @@ ${generateStandaloneExportStyles(options?.customInlineStyles)}
 </head>
 <body>
   <div id="app" data-normalize-headings="${doc.config.normalizeHeadingSizes ? 'true' : 'false'}">
-    <div class="slide-viewport slidev-theme-${doc.config.theme || 'default'}" id="viewport" data-slidev-theme="${doc.config.theme || 'default'}">
+    <div class="slide-viewport slides-theme-${doc.config.theme || 'default'}" id="viewport" data-slides-theme="${doc.config.theme || 'default'}">
       <div class="slide-content" id="slide-container"></div>
     </div>
     <div class="controls">
@@ -76,9 +76,9 @@ ${generateStandaloneExportStyles(options?.customInlineStyles)}
       <button id="btn-fullscreen">全屏</button>
     </div>
     <!-- 全屏媒体灯箱 (Lightbox) 模态窗口 -->
-    <div id="slidev-lightbox" class="slidev-lightbox">
-      <button class="slidev-lightbox-close" id="lightbox-close" aria-label="关闭 (Esc)">✕</button>
-      <div class="slidev-lightbox-content" id="lightbox-content"></div>
+    <div id="slides-lightbox" class="slides-lightbox">
+      <button class="slides-lightbox-close" id="lightbox-close" aria-label="关闭 (Esc)">✕</button>
+      <div class="slides-lightbox-content" id="lightbox-content"></div>
     </div>
   </div>
 

@@ -7,11 +7,11 @@ import {
   setBlockAttrs,
   upload,
 } from '@/api'
-import { extractSlidevZip, rewritePresentationAssetPaths } from '@/compiler/asset-importer'
+import { extractSlidesZip, rewritePresentationAssetPaths } from '@/compiler/asset-importer'
 import type { IExtractedAssetItem } from '@/compiler/asset-importer'
-import type { IParsedSlidevPresentation } from '@/compiler/slidev-importer'
-import { parseSlidevPresentation } from '@/compiler/slidev-importer'
-import { ATTR_ELEM_SLOT } from '@/types/slidev-protocol'
+import type { IParsedSlidesPresentation } from '@/compiler/slides-importer'
+import { parseSlidesPresentation } from '@/compiler/slides-importer'
+import { ATTR_ELEM_SLOT } from '@/types/slides-protocol'
 
 /**
  * 判断块是否为水平分割线 / 分页符
@@ -76,7 +76,7 @@ export async function backfillDividerAttributes(
 }
 
 /**
- * 扫描各块并将 ::right:: 插槽标记之后的块自动持久化打上 custom-slidev-slot="right" 块属性
+ * 扫描各块并将 ::right:: 插槽标记之后的块自动持久化打上 custom-slides-slot="right" 块属性
  */
 export async function backfillSlotAttributes(
   blocks: any[],
@@ -108,7 +108,7 @@ export async function backfillSlotAttributes(
  * 批量上传本地资产并重写演示模型中的引用路径
  */
 export async function uploadAndRewriteAssets(
-  presentation: IParsedSlidevPresentation,
+  presentation: IParsedSlidesPresentation,
   extractedAssets: IExtractedAssetItem[],
   uploadFn = upload,
 ): Promise<Record<string, string>> {
@@ -139,8 +139,8 @@ export async function uploadAndRewriteAssets(
   return assetMap
 }
 
-export interface ISlidevImportExecutionParams {
-  presentation: IParsedSlidevPresentation
+export interface ISlidesImportExecutionParams {
+  presentation: IParsedSlidesPresentation
   notebookId: string
   docTitle: string
   extractedAssets?: IExtractedAssetItem[]
@@ -160,8 +160,8 @@ export interface ISlidevImportExecutionParams {
 /**
  * 导入执行编排服务核心入口
  */
-export async function executeSlidevImport(
-  params: ISlidevImportExecutionParams,
+export async function executeSlidesImport(
+  params: ISlidesImportExecutionParams,
 ): Promise<string> {
   const {
     presentation,
@@ -231,7 +231,7 @@ export async function executeSlidevImport(
 /**
  * Slidev 导入对话框组合式函数 (Composable)
  */
-export function useSlidevImport(pluginInstance?: any) {
+export function useSlidesImport(pluginInstance?: any) {
   const inputMode = ref<'file' | 'text'>('file')
   const isDragging = ref(false)
   const isImporting = ref(false)
@@ -244,7 +244,7 @@ export function useSlidevImport(pluginInstance?: any) {
   const rawMarkdownText = ref('')
 
   const extractedAssets = ref<IExtractedAssetItem[]>([])
-  const parsedPresentation = ref<IParsedSlidevPresentation | null>(null)
+  const parsedPresentation = ref<IParsedSlidesPresentation | null>(null)
 
   const customDocTitle = ref('')
   const notebooks = ref<Array<{ id: string; name: string }>>([])
@@ -266,7 +266,7 @@ export function useSlidevImport(pluginInstance?: any) {
   })
 
   const currentTheme = computed(() => {
-    return parsedPresentation.value?.docRootAttrs['custom-slidev-theme'] || 'default'
+    return parsedPresentation.value?.docRootAttrs['custom-slides-theme'] || 'default'
   })
 
   const extractedAssetsCount = computed(() => {
@@ -318,13 +318,13 @@ export function useSlidevImport(pluginInstance?: any) {
       const isZip = file.name.toLowerCase().endsWith('.zip')
       if (isZip) {
         const buffer = await file.arrayBuffer()
-        const zipRes = await extractSlidevZip(buffer)
+        const zipRes = await extractSlidesZip(buffer)
         if (!zipRes.entryMarkdown) {
           errorMessage.value = '未在 Zip 压缩包中找到 slides.md 或任何有效的 Markdown 入口文件'
           return
         }
         extractedAssets.value = zipRes.assets
-        const parsed = parseSlidevPresentation(zipRes.entryMarkdown, {
+        const parsed = parseSlidesPresentation(zipRes.entryMarkdown, {
           stripNotesFromMarkdown: optStripNotes.value,
           cleanHtmlToMarkdown: optCleanHtml.value,
           cleanSlots: false,
@@ -338,7 +338,7 @@ export function useSlidevImport(pluginInstance?: any) {
         extractedAssets.value = []
         const filePath = (file as any).path || ''
         const baseDir = filePath ? filePath.replace(/[\\/][^\\/]+$/, '') : ''
-        const parsed = parseSlidevPresentation(text, {
+        const parsed = parseSlidesPresentation(text, {
           stripNotesFromMarkdown: optStripNotes.value,
           cleanHtmlToMarkdown: optCleanHtml.value,
           cleanSlots: false,
@@ -360,7 +360,7 @@ export function useSlidevImport(pluginInstance?: any) {
       return
     }
     try {
-      const parsed = parseSlidevPresentation(rawMarkdownText.value, {
+      const parsed = parseSlidesPresentation(rawMarkdownText.value, {
         stripNotesFromMarkdown: optStripNotes.value,
         cleanHtmlToMarkdown: optCleanHtml.value,
         cleanSlots: false,
@@ -408,7 +408,7 @@ export function useSlidevImport(pluginInstance?: any) {
     errorMessage.value = ''
 
     try {
-      const newDocId = await executeSlidevImport({
+      const newDocId = await executeSlidesImport({
         presentation: parsedPresentation.value,
         notebookId: selectedNotebookId.value,
         docTitle: customDocTitle.value,

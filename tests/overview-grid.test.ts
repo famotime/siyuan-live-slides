@@ -3,22 +3,22 @@ import path from "node:path"
 import { describe, expect, it } from "vitest"
 import { buildStandaloneHtml } from "../src/export/single-html-exporter"
 import { getStandaloneClientRuntimeScript } from "../src/export/standalone-client-runtime"
-import type { ISlidevDocument } from "../src/types/slidev-protocol"
+import type { ISlidesDocument } from "../src/types/slides-protocol"
 
 /**
  * 缩略图总览（o 键呼出，方向键/数字+回车/点选跳页）三处播放面的内容断言：
  * 内置沙箱播放器 / 宿主页签入口 / standalone 单文件导出播放器
  */
 describe("Overview Grid (缩略图总览)", () => {
-  const indexHtmlPath = path.resolve(__dirname, "../public/slidev-client/index.html")
+  const indexHtmlPath = path.resolve(__dirname, "../public/slides-client/index.html")
   const indexHtml = fs.readFileSync(indexHtmlPath, "utf-8")
-  const previewTabPath = path.resolve(__dirname, "../src/ui/tab/SlidevPreviewTab.vue")
+  const previewTabPath = path.resolve(__dirname, "../src/ui/tab/SlidesPreviewTab.vue")
   const previewTabVue = fs.readFileSync(previewTabPath, "utf-8")
   const bridgePath = path.resolve(__dirname, "../src/engine/web-sandbox-bridge.ts")
   const bridgeTs = fs.readFileSync(bridgePath, "utf-8")
   const runtimeScript = getStandaloneClientRuntimeScript()
 
-  const dummyDoc: ISlidevDocument = {
+  const dummyDoc: ISlidesDocument = {
     docId: "doc-overview-test",
     config: {
       theme: "default",
@@ -62,11 +62,11 @@ describe("Overview Grid (缩略图总览)", () => {
   describe("2. 内置沙箱播放器总览层", () => {
     it("应包含总览层 DOM（网格/卡片/页码/提示）与主题上下文属性", () => {
       expect(indexHtml).toContain('v-show="showOverview"')
-      expect(indexHtml).toContain('class="slidev-overview"')
-      expect(indexHtml).toContain(':data-slidev-theme="currentSlidevTheme"')
-      expect(indexHtml).toContain('class="slidev-overview-grid"')
-      expect(indexHtml).toContain('class="slidev-overview-canvas"')
-      expect(indexHtml).toContain('class="slidev-overview-caption"')
+      expect(indexHtml).toContain('class="slides-overview"')
+      expect(indexHtml).toContain(':data-slides-theme="currentSlidesTheme"')
+      expect(indexHtml).toContain('class="slides-overview-grid"')
+      expect(indexHtml).toContain('class="slides-overview-canvas"')
+      expect(indexHtml).toContain('class="slides-overview-caption"')
       expect(indexHtml).toContain("@click.self=\"closeOverview\"")
       // 点击卡片跳转并关闭
       expect(indexHtml).toContain('@click.stop="goFromOverview(idx + 1)"')
@@ -105,7 +105,7 @@ describe("Overview Grid (缩略图总览)", () => {
       expect(indexHtml).toMatch(/handleOverviewKeyDown[\s\S]*?setOverviewFocus\(p\)/)
       expect(indexHtml).toMatch(/handleOverviewKeyDown[\s\S]*?goFromOverview\(page\)/)
       // 跳转落初始 click 状态：复用 nav.go（内部重置 currentStep）
-      expect(indexHtml).toMatch(/function goFromOverview\(page\) \{[\s\S]*?slidevContext\.nav\.go\(p\)/)
+      expect(indexHtml).toMatch(/function goFromOverview\(page\) \{[\s\S]*?slidesContext\.nav\.go\(p\)/)
     })
 
     it("总览打开时滚轮与翻页应被冻结，交给总览列表原生滚动", () => {
@@ -135,7 +135,7 @@ describe("Overview Grid (缩略图总览)", () => {
 
   describe("4. standalone 单文件导出播放器", () => {
     it("运行时脚本应包含总览层、懒渲染与同套交互", () => {
-      expect(runtimeScript).toContain('className = "slidev-overview"')
+      expect(runtimeScript).toContain('className = "slides-overview"')
       expect(runtimeScript).toContain("function buildOverviewThumbInto(canvas, slide)")
       expect(runtimeScript).toContain("new IntersectionObserver(")
       expect(runtimeScript).toContain("function handleOverviewKeyDown(e)")
@@ -147,7 +147,7 @@ describe("Overview Grid (缩略图总览)", () => {
 
     it("导出的单文件 HTML 应内嵌总览运行时", () => {
       const exportedHtml = buildStandaloneHtml(dummyDoc)
-      expect(exportedHtml).toContain("slidev-overview")
+      expect(exportedHtml).toContain("slides-overview")
       expect(exportedHtml).toContain("buildOverviewThumbInto")
       expect(exportedHtml).toContain("renderSlide(p - 1)")
     })

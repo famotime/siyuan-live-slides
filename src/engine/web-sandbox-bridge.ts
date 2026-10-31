@@ -1,10 +1,10 @@
 import type {
-  IHostToSlidevMessage,
-  ISlidevToHostMessage,
-  THostToSlidevAction,
-  TSlidevToHostAction,
+  IHostToSlidesMessage,
+  ISlidesToHostMessage,
+  THostToSlidesAction,
+  TSlidesToHostAction,
 } from "../types/ipc-messages"
-import type { ISlidevPluginConfig, ISlidevVirtualPage } from "../types/slidev-protocol"
+import type { ISlidesPluginConfig, ISlidesVirtualPage } from "../types/slides-protocol"
 
 export type TSlideChangedHandler = (
   currentPage: number,
@@ -33,7 +33,7 @@ export type TOpenPeekDrawerHandler = (detail: IOpenPeekDrawerDetail) => void
 export class WebSandboxBridge {
   private iframe: HTMLIFrameElement | null = null
   private isReady = false
-  private pendingMessages: IHostToSlidevMessage[] = []
+  private pendingMessages: IHostToSlidesMessage[] = []
 
   private slideChangedHandlers: TSlideChangedHandler[] = []
   private blockClickedHandlers: TBlockClickedHandler[] = []
@@ -78,9 +78,9 @@ export class WebSandboxBridge {
   /**
    * 宿主向沙箱发送消息
    */
-  public postMessage(action: THostToSlidevAction, payload: IHostToSlidevMessage["payload"]): void {
-    const message: IHostToSlidevMessage = {
-      source: "siyuan-slidev-host",
+  public postMessage(action: THostToSlidesAction, payload: IHostToSlidesMessage["payload"]): void {
+    const message: IHostToSlidesMessage = {
+      source: "siyuan-slides-host",
       action,
       payload,
     }
@@ -101,8 +101,8 @@ export class WebSandboxBridge {
    * 推送最新幻灯片集合与全局配置
    */
   public updateSlides(
-    slides: ISlidevVirtualPage[],
-    config?: ISlidevPluginConfig,
+    slides: ISlidesVirtualPage[],
+    config?: ISlidesPluginConfig,
     fullMarkdown?: string,
     customThemeCss?: string,
   ): void {
@@ -118,7 +118,7 @@ export class WebSandboxBridge {
    * 请求跳转至指定页码（可选指定页内步进 step）
    */
   public navigatePage(pageIndex: number, step?: number): void {
-    const payload: IHostToSlidevMessage["payload"] = { pageIndex }
+    const payload: IHostToSlidesMessage["payload"] = { pageIndex }
     if (typeof step === "number") {
       payload.step = step
     }
@@ -255,8 +255,8 @@ export class WebSandboxBridge {
    * 监听并处理沙箱返回的 postMessage 消息
    */
   private handleWindowMessage(event: MessageEvent): void {
-    const data = event.data as ISlidevToHostMessage
-    if (!data || data.source !== "siyuan-slidev-client") {
+    const data = event.data as ISlidesToHostMessage
+    if (!data || data.source !== "siyuan-slides-client") {
       return
     }
 

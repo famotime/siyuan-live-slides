@@ -2,7 +2,7 @@
 
 ## 1. 为什么使用 Worktree 进行插件开发
 
-在 `siyuan-slidev` 的持续迭代中，我们经常遇到以下场景：
+在 `siyuan-live-slides` 的持续迭代中，我们经常遇到以下场景：
 1. **大型新特性开发周期长**：例如 Slidev 导入引擎与多格式解包，在未完全稳定前不宜污染 `main` 分支；
 2. **紧急 Bugfix 与版本发布**：开发进行到一半时，需要基于 `main` 快速切出补丁分支打 Tag 发布，传统 `git stash` 容易导致未完成代码混乱或本地构建产物污染；
 3. **思源测试环境联调隔离**：可在独立目录中运行单元测试与类型检查，保持主工作区整洁。
@@ -39,7 +39,7 @@ Git Worktree 允许同一个 Git 仓库在不同目录中同时检出多个不�
 # 语法：pnpm run worktree:add <分支名> [基础分支] [--skip-install]
 
 # 示例 1：基于 main 分支创建并检出特性分支
-pnpm run worktree:add feat/slidev-importer main
+pnpm run worktree:add feat/slides-importer main
 
 # 示例 2：快速检出热修复分支（跳过自动依赖安装）
 pnpm run worktree:add fix/ui-layout-jump main --skip-install
@@ -60,10 +60,10 @@ pnpm run worktree:list
 ```text
 📋 当前活跃的 Git Worktrees 列表:
 
-  👉 D:/MyCodingProjects/siyuan-slidev [main] (当前目录)
+  👉 D:/MyCodingProjects/siyuan-live-slides [main] (当前目录)
      commit: 6f4d561a
 
-     D:/MyCodingProjects/siyuan-slidev/.worktrees/feat-slidev-importer [feat/slidev-importer]
+     D:/MyCodingProjects/siyuan-live-slides/.worktrees/feat-slides-importer [feat/slides-importer]
      commit: 6f4d561a
 ```
 
@@ -73,7 +73,7 @@ pnpm run worktree:list
 在特性分支开发完成并合并（或放弃）后，执行清理：
 ```bash
 # 语法：pnpm run worktree:remove <分支名或路径> [--force]
-pnpm run worktree:remove feat/slidev-importer
+pnpm run worktree:remove feat/slides-importer
 ```
 **脚本执行动作：**
 1. 查找并验证对应的工作树目录；
@@ -85,7 +85,7 @@ pnpm run worktree:remove feat/slidev-importer
 ## 4. 与思源笔记联调的注意事项
 
 1. **Vite 监听构建争用防护**：
-   - 主工作区和各子工作区共享同一个思源测试库输出目录（`VITE_SIYUAN_WORKSPACE_PATH/data/plugins/siyuan-slidev`）；
+   - 主工作区和各子工作区共享同一个思源测试库输出目录（`VITE_SIYUAN_WORKSPACE_PATH/data/plugins/siyuan-live-slides`）；
    - **强烈建议：** 同一时间只在某一个工作区内运行 `pnpm dev`（监听构建），避免双进程同时写盘引起构建冲突；
    - 如需同时调试两个分支的版本，可临时在其中一个工作区的 `.env` 中调整 `VITE_DEV_DIST_DIR` 或使用不同的测试空间。
 

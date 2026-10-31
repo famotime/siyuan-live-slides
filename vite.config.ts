@@ -18,7 +18,7 @@ function syncToSiyuanPlugin(targetDir: string) {
   return {
     name: "sync-to-siyuan",
     closeBundle() {
-      const targetDirs = [targetDir, "D:/SiYuan_data/data/plugins/siyuan-slidev"].filter(Boolean)
+      const targetDirs = [targetDir, "D:/SiYuan_data/data/plugins/siyuan-live-slides"].filter(Boolean)
       for (const tDir of targetDirs) {
         if (!fs.existsSync(path.dirname(tDir))) {
           continue
@@ -117,8 +117,8 @@ export default defineConfig(({
             dest: "./i18n/",
           },
           {
-            src: "./public/slidev-client/**",
-            dest: "./slidev-client/",
+            src: "./public/slides-client/**",
+            dest: "./slides-client/",
           },
         ],
       }),

@@ -1,4 +1,4 @@
-# 思源笔记 Slidev 演示插件：详细方案、实施进展与下一步研发计划
+# 思源笔记即现演示插件：详细方案、实施进展与下一步研发计划
 
 > 最近刷新：2026-10-26（对齐 v0.9.0 之后至 `6d091df` 的全部交付；工程测试基线 67 套件 / 608 项全绿）
 > 工程结构与模块映射见 [project-structure](./project-structure.md)；重构全量日志见 [refactor-plan](./refactor-plan.md)。
@@ -23,7 +23,7 @@ graph TD
 
 ## 2. 块属性协议字典与架构设计
 
-插件统一采用具有命名空间隔离的 `custom-slidev-*` 块属性字典（完整 30 项常量定义见 [技术规格定义](./技术规格定义.md)，与 `src/types/slidev-protocol.ts` 逐一对齐），按作用域划分为：
+插件统一采用具有命名空间隔离的 `custom-slides-*` 块属性字典（完整 30 项常量定义见 [技术规格定义](./技术规格定义.md)，与 `src/types/slides-protocol.ts` 逐一对齐），按作用域划分为：
 
 1. **文档全局级（Document Scope）**：`theme`、`aspect-ratio`、`highlighter`、`default-transition`、`color-schema`、`spacing`；
 2. **幻灯片页面级（Page Scope）**：`slide`、`layout`、`transition`、`background`、`image`、`notes`、`class`、`spacing`、`layout-ratio`、`mask` / `mask-ratio` / `mask-style` / `mask-initial`；
@@ -42,18 +42,18 @@ sequenceDiagram
     Note over PM,Slidev: 1. 预设模板注入
     PM->>PM: 启动时加载 Slidev 预设属性模板字典
     User->>PM: 在属性管家中点击【应用模板: 幻灯片-双栏对比】
-    PM->>Kernel: 写入分割线 custom-slidev-layout="two-cols"
+    PM->>Kernel: 写入分割线 custom-slides-layout="two-cols"
     Kernel-->>Slidev: ws-main 推送属性变更
     Slidev->>Slidev: 实时更新预览为双栏布局
 
     Note over PM,Slidev: 2. 全库批量治理
-    User->>PM: 在属性管家统计面板检索 custom-slidev-transition
+    User->>PM: 在属性管家统计面板检索 custom-slides-transition
     PM-->>User: 展示全库幻灯片块的转场分布
     User->>PM: 批量将 "fade" 替换为 "slide-left"
     PM->>Kernel: 批量更新全库对应分割线块属性
 ```
 
-- **松耦合契约**：双方完全依托思源原生块属性 `custom-slidev-*`，即使属性管家未安装或版本更新，Slidev 插件功能不受任何影响；
+- **松耦合契约**：双方完全依托思源原生块属性 `custom-slides-*`，即使属性管家未安装或版本更新，Slidev 插件功能不受任何影响；
 - **生态共赢**：为同时安装两款插件的用户提供"全库幻灯片全景资产盘点"与"一键批量重构"的能力。
 
 ---
@@ -65,7 +65,7 @@ sequenceDiagram
 ### 3.1 基础能力（已全部闭环）
 
 - [x] **三层作用域块属性协议与编译管线**：`document-compiler.ts` 编排 AST 检索、IAL 解析、动态块引用与沙箱推送；`scope-mapper.ts` / `directive-wrapper.ts` 完成属性到 Frontmatter 与 `v-click` / `v-motion` / Shiki 指令的双向转换；
-- [x] **分屏实时预览与毫秒级双向光标联动**：`SlidevPreviewTab` + `cursor-tracker` / `selection-mirror` 双向跟随；预览页签标题即现并与文档切换联动；
+- [x] **分屏实时预览与毫秒级双向光标联动**：`SlidesPreviewTab` + `cursor-tracker` / `selection-mirror` 双向跟随；预览页签标题即现并与文档切换联动；
 - [x] **右侧 Inspector 配置面板**：页面 / 块 / 全局三大子面板 + Actions 三领域模块（属性持久化 / 备注与 AI / 版式与元素指令），覆写属性三级查找工厂；
 - [x] **版式体系**：封面 / 标准 / 双栏 / 表头多栏（`cols-header`，含组件级逐步呈现与级联防倒置调度）/ 四叶草（2×2 田字象限）/ 图左 / 图右 / 居中 / 大字报 / 介绍 / 引言；分栏自定义比例与超级块列宽自动识别；全局标题大小规范化；思源内置调色板与行内样式注入；间距风格三档；
 - [x] **动效体系**：块级 `v-click` 步进（含表头多栏内组件级逐步呈现）、`v-motion` 入场微动效（slide-up / fade-in / zoom-in / bounce 预设循环）、Shiki 代码逐行聚光、页面动态蒙版分段展露（GPU 合成层毛玻璃）；
@@ -104,7 +104,7 @@ sequenceDiagram
 | **3** | **PPTX 可编辑导出** | 基于 `pptxgenjs` 生成可编辑 `.pptx` | 未接入，无相关代码 | **低（P2）**：已有单文件 HTML 与 PDF 双通道兜底。 |
 | **4** | **Pro 模式本地 DevServer 的纯前端环境限制** | 桌面端一键拉起官方 DevServer | 桌面端已具备 Node 子进程托管、端口分配与健康探活（`process-manager.ts` / `workspace-scaffolder.ts`）；纯浏览器/移动端仍无法 spawn 子进程，依赖用户本地预启动 CLI | **低**：已具备检测与降级提醒，向导 UI 可再优化。 |
 
-> 已消除的历史差距（供对照）：`custom-slidev-motion` 动效闭环（UI 预设循环 + 沙箱渲染 + 导出管线均已支持）；`custom-slidev-class` / `highlighter` / `color-schema` 面板可视化配置；编译 N+1 与请求放大性能问题。
+> 已消除的历史差距（供对照）：`custom-slides-motion` 动效闭环（UI 预设循环 + 沙箱渲染 + 导出管线均已支持）；`custom-slides-class` / `highlighter` / `color-schema` 面板可视化配置；编译 N+1 与请求放大性能问题。
 
 ---
 
@@ -127,11 +127,11 @@ sequenceDiagram
 
 ### Sprint C：生态交付（P2）
 
-- [ ] **Task C.1：PPTX 可编辑幻灯片导出**：接入 `pptxgenjs`，基于 `ISlidevVirtualPage` 模型一键生成可编辑 `.pptx`；
+- [ ] **Task C.1：PPTX 可编辑幻灯片导出**：接入 `pptxgenjs`，基于 `ISlidesVirtualPage` 模型一键生成可编辑 `.pptx`；
 - [ ] **Task C.2：Pro 模式 DevServer 引导向导优化**：一键复制终端命令、实时探活自动连入；
 - [ ] **Task C.3：社区主题预置与集市上架**：预置热门开源 Slidev 主题样式，更新版本号至 v1.0.0 并提交思源官方集市。
 
 ### 观察项（不排期）
 
-- `SlidevPreviewTab.vue` (820 行) 与 `WebviewPeekDrawer.vue` (961 行) 体量偏大但内聚良好，待功能稳定后评估是否进一步拆分；
+- `SlidesPreviewTab.vue` (820 行) 与 `WebviewPeekDrawer.vue` (961 行) 体量偏大但内聚良好，待功能稳定后评估是否进一步拆分；
 - 表头多栏 / 蒙版 / 速览等新特性待真实演讲场景反馈后再迭代交互细节。

@@ -57,12 +57,12 @@ export function resolveBlockRefsSync(
       // 若缓存中存在源块内容，直接展开并附带引用样式
       if (refContentMap && refContentMap[blockId]) {
         const resolved = refContentMap[blockId].trim()
-        return `<div class="slidev-block-ref" data-ref-id="${blockId}">${resolved}</div>`
+        return `<div class="slides-block-ref" data-ref-id="${blockId}">${resolved}</div>`
       }
 
       // 否则呈现带有思源跳转协议与数据属性的可点击交互链接
       const text = anchor || `Ref(${blockId.slice(0, 8)})`
-      return `<a href="siyuan://blocks/${blockId}" data-ref-id="${blockId}" class="slidev-ref-tag">🔗 ${text}</a>`
+      return `<a href="siyuan://blocks/${blockId}" data-ref-id="${blockId}" class="slides-ref-tag">🔗 ${text}</a>`
     },
   )
 }

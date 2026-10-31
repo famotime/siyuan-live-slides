@@ -1,13 +1,13 @@
 import type { App as VueApp } from 'vue'
 import { createApp } from 'vue'
 import type { Plugin } from 'siyuan'
-import SlidevPreviewTab from './ui/tab/SlidevPreviewTab.vue'
-import SlidevPresenterTab from './ui/tab/SlidevPresenterTab.vue'
-import SlidevInspectorDockView from './ui/dock/SlidevInspectorDockView.vue'
+import SlidesPreviewTab from './ui/tab/SlidesPreviewTab.vue'
+import SlidesPresenterTab from './ui/tab/SlidesPresenterTab.vue'
+import SlidesInspectorDockView from './ui/dock/SlidesInspectorDockView.vue'
 import { WebSandboxBridge } from './engine/web-sandbox-bridge'
 import { globalCompileConsumerGate } from './sync/compile-consumer-gate'
 import type { ICompileConsumerHost } from './sync/compile-consumer-gate'
-import type { IActiveBlockInfo, ISlidevDocument } from './types/slidev-protocol'
+import type { IActiveBlockInfo, ISlidesDocument } from './types/slides-protocol'
 
 export const globalSandboxBridge = new WebSandboxBridge()
 
@@ -29,7 +29,7 @@ function registerConsumer(
   return dispose
 }
 
-// 1. 下方分屏预览页签 (SlidevPreviewTab) 实例管理
+// 1. 下方分屏预览页签 (SlidesPreviewTab) 实例管理
 let previewTabApp: VueApp | null = null
 let previewTabInstance: any = null
 let disposePreviewConsumer: (() => void) | null = null
@@ -43,7 +43,7 @@ export function mountPreviewTab(element: HTMLElement, pluginInstance: Plugin): a
     unmountPreviewTab(element)
   }
 
-  previewTabApp = createApp(SlidevPreviewTab)
+  previewTabApp = createApp(SlidesPreviewTab)
   previewTabApp.provide('plugin', pluginInstance)
   previewTabApp.provide('sandboxBridge', globalSandboxBridge)
 
@@ -69,7 +69,7 @@ export function isPreviewTabMounted(): boolean {
   return previewTabInstance !== null
 }
 
-// 1.5 演讲者控制台页签 (SlidevPresenterTab) 实例管理
+// 1.5 演讲者控制台页签 (SlidesPresenterTab) 实例管理
 // 注意：演讲者页签不是编译消费者，其数据由宿主 updateDockDocument 直连推送，
 //       跨窗口（页签被移动到其它思源窗口）时经 BroadcastChannel 兜底同步
 let presenterTabApp: VueApp | null = null
@@ -80,7 +80,7 @@ export function mountPresenterTab(element: HTMLElement, pluginInstance: Plugin):
     unmountPresenterTab(element)
   }
 
-  presenterTabApp = createApp(SlidevPresenterTab)
+  presenterTabApp = createApp(SlidesPresenterTab)
   presenterTabApp.provide('plugin', pluginInstance)
   presenterTabApp.provide('sandboxBridge', globalSandboxBridge)
   presenterTabInstance = presenterTabApp.mount(element)
@@ -100,9 +100,9 @@ export function unmountPresenterTab(element: HTMLElement): void {
  * 可投递，改由广播信道把最新编译结果推给远端窗口中的沙盒（其 BC 监听器接收
  * SYNC_SLIDES 后自行更新），保证大屏窗口持续获得编辑刷新
  */
-function broadcastDocToRemoteSandbox(doc: ISlidevDocument): void {
+function broadcastDocToRemoteSandbox(doc: ISlidesDocument): void {
   try {
-    const channel = new BroadcastChannel('siyuan-slidev-sync')
+    const channel = new BroadcastChannel('siyuan-slides-sync')
     channel.postMessage({
       type: 'SYNC_SLIDES',
       slides: JSON.parse(JSON.stringify(doc.slides || [])),
@@ -114,7 +114,7 @@ function broadcastDocToRemoteSandbox(doc: ISlidevDocument): void {
   }
 }
 
-// 2. 右侧演示配置 Dock 面板 (SlidevInspectorDockView) 实例管理
+// 2. 右侧演示配置 Dock 面板 (SlidesInspectorDockView) 实例管理
 let inspectorDockApp: VueApp | null = null
 let inspectorDockInstance: any = null
 let disposeDockConsumer: (() => void) | null = null
@@ -124,7 +124,7 @@ export function mountInspectorDock(element: HTMLElement, pluginInstance: Plugin)
     unmountInspectorDock(element)
   }
 
-  inspectorDockApp = createApp(SlidevInspectorDockView)
+  inspectorDockApp = createApp(SlidesInspectorDockView)
   inspectorDockApp.provide('plugin', pluginInstance)
   inspectorDockApp.provide('sandboxBridge', globalSandboxBridge)
 
@@ -151,7 +151,7 @@ export const mountDock = mountInspectorDock
 export const unmountDock = unmountInspectorDock
 
 // 3. 数据调度与联动桥梁
-export function updateDockDocument(doc: ISlidevDocument, targetDocId?: string): void {
+export function updateDockDocument(doc: ISlidesDocument, targetDocId?: string): void {
   // 更新右侧配置面板
   if (inspectorDockInstance?.updateDocument) {
     inspectorDockInstance.updateDocument(doc)

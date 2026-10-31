@@ -1,17 +1,17 @@
 import type {
   ISiYuanBlockNode,
-  ISlidevBlockItem,
-  ISlidevDocument,
-  ISlidevMotionConfig,
-  ISlidevVirtualPage,
-} from "../types/slidev-protocol"
+  ISlidesBlockItem,
+  ISlidesDocument,
+  ISlidesMotionConfig,
+  ISlidesVirtualPage,
+} from "../types/slides-protocol"
 import {
   ATTR_ELEM_CLICK,
   ATTR_ELEM_MOTION,
   ATTR_ELEM_SLOT,
   ATTR_PAGE_LAYOUT_RATIO,
   isColsHeaderLayout,
-} from "../types/slidev-protocol"
+} from "../types/slides-protocol"
 import type { IAssetRewriteOptions } from "./assets-rewriter"
 import { extractBlockMarkdown, parseKramdownIAL } from "./ast-crawler"
 import { rewriteAssetPaths, rewriteSingleAssetUrl } from "./assets-rewriter"
@@ -60,11 +60,11 @@ interface IHeadingScope {
   level: number
   slot?: string
   clicks?: string
-  motion?: ISlidevMotionConfig
+  motion?: ISlidesMotionConfig
   customAttrs?: Record<string, string>
 }
 
-export interface IBuildSlidevDocOptions extends IAssetRewriteOptions {
+export interface IBuildSlidesDocOptions extends IAssetRewriteOptions {
   refContentMap?: Record<string, string>
 }
 
@@ -72,18 +72,18 @@ export interface IBuildSlidevDocOptions extends IAssetRewriteOptions {
 /**
  * 构建完整的 Slidev 虚拟文档与 Markdown 载荷
  */
-export function buildSlidevDocument(
+export function buildSlidesDocument(
   docId: string,
   docAttrs: Record<string, string> | null | undefined,
   blocks: ISiYuanBlockNode[],
-  options?: IBuildSlidevDocOptions,
-): ISlidevDocument {
+  options?: IBuildSlidesDocOptions,
+): ISlidesDocument {
   const config = parseDocumentConfig(docAttrs)
-  const slides: ISlidevVirtualPage[] = []
+  const slides: ISlidesVirtualPage[] = []
 
   // 1. 初始化第一页（封面页或默认页）
   const initialPageAttrs = parsePageAttrs(docAttrs)
-  let currentPage: ISlidevVirtualPage = {
+  let currentPage: ISlidesVirtualPage = {
     pageIndex: 1,
     startBlockId: docId,
     frontmatter: {
@@ -249,10 +249,10 @@ export function buildSlidevDocument(
       // 若当前容器节点自身未设置视频属性，仅递归检索子节点中的视频块属性并向上合并 (避免污染 clicks/motion)
       if (itemNode.children && itemNode.children.length > 0) {
         const videoAttrKeys = [
-          "custom-slidev-autoplay",
-          "custom-slidev-loop",
-          "custom-slidev-muted",
-          "custom-slidev-controls",
+          "custom-slides-autoplay",
+          "custom-slides-loop",
+          "custom-slides-muted",
+          "custom-slides-controls",
         ]
         const collectAttrsFromTree = (nodes: ISiYuanBlockNode[]) => {
           for (const n of nodes) {
@@ -275,10 +275,10 @@ export function buildSlidevDocument(
 
       // 视频块属性同步与增强 (autoplay, loop, muted, controls)
       if (isVideoBlock) {
-        const isAutoplay = combinedIal["custom-slidev-autoplay"] === "true"
-        const isLoop = combinedIal["custom-slidev-loop"] === "true"
-        const isMuted = combinedIal["custom-slidev-muted"] === "true" || isAutoplay
-        const hideControls = combinedIal["custom-slidev-controls"] === "false"
+        const isAutoplay = combinedIal["custom-slides-autoplay"] === "true"
+        const isLoop = combinedIal["custom-slides-loop"] === "true"
+        const isMuted = combinedIal["custom-slides-muted"] === "true" || isAutoplay
+        const hideControls = combinedIal["custom-slides-controls"] === "false"
 
         rawMd = rawMd.replace(/<video\b([^>]*)>/gi, (_, existingAttrs) => {
           let attrs = existingAttrs
@@ -289,24 +289,24 @@ export function buildSlidevDocument(
           }
           if (isAutoplay && !/autoplay/i.test(attrs)) {
             attrs += " autoplay playsinline"
-          } else if (!isAutoplay && combinedIal["custom-slidev-autoplay"] === "false") {
+          } else if (!isAutoplay && combinedIal["custom-slides-autoplay"] === "false") {
             attrs = attrs.replace(/\bautoplay\b/gi, "").replace(/\bplaysinline\b/gi, "").trim()
           }
           if (isLoop && !/loop/i.test(attrs)) {
             attrs += " loop"
-          } else if (!isLoop && combinedIal["custom-slidev-loop"] === "false") {
+          } else if (!isLoop && combinedIal["custom-slides-loop"] === "false") {
             attrs = attrs.replace(/\bloop\b/gi, "").trim()
           }
           if (isMuted && !/muted/i.test(attrs)) {
             attrs += " muted"
-          } else if (!isMuted && combinedIal["custom-slidev-muted"] === "false") {
+          } else if (!isMuted && combinedIal["custom-slides-muted"] === "false") {
             attrs = attrs.replace(/\bmuted\b/gi, "").trim()
           }
           return `<video ${attrs.trim()}>`
         })
       }
 
-      // 页面背景图块处理 (custom-slidev-role="background" 或 custom-slidev-background="true")
+      // 页面背景图块处理 (custom-slides-role="background" 或 custom-slides-background="true")
       if (elemAttrs.isBackground) {
         const imgUrl = extractImageUrl(rawMd, itemNode.content)
         if (imgUrl) {
@@ -408,7 +408,7 @@ export function buildSlidevDocument(
         // 查找首个有内容的有效子块（代表主容器自身的主文本）
         const hasMultipleChildren = Boolean(itemNode.children && itemNode.children.length >= 2)
         const firstValidChild = itemNode.children.find(c => Boolean((c.markdown || c.content || "").trim())) || itemNode.children[0]
-        const firstChildClicks = firstValidChild?.ial?.[ATTR_ELEM_CLICK] || firstValidChild?.ial?.["custom-slidev-click"]
+        const firstChildClicks = firstValidChild?.ial?.[ATTR_ELEM_CLICK] || firstValidChild?.ial?.["custom-slides-click"]
 
         // 确定容器 clicks：
         // 1. 若列表项自身配置了 clicks，以自身为准；
@@ -451,7 +451,7 @@ export function buildSlidevDocument(
               ial: { ...(childNode.ial || {}) },
             }
             delete childToProcess.ial[ATTR_ELEM_CLICK]
-            delete childToProcess.ial["custom-slidev-click"]
+            delete childToProcess.ial["custom-slides-click"]
           }
 
           processBlockNode(childToProcess, {
@@ -463,7 +463,7 @@ export function buildSlidevDocument(
         return
       }
 
-      // 讲稿备注块处理 (custom-slidev-note / slidev-note)
+      // 讲稿备注块处理 (custom-slides-note / slidev-note)
       if (elemAttrs.isNote) {
         const cleanNote = extractCleanNoteText(rawMd)
         if (cleanNote) {
@@ -518,7 +518,7 @@ export function buildSlidevDocument(
 
       let effectiveSlot: string | undefined = elemAttrs.slot
       let effectiveClicks: string | undefined = elemAttrs.clicks
-      let effectiveMotion: ISlidevMotionConfig | undefined = elemAttrs.motion
+      let effectiveMotion: ISlidesMotionConfig | undefined = elemAttrs.motion
       let effectiveAttrs: Record<string, string> = { ...(itemNode.ial || {}) }
 
       if (headingLevel !== null) {
@@ -541,13 +541,13 @@ export function buildSlidevDocument(
           effectiveMotion = parentScope.motion
         }
 
-        // 合并自定义扩展属性 (custom-slidev-*)
+        // 合并自定义扩展属性 (custom-slides-*)
         const headingCustomAttrs: Record<string, string> = {
           ...(parentScope?.customAttrs || {}),
         }
         if (itemNode.ial) {
           for (const [k, v] of Object.entries(itemNode.ial)) {
-            if (k.startsWith("custom-slidev-") && !k.startsWith("custom-slidev-slide")) {
+            if (k.startsWith("custom-slides-") && !k.startsWith("custom-slides-slide")) {
               headingCustomAttrs[k] = v
             }
           }
@@ -605,19 +605,19 @@ export function buildSlidevDocument(
         effectiveAttrs[ATTR_ELEM_MOTION] = JSON.stringify(effectiveMotion)
       }
 
-      if (isVideoBlock || combinedIal["custom-slidev-autoplay"] || combinedIal["custom-slidev-muted"]) {
-        if (combinedIal["custom-slidev-autoplay"]) {
-          effectiveAttrs["custom-slidev-autoplay"] = combinedIal["custom-slidev-autoplay"]
-          if (combinedIal["custom-slidev-autoplay"] === "true" && !combinedIal["custom-slidev-muted"]) {
-            effectiveAttrs["custom-slidev-muted"] = "true"
+      if (isVideoBlock || combinedIal["custom-slides-autoplay"] || combinedIal["custom-slides-muted"]) {
+        if (combinedIal["custom-slides-autoplay"]) {
+          effectiveAttrs["custom-slides-autoplay"] = combinedIal["custom-slides-autoplay"]
+          if (combinedIal["custom-slides-autoplay"] === "true" && !combinedIal["custom-slides-muted"]) {
+            effectiveAttrs["custom-slides-muted"] = "true"
           }
         }
-        if (combinedIal["custom-slidev-loop"]) effectiveAttrs["custom-slidev-loop"] = combinedIal["custom-slidev-loop"]
-        if (combinedIal["custom-slidev-muted"]) effectiveAttrs["custom-slidev-muted"] = combinedIal["custom-slidev-muted"]
-        if (combinedIal["custom-slidev-controls"]) effectiveAttrs["custom-slidev-controls"] = combinedIal["custom-slidev-controls"]
+        if (combinedIal["custom-slides-loop"]) effectiveAttrs["custom-slides-loop"] = combinedIal["custom-slides-loop"]
+        if (combinedIal["custom-slides-muted"]) effectiveAttrs["custom-slides-muted"] = combinedIal["custom-slides-muted"]
+        if (combinedIal["custom-slides-controls"]) effectiveAttrs["custom-slides-controls"] = combinedIal["custom-slides-controls"]
       }
 
-      const blockItem: ISlidevBlockItem = {
+      const blockItem: ISlidesBlockItem = {
         id: itemNode.id,
         type: itemNode.type,
         content: itemNode.content || "",
@@ -659,13 +659,13 @@ export function buildSlidevDocument(
 
     // 组织多栏插槽或常规内容（排除纯分界占位块与纯空白段落）
     const contentBlocks = page.blocks.filter(b => b.slot !== "slot-divider-right")
-    const renderBlocks = (list: ISlidevBlockItem[]) =>
+    const renderBlocks = (list: ISlidesBlockItem[]) =>
       list
         .filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
         .map(b => wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion, b.attributes?.style))
         .join("\n\n")
 
-    const cleanFirstListBlock = (list: ISlidevBlockItem[]) => {
+    const cleanFirstListBlock = (list: ISlidesBlockItem[]) => {
       const valid = list.filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
       if (valid.length === 0) return
       const first = valid[0]
@@ -677,7 +677,7 @@ export function buildSlidevDocument(
       }
     }
 
-    const renderColList = (colList: ISlidevBlockItem[]) => {
+    const renderColList = (colList: ISlidesBlockItem[]) => {
       if (colList.length === 0) return ""
       cleanFirstListBlock(colList)
 
@@ -691,7 +691,7 @@ export function buildSlidevDocument(
       }
 
       const resultParts: string[] = []
-      let baseGroup: ISlidevBlockItem[] = []
+      let baseGroup: ISlidesBlockItem[] = []
 
       const flushBaseGroup = () => {
         if (baseGroup.length === 0) return
@@ -725,7 +725,7 @@ export function buildSlidevDocument(
     const layout = page.frontmatter.layout || "default"
 
     if (layout === "clover" || isColsHeaderLayout(layout)) {
-      let headerList: ISlidevBlockItem[] = []
+      let headerList: ISlidesBlockItem[] = []
       const explicitHeader = contentBlocks.filter(b => b.slot === "header")
       if (explicitHeader.length > 0) {
         headerList = explicitHeader

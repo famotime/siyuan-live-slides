@@ -1,12 +1,12 @@
-# SiYuan Slidev Pro 模式系统配置与用户指南
+# SiYuan Live Slides Pro 模式系统配置与用户指南
 
-> 本文档针对 **SiYuan Slidev（思源笔记 Slidev 演示插件）** 的「官方原生 Pro 模式（Pro CLI 引擎）」提供完整的本地系统环境配置、验证诊断以及日常使用操作指南。
+> 本文档针对 **SiYuan Live Slides（思源笔记即现演示插件）** 的「官方原生 Pro 模式（Pro CLI 引擎）」提供完整的本地系统环境配置、验证诊断以及日常使用操作指南。
 
 ---
 
 ## 1. 为什么需要 Pro 模式？（双轨架构解析）
 
-SiYuan Slidev 创新性地采用了**双轨演示渲染引擎架构**：
+SiYuan Live Slides 创新性地采用了**双轨演示渲染引擎架构**：
 
 | 维度 | 内置高保真沙箱 (`web-sandbox`) | 官方原生 Pro 模式 (`pro-cli`) |
 | :--- | :--- | :--- |
@@ -88,7 +88,7 @@ slidev --version
 
 ### 4.2 插件底层环境探测器验证
 
-SiYuan Slidev 内置了跨平台环境探测器 [`NativeEnvDetector`](file:///d:/MyCodingProjects/siyuan-slidev/src/engine/env-detector.ts)。
+SiYuan Live Slides 内置了跨平台环境探测器 [`NativeEnvDetector`](file:///d:/MyCodingProjects/siyuan-live-slides/src/engine/env-detector.ts)。
 
 当配置就绪后，探测器会自动检测到宿主环境状态：
 
@@ -122,7 +122,7 @@ theme: default
 
 # Hello Slidev Pro
 
-配置成功！欢迎使用 SiYuan Slidev Pro 模式。
+配置成功！欢迎使用 SiYuan Live Slides Pro 模式。
 ```
 
 在同级目录下运行：
@@ -170,10 +170,10 @@ slidev test.md --port 3030 --no-open
 ### Q1: 点击切换 Pro 模式时提示“当前系统未检测到 Node.js 环境”？
 - **原因分析**：
   1. 思源笔记插件运行在 Electron 渲染进程中，受浏览器沙箱隔离限制，常规纯前端检测无法直接访问 Node 原生对象；
-  2. 插件已内置自适应桥接器 [`runtime-node.ts`](file:///d:/MyCodingProjects/siyuan-slidev/src/engine/runtime-node.ts)，能自动穿透识别 Electron 底层 Node.js 运行时与注入系统 PATH 环境变量；
+  2. 插件已内置自适应桥接器 [`runtime-node.ts`](file:///d:/MyCodingProjects/siyuan-live-slides/src/engine/runtime-node.ts)，能自动穿透识别 Electron 底层 Node.js 运行时与注入系统 PATH 环境变量；
   3. 若刚更新了插件或修改了环境变量，思源笔记客户端仍缓存着旧版内存实例。
 - **解决与生效办法**：
-  1. **刷新或重载插件**：在思源笔记主界面按下 `Ctrl + F5`（或在「设置 -> 集市 -> 已安装插件」中将 `siyuan-slidev` 开关关闭再重新打开）；
+  1. **刷新或重载插件**：在思源笔记主界面按下 `Ctrl + F5`（或在「设置 -> 集市 -> 已安装插件」中将 `siyuan-live-slides` 开关关闭再重新打开）；
   2. **确保运行于桌面客户端**：官方 Pro 模式依赖本地子进程，仅支持在桌面端客户端（Windows / macOS / Linux）运行，纯网页版 Web/移动端请继续使用零依赖的「内置高保真沙箱」；
   3. **重启客户端**：若系统环境变量 PATH 刚做过修改，完全退出并重启思源笔记客户端即可自动加载最新系统 PATH。
 
@@ -199,22 +199,22 @@ slidev test.md --port 3030 --no-open
   1. Slidev CLI (Vite DevServer) 运行期间，其文件监听器（Chokidar）会持续持有 `slides.md` 的读句柄；
   2. 若将工作空间存放在思源数据目录（`/data/...`）并通过思源内核 API 写入，思源 Golang 内核在原子替换文件时（写 `.tmp` 后执行 `os.Rename`）会因 Windows 系统的只读锁限制抛出 `Access is denied`，触发内核致命错误退出。
 - **全新安全隔离设计**：
-  - 插件已重构编排机制：Pro 模式临时工作空间默认重定向至系统独立临时目录（`%TEMP%/siyuan-slidev-pro`），完全脱离思源笔记的数据监视范围；
+  - 插件已重构编排机制：Pro 模式临时工作空间默认重定向至系统独立临时目录（`%TEMP%/siyuan-live-slides-pro`），完全脱离思源笔记的数据监视范围；
   - 采用直接物理文件系统（`fs.writeFileSync`）写入，完全不调用思源内核文件写入接口，从底层根源彻底杜绝文件锁冲突与思源内核异常退出隐患。
 
 ### Q5: 演示第 5 页提示 `Code snippet path not found: snippets/external.ts`？
 - **原因与机制**：
   - Slidev 支持代码切片语法（如 `<<< @/snippets/external.ts#snippet`），Slidev 官方 Starter 示例的第 5 页便使用了该切片语法；
-  - 插件在 [`WorkspaceScaffolder`](file:///d:/MyCodingProjects/siyuan-slidev/src/engine/workspace-scaffolder.ts) 中内置了 AST 切片路径嗅探与自动占位生成机制，在启动与更新 Pro 模式时会自动在临时目录的 `snippets/` 下生成所需的示例代码切片，确保官方 Vite Markdown 插件编译平滑通过。
+  - 插件在 [`WorkspaceScaffolder`](file:///d:/MyCodingProjects/siyuan-live-slides/src/engine/workspace-scaffolder.ts) 中内置了 AST 切片路径嗅探与自动占位生成机制，在启动与更新 Pro 模式时会自动在临时目录的 `snippets/` 下生成所需的示例代码切片，确保官方 Vite Markdown 插件编译平滑通过。
 
 ---
 
 ## 7. 相关代码与核心模块索引
 
-- 双模引擎统一调度器：[`EngineManager`](file:///d:/MyCodingProjects/siyuan-slidev/src/engine/engine-manager.ts)
-- 本地环境探测器：[`NativeEnvDetector`](file:///d:/MyCodingProjects/siyuan-slidev/src/engine/env-detector.ts)
-- 子进程生命周期守护器：[`NativeSlidevProcessManager`](file:///d:/MyCodingProjects/siyuan-slidev/src/engine/process-manager.ts)
-- 临时工程自动编排器：[`WorkspaceScaffolder`](file:///d:/MyCodingProjects/siyuan-slidev/src/engine/workspace-scaffolder.ts)
-- 预览视图与模式切换按钮：[`SlidevPreviewTab.vue`](file:///d:/MyCodingProjects/siyuan-slidev/src/ui/tab/SlidevPreviewTab.vue)
-- 环境探测器自动化测试套件：[`tests/env-detector.test.ts`](file:///d:/MyCodingProjects/siyuan-slidev/tests/env-detector.test.ts)
-- 引擎调度器自动化测试套件：[`tests/engine.test.ts`](file:///d:/MyCodingProjects/siyuan-slidev/tests/engine.test.ts)
+- 双模引擎统一调度器：[`EngineManager`](file:///d:/MyCodingProjects/siyuan-live-slides/src/engine/engine-manager.ts)
+- 本地环境探测器：[`NativeEnvDetector`](file:///d:/MyCodingProjects/siyuan-live-slides/src/engine/env-detector.ts)
+- 子进程生命周期守护器：[`NativeSlidevProcessManager`](file:///d:/MyCodingProjects/siyuan-live-slides/src/engine/process-manager.ts)
+- 临时工程自动编排器：[`WorkspaceScaffolder`](file:///d:/MyCodingProjects/siyuan-live-slides/src/engine/workspace-scaffolder.ts)
+- 预览视图与模式切换按钮：[`SlidesPreviewTab.vue`](file:///d:/MyCodingProjects/siyuan-live-slides/src/ui/tab/SlidesPreviewTab.vue)
+- 环境探测器自动化测试套件：[`tests/env-detector.test.ts`](file:///d:/MyCodingProjects/siyuan-live-slides/tests/env-detector.test.ts)
+- 引擎调度器自动化测试套件：[`tests/engine.test.ts`](file:///d:/MyCodingProjects/siyuan-live-slides/tests/engine.test.ts)

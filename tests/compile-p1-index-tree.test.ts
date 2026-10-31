@@ -4,7 +4,7 @@ import {
   analyzeIndexContent,
   buildBlockTreeFromIndex,
 } from "../src/compiler/document-compiler"
-import type { ISiYuanBlockNode } from "../src/types/slidev-protocol"
+import type { ISiYuanBlockNode } from "../src/types/slides-protocol"
 
 const DOC = "doc-1"
 

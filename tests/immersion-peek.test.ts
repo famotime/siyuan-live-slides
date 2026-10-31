@@ -38,7 +38,7 @@ describe("Immersion Peek Drawer & IPC Coordination (原位速览抽屉与通信�
     window.dispatchEvent(
       new (globalThis as any).MessageEvent("message", {
         data: {
-          source: "siyuan-slidev-client",
+          source: "siyuan-slides-client",
           action: "CLIENT_READY",
         },
       }),
@@ -48,7 +48,7 @@ describe("Immersion Peek Drawer & IPC Coordination (原位速览抽屉与通信�
     bridge.freezeKeyboardNav(true)
     expect(mockIframe.contentWindow.postMessage).toHaveBeenCalledWith(
       {
-        source: "siyuan-slidev-host",
+        source: "siyuan-slides-host",
         action: "FREEZE_KEYBOARD_NAV",
         payload: { frozen: true },
       },
@@ -59,7 +59,7 @@ describe("Immersion Peek Drawer & IPC Coordination (原位速览抽屉与通信�
     bridge.freezeKeyboardNav(false)
     expect(mockIframe.contentWindow.postMessage).toHaveBeenCalledWith(
       {
-        source: "siyuan-slidev-host",
+        source: "siyuan-slides-host",
         action: "FREEZE_KEYBOARD_NAV",
         payload: { frozen: false },
       },
@@ -84,7 +84,7 @@ describe("Immersion Peek Drawer & IPC Coordination (原位速览抽屉与通信�
     // 模拟客户端触发思源块引用点击
     const event = new (globalThis as any).MessageEvent("message", {
       data: {
-        source: "siyuan-slidev-client",
+        source: "siyuan-slides-client",
         action: "OPEN_PEEK_DRAWER",
         payload: {
           peekType: "siyuan",
@@ -120,7 +120,7 @@ describe("Immersion Peek Drawer & IPC Coordination (原位速览抽屉与通信�
     // 模拟客户端触发外部网页链接点击
     const event = new (globalThis as any).MessageEvent("message", {
       data: {
-        source: "siyuan-slidev-client",
+        source: "siyuan-slides-client",
         action: "OPEN_PEEK_DRAWER",
         payload: {
           peekType: "web",
@@ -153,7 +153,7 @@ describe("Immersion Peek Drawer & IPC Coordination (原位速览抽屉与通信�
 
     const event = new (globalThis as any).MessageEvent("message", {
       data: {
-        source: "siyuan-slidev-client",
+        source: "siyuan-slides-client",
         action: "REQUEST_TOGGLE_FULLSCREEN",
         payload: {},
       },
@@ -314,8 +314,8 @@ describe("Immersion Peek Drawer & IPC Coordination (原位速览抽屉与通信�
     expect(containerContent).toContain('v-show="visible"')
     expect(containerContent).not.toContain('v-if="visible"')
 
-    // 2. 验证 SlidevPreviewTab 中对 WebviewPeekDrawer 采用 hasOpenedWeb 懒加载与 v-show
-    const tabPath = path.resolve(__dirname, "../src/ui/tab/SlidevPreviewTab.vue")
+    // 2. 验证 SlidesPreviewTab 中对 WebviewPeekDrawer 采用 hasOpenedWeb 懒加载与 v-show
+    const tabPath = path.resolve(__dirname, "../src/ui/tab/SlidesPreviewTab.vue")
     const tabContent = fs.readFileSync(tabPath, "utf-8")
     expect(tabContent).toContain('v-if="hasOpenedWeb"')
     expect(tabContent).toContain('v-show="peekType === \'web\'"')

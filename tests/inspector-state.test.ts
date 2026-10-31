@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { resolveTargetSlide } from "@/sync/inspector-slide-resolver"
-import type { ISlidevVirtualPage } from "@/types/slidev-protocol"
+import type { ISlidesVirtualPage } from "@/types/slides-protocol"
 
 /**
  * 演示配置面板的纯函数状态机与标签辅助解析器
@@ -158,7 +158,7 @@ describe("Inspector State Machine (演示配置面板状态推断)", () => {
 
   describe("Target Slide & Notes Inference (点击分隔行识别下一页内容与讲稿备注)", () => {
     // 构造模拟的三页幻灯片
-    const mockSlides: ISlidevVirtualPage[] = [
+    const mockSlides: ISlidesVirtualPage[] = [
       {
         pageIndex: 1,
         startBlockId: "doc-root",

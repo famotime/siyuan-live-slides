@@ -1,4 +1,4 @@
-import type { ISlidevDocument } from "../types/slidev-protocol"
+import type { ISlidesDocument } from "../types/slides-protocol"
 
 export class CliDevServerBridge {
   private devServerUrl = "http://localhost:3030"
@@ -53,7 +53,7 @@ export class CliDevServerBridge {
   /**
    * 将当前演示文档构建为 Slidev 官方标准的 Markdown 格式 (含全局与分页 Frontmatter)
    */
-  public buildStandardSlidevMarkdown(doc: ISlidevDocument): string {
+  public buildStandardSlidevMarkdown(doc: ISlidesDocument): string {
     const config = doc.config
     const frontmatterLines: string[] = [
       "---",
@@ -134,8 +134,8 @@ export class CliDevServerBridge {
    * 将构建的标准 Slidev Markdown 写入思源工作空间存储中，供本地 CLI 读取
    */
   public async syncToWorkspaceFile(
-    doc: ISlidevDocument,
-    targetPath = "/data/storage/petal/siyuan-slidev/slides.md",
+    doc: ISlidesDocument,
+    targetPath = "/data/storage/petal/siyuan-live-slides/slides.md",
     putFileFn?: (path: string, isDir: boolean, file: any) => Promise<any>,
   ): Promise<{ success: boolean; path: string; error?: string }> {
     const md = this.buildStandardSlidevMarkdown(doc)
@@ -159,7 +159,7 @@ export class CliDevServerBridge {
   /**
    * 触发浏览器下载生成的 slides.md 文件
    */
-  public downloadSlidesMd(doc: ISlidevDocument, filename = "slides.md"): boolean {
+  public downloadSlidesMd(doc: ISlidesDocument, filename = "slides.md"): boolean {
     if (typeof window === "undefined" || typeof document === "undefined") {
       return false
     }

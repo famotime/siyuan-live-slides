@@ -5,7 +5,7 @@ export function getKeyboardScrollInitSection(): string {
   return `      function canElementScrollY(el, deltaY) {
         let cur = el;
         while (cur && cur !== document.body && cur !== document.documentElement) {
-          if (cur.classList && (cur.classList.contains("slidev-viewport") || cur.classList.contains("slidev-stage") || cur.classList.contains("slide-container"))) {
+          if (cur.classList && (cur.classList.contains("slides-viewport") || cur.classList.contains("slides-stage") || cur.classList.contains("slide-container"))) {
             break;
           }
           const style = window.getComputedStyle(cur);
@@ -57,7 +57,7 @@ export function getKeyboardScrollInitSection(): string {
             return;
           }
           const target = e.target instanceof Element ? e.target : e.target?.parentElement;
-          const isMediaItself = target && target.closest && target.closest(".slidev-lightbox-img, .slidev-lightbox-video");
+          const isMediaItself = target && target.closest && target.closest(".slides-lightbox-img, .slides-lightbox-video");
           if (!isMediaItself) {
             e.stopPropagation();
             closeLightbox();
@@ -95,7 +95,7 @@ export function getKeyboardScrollInitSection(): string {
         if (selection.length > 0) return;
 
         const isComponent = targetEl.closest(
-          ".slide-block, .controls-bar, .image-right-img-container, .image-left-img-container, .controls, img, video, audio, button, a, input, textarea, select, [data-clickable], [data-ref-id], .slidev-toc, .empty-state"
+          ".slide-block, .controls-bar, .image-right-img-container, .image-left-img-container, .controls, img, video, audio, button, a, input, textarea, select, [data-clickable], [data-ref-id], .slides-toc, .empty-state"
         );
         if (isComponent) return;
 

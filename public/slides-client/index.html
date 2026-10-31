@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SiYuan Slidev Client Sandbox</title>
+  <title>SiYuan Live Slides Client Sandbox</title>
   <style>
     :root {
       --slide-bg: #ffffff;
@@ -202,27 +202,27 @@
        ========================================= */
 
     /* 1. 默认科技主题 Default */
-    [data-slidev-theme="default"],
-    .slidev-theme-default {
+    [data-slides-theme="default"],
+    .slides-theme-default {
       --slide-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
       --slide-accent: #10b981;
     }
-    [data-theme="light"][data-slidev-theme="default"],
-    [data-theme="light"] .slidev-theme-default {
+    [data-theme="light"][data-slides-theme="default"],
+    [data-theme="light"] .slides-theme-default {
       --slide-bg: #ffffff;
       --slide-text: #1e293b;
       --slide-code-bg: #f8fafc;
       --slide-accent: #059669;
     }
-    [data-theme="dark"][data-slidev-theme="default"],
-    [data-theme="dark"] .slidev-theme-default {
+    [data-theme="dark"][data-slides-theme="default"],
+    [data-theme="dark"] .slides-theme-default {
       --slide-bg: #121214;
       --slide-text: #e2e8f0;
       --slide-code-bg: #1e1e24;
       --slide-accent: #34d399;
     }
-    .slidev-theme-default .layout-cover h1,
-    .slidev-theme-default .layout-cover .slide-block h1 {
+    .slides-theme-default .layout-cover h1,
+    .slides-theme-default .layout-cover .slide-block h1 {
       font-size: 3.8rem !important;
       font-weight: 800 !important;
       line-height: 1.15 !important;
@@ -232,55 +232,55 @@
       -webkit-background-clip: text !important;
       -webkit-text-fill-color: transparent !important;
     }
-    .slidev-theme-default .layout-cover h2,
-    .slidev-theme-default .layout-cover .slide-block h2 {
+    .slides-theme-default .layout-cover h2,
+    .slides-theme-default .layout-cover .slide-block h2 {
       font-size: 1.85rem !important;
       font-weight: 600 !important;
       opacity: 0.85 !important;
       margin-bottom: 12px !important;
     }
-    .slidev-theme-default .layout-cover p,
-    .slidev-theme-default .layout-cover .slide-block p {
+    .slides-theme-default .layout-cover p,
+    .slides-theme-default .layout-cover .slide-block p {
       font-size: 1.45rem !important;
       line-height: 1.5 !important;
       opacity: 0.85 !important;
     }
 
     /* 2. 优雅衬线主题 Seriph (典雅学术书卷风) */
-    [data-slidev-theme="seriph"],
-    .slidev-theme-seriph {
+    [data-slides-theme="seriph"],
+    .slides-theme-seriph {
       --slide-font: "PT Serif", "Charter", "Georgia", "Cambria", "Times New Roman", "Source Han Serif SC", "Noto Serif SC", "Songti SC", "SimSun", serif;
       --slide-accent: #b45309;
       letter-spacing: 0.015em;
     }
-    [data-theme="light"][data-slidev-theme="seriph"],
-    [data-theme="light"] .slidev-theme-seriph {
+    [data-theme="light"][data-slides-theme="seriph"],
+    [data-theme="light"] .slides-theme-seriph {
       --slide-bg: #fdfbf7;
       --slide-text: #2a2521;
       --slide-code-bg: #f4efe6;
       --slide-accent: #b45309;
     }
-    [data-theme="dark"][data-slidev-theme="seriph"],
-    [data-theme="dark"] .slidev-theme-seriph {
+    [data-theme="dark"][data-slides-theme="seriph"],
+    [data-theme="dark"] .slides-theme-seriph {
       --slide-bg: #1c1a17;
       --slide-text: #e8e3d9;
       --slide-code-bg: #26231f;
       --slide-accent: #f59e0b;
     }
-    .slidev-theme-seriph,
-    .slidev-theme-seriph .slide-content-wrapper {
+    .slides-theme-seriph,
+    .slides-theme-seriph .slide-content-wrapper {
       font-family: var(--slide-font) !important;
       line-height: 1.72;
     }
-    .slidev-theme-seriph h1,
-    .slidev-theme-seriph h2,
-    .slidev-theme-seriph h3,
-    .slidev-theme-seriph h4 {
+    .slides-theme-seriph h1,
+    .slides-theme-seriph h2,
+    .slides-theme-seriph h3,
+    .slides-theme-seriph h4 {
       font-family: var(--slide-font) !important;
       letter-spacing: 0.025em;
       font-weight: 700;
     }
-    .slidev-theme-seriph .layout-cover h1 {
+    .slides-theme-seriph .layout-cover h1 {
       background: none !important;
       -webkit-background-clip: initial !important;
       -webkit-text-fill-color: initial !important;
@@ -292,12 +292,12 @@
       padding-bottom: 10px;
       margin-bottom: 24px;
     }
-    .slidev-theme-seriph .layout-cover p {
+    .slides-theme-seriph .layout-cover p {
       font-style: italic;
       color: var(--slide-text);
       opacity: 0.85;
     }
-    .slidev-theme-seriph blockquote {
+    .slides-theme-seriph blockquote {
       font-style: italic;
       border-left: 3px solid var(--slide-accent) !important;
       background: rgba(180, 83, 9, 0.06) !important;
@@ -306,36 +306,36 @@
     }
 
     /* 3. 极简发布会主题 Apple Basic (苹果 Keynote 风格) */
-    [data-slidev-theme="apple-basic"],
-    .slidev-theme-apple-basic {
+    [data-slides-theme="apple-basic"],
+    .slides-theme-apple-basic {
       --slide-font: -apple-system, "SF Pro Display", "SF Pro Text", BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
       --slide-accent: #0071e3;
     }
-    [data-theme="light"][data-slidev-theme="apple-basic"],
-    [data-theme="light"] .slidev-theme-apple-basic {
+    [data-theme="light"][data-slides-theme="apple-basic"],
+    [data-theme="light"] .slides-theme-apple-basic {
       --slide-bg: #ffffff;
       --slide-text: #1d1d1f;
       --slide-code-bg: #f5f5f7;
       --slide-accent: #0071e3;
     }
-    [data-theme="dark"][data-slidev-theme="apple-basic"],
-    [data-theme="dark"] .slidev-theme-apple-basic {
+    [data-theme="dark"][data-slides-theme="apple-basic"],
+    [data-theme="dark"] .slides-theme-apple-basic {
       --slide-bg: #000000;
       --slide-text: #f5f5f7;
       --slide-code-bg: #161617;
       --slide-accent: #2997ff;
     }
-    .slidev-theme-apple-basic,
-    .slidev-theme-apple-basic .slide-content-wrapper {
+    .slides-theme-apple-basic,
+    .slides-theme-apple-basic .slide-content-wrapper {
       font-family: var(--slide-font) !important;
     }
-    .slidev-theme-apple-basic h1,
-    .slidev-theme-apple-basic h2,
-    .slidev-theme-apple-basic h3 {
+    .slides-theme-apple-basic h1,
+    .slides-theme-apple-basic h2,
+    .slides-theme-apple-basic h3 {
       letter-spacing: -0.035em;
       font-weight: 800;
     }
-    .slidev-theme-apple-basic .layout-cover h1 {
+    .slides-theme-apple-basic .layout-cover h1 {
       background: none !important;
       -webkit-background-clip: initial !important;
       -webkit-text-fill-color: initial !important;
@@ -345,18 +345,18 @@
       letter-spacing: -0.04em !important;
       margin-bottom: 12px;
     }
-    .slidev-theme-apple-basic .layout-cover p {
+    .slides-theme-apple-basic .layout-cover p {
       color: #86868b !important;
       font-size: 1.35rem !important;
       font-weight: 500 !important;
       opacity: 1 !important;
     }
-    .slidev-theme-apple-basic pre,
-    .slidev-theme-apple-basic .code-block-container {
+    .slides-theme-apple-basic pre,
+    .slides-theme-apple-basic .code-block-container {
       border-radius: 14px !important;
       border: 1px solid rgba(128, 128, 128, 0.15) !important;
     }
-    .slidev-theme-apple-basic blockquote {
+    .slides-theme-apple-basic blockquote {
       border-left: none !important;
       background: rgba(128, 128, 128, 0.08) !important;
       border-radius: 12px !important;
@@ -416,7 +416,7 @@
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
-      transform: translate(-50%, -50%) scale(var(--slidev-slide-scale, 1));
+      transform: translate(-50%, -50%) scale(var(--slides-slide-scale, 1));
       transform-origin: center center;
       will-change: transform;
       transition: background 0.3s ease, color 0.3s ease, border-radius 0.2s ease, box-shadow 0.2s ease;
@@ -456,7 +456,7 @@
       height: 100%;
       min-height: 100%;
       flex: 1 1 0%;
-      padding: var(--slidev-padding-y, 32px) var(--slidev-padding-x, 48px);
+      padding: var(--slides-padding-y, 32px) var(--slides-padding-x, 48px);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -466,27 +466,27 @@
     /* 间距预设风格 */
     .slide-content-wrapper.spacing-compact,
     .slide-viewport[data-spacing="compact"] .slide-content-wrapper,
-    [data-slidev-spacing="compact"] {
-      --slidev-padding-y: 20px;
-      --slidev-padding-x: 36px;
-      --slidev-header-gap: 10px;
-      --slidev-title-margin-bottom: 6px;
+    [data-slides-spacing="compact"] {
+      --slides-padding-y: 20px;
+      --slides-padding-x: 36px;
+      --slides-header-gap: 10px;
+      --slides-title-margin-bottom: 6px;
     }
     .slide-content-wrapper.spacing-normal,
     .slide-viewport[data-spacing="normal"] .slide-content-wrapper,
-    [data-slidev-spacing="normal"] {
-      --slidev-padding-y: 32px;
-      --slidev-padding-x: 48px;
-      --slidev-header-gap: 16px;
-      --slidev-title-margin-bottom: 10px;
+    [data-slides-spacing="normal"] {
+      --slides-padding-y: 32px;
+      --slides-padding-x: 48px;
+      --slides-header-gap: 16px;
+      --slides-title-margin-bottom: 10px;
     }
     .slide-content-wrapper.spacing-loose,
     .slide-viewport[data-spacing="loose"] .slide-content-wrapper,
-    [data-slidev-spacing="loose"] {
-      --slidev-padding-y: 48px;
-      --slidev-padding-x: 56px;
-      --slidev-header-gap: 24px;
-      --slidev-title-margin-bottom: 16px;
+    [data-slides-spacing="loose"] {
+      --slides-padding-y: 48px;
+      --slides-padding-x: 56px;
+      --slides-header-gap: 24px;
+      --slides-title-margin-bottom: 16px;
     }
 
     /* Layouts */
@@ -546,14 +546,14 @@
     .cols-header-top,
     .layout-header-section {
       width: 100% !important;
-      margin-bottom: var(--slidev-header-gap, 16px) !important;
+      margin-bottom: var(--slides-header-gap, 16px) !important;
       flex-shrink: 0 !important;
     }
     .two-cols-header-top h1, .two-cols-header-top h2, .two-cols-header-top h3,
     .three-cols-header-top h1, .three-cols-header-top h2, .three-cols-header-top h3,
     .cols-header-top h1, .cols-header-top h2, .cols-header-top h3,
     .layout-header-section h1, .layout-header-section h2, .layout-header-section h3 {
-      margin-bottom: var(--slidev-title-margin-bottom, 10px) !important;
+      margin-bottom: var(--slides-title-margin-bottom, 10px) !important;
     }
 
     .layout-two-cols {
@@ -878,8 +878,8 @@
     .layout-cols-grid.has-superblock-cols .col .slide-block:first-child p:first-child,
     .layout-cols-grid.has-superblock-cols .col .slide-block:first-child :is(ul, ol) > li:first-child,
     .layout-cols-grid.has-superblock-cols .col .slide-block:first-child .slide-list > .slide-list-item:first-child,
-    .has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    .has-superblock-cols .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    .has-superblock-cols .slides-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    .has-superblock-cols .slides-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       list-style: none !important;
       list-style-type: none !important;
       text-align: center !important;
@@ -906,8 +906,8 @@
     }
 
     /* 全局特定标题大小规范化 (除封面外页首首个标题按 H2 1.7rem，表头多栏内首个标题按 H3 1.3rem) */
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slidev-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slidev-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slides-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
     :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
     :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slide-content-wrapper:not(.layout-cover) > .layout-header-section .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
     :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slide-content-wrapper:not(.layout-cover) > :not(.layout-cols-grid):not(.layout-two-cols):not(.layout-image-left):not(.layout-image-right):first-child :is(h1, h2, h3, h4, h5, h6) {
@@ -917,7 +917,7 @@
       margin-bottom: 10px !important;
     }
 
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .has-superblock-cols .slides-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
     :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .has-superblock-cols.layout-cols-grid .col .slide-block:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
     :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .has-superblock-cols .col .slide-block:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       font-size: 1.3rem !important;
@@ -1196,9 +1196,9 @@
     }
 
     /* Slidev 规范链接排版 (继承正文颜色，虚线底边，Hover 时平滑点亮为主题色并转为实线) */
-    .slide-content-wrapper a:not(.slidev-ref-tag):not(.slidev-icon-btn):not(.slidev-toc-link),
-    .slide-block a:not(.slidev-ref-tag):not(.slidev-icon-btn):not(.slidev-toc-link),
-    a.slidev-link {
+    .slide-content-wrapper a:not(.slides-ref-tag):not(.slidev-icon-btn):not(.slides-toc-link),
+    .slide-block a:not(.slides-ref-tag):not(.slidev-icon-btn):not(.slides-toc-link),
+    a.slides-link {
       color: inherit;
       text-decoration: none;
       border-bottom: 1px dashed currentColor;
@@ -1208,17 +1208,17 @@
       cursor: pointer;
     }
 
-    .slide-content-wrapper a:not(.slidev-ref-tag):not(.slidev-icon-btn):not(.slidev-toc-link):hover,
-    .slide-block a:not(.slidev-ref-tag):not(.slidev-icon-btn):not(.slidev-toc-link):hover,
-    a.slidev-link:hover {
+    .slide-content-wrapper a:not(.slides-ref-tag):not(.slidev-icon-btn):not(.slides-toc-link):hover,
+    .slide-block a:not(.slides-ref-tag):not(.slidev-icon-btn):not(.slides-toc-link):hover,
+    a.slides-link:hover {
       color: var(--slide-accent);
       border-bottom-style: solid;
       border-bottom-color: var(--slide-accent);
     }
 
     /* 思源笔记块引用胶囊标签 (随当前主题强调色智能联动) */
-    .slide-block .slidev-ref-tag,
-    a.slidev-ref-tag {
+    .slide-block .slides-ref-tag,
+    a.slides-ref-tag {
       display: inline-flex;
       align-items: center;
       background: color-mix(in srgb, var(--slide-accent) 12%, transparent);
@@ -1234,8 +1234,8 @@
       user-select: none;
     }
 
-    .slide-block .slidev-ref-tag:hover,
-    a.slidev-ref-tag:hover {
+    .slide-block .slides-ref-tag:hover,
+    a.slides-ref-tag:hover {
       background: color-mix(in srgb, var(--slide-accent) 22%, transparent);
       color: var(--slide-accent);
       border-color: color-mix(in srgb, var(--slide-accent) 55%, transparent);
@@ -1244,7 +1244,7 @@
     }
 
     /* 思源笔记块引用面板 (联动主题强调色) */
-    .slide-block .slidev-block-ref {
+    .slide-block .slides-block-ref {
       display: block;
       padding: 10px 14px;
       background: color-mix(in srgb, var(--slide-accent) 8%, transparent);
@@ -1255,7 +1255,7 @@
       transition: background 0.2s ease;
     }
 
-    .slide-block .slidev-block-ref:hover {
+    .slide-block .slides-block-ref:hover {
       background: color-mix(in srgb, var(--slide-accent) 15%, transparent);
     }
 
@@ -1498,15 +1498,15 @@
     .slide-list-item > h6, .slide-list-item h6.slide-list-item-title { font-size: 0.95rem !important; }
 
     /* 全局特定标题大小规范化强制覆盖 (确保在列表项字号之后生效) */
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slidev-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slidev-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slides-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       font-size: 1.7rem !important;
       font-weight: 600 !important;
       line-height: 1.25 !important;
       margin-bottom: 10px !important;
     }
 
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .has-superblock-cols .slides-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
     :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .has-superblock-cols.layout-cols-grid .col .slide-block:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
     :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .has-superblock-cols .col .slide-block:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       font-size: 1.3rem !important;
@@ -1701,7 +1701,7 @@
     }
 
     /* Lightbox 大图与视频灯箱模态窗口 */
-    .slidev-lightbox {
+    .slides-lightbox {
       position: fixed;
       top: 0;
       left: 0;
@@ -1715,13 +1715,13 @@
       justify-content: center;
       cursor: zoom-out;
       opacity: 0;
-      animation: slidev-lightbox-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: slides-lightbox-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
-    @keyframes slidev-lightbox-fade-in {
+    @keyframes slides-lightbox-fade-in {
       from { opacity: 0; }
       to { opacity: 1; }
     }
-    .slidev-lightbox-content {
+    .slides-lightbox-content {
       position: relative;
       max-width: 92vw;
       max-height: 92vh;
@@ -1730,7 +1730,7 @@
       justify-content: center;
       cursor: default;
     }
-    .slidev-lightbox-img {
+    .slides-lightbox-img {
       max-width: 92vw;
       max-height: 92vh;
       object-fit: contain;
@@ -1740,13 +1740,13 @@
       -webkit-user-drag: none;
       touch-action: none;
     }
-    .slidev-lightbox-video {
+    .slides-lightbox-video {
       max-width: 92vw;
       max-height: 92vh;
       border-radius: 8px;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
     }
-    .slidev-lightbox-close {
+    .slides-lightbox-close {
       position: absolute;
       top: 24px;
       right: 28px;
@@ -1764,7 +1764,7 @@
       transition: background 0.2s, transform 0.2s;
       z-index: 1000000;
     }
-    .slidev-lightbox-close:hover {
+    .slides-lightbox-close:hover {
       background: rgba(255, 255, 255, 0.4);
       transform: scale(1.08);
     }
@@ -1921,67 +1921,67 @@
     }
 
     /* Slidev Micro-motion Keyframes & Presets */
-    @keyframes slidevMotionFadeIn {
+    @keyframes slidesMotionFadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
     }
-    @keyframes slidevMotionSlideUp {
+    @keyframes slidesMotionSlideUp {
       from { opacity: 0; transform: translateY(40px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    @keyframes slidevMotionSlideDown {
+    @keyframes slidesMotionSlideDown {
       from { opacity: 0; transform: translateY(-40px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    @keyframes slidevMotionSlideLeft {
+    @keyframes slidesMotionSlideLeft {
       from { opacity: 0; transform: translateX(40px); }
       to { opacity: 1; transform: translateX(0); }
     }
-    @keyframes slidevMotionSlideRight {
+    @keyframes slidesMotionSlideRight {
       from { opacity: 0; transform: translateX(-40px); }
       to { opacity: 1; transform: translateX(0); }
     }
-    @keyframes slidevMotionZoomIn {
+    @keyframes slidesMotionZoomIn {
       from { opacity: 0; transform: scale(0.8); }
       to { opacity: 1; transform: scale(1); }
     }
-    @keyframes slidevMotionBounce {
+    @keyframes slidesMotionBounce {
       0% { opacity: 0; transform: translateY(40px); }
       60% { opacity: 1; transform: translateY(-8px); }
       80% { transform: translateY(4px); }
       100% { transform: translateY(0); }
     }
 
-    .slidev-motion-fade-in {
-      animation: slidevMotionFadeIn var(--motion-duration, 0.4s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both;
+    .slides-motion-fade-in {
+      animation: slidesMotionFadeIn var(--motion-duration, 0.4s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both;
     }
-    .slidev-motion-slide-up {
-      animation: slidevMotionSlideUp var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both;
+    .slides-motion-slide-up {
+      animation: slidesMotionSlideUp var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both;
     }
-    .slidev-motion-slide-down {
-      animation: slidevMotionSlideDown var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both;
+    .slides-motion-slide-down {
+      animation: slidesMotionSlideDown var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both;
     }
-    .slidev-motion-slide-left {
-      animation: slidevMotionSlideLeft var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both;
+    .slides-motion-slide-left {
+      animation: slidesMotionSlideLeft var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both;
     }
-    .slidev-motion-slide-right {
-      animation: slidevMotionSlideRight var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both;
+    .slides-motion-slide-right {
+      animation: slidesMotionSlideRight var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both;
     }
-    .slidev-motion-zoom-in, .slidev-motion-pop {
-      animation: slidevMotionZoomIn var(--motion-duration, 0.4s) cubic-bezier(0.34, 1.56, 0.64, 1) var(--motion-delay, 0s) both;
+    .slides-motion-zoom-in, .slides-motion-pop {
+      animation: slidesMotionZoomIn var(--motion-duration, 0.4s) cubic-bezier(0.34, 1.56, 0.64, 1) var(--motion-delay, 0s) both;
     }
-    .slidev-motion-bounce {
-      animation: slidevMotionBounce var(--motion-duration, 0.6s) cubic-bezier(0.34, 1.56, 0.64, 1) var(--motion-delay, 0s) both;
+    .slides-motion-bounce {
+      animation: slidesMotionBounce var(--motion-duration, 0.6s) cubic-bezier(0.34, 1.56, 0.64, 1) var(--motion-delay, 0s) both;
     }
 
-    .v-click-hidden.slidev-motion-fade-in,
-    .v-click-hidden.slidev-motion-slide-up,
-    .v-click-hidden.slidev-motion-slide-down,
-    .v-click-hidden.slidev-motion-slide-left,
-    .v-click-hidden.slidev-motion-slide-right,
-    .v-click-hidden.slidev-motion-zoom-in,
-    .v-click-hidden.slidev-motion-pop,
-    .v-click-hidden.slidev-motion-bounce {
+    .v-click-hidden.slides-motion-fade-in,
+    .v-click-hidden.slides-motion-slide-up,
+    .v-click-hidden.slides-motion-slide-down,
+    .v-click-hidden.slides-motion-slide-left,
+    .v-click-hidden.slides-motion-slide-right,
+    .v-click-hidden.slides-motion-zoom-in,
+    .v-click-hidden.slides-motion-pop,
+    .v-click-hidden.slides-motion-bounce {
       animation: none !important;
     }
 
@@ -2167,7 +2167,7 @@
     /* =========================================
        缩略图总览层（o 键呼出，方向键/数字+回车/点选跳页）
        ========================================= */
-    .slidev-overview {
+    .slides-overview {
       position: absolute;
       inset: 0;
       z-index: 150;
@@ -2179,7 +2179,7 @@
       box-sizing: border-box;
     }
 
-    .slidev-overview-grid {
+    .slides-overview-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
       gap: 18px;
@@ -2187,7 +2187,7 @@
       margin: 0 auto;
     }
 
-    .slidev-overview-card {
+    .slides-overview-card {
       cursor: pointer;
       border-radius: 10px;
       border: 2px solid rgba(255, 255, 255, 0.12);
@@ -2196,23 +2196,23 @@
       transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
     }
 
-    .slidev-overview-card:hover {
+    .slides-overview-card:hover {
       border-color: rgba(255, 255, 255, 0.38);
       transform: translateY(-2px);
     }
 
-    .slidev-overview-card.is-active {
+    .slides-overview-card.is-active {
       border-color: var(--slide-accent, #3b82f6);
       box-shadow: 0 0 0 1px var(--slide-accent, #3b82f6), 0 8px 24px rgba(0, 0, 0, 0.4);
     }
 
-    .slidev-overview-canvas-box {
+    .slides-overview-canvas-box {
       position: relative;
       overflow: hidden;
       background: var(--slide-bg, #ffffff);
     }
 
-    .slidev-overview-canvas {
+    .slides-overview-canvas {
       position: absolute;
       top: 0;
       left: 0;
@@ -2224,15 +2224,15 @@
     }
 
     /* 缩略图内隐藏滚动条与指针反馈，保持纯静态快照观感 */
-    .slidev-overview-canvas * {
+    .slides-overview-canvas * {
       scrollbar-width: none;
     }
 
-    .slidev-overview-canvas ::-webkit-scrollbar {
+    .slides-overview-canvas ::-webkit-scrollbar {
       display: none;
     }
 
-    .slidev-overview-caption {
+    .slides-overview-caption {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -2243,7 +2243,7 @@
       background: rgba(13, 16, 22, 0.6);
     }
 
-    .slidev-overview-page-no {
+    .slides-overview-page-no {
       flex-shrink: 0;
       font-variant-numeric: tabular-nums;
       font-weight: 600;
@@ -2254,19 +2254,19 @@
       line-height: 18px;
     }
 
-    .slidev-overview-page-no.is-current {
+    .slides-overview-page-no.is-current {
       background: var(--slide-accent, #3b82f6);
       color: #0b1210;
     }
 
-    .slidev-overview-title {
+    .slides-overview-title {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       user-select: none;
     }
 
-    .slidev-overview-hint {
+    .slides-overview-hint {
       text-align: center;
       margin: 18px 0 8px;
       font-size: 12px;
@@ -2325,7 +2325,7 @@
     .slide-block div:has(> .slidev-icon-btn),
     .slide-block div:has(> button),
     .slide-block [class*="abs-"],
-    .slidev-btn-row {
+    .slides-btn-row {
       display: inline-flex !important;
       flex-direction: row !important;
       align-items: center !important;
@@ -2377,63 +2377,63 @@
     .cursor-pointer, [data-clickable], [onClick], [onclick] { cursor: pointer; }
 
     /* Slidev Built-in Toc Component */
-    .slidev-toc {
+    .slides-toc {
       font-size: 1rem;
       line-height: 1.6;
       width: 100%;
     }
-    .slidev-toc.text-sm,
-    .slidev-toc .text-sm {
+    .slides-toc.text-sm,
+    .slides-toc .text-sm {
       font-size: 0.875rem !important;
       line-height: 1.45 !important;
     }
-    .slidev-toc-list {
+    .slides-toc-list {
       list-style-type: decimal;
       padding-left: 1.4rem;
       margin: 0.25rem 0;
     }
-    .slidev-toc-list-level-1 {
+    .slides-toc-list-level-1 {
       padding-left: 1.25rem;
     }
-    .slidev-toc-list-level-2 {
+    .slides-toc-list-level-2 {
       padding-left: 1.4rem;
       margin-top: 0.25rem;
       margin-bottom: 0.25rem;
       list-style-type: decimal;
     }
-    .slidev-toc-item {
+    .slides-toc-item {
       margin-bottom: 0.35rem;
       line-height: 1.4;
       font-family: var(--slide-font);
     }
-    .slidev-toc-item a,
-    .slidev-toc-item .slidev-toc-link {
+    .slides-toc-item a,
+    .slides-toc-item .slides-toc-link {
       color: inherit;
       text-decoration: none;
       cursor: pointer;
       display: inline;
     }
-    .slidev-toc-item a:hover,
-    .slidev-toc-item .slidev-toc-link:hover {
+    .slides-toc-item a:hover,
+    .slides-toc-item .slides-toc-link:hover {
       color: var(--slide-accent, #3b82f6);
     }
-    .slidev-toc-title {
+    .slides-toc-title {
       border-bottom: 1px dashed rgba(150, 150, 150, 0.45);
       padding-bottom: 1px;
       transition: all 0.2s ease;
     }
-    .slidev-toc-item:hover .slidev-toc-title {
+    .slides-toc-item:hover .slides-toc-title {
       border-bottom: 1px solid var(--slide-accent, #3b82f6);
       color: var(--slide-accent, #3b82f6);
     }
-    .slidev-toc-item-active > .slidev-toc-link .slidev-toc-title {
+    .slides-toc-item-active > .slides-toc-link .slides-toc-title {
       color: var(--slide-accent, #3b82f6);
       font-weight: 600;
       border-bottom: 1.5px solid var(--slide-accent, #3b82f6);
     }
 
     /* 页面动态蒙版 (Dynamic Mask) GPU 合成器硬件加速体系 */
-    .slidev-mask-body-container {
+    .slides-mask-body-container {
       position: relative;
       width: 100%;
       height: 100%;
@@ -2445,34 +2445,34 @@
       contain: layout paint;
       isolation: isolate;
     }
-    .slidev-mask-body-container--has-mask {
+    .slides-mask-body-container--has-mask {
       overflow: hidden !important;
       /* 向左右、向下突破父容器内边距，完全贴合幻灯片视口边缘 */
-      margin-left: calc(-1 * var(--slidev-padding-x, 48px)) !important;
-      margin-right: calc(-1 * var(--slidev-padding-x, 48px)) !important;
-      margin-bottom: calc(-1 * var(--slidev-padding-y, 32px)) !important;
-      padding-left: var(--slidev-padding-x, 48px) !important;
-      padding-right: var(--slidev-padding-x, 48px) !important;
-      padding-bottom: var(--slidev-padding-y, 32px) !important;
-      width: calc(100% + 2 * var(--slidev-padding-x, 48px)) !important;
+      margin-left: calc(-1 * var(--slides-padding-x, 48px)) !important;
+      margin-right: calc(-1 * var(--slides-padding-x, 48px)) !important;
+      margin-bottom: calc(-1 * var(--slides-padding-y, 32px)) !important;
+      padding-left: var(--slides-padding-x, 48px) !important;
+      padding-right: var(--slides-padding-x, 48px) !important;
+      padding-bottom: var(--slides-padding-y, 32px) !important;
+      width: calc(100% + 2 * var(--slides-padding-x, 48px)) !important;
       box-sizing: border-box !important;
     }
     /* 无标题且首个元素即为蒙版正文容器时，向上同步扩展至顶部边缘 */
-    .slide-content-wrapper > .slidev-mask-body-container--has-mask:first-child,
-    .slide-content > .slidev-mask-body-container--has-mask:first-child {
-      margin-top: calc(-1 * var(--slidev-padding-y, 32px)) !important;
-      padding-top: var(--slidev-padding-y, 32px) !important;
+    .slide-content-wrapper > .slides-mask-body-container--has-mask:first-child,
+    .slide-content > .slides-mask-body-container--has-mask:first-child {
+      margin-top: calc(-1 * var(--slides-padding-y, 32px)) !important;
+      padding-top: var(--slides-padding-y, 32px) !important;
     }
     /* 针对全屏零内边距特殊布局（如 image-right/image-left），重置内边距变量避免越界 */
     .slide-content-wrapper.layout-image-right,
     .slide-content-wrapper.layout-image-left,
     .slide-content.layout-image-right,
     .slide-content.layout-image-left {
-      --slidev-padding-x: 0px !important;
-      --slidev-padding-y: 0px !important;
+      --slides-padding-x: 0px !important;
+      --slides-padding-y: 0px !important;
     }
     /* 蒙版运动总图层：纯 GPU Compositor 硬件加速 translate3d */
-    .slidev-mask-layer {
+    .slides-mask-layer {
       position: absolute;
       top: 0;
       left: 0;
@@ -2487,7 +2487,7 @@
                   opacity 0.42s cubic-bezier(0.2, 0, 0, 1);
     }
     /* 蒙版内部遮罩层：纯色或磨砂玻璃 */
-    .slidev-mask-overlay {
+    .slides-mask-overlay {
       position: absolute;
       top: 0;
       left: 0;
@@ -2495,34 +2495,34 @@
       height: 100%;
       pointer-events: none;
     }
-    .slidev-mask-layer--solid .slidev-mask-overlay,
-    .slidev-mask-overlay--solid {
+    .slides-mask-layer--solid .slides-mask-overlay,
+    .slides-mask-overlay--solid {
       background: var(--slide-bg, #ffffff);
     }
-    [data-theme="dark"] .slidev-mask-layer--solid .slidev-mask-overlay,
-    [data-theme="dark"] .slidev-mask-overlay--solid {
+    [data-theme="dark"] .slides-mask-layer--solid .slides-mask-overlay,
+    [data-theme="dark"] .slides-mask-overlay--solid {
       background: var(--slide-bg, #121214);
     }
-    .slidev-mask-layer--blur .slidev-mask-overlay,
-    .slidev-mask-overlay--blur {
+    .slides-mask-layer--blur .slides-mask-overlay,
+    .slides-mask-overlay--blur {
       backdrop-filter: blur(30px) saturate(180%);
       -webkit-backdrop-filter: blur(30px) saturate(180%);
       background: color-mix(in srgb, var(--slide-bg, #ffffff) 90%, transparent);
     }
-    [data-theme="dark"] .slidev-mask-layer--blur .slidev-mask-overlay,
-    [data-theme="dark"] .slidev-mask-overlay--blur {
+    [data-theme="dark"] .slides-mask-layer--blur .slides-mask-overlay,
+    [data-theme="dark"] .slides-mask-overlay--blur {
       background: color-mix(in srgb, var(--slide-bg, #121214) 90%, transparent);
     }
     /* 动态展露分界提示线：物理内嵌于蒙版边缘，相对坐标永为 0，绝对物理同步 */
-    .slidev-mask-divider-line {
+    .slides-mask-divider-line {
       position: absolute;
       pointer-events: none;
       z-index: 51;
       opacity: 0;
       transition: opacity 0.3s ease;
     }
-    .slidev-mask-layer--down .slidev-mask-divider-line,
-    .slidev-mask-divider-line--down {
+    .slides-mask-layer--down .slides-mask-divider-line,
+    .slides-mask-divider-line--down {
       top: 0;
       left: 0;
       right: 0;
@@ -2531,8 +2531,8 @@
       background: linear-gradient(90deg, transparent 0%, var(--slide-accent, #3b82f6) 6%, var(--slide-accent, #3b82f6) 94%, transparent 100%);
       box-shadow: 0 0 10px var(--slide-accent, #3b82f6), 0 0 4px var(--slide-accent, #3b82f6);
     }
-    .slidev-mask-layer--right .slidev-mask-divider-line,
-    .slidev-mask-divider-line--right {
+    .slides-mask-layer--right .slides-mask-divider-line,
+    .slides-mask-divider-line--right {
       top: 0;
       bottom: 0;
       left: 0;
@@ -2553,12 +2553,12 @@
       class="slide-stage-container"
       :class="{ 'is-fullscreen': isFullscreenMode, 'is-capturing': isCapturingImages }"
       :data-theme="currentThemeMode"
-      :data-slidev-theme="currentSlidevTheme"
+      :data-slides-theme="currentSlidesTheme"
       :data-normalize-headings="isNormalizeHeadings ? 'true' : null"
     >
       <div
         class="slide-viewport"
-        :class="['slidev-theme-' + currentSlidevTheme, { 'is-capturing': isCapturingImages }]"
+        :class="['slides-theme-' + currentSlidesTheme, { 'is-capturing': isCapturingImages }]"
         :data-spacing="currentSpacing"
         :data-normalize-headings="isNormalizeHeadings ? 'true' : null"
         :style="viewportStyle"
@@ -2584,7 +2584,7 @@
                   :data-block-id="block.id"
                   @click="onBlockClick(block.id, $event)"
                 >
-                  <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                  <slide-block-renderer :block="block" :slidev="slidesContext" :render-html="renderBlockHtml" />
                 </div>
               </div>
               <div
@@ -2594,7 +2594,7 @@
                   dynamicColsCount === 3 ? 'layout-three-cols' : '',
                   currentSlide.frontmatter.layout === 'clover' ? 'layout-clover-grid' : '',
                   isSuperBlockColsHeader ? 'has-superblock-cols' : '',
-                  currentSlideMaskConfig ? 'slidev-mask-body-container slidev-mask-body-container--has-mask' : '',
+                  currentSlideMaskConfig ? 'slides-mask-body-container slides-mask-body-container--has-mask' : '',
                 ]"
                 :style="currentSlide.frontmatter.layout === 'clover' ? {} : getLayoutGridStyle(currentSlide, dynamicColsCount)"
                 style="flex: 1;"
@@ -2622,21 +2622,21 @@
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
                   >
-                    <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                    <slide-block-renderer :block="block" :slidev="slidesContext" :render-html="renderBlockHtml" />
                   </div>
                 </div>
 
                 <div
                   v-if="currentSlideMaskConfig"
-                  class="slidev-mask-layer"
+                  class="slides-mask-layer"
                   :class="[
-                    'slidev-mask-layer--' + currentSlideMaskConfig.style,
-                    'slidev-mask-layer--' + currentSlideMaskConfig.direction
+                    'slides-mask-layer--' + currentSlideMaskConfig.style,
+                    'slides-mask-layer--' + currentSlideMaskConfig.direction
                   ]"
                   :style="maskLayerStyle"
                 >
-                  <div class="slidev-mask-overlay"></div>
-                  <div class="slidev-mask-divider-line" :style="maskDividerLineStyle"></div>
+                  <div class="slides-mask-overlay"></div>
+                  <div class="slides-mask-divider-line" :style="maskDividerLineStyle"></div>
                 </div>
               </div>
             </template>
@@ -2646,7 +2646,7 @@
               <div
                 class="layout-two-cols"
                 :style="getLayoutGridStyle(currentSlide, 2)"
-                :class="[currentSlide.frontmatter.layoutClass, currentSlideMaskConfig ? 'slidev-mask-body-container slidev-mask-body-container--has-mask' : '']"
+                :class="[currentSlide.frontmatter.layoutClass, currentSlideMaskConfig ? 'slides-mask-body-container slides-mask-body-container--has-mask' : '']"
               >
                 <div class="two-cols-left" :class="currentSlide.frontmatter.class">
                   <div
@@ -2658,7 +2658,7 @@
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
                   >
-                    <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                    <slide-block-renderer :block="block" :slidev="slidesContext" :render-html="renderBlockHtml" />
                   </div>
                 </div>
                 <div class="two-cols-right" :class="currentSlide.frontmatter.class">
@@ -2671,21 +2671,21 @@
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
                   >
-                    <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                    <slide-block-renderer :block="block" :slidev="slidesContext" :render-html="renderBlockHtml" />
                   </div>
                 </div>
 
                 <div
                   v-if="currentSlideMaskConfig"
-                  class="slidev-mask-layer"
+                  class="slides-mask-layer"
                   :class="[
-                    'slidev-mask-layer--' + currentSlideMaskConfig.style,
-                    'slidev-mask-layer--' + currentSlideMaskConfig.direction
+                    'slides-mask-layer--' + currentSlideMaskConfig.style,
+                    'slides-mask-layer--' + currentSlideMaskConfig.direction
                   ]"
                   :style="maskLayerStyle"
                 >
-                  <div class="slidev-mask-overlay"></div>
-                  <div class="slidev-mask-divider-line" :style="maskDividerLineStyle"></div>
+                  <div class="slides-mask-overlay"></div>
+                  <div class="slides-mask-divider-line" :style="maskDividerLineStyle"></div>
                 </div>
               </div>
             </template>
@@ -2695,7 +2695,7 @@
               <div
                 class="layout-image-right"
                 :style="getLayoutGridStyle(currentSlide, 2)"
-                :class="[currentSlideMaskConfig ? 'slidev-mask-body-container slidev-mask-body-container--has-mask' : '']"
+                :class="[currentSlideMaskConfig ? 'slides-mask-body-container slides-mask-body-container--has-mask' : '']"
               >
                 <div class="image-right-content" :class="currentSlide.frontmatter.class">
                   <div
@@ -2707,7 +2707,7 @@
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
                   >
-                    <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                    <slide-block-renderer :block="block" :slidev="slidesContext" :render-html="renderBlockHtml" />
                   </div>
                 </div>
                 <div class="image-right-img-container">
@@ -2727,15 +2727,15 @@
 
                 <div
                   v-if="currentSlideMaskConfig"
-                  class="slidev-mask-layer"
+                  class="slides-mask-layer"
                   :class="[
-                    'slidev-mask-layer--' + currentSlideMaskConfig.style,
-                    'slidev-mask-layer--' + currentSlideMaskConfig.direction
+                    'slides-mask-layer--' + currentSlideMaskConfig.style,
+                    'slides-mask-layer--' + currentSlideMaskConfig.direction
                   ]"
                   :style="maskLayerStyle"
                 >
-                  <div class="slidev-mask-overlay"></div>
-                  <div class="slidev-mask-divider-line" :style="maskDividerLineStyle"></div>
+                  <div class="slides-mask-overlay"></div>
+                  <div class="slides-mask-divider-line" :style="maskDividerLineStyle"></div>
                 </div>
               </div>
             </template>
@@ -2745,7 +2745,7 @@
               <div
                 class="layout-image-left"
                 :style="getLayoutGridStyle(currentSlide, 2)"
-                :class="[currentSlideMaskConfig ? 'slidev-mask-body-container slidev-mask-body-container--has-mask' : '']"
+                :class="[currentSlideMaskConfig ? 'slides-mask-body-container slides-mask-body-container--has-mask' : '']"
               >
                 <div class="image-left-img-container">
                   <img
@@ -2771,21 +2771,21 @@
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
                   >
-                    <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                    <slide-block-renderer :block="block" :slidev="slidesContext" :render-html="renderBlockHtml" />
                   </div>
                 </div>
 
                 <div
                   v-if="currentSlideMaskConfig"
-                  class="slidev-mask-layer"
+                  class="slides-mask-layer"
                   :class="[
-                    'slidev-mask-layer--' + currentSlideMaskConfig.style,
-                    'slidev-mask-layer--' + currentSlideMaskConfig.direction
+                    'slides-mask-layer--' + currentSlideMaskConfig.style,
+                    'slides-mask-layer--' + currentSlideMaskConfig.direction
                   ]"
                   :style="maskLayerStyle"
                 >
-                  <div class="slidev-mask-overlay"></div>
-                  <div class="slidev-mask-divider-line" :style="maskDividerLineStyle"></div>
+                  <div class="slides-mask-overlay"></div>
+                  <div class="slides-mask-divider-line" :style="maskDividerLineStyle"></div>
                 </div>
               </div>
             </template>
@@ -2795,16 +2795,16 @@
               <!-- 若启用动态蒙版且存在顶部主标题，主标题常显，正文包裹在蒙版容器内 -->
               <template v-if="currentSlideMaskConfig && pageFirstHeadingBlock">
                 <div
-                  class="slidev-page-first-heading-block slide-block"
+                  class="slides-page-first-heading-block slide-block"
                   :class="[getBlockClickClass(pageFirstHeadingBlock), getBlockMotionClass(pageFirstHeadingBlock), getHeadingNormalizeClass(pageFirstHeadingBlock), { highlighted: pageFirstHeadingBlock.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(pageFirstHeadingBlock) }]"
                   :style="getBlockMotionStyle(pageFirstHeadingBlock)"
                   :data-block-id="pageFirstHeadingBlock.id"
                   @click="onBlockClick(pageFirstHeadingBlock.id, $event)"
                 >
-                  <slide-block-renderer :block="pageFirstHeadingBlock" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                  <slide-block-renderer :block="pageFirstHeadingBlock" :slidev="slidesContext" :render-html="renderBlockHtml" />
                 </div>
 
-                <div class="slidev-mask-body-container slidev-mask-body-container--has-mask">
+                <div class="slides-mask-body-container slides-mask-body-container--has-mask">
                   <div
                     v-for="block in bodyBlocksWithoutFirstHeading"
                     :key="block.id"
@@ -2814,26 +2814,26 @@
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
                   >
-                    <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                    <slide-block-renderer :block="block" :slidev="slidesContext" :render-html="renderBlockHtml" />
                   </div>
 
                   <div
                     v-if="currentSlideMaskConfig"
-                    class="slidev-mask-layer"
+                    class="slides-mask-layer"
                     :class="[
-                      'slidev-mask-layer--' + currentSlideMaskConfig.style,
-                      'slidev-mask-layer--' + currentSlideMaskConfig.direction
+                      'slides-mask-layer--' + currentSlideMaskConfig.style,
+                      'slides-mask-layer--' + currentSlideMaskConfig.direction
                     ]"
                     :style="maskLayerStyle"
                   >
-                    <div class="slidev-mask-overlay"></div>
-                    <div class="slidev-mask-divider-line" :style="maskDividerLineStyle"></div>
+                    <div class="slides-mask-overlay"></div>
+                    <div class="slides-mask-divider-line" :style="maskDividerLineStyle"></div>
                   </div>
                 </div>
               </template>
 
               <!-- 启用动态蒙版但无主标题：整体作为正文包裹蒙版 -->
-              <div v-else-if="currentSlideMaskConfig" class="slidev-mask-body-container slidev-mask-body-container--has-mask">
+              <div v-else-if="currentSlideMaskConfig" class="slides-mask-body-container slides-mask-body-container--has-mask">
                 <div
                   v-for="block in normalBlocks"
                   :key="block.id"
@@ -2843,20 +2843,20 @@
                   :data-block-id="block.id"
                   @click="onBlockClick(block.id, $event)"
                 >
-                  <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                  <slide-block-renderer :block="block" :slidev="slidesContext" :render-html="renderBlockHtml" />
                 </div>
 
                 <div
                   v-if="currentSlideMaskConfig"
-                  class="slidev-mask-layer"
+                  class="slides-mask-layer"
                   :class="[
-                    'slidev-mask-layer--' + currentSlideMaskConfig.style,
-                    'slidev-mask-layer--' + currentSlideMaskConfig.direction
+                    'slides-mask-layer--' + currentSlideMaskConfig.style,
+                    'slides-mask-layer--' + currentSlideMaskConfig.direction
                   ]"
                   :style="maskLayerStyle"
                 >
-                  <div class="slidev-mask-overlay"></div>
-                  <div class="slidev-mask-divider-line" :style="maskDividerLineStyle"></div>
+                  <div class="slides-mask-overlay"></div>
+                  <div class="slides-mask-divider-line" :style="maskDividerLineStyle"></div>
                 </div>
               </div>
 
@@ -2871,7 +2871,7 @@
                   :data-block-id="block.id"
                   @click="onBlockClick(block.id, $event)"
                 >
-                  <slide-block-renderer :block="block" :slidev="slidevContext" :render-html="renderBlockHtml" />
+                  <slide-block-renderer :block="block" :slidev="slidesContext" :render-html="renderBlockHtml" />
                 </div>
               </template>
             </template>
@@ -2932,32 +2932,32 @@
       <transition name="fade">
         <div
           v-show="showOverview"
-          class="slidev-overview"
-          :class="'slidev-theme-' + currentSlidevTheme"
+          class="slides-overview"
+          :class="'slides-theme-' + currentSlidesTheme"
           :data-theme="currentThemeMode"
-          :data-slidev-theme="currentSlidevTheme"
+          :data-slides-theme="currentSlidesTheme"
           @click.self="closeOverview"
         >
-          <div ref="overviewGridRef" class="slidev-overview-grid">
+          <div ref="overviewGridRef" class="slides-overview-grid">
             <div
               v-for="(s, idx) in slides"
               :key="s.pageIndex || idx"
-              class="slidev-overview-card"
+              class="slides-overview-card"
               :class="{ 'is-active': overviewFocus === idx + 1, 'is-current': currentPageIndex === idx + 1 }"
               :data-idx="idx"
               :ref="el => setOverviewCardRef(el, idx)"
               @click.stop="goFromOverview(idx + 1)"
             >
-              <div class="slidev-overview-canvas-box" :style="{ height: overviewCardHeight + 'px' }">
-                <div class="slidev-overview-canvas" :style="getOverviewCanvasStyle(s)"></div>
+              <div class="slides-overview-canvas-box" :style="{ height: overviewCardHeight + 'px' }">
+                <div class="slides-overview-canvas" :style="getOverviewCanvasStyle(s)"></div>
               </div>
-              <div class="slidev-overview-caption">
-                <span class="slidev-overview-page-no" :class="{ 'is-current': currentPageIndex === idx + 1 }">{{ idx + 1 }}</span>
-                <span v-if="getSlideOverviewTitle(s)" class="slidev-overview-title">{{ getSlideOverviewTitle(s) }}</span>
+              <div class="slides-overview-caption">
+                <span class="slides-overview-page-no" :class="{ 'is-current': currentPageIndex === idx + 1 }">{{ idx + 1 }}</span>
+                <span v-if="getSlideOverviewTitle(s)" class="slides-overview-title">{{ getSlideOverviewTitle(s) }}</span>
               </div>
             </div>
           </div>
-          <div class="slidev-overview-hint">← → ↑ ↓ 移动 · Enter 跳转 · 数字直达 · Esc / O 关闭</div>
+          <div class="slides-overview-hint">← → ↑ ↓ 移动 · Enter 跳转 · 数字直达 · Esc / O 关闭</div>
         </div>
       </transition>
 
@@ -2965,16 +2965,16 @@
       <transition name="fade">
         <div
           v-if="activeLightbox"
-          class="slidev-lightbox"
+          class="slides-lightbox"
           @click.stop="onLightboxBackdropClick"
         >
-          <button class="slidev-lightbox-close" @click.stop="closeLightbox" aria-label="关闭 (Esc)">✕</button>
-          <div class="slidev-lightbox-content" @click.stop="onLightboxBackdropClick">
+          <button class="slides-lightbox-close" @click.stop="closeLightbox" aria-label="关闭 (Esc)">✕</button>
+          <div class="slides-lightbox-content" @click.stop="onLightboxBackdropClick">
             <img
               v-if="activeLightbox.type === 'img'"
               :src="activeLightbox.src"
               :alt="activeLightbox.alt"
-              class="slidev-lightbox-img"
+              class="slides-lightbox-img"
               :class="{ 'is-zoomed': lightboxScale > 1, 'is-dragging': isLightboxDragging }"
               :style="lightboxImgStyle"
               @pointerdown="onLightboxPointerDown"
@@ -2987,7 +2987,7 @@
             <video
               v-else-if="activeLightbox.type === 'video'"
               :src="activeLightbox.src"
-              class="slidev-lightbox-video"
+              class="slides-lightbox-video"
               controls
               autoplay
               @click.stop
@@ -3070,7 +3070,7 @@
       res = res.replace(/\(\(([0-9a-zA-Z-]+)(?:\s*(?:&#039;([^&#]*)&#039;|&quot;([^&]*)&quot;|'([^']*)'|"([^"]*)"|([^\)]+?)))?\s*\)\)/g, (match, blockId, singleEscaped, doubleEscaped, singleRaw, doubleRaw, plainRaw) => {
         const anchor = (singleEscaped ?? doubleEscaped ?? singleRaw ?? doubleRaw ?? plainRaw ?? "").trim()
         const text = anchor || `Ref(${blockId.slice(0, 8)})`
-        return `<a href="siyuan://blocks/${blockId}" data-ref-id="${blockId}" class="slidev-ref-tag">🔗 ${text}</a>`
+        return `<a href="siyuan://blocks/${blockId}" data-ref-id="${blockId}" class="slides-ref-tag">🔗 ${text}</a>`
       })
 
       // 3.1 行内数学公式 $formula$
@@ -3087,14 +3087,14 @@
       res = res.replace(/\[(.*?)\]\((.*?)\)/g, (match, title, url) => {
         if (url.startsWith("siyuan://blocks/")) {
           const blockId = url.replace("siyuan://blocks/", "").split("?")[0]
-          return `<a href="${url}" data-ref-id="${blockId}" class="slidev-ref-tag">🔗 ${title}</a>`
+          return `<a href="${url}" data-ref-id="${blockId}" class="slides-ref-tag">🔗 ${title}</a>`
         }
-        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="slidev-link">${title}</a>`
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="slides-link">${title}</a>`
       })
 
       // 3.2.1 裸思源协议链接 (如 siyuan://blocks/20260625214150-d151ljw)
       res = res.replace(/(^|[\s(])(siyuan:\/\/blocks\/([0-9a-zA-Z-]+)(?:\?[^\s\)]*)?)/g, (match, prefix, url, blockId) => {
-        return `${prefix}<a href="${url}" data-ref-id="${blockId}" class="slidev-ref-tag">🔗 ${url}</a>`
+        return `${prefix}<a href="${url}" data-ref-id="${blockId}" class="slides-ref-tag">🔗 ${url}</a>`
       })
 
       // 3.3 加粗 **text**
@@ -3257,10 +3257,10 @@
 
     function renderTocListHtml(tree, level = 1, options = {}) {
       if (!tree || tree.length === 0) return ''
-      const olClass = `slidev-toc-list slidev-toc-list-level-${level}`
+      const olClass = `slides-toc-list slides-toc-list-level-${level}`
       const startAttr = (level === 1 && options.start) ? ` start="${options.start}"` : ''
       const listItems = tree.map((item) => {
-        const activeClass = item.active ? ' slidev-toc-item-active' : (item.hasActiveChild ? ' slidev-toc-item-parent-active' : '')
+        const activeClass = item.active ? ' slides-toc-item-active' : (item.hasActiveChild ? ' slides-toc-item-parent-active' : '')
         const childrenHtml = item.children && item.children.length > 0
           ? renderTocListHtml(item.children, level + 1, options)
           : ''
@@ -3271,9 +3271,9 @@
         }
 
         return `
-          <li class="slidev-toc-item${activeClass}" data-page="${item.pageIndex}">
-            <a class="slidev-toc-link" href="javascript:void(0)" onclick="if(window.__slidevNavigateTo) window.__slidevNavigateTo(${item.pageIndex})">
-              <span class="slidev-toc-title">${formattedTitle}</span>
+          <li class="slides-toc-item${activeClass}" data-page="${item.pageIndex}">
+            <a class="slides-toc-link" href="javascript:void(0)" onclick="if(window.__slidesNavigateTo) window.__slidesNavigateTo(${item.pageIndex})">
+              <span class="slides-toc-title">${formattedTitle}</span>
             </a>
             ${childrenHtml}
           </li>
@@ -3289,7 +3289,7 @@
       const colStyle = columns > 1 ? ` style="column-count: ${columns};"` : ''
       const extraClass = props.textSm ? ' text-sm' : ''
       const listHtml = renderTocListHtml(tree, 1, props)
-      return `<div class="slidev-toc${extraClass}"${colStyle}>${listHtml}</div>`
+      return `<div class="slides-toc${extraClass}"${colStyle}>${listHtml}</div>`
     }
 
     const TocComponent = {
@@ -3305,11 +3305,11 @@
         const slidev = (typeof inject === 'function' ? inject('$slidev', null) : (Vue && Vue.inject ? Vue.inject('$slidev', null) : null))
 
         const tocTree = computed(() => {
-          const allSlides = (window.__slidevSlides && window.__slidevSlides.value)
-            ? window.__slidevSlides.value
+          const allSlides = (window.__slidesSlides && window.__slidesSlides.value)
+            ? window.__slidesSlides.value
             : (slidev?.slides?.value || [])
-          const currIdx = (window.__slidevCurrentPageIndex && window.__slidevCurrentPageIndex.value)
-            ? window.__slidevCurrentPageIndex.value
+          const currIdx = (window.__slidesCurrentPageIndex && window.__slidesCurrentPageIndex.value)
+            ? window.__slidesCurrentPageIndex.value
             : (slidev?.nav?.currentSlideNo?.value || 1)
           return buildTocTree(allSlides, currIdx, {
             minDepth: props.minDepth,
@@ -3325,8 +3325,8 @@
         const navigateTo = (page) => {
           if (slidev?.nav?.go) {
             slidev.nav.go(page)
-          } else if (window.__slidevNavigateTo) {
-            window.__slidevNavigateTo(page)
+          } else if (window.__slidesNavigateTo) {
+            window.__slidesNavigateTo(page)
           }
         }
 
@@ -3334,30 +3334,30 @@
           const tree = tocTree.value
           const columns = Number(props.columns) || 1
           const style = columns > 1 ? { columnCount: columns } : {}
-          const classes = ['slidev-toc']
+          const classes = ['slides-toc']
           if (hasTextSm.value) classes.push('text-sm')
           if (attrs.class) classes.push(attrs.class)
 
           function renderList(nodes, level = 1) {
             if (!nodes || nodes.length === 0) return null
             return h('ol', {
-              class: `slidev-toc-list slidev-toc-list-level-${level}`,
+              class: `slides-toc-list slides-toc-list-level-${level}`,
               start: level === 1 ? props.start : undefined
             }, nodes.map((item) => {
-              const itemClasses = ['slidev-toc-item']
-              if (item.active) itemClasses.push('slidev-toc-item-active')
-              if (item.hasActiveChild) itemClasses.push('slidev-toc-item-parent-active')
+              const itemClasses = ['slides-toc-item']
+              if (item.active) itemClasses.push('slides-toc-item-active')
+              if (item.hasActiveChild) itemClasses.push('slides-toc-item-parent-active')
 
-              let titleVNode = h('span', { class: 'slidev-toc-title' }, item.title)
+              let titleVNode = h('span', { class: 'slides-toc-title' }, item.title)
               if (item.title.includes('LaTeX')) {
                 titleVNode = h('span', {
-                  class: 'slidev-toc-title',
+                  class: 'slides-toc-title',
                   innerHTML: formatInlineMarkdown(item.title).replace(/\$\\LaTeX\$/g, '<span class="font-math">L<sup>A</sup>T<sub>E</sub>X</span>')
                 })
               }
 
               const linkVNode = h('a', {
-                class: 'slidev-toc-link',
+                class: 'slides-toc-link',
                 href: 'javascript:void(0)',
                 onClick: (e) => {
                   e.preventDefault()
@@ -3417,7 +3417,7 @@
           const arrowY2 = y2 - headLength * Math.sin(angle + headAngle)
 
           return h('svg', {
-            class: 'slidev-arrow',
+            class: 'slides-arrow',
             style: {
               position: 'absolute',
               top: 0,
@@ -3471,8 +3471,8 @@
           if (shouldLoop) {
             v.loop = true
             v.setAttribute('loop', '')
-            if (!v.__slidevLoopBound) {
-              v.__slidevLoopBound = true
+            if (!v.__slidesLoopBound) {
+              v.__slidesLoopBound = true
               v.addEventListener('ended', () => {
                 try {
                   v.currentTime = 0
@@ -3520,8 +3520,8 @@
             doPlay()
 
             // 监听媒体异步加载就绪事件，保证网络延迟加载完毕后立即触发自动播放
-            if (!v.__slidevAutoplayBound) {
-              v.__slidevAutoplayBound = true
+            if (!v.__slidesAutoplayBound) {
+              v.__slidesAutoplayBound = true
               v.addEventListener('loadedmetadata', doPlay)
               v.addEventListener('loadeddata', doPlay)
               v.addEventListener('canplay', doPlay)
@@ -3695,7 +3695,7 @@
             width: `${baseWidth}px`,
             height: `${baseHeight.value}px`,
             transform: `translate(-50%, -50%) scale(${slideScale.value})`,
-            '--slidev-slide-scale': slideScale.value,
+            '--slides-slide-scale': slideScale.value,
             ...pageBackgroundStyle.value
           }
         })
@@ -3721,25 +3721,25 @@
           const sp = currentSpacing.value
           if (sp === 'compact') {
             return {
-              '--slidev-padding-y': '20px',
-              '--slidev-padding-x': '36px',
-              '--slidev-header-gap': '10px',
-              '--slidev-title-margin-bottom': '6px',
+              '--slides-padding-y': '20px',
+              '--slides-padding-x': '36px',
+              '--slides-header-gap': '10px',
+              '--slides-title-margin-bottom': '6px',
             }
           }
           if (sp === 'loose') {
             return {
-              '--slidev-padding-y': '48px',
-              '--slidev-padding-x': '56px',
-              '--slidev-header-gap': '24px',
-              '--slidev-title-margin-bottom': '16px',
+              '--slides-padding-y': '48px',
+              '--slides-padding-x': '56px',
+              '--slides-header-gap': '24px',
+              '--slides-title-margin-bottom': '16px',
             }
           }
           return {
-            '--slidev-padding-y': '32px',
-            '--slidev-padding-x': '48px',
-            '--slidev-header-gap': '16px',
-            '--slidev-title-margin-bottom': '10px',
+            '--slides-padding-y': '32px',
+            '--slides-padding-x': '48px',
+            '--slides-header-gap': '16px',
+            '--slides-title-margin-bottom': '10px',
           }
         })
 
@@ -3814,7 +3814,7 @@
             nextScale = 5.0
           }
 
-          const imgEl = document.querySelector('.slidev-lightbox-img')
+          const imgEl = document.querySelector('.slides-lightbox-img')
           if (imgEl && imgEl.getBoundingClientRect) {
             const rect = imgEl.getBoundingClientRect()
             const currentCenterX = rect.left + rect.width / 2
@@ -3937,7 +3937,7 @@
         }
 
         const currentThemeMode = computed(() => isDarkTheme.value ? "dark" : "light")
-        const currentSlidevTheme = computed(() => config.value?.theme || "default")
+        const currentSlidesTheme = computed(() => config.value?.theme || "default")
         const isNormalizeHeadings = computed(() => Boolean(config.value?.normalizeHeadingSizes))
 
         // 页面背景样式
@@ -4208,10 +4208,10 @@
           if (fm.layout === "cover" || fm.layout === "image-left" || fm.layout === "image-right") return "";
 
           if (block.id === pageFirstHeadingBlockId.value) {
-            return "slidev-page-first-heading-block";
+            return "slides-page-first-heading-block";
           }
           if (colFirstHeadingBlockIds.value.has(block.id)) {
-            return "slidev-col-first-heading-block";
+            return "slides-col-first-heading-block";
           }
           return "";
         }
@@ -4236,7 +4236,7 @@
           syncAutoplayVideos()
           if (currentSlideMaskConfig.value) {
             requestAnimationFrame(() => {
-              const layer = document.querySelector(".slidev-mask-layer")
+              const layer = document.querySelector(".slides-mask-layer")
               if (layer) void layer.offsetHeight
             })
           }
@@ -4621,7 +4621,7 @@
             // 若设置了 v-click 逐步呈现，仅在元素可见时触发动效
             if (!block.clicks || getBlockClickClass(block) === "v-click-visible") {
               const preset = String(block.motion.preset).toLowerCase().trim()
-              classes.push("slidev-motion-" + preset)
+              classes.push("slides-motion-" + preset)
             }
           }
 
@@ -4763,7 +4763,7 @@
           res = res.replace(/\(\(([0-9a-zA-Z-]+)(?:\s*(?:&#039;([^&#]*)&#039;|&quot;([^&]*)&quot;|'([^']*)'|"([^"]*)"|([^\)]+?)))?\s*\)\)/g, (match, blockId, singleEscaped, doubleEscaped, singleRaw, doubleRaw, plainRaw) => {
             const anchor = (singleEscaped ?? doubleEscaped ?? singleRaw ?? doubleRaw ?? plainRaw ?? "").trim()
             const text = anchor || `Ref(${blockId.slice(0, 8)})`
-            return `<a href="siyuan://blocks/${blockId}" data-ref-id="${blockId}" class="slidev-ref-tag">🔗 ${text}</a>`
+            return `<a href="siyuan://blocks/${blockId}" data-ref-id="${blockId}" class="slides-ref-tag">🔗 ${text}</a>`
           })
 
           // 3.1 行内数学公式 $formula$
@@ -4780,14 +4780,14 @@
           res = res.replace(/\[(.*?)\]\((.*?)\)/g, (match, title, url) => {
             if (url.startsWith("siyuan://blocks/")) {
               const blockId = url.replace("siyuan://blocks/", "").split("?")[0]
-              return `<a href="${url}" data-ref-id="${blockId}" class="slidev-ref-tag">🔗 ${title}</a>`
+              return `<a href="${url}" data-ref-id="${blockId}" class="slides-ref-tag">🔗 ${title}</a>`
             }
-            return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="slidev-link">${title}</a>`
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="slides-link">${title}</a>`
           })
 
           // 3.2.1 裸思源协议链接 (如 siyuan://blocks/20260625214150-d151ljw)
           res = res.replace(/(^|[\s(])(siyuan:\/\/blocks\/([0-9a-zA-Z-]+)(?:\?[^\s\)]*)?)/g, (match, prefix, url, blockId) => {
-            return `${prefix}<a href="${url}" data-ref-id="${blockId}" class="slidev-ref-tag">🔗 ${url}</a>`
+            return `${prefix}<a href="${url}" data-ref-id="${blockId}" class="slides-ref-tag">🔗 ${url}</a>`
           })
 
           // 3.3 加粗 **text**
@@ -4933,10 +4933,10 @@
                     videoRaw += " " + lines[i].trim()
                   }
                 }
-                const isAutoplay = block?.attributes?.["custom-slidev-autoplay"] === "true" || /autoplay/i.test(videoRaw)
-                const isLoop = block?.attributes?.["custom-slidev-loop"] === "true" || /loop/i.test(videoRaw)
-                const isMuted = block?.attributes?.["custom-slidev-muted"] === "true" || isAutoplay || /muted/i.test(videoRaw)
-                const hideControls = block?.attributes?.["custom-slidev-controls"] === "false"
+                const isAutoplay = block?.attributes?.["custom-slides-autoplay"] === "true" || /autoplay/i.test(videoRaw)
+                const isLoop = block?.attributes?.["custom-slides-loop"] === "true" || /loop/i.test(videoRaw)
+                const isMuted = block?.attributes?.["custom-slides-muted"] === "true" || isAutoplay || /muted/i.test(videoRaw)
+                const hideControls = block?.attributes?.["custom-slides-controls"] === "false"
 
                 const srcMatch = videoRaw.match(/\bsrc=["']([^"']+)["']/i)
                 const src = srcMatch ? srcMatch[1] : ""
@@ -5087,10 +5087,10 @@
           if (!md) return ""
 
           // 1. 已解析的思源引用与内联 HTML 结构直接原样保留
-          if (md.startsWith('<div class="slidev-block-ref"')) {
+          if (md.startsWith('<div class="slides-block-ref"')) {
             return md
           }
-          if (md.startsWith('<a ') && md.endsWith('</a>') && md.includes('class="slidev-ref-tag"')) {
+          if (md.startsWith('<a ') && md.endsWith('</a>') && md.includes('class="slides-ref-tag"')) {
             return `<p>${md}</p>`
           }
 
@@ -5124,7 +5124,7 @@
               const lineNo = idx + 1
               return `<span class="code-line shiki-focus"><span class="line-no">${lineNo}</span><span class="line-content">${highlightCode(line, 'ts')}</span></span>`
             }).join("\n")
-            const customMaxHeight = block?.attrs?.["custom-slidev-max-height"] || block?.maxHeight || ""
+            const customMaxHeight = block?.attrs?.["custom-slides-max-height"] || block?.maxHeight || ""
             const heightStyle = customMaxHeight ? ` style="max-height:${customMaxHeight};overflow-y:auto;"` : ""
             return `<pre class="shiki-container"${heightStyle}><span class="lang-badge">TS</span><code>${formattedLines}</code></pre>`
           }
@@ -5180,7 +5180,7 @@
               ? `<div class="shiki-slider-controls"><button class="shiki-slider-btn">◀</button><div class="shiki-slider-bar"><div class="shiki-slider-fill"></div></div><button class="shiki-slider-btn">▶</button></div>`
               : ""
 
-            const customMaxHeight = block?.attrs?.["custom-slidev-max-height"] || block?.maxHeight || ""
+            const customMaxHeight = block?.attrs?.["custom-slides-max-height"] || block?.maxHeight || ""
             const heightStyle = customMaxHeight ? ` style="max-height:${customMaxHeight};overflow-y:auto;"` : ""
 
             return `<pre class="${containerClass}"${heightStyle}>${filenameHtml}${langBadge}<code>${formattedLines}</code>${sliderHtml}</pre>`
@@ -5202,10 +5202,10 @@
           const hasListPrefix = /^(\s*)([-*+]|\d+\.)\s+/m.test(md)
           const hasHeadingTag = /(?:^|\n)\s*#{1,6}\s+/.test(md)
           if (isVideoTag && !hasListPrefix && !hasHeadingTag && !md.includes("\n")) {
-            const isAutoplay = block?.attributes?.["custom-slidev-autoplay"] === "true" || /autoplay/i.test(md)
-            const isLoop = block?.attributes?.["custom-slidev-loop"] === "true" || /loop/i.test(md)
-            const isMuted = block?.attributes?.["custom-slidev-muted"] === "true" || isAutoplay || /muted/i.test(md)
-            const hideControls = block?.attributes?.["custom-slidev-controls"] === "false"
+            const isAutoplay = block?.attributes?.["custom-slides-autoplay"] === "true" || /autoplay/i.test(md)
+            const isLoop = block?.attributes?.["custom-slides-loop"] === "true" || /loop/i.test(md)
+            const isMuted = block?.attributes?.["custom-slides-muted"] === "true" || isAutoplay || /muted/i.test(md)
+            const hideControls = block?.attributes?.["custom-slides-controls"] === "false"
 
             const srcMatch = md.match(/\bsrc=["']([^"']+)["']/i)
             const src = srcMatch ? srcMatch[1] : ""
@@ -5397,10 +5397,10 @@
 
             // 3. 视频
             if (/<video\b/i.test(trimmedSub)) {
-              const isAutoplay = block?.attributes?.["custom-slidev-autoplay"] === "true" || /autoplay/i.test(trimmedSub)
-              const isLoop = block?.attributes?.["custom-slidev-loop"] === "true" || /loop/i.test(trimmedSub)
-              const isMuted = block?.attributes?.["custom-slidev-muted"] === "true" || isAutoplay || /muted/i.test(trimmedSub)
-              const hideControls = block?.attributes?.["custom-slidev-controls"] === "false"
+              const isAutoplay = block?.attributes?.["custom-slides-autoplay"] === "true" || /autoplay/i.test(trimmedSub)
+              const isLoop = block?.attributes?.["custom-slides-loop"] === "true" || /loop/i.test(trimmedSub)
+              const isMuted = block?.attributes?.["custom-slides-muted"] === "true" || isAutoplay || /muted/i.test(trimmedSub)
+              const hideControls = block?.attributes?.["custom-slides-controls"] === "false"
 
               const srcMatch = trimmedSub.match(/\bsrc=["']([^"']+)["']/i)
               const src = srcMatch ? srcMatch[1] : ""
@@ -5481,7 +5481,7 @@
         function toggleFullScreen() {
           if (window.parent && window.parent !== window) {
             window.parent.postMessage({
-              source: "siyuan-slidev-client",
+              source: "siyuan-slides-client",
               action: "REQUEST_TOGGLE_FULLSCREEN",
               payload: {}
             }, "*")
@@ -5506,7 +5506,7 @@
           if (highlightedBlockId.value && highlightedBlockId.value === blockId) {
             highlightedBlockId.value = ""
             window.parent.postMessage({
-              source: "siyuan-slidev-client",
+              source: "siyuan-slides-client",
               action: "BLOCK_CLICKED",
               payload: {
                 currentPage: currentPageIndex.value,
@@ -5517,13 +5517,13 @@
           }
           if (e && e.target) {
             const img = e.target.closest('img')
-            if (img && img.src && !img.closest('.slidev-lightbox')) {
+            if (img && img.src && !img.closest('.slides-lightbox')) {
               e.stopPropagation()
               openLightbox('img', img.src, img.alt || '')
               return
             }
             const vid = e.target.closest('video')
-            if (vid && vid.src && !vid.closest('.slidev-lightbox') && !vid.hasAttribute('controls')) {
+            if (vid && vid.src && !vid.closest('.slides-lightbox') && !vid.hasAttribute('controls')) {
               e.stopPropagation()
               openLightbox('video', vid.src)
               return
@@ -5535,7 +5535,7 @@
           }
           highlightedBlockId.value = blockId
           window.parent.postMessage({
-            source: "siyuan-slidev-client",
+            source: "siyuan-slides-client",
             action: "BLOCK_CLICKED",
             payload: {
               currentPage: currentPageIndex.value,
@@ -5553,7 +5553,7 @@
         function openInEditor(blockId) {
           const targetId = blockId || currentSlide.value?.startBlockId || ""
           window.parent.postMessage({
-            source: "siyuan-slidev-client",
+            source: "siyuan-slides-client",
             action: "OPEN_IN_EDITOR",
             payload: {
               currentPage: currentPageIndex.value,
@@ -5562,10 +5562,10 @@
           }, "*")
         }
 
-        window.__slidevSlides = slides
-        window.__slidevCurrentPageIndex = currentPageIndex
+        window.__slidesSlides = slides
+        window.__slidesCurrentPageIndex = currentPageIndex
 
-        const slidevContext = reactive({
+        const slidesContext = reactive({
           nav: {
             next: () => nextStepOrSlide(),
             prev: () => prevStepOrSlide(),
@@ -5612,19 +5612,21 @@
           theme: computed(() => config.value.theme || 'default')
         })
 
-        window.__slidevNavigateTo = (page) => {
-          slidevContext.nav.go(page)
+        window.__slidesNavigateTo = (page) => {
+          slidesContext.nav.go(page)
         }
 
-        provide('$slidev', slidevContext)
+        provide('$slides', slidesContext)
+        provide('$slidev', slidesContext)
         const instance = getCurrentInstance()
         if (instance && instance.appContext) {
-          instance.appContext.config.globalProperties.$slidev = slidevContext
+          instance.appContext.config.globalProperties.$slides = slidesContext
+          instance.appContext.config.globalProperties.$slidev = slidesContext
         }
 
         function notifySlideChanged() {
           window.parent.postMessage({
-            source: "siyuan-slidev-client",
+            source: "siyuan-slides-client",
             action: "SLIDE_CHANGED",
             payload: {
               currentPage: currentPageIndex.value,
@@ -5651,7 +5653,7 @@
         // 双向广播频道用于双屏演讲者模式同步
         let broadcastChannel = null
         try {
-          broadcastChannel = new BroadcastChannel("siyuan-slidev-sync")
+          broadcastChannel = new BroadcastChannel("siyuan-slides-sync")
           broadcastChannel.onmessage = (e) => {
             if (e.data?.type === "SYNC_PAGE" && typeof e.data.page === "number") {
               currentPageIndex.value = Math.max(1, Math.min(e.data.page, totalPages.value || 1))
@@ -5706,14 +5708,14 @@
           // BroadcastChannel 完全失效；嵌入宿主时改为请求宿主在思源内打开演讲者页签
           if (window.parent && window.parent !== window) {
             window.parent.postMessage({
-              source: "siyuan-slidev-client",
+              source: "siyuan-slides-client",
               action: "OPEN_PRESENTER",
               payload: {}
             }, "*")
             return
           }
           // 独立浏览器打开（无宿主）时退回原行为
-          window.open("presenter.html", "SlidevPresenter", "width=1200,height=800")
+          window.open("presenter.html", "SlidesPresenter", "width=1200,height=800")
         }
 
         // 「数字+回车」跳页输入状态：右下角角标实时回显，Esc/超时清空
@@ -5854,7 +5856,7 @@
           if (!cardEl || cardEl.dataset.rendered === "1") return
           const idx = Number(cardEl.dataset.idx)
           const slide = slides.value[idx]
-          const canvas = cardEl.querySelector(".slidev-overview-canvas")
+          const canvas = cardEl.querySelector(".slides-overview-canvas")
           if (slide && canvas) canvas.innerHTML = buildOverviewThumbHtml(slide)
           cardEl.dataset.rendered = "1"
         }
@@ -5900,7 +5902,7 @@
             const el = overviewCardEls[i]
             if (!el) continue
             el.dataset.rendered = ""
-            const canvas = el.querySelector(".slidev-overview-canvas")
+            const canvas = el.querySelector(".slides-overview-canvas")
             if (canvas) canvas.innerHTML = ""
           }
         }
@@ -5926,7 +5928,7 @@
           const p = parseInt(page, 10)
           if (isNaN(p) || p < 1 || p > (totalPages.value || 0)) return
           closeOverview()
-          slidevContext.nav.go(p)
+          slidesContext.nav.go(p)
         }
 
         function openOverview() {
@@ -6056,7 +6058,7 @@
                 const total = totalPages.value || 0
                 if (!isNaN(page) && page >= 1 && page <= total) {
                   hideJumpIndicator()
-                  slidevContext.nav.go(page)
+                  slidesContext.nav.go(page)
                 } else {
                   flashJumpInvalid()
                 }
@@ -6072,7 +6074,7 @@
             if (e.key === "Escape" && highlightedBlockId.value) {
               highlightedBlockId.value = ""
               window.parent.postMessage({
-                source: "siyuan-slidev-client",
+                source: "siyuan-slides-client",
                 action: "BLOCK_CLICKED",
                 payload: {
                   currentPage: currentPageIndex.value,
@@ -6111,7 +6113,7 @@
         function canElementScrollY(el, deltaY) {
           let cur = el
           while (cur && cur !== document.body && cur !== document.documentElement) {
-            if (cur.classList && (cur.classList.contains('slidev-viewport') || cur.classList.contains('slidev-stage') || cur.classList.contains('slidev-container'))) {
+            if (cur.classList && (cur.classList.contains('slides-viewport') || cur.classList.contains('slides-stage') || cur.classList.contains('slides-container'))) {
               break
             }
             const style = window.getComputedStyle(cur)
@@ -6197,7 +6199,7 @@
               return
             }
             const target = e.target instanceof Element ? e.target : e.target?.parentElement
-            const isMediaItself = target && target.closest && target.closest('.slidev-lightbox-img, .slidev-lightbox-video')
+            const isMediaItself = target && target.closest && target.closest('.slides-lightbox-img, .slides-lightbox-video')
             if (!isMediaItself) {
               e.preventDefault()
               e.stopPropagation()
@@ -6220,7 +6222,7 @@
               e.stopPropagation()
               const blockTitle = (refEl.innerText || refEl.title || '').trim()
               window.parent.postMessage({
-                source: "siyuan-slidev-client",
+                source: "siyuan-slides-client",
                 action: "OPEN_PEEK_DRAWER",
                 payload: {
                   peekType: "siyuan",
@@ -6241,7 +6243,7 @@
               const cleanBlockId = href.replace('siyuan://blocks/', '').split('?')[0]
               const blockTitle = (linkEl.innerText || linkEl.title || '').trim()
               window.parent.postMessage({
-                source: "siyuan-slidev-client",
+                source: "siyuan-slides-client",
                 action: "OPEN_PEEK_DRAWER",
                 payload: {
                   peekType: "siyuan",
@@ -6254,7 +6256,7 @@
               e.preventDefault()
               e.stopPropagation()
               window.parent.postMessage({
-                source: "siyuan-slidev-client",
+                source: "siyuan-slides-client",
                 action: "OPEN_PEEK_DRAWER",
                 payload: {
                   peekType: "web",
@@ -6267,7 +6269,7 @@
               e.preventDefault()
               e.stopPropagation()
               window.parent.postMessage({
-                source: "siyuan-slidev-client",
+                source: "siyuan-slides-client",
                 action: "OPEN_PEEK_DRAWER",
                 payload: {
                   peekType: "web",
@@ -6285,7 +6287,7 @@
 
           // 页面组件排查：若点击命中任意内容块、控件或媒体，均视为组件，不触发翻页
           const isComponent = targetEl.closest(
-            '.slide-block, .controls-bar, .image-right-img-container, .image-left-img-container, img, video, audio, button, a, input, textarea, select, [data-clickable], [data-ref-id], .slidev-toc, .empty-state'
+            '.slide-block, .controls-bar, .image-right-img-container, .image-left-img-container, img, video, audio, button, a, input, textarea, select, [data-clickable], [data-ref-id], .slides-toc, .empty-state'
           )
           if (isComponent) return
 
@@ -6293,7 +6295,7 @@
           if (highlightedBlockId.value) {
             highlightedBlockId.value = ""
             window.parent.postMessage({
-              source: "siyuan-slidev-client",
+              source: "siyuan-slides-client",
               action: "BLOCK_CLICKED",
               payload: {
                 currentPage: currentPageIndex.value,
@@ -6374,7 +6376,7 @@
               }
             }
           } catch (err) {
-            console.warn("[slidev-capture] 视频帧提取异常，降级海报处理:", err)
+            console.warn("[slides-capture] 视频帧提取异常，降级海报处理:", err)
           }
 
           if (poster) return poster
@@ -6389,7 +6391,7 @@
 
           if (!window.htmlToImage) {
             window.parent.postMessage({
-              source: "siyuan-slidev-client",
+              source: "siyuan-slides-client",
               action: "CAPTURE_ERROR",
               payload: { captureError: "沙箱内部 html-to-image 截图组件未就绪" }
             }, "*")
@@ -6399,7 +6401,7 @@
           const vp = stageContainerRef.value ? stageContainerRef.value.querySelector(".slide-viewport") : null
           if (!vp) {
             window.parent.postMessage({
-              source: "siyuan-slidev-client",
+              source: "siyuan-slides-client",
               action: "CAPTURE_ERROR",
               payload: { captureError: "未找到 .slide-viewport 视口元素" }
             }, "*")
@@ -6451,7 +6453,7 @@
               const snapshotUrl = await captureVideoSnapshot(video)
               if (snapshotUrl) {
                 const img = document.createElement("img")
-                img.className = (video.className || "") + " slidev-video-export-snapshot"
+                img.className = (video.className || "") + " slides-video-export-snapshot"
                 img.src = snapshotUrl
                 img.style.cssText = video.style.cssText
                 const comp = window.getComputedStyle(video)
@@ -6489,7 +6491,7 @@
             try {
               const dataUrl = await captureSinglePage(currentPageIndex.value)
               window.parent.postMessage({
-                source: "siyuan-slidev-client",
+                source: "siyuan-slides-client",
                 action: "CAPTURE_PAGE_DONE",
                 payload: {
                   captureResult: {
@@ -6502,7 +6504,7 @@
               }, "*")
             } catch (err) {
               window.parent.postMessage({
-                source: "siyuan-slidev-client",
+                source: "siyuan-slides-client",
                 action: "CAPTURE_ERROR",
                 payload: { captureError: String(err && err.message ? err.message : err) }
               }, "*")
@@ -6522,7 +6524,7 @@
               if (isCaptureCancelled) break
 
               window.parent.postMessage({
-                source: "siyuan-slidev-client",
+                source: "siyuan-slides-client",
                 action: "CAPTURE_PROGRESS",
                 payload: {
                   captureProgress: {
@@ -6537,7 +6539,7 @@
               if (isCaptureCancelled) break
 
               window.parent.postMessage({
-                source: "siyuan-slidev-client",
+                source: "siyuan-slides-client",
                 action: "CAPTURE_PAGE_DONE",
                 payload: {
                   captureResult: {
@@ -6552,14 +6554,14 @@
 
             if (!isCaptureCancelled) {
               window.parent.postMessage({
-                source: "siyuan-slidev-client",
+                source: "siyuan-slides-client",
                 action: "CAPTURE_COMPLETE",
                 payload: { totalPages: total }
               }, "*")
             }
           } catch (err) {
             window.parent.postMessage({
-              source: "siyuan-slidev-client",
+              source: "siyuan-slides-client",
               action: "CAPTURE_ERROR",
               payload: { captureError: String(err && err.message ? err.message : err) }
             }, "*")
@@ -6575,7 +6577,7 @@
         // 监听来自宿主 (Plugin Host) 的 postMessage 消息
         function onHostMessage(event) {
           const data = event.data
-          if (!data || data.source !== "siyuan-slidev-host") return
+          if (!data || data.source !== "siyuan-slides-host") return
 
           switch (data.action) {
             case "UPDATE_SLIDES":
@@ -6719,7 +6721,7 @@
 
           // 告知宿主客户端沙箱已准备就绪并上报初始页码
           window.parent.postMessage({
-            source: "siyuan-slidev-client",
+            source: "siyuan-slides-client",
             action: "CLIENT_READY",
             payload: {
               currentPage: currentPageIndex.value,
@@ -6782,7 +6784,7 @@
           getLayoutGridStyle,
           updateScale,
           currentThemeMode,
-          currentSlidevTheme,
+          currentSlidesTheme,
           pageBackgroundStyle,
           slideImageRightStyle,
           currentSlideImageUrl,
@@ -6802,7 +6804,7 @@
           normalBlocks,
           isDarkTheme,
           isMaxStep,
-          slidevContext,
+          slidesContext,
           isAbsoluteBlock,
           openInEditor,
           slideClicksPlan,
@@ -6854,7 +6856,7 @@
       const iconComp = {
         render() {
           return h('span', {
-            class: 'slidev-icon',
+            class: 'slides-icon',
             style: { display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle' },
             innerHTML: svg
           })

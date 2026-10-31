@@ -4,13 +4,13 @@ import { scanAndTagListSuperBlocks } from "../src/compiler/list-column-scanner"
 import { scanAndTagSuperBlocks } from "../src/compiler/superblock-scanner"
 import { parseRatioToGridCols } from "../src/utils"
 import { renderSlideBlocksToHtml } from "../src/export/slide-layout-renderer"
-import { buildSlidevDocument } from "../src/compiler/slidev-ast-builder"
-import type { ISiYuanBlockNode, ISlidevVirtualPage } from "../src/types/slidev-protocol"
+import { buildSlidesDocument } from "../src/compiler/slides-ast-builder"
+import type { ISiYuanBlockNode, ISlidesVirtualPage } from "../src/types/slides-protocol"
 import {
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_LAYOUT_RATIO,
   ATTR_ELEM_SLOT,
-} from "../src/types/slidev-protocol"
+} from "../src/types/slides-protocol"
 
 describe("Layout Ratio & SuperBlock Width Integration (分栏与图文布局比例及超级块宽度识别)", () => {
   describe("extractSuperBlockWidthRatios (思源超级块子块宽度解析)", () => {
@@ -121,7 +121,7 @@ describe("Layout Ratio & SuperBlock Width Integration (分栏与图文布局比�
   })
 
   describe("自动识别与手动优先策略协同", () => {
-    it("超级块扫描器不应自动将提取的比例写入 custom-slidev-layout-ratio（由用户在面板显式点击读取按钮应用）", () => {
+    it("超级块扫描器不应自动将提取的比例写入 custom-slides-layout-ratio（由用户在面板显式点击读取按钮应用）", () => {
       const docId = "doc-root"
       const blocks: ISiYuanBlockNode[] = [
         {
@@ -162,7 +162,7 @@ describe("Layout Ratio & SuperBlock Width Integration (分栏与图文布局比�
       expect(ratioChange).toBeUndefined()
     })
 
-    it("用户已在页面手动配置 custom-slidev-layout-ratio 时，以手动为准，不被超级块覆盖", () => {
+    it("用户已在页面手动配置 custom-slides-layout-ratio 时，以手动为准，不被超级块覆盖", () => {
       const docId = "doc-root"
       const blocks: ISiYuanBlockNode[] = [
         {
@@ -211,7 +211,7 @@ describe("Layout Ratio & SuperBlock Width Integration (分栏与图文布局比�
 
   describe("导出渲染管线中的比例注入 (slide-layout-renderer)", () => {
     it("双栏布局渲染应包含由 layoutRatio 生成的 grid-template-columns", () => {
-      const slide: ISlidevVirtualPage = {
+      const slide: ISlidesVirtualPage = {
         pageIndex: 1,
         startBlockId: "p1",
         frontmatter: {
@@ -231,7 +231,7 @@ describe("Layout Ratio & SuperBlock Width Integration (分栏与图文布局比�
     })
 
     it("三栏布局渲染应包含三栏比例样式", () => {
-      const slide: ISlidevVirtualPage = {
+      const slide: ISlidesVirtualPage = {
         pageIndex: 2,
         startBlockId: "p2",
         frontmatter: {
@@ -253,7 +253,7 @@ describe("Layout Ratio & SuperBlock Width Integration (分栏与图文布局比�
     })
 
     it("图文分栏布局渲染应包含图文比例样式", () => {
-      const slide: ISlidevVirtualPage = {
+      const slide: ISlidesVirtualPage = {
         pageIndex: 3,
         startBlockId: "p3",
         frontmatter: {
@@ -301,7 +301,7 @@ describe("Layout Ratio & SuperBlock Width Integration (分栏与图文布局比�
         },
       ]
 
-      const doc = buildSlidevDocument("doc-test", {}, blocks)
+      const doc = buildSlidesDocument("doc-test", {}, blocks)
       expect(doc.slides.length).toBe(1)
       expect(doc.slides[0].frontmatter.layoutRatio).toBe("1:2")
     })

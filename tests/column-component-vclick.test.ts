@@ -1,13 +1,13 @@
 import { describe, it, expect, vi } from "vitest"
 import { DocumentCompilerService } from "../src/compiler/document-compiler"
-import { buildSlidevDocument } from "../src/compiler/slidev-ast-builder"
+import { buildSlidesDocument } from "../src/compiler/slides-ast-builder"
 import { computeSlideClicksPlan, getBlockClickStatus } from "../src/engine/v-click-resolver"
-import type { ISiYuanBlockNode, ISlidevBlockItem } from "../src/types/slidev-protocol"
-import { ATTR_PAGE_LAYOUT, ATTR_ELEM_SLOT, ATTR_ELEM_CLICK } from "../src/types/slidev-protocol"
+import type { ISiYuanBlockNode, ISlidesBlockItem } from "../src/types/slides-protocol"
+import { ATTR_PAGE_LAYOUT, ATTR_ELEM_SLOT, ATTR_ELEM_CLICK } from "../src/types/slides-protocol"
 
 describe("表头多栏分栏内组件逐步呈现 (v-click) 级联调度集成测试", () => {
   describe("1. 编译器 AST 列表项子块解构与属性隔离", () => {
-    it("分栏列表项包含多个子块时，应展开为独立的 ISlidevBlockItem 并隔离各自 clicks 属性", () => {
+    it("分栏列表项包含多个子块时，应展开为独立的 ISlidesBlockItem 并隔离各自 clicks 属性", () => {
       const mockBlocks: ISiYuanBlockNode[] = [
         {
           id: "h-title",
@@ -80,7 +80,7 @@ describe("表头多栏分栏内组件逐步呈现 (v-click) 级联调度集成�
         },
       ]
 
-      const doc = buildSlidevDocument("doc-test", { [ATTR_PAGE_LAYOUT]: "cols-header" }, mockBlocks, {
+      const doc = buildSlidesDocument("doc-test", { [ATTR_PAGE_LAYOUT]: "cols-header" }, mockBlocks, {
         theme: "default",
         aspectRatio: "16/9",
       })
@@ -139,7 +139,7 @@ describe("表头多栏分栏内组件逐步呈现 (v-click) 级联调度集成�
         },
       ]
 
-      const doc = buildSlidevDocument("doc-test", { [ATTR_PAGE_LAYOUT]: "cols-header" }, mockBlocks, {
+      const doc = buildSlidesDocument("doc-test", { [ATTR_PAGE_LAYOUT]: "cols-header" }, mockBlocks, {
         theme: "default",
         aspectRatio: "16/9",
       })
@@ -154,7 +154,7 @@ describe("表头多栏分栏内组件逐步呈现 (v-click) 级联调度集成�
 
   describe("2. computeSlideClicksPlan 级联步进调度算法", () => {
     it("场景 A：主容器开启 +1，基础子组件同时在第 1 步出现，独立配置子组件顺延在第 2 步出现", () => {
-      const blocks: ISlidevBlockItem[] = [
+      const blocks: ISlidesBlockItem[] = [
         {
           id: "col1-title",
           type: "p",
@@ -201,7 +201,7 @@ describe("表头多栏分栏内组件逐步呈现 (v-click) 级联调度集成�
     })
 
     it("场景 B：主容器未开启逐步，基础子组件始终可见，独立配置子组件顺延在第 1 步出现", () => {
-      const blocks: ISlidevBlockItem[] = [
+      const blocks: ISlidesBlockItem[] = [
         {
           id: "col1-title",
           type: "p",
@@ -243,7 +243,7 @@ describe("表头多栏分栏内组件逐步呈现 (v-click) 级联调度集成�
     })
 
     it("场景 C：双栏均有子组件，不同栏之间各司其职，步长连贯递增", () => {
-      const blocks: ISlidevBlockItem[] = [
+      const blocks: ISlidesBlockItem[] = [
         // 栏 1：容器 +1，基础块 1 个，独立块 1 个
         {
           id: "c1-p1",
@@ -337,7 +337,7 @@ describe("表头多栏分栏内组件逐步呈现 (v-click) 级联调度集成�
         },
       ]
 
-      const doc = buildSlidevDocument("doc-test", { [ATTR_PAGE_LAYOUT]: "cols-header" }, mockBlocks, {
+      const doc = buildSlidesDocument("doc-test", { [ATTR_PAGE_LAYOUT]: "cols-header" }, mockBlocks, {
         theme: "default",
         aspectRatio: "16/9",
       })
@@ -396,7 +396,7 @@ describe("表头多栏分栏内组件逐步呈现 (v-click) 级联调度集成�
         },
       ]
 
-      const doc = buildSlidevDocument("doc-test", { [ATTR_PAGE_LAYOUT]: "cols-header" }, mockBlocks, {
+      const doc = buildSlidesDocument("doc-test", { [ATTR_PAGE_LAYOUT]: "cols-header" }, mockBlocks, {
         theme: "default",
         aspectRatio: "16/9",
       })
@@ -467,7 +467,7 @@ describe("表头多栏分栏内组件逐步呈现 (v-click) 级联调度集成�
         },
       ]
 
-      const doc = buildSlidevDocument("doc-test", { [ATTR_PAGE_LAYOUT]: "cols-header" }, mockBlocks, {
+      const doc = buildSlidesDocument("doc-test", { [ATTR_PAGE_LAYOUT]: "cols-header" }, mockBlocks, {
         theme: "default",
         aspectRatio: "16/9",
       })
@@ -543,7 +543,7 @@ describe("表头多栏分栏内组件逐步呈现 (v-click) 级联调度集成�
         },
       ]
 
-      const doc = buildSlidevDocument("doc-test", { [ATTR_PAGE_LAYOUT]: "cols-header" }, mockBlocks, {
+      const doc = buildSlidesDocument("doc-test", { [ATTR_PAGE_LAYOUT]: "cols-header" }, mockBlocks, {
         theme: "default",
         aspectRatio: "16/9",
       })
@@ -613,7 +613,7 @@ describe("表头多栏分栏内组件逐步呈现 (v-click) 级联调度集成�
         },
       ]
 
-      const doc = buildSlidevDocument("doc-test", { [ATTR_PAGE_LAYOUT]: "cols-header" }, mockBlocks, {
+      const doc = buildSlidesDocument("doc-test", { [ATTR_PAGE_LAYOUT]: "cols-header" }, mockBlocks, {
         theme: "default",
         aspectRatio: "16/9",
       })
@@ -678,7 +678,7 @@ describe("表头多栏分栏内组件逐步呈现 (v-click) 级联调度集成�
         },
       ]
 
-      const doc = buildSlidevDocument("doc-test", { [ATTR_PAGE_LAYOUT]: "cols-header" }, mockBlocks, {
+      const doc = buildSlidesDocument("doc-test", { [ATTR_PAGE_LAYOUT]: "cols-header" }, mockBlocks, {
         theme: "default",
         aspectRatio: "16/9",
       })

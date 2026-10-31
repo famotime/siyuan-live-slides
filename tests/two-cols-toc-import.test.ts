@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest"
-import { parseSlidevPresentation } from "../src/compiler/slidev-importer"
-import { buildSlidevDocument } from "../src/compiler/slidev-ast-builder"
+import { parseSlidesPresentation } from "../src/compiler/slides-importer"
+import { buildSlidesDocument } from "../src/compiler/slides-ast-builder"
 import {
   buildTocTree,
   convertBlockToHtml,
   renderSlideBlocksToHtml,
   renderTocHtml,
 } from "../src/export/markdown-renderer"
-import type { ISiYuanBlockNode, ISlidevVirtualPage } from "../src/types/slidev-protocol"
+import type { ISiYuanBlockNode, ISlidesVirtualPage } from "../src/types/slides-protocol"
 
 describe("Two-Cols & Toc Import and Rendering Pipeline", () => {
   const userSnippet = `---
@@ -30,14 +30,14 @@ The title will be inferred from your slide content, or you can override it with 
 <Toc text-sm minDepth="1" maxDepth="2" />`
 
   it("should parse snippet with cleanSlots: false, preserving ::right:: and layoutClass", () => {
-    const res = parseSlidevPresentation(userSnippet, { cleanSlots: false })
+    const res = parseSlidesPresentation(userSnippet, { cleanSlots: false })
 
     expect(res.slides.length).toBe(1)
     const s1 = res.slides[0]
 
     // 验证两栏与间距属性完整保留
-    expect(s1.pageAttrs["custom-slidev-layout"]).toBe("two-cols")
-    expect(s1.pageAttrs["custom-slidev-layoutClass"]).toBe("gap-16")
+    expect(s1.pageAttrs["custom-slides-layout"]).toBe("two-cols")
+    expect(s1.pageAttrs["custom-slides-layoutClass"]).toBe("gap-16")
 
     // 验证插槽标记 ::right:: 未被吞噬
     expect(s1.rawMarkdown).toContain("::right::")
@@ -56,11 +56,11 @@ The title will be inferred from your slide content, or you can override it with 
     ]
 
     const docAttrs = {
-      "custom-slidev-layout": "two-cols",
-      "custom-slidev-layoutClass": "gap-16",
+      "custom-slides-layout": "two-cols",
+      "custom-slides-layoutClass": "gap-16",
     }
 
-    const doc = buildSlidevDocument("doc-toc-test", docAttrs, mockBlocks)
+    const doc = buildSlidesDocument("doc-toc-test", docAttrs, mockBlocks)
     expect(doc.slides.length).toBe(1)
     const slide = doc.slides[0]
 
@@ -78,7 +78,7 @@ The title will be inferred from your slide content, or you can override it with 
   })
 
   it("should render Toc component into structured HTML list instead of escaped text", () => {
-    const mockSlides: ISlidevVirtualPage[] = [
+    const mockSlides: ISlidesVirtualPage[] = [
       {
         pageIndex: 1,
         startBlockId: "p1",
@@ -123,12 +123,12 @@ The title will be inferred from your slide content, or you can override it with 
 
     // 2. 测试 renderTocHtml 生成的 HTML
     const tocHtml = renderTocHtml(mockSlides, 4, { minDepth: 1, maxDepth: 2, textSm: true })
-    expect(tocHtml).toContain('class="slidev-toc text-sm"')
-    expect(tocHtml).toContain("slidev-toc-list-level-1")
-    expect(tocHtml).toContain("slidev-toc-list-level-2")
+    expect(tocHtml).toContain('class="slides-toc text-sm"')
+    expect(tocHtml).toContain("slides-toc-list-level-1")
+    expect(tocHtml).toContain("slides-toc-list-level-2")
     expect(tocHtml).toContain("Welcome to Slidev")
     expect(tocHtml).toContain("Navigation")
-    expect(tocHtml).toContain("slidev-toc-item-active")
+    expect(tocHtml).toContain("slides-toc-item-active")
 
     // 3. 测试 convertBlockToHtml 对 <Toc ... /> 的渲染
     const blockToc = {
@@ -138,13 +138,13 @@ The title will be inferred from your slide content, or you can override it with 
     }
     const html = convertBlockToHtml(blockToc, { allSlides: mockSlides, currentPageIndex: 4 })
     expect(html).not.toContain("&lt;Toc")
-    expect(html).toContain("slidev-toc text-sm")
+    expect(html).toContain("slides-toc text-sm")
     expect(html).toContain("Welcome to Slidev")
     expect(html).toContain("Navigation")
   })
 
   it("should render two-cols layout with layoutClass and correct left/right slot separation", () => {
-    const slide: ISlidevVirtualPage = {
+    const slide: ISlidesVirtualPage = {
       pageIndex: 1,
       startBlockId: "p1",
       frontmatter: { layout: "two-cols", layoutClass: "gap-16" },
@@ -172,6 +172,6 @@ The title will be inferred from your slide content, or you can override it with 
     expect(html).not.toContain("::right::")
 
     // 验证右栏包含 Toc 渲染结果
-    expect(html).toContain("slidev-toc text-sm")
+    expect(html).toContain("slides-toc text-sm")
   })
 })

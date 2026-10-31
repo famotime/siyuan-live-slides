@@ -1,5 +1,5 @@
 import JSZip from "jszip"
-import type { IParsedSlidevPresentation } from "./slidev-importer"
+import type { IParsedSlidesPresentation } from "./slides-importer"
 
 export const MEDIA_EXTENSIONS = /\.(?:png|jpe?g|gif|svg|webp|avif|ico|bmp|tiff?|mp4|webm|mp3|wav|ogg)$/i
 export const CODE_EXTENSIONS = /\.(?:ts|js|mjs|cjs|jsx|tsx|vue|json|css|scss|less|html|py|rs|go|java|c|cpp|h|sh|bash|yaml|yml|toml)$/i
@@ -21,7 +21,7 @@ export interface IZipExtractionResult {
 /**
  * 解包 Slidev 项目 Zip 压缩包，自动探索入口 slides.md、关联子页面与静态素材
  */
-export async function extractSlidevZip(
+export async function extractSlidesZip(
   zipInput: ArrayBuffer | Blob | Uint8Array,
 ): Promise<IZipExtractionResult> {
   const zip = await JSZip.loadAsync(zipInput)
@@ -89,12 +89,12 @@ export async function extractSlidevZip(
 
 /**
  * 重写演示包中的媒体路径为思源资产路径 (assets/...)
- * 覆盖：Markdown 正文图片、HTML <img> 标签、页面 custom-slidev-background 属性
+ * 覆盖：Markdown 正文图片、HTML <img> 标签、页面 custom-slides-background 属性
  */
 export function rewritePresentationAssetPaths(
-  presentation: IParsedSlidevPresentation,
+  presentation: IParsedSlidesPresentation,
   assetPathMap: Record<string, string>,
-): IParsedSlidevPresentation {
+): IParsedSlidesPresentation {
   if (Object.keys(assetPathMap).length === 0) {
     return presentation
   }
@@ -137,11 +137,11 @@ export function rewritePresentationAssetPaths(
   for (const slide of presentation.slides) {
     slide.rawMarkdown = rewriteContentString(slide.rawMarkdown)
 
-    if (slide.pageAttrs["custom-slidev-background"]) {
-      const bg = slide.pageAttrs["custom-slidev-background"]
+    if (slide.pageAttrs["custom-slides-background"]) {
+      const bg = slide.pageAttrs["custom-slides-background"]
       const target = resolveSiyuanPath(bg)
       if (target) {
-        slide.pageAttrs["custom-slidev-background"] = target
+        slide.pageAttrs["custom-slides-background"] = target
       }
     }
   }
@@ -150,11 +150,11 @@ export function rewritePresentationAssetPaths(
   presentation.flattenedMarkdown = rewriteContentString(presentation.flattenedMarkdown)
 
   // 重写文档根属性中的背景
-  if (presentation.docRootAttrs["custom-slidev-background"]) {
-    const bg = presentation.docRootAttrs["custom-slidev-background"]
+  if (presentation.docRootAttrs["custom-slides-background"]) {
+    const bg = presentation.docRootAttrs["custom-slides-background"]
     const target = resolveSiyuanPath(bg)
     if (target) {
-      presentation.docRootAttrs["custom-slidev-background"] = target
+      presentation.docRootAttrs["custom-slides-background"] = target
     }
   }
 

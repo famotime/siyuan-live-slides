@@ -13,7 +13,7 @@ describe("速览抽屉代理继承：必须复用宿主默认 Session", () => {
     // 「设置 → 网络代理」；Electron 的 session.setProxy 按 Session 生效，一旦使用 partition
     // 就会落到无代理的独立 Session，公司内网访问外网恒为空白页
     expect(drawerSource).not.toMatch(/<webview[\s\S]*?partition=/)
-    expect(drawerSource).not.toContain("persist:slidev-peek")
+    expect(drawerSource).not.toContain("persist:slides-peek")
   })
 
   it("应保留 allowpopups 与 useragent 能力，并写明复用默认 Session 的原因", () => {

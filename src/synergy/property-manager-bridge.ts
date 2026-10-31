@@ -1,26 +1,26 @@
 import {
   ATTR_PAGE_TRANSITION,
-} from "../types/slidev-protocol"
-import type { ISlidevPresetTemplate } from "./preset-templates"
-import { SLIDEV_PRESET_TEMPLATES } from "./preset-templates"
+} from "../types/slides-protocol"
+import type { ISlidesPresetTemplate } from "./preset-templates"
+import { SLIDES_PRESET_TEMPLATES } from "./preset-templates"
 
 export class PropertyManagerBridge {
   /**
-   * 获取预设 Slidev 属性模板列表
+   * 获取预设即现属性模板列表
    */
-  public getPresetTemplates(): ISlidevPresetTemplate[] {
-    return SLIDEV_PRESET_TEMPLATES
+  public getPresetTemplates(): ISlidesPresetTemplate[] {
+    return SLIDES_PRESET_TEMPLATES
   }
 
   /**
-   * 生成检索全库所有包含 Slidev 属性的块 SQL
+   * 生成检索全库所有包含即现属性的块 SQL
    */
-  public buildScanSlidevBlocksSql(attrKeyPrefix = "custom-slidev-"): string {
+  public buildScanSlidesBlocksSql(attrKeyPrefix = "custom-slides-"): string {
     return `SELECT block_id, name, value FROM attributes WHERE name LIKE '${attrKeyPrefix}%' ORDER BY block_id ASC`
   }
 
   /**
-   * 生成统计全库 Slidev 转场效果分布的 SQL
+   * 生成统计全库即现转场效果分布的 SQL
    */
   public buildTransitionStatsSql(): string {
     return `SELECT value, count(1) as count FROM attributes WHERE name = '${ATTR_PAGE_TRANSITION}' GROUP BY value ORDER BY count DESC`
@@ -61,7 +61,7 @@ export class PropertyManagerBridge {
     sqlExecutor: (sqlStr: string) => Promise<any[]>,
     setAttrsFn: (blockId: string, attrs: Record<string, string>) => Promise<any>,
   ): Promise<{ updatedCount: number }> {
-    const findSql = `SELECT block_id FROM attributes WHERE name = 'custom-slidev-layout' AND value = '${fromLayout}'`
+    const findSql = `SELECT block_id FROM attributes WHERE name = 'custom-slides-layout' AND value = '${fromLayout}'`
     const rows = await sqlExecutor(findSql)
     let updatedCount = 0
 
@@ -69,7 +69,7 @@ export class PropertyManagerBridge {
       for (const row of rows) {
         const blockId = row.block_id || row.blockId
         if (blockId) {
-          await setAttrsFn(blockId, { "custom-slidev-layout": toLayout })
+          await setAttrsFn(blockId, { "custom-slides-layout": toLayout })
           updatedCount++
         }
       }
@@ -94,10 +94,10 @@ export class PropertyManagerBridge {
    */
   public formatTransitionSummary(statsRows: Array<{ value: string; count: number | string }>): string {
     if (!statsRows || statsRows.length === 0) {
-      return "全库目前暂无已设置 Slidev 转场效果的块"
+      return "全库目前暂无已设置即现转场效果的块"
     }
     const items = statsRows.map(r => `${r.value}: ${r.count} 个`).join("，")
-    return `全库 Slidev 转场分布统计：${items}`
+    return `全库即现转场分布统计：${items}`
   }
 }
 

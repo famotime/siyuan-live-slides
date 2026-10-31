@@ -4,21 +4,21 @@ import {
   navigateDockToBlock,
   updateInspectorCurrentBlock,
 } from "@/main"
-import { purgeStaleDomSlidevAttrs as purgeStaleDomAttrs, syncDomBlockAttrs } from "@/sync/dom-attr-sync"
+import { purgeStaleDomSlidesAttrs as purgeStaleDomAttrs, syncDomBlockAttrs } from "@/sync/dom-attr-sync"
 import { mirrorBlockSelection, clearBlockSelectionHighlight } from "@/sync/selection-mirror"
 import { BlockAttrCache, buildCompiledIalIndex } from "@/sync/inspector-sync-cache"
-import type { ISlidevDocument } from "@/types/slidev-protocol"
+import type { ISlidesDocument } from "@/types/slides-protocol"
 import {
   ATTR_ELEM_NOTE,
   ATTR_ELEM_ROLE,
   ATTR_PAGE_LAYOUT,
   ATTR_ELEM_SLOT,
   ATTR_ELEM_CLICK,
-} from "@/types/slidev-protocol"
+} from "@/types/slides-protocol"
 
 export class InspectorSyncCoordinator {
   private attrCache = new BlockAttrCache()
-  private compiledIalIndex: { doc: ISlidevDocument | null; map: Map<string, Record<string, string>> } = {
+  private compiledIalIndex: { doc: ISlidesDocument | null; map: Map<string, Record<string, string>> } = {
     doc: null,
     map: new Map(),
   }
@@ -31,7 +31,7 @@ export class InspectorSyncCoordinator {
    */
   private async resolveBlockAttrs(
     id: string,
-    latestCompiledDoc: ISlidevDocument | null,
+    latestCompiledDoc: ISlidesDocument | null,
   ): Promise<Record<string, string>> {
     if (!id) return {}
     const override = globalDocumentCompiler.getBlockAttrOverride(id)
@@ -54,7 +54,7 @@ export class InspectorSyncCoordinator {
 
   /** 从编译模型取块 IAL（同一文档对象只构建一次索引） */
   private getCompiledIal(
-    doc: ISlidevDocument | null,
+    doc: ISlidesDocument | null,
     id: string,
   ): Record<string, string> | undefined {
     if (!doc) return undefined
@@ -157,7 +157,7 @@ export class InspectorSyncCoordinator {
     blockId: string,
     app: any,
     currentDocId: string,
-    latestCompiledDoc: ISlidevDocument | null,
+    latestCompiledDoc: ISlidesDocument | null,
     page?: number,
   ): boolean {
     if (!blockId) {
@@ -170,7 +170,7 @@ export class InspectorSyncCoordinator {
         const divId = currentSlide.startBlockId || ""
         const pageLayout = currentSlide.frontmatter?.layout || ""
         const initialAttrs: Record<string, string> = {
-          "custom-slidev-layout": pageLayout,
+          "custom-slides-layout": pageLayout,
           ...(currentSlide.frontmatter as any),
         }
         updateInspectorCurrentBlock({
@@ -236,11 +236,11 @@ export class InspectorSyncCoordinator {
       this.resolveBlockAttrs(blockId, latestCompiledDoc).then(async attrs => {
         if (pageDividerId && !pageDividerLayout) {
           const cachedOverride = globalDocumentCompiler.getBlockAttrOverride(pageDividerId)
-          if (cachedOverride?.[ATTR_PAGE_LAYOUT] || cachedOverride?.["custom-slidev-layout"]) {
-            pageDividerLayout = cachedOverride[ATTR_PAGE_LAYOUT] || cachedOverride["custom-slidev-layout"] || ""
+          if (cachedOverride?.[ATTR_PAGE_LAYOUT] || cachedOverride?.["custom-slides-layout"]) {
+            pageDividerLayout = cachedOverride[ATTR_PAGE_LAYOUT] || cachedOverride["custom-slides-layout"] || ""
           } else {
             const dividerAttrs = await this.resolveBlockAttrs(pageDividerId, latestCompiledDoc)
-            pageDividerLayout = dividerAttrs[ATTR_PAGE_LAYOUT] || dividerAttrs["custom-slidev-layout"] || ""
+            pageDividerLayout = dividerAttrs[ATTR_PAGE_LAYOUT] || dividerAttrs["custom-slides-layout"] || ""
             if (dividerAttrs && Object.keys(dividerAttrs).length > 0) {
               globalDocumentCompiler.setBlockAttrOverride(pageDividerId, dividerAttrs)
             }
@@ -268,7 +268,7 @@ export class InspectorSyncCoordinator {
     blockId: string,
     blockType: string,
     currentDocId: string,
-    latestCompiledDoc: ISlidevDocument | null,
+    latestCompiledDoc: ISlidesDocument | null,
   ): Promise<void> {
     let effectiveEl = blockEl
     let effectiveId = blockId
@@ -282,7 +282,7 @@ export class InspectorSyncCoordinator {
         const calloutAttrs = await this.resolveBlockAttrs(calloutId, latestCompiledDoc)
         const override = globalDocumentCompiler.getBlockAttrOverride(calloutId) || {}
         const mergedAttrs = { ...calloutAttrs, ...override }
-        if (mergedAttrs[ATTR_ELEM_NOTE] || mergedAttrs["slidev-note"]) {
+        if (mergedAttrs[ATTR_ELEM_NOTE] || mergedAttrs["slides-note"]) {
           effectiveEl = calloutEl
           effectiveId = calloutId
           effectiveType = "NodeCallout"
@@ -313,7 +313,7 @@ export class InspectorSyncCoordinator {
     if (isDivider) {
       // 当前激活块本身即为分页符 (---)，其开启并承载了分隔行下一页的页面配置与演讲备注
       pageDividerId = effectiveId
-      pageDividerLayout = finalAttrs[ATTR_PAGE_LAYOUT] || finalAttrs["custom-slidev-layout"] || ""
+      pageDividerLayout = finalAttrs[ATTR_PAGE_LAYOUT] || finalAttrs["custom-slides-layout"] || ""
     } else {
       let prev = topBlockEl.previousElementSibling
       while (prev) {
@@ -358,8 +358,8 @@ export class InspectorSyncCoordinator {
     // 深度持久化回溯：若确定了前置分页符，查缓存、编译模型并直接调用思源内核 API 获取持久化属性
     if (pageDividerId) {
       const cachedOverride = globalDocumentCompiler.getBlockAttrOverride(pageDividerId)
-      if (cachedOverride && (ATTR_PAGE_LAYOUT in cachedOverride || "custom-slidev-layout" in cachedOverride)) {
-        pageDividerLayout = cachedOverride[ATTR_PAGE_LAYOUT] || cachedOverride["custom-slidev-layout"] || ""
+      if (cachedOverride && (ATTR_PAGE_LAYOUT in cachedOverride || "custom-slides-layout" in cachedOverride)) {
+        pageDividerLayout = cachedOverride[ATTR_PAGE_LAYOUT] || cachedOverride["custom-slides-layout"] || ""
       }
       if (!pageDividerLayout && latestCompiledDoc?.slides) {
         const matched = latestCompiledDoc.slides.find(s => s.startBlockId === pageDividerId)
@@ -369,7 +369,7 @@ export class InspectorSyncCoordinator {
       }
       if (!pageDividerLayout) {
         const dividerAttrs = await this.resolveBlockAttrs(pageDividerId, latestCompiledDoc)
-        pageDividerLayout = dividerAttrs[ATTR_PAGE_LAYOUT] || dividerAttrs["custom-slidev-layout"] || ""
+        pageDividerLayout = dividerAttrs[ATTR_PAGE_LAYOUT] || dividerAttrs["custom-slides-layout"] || ""
         if (dividerAttrs && Object.keys(dividerAttrs).length > 0) {
           globalDocumentCompiler.setBlockAttrOverride(pageDividerId, dividerAttrs)
         }
@@ -378,21 +378,21 @@ export class InspectorSyncCoordinator {
     } else if (currentDocId) {
       // 若当前块位于首个分页符之前（即第 1 页），页面版式源自文档根属性
       const docOverride = globalDocumentCompiler.getBlockAttrOverride(currentDocId)
-      if (docOverride && (ATTR_PAGE_LAYOUT in docOverride || "custom-slidev-layout" in docOverride)) {
-        pageDividerLayout = docOverride[ATTR_PAGE_LAYOUT] || docOverride["custom-slidev-layout"] || ""
+      if (docOverride && (ATTR_PAGE_LAYOUT in docOverride || "custom-slides-layout" in docOverride)) {
+        pageDividerLayout = docOverride[ATTR_PAGE_LAYOUT] || docOverride["custom-slides-layout"] || ""
       } else if (!pageDividerLayout && latestCompiledDoc?.slides?.[0]?.frontmatter?.layout) {
         pageDividerLayout = latestCompiledDoc.slides[0].frontmatter.layout
       }
     }
 
     // 对齐当前激活块 DOM 属性与真实属性：若 DOM 上有残留属性但真实已无，立即清除
-    const currentDomLayout = effectiveEl.getAttribute(ATTR_PAGE_LAYOUT) || effectiveEl.getAttribute("custom-slidev-layout")
-    const expectedLayout = finalAttrs[ATTR_PAGE_LAYOUT] || finalAttrs["custom-slidev-layout"] || ""
+    const currentDomLayout = effectiveEl.getAttribute(ATTR_PAGE_LAYOUT) || effectiveEl.getAttribute("custom-slides-layout")
+    const expectedLayout = finalAttrs[ATTR_PAGE_LAYOUT] || finalAttrs["custom-slides-layout"] || ""
     if (currentDomLayout && currentDomLayout !== expectedLayout) {
       syncDomBlockAttrs(effectiveId, { [ATTR_PAGE_LAYOUT]: expectedLayout })
     }
-    const currentDomRole = effectiveEl.getAttribute(ATTR_ELEM_ROLE) || effectiveEl.getAttribute("custom-slidev-role")
-    const expectedRole = finalAttrs[ATTR_ELEM_ROLE] || finalAttrs["custom-slidev-role"] || ""
+    const currentDomRole = effectiveEl.getAttribute(ATTR_ELEM_ROLE) || effectiveEl.getAttribute("custom-slides-role")
+    const expectedRole = finalAttrs[ATTR_ELEM_ROLE] || finalAttrs["custom-slides-role"] || ""
     if (currentDomRole && currentDomRole !== expectedRole) {
       syncDomBlockAttrs(effectiveId, { [ATTR_ELEM_ROLE]: expectedRole })
     }
@@ -413,13 +413,13 @@ export class InspectorSyncCoordinator {
         parentContainerSlot = parentFinalAttrs[ATTR_ELEM_SLOT] || ""
         parentContainerClicks = parentFinalAttrs[ATTR_ELEM_CLICK] || ""
 
-        const parentExpectedLayout = parentFinalAttrs[ATTR_PAGE_LAYOUT] || parentFinalAttrs["custom-slidev-layout"] || ""
-        const parentDomLayout = parentLiEl.getAttribute(ATTR_PAGE_LAYOUT) || parentLiEl.getAttribute("custom-slidev-layout")
+        const parentExpectedLayout = parentFinalAttrs[ATTR_PAGE_LAYOUT] || parentFinalAttrs["custom-slides-layout"] || ""
+        const parentDomLayout = parentLiEl.getAttribute(ATTR_PAGE_LAYOUT) || parentLiEl.getAttribute("custom-slides-layout")
         if (parentDomLayout && parentDomLayout !== parentExpectedLayout) {
           syncDomBlockAttrs(parentLiId, { [ATTR_PAGE_LAYOUT]: parentExpectedLayout })
         }
-        const parentExpectedRole = parentFinalAttrs[ATTR_ELEM_ROLE] || parentFinalAttrs["custom-slidev-role"] || ""
-        const parentDomRole = parentLiEl.getAttribute(ATTR_ELEM_ROLE) || parentLiEl.getAttribute("custom-slidev-role")
+        const parentExpectedRole = parentFinalAttrs[ATTR_ELEM_ROLE] || parentFinalAttrs["custom-slides-role"] || ""
+        const parentDomRole = parentLiEl.getAttribute(ATTR_ELEM_ROLE) || parentLiEl.getAttribute("custom-slides-role")
         if (parentDomRole && parentDomRole !== parentExpectedRole) {
           syncDomBlockAttrs(parentLiId, { [ATTR_ELEM_ROLE]: parentExpectedRole })
         }
@@ -485,7 +485,7 @@ export class InspectorSyncCoordinator {
   /**
    * 收集编译模型与内存覆盖层中的所有合法版式与角色，巡检并清理 Protyle 编辑区中残留的幽灵 DOM 属性与角标
    */
-  public purgeStaleDomSlidevAttrs(doc: ISlidevDocument): void {
+  public purgeStaleDomSlidesAttrs(doc: ISlidesDocument): void {
     if (typeof document === "undefined" || !doc) return
 
     const validAttrsMap = new Map<string, Record<string, string>>()

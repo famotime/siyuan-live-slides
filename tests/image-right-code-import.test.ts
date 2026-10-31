@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { parseSlidevPresentation } from '../src/compiler/slidev-importer'
+import { parseSlidesPresentation } from '../src/compiler/slides-importer'
 import { parsePageAttrs } from '../src/compiler/scope-mapper'
 import { convertBlockToHtml, renderSlideBlocksToHtml } from '../src/export/markdown-renderer'
-import { ATTR_PAGE_IMAGE, ATTR_PAGE_LAYOUT } from '../src/types/slidev-protocol'
+import { ATTR_PAGE_IMAGE, ATTR_PAGE_LAYOUT } from '../src/types/slides-protocol'
 
 const SAMPLE_SLIDE_MD = `---
 layout: image-right
@@ -44,7 +44,7 @@ doubled.value = 2
 
 describe('image-right and Code Highlighting Import & Render Audit', () => {
   it('正确解析 image-right 布局与 image 属性', () => {
-    const parsed = parseSlidevPresentation(SAMPLE_SLIDE_MD)
+    const parsed = parseSlidesPresentation(SAMPLE_SLIDE_MD)
     expect(parsed.slides.length).toBe(1)
     const slide = parsed.slides[0]
 
@@ -57,7 +57,7 @@ describe('image-right and Code Highlighting Import & Render Audit', () => {
   })
 
   it('导入时自动展开外部代码切片 <<< @/snippets/external.ts#snippet 为 TS 代码块', () => {
-    const parsed = parseSlidevPresentation(SAMPLE_SLIDE_MD)
+    const parsed = parseSlidesPresentation(SAMPLE_SLIDE_MD)
     const slide = parsed.slides[0]
 
     // 验证切片被展开为代码块
@@ -116,12 +116,12 @@ describe('image-right and Code Highlighting Import & Render Audit', () => {
     expect(highlighted).toContain('<span class="token-keyword">from</span>')
   })
 
-  it('buildSlidevDocument 正确为第一页继承文档级/分割线头部配置中的 image 属性', async () => {
-    const { buildSlidevDocument } = await import('../src/compiler/slidev-ast-builder')
+  it('buildSlidesDocument 正确为第一页继承文档级/分割线头部配置中的 image 属性', async () => {
+    const { buildSlidesDocument } = await import('../src/compiler/slides-ast-builder')
     // 场景 1：仅文档根级设置了 layout 和 image
     const docAttrs = {
-      'custom-slidev-layout': 'image-right',
-      'custom-slidev-image': 'https://cover.sli.dev',
+      'custom-slides-layout': 'image-right',
+      'custom-slides-image': 'https://cover.sli.dev',
     }
     const blocks = [
       {
@@ -133,7 +133,7 @@ describe('image-right and Code Highlighting Import & Render Audit', () => {
       },
     ]
 
-    const doc = buildSlidevDocument('doc-1', docAttrs, blocks as any)
+    const doc = buildSlidesDocument('doc-1', docAttrs, blocks as any)
     expect(doc.slides.length).toBe(1)
     expect(doc.slides[0].frontmatter.layout).toBe('image-right')
     expect(doc.slides[0].frontmatter.image).toBe('https://cover.sli.dev')
@@ -145,7 +145,7 @@ describe('image-right and Code Highlighting Import & Render Audit', () => {
         type: 'tb',
         content: '---',
         markdown: '---',
-        ial: { 'custom-slidev-layout': 'image-right' },
+        ial: { 'custom-slides-layout': 'image-right' },
       },
       {
         id: 'heading-1',
@@ -155,7 +155,7 @@ describe('image-right and Code Highlighting Import & Render Audit', () => {
         ial: {},
       },
     ]
-    const doc2 = buildSlidevDocument('doc-2', docAttrs, blocksWithDivider as any)
+    const doc2 = buildSlidesDocument('doc-2', docAttrs, blocksWithDivider as any)
     expect(doc2.slides.length).toBe(1)
     expect(doc2.slides[0].frontmatter.layout).toBe('image-right')
     expect(doc2.slides[0].frontmatter.image).toBe('https://cover.sli.dev')

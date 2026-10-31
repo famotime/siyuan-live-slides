@@ -6,11 +6,11 @@ import {
 
 describe("DocumentCompiler - parseIALString (IAL 解析纯函数)", () => {
   it("应正确解析标准带 {: } 包裹的双引号属性", () => {
-    const ial = '{: custom-slidev-layout="cover" custom-slidev-transition="fade" }'
+    const ial = '{: custom-slides-layout="cover" custom-slides-transition="fade" }'
     const result = parseIALString(ial)
     expect(result).toEqual({
-      "custom-slidev-layout": "cover",
-      "custom-slidev-transition": "fade",
+      "custom-slides-layout": "cover",
+      "custom-slides-transition": "fade",
     })
   })
 
@@ -34,8 +34,8 @@ describe("DocumentCompiler - parseIALString (IAL 解析纯函数)", () => {
 describe("DocumentCompilerService - compile (编排编译服务)", () => {
   it("应完整编排获取块、映射 IAL、解析块引用并返回 Slidev 虚拟文档", async () => {
     const mockGetBlockAttrs = vi.fn().mockResolvedValue({
-      "custom-slidev-theme": "seriph",
-      "custom-slidev-aspect-ratio": "16/9",
+      "custom-slides-theme": "seriph",
+      "custom-slides-aspect-ratio": "16/9",
     })
     const mockGetChildBlocks = vi.fn().mockResolvedValue([
       { id: "b1", type: "NodeHeading", content: "标题", markdown: "# 演示标题" },
@@ -45,9 +45,9 @@ describe("DocumentCompilerService - compile (编排编译服务)", () => {
     const mockSql = vi.fn().mockImplementation((query: string) => {
       if (query.includes("root_id = 'doc-1'")) {
         return Promise.resolve([
-          { id: "b1", ial: '{: custom-slidev-motion="bounce" }' },
-          { id: "b2", ial: '{: custom-slidev-layout="two-cols" custom-slidev-transition="slide-left" }' },
-          { id: "b3", ial: '{: custom-slidev-slot="left" }' },
+          { id: "b1", ial: '{: custom-slides-motion="bounce" }' },
+          { id: "b2", ial: '{: custom-slides-layout="two-cols" custom-slides-transition="slide-left" }' },
+          { id: "b3", ial: '{: custom-slides-slot="left" }' },
         ])
       }
       if (query.includes("ref-1")) {
@@ -113,12 +113,12 @@ describe("DocumentCompilerService - compile (编排编译服务)", () => {
       { id: "b2", type: "NodeThematicBreak", content: "", markdown: "---" },
       { id: "b3", type: "NodeParagraph", content: "原本为正文", markdown: "> [!NOTE] 💡 演讲备注\n> 这是刚设为讲稿的提词内容" },
     ])
-    // 模拟 SQLite 存在延迟，尚未同步 b3 的 custom-slidev-note 属性
+    // 模拟 SQLite 存在延迟，尚未同步 b3 的 custom-slides-note 属性
     const mockSql = vi.fn().mockImplementation((query: string) => {
       if (query.includes("root_id = 'doc-delay'")) {
         return Promise.resolve([
           { id: "b1", ial: "{: }" },
-          { id: "b2", ial: "{: custom-slidev-layout=\"default\" }" },
+          { id: "b2", ial: "{: custom-slides-layout=\"default\" }" },
           { id: "b3", ial: "{: }" }, // 数据库中依然是空的！
         ])
       }
@@ -138,7 +138,7 @@ describe("DocumentCompilerService - compile (编排编译服务)", () => {
     expect(docBefore.slides[1].blocks.some(b => b.id === "b3")).toBe(true)
 
     // 2. 注入即时覆盖缓存 (模拟用户在 Dock 中点击设为讲稿备注)
-    compiler.setBlockAttrOverride("b3", { "custom-slidev-note": "true" })
+    compiler.setBlockAttrOverride("b3", { "custom-slides-note": "true" })
 
     // 3. 再次编译，即便 SQLite 依然返回空 IAL，b3 也应立即被识别为讲稿备注块
     const docAfter = await compiler.compile("doc-delay")
@@ -165,16 +165,16 @@ describe("DocumentCompilerService - compile (编排编译服务)", () => {
       // 验证查询包含了 LIMIT 99999
       expect(query).toContain("LIMIT 99999")
       if (query.includes("FROM blocks")) {
-        // 模拟 blocks.ial 中并未包含 custom-slidev-role
+        // 模拟 blocks.ial 中并未包含 custom-slides-role
         return Promise.resolve([
           { id: "h1", ial: "{: id=\"h1\" }" },
           { id: "img1", ial: "{: id=\"img1\" }" },
         ])
       }
       if (query.includes("FROM attributes")) {
-        // attributes 表中包含已落库的 custom-slidev-role
+        // attributes 表中包含已落库的 custom-slides-role
         return Promise.resolve([
-          { block_id: "img1", name: "custom-slidev-role", value: "background" },
+          { block_id: "img1", name: "custom-slides-role", value: "background" },
         ])
       }
       return Promise.resolve([])

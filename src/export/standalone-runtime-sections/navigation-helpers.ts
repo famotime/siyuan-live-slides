@@ -13,7 +13,7 @@ export function getNavigationHelpersSection(): string {
         viewport.style.width = baseWidth + "px";
         viewport.style.height = baseHeight + "px";
         viewport.style.transform = "translate(-50%, -50%) scale(" + scale + ")";
-        viewport.style.setProperty("--slidev-slide-scale", scale);
+        viewport.style.setProperty("--slides-slide-scale", scale);
         if (isFull) document.body.classList.add("is-fullscreen");
         else document.body.classList.remove("is-fullscreen");
       }

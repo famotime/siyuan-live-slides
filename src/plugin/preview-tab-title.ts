@@ -1,6 +1,6 @@
 import { sql } from "@/api"
 import { getPreviewTabInstance } from "@/main"
-import type { ISlidevDocument } from "@/types/slidev-protocol"
+import type { ISlidesDocument } from "@/types/slides-protocol"
 
 /**
  * 预览页签标题服务宿主契约：插件主类天然实现该接口，
@@ -8,7 +8,7 @@ import type { ISlidevDocument } from "@/types/slidev-protocol"
  */
 export interface IPreviewTabTitleHost {
   currentDocId: string
-  latestCompiledDoc: ISlidevDocument | null
+  latestCompiledDoc: ISlidesDocument | null
   previewTab: any
   getActiveDocumentId(): string
   /** 标题解析钩子：插件实例提供同名方法（可被测试打桩）；缺省时回退到模块内三级降级解析 */
@@ -141,7 +141,7 @@ export function sanitizeFileName(name: string): string {
  * 5. 降级为 "presentation"
  */
 export async function resolveDocumentTitle(
-  doc?: ISlidevDocument | null,
+  doc?: ISlidesDocument | null,
   docId?: string,
   hostOrPlugin?: any,
 ): Promise<string> {

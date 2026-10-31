@@ -36,7 +36,7 @@ export function getBlockRenderingSection(): string {
         const div = document.createElement("div");
         div.className = "slide-block" + (extraClass ? " " + extraClass : "");
         if (block && block.motion && block.motion.preset && block.motion.preset !== "none") {
-          div.classList.add("slidev-motion-" + block.motion.preset.toLowerCase());
+          div.classList.add("slides-motion-" + block.motion.preset.toLowerCase());
           if (typeof block.motion.duration === "number" && block.motion.duration > 0) {
             div.style.setProperty("--motion-duration", block.motion.duration + "ms");
           }
@@ -46,7 +46,7 @@ export function getBlockRenderingSection(): string {
         }
         const md = block.rawMarkdown || block.content || "";
 
-        if (md.includes('class="slidev-block-ref"') || md.includes('class="slidev-ref-tag"')) {
+        if (md.includes('class="slides-block-ref"') || md.includes('class="slides-ref-tag"')) {
           div.innerHTML = md;
           return div;
         }
@@ -102,17 +102,17 @@ export function getBlockRenderingSection(): string {
           div.innerHTML = "<h" + level + ">" + th + "</h" + level + ">";
         }
         else if (md.startsWith("\`\`\`")) {
-          const customMaxHeight = block?.attributes?.["custom-slidev-max-height"] || block?.attrs?.["custom-slidev-max-height"] || block?.maxHeight || "";
+          const customMaxHeight = block?.attributes?.["custom-slides-max-height"] || block?.attrs?.["custom-slides-max-height"] || block?.maxHeight || "";
           const heightStyle = customMaxHeight ? ' style="max-height:' + customMaxHeight + ';overflow-y:auto;"' : "";
           div.innerHTML = "<pre" + heightStyle + "><code>" + md.slice(3, -3) + "</code></pre>";
         }
         else if (md.startsWith("> ")) div.innerHTML = "<blockquote><p>" + md.slice(2) + "</p></blockquote>";
         else if ((/<video\b/i.test(md) || (block && (block.type === "video" || block.type === "NodeVideo"))) && !/^(\s*)([-*+]|\d+\.)\s+/m.test(md) && !hasHeadingTag && !md.includes("\n")) {
           div.classList.add("slide-video-container", "slide-media-container", "slide-media-block");
-          const isAutoplay = block && block.attributes && block.attributes["custom-slidev-autoplay"] === "true";
-          const isLoop = block && block.attributes && block.attributes["custom-slidev-loop"] === "true";
-          const isMuted = block && block.attributes && (block.attributes["custom-slidev-muted"] === "true" || isAutoplay);
-          const hideControls = block && block.attributes && block.attributes["custom-slidev-controls"] === "false";
+          const isAutoplay = block && block.attributes && block.attributes["custom-slides-autoplay"] === "true";
+          const isLoop = block && block.attributes && block.attributes["custom-slides-loop"] === "true";
+          const isMuted = block && block.attributes && (block.attributes["custom-slides-muted"] === "true" || isAutoplay);
+          const hideControls = block && block.attributes && block.attributes["custom-slides-controls"] === "false";
           let videoHtml = md;
           if (hideControls) videoHtml = videoHtml.replace(/\bcontrols(?:="[^"]*")?/gi, "").trim();
           else if (!videoHtml.includes("controls")) videoHtml = videoHtml.replace("<video", "<video controls");
@@ -167,10 +167,10 @@ export function getBlockRenderingSection(): string {
                     vHtml += " " + lines[i].trim();
                   }
                 }
-                const isAutoplay = block && block.attributes && block.attributes["custom-slidev-autoplay"] === "true";
-                const isLoop = block && block.attributes && block.attributes["custom-slidev-loop"] === "true";
-                const isMuted = block && block.attributes && (block.attributes["custom-slidev-muted"] === "true" || isAutoplay);
-                const hideControls = block && block.attributes && block.attributes["custom-slidev-controls"] === "false";
+                const isAutoplay = block && block.attributes && block.attributes["custom-slides-autoplay"] === "true";
+                const isLoop = block && block.attributes && block.attributes["custom-slides-loop"] === "true";
+                const isMuted = block && block.attributes && (block.attributes["custom-slides-muted"] === "true" || isAutoplay);
+                const hideControls = block && block.attributes && block.attributes["custom-slides-controls"] === "false";
                 if (hideControls) vHtml = vHtml.replace(/\bcontrols(?:="[^"]*")?/gi, "").trim();
                 else if (!vHtml.includes("controls")) vHtml = vHtml.replace("<video", "<video controls");
                 if (isAutoplay && !vHtml.includes("autoplay")) vHtml = vHtml.replace("<video", "<video autoplay playsinline");

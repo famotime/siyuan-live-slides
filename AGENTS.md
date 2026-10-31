@@ -1,9 +1,9 @@
-# Repository Guide: siyuan-slidev
+# Repository Guide: siyuan-live-slides
 
 ## 1. Project Overview
 
-`siyuan-slidev` is a SiYuan Note plugin that integrates the modern presentation framework Slidev into SiYuan's block-level ecosystem.
-All presentation layouts, animations, transitions, and presenter notes are stored cleanly in native SiYuan IAL block attributes (`custom-slidev-*`) with zero pollution to the Markdown content.
+`siyuan-live-slides` is a SiYuan Note plugin that integrates the modern presentation framework Slidev into SiYuan's block-level ecosystem.
+All presentation layouts, animations, transitions, and presenter notes are stored cleanly in native SiYuan IAL block attributes (`custom-slides-*`) with zero pollution to the Markdown content.
 
 Stack: Vue 3, TypeScript, Vite, Vitest, Sass, SiYuan Plugin API.
 
@@ -27,8 +27,8 @@ Stack: Vue 3, TypeScript, Vite, Vitest, Sass, SiYuan Plugin API.
   - Delegates document compilation to `src/compiler/document-compiler.ts`.
 - **Compiler Pipeline**: `src/compiler/`
   - `document-compiler.ts`: Orchestrates AST retrieval, IAL parsing, dynamic block ref resolution, and sandbox updates.
-  - `slidev-ast-builder.ts` & `directive-wrapper.ts`: Converts SiYuan block AST into Slidev presentation models and handles Frontmatter/v-click/v-motion/Shiki directives.
-  - `slidev-importer.ts` & `frontmatter-parser.ts`: Parses external Slidev Markdown, handles YAML frontmatter state machine, and unfolds code slice directives.
+  - `slides-ast-builder.ts` & `directive-wrapper.ts`: Converts SiYuan block AST into Slidev presentation models and handles Frontmatter/v-click/v-motion/Shiki directives.
+  - `slides-importer.ts` & `frontmatter-parser.ts`: Parses external Slidev Markdown, handles YAML frontmatter state machine, and unfolds code slice directives.
   - `html-cleaner.ts`: Cleans and converts HTML containers and grids to native SiYuan blocks.
   - `superblock-scanner.ts` & `list-column-scanner.ts`: Scans superblocks, allocates list column slots, and infers image roles.
   - `block-ref-resolver.ts`: Recursively resolves SiYuan block references (`((id))`).
@@ -47,13 +47,13 @@ Stack: Vue 3, TypeScript, Vite, Vitest, Sass, SiYuan Plugin API.
   - `standalone-client-runtime.ts`: Self-contained presentation player client runtime script template.
   - `pdf-exporter.ts` & `pdf-template-styles.ts`: Generates 16:9 landscape PDF slides and handles isolated @page print styles.
 - **Presentation Inspector UI**: `src/ui/`
-  - `dock/SlidevInspectorDockView.vue`: Master container dock view managing state and layout orchestration.
+  - `dock/SlidesInspectorDockView.vue`: Master container dock view managing state and layout orchestration.
   - `dock/useInspectorActions.ts`: Encapsulates kernel API mutations, notes conversion, and divider management.
-  - `components/SlidevImportDialog.vue` & `components/useSlidevImport.ts`: Slidev project import dialog and composable orchestrating asset uploads, document creation, and slot backfilling.
+  - `components/SlidesImportDialog.vue` & `components/useSlidesImport.ts`: Slidev project import dialog and composable orchestrating asset uploads, document creation, and slot backfilling.
   - `components/PageInspectorSection.vue`: Slide layout, transition, background, notes.
   - `components/BlockInspectorSection.vue`: Block `v-click` animation, column slot, Shiki code spotlight.
   - `components/DocInspectorSection.vue`: Presentation theme, aspect ratio, AI toolbar, quick actions.
-  - `tab/SlidevPreviewTab.vue`: Split-screen live preview tab.
+  - `tab/SlidesPreviewTab.vue`: Split-screen live preview tab.
 - **Testing & Mocks**: `tests/`
   - 67 test suites (608 tests) covering compiler, cleaner, renderer, inspector state, actions (facade + domain modules), coordinator, engine, export runtime sections, import composable, peek, and synergy.
   - `tests/mocks/siyuan.ts`: Host plugin mock aliased in `vitest.config.ts` for running tests in pure Node environments.

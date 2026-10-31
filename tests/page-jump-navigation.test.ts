@@ -3,20 +3,20 @@ import path from "node:path"
 import { describe, expect, it } from "vitest"
 import { buildStandaloneHtml } from "../src/export/single-html-exporter"
 import { getStandaloneClientRuntimeScript } from "../src/export/standalone-client-runtime"
-import type { ISlidevDocument } from "../src/types/slidev-protocol"
+import type { ISlidesDocument } from "../src/types/slides-protocol"
 
 /**
  * 「数字+回车」跳页功能三处播放面的内容断言：
  * 宿主页签补位监听 / 内置沙箱播放器 / standalone 单文件导出播放器
  */
 describe("Page Jump Navigation (放映中数字+回车跳页)", () => {
-  const indexHtmlPath = path.resolve(__dirname, "../public/slidev-client/index.html")
+  const indexHtmlPath = path.resolve(__dirname, "../public/slides-client/index.html")
   const indexHtml = fs.readFileSync(indexHtmlPath, "utf-8")
-  const previewTabPath = path.resolve(__dirname, "../src/ui/tab/SlidevPreviewTab.vue")
+  const previewTabPath = path.resolve(__dirname, "../src/ui/tab/SlidesPreviewTab.vue")
   const previewTabVue = fs.readFileSync(previewTabPath, "utf-8")
   const runtimeScript = getStandaloneClientRuntimeScript()
 
-  const dummyDoc: ISlidevDocument = {
+  const dummyDoc: ISlidesDocument = {
     docId: "doc-jump-test",
     config: {
       theme: "default",
@@ -45,7 +45,7 @@ describe("Page Jump Navigation (放映中数字+回车跳页)", () => {
     fullMarkdown: "# Slide 1\n---\n# Slide 2",
   }
 
-  describe("1. 内置沙箱播放器 (public/slidev-client/index.html)", () => {
+  describe("1. 内置沙箱播放器 (public/slides-client/index.html)", () => {
     it("应包含右下角跳页角标元素与样式（含越界红色抖动态）", () => {
       expect(indexHtml).toContain('<div class="jump-page-indicator" v-show="jumpDisplay"')
       expect(indexHtml).toMatch(/\.jump-page-indicator\s*\{/)
@@ -58,7 +58,7 @@ describe("Page Jump Navigation (放映中数字+回车跳页)", () => {
     it("keydown 应处理数字缓冲、回车跳转、Esc 清空，且复用 nav.go 落到初始 click 状态", () => {
       expect(indexHtml).toContain('if (/^[0-9]$/.test(e.key)) {')
       expect(indexHtml).toContain('if (e.key === "Enter" && jumpDisplay.value) {')
-      expect(indexHtml).toContain("slidevContext.nav.go(page)")
+      expect(indexHtml).toContain("slidesContext.nav.go(page)")
       expect(indexHtml).toContain('if (e.key === "Escape" && (jumpDisplay.value || jumpInvalid.value)) {')
       // 空闲清空与越界抖动提示时长
       expect(indexHtml).toContain("const JUMP_IDLE_CLEAR_MS = 1500")
@@ -80,7 +80,7 @@ describe("Page Jump Navigation (放映中数字+回车跳页)", () => {
     })
   })
 
-  describe("2. 宿主页签补位监听 (SlidevPreviewTab.vue)", () => {
+  describe("2. 宿主页签补位监听 (SlidesPreviewTab.vue)", () => {
     it("页签根容器应挂接 keydown 补位监听并接入跳页状态机", () => {
       expect(previewTabVue).toContain('@keydown="onTabKeydown"')
       expect(previewTabVue).toContain("createPageJumpInput({")

@@ -1,4 +1,4 @@
-import type { ISiYuanBlockNode } from "../types/slidev-protocol"
+import type { ISiYuanBlockNode } from "../types/slides-protocol"
 import { isPageBreak } from "../compiler/scope-mapper"
 
 export interface ISplitSuggestion {

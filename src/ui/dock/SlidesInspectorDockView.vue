@@ -1,9 +1,9 @@
 <template>
-  <div class="spm-slidev-inspector">
+  <div class="spm-slides-inspector">
     <!-- 面板顶栏 -->
     <div class="spm-inspector-topbar">
       <div class="spm-inspector-title">
-        <svg class="slidev-icon" style="fill: none !important" aria-hidden="true" viewBox="0 0 24 24">
+        <svg class="slides-icon" style="fill: none !important" aria-hidden="true" viewBox="0 0 24 24">
           <rect x="2" y="3" width="20" height="14" rx="2" />
           <line x1="8" y1="21" x2="16" y2="21" />
           <line x1="12" y1="17" x2="12" y2="21" />
@@ -18,7 +18,7 @@
           aria-label="导入 Slidev 演示文档 (.md / .zip)"
           @click="showImportDialog = true"
         >
-          <SlidevIcon name="import" />
+          <SlidesIcon name="import" />
           <span>导入</span>
         </button>
 
@@ -28,7 +28,7 @@
           aria-label="在下方分屏开启幻灯片预览 (Alt+P)"
           @click="onOpenBottomPreview"
         >
-          <SlidevIcon name="split-preview" />
+          <SlidesIcon name="split-preview" />
           <span>分屏预览</span>
         </button>
       </div>
@@ -43,7 +43,7 @@
           :aria-label="copyNotice || '点击复制 ID: ' + (activeBlockId || currentDocId)"
           @click="onCopyBlockId"
         >
-          <SlidevIcon name="copy" />
+          <SlidesIcon name="copy" />
           <span>#{{ displayShortId }}</span>
         </span>
       </div>
@@ -164,7 +164,7 @@
     </div>
 
     <!-- 导入 Slidev 演示对话框 -->
-    <SlidevImportDialog
+    <SlidesImportDialog
       v-if="showImportDialog"
       @close="showImportDialog = false"
       @success="onImportSuccess"
@@ -177,8 +177,8 @@ import { ref, computed, inject } from 'vue'
 import PageInspectorSection from '@/ui/components/PageInspectorSection.vue'
 import BlockInspectorSection from '@/ui/components/BlockInspectorSection.vue'
 import DocInspectorSection from '@/ui/components/DocInspectorSection.vue'
-import SlidevImportDialog from '@/ui/components/SlidevImportDialog.vue'
-import SlidevIcon from '@/ui/components/SlidevIcon.vue'
+import SlidesImportDialog from '@/ui/components/SlidesImportDialog.vue'
+import SlidesIcon from '@/ui/components/SlidesIcon.vue'
 import { extractImageUrl } from '@/utils'
 import { globalDocumentCompiler } from '@/compiler/document-compiler'
 import {
@@ -192,8 +192,8 @@ import { useInspectorActions } from '@/ui/dock/useInspectorActions'
 import { createPageAttrResolver } from '@/ui/dock/useInspectorPageOverrides'
 import type {
   IActiveBlockInfo,
-  ISlidevDocument,
-} from '@/types/slidev-protocol'
+  ISlidesDocument,
+} from '@/types/slides-protocol'
 import {
   ATTR_DOC_THEME,
   ATTR_DOC_ASPECT_RATIO,
@@ -221,7 +221,7 @@ import {
   ATTR_VIDEO_MUTED,
   ATTR_VIDEO_CONTROLS,
   ROLE_BACKGROUND,
-} from '@/types/slidev-protocol'
+} from '@/types/slides-protocol'
 
 const plugin = inject<any>('plugin')
 const showImportDialog = ref(false)
@@ -246,7 +246,7 @@ const currentPageDividerLayout = ref('')
 const parentContainerId = ref('')
 const parentContainerSlot = ref('')
 const parentContainerClicks = ref('')
-const latestDoc = ref<ISlidevDocument | null>(null)
+const latestDoc = ref<ISlidesDocument | null>(null)
 const saveStatus = ref('')
 const copyNotice = ref('')
 
@@ -360,11 +360,11 @@ const currentSlideNoteBlockId = computed(() => targetSlide.value?.noteBlocks?.[0
 
 const currentSlideLayout = computed(() => {
   if (isDivider.value) {
-    const directLayout = activeBlockAttrs.value[ATTR_PAGE_LAYOUT] || activeBlockAttrs.value['custom-slidev-layout']
+    const directLayout = activeBlockAttrs.value[ATTR_PAGE_LAYOUT] || activeBlockAttrs.value['custom-slides-layout']
     if (directLayout) return directLayout
   }
 
-  const blockSlot = activeBlockAttrs.value[ATTR_ELEM_SLOT] || activeBlockAttrs.value['custom-slidev-slot']
+  const blockSlot = activeBlockAttrs.value[ATTR_ELEM_SLOT] || activeBlockAttrs.value['custom-slides-slot']
   if (blockSlot && (['col-1', 'col-2', 'col-3'].includes(blockSlot) || /^col-\d+$/.test(blockSlot))) {
     return 'cols-header'
   }
@@ -595,7 +595,7 @@ const isSuperBlock = computed(() => {
 })
 
 const targetPageIndex = computed(() => targetSlide.value?.pageIndex || 1)
-const isNoteBlock = computed(() => Boolean(activeBlockAttrs.value[ATTR_ELEM_NOTE] || activeBlockAttrs.value['slidev-note']))
+const isNoteBlock = computed(() => Boolean(activeBlockAttrs.value[ATTR_ELEM_NOTE] || activeBlockAttrs.value['slides-note']))
 
 // 内容块属性绑定
 function isCurrentBlockMainText(): boolean {
@@ -668,11 +668,11 @@ const docDefaultTransition = computed(() => latestDoc.value?.config?.defaultTran
 const docSpacing = computed(() => latestDoc.value?.config?.spacing || activeBlockAttrs.value[ATTR_DOC_SPACING] || 'normal')
 
 const imageRole = computed(() => {
-  const role = activeBlockAttrs.value[ATTR_ELEM_ROLE] || activeBlockAttrs.value['slidev-role']
+  const role = activeBlockAttrs.value[ATTR_ELEM_ROLE] || activeBlockAttrs.value['slides-role']
   if (role === ROLE_BACKGROUND || activeBlockAttrs.value[ATTR_PAGE_BACKGROUND] === 'true') {
     return 'background'
   }
-  const layout = activeBlockAttrs.value[ATTR_PAGE_LAYOUT] || activeBlockAttrs.value['slidev-layout']
+  const layout = activeBlockAttrs.value[ATTR_PAGE_LAYOUT] || activeBlockAttrs.value['slides-layout']
   if (layout === 'image-left' || layout === 'image-right') {
     return layout
   }
@@ -694,7 +694,7 @@ const hasBlockAttrs = computed(() => {
     activeBlockAttrs.value[ATTR_ELEM_SLOT] ||
     activeBlockAttrs.value[ATTR_ELEM_SHIKI_LINES] ||
     activeBlockAttrs.value[ATTR_ELEM_NOTE] ||
-    activeBlockAttrs.value['slidev-note'] ||
+    activeBlockAttrs.value['slides-note'] ||
     activeBlockAttrs.value[ATTR_ELEM_ROLE] ||
     activeBlockAttrs.value[ATTR_PAGE_LAYOUT] ||
     activeBlockAttrs.value[ATTR_VIDEO_AUTOPLAY] ||
@@ -864,7 +864,7 @@ function onOpenPresenter() {
 
 function onAiAutoSplit() {
   if (plugin?.executeCommand) {
-    plugin.executeCommand('slidevAiSplit')
+    plugin.executeCommand('slidesAiSplit')
   }
 }
 
@@ -892,7 +892,7 @@ defineExpose({
     elemMaxHeight.value = info.attrs[ATTR_ELEM_MAX_HEIGHT] || ''
     isImageExplicit.value = Boolean(info.isImage)
   },
-  updateDocument(doc: ISlidevDocument) {
+  updateDocument(doc: ISlidesDocument) {
     latestDoc.value = doc
     currentDocId.value = doc.docId
   },

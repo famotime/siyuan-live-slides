@@ -3,7 +3,7 @@
  */
 export function getCoreStateSection(): string {
   return `    (function() {
-      const data = window.__SLIDEV_DATA__ || { slides: [] };
+      const data = window.__SLIDES_DATA__ || { slides: [] };
       const slides = data.slides || [];
       let currentIndex = 0;
 

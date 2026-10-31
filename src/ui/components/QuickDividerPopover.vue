@@ -45,7 +45,7 @@ import {
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_TRANSITION,
   ATTR_PAGE_BACKGROUND,
-} from '@/types/slidev-protocol'
+} from '@/types/slides-protocol'
 
 const props = defineProps<{
   blockId: string

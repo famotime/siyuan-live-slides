@@ -22,7 +22,7 @@ import {
   ATTR_VIDEO_MUTED,
   ROLE_IMAGE_LEFT,
   ROLE_IMAGE_RIGHT,
-} from "@/types/slidev-protocol"
+} from "@/types/slides-protocol"
 import type { IInspectorActionsContext } from "./attr-persistence"
 
 export interface ILayoutActionsDeps {
@@ -184,7 +184,7 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
       [ATTR_ELEM_SHIKI_LINES]: "",
       [ATTR_ELEM_MAX_HEIGHT]: "",
       [ATTR_ELEM_NOTE]: "",
-      "slidev-note": "",
+      "slides-note": "",
       [ATTR_PAGE_LAYOUT]: "",
       [ATTR_PAGE_LAYOUT_RATIO]: "",
       [ATTR_ELEM_ROLE]: "",

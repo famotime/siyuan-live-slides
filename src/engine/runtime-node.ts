@@ -194,9 +194,9 @@ export function getDefaultProWorkspaceDir(): string {
   if (os && typeof os.tmpdir === "function") {
     const tmp = os.tmpdir()
     if (path && typeof path.join === "function") {
-      return path.join(tmp, "siyuan-slidev-pro").replace(/\\/g, "/")
+      return path.join(tmp, "siyuan-live-slides-pro").replace(/\\/g, "/")
     }
-    return `${tmp}/siyuan-slidev-pro`.replace(/\\/g, "/")
+    return `${tmp}/siyuan-live-slides-pro`.replace(/\\/g, "/")
   }
-  return "/data/storage/petal/siyuan-slidev/pro-workspace"
+  return "/data/storage/petal/siyuan-live-slides/pro-workspace"
 }

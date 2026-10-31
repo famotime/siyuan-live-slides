@@ -2,18 +2,18 @@ import fs from "node:fs"
 import path from "node:path"
 import { describe, expect, it } from "vitest"
 import { mapElementAttrs } from "../src/compiler/scope-mapper"
-import { SLIDEV_CUSTOM_STYLES_CSS } from "../src/engine/workspace-scaffolder"
+import { SLIDES_CUSTOM_STYLES_CSS } from "../src/engine/workspace-scaffolder"
 import { convertBlockToHtml } from "../src/export/markdown-renderer"
 import { buildPrintableHtml } from "../src/export/pdf-exporter"
 import { buildStandaloneHtml } from "../src/export/single-html-exporter"
 import {
   ATTR_ELEM_MAX_HEIGHT,
-  type ISlidevBlockItem,
-  type ISlidevDocument,
-} from "../src/types/slidev-protocol"
+  type ISlidesBlockItem,
+  type ISlidesDocument,
+} from "../src/types/slides-protocol"
 
 describe("Code Block Wrapping & Subtle Scrollbar (代码块换行、无横向滚动条与弱提示滚动条测试)", () => {
-  const sampleDoc: ISlidevDocument = {
+  const sampleDoc: ISlidesDocument = {
     docId: "doc-code-wrap-test",
     config: {
       theme: "default",
@@ -45,7 +45,7 @@ describe("Code Block Wrapping & Subtle Scrollbar (代码块换行、无横向滚
     fullMarkdown: "",
   }
 
-  it("scope-mapper 应正确将 custom-slidev-max-height 映射为 block.maxHeight", () => {
+  it("scope-mapper 应正确将 custom-slides-max-height 映射为 block.maxHeight", () => {
     const rawAttrs = {
       [ATTR_ELEM_MAX_HEIGHT]: "400px",
     }
@@ -54,7 +54,7 @@ describe("Code Block Wrapping & Subtle Scrollbar (代码块换行、无横向滚
   })
 
   it("Web Sandbox HTML 模版应包含禁止横向滚动、自动换行与弱提示滚动条样式", () => {
-    const indexPath = path.resolve(__dirname, "../public/slidev-client/index.html")
+    const indexPath = path.resolve(__dirname, "../public/slides-client/index.html")
     const content = fs.readFileSync(indexPath, "utf-8")
 
     // 1. 禁止横向滚动条，支持自动换行
@@ -79,8 +79,8 @@ describe("Code Block Wrapping & Subtle Scrollbar (代码块换行、无横向滚
     expect(content).toContain("rgba(255, 255, 255, 0.20)")
   })
 
-  it("markdown-renderer 渲染代码块时应将 custom-slidev-max-height 注入为 style max-height", () => {
-    const block: ISlidevBlockItem = {
+  it("markdown-renderer 渲染代码块时应将 custom-slides-max-height 注入为 style max-height", () => {
+    const block: ISlidesBlockItem = {
       id: "b-test",
       type: "c",
       content: "```ts\nconsole.log(1)\n```",
@@ -115,12 +115,12 @@ describe("Code Block Wrapping & Subtle Scrollbar (代码块换行、无横向滚
     expect(html).toContain("align-items: flex-start !important")
   })
 
-  it("Slidev Pro 本地工程 SLIDEV_CUSTOM_STYLES_CSS 应包含自动换行与弱提示滚动条样式", () => {
-    expect(SLIDEV_CUSTOM_STYLES_CSS).toContain("overflow-x: hidden !important")
-    expect(SLIDEV_CUSTOM_STYLES_CSS).toContain("overflow-y: auto !important")
-    expect(SLIDEV_CUSTOM_STYLES_CSS).toContain("white-space: pre-wrap !important")
-    expect(SLIDEV_CUSTOM_STYLES_CSS).toContain("scrollbar-width: thin")
-    expect(SLIDEV_CUSTOM_STYLES_CSS).toContain("rgba(0, 0, 0, 0.15)")
-    expect(SLIDEV_CUSTOM_STYLES_CSS).toContain("rgba(255, 255, 255, 0.20)")
+  it("Slidev Pro 本地工程 SLIDES_CUSTOM_STYLES_CSS 应包含自动换行与弱提示滚动条样式", () => {
+    expect(SLIDES_CUSTOM_STYLES_CSS).toContain("overflow-x: hidden !important")
+    expect(SLIDES_CUSTOM_STYLES_CSS).toContain("overflow-y: auto !important")
+    expect(SLIDES_CUSTOM_STYLES_CSS).toContain("white-space: pre-wrap !important")
+    expect(SLIDES_CUSTOM_STYLES_CSS).toContain("scrollbar-width: thin")
+    expect(SLIDES_CUSTOM_STYLES_CSS).toContain("rgba(0, 0, 0, 0.15)")
+    expect(SLIDES_CUSTOM_STYLES_CSS).toContain("rgba(255, 255, 255, 0.20)")
   })
 })

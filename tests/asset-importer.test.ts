@@ -1,10 +1,10 @@
 import JSZip from "jszip"
 import { describe, expect, it } from "vitest"
 import {
-  extractSlidevZip,
+  extractSlidesZip,
   rewritePresentationAssetPaths,
 } from "../src/compiler/asset-importer"
-import { parseSlidevPresentation } from "../src/compiler/slidev-importer"
+import { parseSlidesPresentation } from "../src/compiler/slides-importer"
 
 describe("Asset Importer Tests", () => {
   it("should extract entry slides.md, sub-pages and media assets from zip buffer", async () => {
@@ -16,7 +16,7 @@ describe("Asset Importer Tests", () => {
     zip.file("README.md", "ignore me")
 
     const zipBuffer = await zip.generateAsync({ type: "uint8array" })
-    const res = await extractSlidevZip(zipBuffer)
+    const res = await extractSlidesZip(zipBuffer)
 
     expect(res.entryMarkdownPath).toBe("slides.md")
     expect(res.entryMarkdown).toContain("# Main Slide")
@@ -40,7 +40,7 @@ background: /images/cover.png
 
 <img src="./assets/photo.jpg" width="200" />
 `
-    const parsed = parseSlidevPresentation(md)
+    const parsed = parseSlidesPresentation(md)
 
     const assetMap = {
       "/images/cover.png": "assets/cover-sy2026.png",
@@ -51,7 +51,7 @@ background: /images/cover.png
     const rewritten = rewritePresentationAssetPaths(parsed, assetMap)
 
     // 检查背景属性
-    expect(rewritten.docRootAttrs["custom-slidev-background"]).toBe("assets/cover-sy2026.png")
+    expect(rewritten.docRootAttrs["custom-slides-background"]).toBe("assets/cover-sy2026.png")
 
     // 检查 Markdown 正文
     const s1 = rewritten.slides[0]

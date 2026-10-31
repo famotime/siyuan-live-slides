@@ -1,9 +1,9 @@
 <template>
-  <div class="spm-slidev-preview-tab" @keydown="onTabKeydown">
+  <div class="spm-slides-preview-tab" @keydown="onTabKeydown">
     <!-- 顶栏工具条：左右分栏，去除冗余标题文本 -->
-    <div class="spm-slidev-tab__toolbar">
+    <div class="spm-slides-tab__toolbar">
       <!-- 左侧：翻页导航与状态控制 -->
-      <div class="spm-slidev-tab__nav">
+      <div class="spm-slides-tab__nav">
         <!-- 翻页控制 -->
         <button
           class="spm-icon-btn b3-tooltips b3-tooltips__s"
@@ -11,7 +11,7 @@
           aria-label="上一页"
           @click="onPrevPage"
         >
-          <SlidevIcon name="chevron-left" />
+          <SlidesIcon name="chevron-left" />
         </button>
         <span class="spm-page-badge">{{ currentPage }} / {{ totalPages || 1 }}</span>
         <button
@@ -20,7 +20,7 @@
           aria-label="下一页"
           @click="onNextPage"
         >
-          <SlidevIcon name="chevron-right" />
+          <SlidesIcon name="chevron-right" />
         </button>
 
         <!-- 📌 Pin 图钉锁定文档 -->
@@ -30,7 +30,7 @@
           :aria-label="isPinned ? '已锁定当前文档（点击解除）：' + pinnedDocId : '点击锁定当前文档（不随主编辑区切换）'"
           @click="togglePin"
         >
-          <SlidevIcon name="pin" />
+          <SlidesIcon name="pin" />
           <span>{{ isPinned ? '已锁定' : '跟随' }}</span>
         </button>
 
@@ -41,20 +41,20 @@
           :aria-label="engineMode === 'pro-cli' ? '当前：官方原生 Pro 模式 (localhost:' + activeProPort + ')，点击切回沙箱' : '当前：内置高保真沙箱，点击切换官方原生 Pro 模式'"
           @click="toggleEngineMode"
         >
-          <SlidevIcon name="rocket" />
+          <SlidesIcon name="rocket" />
           <span>{{ engineMode === 'pro-cli' ? 'Pro (' + activeProPort + ')' : '沙箱' }}</span>
         </button>
       </div>
 
       <!-- 右侧：全局演示工具操作 -->
-      <div class="spm-slidev-tab__tools">
+      <div class="spm-slides-tab__tools">
         <!-- 缩略图总览 -->
         <button
           class="spm-icon-btn b3-tooltips b3-tooltips__s"
           aria-label="缩略图总览 (O)"
           @click="onToggleOverview"
         >
-          <SlidevIcon name="columns" />
+          <SlidesIcon name="columns" />
         </button>
 
         <!-- 双屏演讲者视图 -->
@@ -63,7 +63,7 @@
           aria-label="双屏演讲者视图 (Presenter Mode ⌥M)"
           @click="onOpenPresenter"
         >
-          <SlidevIcon name="presenter" />
+          <SlidesIcon name="presenter" />
         </button>
 
         <!-- 导出离线单文件 HTML -->
@@ -72,7 +72,7 @@
           aria-label="导出单文件 HTML 演示包"
           @click="onExportHtml"
         >
-          <SlidevIcon name="export-html" />
+          <SlidesIcon name="export-html" />
         </button>
 
         <!-- 导出 PDF -->
@@ -81,7 +81,7 @@
           aria-label="导出 16:9 PDF 演示讲义"
           @click="onExportPdf"
         >
-          <SlidevIcon name="export-pdf" />
+          <SlidesIcon name="export-pdf" />
         </button>
 
         <!-- 导出图片 -->
@@ -91,7 +91,7 @@
             aria-label="导出幻灯片为图片包 (ZIP)"
             @click="onExportAllImages"
           >
-            <SlidevIcon name="export-image" />
+            <SlidesIcon name="export-image" />
           </button>
           <button
             class="spm-icon-btn b3-tooltips b3-tooltips__s"
@@ -99,7 +99,7 @@
             aria-label="更多图片导出选项"
             @click.stop="showImageExportMenu = !showImageExportMenu"
           >
-            <SlidevIcon name="chevron-down" />
+            <SlidesIcon name="chevron-down" />
           </button>
           <div
             v-if="showImageExportMenu"
@@ -124,7 +124,7 @@
           aria-label="重新编译并刷新"
           @click="onRefresh"
         >
-          <SlidevIcon name="refresh" />
+          <SlidesIcon name="refresh" />
         </button>
 
         <!-- 全屏放映 -->
@@ -133,7 +133,7 @@
           aria-label="全屏放映"
           @click="onFullscreen"
         >
-          <SlidevIcon name="fullscreen" />
+          <SlidesIcon name="fullscreen" />
         </button>
       </div>
     </div>
@@ -141,12 +141,12 @@
     <!-- 演示沙箱容器与主视口（一体化全屏容器，沙箱与抽屉浮层同级挂载） -->
     <div
       ref="fullscreenContainerRef"
-      class="spm-slidev-tab__viewport spm-slidev-fullscreen-container"
+      class="spm-slides-tab__viewport spm-slides-fullscreen-container"
       @wheel="onViewportWheel"
     >
       <iframe
         ref="sandboxIframeRef"
-        class="spm-slidev-tab__iframe"
+        class="spm-slides-tab__iframe"
         :src="iframeSrc"
         frameborder="0"
         allow="fullscreen; autoplay"
@@ -198,7 +198,7 @@ import { putFile, sql } from '@/api'
 import { EngineManager } from '@/engine/engine-manager'
 import { WebSandboxBridge } from '@/engine/web-sandbox-bridge'
 import type { IOpenPeekDrawerDetail } from '@/engine/web-sandbox-bridge'
-import SlidevIcon from '@/ui/components/SlidevIcon.vue'
+import SlidesIcon from '@/ui/components/SlidesIcon.vue'
 import ImmersionDrawerContainer from '@/ui/components/peek/ImmersionDrawerContainer.vue'
 import ProtylePeekDrawer from '@/ui/components/peek/ProtylePeekDrawer.vue'
 import WebviewPeekDrawer from '@/ui/components/peek/WebviewPeekDrawer.vue'
@@ -217,7 +217,7 @@ import {
 } from '@/export/image-exporter'
 import { getRuntimeSettings, buildSiYuanWebUrl } from '@/settings'
 import { createPageJumpInput, isEditableTarget } from './page-jump-input'
-import type { ISlidevDocument } from '@/types/slidev-protocol'
+import type { ISlidesDocument } from '@/types/slides-protocol'
 
 const plugin = inject<Plugin>('plugin')
 const sandboxBridge = inject<WebSandboxBridge>('sandboxBridge', new WebSandboxBridge())
@@ -297,7 +297,7 @@ function jumpToPage(page: number) {
   sandboxIframeRef.value?.focus()
 }
 
-const iframeSrc = ref('/plugins/siyuan-slidev/slidev-client/index.html')
+const iframeSrc = ref('/plugins/siyuan-live-slides/slides-client/index.html')
 
 let unbindSlideChanged: (() => void) | null = null
 let unbindBlockClicked: (() => void) | null = null
@@ -306,7 +306,7 @@ let unbindNativePageChanged: (() => void) | null = null
 let unbindOpenPeekDrawer: (() => void) | null = null
 let unbindToggleFullscreen: (() => void) | null = null
 let unbindOpenPresenter: (() => void) | null = null
-let latestDoc: ISlidevDocument | null = null
+let latestDoc: ISlidesDocument | null = null
 
 onMounted(() => {
   if (sandboxIframeRef.value) {
@@ -361,7 +361,7 @@ onMounted(() => {
             isDoc = rows[0].type === 'd' || rows[0].id === rows[0].root_id
           }
         } catch (err) {
-          console.warn('[SlidevPreviewTab] detect block type failed:', err)
+          console.warn('[SlidesPreviewTab] detect block type failed:', err)
         }
       }
 
@@ -447,7 +447,7 @@ async function toggleEngineMode() {
   } else {
     engineManager.stopProMode()
     engineMode.value = 'web-sandbox'
-    iframeSrc.value = '/plugins/siyuan-slidev/slidev-client/index.html'
+    iframeSrc.value = '/plugins/siyuan-live-slides/slides-client/index.html'
     if (sandboxIframeRef.value) {
       sandboxBridge.attach(sandboxIframeRef.value)
     }
@@ -514,7 +514,7 @@ function onRefresh() {
   if (plugin && typeof (plugin as any).compileCurrentDocument === 'function') {
     ;(plugin as any).compileCurrentDocument()
   } else if (plugin?.eventBus && typeof (plugin.eventBus as any).emit === 'function') {
-    ;(plugin.eventBus as any).emit('slidev:request-compile' as any)
+    ;(plugin.eventBus as any).emit('slides:request-compile' as any)
   }
 }
 
@@ -671,7 +671,7 @@ async function onCopyCurrentSlide() {
 }
 
 defineExpose({
-  updateDocument(doc: ISlidevDocument, targetDocId?: string) {
+  updateDocument(doc: ISlidesDocument, targetDocId?: string) {
     // 若已锁定且目标文档不匹配，则忽略
     if (isPinned.value && pinnedDocId.value && targetDocId && targetDocId !== pinnedDocId.value) {
       return
@@ -706,7 +706,7 @@ defineExpose({
 </script>
 
 <style lang="scss" scoped>
-.spm-slidev-preview-tab {
+.spm-slides-preview-tab {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -717,7 +717,7 @@ defineExpose({
   box-sizing: border-box;
 }
 
-.spm-slidev-tab__toolbar {
+.spm-slides-tab__toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -729,8 +729,8 @@ defineExpose({
   flex-shrink: 0;
 }
 
-.spm-slidev-tab__nav,
-.spm-slidev-tab__tools {
+.spm-slides-tab__nav,
+.spm-slides-tab__tools {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -819,7 +819,7 @@ defineExpose({
   margin: 0 4px;
 }
 
-.spm-slidev-tab__viewport {
+.spm-slides-tab__viewport {
   flex: 1;
   position: relative;
   width: 100%;
@@ -828,7 +828,7 @@ defineExpose({
   background: #0f172a;
 }
 
-.spm-slidev-tab__iframe {
+.spm-slides-tab__iframe {
   width: 100%;
   height: 100%;
   border: none;

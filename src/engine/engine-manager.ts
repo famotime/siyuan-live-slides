@@ -1,8 +1,8 @@
-import type { ISlidevDocument } from "../types/slidev-protocol"
+import type { ISlidesDocument } from "../types/slides-protocol"
 import { CliDevServerBridge } from "./cli-devserver-bridge"
 import { NativeEnvDetector } from "./env-detector"
-import { NativeSlidevBridge } from "./native-slidev-bridge"
-import { NativeSlidevProcessManager } from "./process-manager"
+import { NativeSlidesBridge } from "./native-slides-bridge"
+import { NativeSlidesProcessManager } from "./process-manager"
 import { WebSandboxBridge } from "./web-sandbox-bridge"
 import { WorkspaceScaffolder } from "./workspace-scaffolder"
 
@@ -23,16 +23,16 @@ export class EngineManager {
   private mode: TEngineMode = "web-sandbox"
   public readonly webBridge: WebSandboxBridge
   public readonly cliBridge: CliDevServerBridge
-  public readonly nativeBridge: NativeSlidevBridge
-  public readonly processManager: NativeSlidevProcessManager
+  public readonly nativeBridge: NativeSlidesBridge
+  public readonly processManager: NativeSlidesProcessManager
   public readonly scaffolder: WorkspaceScaffolder
   public readonly envDetector: NativeEnvDetector
 
   constructor() {
     this.webBridge = new WebSandboxBridge()
     this.cliBridge = new CliDevServerBridge()
-    this.nativeBridge = new NativeSlidevBridge()
-    this.processManager = new NativeSlidevProcessManager()
+    this.nativeBridge = new NativeSlidesBridge()
+    this.processManager = new NativeSlidesProcessManager()
     this.scaffolder = new WorkspaceScaffolder()
     this.envDetector = new NativeEnvDetector()
   }
@@ -49,7 +49,7 @@ export class EngineManager {
    * 启动官方 Pro 模式：自动编排临时工程与拉起子进程服务
    */
   public async startProMode(
-    doc: ISlidevDocument,
+    doc: ISlidesDocument,
     putFileFn?: (path: string, isDir: boolean, file: any) => Promise<any>,
   ): Promise<IProModeStartResult> {
     // 1. 环境前置检测

@@ -8,11 +8,11 @@ import {
   resolvePeekUrl,
   withHTMLAssetIFrameParam,
 } from "../src/utils/peek-url"
-import { SLIDEV_PEEK_INTERCEPTOR_SETUP_TS } from "../src/engine/workspace-scaffolder"
+import { SLIDES_PEEK_INTERCEPTOR_SETUP_TS } from "../src/engine/workspace-scaffolder"
 import { isRemoteKernelHost } from "../src/engine/runtime-node"
 
 const PROJECT_ROOT = path.resolve(__dirname, "..")
-const SANDBOX_CLIENT_PATH = path.join(PROJECT_ROOT, "public/slidev-client/index.html")
+const SANDBOX_CLIENT_PATH = path.join(PROJECT_ROOT, "public/slides-client/index.html")
 
 /**
  * 从源码文本中按花括号配平截取指定函数的完整定义
@@ -61,7 +61,7 @@ const LOCAL_HTML_CASES: Array<[string, boolean]> = [
   ["../docs/demo.html", true],
   ["D:\\SiYuan\\data\\assets\\demo.html", true],
   ["file:///D:/SiYuan/data/assets/demo.html", true],
-  ["/plugins/siyuan-slidev/slidev-client/presenter.html", true],
+  ["/plugins/siyuan-live-slides/slides-client/presenter.html", true],
   // 保持原生行为
   ["https://sli.dev/guide/index.html", false],
   ["http://localhost:8080/demo.html", false],
@@ -90,7 +90,7 @@ const PEEK_URL_CASES: Array<[string, string, boolean]> = [
   ["/assets/demo.html?download=true", "/assets/demo.html?download=true", false],
   // 非 HTML 资源与插件目录资源无需该参数
   ["assets/cover.png", "/assets/cover.png", false],
-  ["/plugins/siyuan-slidev/slidev-client/presenter.html", "/plugins/siyuan-slidev/slidev-client/presenter.html", false],
+  ["/plugins/siyuan-live-slides/slides-client/presenter.html", "/plugins/siyuan-live-slides/slides-client/presenter.html", false],
   ["demo.html", "/demo.html", false],
   ["./docs/demo.html", "/docs/demo.html", false],
   ["../docs/demo.html", "/docs/demo.html", false],
@@ -205,14 +205,14 @@ describe("本地 HTML 链接速览：客户端拦截器与宿主归一化逻辑�
   const sandboxSource = fs.readFileSync(SANDBOX_CLIENT_PATH, "utf-8")
 
   it("沙箱播放器与脚手架生成的拦截器都应内置本地 HTML 判定与绝对化函数", () => {
-    for (const source of [sandboxSource, SLIDEV_PEEK_INTERCEPTOR_SETUP_TS]) {
+    for (const source of [sandboxSource, SLIDES_PEEK_INTERCEPTOR_SETUP_TS]) {
       expect(source).toContain("isPeekableLocalHtml")
       expect(source).toContain("resolvePeekHref")
       expect(source).toContain("本地 HTML 链接")
     }
     // 两个客户端都必须把本地 HTML 链接转交宿主抽屉，而非在沙箱内原地跳转
     expect(sandboxSource).toContain("} else if (isPeekableLocalHtml(href)) {")
-    expect(SLIDEV_PEEK_INTERCEPTOR_SETUP_TS).toContain("} else if (isPeekableLocalHtml(href)) {")
+    expect(SLIDES_PEEK_INTERCEPTOR_SETUP_TS).toContain("} else if (isPeekableLocalHtml(href)) {")
   })
 
   it("沙箱播放器内联判定函数应与 peek-url 的 isLocalHtmlHref 行为一致", () => {
@@ -223,7 +223,7 @@ describe("本地 HTML 链接速览：客户端拦截器与宿主归一化逻辑�
   })
 
   it("脚手架生成的拦截器内联判定函数应与 peek-url 的 isLocalHtmlHref 行为一致", () => {
-    const inlinePredicate = evalInlineFunction(SLIDEV_PEEK_INTERCEPTOR_SETUP_TS, "isPeekableLocalHtml", true)
+    const inlinePredicate = evalInlineFunction(SLIDES_PEEK_INTERCEPTOR_SETUP_TS, "isPeekableLocalHtml", true)
     for (const [href, expected] of LOCAL_HTML_CASES) {
       expect(inlinePredicate(href), `Pro 模式内联判定 isPeekableLocalHtml(${JSON.stringify(href)})`).toBe(expected)
     }
@@ -232,7 +232,7 @@ describe("本地 HTML 链接速览：客户端拦截器与宿主归一化逻辑�
   it("两个客户端内联的 resolvePeekHref 都应把思源资产链接指向内核 /assets/ 静态服务", () => {
     for (const [source, isTs] of [
       [sandboxSource, false],
-      [SLIDEV_PEEK_INTERCEPTOR_SETUP_TS, true],
+      [SLIDES_PEEK_INTERCEPTOR_SETUP_TS, true],
     ] as Array<[string, boolean]>) {
       const resolveHref = evalInlineFunction(source, "resolvePeekHref", isTs)
       expect(resolveHref("assets/demo.html")).toBe("/assets/demo.html")
@@ -246,7 +246,7 @@ describe("本地 HTML 链接速览：客户端拦截器与宿主归一化逻辑�
   })
 
   it("抽屉宿主与微型浏览器都应接入 resolvePeekUrl，工作区外文件外跳系统浏览器", () => {
-    const tabSource = fs.readFileSync(path.join(PROJECT_ROOT, "src/ui/tab/SlidevPreviewTab.vue"), "utf-8")
+    const tabSource = fs.readFileSync(path.join(PROJECT_ROOT, "src/ui/tab/SlidesPreviewTab.vue"), "utf-8")
     expect(tabSource).toContain("resolvePeekUrl(detail.target)")
     expect(tabSource).toContain("openLocalFileExternally")
     expect(tabSource).toContain("fileUrlToPath")

@@ -11,7 +11,7 @@
         @click="selectLayout(layout.name)"
       >
         <div class="spm-layout-icon">
-          <SlidevIcon :name="'layout-' + layout.name" />
+          <SlidesIcon :name="'layout-' + layout.name" />
         </div>
         <span class="spm-layout-label">{{ layout.label }}</span>
       </div>
@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import SlidevIcon from './SlidevIcon.vue'
+import SlidesIcon from './SlidesIcon.vue'
 
 const props = defineProps<{
   modelValue?: string

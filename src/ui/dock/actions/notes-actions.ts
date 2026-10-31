@@ -11,11 +11,11 @@ import {
 } from "@/api"
 import { generateSpeakerNotesWithAIDetailed } from "@/ai/notes-generator"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
-import { extractCleanNoteText } from "@/compiler/slidev-ast-builder"
+import { extractCleanNoteText } from "@/compiler/slides-ast-builder"
 import { syncDomBlockAttrs } from "@/sync/dom-attr-sync"
 import { mirrorBlockSelection } from "@/sync/selection-mirror"
-import type { ISlidevVirtualPage } from "@/types/slidev-protocol"
-import { ATTR_ELEM_NOTE } from "@/types/slidev-protocol"
+import type { ISlidesVirtualPage } from "@/types/slides-protocol"
+import { ATTR_ELEM_NOTE } from "@/types/slides-protocol"
 import type { IInspectorActionsContext } from "./attr-persistence"
 
 export interface INotesActionsDeps {
@@ -44,7 +44,7 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
   async function createNoteBlockOnCurrentSlide(noteContent?: string) {
     const content = noteContent || "在此输入本页讲稿提词..."
     const noteLines = content.split(/\r?\n/).map(l => `> ${l}`).join("\n")
-    const markdownPayload = `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slidev-note="true"}`
+    const markdownPayload = `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slides-note="true"}`
 
     const slides = ctx.latestDoc.value?.slides || []
     const curSlide = ctx.targetSlide.value
@@ -94,7 +94,7 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
 
         const cleanContent = extractCleanNoteText(sourceText) || sourceText.replace(/<[^>]+>/g, "").trim() || "在此输入本页讲稿提词..."
         const noteBody = cleanContent.split(/\r?\n/).map(line => `> ${line}`).join("\n")
-        const calloutMd = `> [!NOTE] 💡 演讲备注\n${noteBody}\n{: custom-slidev-note="true"}`
+        const calloutMd = `> [!NOTE] 💡 演讲备注\n${noteBody}\n{: custom-slides-note="true"}`
 
         await updateBlock("markdown", calloutMd, targetId)
         await setBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: "true" })
@@ -110,18 +110,18 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
           await ctx.plugin.compileCurrentDocument()
         }
       } catch (err) {
-        console.error("[SiYuanSlidev] 转换讲稿备注提示块失败:", err)
+        console.error("[SiYuanLiveSlides] 转换讲稿备注提示块失败:", err)
         triggerSaveNotice("设置失败")
         showMessage("转为讲稿备注提示块失败")
       }
     } else {
       triggerSaveNotice("取消中...")
       try {
-        await setBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: "", "slidev-note": "" })
-        globalDocumentCompiler.setBlockAttrOverride(targetId, { [ATTR_ELEM_NOTE]: "", "slidev-note": "" })
-        syncDomBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: "", "slidev-note": "" })
+        await setBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: "", "slides-note": "" })
+        globalDocumentCompiler.setBlockAttrOverride(targetId, { [ATTR_ELEM_NOTE]: "", "slides-note": "" })
+        syncDomBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: "", "slides-note": "" })
         delete ctx.activeBlockAttrs.value[ATTR_ELEM_NOTE]
-        delete ctx.activeBlockAttrs.value["slidev-note"]
+        delete ctx.activeBlockAttrs.value["slides-note"]
 
         triggerSaveNotice("已取消备注")
         showMessage("已取消讲稿备注")
@@ -130,7 +130,7 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
           await ctx.plugin.compileCurrentDocument()
         }
       } catch (err) {
-        console.error("[SiYuanSlidev] 取消讲稿备注失败:", err)
+        console.error("[SiYuanLiveSlides] 取消讲稿备注失败:", err)
         triggerSaveNotice("取消失败")
         showMessage("取消讲稿备注失败")
       }
@@ -164,7 +164,7 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
   async function onGenerateNotesWithAI() {
     if (!ctx.currentDocId.value) return
 
-    const slideToUse: ISlidevVirtualPage = ctx.targetSlide.value || {
+    const slideToUse: ISlidesVirtualPage = ctx.targetSlide.value || {
       pageIndex: 1,
       startBlockId: ctx.activeBlockId.value || ctx.currentDocId.value,
       frontmatter: {},
@@ -180,7 +180,7 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
     if (result.notes) {
       const existingNoteBlockId = ctx.currentSlideNoteBlockId.value
       if (existingNoteBlockId) {
-        const formattedNoteMd = `> [!NOTE] 💡 演讲备注\n${result.notes.split(/\r?\n/).map(l => `> ${l}`).join("\n")}\n{: custom-slidev-note="true"}`
+        const formattedNoteMd = `> [!NOTE] 💡 演讲备注\n${result.notes.split(/\r?\n/).map(l => `> ${l}`).join("\n")}\n{: custom-slides-note="true"}`
         await updateBlock("markdown", formattedNoteMd, existingNoteBlockId)
         await setBlockAttrs(existingNoteBlockId, { [ATTR_ELEM_NOTE]: "true" })
         globalDocumentCompiler.setBlockAttrOverride(existingNoteBlockId, { [ATTR_ELEM_NOTE]: "true" })
@@ -233,7 +233,7 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
         try {
           const content = "在此输入本页讲稿提词..."
           const noteLines = content.split(/\r?\n/).map(l => `> ${l}`).join("\n")
-          const markdownPayload = `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slidev-note="true"}`
+          const markdownPayload = `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slides-note="true"}`
 
           for (const { slide, idx } of targetSlidesWithIndex) {
             try {
@@ -258,7 +258,7 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
               }
               successCount++
             } catch (err) {
-              console.error(`[SiYuanSlidev] 为第 ${idx + 1} 页追加讲稿块失败:`, err)
+              console.error(`[SiYuanLiveSlides] 为第 ${idx + 1} 页追加讲稿块失败:`, err)
             }
           }
 
@@ -267,7 +267,7 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
           }
           showMessage(`已成功为 ${successCount} 页追加讲稿备注块`)
         } catch (error) {
-          console.error("[SiYuanSlidev] 批量追加讲稿块失败:", error)
+          console.error("[SiYuanLiveSlides] 批量追加讲稿块失败:", error)
           showMessage("批量追加讲稿块时出现异常")
         } finally {
           isBatchProcessing.value = false
@@ -319,13 +319,13 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
               globalDocumentCompiler.clearBlockAttrOverride(item.id)
               deletedCount++
             } catch (err) {
-              console.error(`[SiYuanSlidev] 删除讲稿块 ${item.id} 失败:`, err)
+              console.error(`[SiYuanLiveSlides] 删除讲稿块 ${item.id} 失败:`, err)
             }
           }
 
           if (ctx.activeBlockId.value && allNoteBlocks.some(b => b.id === ctx.activeBlockId.value)) {
             delete ctx.activeBlockAttrs.value[ATTR_ELEM_NOTE]
-            delete ctx.activeBlockAttrs.value["slidev-note"]
+            delete ctx.activeBlockAttrs.value["slides-note"]
           }
 
           if (ctx.plugin) {
@@ -333,7 +333,7 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
           }
           showMessage(`已成功删除全部 ${deletedCount} 个讲稿备注块`)
         } catch (error) {
-          console.error("[SiYuanSlidev] 批量删除讲稿块失败:", error)
+          console.error("[SiYuanLiveSlides] 批量删除讲稿块失败:", error)
           showMessage("批量删除讲稿块时出现异常")
         } finally {
           isBatchProcessing.value = false

@@ -1,4 +1,4 @@
-export interface ISlidevNavState {
+export interface ISlidesNavState {
   no: number
   clicks: number
   hasNext?: boolean
@@ -6,24 +6,24 @@ export interface ISlidevNavState {
   total?: number
 }
 
-export type TSlidevPageChangedHandler = (pageNo: number, total: number, navState: ISlidevNavState) => void
-export type TSlidevReadyHandler = () => void
+export type TSlidesPageChangedHandler = (pageNo: number, total: number, navState: ISlidesNavState) => void
+export type TSlidesReadyHandler = () => void
 
 /**
  * 官方 Slidev 原生标准通信协议适配桥接器 (基于 ?embedded=true postMessage 规范)
  */
-export class NativeSlidevBridge {
+export class NativeSlidesBridge {
   private iframe: HTMLIFrameElement | null = null
   private isReady = false
-  private pageChangedHandlers: TSlidevPageChangedHandler[] = []
-  private readyHandlers: TSlidevReadyHandler[] = []
-  private currentState: ISlidevNavState = { no: 1, clicks: 0, total: 1 }
+  private pageChangedHandlers: TSlidesPageChangedHandler[] = []
+  private readyHandlers: TSlidesReadyHandler[] = []
+  private currentState: ISlidesNavState = { no: 1, clicks: 0, total: 1 }
 
   constructor() {
     this.handleWindowMessage = this.handleWindowMessage.bind(this)
   }
 
-  public getCurrentState(): ISlidevNavState {
+  public getCurrentState(): ISlidesNavState {
     return { ...this.currentState }
   }
 
@@ -58,7 +58,7 @@ export class NativeSlidevBridge {
     try {
       this.iframe.contentWindow.postMessage(msg, "*")
     } catch (e) {
-      console.warn("[NativeSlidevBridge] postMessage error:", e)
+      console.warn("[NativeSlidesBridge] postMessage error:", e)
     }
   }
 
@@ -97,14 +97,14 @@ export class NativeSlidevBridge {
     this.postMessage("prev-click")
   }
 
-  public onPageChanged(handler: TSlidevPageChangedHandler): () => void {
+  public onPageChanged(handler: TSlidesPageChangedHandler): () => void {
     this.pageChangedHandlers.push(handler)
     return () => {
       this.pageChangedHandlers = this.pageChangedHandlers.filter(h => h !== handler)
     }
   }
 
-  public onReady(handler: TSlidevReadyHandler): () => void {
+  public onReady(handler: TSlidesReadyHandler): () => void {
     this.readyHandlers.push(handler)
     return () => {
       this.readyHandlers = this.readyHandlers.filter(h => h !== handler)
@@ -128,7 +128,7 @@ export class NativeSlidevBridge {
     }
 
     if (data.type === "update-state" && data.navState) {
-      const nav = data.navState as ISlidevNavState
+      const nav = data.navState as ISlidesNavState
       this.currentState = {
         no: nav.no ?? this.currentState.no,
         clicks: nav.clicks ?? this.currentState.clicks,

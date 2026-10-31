@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest"
 import TransitionSelector from "../src/ui/components/TransitionSelector.vue"
 import DocInspectorSection from "../src/ui/components/DocInspectorSection.vue"
-import { DEFAULT_SLIDEV_CONFIG, parseDocumentConfig } from "../src/compiler/scope-mapper"
-import { ATTR_DOC_DEFAULT_TRANSITION, ATTR_DOC_THEME } from "../src/types/slidev-protocol"
+import { DEFAULT_SLIDES_CONFIG, parseDocumentConfig } from "../src/compiler/scope-mapper"
+import { ATTR_DOC_DEFAULT_TRANSITION, ATTR_DOC_THEME } from "../src/types/slides-protocol"
 
 describe("Transition & Theme Inspector Synergy", () => {
   it("TransitionSelector 组件应成功加载并包含 5 种转场动效及其描述", () => {
@@ -28,8 +28,8 @@ describe("Transition & Theme Inspector Synergy", () => {
     expect(config2.defaultTransition).toBe("slide-up")
 
     const configDefault = parseDocumentConfig({})
-    expect(configDefault.theme).toBe(DEFAULT_SLIDEV_CONFIG.theme)
-    expect(configDefault.defaultTransition).toBe(DEFAULT_SLIDEV_CONFIG.defaultTransition)
+    expect(configDefault.theme).toBe(DEFAULT_SLIDES_CONFIG.theme)
+    expect(configDefault.defaultTransition).toBe(DEFAULT_SLIDES_CONFIG.defaultTransition)
   })
 
   it("DocInspectorSection 组件应成功定义并导出", () => {

@@ -15,7 +15,7 @@ export function getLightboxSection(): string {
 
       function updateLightboxImgTransform(animate) {
         if (!lightboxContent) return;
-        const img = lightboxContent.querySelector(".slidev-lightbox-img");
+        const img = lightboxContent.querySelector(".slides-lightbox-img");
         if (!img) return;
         img.style.transformOrigin = "center center";
         img.style.transform = "translate(" + lightboxTranslateX + "px, " + lightboxTranslateY + "px) scale(" + lightboxScale + ")";
@@ -39,7 +39,7 @@ export function getLightboxSection(): string {
         resetLightboxZoom();
         if (type === "video") {
           const v = document.createElement("video");
-          v.className = "slidev-lightbox-video";
+          v.className = "slides-lightbox-video";
           v.src = src;
           v.controls = true;
           v.autoplay = true;
@@ -47,7 +47,7 @@ export function getLightboxSection(): string {
           lightboxContent.appendChild(v);
         } else {
           const img = document.createElement("img");
-          img.className = "slidev-lightbox-img";
+          img.className = "slides-lightbox-img";
           img.src = src;
           img.alt = alt || "";
           lightboxContent.appendChild(img);
@@ -70,7 +70,7 @@ export function getLightboxSection(): string {
 
       function handleLightboxWheel(e) {
         if (!lightboxContent || lightboxMediaType !== "image") return;
-        const img = lightboxContent.querySelector(".slidev-lightbox-img");
+        const img = lightboxContent.querySelector(".slides-lightbox-img");
         if (!img) return;
         e.preventDefault();
         e.stopPropagation();
@@ -106,7 +106,7 @@ export function getLightboxSection(): string {
       if (lightboxContent) {
         lightboxContent.addEventListener("pointerdown", (e) => {
           if (e.button !== 0 || lightboxMediaType !== "image" || lightboxScale <= 1.0) return;
-          const img = lightboxContent.querySelector(".slidev-lightbox-img");
+          const img = lightboxContent.querySelector(".slides-lightbox-img");
           if (!img || (e.target !== img && !img.contains(e.target))) return;
           e.preventDefault();
           e.stopPropagation();
@@ -139,7 +139,7 @@ export function getLightboxSection(): string {
         const onLightboxPointerEnd = (e) => {
           if (!isLightboxDragging) return;
           isLightboxDragging = false;
-          const img = lightboxContent ? lightboxContent.querySelector(".slidev-lightbox-img") : null;
+          const img = lightboxContent ? lightboxContent.querySelector(".slides-lightbox-img") : null;
           if (img && img.releasePointerCapture) {
             try { img.releasePointerCapture(e.pointerId); } catch (_) {}
           }
@@ -150,7 +150,7 @@ export function getLightboxSection(): string {
 
         lightboxContent.addEventListener("dblclick", (e) => {
           if (lightboxMediaType !== "image") return;
-          const img = lightboxContent.querySelector(".slidev-lightbox-img");
+          const img = lightboxContent.querySelector(".slides-lightbox-img");
           if (!img || (e.target !== img && !img.contains(e.target))) return;
           e.preventDefault();
           e.stopPropagation();

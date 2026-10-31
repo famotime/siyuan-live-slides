@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
 import { ref } from "vue"
 import { createPageAttrResolver } from "../src/ui/dock/useInspectorPageOverrides"
 import { globalDocumentCompiler } from "../src/compiler/document-compiler"
-import { ATTR_PAGE_MASK, ATTR_PAGE_MASK_STYLE, ATTR_PAGE_LAYOUT_RATIO } from "../src/types/slidev-protocol"
+import { ATTR_PAGE_MASK, ATTR_PAGE_MASK_STYLE, ATTR_PAGE_LAYOUT_RATIO } from "../src/types/slides-protocol"
 
 /**
  * RF-017 单测：分页符属性三级查找工厂

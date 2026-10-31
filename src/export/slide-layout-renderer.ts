@@ -1,6 +1,6 @@
-import type { ISlidevBlockItem, ISlidevVirtualPage } from "../types/slidev-protocol"
-import { isColsHeaderLayout } from "../types/slidev-protocol"
-import { distributeNColumns, distributeThreeColumns } from "../compiler/slidev-ast-builder"
+import type { ISlidesBlockItem, ISlidesVirtualPage } from "../types/slides-protocol"
+import { isColsHeaderLayout } from "../types/slides-protocol"
+import { distributeNColumns, distributeThreeColumns } from "../compiler/slides-ast-builder"
 import { cleanCardListItemMarkdown, isListItemNode, parseRatioToGridCols } from "../utils"
 import { convertBlockToHtml, escapeHtml } from "./markdown-renderer"
 import type { IBlockRenderOptions } from "./markdown-renderer"
@@ -11,7 +11,7 @@ export interface IRenderSlideOptions extends IBlockRenderOptions {
   rightColClass?: string
 }
 
-function isHeadingBlock(b: ISlidevBlockItem): boolean {
+function isHeadingBlock(b: ISlidesBlockItem): boolean {
   if (!b) return false
   if (b.type === "h" || b.type === "NodeHeading") return true
   const md = (b.rawMarkdown || b.content || "").trim()
@@ -22,7 +22,7 @@ function isHeadingBlock(b: ISlidevBlockItem): boolean {
  * 渲染单个幻灯片页面的所有块，支持多种标准版式（two-cols, cols-header, two-cols-header, three-cols-header, cover, fact, image-left, image-right 等）
  */
 export function renderSlideBlocksToHtml(
-  slide: ISlidevVirtualPage,
+  slide: ISlidesVirtualPage,
   options?: IRenderSlideOptions,
 ): string {
   const layout = slide.frontmatter?.layout || "default"
@@ -34,8 +34,8 @@ export function renderSlideBlocksToHtml(
   // 1. 双栏布局 (two-cols)
   if (layout === "two-cols") {
     const hasRightSlot = blocks.some(b => b.slot === "right")
-    let leftBlocks: ISlidevBlockItem[] = []
-    let rightBlocks: ISlidevBlockItem[] = []
+    let leftBlocks: ISlidesBlockItem[] = []
+    let rightBlocks: ISlidesBlockItem[] = []
 
     if (hasRightSlot) {
       leftBlocks = blocks.filter(b => b.slot !== "right")
@@ -46,7 +46,7 @@ export function renderSlideBlocksToHtml(
       rightBlocks = blocks.slice(mid)
     }
 
-    const cleanFirstList = (list: ISlidevBlockItem[]) => {
+    const cleanFirstList = (list: ISlidesBlockItem[]) => {
       const valid = list.filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
       if (valid.length > 0) {
         const first = valid[0]
@@ -82,7 +82,7 @@ export function renderSlideBlocksToHtml(
   // 2. 带表头的多栏布局 (通用 cols-header 与历史兼容 two-cols-header, three-cols-header，以及四叶草 2x2 clover)
   if (layout === "clover" || isColsHeaderLayout(layout)) {
     const isClover = layout === "clover"
-    let headerBlocks: ISlidevBlockItem[] = []
+    let headerBlocks: ISlidesBlockItem[] = []
     const explicitHeader = blocks.filter(b => b.slot === "header")
     if (explicitHeader.length > 0) {
       headerBlocks = explicitHeader
@@ -134,7 +134,7 @@ export function renderSlideBlocksToHtml(
       layout === "three-cols-header" ||
       (isColsHeaderLayout(layout) && hasColSlots)
 
-    const renderColBlockToHtml = (colBlocks: ISlidevBlockItem[]) => {
+    const renderColBlockToHtml = (colBlocks: ISlidesBlockItem[]) => {
       const validBlocks = colBlocks.filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
       if (isSuperBlockCols && validBlocks.length > 0) {
         const first = validBlocks[0]
@@ -148,14 +148,14 @@ export function renderSlideBlocksToHtml(
       }
       const colFirstH = isSuperBlockCols ? validBlocks.find(isHeadingBlock) : null
       return validBlocks.map(b => {
-        const extraClass = b === colFirstH ? "slidev-col-first-heading-block" : ""
+        const extraClass = b === colFirstH ? "slides-col-first-heading-block" : ""
         return convertBlockToHtml(b, { ...options, extraClassName: extraClass })
       }).join("\n")
     }
 
     const headerFirstH = headerBlocks.find(isHeadingBlock)
     const headerHtml = headerBlocks.map(b => {
-      const extraClass = b === headerFirstH ? "slidev-page-first-heading-block" : ""
+      const extraClass = b === headerFirstH ? "slides-page-first-heading-block" : ""
       return convertBlockToHtml(b, { ...options, extraClassName: extraClass })
     }).join("\n")
     const gridCols = isClover
@@ -233,7 +233,7 @@ export function renderSlideBlocksToHtml(
 
   // 5. 默认流式布局
   return blocks.map(b => {
-    const extraClass = b === pageFirstH ? "slidev-page-first-heading-block" : ""
+    const extraClass = b === pageFirstH ? "slides-page-first-heading-block" : ""
     return convertBlockToHtml(b, { ...options, extraClassName: extraClass })
   }).join("\n")
 }

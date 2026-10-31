@@ -21,7 +21,7 @@ export interface IChildProcessMock {
   stderr?: any
 }
 
-export class NativeSlidevProcessManager {
+export class NativeSlidesProcessManager {
   private childProcess: IChildProcessMock | null = null
   private activePort: number | null = null
   private isRunning = false

@@ -6,9 +6,9 @@ import {
   ATTR_ELEM_CLICK,
   ATTR_ELEM_SLOT,
   ATTR_ELEM_SHIKI_LINES,
-} from "../types/slidev-protocol"
+} from "../types/slides-protocol"
 
-export interface ISlidevPresetTemplate {
+export interface ISlidesPresetTemplate {
   id: string
   name: string
   open: boolean
@@ -18,10 +18,10 @@ export interface ISlidevPresetTemplate {
 /**
  * 为「属性管家」定制的开箱即用 Slidev 演示属性预设字典
  */
-export const SLIDEV_PRESET_TEMPLATES: ISlidevPresetTemplate[] = [
+export const SLIDES_PRESET_TEMPLATES: ISlidesPresetTemplate[] = [
   // 1. 页面级版式预设
   {
-    id: "slidev-cover",
+    id: "slides-cover",
     name: "幻灯片 - 封面页 (Cover)",
     open: true,
     attrs: [
@@ -31,7 +31,7 @@ export const SLIDEV_PRESET_TEMPLATES: ISlidevPresetTemplate[] = [
     ],
   },
   {
-    id: "slidev-two-cols",
+    id: "slides-two-cols",
     name: "幻灯片 - 双栏对比 (Two Columns)",
     open: true,
     attrs: [
@@ -41,7 +41,7 @@ export const SLIDEV_PRESET_TEMPLATES: ISlidevPresetTemplate[] = [
     ],
   },
   {
-    id: "slidev-fact",
+    id: "slides-fact",
     name: "幻灯片 - 大字报与核心指标 (Fact)",
     open: true,
     attrs: [
@@ -51,7 +51,7 @@ export const SLIDEV_PRESET_TEMPLATES: ISlidevPresetTemplate[] = [
     ],
   },
   {
-    id: "slidev-intro",
+    id: "slides-intro",
     name: "幻灯片 - 章节导引与作者 (Intro)",
     open: true,
     attrs: [
@@ -61,7 +61,7 @@ export const SLIDEV_PRESET_TEMPLATES: ISlidevPresetTemplate[] = [
     ],
   },
   {
-    id: "slidev-quote",
+    id: "slides-quote",
     name: "幻灯片 - 金句与强调 (Quote)",
     open: true,
     attrs: [
@@ -72,7 +72,7 @@ export const SLIDEV_PRESET_TEMPLATES: ISlidevPresetTemplate[] = [
   },
   // 2. 元素级动效与排版预设
   {
-    id: "slidev-elem-click",
+    id: "slides-elem-click",
     name: "元素 - 顺延逐步呈现 (v-click)",
     open: true,
     attrs: [
@@ -80,7 +80,7 @@ export const SLIDEV_PRESET_TEMPLATES: ISlidevPresetTemplate[] = [
     ],
   },
   {
-    id: "slidev-elem-click-hide",
+    id: "slides-elem-click-hide",
     name: "元素 - 隐藏直到激活 (v-click:hide)",
     open: true,
     attrs: [
@@ -88,7 +88,7 @@ export const SLIDEV_PRESET_TEMPLATES: ISlidevPresetTemplate[] = [
     ],
   },
   {
-    id: "slidev-elem-slot-right",
+    id: "slides-elem-slot-right",
     name: "元素 - 双栏右栏归属 (Slot: Right)",
     open: true,
     attrs: [
@@ -96,7 +96,7 @@ export const SLIDEV_PRESET_TEMPLATES: ISlidevPresetTemplate[] = [
     ],
   },
   {
-    id: "slidev-shiki-lines",
+    id: "slides-shiki-lines",
     name: "代码 - 逐行聚光高亮 (Shiki)",
     open: true,
     attrs: [

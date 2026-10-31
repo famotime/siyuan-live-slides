@@ -2,13 +2,13 @@ import fs from "node:fs"
 import path from "node:path"
 import { describe, expect, it, vi } from "vitest"
 import { buildStandaloneHtml } from "../src/export/single-html-exporter"
-import type { ISlidevDocument } from "../src/types/slidev-protocol"
+import type { ISlidesDocument } from "../src/types/slides-protocol"
 
 describe("Blank Area Mouse Click Navigation (空白区域鼠标左键左右翻页)", () => {
-  const indexPath = path.resolve(__dirname, "../public/slidev-client/index.html")
+  const indexPath = path.resolve(__dirname, "../public/slides-client/index.html")
   const indexHtml = fs.readFileSync(indexPath, "utf-8")
 
-  const dummyDoc: ISlidevDocument = {
+  const dummyDoc: ISlidesDocument = {
     docId: "doc-click-test",
     config: {
       theme: "default",
@@ -81,7 +81,7 @@ describe("Blank Area Mouse Click Navigation (空白区域鼠标左键左右翻�
       if (selectionText && selectionText.trim().length > 0) return false
 
       const isComponent = e.target.closest(
-        ".slide-block, .controls-bar, .image-right-img-container, .image-left-img-container, img, video, audio, button, a, input, textarea, select, [data-clickable], [data-ref-id], .slidev-toc, .empty-state"
+        ".slide-block, .controls-bar, .image-right-img-container, .image-left-img-container, img, video, audio, button, a, input, textarea, select, [data-clickable], [data-ref-id], .slides-toc, .empty-state"
       )
       if (isComponent) return false
 

@@ -1,13 +1,13 @@
 import fs from "node:fs"
 import path from "node:path"
 import { describe, expect, it } from "vitest"
-import { SLIDEV_CUSTOM_STYLES_CSS, WorkspaceScaffolder } from "../src/engine/workspace-scaffolder"
+import { SLIDES_CUSTOM_STYLES_CSS, WorkspaceScaffolder } from "../src/engine/workspace-scaffolder"
 import { buildPrintableHtml } from "../src/export/pdf-exporter"
 import { buildStandaloneHtml } from "../src/export/single-html-exporter"
-import type { ISlidevDocument } from "../src/types/slidev-protocol"
+import type { ISlidesDocument } from "../src/types/slides-protocol"
 
 describe("Theme Link & Ref Styles (超链接与块引用 Slidev 规范与主题设计测试)", () => {
-  const sampleDoc: ISlidevDocument = {
+  const sampleDoc: ISlidesDocument = {
     docId: "doc-links-test",
     config: {
       theme: "default",
@@ -37,14 +37,14 @@ describe("Theme Link & Ref Styles (超链接与块引用 Slidev 规范与主题�
   }
 
   it("Web Sandbox HTML 模版应包含 Slidev 规范的超链接与主题色块引用样式", () => {
-    const indexPath = path.resolve(__dirname, "../public/slidev-client/index.html")
+    const indexPath = path.resolve(__dirname, "../public/slides-client/index.html")
     const content = fs.readFileSync(indexPath, "utf-8")
 
     // 不再使用默认浏览器蓝字下划线，而是使用正文继承色与虚线底边
     expect(content).toContain("border-bottom: 1px dashed currentColor")
     expect(content).toContain("color: inherit")
     expect(content).toContain("text-decoration: none")
-    expect(content).toContain("a.slidev-link")
+    expect(content).toContain("a.slides-link")
 
     // Hover 态高亮为主题强调色并转为实线
     expect(content).toContain("color: var(--slide-accent)")
@@ -57,7 +57,7 @@ describe("Theme Link & Ref Styles (超链接与块引用 Slidev 规范与主题�
   })
 
   it("演讲者模式 Presenter HTML 模版应包含 Slidev 规范超链接样式", () => {
-    const presenterPath = path.resolve(__dirname, "../public/slidev-client/presenter.html")
+    const presenterPath = path.resolve(__dirname, "../public/slides-client/presenter.html")
     const content = fs.readFileSync(presenterPath, "utf-8")
 
     expect(content).toContain("border-bottom: 1px dashed currentColor")
@@ -76,13 +76,13 @@ describe("Theme Link & Ref Styles (超链接与块引用 Slidev 规范与主题�
     const html = buildPrintableHtml(sampleDoc)
 
     expect(html).toContain("border-bottom: 1px dashed currentColor")
-    expect(html).toContain(".slidev-ref-tag, a.slidev-ref-tag")
-    expect(html).toContain(".slidev-block-ref, .pdf-block--ref")
+    expect(html).toContain(".slides-ref-tag, a.slides-ref-tag")
+    expect(html).toContain(".slides-block-ref, .pdf-block--ref")
   })
 
   it("WorkspaceScaffolder 的 styles/index.css 应包含 Slidev 原生主题色联动样式", () => {
-    expect(SLIDEV_CUSTOM_STYLES_CSS).toContain(".slidev-ref-tag")
-    expect(SLIDEV_CUSTOM_STYLES_CSS).toContain("var(--slidev-theme-primary")
-    expect(SLIDEV_CUSTOM_STYLES_CSS).toContain("color-mix(in srgb, var(--slidev-theme-primary")
+    expect(SLIDES_CUSTOM_STYLES_CSS).toContain(".slides-ref-tag")
+    expect(SLIDES_CUSTOM_STYLES_CSS).toContain("var(--slides-theme-primary")
+    expect(SLIDES_CUSTOM_STYLES_CSS).toContain("color-mix(in srgb, var(--slides-theme-primary")
   })
 })

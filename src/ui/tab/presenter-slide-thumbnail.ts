@@ -1,5 +1,5 @@
-import type { ISlidevPluginConfig, ISlidevVirtualPage } from "@/types/slidev-protocol"
-import { parseMaskRatio } from "@/types/slidev-protocol"
+import type { ISlidesPluginConfig, ISlidesVirtualPage } from "@/types/slides-protocol"
+import { parseMaskRatio } from "@/types/slides-protocol"
 import { computeSlideClicksPlan, getBlockClickStatus } from "@/engine/v-click-resolver"
 import { escapeHtml, renderSlideBlocksToHtml } from "@/export/markdown-renderer"
 
@@ -18,8 +18,8 @@ export interface IThumbnailScaleMetrics {
 }
 
 export interface IRenderPresenterThumbOptions {
-  config?: (Partial<ISlidevPluginConfig> & { image?: string }) | null
-  allSlides?: ISlidevVirtualPage[]
+  config?: (Partial<ISlidesPluginConfig> & { image?: string }) | null
+  allSlides?: ISlidesVirtualPage[]
   pageIndex?: number
   /**
    * 当前已触发的页内步进数 (0-based)。
@@ -32,7 +32,7 @@ export interface IRenderPresenterThumbOptions {
 /**
  * 计算单页幻灯片的最大步进数（综合 v-click 步进计划与页面动态蒙版步数）
  */
-export function computeSlideMaxStep(slide: ISlidevVirtualPage | null | undefined): number {
+export function computeSlideMaxStep(slide: ISlidesVirtualPage | null | undefined): number {
   if (!slide) return 0
   const clicksPlan = computeSlideClicksPlan((slide.blocks || []) as any)
   const clicksMax = clicksPlan.maxStep || 0
@@ -118,7 +118,7 @@ export function computeThumbnailScale(
 /**
  * 克隆幻灯片页对象，防止布局渲染器原地改写响应式块的 rawMarkdown / isColFirst
  */
-function cloneSlidePage(slide: ISlidevVirtualPage): ISlidevVirtualPage {
+function cloneSlidePage(slide: ISlidesVirtualPage): ISlidesVirtualPage {
   return {
     ...slide,
     frontmatter: { ...(slide.frontmatter || {}) },
@@ -144,7 +144,7 @@ function cloneSlidePage(slide: ISlidevVirtualPage): ISlidevVirtualPage {
  * 将单页幻灯片渲染为供演讲者视图缩略图画布挂载的完整 HTML 结构
  */
 export function renderPresenterSlideThumbnailHtml(
-  slide: ISlidevVirtualPage | null | undefined,
+  slide: ISlidesVirtualPage | null | undefined,
   options?: IRenderPresenterThumbOptions,
 ): string {
   if (!slide) return ""

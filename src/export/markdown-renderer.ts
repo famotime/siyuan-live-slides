@@ -1,4 +1,4 @@
-import type { ISlidevBlockItem, ISlidevVirtualPage } from "../types/slidev-protocol"
+import type { ISlidesBlockItem, ISlidesVirtualPage } from "../types/slides-protocol"
 import { cleanAndTransformInlineKramdown } from "../compiler/html-cleaner"
 import {
   formatLeadContent,
@@ -118,7 +118,7 @@ export function formatInlineMarkdown(text: string): string {
   res = res.replace(/\(\(([0-9a-zA-Z-]+)(?:\s*(?:&#039;([^&#]*)&#039;|&quot;([^&]*)&quot;|'([^']*)'|"([^"]*)"|([^\)]+?)))?\s*\)\)/g, (match, blockId, singleEscaped, doubleEscaped, singleRaw, doubleRaw, plainRaw) => {
     const anchor = (singleEscaped ?? doubleEscaped ?? singleRaw ?? doubleRaw ?? plainRaw ?? "").trim()
     const text = anchor || `Ref(${blockId.slice(0, 8)})`
-    return `<a href="siyuan://blocks/${blockId}" data-ref-id="${blockId}" class="slidev-ref-tag">🔗 ${text}</a>`
+    return `<a href="siyuan://blocks/${blockId}" data-ref-id="${blockId}" class="slides-ref-tag">🔗 ${text}</a>`
   })
 
   // 3.1 行内数学公式 $formula$
@@ -135,14 +135,14 @@ export function formatInlineMarkdown(text: string): string {
   res = res.replace(/\[(.*?)\]\((.*?)\)/g, (match, title, url) => {
     if (url.startsWith("siyuan://blocks/")) {
       const blockId = url.replace("siyuan://blocks/", "").split("?")[0]
-      return `<a href="${url}" data-ref-id="${blockId}" class="slidev-ref-tag">🔗 ${title}</a>`
+      return `<a href="${url}" data-ref-id="${blockId}" class="slides-ref-tag">🔗 ${title}</a>`
     }
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="slidev-link">${title}</a>`
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="slides-link">${title}</a>`
   })
 
   // 3.2.1 裸思源协议链接 (如 siyuan://blocks/20260625214150-d151ljw)
   res = res.replace(/(^|[\s(])(siyuan:\/\/blocks\/([0-9a-zA-Z-]+)(?:\?[^\s\)]*)?)/g, (match, prefix, url, blockId) => {
-    return `${prefix}<a href="${url}" data-ref-id="${blockId}" class="slidev-ref-tag">🔗 ${url}</a>`
+    return `${prefix}<a href="${url}" data-ref-id="${blockId}" class="slides-ref-tag">🔗 ${url}</a>`
   })
 
   // 3.3 加粗 **text**
@@ -251,16 +251,16 @@ export interface IBlockRenderOptions {
   calloutClassName?: string
   listClassName?: string
   extraClassName?: string
-  blockClassResolver?: (block: ISlidevBlockItem) => string
+  blockClassResolver?: (block: ISlidesBlockItem) => string
   highlight?: boolean
-  allSlides?: ISlidevVirtualPage[]
+  allSlides?: ISlidesVirtualPage[]
   currentPageIndex?: number
 }
 
 /**
  * 从页面提取用于目录显示的标题与层级
  */
-export function extractSlideTitleAndLevel(slide: ISlidevVirtualPage, fallbackIndex: number) {
+export function extractSlideTitleAndLevel(slide: ISlidesVirtualPage, fallbackIndex: number) {
   if (!slide) return null
   const fm = slide.frontmatter || {}
   if (fm.hideInToc === true || fm.hideInToc === "true") {
@@ -304,7 +304,7 @@ export function extractSlideTitleAndLevel(slide: ISlidevVirtualPage, fallbackInd
  * 依据幻灯片集合组装多层级目录树结构
  */
 export function buildTocTree(
-  slides: ISlidevVirtualPage[],
+  slides: ISlidesVirtualPage[],
   currentSlideIndex = 1,
   options: { minDepth?: number; maxDepth?: number; mode?: string } = {},
 ) {
@@ -380,7 +380,7 @@ export function buildTocTree(
  * 静态生成 Slidev Toc 目录组件的 HTML
  */
 export function renderTocHtml(
-  slides: ISlidevVirtualPage[],
+  slides: ISlidesVirtualPage[],
   currentSlideIndex = 1,
   props: { minDepth?: number; maxDepth?: number; columns?: number; textSm?: boolean } = {},
 ): string {
@@ -391,18 +391,18 @@ export function renderTocHtml(
 
   function renderList(nodes: any[], level = 1): string {
     if (!nodes || nodes.length === 0) return ""
-    const olClass = `slidev-toc-list slidev-toc-list-level-${level}`
+    const olClass = `slides-toc-list slides-toc-list-level-${level}`
     const listItems = nodes.map((item) => {
-      const activeClass = item.active ? " slidev-toc-item-active" : (item.hasActiveChild ? " slidev-toc-item-parent-active" : "")
+      const activeClass = item.active ? " slides-toc-item-active" : (item.hasActiveChild ? " slides-toc-item-parent-active" : "")
       const childrenHtml = item.children && item.children.length > 0 ? renderList(item.children, level + 1) : ""
       let formattedTitle = formatInlineMarkdown(item.title)
       if (formattedTitle.includes("LaTeX")) {
         formattedTitle = formattedTitle.replace(/\$\\LaTeX\$/g, '<span class="font-math">L<sup>A</sup>T<sub>E</sub>X</span>')
       }
       return `
-        <li class="slidev-toc-item${activeClass}" data-page="${item.pageIndex}">
-          <a class="slidev-toc-link" href="javascript:void(0)">
-            <span class="slidev-toc-title">${formattedTitle}</span>
+        <li class="slides-toc-item${activeClass}" data-page="${item.pageIndex}">
+          <a class="slides-toc-link" href="javascript:void(0)">
+            <span class="slides-toc-title">${formattedTitle}</span>
           </a>
           ${childrenHtml}
         </li>
@@ -412,15 +412,15 @@ export function renderTocHtml(
   }
 
   const listHtml = renderList(tree, 1)
-  return `<div class="slidev-toc${extraClass}"${colStyle}>${listHtml}</div>`
+  return `<div class="slides-toc${extraClass}"${colStyle}>${listHtml}</div>`
 }
 
 
 /**
- * 将单个 SlidevBlockItem 渲染为标准语义化 HTML 字符串
+ * 将单个 SlidesBlockItem 渲染为标准语义化 HTML 字符串
  */
 export function convertBlockToHtml(
-  block: ISlidevBlockItem,
+  block: ISlidesBlockItem,
   options?: IBlockRenderOptions,
 ): string {
   let motionClass = ""
@@ -429,7 +429,7 @@ export function convertBlockToHtml(
   const styleParts: string[] = []
 
   if (block.motion?.preset && block.motion.preset !== "none") {
-    motionClass = ` slidev-motion-${block.motion.preset.toLowerCase()}`
+    motionClass = ` slides-motion-${block.motion.preset.toLowerCase()}`
     if (typeof block.motion.duration === "number" && block.motion.duration > 0) {
       styleParts.push(`--motion-duration:${block.motion.duration}ms`)
     }
@@ -460,7 +460,7 @@ export function convertBlockToHtml(
   }
 
   // 1. 若已经是渲染好的思源引用或标签，直接内联
-  if (md.includes('class="slidev-block-ref"') || md.includes('class="slidev-ref-tag"')) {
+  if (md.includes('class="slides-block-ref"') || md.includes('class="slides-ref-tag"')) {
     return `<div class="${containerClass}"${motionStyle}>${md}</div>`
   }
 
@@ -477,7 +477,7 @@ export function convertBlockToHtml(
     const titleText = formatInlineMarkdown(hMatch[2])
     const isColFirstHeading = Boolean(
       block.isColFirst ||
-      (block.type === "i" && options?.extraClassName?.includes("slidev-col-first-heading-block"))
+      (block.type === "i" && options?.extraClassName?.includes("slides-col-first-heading-block"))
     )
     const hClass = isColFirstHeading ? ' class="slide-list-item-title"' : ""
     return `<div class="${containerClass}"${motionStyle}><h${level}${hClass}>${titleText}</h${level}></div>`
@@ -502,7 +502,7 @@ export function convertBlockToHtml(
       return `<span class="code-line shiki-focus"><span class="line-no">${lineNo}</span><span class="line-content">${highlightCode(line, "ts")}</span></span>`
     }).join("\n")
     const codeClass = options?.codeClassName || "pdf-code shiki-container"
-    const customMaxHeight = block.attrs?.["custom-slidev-max-height"] || block.maxHeight || ""
+    const customMaxHeight = block.attrs?.["custom-slides-max-height"] || block.maxHeight || ""
     const heightStyle = customMaxHeight ? ` style="max-height:${escapeHtml(customMaxHeight)};overflow-y:auto;"` : ""
     return `<div class="${containerClass}"${motionStyle}><pre class="${codeClass}"${heightStyle}><span class="lang-badge">TS</span><code>${formattedLines}</code></pre></div>`
   }
@@ -554,7 +554,7 @@ export function convertBlockToHtml(
     const langBadge = lang ? `<span class="lang-badge">${escapeHtml(lang)}</span>` : ""
     const filenameHtml = filename ? `<span class="code-filename">${escapeHtml(filename)}</span>` : ""
 
-    const customMaxHeight = block.attrs?.["custom-slidev-max-height"] || block.maxHeight || ""
+    const customMaxHeight = block.attrs?.["custom-slides-max-height"] || block.maxHeight || ""
     const heightStyle = customMaxHeight ? ` style="max-height:${escapeHtml(customMaxHeight)};overflow-y:auto;"` : ""
 
     return `<div class="${containerClass}"${motionStyle}><pre class="${codeClass}"${heightStyle}>${filenameHtml}${langBadge}<code>${formattedLines}</code></pre></div>`
@@ -578,10 +578,10 @@ export function convertBlockToHtml(
   const hasListPrefix = /^(\s*)([-*+]|\d+\.)\s+/m.test(md)
   const hasHeadingTag = /(?:^|\n)\s*#{1,6}\s+/.test(md)
   if (isVideoTag && !hasListPrefix && !hasHeadingTag && !md.includes("\n")) {
-    const isAutoplay = block.attributes?.["custom-slidev-autoplay"] === "true" || /autoplay/i.test(md)
-    const isLoop = block.attributes?.["custom-slidev-loop"] === "true" || /loop/i.test(md)
-    const isMuted = block.attributes?.["custom-slidev-muted"] === "true" || isAutoplay || /muted/i.test(md)
-    const hideControls = block.attributes?.["custom-slidev-controls"] === "false"
+    const isAutoplay = block.attributes?.["custom-slides-autoplay"] === "true" || /autoplay/i.test(md)
+    const isLoop = block.attributes?.["custom-slides-loop"] === "true" || /loop/i.test(md)
+    const isMuted = block.attributes?.["custom-slides-muted"] === "true" || isAutoplay || /muted/i.test(md)
+    const hideControls = block.attributes?.["custom-slides-controls"] === "false"
 
     const srcMatch = md.match(/\bsrc=["']([^"']+)["']/i)
     const src = srcMatch ? srcMatch[1] : ""

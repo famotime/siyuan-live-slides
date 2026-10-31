@@ -1,9 +1,9 @@
 import type {
   ISiYuanBlockNode,
   ISlidePageFrontmatter,
-  ISlidevMotionConfig,
-  ISlidevPluginConfig,
-} from "../types/slidev-protocol"
+  ISlidesMotionConfig,
+  ISlidesPluginConfig,
+} from "../types/slides-protocol"
 import {
   ATTR_DOC_ASPECT_RATIO,
   ATTR_DOC_COLOR_SCHEMA,
@@ -34,12 +34,12 @@ import {
   ATTR_PAGE_NOTES,
   ATTR_PAGE_SLIDE,
   ATTR_PAGE_TRANSITION,
-} from "../types/slidev-protocol"
+} from "../types/slides-protocol"
 
 import { getRuntimeSettings } from "../settings"
 
 /** 默认全局配置 */
-export const DEFAULT_SLIDEV_CONFIG: ISlidevPluginConfig = {
+export const DEFAULT_SLIDES_CONFIG: ISlidesPluginConfig = {
   theme: "default",
   aspectRatio: "16/9",
   highlighter: "shiki",
@@ -54,28 +54,28 @@ export const DEFAULT_SLIDEV_CONFIG: ISlidevPluginConfig = {
  */
 export function parseDocumentConfig(
   attrs?: Record<string, string> | null,
-): ISlidevPluginConfig {
+): ISlidesPluginConfig {
   const globalSettings = getRuntimeSettings()
   if (!attrs) {
-    return { ...DEFAULT_SLIDEV_CONFIG, normalizeHeadingSizes: globalSettings.normalizeHeadingSizes }
+    return { ...DEFAULT_SLIDES_CONFIG, normalizeHeadingSizes: globalSettings.normalizeHeadingSizes }
   }
 
   return {
-    theme: attrs[ATTR_DOC_THEME]?.trim() || DEFAULT_SLIDEV_CONFIG.theme,
-    aspectRatio: (attrs[ATTR_DOC_ASPECT_RATIO]?.trim() as any) || DEFAULT_SLIDEV_CONFIG.aspectRatio,
-    highlighter: (attrs[ATTR_DOC_HIGHLIGHTER]?.trim() as any) || DEFAULT_SLIDEV_CONFIG.highlighter,
-    defaultTransition: attrs[ATTR_DOC_DEFAULT_TRANSITION]?.trim() || DEFAULT_SLIDEV_CONFIG.defaultTransition,
-    colorSchema: (attrs[ATTR_DOC_COLOR_SCHEMA]?.trim() as any) || DEFAULT_SLIDEV_CONFIG.colorSchema,
-    spacing: (attrs[ATTR_DOC_SPACING]?.trim() as any) || DEFAULT_SLIDEV_CONFIG.spacing,
+    theme: attrs[ATTR_DOC_THEME]?.trim() || DEFAULT_SLIDES_CONFIG.theme,
+    aspectRatio: (attrs[ATTR_DOC_ASPECT_RATIO]?.trim() as any) || DEFAULT_SLIDES_CONFIG.aspectRatio,
+    highlighter: (attrs[ATTR_DOC_HIGHLIGHTER]?.trim() as any) || DEFAULT_SLIDES_CONFIG.highlighter,
+    defaultTransition: attrs[ATTR_DOC_DEFAULT_TRANSITION]?.trim() || DEFAULT_SLIDES_CONFIG.defaultTransition,
+    colorSchema: (attrs[ATTR_DOC_COLOR_SCHEMA]?.trim() as any) || DEFAULT_SLIDES_CONFIG.colorSchema,
+    spacing: (attrs[ATTR_DOC_SPACING]?.trim() as any) || DEFAULT_SLIDES_CONFIG.spacing,
     normalizeHeadingSizes: globalSettings.normalizeHeadingSizes,
   }
 }
 
 /**
- * 判断是否为分页分界块 (Thematic Break 或显式标记 custom-slidev-slide)
+ * 判断是否为分页分界块 (Thematic Break 或显式标记 custom-slides-slide)
  */
 export function isPageBreak(node: ISiYuanBlockNode): boolean {
-  // 1. 显式属性标记 custom-slidev-slide = "true" | "page" | "cover" | "end"
+  // 1. 显式属性标记 custom-slides-slide = "true" | "page" | "cover" | "end"
   const slideAttr = node.ial?.[ATTR_PAGE_SLIDE]
   if (slideAttr && (slideAttr === "true" || slideAttr === "page" || slideAttr === "cover" || slideAttr === "end")) {
     return true
@@ -157,10 +157,10 @@ export function parsePageAttrs(
     notes = attrs[ATTR_PAGE_NOTES].trim()
   }
 
-  // 保留所有其他扩展 custom-slidev-* 属性到 frontmatter (如 layoutClass, level, title, hideInToc 等)
+  // 保留所有其他扩展 custom-slides-* 属性到 frontmatter (如 layoutClass, level, title, hideInToc 等)
   for (const [k, v] of Object.entries(attrs)) {
     if (
-      k.startsWith("custom-slidev-") &&
+      k.startsWith("custom-slides-") &&
       ![
         ATTR_PAGE_LAYOUT,
         ATTR_PAGE_LAYOUT_RATIO,
@@ -177,7 +177,7 @@ export function parsePageAttrs(
         ATTR_PAGE_SLIDE,
       ].includes(k)
     ) {
-      const propKey = k.replace(/^custom-slidev-/, "")
+      const propKey = k.replace(/^custom-slides-/, "")
       try {
         frontmatter[propKey] = JSON.parse(v)
       } catch {
@@ -196,7 +196,7 @@ export function parseElementAttrs(
   attrs?: Record<string, string> | null,
 ): {
   clicks?: string
-  motion?: ISlidevMotionConfig
+  motion?: ISlidesMotionConfig
   shikiLines?: string
   maxHeight?: string
   slot?: "left" | "right" | "default" | string
@@ -207,7 +207,7 @@ export function parseElementAttrs(
 } {
   const result: {
     clicks?: string
-    motion?: ISlidevMotionConfig
+    motion?: ISlidesMotionConfig
     shikiLines?: string
     maxHeight?: string
     slot?: string
@@ -221,28 +221,28 @@ export function parseElementAttrs(
     return result
   }
 
-  // 讲稿备注块识别：命中 custom-slidev-note 或 slidev-note
-  const noteAttr = attrs[ATTR_ELEM_NOTE] ?? attrs["slidev-note"]
+  // 讲稿备注块识别：命中 custom-slides-note 或 slidev-note
+  const noteAttr = attrs[ATTR_ELEM_NOTE] ?? attrs["slides-note"]
   if (noteAttr !== undefined && noteAttr !== null && noteAttr !== "" && noteAttr !== "false" && noteAttr !== "0") {
     result.isNote = true
   }
 
-  // 页面背景图识别：命中 custom-slidev-role="background" 或 custom-slidev-background="true"
-  const roleAttr = attrs[ATTR_ELEM_ROLE] ?? attrs["slidev-role"]
-  const bgAttr = attrs[ATTR_PAGE_BACKGROUND] ?? attrs["slidev-background"]
+  // 页面背景图识别：命中 custom-slides-role="background" 或 custom-slides-background="true"
+  const roleAttr = attrs[ATTR_ELEM_ROLE] ?? attrs["slides-role"]
+  const bgAttr = attrs[ATTR_PAGE_BACKGROUND] ?? attrs["slides-background"]
   if (roleAttr === ROLE_BACKGROUND || bgAttr === "true" || bgAttr === "1") {
     result.isBackground = true
   }
 
-  // 图左 / 图右图片排版识别：命中 custom-slidev-layout="image-left" | "image-right" 或 custom-slidev-role
-  const layoutAttr = attrs[ATTR_PAGE_LAYOUT] ?? attrs["slidev-layout"]
+  // 图左 / 图右图片排版识别：命中 custom-slides-layout="image-left" | "image-right" 或 custom-slides-role
+  const layoutAttr = attrs[ATTR_PAGE_LAYOUT] ?? attrs["slides-layout"]
   if (layoutAttr === ROLE_IMAGE_LEFT || layoutAttr === ROLE_IMAGE_RIGHT) {
     result.imageLayout = layoutAttr
   } else if (roleAttr === ROLE_IMAGE_LEFT || roleAttr === ROLE_IMAGE_RIGHT) {
     result.imageLayout = roleAttr
   }
 
-  const clickAttr = attrs[ATTR_ELEM_CLICK] ?? attrs["custom-slidev-clicks"] ?? attrs["slidev-click"] ?? attrs["slidev-clicks"]
+  const clickAttr = attrs[ATTR_ELEM_CLICK] ?? attrs["custom-slides-clicks"] ?? attrs["slides-click"] ?? attrs["slides-clicks"]
   if (clickAttr !== undefined && clickAttr !== null) {
     result.clicks = clickAttr.trim()
   }

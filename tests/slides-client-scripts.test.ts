@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { describe, expect, it } from "vitest"
 
-// 回归守卫：slidev-client 静态页曾因「计算属性 nextSlide 与翻页函数 nextSlide() 同名」
+// 回归守卫：slides-client 静态页曾因「计算属性 nextSlide 与翻页函数 nextSlide() 同名」
 // 触发 SyntaxError，整段内联脚本解析失败、Vue 应用从未挂载，演讲者视图呈现占位符
 // 且按钮全部失效。此处对两份静态 HTML 的全部内联脚本做语法可解析性校验，
 // 让同类致命错误在测试阶段即被拦截。
@@ -24,12 +24,12 @@ function assertScriptsParse(htmlPath: string): void {
   }
 }
 
-describe("slidev-client 静态页内联脚本语法守卫", () => {
+describe("slides-client 静态页内联脚本语法守卫", () => {
   it("presenter.html 内联脚本必须可完整解析", () => {
-    assertScriptsParse(resolve(__dirname, "../public/slidev-client/presenter.html"))
+    assertScriptsParse(resolve(__dirname, "../public/slides-client/presenter.html"))
   })
 
   it("index.html 内联脚本必须可完整解析", () => {
-    assertScriptsParse(resolve(__dirname, "../public/slidev-client/index.html"))
+    assertScriptsParse(resolve(__dirname, "../public/slides-client/index.html"))
   })
 })

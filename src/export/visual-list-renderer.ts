@@ -1,4 +1,4 @@
-import type { ISlidevBlockItem } from "../types/slidev-protocol"
+import type { ISlidesBlockItem } from "../types/slides-protocol"
 import { escapeHtml, formatInlineMarkdown } from "./markdown-renderer"
 import type { IBlockRenderOptions } from "./markdown-renderer"
 
@@ -96,7 +96,7 @@ export function formatLeadContent(lines: string[]): string {
 export function renderMarkdownList(
   md: string,
   options?: IBlockRenderOptions,
-  block?: ISlidevBlockItem,
+  block?: ISlidesBlockItem,
 ): string | null {
   const lines = md.split("\n")
   const hasListItems = lines.some(line => /^(\s*)([-*+]|\d+\.)\s+/.test(line))
@@ -191,10 +191,10 @@ export function renderMarkdownList(
             videoRaw += " " + lines[i].trim()
           }
         }
-        const isAutoplay = block?.attributes?.["custom-slidev-autoplay"] === "true" || /autoplay/i.test(videoRaw)
-        const isLoop = block?.attributes?.["custom-slidev-loop"] === "true" || /loop/i.test(videoRaw)
-        const isMuted = block?.attributes?.["custom-slidev-muted"] === "true" || isAutoplay || /muted/i.test(videoRaw)
-        const hideControls = block?.attributes?.["custom-slidev-controls"] === "false"
+        const isAutoplay = block?.attributes?.["custom-slides-autoplay"] === "true" || /autoplay/i.test(videoRaw)
+        const isLoop = block?.attributes?.["custom-slides-loop"] === "true" || /loop/i.test(videoRaw)
+        const isMuted = block?.attributes?.["custom-slides-muted"] === "true" || isAutoplay || /muted/i.test(videoRaw)
+        const hideControls = block?.attributes?.["custom-slides-controls"] === "false"
 
         const srcMatch = videoRaw.match(/\bsrc=["']([^"']+)["']/i)
         const src = srcMatch ? srcMatch[1] : ""
@@ -262,7 +262,7 @@ export function renderMarkdownList(
 export function renderCompoundMarkdown(
   md: string,
   options?: IBlockRenderOptions,
-  block?: ISlidevBlockItem,
+  block?: ISlidesBlockItem,
 ): string {
   const containerClass = options?.containerClassName || "pdf-block"
   const lines = md.split(/\r?\n/)
@@ -350,10 +350,10 @@ export function renderCompoundMarkdown(
 
     // 3. 视频
     if (/<video\b/i.test(trimmedSub)) {
-      const isAutoplay = block?.attributes?.["custom-slidev-autoplay"] === "true" || /autoplay/i.test(trimmedSub)
-      const isLoop = block?.attributes?.["custom-slidev-loop"] === "true" || /loop/i.test(trimmedSub)
-      const isMuted = block?.attributes?.["custom-slidev-muted"] === "true" || isAutoplay || /muted/i.test(trimmedSub)
-      const hideControls = block?.attributes?.["custom-slidev-controls"] === "false"
+      const isAutoplay = block?.attributes?.["custom-slides-autoplay"] === "true" || /autoplay/i.test(trimmedSub)
+      const isLoop = block?.attributes?.["custom-slides-loop"] === "true" || /loop/i.test(trimmedSub)
+      const isMuted = block?.attributes?.["custom-slides-muted"] === "true" || isAutoplay || /muted/i.test(trimmedSub)
+      const hideControls = block?.attributes?.["custom-slides-controls"] === "false"
 
       const srcMatch = trimmedSub.match(/\bsrc=["']([^"']+)["']/i)
       const src = srcMatch ? srcMatch[1] : ""

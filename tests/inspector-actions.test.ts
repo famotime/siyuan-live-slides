@@ -28,11 +28,11 @@ describe("useInspectorActions (Inspector 操作与 API 编排)", () => {
       currentSlideNoteBlockId: computed(() => ""),
       currentSlideLayout: computed(() => "default"),
       isNoteBlock: computed(() => false),
-      elemClick: computed(() => ctx.activeBlockAttrs.value["custom-slidev-click"] || ""),
-      videoAutoplay: computed(() => ctx.activeBlockAttrs.value["custom-slidev-autoplay"] === "true"),
-      videoLoop: computed(() => ctx.activeBlockAttrs.value["custom-slidev-loop"] === "true"),
-      videoMuted: computed(() => ctx.activeBlockAttrs.value["custom-slidev-muted"] === "true"),
-      videoControls: computed(() => ctx.activeBlockAttrs.value["custom-slidev-controls"] !== "false"),
+      elemClick: computed(() => ctx.activeBlockAttrs.value["custom-slides-click"] || ""),
+      videoAutoplay: computed(() => ctx.activeBlockAttrs.value["custom-slides-autoplay"] === "true"),
+      videoLoop: computed(() => ctx.activeBlockAttrs.value["custom-slides-loop"] === "true"),
+      videoMuted: computed(() => ctx.activeBlockAttrs.value["custom-slides-muted"] === "true"),
+      videoControls: computed(() => ctx.activeBlockAttrs.value["custom-slides-controls"] !== "false"),
       pageBackground: ref(""),
       pageImage: ref(""),
       elemShikiLines: ref(""),
@@ -51,12 +51,12 @@ describe("useInspectorActions (Inspector 操作与 API 编排)", () => {
     const syncDomSpy = vi.spyOn(domSyncModule, "syncDomBlockAttrs").mockImplementation(() => {})
     const setOverrideSpy = vi.spyOn(globalDocumentCompiler, "setBlockAttrOverride")
 
-    await actions.saveAttr("custom-slidev-click", "+1")
+    await actions.saveAttr("custom-slides-click", "+1")
 
-    expect(ctx.activeBlockAttrs.value["custom-slidev-click"]).toBe("+1")
-    expect(setOverrideSpy).toHaveBeenCalledWith("block-101", { "custom-slidev-click": "+1" })
-    expect(syncDomSpy).toHaveBeenCalledWith("block-101", { "custom-slidev-click": "+1" })
-    expect(setBlockAttrsSpy).toHaveBeenCalledWith("block-101", { "custom-slidev-click": "+1" })
+    expect(ctx.activeBlockAttrs.value["custom-slides-click"]).toBe("+1")
+    expect(setOverrideSpy).toHaveBeenCalledWith("block-101", { "custom-slides-click": "+1" })
+    expect(syncDomSpy).toHaveBeenCalledWith("block-101", { "custom-slides-click": "+1" })
+    expect(setBlockAttrsSpy).toHaveBeenCalledWith("block-101", { "custom-slides-click": "+1" })
     expect(ctx.plugin.compileCurrentDocument).toHaveBeenCalled()
 
     setBlockAttrsSpy.mockRestore()
@@ -70,14 +70,14 @@ describe("useInspectorActions (Inspector 操作与 API 编排)", () => {
 
     await actions.onToggleVideoAutoplay()
 
-    expect(ctx.activeBlockAttrs.value["custom-slidev-autoplay"]).toBe("true")
-    expect(ctx.activeBlockAttrs.value["custom-slidev-muted"]).toBe("true")
+    expect(ctx.activeBlockAttrs.value["custom-slides-autoplay"]).toBe("true")
+    expect(ctx.activeBlockAttrs.value["custom-slides-muted"]).toBe("true")
   })
 
   it("onClearBlockAttrs 应清除所有演示属性并清空本地响应式状态", async () => {
     ctx.activeBlockAttrs.value = {
-      "custom-slidev-click": "+1",
-      "custom-slidev-slot": "left",
+      "custom-slides-click": "+1",
+      "custom-slides-slot": "left",
     }
     ctx.elemShikiLines.value = "1-3"
     ctx.elemMaxHeight.value = "300px"
@@ -146,7 +146,7 @@ describe("useInspectorActions (Inspector 操作与 API 编排)", () => {
 
       expect(confirmSpy).toHaveBeenCalled()
       expect(insertSpy).toHaveBeenCalledTimes(1)
-      expect(setAttrsSpy).toHaveBeenCalledWith("new-note-block-id", { "custom-slidev-note": "true" })
+      expect(setAttrsSpy).toHaveBeenCalledWith("new-note-block-id", { "custom-slides-note": "true" })
       expect(ctx.plugin.compileCurrentDocument).toHaveBeenCalled()
       expect(showMessageSpy).toHaveBeenCalledWith("已成功为 1 页追加讲稿备注块")
 
@@ -199,7 +199,7 @@ describe("useInspectorActions (Inspector 操作与 API 编排)", () => {
         { pageIndex: 2, noteBlocks: [{ id: "note-2" }, { id: "note-3" }] },
       ]
       ctx.activeBlockId.value = "note-2"
-      ctx.activeBlockAttrs.value = { "custom-slidev-note": "true" }
+      ctx.activeBlockAttrs.value = { "custom-slides-note": "true" }
 
       let cbPromise: any = null
       const confirmSpy = vi.spyOn(siyuanModule, "confirm").mockImplementation((title, text, confirmCb) => {
@@ -219,7 +219,7 @@ describe("useInspectorActions (Inspector 操作与 API 编排)", () => {
       expect(deleteBlockSpy).toHaveBeenCalledWith("note-2")
       expect(deleteBlockSpy).toHaveBeenCalledWith("note-3")
       expect(ctx.plugin.compileCurrentDocument).toHaveBeenCalled()
-      expect(ctx.activeBlockAttrs.value["custom-slidev-note"]).toBeUndefined()
+      expect(ctx.activeBlockAttrs.value["custom-slides-note"]).toBeUndefined()
       expect(showMessageSpy).toHaveBeenCalledWith("已成功删除全部 3 个讲稿备注块")
 
       confirmSpy.mockRestore()

@@ -5,13 +5,13 @@ import {
   findFourComponentSuperBlockInPage,
   scanAndTagListSuperBlocks,
 } from "../src/compiler/superblock-scanner"
-import { buildSlidevDocument } from "../src/compiler/slidev-ast-builder"
+import { buildSlidesDocument } from "../src/compiler/slides-ast-builder"
 import { renderSlideBlocksToHtml } from "../src/export/slide-layout-renderer"
 import { useInspectorActions } from "../src/ui/dock/useInspectorActions"
 import * as apiModule from "../src/api"
 import * as domSyncModule from "../src/sync/dom-attr-sync"
 import * as siyuanModule from "siyuan"
-import type { ISiYuanBlockNode, ISlidevVirtualPage } from "../src/types/slidev-protocol"
+import type { ISiYuanBlockNode, ISlidesVirtualPage } from "../src/types/slides-protocol"
 
 describe("Clover Layout (四叶草 2x2 田字型布局规范测试)", () => {
   describe("1. 四组件超级块提取与页面检索 (extract & find)", () => {
@@ -171,7 +171,7 @@ describe("Clover Layout (四叶草 2x2 田字型布局规范测试)", () => {
       const pageTargetNode: ISiYuanBlockNode = {
         id: "page-div-1",
         type: "tb",
-        ial: { "custom-slidev-layout": "clover" },
+        ial: { "custom-slides-layout": "clover" },
       }
       const headingNode: ISiYuanBlockNode = {
         id: "h-title",
@@ -193,10 +193,10 @@ describe("Clover Layout (四叶草 2x2 田字型布局规范测试)", () => {
       const blocks: ISiYuanBlockNode[] = [pageTargetNode, headingNode, sbNode]
       const result = scanAndTagListSuperBlocks("doc-1", blocks)
 
-      // 验证未产生将 custom-slidev-layout 改为 cols-header 的变更
-      const layoutChanges = result.changes.filter(c => c.attrs["custom-slidev-layout"] !== undefined)
+      // 验证未产生将 custom-slides-layout 改为 cols-header 的变更
+      const layoutChanges = result.changes.filter(c => c.attrs["custom-slides-layout"] !== undefined)
       expect(layoutChanges.length).toBe(0)
-      expect(pageTargetNode.ial?.["custom-slidev-layout"]).toBe("clover")
+      expect(pageTargetNode.ial?.["custom-slides-layout"]).toBe("clover")
 
       // 验证追踪列表中正确记录版式为 clover
       const tracked = result.newTracked[0]
@@ -204,7 +204,7 @@ describe("Clover Layout (四叶草 2x2 田字型布局规范测试)", () => {
     })
   })
 
-  describe("3. Slidev Markdown AST 编译 (buildSlidevDocument)", () => {
+  describe("3. Slidev Markdown AST 编译 (buildSlidesDocument)", () => {
     it("clover 版式下应正确生成包含通栏标题与 ::col-1:: 至 ::col-4:: 的 Slidev Markdown", () => {
       const pageBlocks: ISiYuanBlockNode[] = [
         {
@@ -212,39 +212,39 @@ describe("Clover Layout (四叶草 2x2 田字型布局规范测试)", () => {
           type: "h",
           content: "核心四象限模型",
           markdown: "# 核心四象限模型",
-          ial: { "custom-slidev-slot": "header" },
+          ial: { "custom-slides-slot": "header" },
         },
         {
           id: "q1",
           type: "p",
           content: "重要且紧急",
           markdown: "重要且紧急",
-          ial: { "custom-slidev-slot": "col-1" },
+          ial: { "custom-slides-slot": "col-1" },
         },
         {
           id: "q2",
           type: "p",
           content: "重要不紧急",
           markdown: "重要不紧急",
-          ial: { "custom-slidev-slot": "col-2" },
+          ial: { "custom-slides-slot": "col-2" },
         },
         {
           id: "q3",
           type: "p",
           content: "紧急不重要",
           markdown: "紧急不重要",
-          ial: { "custom-slidev-slot": "col-3" },
+          ial: { "custom-slides-slot": "col-3" },
         },
         {
           id: "q4",
           type: "p",
           content: "不重要不紧急",
           markdown: "不重要不紧急",
-          ial: { "custom-slidev-slot": "col-4" },
+          ial: { "custom-slides-slot": "col-4" },
         },
       ]
 
-      const doc = buildSlidevDocument("doc-clover", { "custom-slidev-layout": "clover" }, pageBlocks)
+      const doc = buildSlidesDocument("doc-clover", { "custom-slides-layout": "clover" }, pageBlocks)
 
       expect(doc.slides.length).toBe(1)
       const slide = doc.slides[0]
@@ -263,7 +263,7 @@ describe("Clover Layout (四叶草 2x2 田字型布局规范测试)", () => {
 
   describe("4. 导出与渲染器 HTML 输出 (renderSlideBlocksToHtml)", () => {
     it("clover 版式应渲染为带有 layout-clover-container 与 2x2 网格样式的 HTML", () => {
-      const slide: ISlidevVirtualPage = {
+      const slide: ISlidesVirtualPage = {
         pageIndex: 1,
         startBlockId: "start-1",
         frontmatter: { layout: "clover" },
@@ -354,7 +354,7 @@ describe("Clover Layout (四叶草 2x2 田字型布局规范测试)", () => {
     })
 
     it("当在当前页 AST 中成功匹配到 4 组件超级块时，应配置 clover 版式与 col-1~4 插槽并返回 true", async () => {
-      const astSlide: ISlidevVirtualPage = {
+      const astSlide: ISlidesVirtualPage = {
         pageIndex: 1,
         startBlockId: "start-1",
         frontmatter: { layout: "default" },
@@ -410,10 +410,10 @@ describe("Clover Layout (四叶草 2x2 田字型布局规范测试)", () => {
       expect(script).toContain('repeat(2, minmax(0, 1fr))')
     })
 
-    it("public/slidev-client/index.html 应支持 clover 布局与田字型 2x2 网格样式", async () => {
+    it("public/slides-client/index.html 应支持 clover 布局与田字型 2x2 网格样式", async () => {
       const fs = await import("fs")
       const path = await import("path")
-      const html = fs.readFileSync(path.resolve(__dirname, "../public/slidev-client/index.html"), "utf-8")
+      const html = fs.readFileSync(path.resolve(__dirname, "../public/slides-client/index.html"), "utf-8")
       expect(html).toContain(".layout-clover-grid")
       expect(html).toContain("repeat(2, minmax(0, 1fr))")
       expect(html).toContain("layout === 'clover'")

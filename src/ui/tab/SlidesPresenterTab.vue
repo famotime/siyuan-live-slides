@@ -9,13 +9,13 @@
     <header class="presenter-header">
       <div class="presenter-title-area">
         <div class="presenter-brand">
-          <SlidevIcon name="presenter" class="brand-icon" />
+          <SlidesIcon name="presenter" class="brand-icon" />
           <span class="title-name">演讲者控制台</span>
         </div>
         <div class="header-pills">
           <span class="pill pill-page">P.{{ currentPage }} / {{ totalPages || 1 }}</span>
           <span v-if="currentMaxStep > 0" class="pill pill-step">
-            <SlidevIcon name="step" class="pill-icon" />
+            <SlidesIcon name="step" class="pill-icon" />
             步进 {{ currentStep }} / {{ currentMaxStep }}
           </span>
         </div>
@@ -27,12 +27,12 @@
           aria-label="弹出大屏放映独立窗口 (16:9)"
           @click="openStandaloneWindow"
         >
-          <SlidevIcon name="window" />
+          <SlidesIcon name="window" />
           <span class="btn-tool-label">独立放映</span>
         </button>
 
         <div class="timer-capsule">
-          <SlidevIcon name="clock" class="timer-icon" />
+          <SlidesIcon name="clock" class="timer-icon" />
           <span class="timer-digits">{{ formattedTime }}</span>
           <div class="timer-actions">
             <button
@@ -40,14 +40,14 @@
               :aria-label="isTimerRunning ? '暂停计时' : '继续计时'"
               @click="toggleTimer"
             >
-              <SlidevIcon :name="isTimerRunning ? 'pause' : 'play'" />
+              <SlidesIcon :name="isTimerRunning ? 'pause' : 'play'" />
             </button>
             <button
               class="timer-btn b3-tooltips b3-tooltips__s"
               aria-label="重置计时"
               @click="resetTimer"
             >
-              <SlidevIcon name="reset" />
+              <SlidesIcon name="reset" />
             </button>
           </div>
         </div>
@@ -90,9 +90,9 @@
             >
               <div
                 class="presenter-thumb-viewport slide-viewport"
-                :class="'slidev-theme-' + activeSlidevTheme"
+                :class="'slides-theme-' + activeSlidesTheme"
                 :data-theme="activeColorSchema"
-                :data-slidev-theme="activeSlidevTheme"
+                :data-slides-theme="activeSlidesTheme"
                 :data-normalize-headings="isNormalizeHeadings ? 'true' : 'false'"
                 :style="{
                   width: slideAspect.baseWidth + 'px',
@@ -140,9 +140,9 @@
             >
               <div
                 class="presenter-thumb-viewport slide-viewport"
-                :class="'slidev-theme-' + activeSlidevTheme"
+                :class="'slides-theme-' + activeSlidesTheme"
                 :data-theme="activeColorSchema"
-                :data-slidev-theme="activeSlidevTheme"
+                :data-slides-theme="activeSlidesTheme"
                 :data-normalize-headings="isNormalizeHeadings ? 'true' : 'false'"
                 :style="{
                   width: slideAspect.baseWidth + 'px',
@@ -164,7 +164,7 @@
       <section class="notes-panel">
         <div class="panel-header">
           <div class="panel-header-left">
-            <SlidevIcon name="notes" class="panel-title-icon" />
+            <SlidesIcon name="notes" class="panel-title-icon" />
             <span>讲稿备忘</span>
           </div>
           <div class="notes-size-controls">
@@ -174,7 +174,7 @@
               :disabled="notesFontSize <= 14"
               @click="decreaseFontSize"
             >
-              <SlidevIcon name="minus" />
+              <SlidesIcon name="minus" />
             </button>
             <span class="notes-size-value">{{ notesFontSize }}px</span>
             <button
@@ -183,7 +183,7 @@
               :disabled="notesFontSize >= 36"
               @click="increaseFontSize"
             >
-              <SlidevIcon name="plus" />
+              <SlidesIcon name="plus" />
             </button>
           </div>
         </div>
@@ -200,7 +200,7 @@
     <!-- 空数据等待态：显式给出原因与自救入口 -->
     <main v-else class="presenter-empty">
       <div class="empty-icon-wrap">
-        <SlidevIcon name="refresh" class="empty-icon" />
+        <SlidesIcon name="refresh" class="empty-icon" />
       </div>
       <h2>等待大屏放映数据</h2>
       <p>未检测到活跃的幻灯片数据，请先开启大屏放映端。</p>
@@ -210,7 +210,7 @@
           aria-label="在思源中打开底部演示预览页签"
           @click="openBigScreen"
         >
-          <SlidevIcon name="presenter" />
+          <SlidesIcon name="presenter" />
           <span>打开大屏放映页签</span>
         </button>
         <button
@@ -218,7 +218,7 @@
           aria-label="将放映端弹出为独立窗口 (16:9)"
           @click="openStandaloneWindow"
         >
-          <SlidevIcon name="window" />
+          <SlidesIcon name="window" />
           <span>弹出独立放映窗口</span>
         </button>
       </div>
@@ -233,7 +233,7 @@
           aria-label="快速返回上一页 (Shift + ←)"
           @click="goPrevSlide"
         >
-          <SlidevIcon name="chevrons-left" />
+          <SlidesIcon name="chevrons-left" />
           <span>上一页</span>
         </button>
         <button
@@ -242,7 +242,7 @@
           aria-label="回退一步 (←)"
           @click="goPrevStep"
         >
-          <SlidevIcon name="chevron-left" />
+          <SlidesIcon name="chevron-left" />
           <span>上一步</span>
         </button>
       </div>
@@ -256,7 +256,7 @@
           aria-label="从第一页重新放映 (Home)"
           @click="restartPresentation"
         >
-          <SlidevIcon name="reset" />
+          <SlidesIcon name="reset" />
           <span>重头放映</span>
         </button>
       </div>
@@ -283,7 +283,7 @@
           @click="goNextStep"
         >
           <span>下一步</span>
-          <SlidevIcon name="chevron-right" />
+          <SlidesIcon name="chevron-right" />
         </button>
         <button
           class="btn-nav btn-nav--slide b3-tooltips b3-tooltips__nw"
@@ -292,7 +292,7 @@
           @click="goNextSlide"
         >
           <span>下一页</span>
-          <SlidevIcon name="chevrons-right" />
+          <SlidesIcon name="chevrons-right" />
         </button>
       </div>
     </footer>
@@ -302,14 +302,14 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted, inject } from 'vue'
 import type { Plugin } from 'siyuan'
-import SlidevIcon from '@/ui/components/SlidevIcon.vue'
+import SlidesIcon from '@/ui/components/SlidesIcon.vue'
 import { WebSandboxBridge } from '@/engine/web-sandbox-bridge'
 import type {
-  ISlidevDocument,
-  ISlidevPluginConfig,
-  ISlidevVirtualPage,
-  ISlidevBlockItem,
-} from '@/types/slidev-protocol'
+  ISlidesDocument,
+  ISlidesPluginConfig,
+  ISlidesVirtualPage,
+  ISlidesBlockItem,
+} from '@/types/slides-protocol'
 import {
   computeSlideMaxStep,
   computeThumbnailScale,
@@ -320,8 +320,8 @@ import {
 const plugin = inject<Plugin>('plugin')
 const sandboxBridge = inject<WebSandboxBridge>('sandboxBridge', new WebSandboxBridge())
 
-const slides = ref<ISlidevVirtualPage[]>([])
-const docConfig = ref<Partial<ISlidevPluginConfig>>({})
+const slides = ref<ISlidesVirtualPage[]>([])
+const docConfig = ref<Partial<ISlidesPluginConfig>>({})
 const currentPage = ref(1)
 const currentStep = ref(0)
 // 桥接侧上报的总页数与最大步数兜底：幻灯片数据未到位时也能显示正确页数/步数并解锁控制
@@ -336,7 +336,7 @@ const currentContainerSize = ref({ width: 0, height: 0 })
 const nextContainerSize = ref({ width: 0, height: 0 })
 
 const slideAspect = computed(() => parseSlideAspectRatio(docConfig.value?.aspectRatio))
-const activeSlidevTheme = computed(() => docConfig.value?.theme || 'default')
+const activeSlidesTheme = computed(() => docConfig.value?.theme || 'default')
 const activeColorSchema = computed(() => (docConfig.value?.colorSchema === 'light' ? 'light' : 'dark'))
 const isNormalizeHeadings = computed(() => Boolean(docConfig.value?.normalizeHeadingSizes))
 
@@ -481,7 +481,7 @@ const currentSlideTitle = computed(() => {
 })
 
 // 摘要行过滤：纯资源路径块（图片等）不参与文字摘要，避免 assets/... 路径噪声占据预览行
-function extractSnippet(blocks: ISlidevBlockItem[] | undefined): string {
+function extractSnippet(blocks: ISlidesBlockItem[] | undefined): string {
   return (blocks || [])
     .slice(1)
     .map(b => (b.content || b.rawMarkdown || '').trim())
@@ -521,7 +521,7 @@ const progressPercent = computed(() => {
 // 跨窗口广播信道：与预览沙盒双向同步页码、步进与数据
 let broadcastChannel: BroadcastChannel | null = null
 try {
-  broadcastChannel = new BroadcastChannel('siyuan-slidev-sync')
+  broadcastChannel = new BroadcastChannel('siyuan-slides-sync')
   broadcastChannel.onmessage = (event: MessageEvent) => {
     const data = event.data
     if (!data) return
@@ -702,7 +702,7 @@ onMounted(() => {
     broadcastChannel?.postMessage({ type: 'REQUEST_SYNC' })
   } catch (e) {}
 
-  const latestDoc = (plugin as any)?.latestCompiledDoc as ISlidevDocument | null | undefined
+  const latestDoc = (plugin as any)?.latestCompiledDoc as ISlidesDocument | null | undefined
   if (latestDoc?.slides?.length) {
     slides.value = latestDoc.slides
     if (latestDoc.config) {
@@ -743,7 +743,7 @@ onUnmounted(() => {
 })
 
 defineExpose({
-  updateDocument(doc: ISlidevDocument) {
+  updateDocument(doc: ISlidesDocument) {
     if (doc?.slides?.length) {
       slides.value = doc.slides
     }
@@ -1550,7 +1550,7 @@ defineExpose({
     --slide-code-bg: #1e1e24;
   }
 
-  &.slidev-theme-seriph {
+  &.slides-theme-seriph {
     --slide-font: "PT Serif", "Charter", "Georgia", "Cambria", "Times New Roman", "Source Han Serif SC", "Noto Serif SC", "Songti SC", "SimSun", serif;
     --slide-accent: #f59e0b;
     &[data-theme="light"] {
@@ -1567,7 +1567,7 @@ defineExpose({
     }
   }
 
-  &.slidev-theme-apple-basic {
+  &.slides-theme-apple-basic {
     --slide-font: -apple-system, "SF Pro Display", "SF Pro Text", BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
     --slide-accent: #2997ff;
     &[data-theme="light"] {
@@ -1602,7 +1602,7 @@ defineExpose({
     height: 100%;
     min-height: 100%;
     flex: 1 1 0%;
-    padding: var(--slidev-padding-y, 32px) var(--slidev-padding-x, 48px);
+    padding: var(--slides-padding-y, 32px) var(--slides-padding-x, 48px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -1610,24 +1610,24 @@ defineExpose({
   }
 
   .slide-content.spacing-compact {
-    --slidev-padding-y: 20px;
-    --slidev-padding-x: 36px;
-    --slidev-header-gap: 10px;
-    --slidev-title-margin-bottom: 6px;
+    --slides-padding-y: 20px;
+    --slides-padding-x: 36px;
+    --slides-header-gap: 10px;
+    --slides-title-margin-bottom: 6px;
   }
 
   .slide-content.spacing-normal {
-    --slidev-padding-y: 32px;
-    --slidev-padding-x: 48px;
-    --slidev-header-gap: 16px;
-    --slidev-title-margin-bottom: 10px;
+    --slides-padding-y: 32px;
+    --slides-padding-x: 48px;
+    --slides-header-gap: 16px;
+    --slides-title-margin-bottom: 10px;
   }
 
   .slide-content.spacing-loose {
-    --slidev-padding-y: 48px;
-    --slidev-padding-x: 56px;
-    --slidev-header-gap: 24px;
-    --slidev-title-margin-bottom: 16px;
+    --slides-padding-y: 48px;
+    --slides-padding-x: 56px;
+    --slides-header-gap: 24px;
+    --slides-title-margin-bottom: 16px;
   }
 
   /* Cover, Center, Fact 版式 */
@@ -1654,8 +1654,8 @@ defineExpose({
     margin-bottom: 16px !important;
   }
 
-  &.slidev-theme-default .layout-cover h1,
-  &.slidev-theme-default .layout-cover .slide-block h1 {
+  &.slides-theme-default .layout-cover h1,
+  &.slides-theme-default .layout-cover .slide-block h1 {
     background: linear-gradient(135deg, #10b981, #06b6d4) !important;
     -webkit-background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
@@ -1698,14 +1698,14 @@ defineExpose({
 
   .layout-header-section {
     width: 100%;
-    margin-bottom: var(--slidev-header-gap, 16px) !important;
+    margin-bottom: var(--slides-header-gap, 16px) !important;
     flex-shrink: 0;
   }
 
   .layout-header-section h1,
   .layout-header-section h2,
   .layout-header-section h3 {
-    margin-bottom: var(--slidev-title-margin-bottom, 10px) !important;
+    margin-bottom: var(--slides-title-margin-bottom, 10px) !important;
   }
 
   .pdf-two-cols-wrapper,
@@ -1872,7 +1872,7 @@ defineExpose({
   .has-superblock-cols .pdf-col > *:first-child p.slide-list-item-title,
   .has-superblock-cols .pdf-col > *:first-child p:first-of-type,
   .has-superblock-cols .pdf-col > *:first-child :is(ul, ol) > li:first-child,
-  .has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+  .has-superblock-cols .slides-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
     list-style: none !important;
     list-style-type: none !important;
     text-align: center !important;
@@ -1887,7 +1887,7 @@ defineExpose({
   }
 
   /* 全局标题字号规范化 */
-  &[data-normalize-headings="true"] .slidev-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+  &[data-normalize-headings="true"] .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
   &[data-normalize-headings="true"] .slide-content:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6) {
     font-size: 1.7rem !important;
     font-weight: 600 !important;
@@ -1895,7 +1895,7 @@ defineExpose({
     margin-bottom: 10px !important;
   }
 
-  &[data-normalize-headings="true"] .has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+  &[data-normalize-headings="true"] .has-superblock-cols .slides-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
   &[data-normalize-headings="true"] .has-superblock-cols .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
     font-size: 1.3rem !important;
     font-weight: 600 !important;
@@ -2083,8 +2083,8 @@ defineExpose({
     border-bottom: 1px dashed currentColor;
   }
 
-  .slidev-ref-tag,
-  a.slidev-ref-tag {
+  .slides-ref-tag,
+  a.slides-ref-tag {
     display: inline-flex;
     align-items: center;
     background: color-mix(in srgb, var(--slide-accent) 12%, transparent);
@@ -2096,7 +2096,7 @@ defineExpose({
     margin: 2px 4px 2px 0;
   }
 
-  .slidev-block-ref {
+  .slides-block-ref {
     display: block;
     padding: 10px 14px;
     background: color-mix(in srgb, var(--slide-accent) 8%, transparent);

@@ -47,11 +47,11 @@ export function getSlideRenderingSection(): string {
         function createMaskElements() {
           if (!currentMaskConfig) return null;
           const layer = document.createElement("div");
-          layer.className = "slidev-mask-layer slidev-mask-layer--" + currentMaskConfig.style + " slidev-mask-layer--" + currentMaskConfig.direction;
+          layer.className = "slides-mask-layer slides-mask-layer--" + currentMaskConfig.style + " slides-mask-layer--" + currentMaskConfig.direction;
           const overlay = document.createElement("div");
-          overlay.className = "slidev-mask-overlay";
+          overlay.className = "slides-mask-overlay";
           const divider = document.createElement("div");
-          divider.className = "slidev-mask-divider-line";
+          divider.className = "slides-mask-divider-line";
           divider.style.opacity = "0";
           layer.appendChild(overlay);
           layer.appendChild(divider);
@@ -63,7 +63,7 @@ export function getSlideRenderingSection(): string {
 
         if (slide.frontmatter?.layout === "two-cols") {
           const bodyWrap = document.createElement("div");
-          bodyWrap.className = "slidev-mask-body-container" + (currentMaskConfig ? " slidev-mask-body-container--has-mask" : "");
+          bodyWrap.className = "slides-mask-body-container" + (currentMaskConfig ? " slides-mask-body-container--has-mask" : "");
           bodyWrap.style.display = "flex";
           bodyWrap.style.flexDirection = "row";
           bodyWrap.style.gap = "2rem";
@@ -87,8 +87,8 @@ export function getSlideRenderingSection(): string {
           const isCover = slide.frontmatter?.layout === "cover";
           const leftFirstH = !isCover ? leftList.find(isHeadingBlock) : null;
           const rightFirstH = !isCover ? rightList.find(isHeadingBlock) : null;
-          for (const b of leftList) leftCol.appendChild(renderBlock(b, b === leftFirstH ? "slidev-col-first-heading-block" : ""));
-          for (const b of rightList) rightCol.appendChild(renderBlock(b, b === rightFirstH ? "slidev-col-first-heading-block" : ""));
+          for (const b of leftList) leftCol.appendChild(renderBlock(b, b === leftFirstH ? "slides-col-first-heading-block" : ""));
+          for (const b of rightList) rightCol.appendChild(renderBlock(b, b === rightFirstH ? "slides-col-first-heading-block" : ""));
           bodyWrap.appendChild(leftCol);
           bodyWrap.appendChild(rightCol);
 
@@ -140,7 +140,7 @@ export function getSlideRenderingSection(): string {
           const headerDiv = document.createElement("div");
           headerDiv.className = "layout-header-section";
           const gridDiv = document.createElement("div");
-          gridDiv.className = (isClover ? "layout-clover-grid pdf-clover-wrapper" : ("layout-cols-wrapper layout-cols-grid " + (targetCols === 2 ? "pdf-two-cols-wrapper layout-two-cols-grid" : (targetCols === 3 ? "pdf-three-cols-wrapper layout-three-cols-grid" : "")))) + (isSuperBlockCols ? " has-superblock-cols" : "") + (currentMaskConfig ? " slidev-mask-body-container slidev-mask-body-container--has-mask" : "");
+          gridDiv.className = (isClover ? "layout-clover-grid pdf-clover-wrapper" : ("layout-cols-wrapper layout-cols-grid " + (targetCols === 2 ? "pdf-two-cols-wrapper layout-two-cols-grid" : (targetCols === 3 ? "pdf-three-cols-wrapper layout-three-cols-grid" : "")))) + (isSuperBlockCols ? " has-superblock-cols" : "") + (currentMaskConfig ? " slides-mask-body-container slides-mask-body-container--has-mask" : "");
 
           const gridCols = isClover ? "repeat(2, minmax(0, 1fr))" : parseRatioToGridCols(slide.frontmatter?.layoutRatio, targetCols);
           if (gridCols) gridDiv.style.gridTemplateColumns = gridCols;
@@ -173,7 +173,7 @@ export function getSlideRenderingSection(): string {
           }
 
           const headerFirstH = !isCover ? headerBlocks.find(isHeadingBlock) : null;
-          for (const b of headerBlocks) headerDiv.appendChild(renderBlock(b, b === headerFirstH ? "slidev-page-first-heading-block" : ""));
+          for (const b of headerBlocks) headerDiv.appendChild(renderBlock(b, b === headerFirstH ? "slides-page-first-heading-block" : ""));
           containerDiv.appendChild(headerDiv);
 
           colsList.forEach((colBlocks, idx) => {
@@ -181,7 +181,7 @@ export function getSlideRenderingSection(): string {
             colDiv.className = "pdf-col pdf-col--" + (idx + 1) + " col-" + (idx + 1) + (targetCols === 2 && idx === 0 ? " pdf-col--left" : "") + (targetCols === 2 && idx === 1 ? " pdf-col--right" : "");
             const cleaned = cleanColList(colBlocks);
             const colFirstH = !isCover ? (cleaned.find(isHeadingBlock) || cleaned[0]) : null;
-            for (const b of cleaned) colDiv.appendChild(renderBlock(b, b === colFirstH ? "slidev-col-first-heading-block" : ""));
+            for (const b of cleaned) colDiv.appendChild(renderBlock(b, b === colFirstH ? "slides-col-first-heading-block" : ""));
             gridDiv.appendChild(colDiv);
           });
 
@@ -199,11 +199,11 @@ export function getSlideRenderingSection(): string {
           const pageFirstH = !isCover ? allBlocks.find(isHeadingBlock) : null;
 
           if (pageFirstH) {
-            container.appendChild(renderBlock(pageFirstH, "slidev-page-first-heading-block"));
+            container.appendChild(renderBlock(pageFirstH, "slides-page-first-heading-block"));
           }
 
           const bodyWrap = document.createElement("div");
-          bodyWrap.className = "slidev-mask-body-container" + (currentMaskConfig ? " slidev-mask-body-container--has-mask" : "");
+          bodyWrap.className = "slides-mask-body-container" + (currentMaskConfig ? " slides-mask-body-container--has-mask" : "");
           bodyWrap.style.display = "flex";
           bodyWrap.style.flexDirection = isImageRight ? "row" : "row-reverse";
           bodyWrap.style.gap = "2rem";
@@ -245,11 +245,11 @@ export function getSlideRenderingSection(): string {
           const pageFirstH = !isCover ? validBlocks.find(isHeadingBlock) : null;
 
           if (pageFirstH) {
-            container.appendChild(renderBlock(pageFirstH, "slidev-page-first-heading-block"));
+            container.appendChild(renderBlock(pageFirstH, "slides-page-first-heading-block"));
           }
 
           const bodyWrap = document.createElement("div");
-          bodyWrap.className = "slidev-mask-body-container" + (currentMaskConfig ? " slidev-mask-body-container--has-mask" : "");
+          bodyWrap.className = "slides-mask-body-container" + (currentMaskConfig ? " slides-mask-body-container--has-mask" : "");
 
           for (const block of validBlocks) {
             if (block === pageFirstH) continue;
@@ -311,7 +311,7 @@ export function getSlideRenderingSection(): string {
       }
 
       // Lightbox 控制逻辑
-      const lightbox = document.getElementById("slidev-lightbox");
+      const lightbox = document.getElementById("slides-lightbox");
       const lightboxContent = document.getElementById("lightbox-content");
       const lightboxClose = document.getElementById("lightbox-close");
       let isLightboxOpen = false;

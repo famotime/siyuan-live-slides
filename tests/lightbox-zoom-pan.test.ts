@@ -5,16 +5,16 @@ import { getLightboxSection } from "../src/export/standalone-runtime-sections/li
 import { getKeyboardScrollInitSection } from "../src/export/standalone-runtime-sections/keyboard-scroll-init"
 import { generateStandaloneExportStyles } from "../src/export/standalone-template-styles"
 import { buildStandaloneHtml } from "../src/export/single-html-exporter"
-import type { ISlidevDocument } from "../src/types/slidev-protocol"
+import type { ISlidesDocument } from "../src/types/slides-protocol"
 
 describe("Lightbox Image Wheel Zoom & Pan (放映灯箱图片滚轮缩放与平移)", () => {
-  const indexHtmlPath = path.resolve(__dirname, "../public/slidev-client/index.html")
+  const indexHtmlPath = path.resolve(__dirname, "../public/slides-client/index.html")
   const indexHtml = fs.readFileSync(indexHtmlPath, "utf-8")
   const lightboxSection = getLightboxSection()
   const keyboardScrollSection = getKeyboardScrollInitSection()
   const standaloneStyles = generateStandaloneExportStyles()
 
-  describe("1. 内置沙箱播放端 (public/slidev-client/index.html)", () => {
+  describe("1. 内置沙箱播放端 (public/slides-client/index.html)", () => {
     it("应定义灯箱缩放与平移的核心响应式状态与重置逻辑", () => {
       expect(indexHtml).toContain("const lightboxScale = ref(1.0)")
       expect(indexHtml).toContain("const lightboxTranslateX = ref(0)")
@@ -45,8 +45,8 @@ describe("Lightbox Image Wheel Zoom & Pan (放映灯箱图片滚轮缩放与平�
     })
 
     it("样式应设置 user-select: none 与 touch-action: none，防止原生拖拽幽灵图干扰", () => {
-      expect(indexHtml).toMatch(/\.slidev-lightbox-img\s*\{[^}]*user-select:\s*none;/)
-      expect(indexHtml).toMatch(/\.slidev-lightbox-img\s*\{[^}]*touch-action:\s*none;/)
+      expect(indexHtml).toMatch(/\.slides-lightbox-img\s*\{[^}]*user-select:\s*none;/)
+      expect(indexHtml).toMatch(/\.slides-lightbox-img\s*\{[^}]*touch-action:\s*none;/)
     })
 
     it("拖拽后松开应有防误触保护，不误触发背景关闭灯箱", () => {
@@ -73,12 +73,12 @@ describe("Lightbox Image Wheel Zoom & Pan (放映灯箱图片滚轮缩放与平�
     })
 
     it("单文件导出样式应包含灯箱图片手势防护与阴影圆角声明", () => {
-      expect(standaloneStyles).toMatch(/\.slidev-lightbox-img\s*\{[^}]*user-select:\s*none;/)
-      expect(standaloneStyles).toMatch(/\.slidev-lightbox-img\s*\{[^}]*touch-action:\s*none;/)
+      expect(standaloneStyles).toMatch(/\.slides-lightbox-img\s*\{[^}]*user-select:\s*none;/)
+      expect(standaloneStyles).toMatch(/\.slides-lightbox-img\s*\{[^}]*touch-action:\s*none;/)
     })
 
     it("完整 buildStandaloneHtml 产物中应包含灯箱缩放与平移动态逻辑", () => {
-      const dummyDoc: ISlidevDocument = {
+      const dummyDoc: ISlidesDocument = {
         docId: "doc-lightbox-test",
         config: { theme: "default", aspectRatio: "16/9", defaultTransition: "fade", colorSchema: "dark" },
         slides: [{ pageIndex: 1, startBlockId: "s1", blocks: [{ id: "b1", type: "p", content: "test" }] }],

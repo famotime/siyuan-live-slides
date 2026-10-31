@@ -20,7 +20,7 @@ function run(cmd, options = {}) {
 
 function printUsage() {
   console.log(`
-\x1b[36m🔧 SiYuan Slidev - Git Worktree 管理助手\x1b[0m
+\x1b[36m🔧 SiYuan Live Slides - Git Worktree 管理助手\x1b[0m
 
 \x1b[33m用法:\x1b[0m
   pnpm run worktree:add <branch-name> [base-branch] [--skip-install]
@@ -33,9 +33,9 @@ function printUsage() {
       安全移除指定的 worktree 并清理 Git 元数据
 
 \x1b[33m示例:\x1b[0m
-  pnpm run worktree:add feat/slidev-importer main
+  pnpm run worktree:add feat/slides-importer main
   pnpm run worktree:list
-  pnpm run worktree:remove feat/slidev-importer
+  pnpm run worktree:remove feat/slides-importer
 `)
 }
 

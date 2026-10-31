@@ -1,13 +1,13 @@
 /* ==========================================================================
-   SiYuan Slidev Studio Design System - Global Styles
+   SiYuan Live Slides Studio Design System - Global Styles
    适配思源亮色与暗色模式，彻底防御 SVG 覆盖，统一专业级 UI/UX 体验
    ========================================================================== */
 
 /* 1. 图标钢铁防御（杜绝思源宿主 CSS 的 fill: currentColor 覆盖线框图标） */
-svg.slidev-icon,
-.slidev-icon svg,
-.spm-slidev-inspector svg,
-.spm-slidev-preview-tab svg {
+svg.slides-icon,
+.slides-icon svg,
+.spm-slides-inspector svg,
+.spm-slides-preview-tab svg {
   fill: none !important;
   stroke: currentColor !important;
   stroke-width: 1.75 !important;
@@ -20,7 +20,7 @@ svg.slidev-icon,
 }
 
 /* 2. 主容器与整体环境 */
-.spm-slidev-inspector {
+.spm-slides-inspector {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -55,7 +55,7 @@ svg.slidev-icon,
     font-weight: 600;
     color: var(--b3-theme-on-surface, #1e293b);
 
-    .slidev-icon {
+    .slides-icon {
       width: 16px;
       height: 16px;
       color: var(--b3-theme-primary, #3b82f6);
@@ -87,7 +87,7 @@ svg.slidev-icon,
   font-size: 11px;
   line-height: 1;
 
-  .slidev-icon {
+  .slides-icon {
     width: 14px;
     height: 14px;
   }
@@ -97,7 +97,7 @@ svg.slidev-icon,
     color: var(--b3-theme-primary, #3b82f6);
     border-color: var(--b3-theme-primary, #3b82f6);
 
-    .slidev-icon {
+    .slides-icon {
       color: var(--b3-theme-primary, #3b82f6);
     }
   }
@@ -112,7 +112,7 @@ svg.slidev-icon,
     border-color: var(--b3-theme-primary, #3b82f6);
     color: #ffffff;
 
-    .slidev-icon {
+    .slides-icon {
       color: #ffffff;
     }
 
@@ -132,7 +132,7 @@ svg.slidev-icon,
       border-color: var(--b3-border-color, #e2e8f0);
       color: var(--b3-theme-primary, #3b82f6);
 
-      .slidev-icon {
+      .slides-icon {
         color: var(--b3-theme-primary, #3b82f6);
       }
     }
@@ -311,7 +311,7 @@ svg.slidev-icon,
     font-weight: 600;
     color: var(--b3-theme-on-surface, #1e293b);
 
-    .slidev-icon {
+    .slides-icon {
       width: 14px;
       height: 14px;
       color: var(--b3-theme-primary, #3b82f6);
@@ -428,7 +428,7 @@ svg.slidev-icon,
     transition: all 0.15s ease;
     white-space: nowrap;
 
-    .slidev-icon {
+    .slides-icon {
       width: 13px;
       height: 13px;
       color: var(--b3-theme-primary, #3b82f6);
@@ -439,7 +439,7 @@ svg.slidev-icon,
       border-color: var(--b3-theme-primary, #3b82f6);
       color: var(--b3-theme-primary, #3b82f6);
 
-      .slidev-icon {
+      .slides-icon {
         color: var(--b3-theme-primary, #3b82f6);
       }
     }
@@ -452,7 +452,7 @@ svg.slidev-icon,
     &.spm-btn-danger {
       color: var(--b3-theme-error, #ef4444);
 
-      .slidev-icon {
+      .slides-icon {
         color: var(--b3-theme-error, #ef4444);
       }
 
@@ -582,8 +582,8 @@ body[data-theme-mode="dark"] .spm-segmented-item.active,
   }
 }
 
-/* 12. 预览页签 (SlidevPreviewTab) 工具栏样式 */
-.spm-slidev-preview-tab {
+/* 12. 预览页签 (SlidesPreviewTab) 工具栏样式 */
+.spm-slides-preview-tab {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -593,7 +593,7 @@ body[data-theme-mode="dark"] .spm-segmented-item.active,
   overflow: hidden;
 }
 
-.spm-slidev-tab__toolbar {
+.spm-slides-tab__toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -602,8 +602,8 @@ body[data-theme-mode="dark"] .spm-segmented-item.active,
   border-bottom: 1px solid var(--b3-border-color, #e2e8f0);
   flex-shrink: 0;
 
-  .spm-slidev-tab__nav,
-  .spm-slidev-tab__tools {
+  .spm-slides-tab__nav,
+  .spm-slides-tab__tools {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -628,8 +628,8 @@ body[data-theme-mode="dark"] .spm-segmented-item.active,
 }
 
 /* 10. 思源正文编辑区（Protyle WYSIWYG）演示素材高亮与轻量角标提示 */
-.protyle-wysiwyg [custom-slidev-role="background"],
-.protyle-wysiwyg [custom-slidev-background="true"] {
+.protyle-wysiwyg [custom-slides-role="background"],
+.protyle-wysiwyg [custom-slides-background="true"] {
   position: relative;
 
   &::before {
@@ -652,11 +652,11 @@ body[data-theme-mode="dark"] .spm-segmented-item.active,
   }
 }
 
-.protyle-wysiwyg [custom-slidev-layout="image-left"] {
+.protyle-wysiwyg [custom-slides-layout="image-left"] {
   position: relative;
 
   &::before {
-    content: "🎨 Slidev 图左";
+    content: "🎨 即现图左";
     position: absolute;
     top: 6px;
     left: 8px;
@@ -675,11 +675,11 @@ body[data-theme-mode="dark"] .spm-segmented-item.active,
   }
 }
 
-.protyle-wysiwyg [custom-slidev-layout="image-right"] {
+.protyle-wysiwyg [custom-slides-layout="image-right"] {
   position: relative;
 
   &::before {
-    content: "🖼️ Slidev 图右";
+    content: "🖼️ 即现图右";
     position: absolute;
     top: 6px;
     right: 8px;

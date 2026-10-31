@@ -1,6 +1,6 @@
 import { getBlockAttrs, getChildBlocks, getDocBlocksOrders, getInlineStyles, setBlockAttrs, sql } from "../api"
 import { extractBlockRefs } from "./block-ref-resolver"
-import { buildSlidevDocument } from "./slidev-ast-builder"
+import { buildSlidesDocument } from "./slides-ast-builder"
 import { generateCompleteSiYuanThemeCss } from "./theme-styles-generator"
 import {
   isSuperBlock,
@@ -8,8 +8,8 @@ import {
   scanAndTagListSuperBlocks,
   ITrackedListSuperBlock,
 } from "./superblock-scanner"
-import type { ISiYuanBlockNode, ISlidevDocument } from "../types/slidev-protocol"
-import { ATTR_PAGE_LAYOUT, ATTR_PAGE_LAYOUT_RATIO } from "../types/slidev-protocol"
+import type { ISiYuanBlockNode, ISlidesDocument } from "../types/slides-protocol"
+import { ATTR_PAGE_LAYOUT, ATTR_PAGE_LAYOUT_RATIO } from "../types/slides-protocol"
 
 /**
  * 辅助解析思源数据库中的 IAL 字段文本为键值对字典
@@ -332,7 +332,7 @@ export class DocumentCompilerService {
     this.trackedListSuperBlocks.clear()
   }
 
-  public async compile(docId: string): Promise<ISlidevDocument> {
+  public async compile(docId: string): Promise<ISlidesDocument> {
     try {
       // 1. 获取文档属性并注入即时覆盖缓存
       const docAttrs = (await this.deps.getBlockAttrs(docId).catch(() => ({}))) || {}
@@ -566,7 +566,7 @@ export class DocumentCompilerService {
         await populateChildrenRecursively(blockNodes)
       }
 
-      // 5.6 递归冒泡与双向同步多媒体播放控制属性 (custom-slidev-autoplay, custom-slidev-muted 等)
+      // 5.6 递归冒泡与双向同步多媒体播放控制属性 (custom-slides-autoplay, custom-slides-muted 等)
       const syncMediaAttrsInTree = (nodes: ISiYuanBlockNode[]) => {
         for (const node of nodes) {
           if (node.children && node.children.length > 0) {
@@ -575,7 +575,7 @@ export class DocumentCompilerService {
             for (const child of node.children) {
               if (child.ial) {
                 for (const [k, v] of Object.entries(child.ial)) {
-                  if (k.startsWith("custom-slidev-") && !node.ial?.[k]) {
+                  if (k.startsWith("custom-slides-") && !node.ial?.[k]) {
                     if (!node.ial) node.ial = {}
                     node.ial[k] = v
                   }
@@ -585,7 +585,7 @@ export class DocumentCompilerService {
             // 向下传递父容器设置的视频属性给包含视频的子块
             if (node.ial) {
               for (const [k, v] of Object.entries(node.ial)) {
-                if (k.startsWith("custom-slidev-")) {
+                if (k.startsWith("custom-slides-")) {
                   for (const child of node.children) {
                     const isVid = child.type === "video" || child.type === "NodeVideo" || /<video\b/i.test(child.markdown || child.content || "")
                     if (isVid && !child.ial?.[k]) {
@@ -669,21 +669,21 @@ export class DocumentCompilerService {
 
       // 8. 调用核心 AST 编译器
       const baseUrl = this.deps.getBaseUrl ? this.deps.getBaseUrl() : ""
-      const slidevDoc = buildSlidevDocument(docId, docAttrs, blockNodes, { baseUrl, refContentMap })
+      const slidesDoc = buildSlidesDocument(docId, docAttrs, blockNodes, { baseUrl, refContentMap })
 
       // 9. 动态检索思源工作空间自定义样式扩展 (/api/storage/getInlineStyles) 并生成全局 CSS
       try {
         const rawStyles = this.deps.getInlineStyles ? await this.deps.getInlineStyles().catch(() => null) : null
-        slidevDoc.customThemeCss = generateCompleteSiYuanThemeCss(rawStyles)
+        slidesDoc.customThemeCss = generateCompleteSiYuanThemeCss(rawStyles)
       } catch {
-        slidevDoc.customThemeCss = generateCompleteSiYuanThemeCss(null)
+        slidesDoc.customThemeCss = generateCompleteSiYuanThemeCss(null)
       }
 
-      return slidevDoc
+      return slidesDoc
     } catch (err) {
       console.error("[DocumentCompilerService] Failed to compile document:", err)
       // 容错兜底：返回基础空文档
-      const fallbackDoc = buildSlidevDocument(docId, {}, [], {})
+      const fallbackDoc = buildSlidesDocument(docId, {}, [], {})
       fallbackDoc.customThemeCss = generateCompleteSiYuanThemeCss(null)
       return fallbackDoc
     }

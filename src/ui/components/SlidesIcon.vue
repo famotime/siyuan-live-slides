@@ -1,6 +1,6 @@
 <template>
   <svg
-    class="slidev-icon"
+    class="slides-icon"
     style="fill: none !important"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -560,7 +560,7 @@ defineProps<{
 </script>
 
 <style scoped>
-.slidev-icon {
+.slides-icon {
   width: 1em;
   height: 1em;
   display: inline-block;

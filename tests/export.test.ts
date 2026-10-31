@@ -4,9 +4,9 @@ import { buildPrintableHtml, triggerPdfExport } from "../src/export/pdf-exporter
 import { buildStandaloneHtml, downloadHtmlFile } from "../src/export/single-html-exporter"
 import { generateStandaloneExportStyles } from "../src/export/standalone-template-styles"
 import { getStandaloneClientRuntimeScript } from "../src/export/standalone-client-runtime"
-import type { ISlidevDocument } from "../src/types/slidev-protocol"
+import type { ISlidesDocument } from "../src/types/slides-protocol"
 
-const dummyDoc: ISlidevDocument = {
+const dummyDoc: ISlidesDocument = {
   docId: "doc-test-1",
   config: {
     theme: "default",
@@ -45,7 +45,7 @@ describe("Single-File HTML Exporter (单文件离线 HTML 导出)", () => {
     const html = buildStandaloneHtml(dummyDoc, { title: "年度技术汇报" })
     expect(html).toContain("<!DOCTYPE html>")
     expect(html).toContain("<title>年度技术汇报</title>")
-    expect(html).toContain("window.__SLIDEV_DATA__")
+    expect(html).toContain("window.__SLIDES_DATA__")
     expect(html).toContain("主标题")
     expect(html).toContain("doc-test-1")
     expect(html).toContain("layout-cover")
@@ -55,12 +55,12 @@ describe("Single-File HTML Exporter (单文件离线 HTML 导出)", () => {
     const html = buildStandaloneHtml(dummyDoc)
     expect(html).toContain("const baseWidth = 980")
     expect(html).toContain("function updateScale()")
-    expect(html).toContain("--slidev-slide-scale")
+    expect(html).toContain("--slides-slide-scale")
     expect(html).toContain("translate(-50%, -50%) scale(")
   })
 
   it("应支持将本地资产路径内联替换为 Base64 data URL", () => {
-    const docWithImage: ISlidevDocument = {
+    const docWithImage: ISlidesDocument = {
       ...dummyDoc,
       slides: [
         {
@@ -93,7 +93,7 @@ describe("Single-File HTML Exporter (单文件离线 HTML 导出)", () => {
   it("导出的独立 HTML 应包含 Slidev 规范的超链接虚线底边与主题色块引用样式", () => {
     const html = buildStandaloneHtml(dummyDoc)
     expect(html).toContain("border-bottom: 1px dashed currentColor")
-    expect(html).toContain(".slidev-ref-tag, a.slidev-ref-tag")
+    expect(html).toContain(".slides-ref-tag, a.slides-ref-tag")
     expect(html).toContain("var(--slide-accent)")
   })
 
@@ -108,7 +108,7 @@ describe("Single-File HTML Exporter (单文件离线 HTML 导出)", () => {
   })
 
   it("导出的独立 HTML 应包含间距系统 CSS 变量、分栏弹性链、contain 媒体与 Lightbox 模态", () => {
-    const spacingDoc: ISlidevDocument = {
+    const spacingDoc: ISlidesDocument = {
       ...dummyDoc,
       config: {
         ...dummyDoc.config,
@@ -122,14 +122,14 @@ describe("Single-File HTML Exporter (单文件离线 HTML 导出)", () => {
       ],
     }
     const html = buildStandaloneHtml(spacingDoc)
-    expect(html).toContain("--slidev-padding-y")
-    expect(html).toContain("--slidev-header-gap")
+    expect(html).toContain("--slides-padding-y")
+    expect(html).toContain("--slides-header-gap")
     expect(html).toContain(".slide-content.spacing-compact")
     expect(html).toContain(".slide-content.spacing-normal")
     expect(html).toContain(".slide-content.spacing-loose")
     expect(html).toContain("object-fit: contain !important;")
     expect(html).toContain("cursor: zoom-in;")
-    expect(html).toContain('id="slidev-lightbox"')
+    expect(html).toContain('id="slides-lightbox"')
     expect(html).toContain("openLightbox")
     expect(html).toContain("closeLightbox")
     expect(html).toContain('e.key === "Escape"')
@@ -139,9 +139,9 @@ describe("Single-File HTML Exporter (单文件离线 HTML 导出)", () => {
     const css = generateStandaloneExportStyles()
     expect(css).toContain(":root")
     expect(css).toContain("--slide-bg")
-    expect(css).toContain(".slidev-theme-default")
-    expect(css).toContain(".slidev-theme-seriph")
-    expect(css).toContain("@keyframes slidevMotionFadeIn")
+    expect(css).toContain(".slides-theme-default")
+    expect(css).toContain(".slides-theme-seriph")
+    expect(css).toContain("@keyframes slidesMotionFadeIn")
     expect(css).toContain(".slide-media-container")
   })
 
@@ -149,7 +149,7 @@ describe("Single-File HTML Exporter (单文件离线 HTML 导出)", () => {
     const js = getStandaloneClientRuntimeScript()
     expect(js).toContain("updateScale")
     expect(js).toContain("renderSlide")
-    expect(js).toContain("window.__SLIDEV_DATA__")
+    expect(js).toContain("window.__SLIDES_DATA__")
     expect(js).toContain("btnPrev")
     expect(js).toContain("btnNext")
   })
@@ -184,7 +184,7 @@ describe("PDF Exporter (高保真 PDF 讲义导出)", () => {
   })
 
   it("应正确渲染双栏布局 (two-cols) 与富文本块", () => {
-    const richDoc: ISlidevDocument = {
+    const richDoc: ISlidesDocument = {
       docId: "rich-1",
       config: dummyDoc.config,
       fullMarkdown: "",
@@ -218,7 +218,7 @@ describe("PDF Exporter (高保真 PDF 讲义导出)", () => {
   })
 
   it("导出的 PDF 打印文档应支持间距预设类与分栏媒体 contain 样式", () => {
-    const spacingDoc: ISlidevDocument = {
+    const spacingDoc: ISlidesDocument = {
       ...dummyDoc,
       config: { ...dummyDoc.config, spacing: "compact" },
       slides: [
@@ -243,7 +243,7 @@ describe("PDF Exporter (高保真 PDF 讲义导出)", () => {
   it("导出的 PDF 打印文档应包含 Slidev 规范的超链接虚线底边与主题色块引用样式", () => {
     const html = buildPrintableHtml(dummyDoc)
     expect(html).toContain("border-bottom: 1px dashed currentColor")
-    expect(html).toContain(".slidev-ref-tag, a.slidev-ref-tag")
+    expect(html).toContain(".slides-ref-tag, a.slides-ref-tag")
   })
 })
 

@@ -6,14 +6,14 @@ import {
   replaceDivContainer,
 } from "../src/compiler/html-cleaner"
 import {
-  parseSlidevPresentation,
-} from "../src/compiler/slidev-importer"
+  parseSlidesPresentation,
+} from "../src/compiler/slides-importer"
 
 describe("Clean Markdown Converter Tests (Terminal Ink & HTML Optimization)", () => {
   it("should convert terminal-ink slides to clean native markdown with cleanHtmlToMarkdown = true", () => {
     const filePath = "D:/MyCodingProjects/slidev-templates/templates/terminal-ink/starter/slides.md"
     const content = fs.readFileSync(filePath, "utf-8")
-    const parsed = parseSlidevPresentation(content, { cleanHtmlToMarkdown: true })
+    const parsed = parseSlidesPresentation(content, { cleanHtmlToMarkdown: true })
 
     expect(parsed.slides.length).toBe(7)
 

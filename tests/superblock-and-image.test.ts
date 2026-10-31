@@ -5,24 +5,24 @@ import {
   detectSuperBlockImageLayout,
   scanAndTagSuperBlocks,
 } from "../src/compiler/superblock-scanner"
-import { buildSlidevDocument } from "../src/compiler/slidev-ast-builder"
-import { parseSlidevPresentation } from "../src/compiler/slidev-importer"
+import { buildSlidesDocument } from "../src/compiler/slides-ast-builder"
+import { parseSlidesPresentation } from "../src/compiler/slides-importer"
 import { DocumentCompilerService } from "../src/compiler/document-compiler"
-import type { ISiYuanBlockNode } from "../src/types/slidev-protocol"
+import type { ISiYuanBlockNode } from "../src/types/slides-protocol"
 import {
   ATTR_PAGE_BACKGROUND,
   ATTR_PAGE_IMAGE,
   ATTR_PAGE_LAYOUT,
   ROLE_IMAGE_LEFT,
   ROLE_IMAGE_RIGHT,
-} from "../src/types/slidev-protocol"
+} from "../src/types/slides-protocol"
 
 describe("Superblock and Image Scanner & Compiler Pipeline", () => {
   describe("1. 图片 URL 提取与图片块判定", () => {
     it("正确提取标准 Markdown 图片语法", () => {
       expect(extractImageUrl("![封面](assets/cover.png)")).toBe("assets/cover.png")
       expect(extractImageUrl("![示例](https://example.com/demo.jpg '标题')")).toBe("https://example.com/demo.jpg")
-      expect(extractImageUrl("![配图](assets/20261004120000-abc.webp)\n{: custom-slidev-role=\"background\" }")).toBe("assets/20261004120000-abc.webp")
+      expect(extractImageUrl("![配图](assets/20261004120000-abc.webp)\n{: custom-slides-role=\"background\" }")).toBe("assets/20261004120000-abc.webp")
     })
 
     it("正确提取 HTML <img> 标签中的资源路径", () => {
@@ -154,7 +154,7 @@ describe("Superblock and Image Scanner & Compiler Pipeline", () => {
   })
 
   describe("3. 自动扫描打标与拖拽换位自适应 (scanAndTagSuperBlocks)", () => {
-    it("为超级块左侧图片自动标记 custom-slidev-layout='image-left'", () => {
+    it("为超级块左侧图片自动标记 custom-slides-layout='image-left'", () => {
       const sbNode: ISiYuanBlockNode = {
         id: "sb-tag-1",
         type: "sb",
@@ -213,13 +213,13 @@ describe("Superblock and Image Scanner & Compiler Pipeline", () => {
   })
 
   describe("4. AST 编译器对正文背景图的抽取与正文去重", () => {
-    it("提取带有 custom-slidev-role='background' 的图片块为页面背景，并在正文内容中排除", () => {
+    it("提取带有 custom-slides-role='background' 的图片块为页面背景，并在正文内容中排除", () => {
       const blocks: ISiYuanBlockNode[] = [
         {
           id: "bg-block-1",
           type: "p",
-          markdown: "![页面背景图](assets/my-bg.jpg)\n{: custom-slidev-role=\"background\" }",
-          ial: { "custom-slidev-role": "background" },
+          markdown: "![页面背景图](assets/my-bg.jpg)\n{: custom-slides-role=\"background\" }",
+          ial: { "custom-slides-role": "background" },
         },
         {
           id: "heading-1",
@@ -233,7 +233,7 @@ describe("Superblock and Image Scanner & Compiler Pipeline", () => {
         },
       ]
 
-      const doc = buildSlidevDocument("doc-bg-1", {}, blocks)
+      const doc = buildSlidesDocument("doc-bg-1", {}, blocks)
       expect(doc.slides.length).toBe(1)
       const page1 = doc.slides[0]
 
@@ -263,8 +263,8 @@ describe("Superblock and Image Scanner & Compiler Pipeline", () => {
         {
           id: "bg-body",
           type: "p",
-          markdown: "![新正文背景图](assets/new-body-bg.png)\n{: custom-slidev-role=\"background\" }",
-          ial: { "custom-slidev-role": "background" },
+          markdown: "![新正文背景图](assets/new-body-bg.png)\n{: custom-slides-role=\"background\" }",
+          ial: { "custom-slides-role": "background" },
         },
         {
           id: "p-body",
@@ -273,7 +273,7 @@ describe("Superblock and Image Scanner & Compiler Pipeline", () => {
         },
       ]
 
-      const doc = buildSlidevDocument("doc-bg-override", {}, blocks)
+      const doc = buildSlidesDocument("doc-bg-override", {}, blocks)
       expect(doc.slides.length).toBe(1)
       // 正文图片覆盖分割线属性
       expect(doc.slides[0].frontmatter.background).toBe("/assets/new-body-bg.png")
@@ -303,7 +303,7 @@ describe("Superblock and Image Scanner & Compiler Pipeline", () => {
         },
       ]
 
-      const doc = buildSlidevDocument("doc-sb-left", {}, blocks)
+      const doc = buildSlidesDocument("doc-sb-left", {}, blocks)
       expect(doc.slides.length).toBe(1)
       const page = doc.slides[0]
 
@@ -338,7 +338,7 @@ describe("Superblock and Image Scanner & Compiler Pipeline", () => {
         },
       ]
 
-      const doc = buildSlidevDocument("doc-sb-right", {}, blocks)
+      const doc = buildSlidesDocument("doc-sb-right", {}, blocks)
       expect(doc.slides.length).toBe(1)
       const page = doc.slides[0]
 
@@ -352,7 +352,7 @@ describe("Superblock and Image Scanner & Compiler Pipeline", () => {
   })
 
   describe("6. Slidev 导入引擎组织超级块与正文背景图", () => {
-    it("导入带有 background 的页面时，在正文顶部生成带 custom-slidev-role='background' 的图片块", () => {
+    it("导入带有 background 的页面时，在正文顶部生成带 custom-slides-role='background' 的图片块", () => {
       const slidevMd = `---
 background: https://images.unsplash.com/photo-nature
 ---
@@ -361,12 +361,12 @@ background: https://images.unsplash.com/photo-nature
 
 这是介绍大自然的幻灯片`
 
-      const parsed = parseSlidevPresentation(slidevMd, { wrapSuperBlocks: true })
+      const parsed = parseSlidesPresentation(slidevMd, { wrapSuperBlocks: true })
       expect(parsed.slides.length).toBe(1)
       const slide = parsed.slides[0]
 
       expect(slide.rawMarkdown).toContain("![背景图](https://images.unsplash.com/photo-nature)")
-      expect(slide.rawMarkdown).toContain('{: custom-slidev-role="background" }')
+      expect(slide.rawMarkdown).toContain('{: custom-slides-role="background" }')
       expect(slide.rawMarkdown).toContain("# 壮丽自然")
     })
 
@@ -380,14 +380,14 @@ image: https://cover.sli.dev/code-sample.png
 
 使用 Slidev 展示代码高亮与交互`
 
-      const parsed = parseSlidevPresentation(slidevMd, { wrapSuperBlocks: true })
+      const parsed = parseSlidesPresentation(slidevMd, { wrapSuperBlocks: true })
       expect(parsed.slides.length).toBe(1)
       const slide = parsed.slides[0]
 
       expect(slide.rawMarkdown).toContain("{{{col")
       expect(slide.rawMarkdown).toContain("# 代码示例")
       expect(slide.rawMarkdown).toContain("![配图](https://cover.sli.dev/code-sample.png)")
-      expect(slide.rawMarkdown).toContain('{: custom-slidev-layout="image-right" }')
+      expect(slide.rawMarkdown).toContain('{: custom-slides-layout="image-right" }')
       expect(slide.rawMarkdown).toContain("}}}")
 
       // 验证顺序：正文在前，配图在后
@@ -406,13 +406,13 @@ image: https://cover.sli.dev/left-sample.png
 
 左侧为大幅配图，右侧为说明`
 
-      const parsed = parseSlidevPresentation(slidevMd, { wrapSuperBlocks: true })
+      const parsed = parseSlidesPresentation(slidevMd, { wrapSuperBlocks: true })
       expect(parsed.slides.length).toBe(1)
       const slide = parsed.slides[0]
 
       expect(slide.rawMarkdown).toContain("{{{col")
       expect(slide.rawMarkdown).toContain("![配图](https://cover.sli.dev/left-sample.png)")
-      expect(slide.rawMarkdown).toContain('{: custom-slidev-layout="image-left" }')
+      expect(slide.rawMarkdown).toContain('{: custom-slides-layout="image-left" }')
       expect(slide.rawMarkdown).toContain("}}}")
 
       // 验证顺序：配图在前，正文在后

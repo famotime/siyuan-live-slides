@@ -4,8 +4,8 @@ import {
   formatInlineMarkdown,
   renderMarkdownList,
 } from "../src/export/markdown-renderer"
-import { buildSlidevDocument } from "../src/compiler/slidev-ast-builder"
-import type { ISiYuanBlockNode, ISlidevBlockItem } from "../src/types/slidev-protocol"
+import { buildSlidesDocument } from "../src/compiler/slides-ast-builder"
+import type { ISiYuanBlockNode, ISlidesBlockItem } from "../src/types/slides-protocol"
 
 describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", () => {
   describe("formatInlineMarkdown (行内 Markdown 与媒体标签放行)", () => {
@@ -105,7 +105,7 @@ describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", ()
 
   describe("convertBlockToHtml (MP4 视频块级渲染)", () => {
     it("应将原生思源视频块或 video 标签渲染为带播放器的视频容器", () => {
-      const videoBlock: ISlidevBlockItem = {
+      const videoBlock: ISlidesBlockItem = {
         id: "vid-1",
         rawMarkdown: '<video controls="controls" src="assets/intro.mp4" data-src="assets/intro.mp4"></video>',
         attributes: {},
@@ -120,14 +120,14 @@ describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", ()
       expect(html).not.toContain("&lt;video")
     })
 
-    it("应支持从 custom-slidev 属性注入 autoplay, loop, muted 配置", () => {
-      const videoBlock: ISlidevBlockItem = {
+    it("应支持从 custom-slides 属性注入 autoplay, loop, muted 配置", () => {
+      const videoBlock: ISlidesBlockItem = {
         id: "vid-2",
         rawMarkdown: '<video controls="controls" src="assets/bg-loop.mp4"></video>',
         attributes: {
-          "custom-slidev-autoplay": "true",
-          "custom-slidev-loop": "true",
-          "custom-slidev-muted": "true",
+          "custom-slides-autoplay": "true",
+          "custom-slides-loop": "true",
+          "custom-slides-muted": "true",
         },
       }
 
@@ -138,12 +138,12 @@ describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", ()
       expect(html).toContain("playsinline")
     })
 
-    it("当配置 custom-slidev-controls=\"false\" 时应隐藏控制条", () => {
-      const videoBlock: ISlidevBlockItem = {
+    it("当配置 custom-slides-controls=\"false\" 时应隐藏控制条", () => {
+      const videoBlock: ISlidesBlockItem = {
         id: "vid-3",
         rawMarkdown: '<video controls="controls" src="assets/clean.mp4"></video>',
         attributes: {
-          "custom-slidev-controls": "false",
+          "custom-slides-controls": "false",
         },
       }
 
@@ -153,7 +153,7 @@ describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", ()
     })
   })
 
-  describe("buildSlidevDocument (AST 编译期对视频块的处理)", () => {
+  describe("buildSlidesDocument (AST 编译期对视频块的处理)", () => {
     it("思源 NodeVideo 节点应被正确编译并保留视频标记与属性", () => {
       const docId = "doc-video-test"
       const blocks: ISiYuanBlockNode[] = [
@@ -168,21 +168,21 @@ describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", ()
           type: "video",
           markdown: '<video controls="controls" src="assets/demo.mp4"></video>',
           ial: {
-            "custom-slidev-autoplay": "true",
-            "custom-slidev-loop": "true",
+            "custom-slides-autoplay": "true",
+            "custom-slides-loop": "true",
           },
         },
       ]
 
-      const doc = buildSlidevDocument(docId, {}, blocks, {})
+      const doc = buildSlidesDocument(docId, {}, blocks, {})
       expect(doc.slides).toHaveLength(1)
       const slide = doc.slides[0]
 
       const vBlock = slide.blocks.find(b => b.id === "v-1")
       expect(vBlock).toBeDefined()
       expect(vBlock!.rawMarkdown).toContain("<video")
-      expect(vBlock!.attributes?.["custom-slidev-autoplay"]).toBe("true")
-      expect(vBlock!.attributes?.["custom-slidev-loop"]).toBe("true")
+      expect(vBlock!.attributes?.["custom-slides-autoplay"]).toBe("true")
+      expect(vBlock!.attributes?.["custom-slides-loop"]).toBe("true")
 
       // 在生成的 fullMarkdown 中也应包含该视频定义
       expect(doc.fullMarkdown).toContain("<video")
@@ -192,7 +192,7 @@ describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", ()
 
   describe("媒体可视区域最大化自适应与防溢出", () => {
     it("图片块应包含 slide-media-block 与 slide-media-container 类，便于 Flex 弹性最大化排版", () => {
-      const imgBlock: ISlidevBlockItem = {
+      const imgBlock: ISlidesBlockItem = {
         id: "img-1",
         rawMarkdown: "![系统架构](assets/arch.png)",
         attributes: {},
@@ -206,7 +206,7 @@ describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", ()
     })
 
     it("视频块应包含 slide-media-block 与 slide-media-container 类", () => {
-      const videoBlock: ISlidevBlockItem = {
+      const videoBlock: ISlidesBlockItem = {
         id: "vid-adaptive",
         rawMarkdown: '<video src="assets/tour.mp4"></video>',
         attributes: {},
@@ -252,7 +252,7 @@ describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", ()
   })
 
   describe("超级块与列表嵌套视频属性继承与三栏布局自适应", () => {
-    it("父列表项或超级块应继承子节点中视频块的 custom-slidev-autoplay 等播放属性", () => {
+    it("父列表项或超级块应继承子节点中视频块的 custom-slides-autoplay 等播放属性", () => {
       const docId = "doc-video-inheritance"
       const blocks: ISiYuanBlockNode[] = [
         {
@@ -266,34 +266,34 @@ describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", ()
           type: "sb",
           markdown: "",
           ial: {
-            "custom-slidev-layout": "three-cols-header",
+            "custom-slides-layout": "three-cols-header",
           },
           children: [
             {
               id: "col-1",
               type: "p",
               markdown: "第一栏说明文本",
-              ial: { "custom-slidev-slot": "col-1" },
+              ial: { "custom-slides-slot": "col-1" },
             },
             {
               id: "col-2",
               type: "p",
               markdown: "第二栏说明文本",
-              ial: { "custom-slidev-slot": "col-2" },
+              ial: { "custom-slides-slot": "col-2" },
             },
             {
               id: "col-3",
               type: "p",
               markdown: '<video src="assets/sample.mp4"></video>',
-              ial: { "custom-slidev-slot": "col-3" },
+              ial: { "custom-slides-slot": "col-3" },
               children: [
                 {
                   id: "vid-nested",
                   type: "video",
                   markdown: '<video src="assets/sample.mp4"></video>',
                   ial: {
-                    "custom-slidev-autoplay": "true",
-                    "custom-slidev-muted": "true",
+                    "custom-slides-autoplay": "true",
+                    "custom-slides-muted": "true",
                   },
                 },
               ],
@@ -302,14 +302,14 @@ describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", ()
         },
       ]
 
-      const doc = buildSlidevDocument(docId, {}, blocks, {})
+      const doc = buildSlidesDocument(docId, {}, blocks, {})
       expect(doc.slides).toHaveLength(1)
       const slide = doc.slides[0]
 
       const col3Block = slide.blocks.find(b => b.id === "col-3")
       expect(col3Block).toBeDefined()
-      expect(col3Block!.attributes?.["custom-slidev-autoplay"]).toBe("true")
-      expect(col3Block!.attributes?.["custom-slidev-muted"]).toBe("true")
+      expect(col3Block!.attributes?.["custom-slides-autoplay"]).toBe("true")
+      expect(col3Block!.attributes?.["custom-slides-muted"]).toBe("true")
       expect(col3Block!.rawMarkdown).toContain("autoplay")
       expect(col3Block!.rawMarkdown).toContain("muted")
     })
@@ -336,7 +336,7 @@ describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", ()
                 content: '<video src="assets/vertical.mp4"></video>',
                 rawMarkdown: '<video src="assets/vertical.mp4"></video>',
                 slot: "col-3",
-                attributes: { "custom-slidev-autoplay": "true" },
+                attributes: { "custom-slides-autoplay": "true" },
               },
             ],
             rawMarkdown: "## 三栏头部\n::col-1::\n第一栏\n::col-2::\n第二栏\n::col-3::\n<video src=\"assets/vertical.mp4\"></video>",

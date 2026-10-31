@@ -1,4 +1,4 @@
-import type { ISiYuanBlockNode } from "../types/slidev-protocol"
+import type { ISiYuanBlockNode } from "../types/slides-protocol"
 
 /**
  * 展平并规范化思源块节点列表（深度优先遍历树形结构）
@@ -34,7 +34,7 @@ export function extractBlockMarkdown(node: ISiYuanBlockNode): string {
 
 /**
  * 解析 Kramdown 字符串中的思源 IAL 属性字典
- * 思源 IAL 格式例如: {: id="20231019" custom-slidev-layout="cover" updated="20231019"}
+ * 思源 IAL 格式例如: {: id="20231019" custom-slides-layout="cover" updated="20231019"}
  */
 export function parseKramdownIAL(ialString: string): Record<string, string> {
   const attrs: Record<string, string> = {}

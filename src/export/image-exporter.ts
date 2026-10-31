@@ -1,7 +1,7 @@
 import JSZip from "jszip"
 import { WebSandboxBridge } from "../engine/web-sandbox-bridge"
 import { resolveDocumentTitle, sanitizeFileName } from "../plugin/preview-tab-title"
-import type { ISlidevDocument } from "../types/slidev-protocol"
+import type { ISlidesDocument } from "../types/slides-protocol"
 
 export { resolveDocumentTitle, sanitizeFileName }
 
@@ -171,7 +171,7 @@ export async function exportAllSlidesZip(
  * 无预览视窗时，后台创建隐形临时沙箱并执行图片导出
  */
 export async function runHeadlessImageExport(
-  doc: ISlidevDocument,
+  doc: ISlidesDocument,
   options?: IImageExportOptions,
 ): Promise<{ success: boolean; total?: number; error?: string }> {
   if (typeof document === "undefined") {
@@ -186,7 +186,7 @@ export async function runHeadlessImageExport(
   iframe.style.height = "1080px"
   iframe.style.opacity = "0"
   iframe.style.pointerEvents = "none"
-  iframe.src = "/plugins/siyuan-slidev/slidev-client/index.html"
+  iframe.src = "/plugins/siyuan-live-slides/slides-client/index.html"
   document.body.appendChild(iframe)
 
   const bridge = new WebSandboxBridge()

@@ -52,7 +52,7 @@ export function generatePdfExportStyles(options?: {
       height: 100vh;
       page-break-after: always;
       break-after: page;
-      padding: var(--slidev-padding-y, 36px) var(--slidev-padding-x, 56px);
+      padding: var(--slides-padding-y, 36px) var(--slides-padding-x, 56px);
       display: flex;
       flex-direction: column;
       position: relative;
@@ -60,22 +60,22 @@ export function generatePdfExportStyles(options?: {
       overflow: hidden;
     }
     .pdf-slide-page.spacing-compact {
-      --slidev-padding-y: 20px;
-      --slidev-padding-x: 36px;
-      --slidev-header-gap: 10px;
-      --slidev-title-margin-bottom: 6px;
+      --slides-padding-y: 20px;
+      --slides-padding-x: 36px;
+      --slides-header-gap: 10px;
+      --slides-title-margin-bottom: 6px;
     }
     .pdf-slide-page.spacing-normal {
-      --slidev-padding-y: 36px;
-      --slidev-padding-x: 56px;
-      --slidev-header-gap: 16px;
-      --slidev-title-margin-bottom: 10px;
+      --slides-padding-y: 36px;
+      --slides-padding-x: 56px;
+      --slides-header-gap: 16px;
+      --slides-title-margin-bottom: 10px;
     }
     .pdf-slide-page.spacing-loose {
-      --slidev-padding-y: 48px;
-      --slidev-padding-x: 64px;
-      --slidev-header-gap: 24px;
-      --slidev-title-margin-bottom: 16px;
+      --slides-padding-y: 48px;
+      --slides-padding-x: 64px;
+      --slides-header-gap: 24px;
+      --slides-title-margin-bottom: 16px;
     }
     .pdf-slide-page.theme-dark {
       background: #0f1117;
@@ -252,13 +252,13 @@ export function generatePdfExportStyles(options?: {
     }
     .layout-header-section {
       width: 100%;
-      margin-bottom: var(--slidev-header-gap, 16px) !important;
+      margin-bottom: var(--slides-header-gap, 16px) !important;
       flex-shrink: 0;
     }
     .layout-header-section h1,
     .layout-header-section h2,
     .layout-header-section h3 {
-      margin-bottom: var(--slidev-title-margin-bottom, 10px) !important;
+      margin-bottom: var(--slides-title-margin-bottom, 10px) !important;
     }
     .pdf-three-cols-wrapper,
     .layout-three-cols-grid {
@@ -321,8 +321,8 @@ export function generatePdfExportStyles(options?: {
     .has-superblock-cols .pdf-col > *:first-child :is(ul, ol) > li:first-child,
     .has-superblock-cols .pdf-col > *:first-child .slide-list > .slide-list-item:first-child,
     .has-superblock-cols .pdf-col > *:first-child .pdf-list > li:first-child,
-    .has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    .has-superblock-cols .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    .has-superblock-cols .slides-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    .has-superblock-cols .slides-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       list-style: none !important;
       list-style-type: none !important;
       text-align: center !important;
@@ -349,8 +349,8 @@ export function generatePdfExportStyles(options?: {
     }
 
     /* 全局特定标题大小规范化 (除封面外页首首个标题按 H2 1.7rem，表头多栏内首个标题按 H3 1.3rem) */
-    [data-normalize-headings="true"] .slidev-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    [data-normalize-headings="true"] .slidev-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .slides-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
     [data-normalize-headings="true"] .pdf-slide:not(.layout-cover) > :is(.pdf-block, .slide-block):first-child :is(h1, h2, h3, h4, h5, h6),
     [data-normalize-headings="true"] .pdf-slide:not(.layout-cover) > .layout-header-section :is(.pdf-block, .slide-block):first-child :is(h1, h2, h3, h4, h5, h6),
     [data-normalize-headings="true"] .pdf-slide:not(.layout-cover) > :not(.layout-cols-wrapper):not(.pdf-two-cols-wrapper):not(.layout-image-cols-grid):first-child :is(h1, h2, h3, h4, h5, h6) {
@@ -360,8 +360,8 @@ export function generatePdfExportStyles(options?: {
       margin-bottom: 10px !important;
     }
 
-    [data-normalize-headings="true"] .has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    [data-normalize-headings="true"] .has-superblock-cols .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .has-superblock-cols .slides-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .has-superblock-cols .slides-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
     [data-normalize-headings="true"] .has-superblock-cols .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       font-size: 1.3rem !important;
       font-weight: 600 !important;
@@ -591,15 +591,15 @@ export function generatePdfExportStyles(options?: {
     .pdf-list li > h4, li > h4.slide-list-item-title { font-size: 1.1rem !important; }
 
     /* 全局特定标题大小规范化后置强力锁定 (防止被列表项内部字号覆盖) */
-    [data-normalize-headings="true"] .slidev-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    [data-normalize-headings="true"] .slidev-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    [data-normalize-headings="true"] .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .slides-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       font-size: 1.7rem !important;
       font-weight: 600 !important;
       line-height: 1.25 !important;
       margin-bottom: 10px !important;
     }
-    [data-normalize-headings="true"] .has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    [data-normalize-headings="true"] .has-superblock-cols .slidev-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .has-superblock-cols .slides-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .has-superblock-cols .slides-col-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
     [data-normalize-headings="true"] .has-superblock-cols .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       font-size: 1.3rem !important;
       font-weight: 600 !important;
@@ -644,7 +644,7 @@ export function generatePdfExportStyles(options?: {
       text-decoration: none;
       border-bottom: 1px dashed currentColor;
     }
-    .slidev-ref-tag, a.slidev-ref-tag {
+    .slides-ref-tag, a.slides-ref-tag {
       display: inline-flex;
       align-items: center;
       background: rgba(16, 185, 129, 0.1);
@@ -656,19 +656,19 @@ export function generatePdfExportStyles(options?: {
       text-decoration: none;
       margin: 2px 4px 2px 0;
     }
-    .theme-dark .slidev-ref-tag, .theme-dark a.slidev-ref-tag {
+    .theme-dark .slides-ref-tag, .theme-dark a.slides-ref-tag {
       background: rgba(52, 211, 153, 0.15);
       color: #34d399;
       border-color: rgba(52, 211, 153, 0.3);
     }
-    .slidev-block-ref, .pdf-block--ref {
+    .slides-block-ref, .pdf-block--ref {
       background: rgba(16, 185, 129, 0.06);
       border-left: 3px solid #059669;
       border-radius: 0 6px 6px 0;
       padding: 10px 14px;
       margin: 8px 0;
     }
-    .theme-dark .slidev-block-ref, .theme-dark .pdf-block--ref {
+    .theme-dark .slides-block-ref, .theme-dark .pdf-block--ref {
       background: rgba(52, 211, 153, 0.08);
       border-left-color: #34d399;
     }
@@ -708,26 +708,26 @@ export function generatePdfExportStyles(options?: {
       color: #ef4444;
     }
     @media print {
-      .slidev-motion-fade-in,
-      .slidev-motion-slide-up,
-      .slidev-motion-slide-down,
-      .slidev-motion-slide-left,
-      .slidev-motion-slide-right,
-      .slidev-motion-zoom-in,
-      .slidev-motion-pop,
-      .slidev-motion-bounce {
+      .slides-motion-fade-in,
+      .slides-motion-slide-up,
+      .slides-motion-slide-down,
+      .slides-motion-slide-left,
+      .slides-motion-slide-right,
+      .slides-motion-zoom-in,
+      .slides-motion-pop,
+      .slides-motion-bounce {
         animation: none !important;
         opacity: 1 !important;
         transform: none !important;
       }
       /* PDF 打印讲义下禁用动态蒙版遮挡，保证内容 100% 完整可见 */
-      .slidev-mask-layer,
-      .slidev-mask-overlay,
-      .slidev-mask-divider-line {
+      .slides-mask-layer,
+      .slides-mask-overlay,
+      .slides-mask-divider-line {
         display: none !important;
         opacity: 0 !important;
       }
-      .slidev-mask-body-container {
+      .slides-mask-body-container {
         clip-path: none !important;
         -webkit-clip-path: none !important;
         overflow: visible !important;

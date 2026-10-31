@@ -3,7 +3,7 @@ export const getFrontend = () => "desktop"
 export const openTab = async () => {}
 export class Plugin {
   app: any = {}
-  name = "siyuan-slidev"
+  name = "siyuan-live-slides"
   eventBus = { on: () => {}, off: () => {}, emit: () => {} }
   addIcons = () => {}
   addTopBar = () => {}

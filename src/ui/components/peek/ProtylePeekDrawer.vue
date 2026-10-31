@@ -10,7 +10,7 @@
           aria-label="返回上层引用文档或块"
           @click="goBack"
         >
-          <SlidevIcon name="arrow-left" />
+          <SlidesIcon name="arrow-left" />
           <span>返回</span>
         </button>
 
@@ -34,7 +34,7 @@
           :aria-label="isFocusMode ? '当前为块聚焦模式（点击展开所属文档全文）' : '当前为文档全文模式（点击切回仅聚焦当前块）'"
           @click="toggleFocusMode"
         >
-          <SlidevIcon :name="isFocusMode ? 'focus' : 'file-text'" />
+          <SlidesIcon :name="isFocusMode ? 'focus' : 'file-text'" />
           <span>{{ isFocusMode ? '块聚焦' : '展开全文' }}</span>
         </button>
 
@@ -45,7 +45,7 @@
           :aria-label="isEditable ? '当前为即时编辑模式（点击切回只读）' : '当前为只读速览模式（点击解锁即时编辑）'"
           @click="toggleEditable"
         >
-          <SlidevIcon :name="isEditable ? 'edit' : 'eye'" />
+          <SlidesIcon :name="isEditable ? 'edit' : 'eye'" />
           <span>{{ isEditable ? '编辑中' : '只读' }}</span>
         </button>
 
@@ -55,7 +55,7 @@
           aria-label="在置顶独立窗口中打开 (保留完整侧边栏与插件)"
           @click="openInStandaloneWindow"
         >
-          <SlidevIcon name="window" />
+          <SlidesIcon name="window" />
           <span>独立窗口</span>
         </button>
 
@@ -66,7 +66,7 @@
           aria-label="在系统默认浏览器中打开 (外跳)"
           @click="openInSystemBrowser"
         >
-          <SlidevIcon name="external-link" />
+          <SlidesIcon name="external-link" />
           <span>外跳</span>
         </button>
       </div>
@@ -87,7 +87,7 @@ import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import type { Plugin } from 'siyuan'
 import { Protyle, openWindow } from 'siyuan'
 import { sql } from '@/api'
-import SlidevIcon from '@/ui/components/SlidevIcon.vue'
+import SlidesIcon from '@/ui/components/SlidesIcon.vue'
 import { globalSettingsState, buildSiYuanWebUrl, getRuntimeSettings } from '@/settings'
 import { getRuntimeModule } from '@/engine/runtime-node'
 

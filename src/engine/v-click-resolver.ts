@@ -1,4 +1,4 @@
-import type { ISlidevBlock } from "../types/slidev-protocol"
+import type { ISlidesBlock } from "../types/slides-protocol"
 
 export type TClickRuleType = "always" | "step" | "range" | "hide"
 
@@ -11,7 +11,7 @@ export interface IBlockClickRule {
 
 export interface ISlideClicksPlan {
   maxStep: number
-  blockMap: Map<ISlidevBlock, IBlockClickRule>
+  blockMap: Map<ISlidesBlock, IBlockClickRule>
   idMap: Map<string, IBlockClickRule>
 }
 
@@ -19,17 +19,17 @@ export interface ISlideClicksPlan {
  * 解析幻灯片中所有块的 v-click 调度计划 (Single Source of Truth)
  * 严格按照 Slidev 规范与文档顺序递增计算步数，确保顺延 (+1) 逻辑正确生效
  */
-export function computeSlideClicksPlan(blocks?: ISlidevBlock[]): ISlideClicksPlan {
+export function computeSlideClicksPlan(blocks?: ISlidesBlock[]): ISlideClicksPlan {
   if (!blocks || blocks.length === 0) {
     return { maxStep: 0, blockMap: new Map(), idMap: new Map() }
   }
 
-  const blockMap = new Map<ISlidevBlock, IBlockClickRule>()
+  const blockMap = new Map<ISlidesBlock, IBlockClickRule>()
   const idMap = new Map<string, IBlockClickRule>()
   const containerBaseStepMap = new Map<string, number>()
   let stepCounter = 0
 
-  const setRule = (b: ISlidevBlock, rule: IBlockClickRule) => {
+  const setRule = (b: ISlidesBlock, rule: IBlockClickRule) => {
     blockMap.set(b, rule)
     const bid = b.id || (b as any).blockId
     if (bid) idMap.set(bid, rule)
@@ -148,7 +148,7 @@ export function computeSlideClicksPlan(blocks?: ISlidevBlock[]): ISlideClicksPla
  * 判断块在当前 step 下的显隐 class
  */
 export function getBlockClickStatus(
-  block: ISlidevBlock,
+  block: ISlidesBlock,
   currentStep: number,
   plan: ISlideClicksPlan,
 ): "v-click-visible" | "v-click-hidden" {

@@ -1,10 +1,10 @@
-import type { ISiYuanBlockNode } from "../types/slidev-protocol"
+import type { ISiYuanBlockNode } from "../types/slides-protocol"
 import {
   ATTR_ELEM_SLOT,
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_LAYOUT_RATIO,
   isColsHeaderLayout,
-} from "../types/slidev-protocol"
+} from "../types/slides-protocol"
 import { isPageBreak } from "./scope-mapper"
 import { isListItemNode } from "../utils/markdown-utils"
 import {
@@ -506,7 +506,7 @@ export function scanAndTagListSuperBlocks(
       const headerNode = preBlocks.find(b => isHeadingBlock(b))
       const headerId = headerNode?.id
 
-      // 2.1 检查并配置页面版式 custom-slidev-layout
+      // 2.1 检查并配置页面版式 custom-slides-layout
       const currentLayout = pageTargetNode?.ial?.[ATTR_PAGE_LAYOUT] || ""
       const isCurrentClover = currentLayout === "clover"
       const targetLayout = isCurrentClover ? "clover" : layout
@@ -518,9 +518,9 @@ export function scanAndTagListSuperBlocks(
         }
       }
 
-      // 2.1.5 不再自动同步超级块宽度设置到 custom-slidev-layout-ratio，改为由用户在面板显式点击「读取」按钮应用
+      // 2.1.5 不再自动同步超级块宽度设置到 custom-slides-layout-ratio，改为由用户在面板显式点击「读取」按钮应用
 
-      // 2.2 检查并配置表头 custom-slidev-slot="header"
+      // 2.2 检查并配置表头 custom-slides-slot="header"
       if (headerNode) {
         const currentSlot = headerNode.ial?.[ATTR_ELEM_SLOT] || ""
         if (currentSlot !== "header") {

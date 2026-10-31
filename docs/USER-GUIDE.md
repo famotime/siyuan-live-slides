@@ -1,14 +1,14 @@
-# SiYuan Slidev User Guide
+# SiYuan Live Slides User Guide
 
 > Last refreshed: 2026-10-26 (aligned with all user-facing capabilities shipped after v0.9.0)
 
-Welcome to **SiYuan Slidev**, the presentation plugin built specifically for SiYuan Note. It integrates the modern **Slidev** presentation framework into your note-taking workflow with **zero document pollution, modern frontend animations, millisecond bidirectional syncing, and tiered synergy**.
+Welcome to **SiYuan Live Slides**, the presentation plugin built specifically for SiYuan Note. It integrates the modern **Slidev** presentation framework into your note-taking workflow with **zero document pollution, modern frontend animations, millisecond bidirectional syncing, and tiered synergy**.
 
 ---
 
 ## 1. Core Architecture: Three-Tier Scope & Zero Pollution
 
-Traditional presentation plugins force users to insert messy Frontmatter or custom code blocks into the markdown body, degrading reading clarity. SiYuan Slidev leverages SiYuan's native **Block IAL (attribute)** engine to decouple presentation metadata from content entirely:
+Traditional presentation plugins force users to insert messy Frontmatter or custom code blocks into the markdown body, degrading reading clarity. SiYuan Live Slides leverages SiYuan's native **Block IAL (attribute)** engine to decouple presentation metadata from content entirely:
 
 1. **Document Root Block**: global configuration (`theme`, `aspect-ratio`, `default-transition`, `spacing`);
 2. **Horizontal Dividers (`---`)**: natural slide page breaks holding page attributes (`layout`, `transition`, `background`, `mask`, `layout-ratio`, `notes`);
@@ -22,7 +22,7 @@ See the [technical specification](./技术规格定义.md) for the full attribut
 
 ### 2.1 Launching and Live Preview
 
-- **Shortcut**: Press `Alt+P` (`⌥P` on macOS) to open the wide split preview tab (`SlidevPreviewTab`) directly beneath the active document; drag to resize;
+- **Shortcut**: Press `Alt+P` (`⌥P` on macOS) to open the wide split preview tab (`SlidesPreviewTab`) directly beneath the active document; drag to resize;
 - **Top Bar Icon**: click the Slidev icon in the top toolbar to launch the bottom split preview;
 - **Hot Reload**: an elastic debounce controller updates the preview as you type, delete or insert blocks;
 - **Instant Tab Title**: the tab title immediately shows "document name · current page" and follows document switching;
@@ -54,13 +54,13 @@ During playback (split preview / fullscreen / exported HTML):
 
 ## 3. Modern Presentation UI
 
-### 3.1 Bottom Split Preview Tab (`SlidevPreviewTab`)
+### 3.1 Bottom Split Preview Tab (`SlidesPreviewTab`)
 - **Wide viewport** with resizable height;
 - **📌 Pin toggle**: unlocked, the preview follows document switching; pinned, it stays on the target document while you browse other notes;
 - **Full control toolbar**: prev/next, page badge, 📑 outline drawer, 🎤 presenter mode, 📥 single-file HTML export, 🖨️ PDF export, 🔄 refresh, ⛶ fullscreen, plus the Sandbox/Pro engine switch;
 - **Immersive Peek**: clicking links inside the playing slide no longer leaves the show (see section 6).
 
-### 3.2 Right Inspector Dock (`SlidevInspectorDockView`)
+### 3.2 Right Inspector Dock (`SlidesInspectorDockView`)
 Context switches with your cursor:
 - **Content block selected**: ✨ `v-click` steps, 🎬 entrance motion presets (`slide-up` / `fade-in` / `zoom-in` / `bounce`), ▥ column slots (incl. header columns for `cols-header`), 🔍 Shiki code spotlight (`1-3|5|7-10`), and quick actions (insert dividers, two-cols compare, clear attributes);
 - **Divider (`---`) selected**: layout picker (cover / default / two-cols / **cols-header** / **clover 2×2 quadrant** / image-left / image-right / center / fact / intro / quote), custom column ratios (e.g. `1:2`, with one-click auto-detection from superblock widths), **dynamic page mask** (direction, segmented ratio, solid/blur style, initial state), transition, background, and speaker notes with 🤖 AI generation;
@@ -99,7 +99,7 @@ Clicking links inside a running presentation opens an **immersive side drawer** 
 
 ## 7. Dynamic Page Mask & Segmented Reveal
 
-A "spotlight" capability for image-background pages: configure `custom-slidev-mask` on a page divider and a directional mask covers the slide during playback, revealing **segment by segment** as you advance:
+A "spotlight" capability for image-background pages: configure `custom-slides-mask` on a page divider and a directional mask covers the slide during playback, revealing **segment by segment** as you advance:
 
 - **Direction**: `down` (top-to-bottom) or `right` (left-to-right);
 - **Segment ratio**: weight form (`1:1`, `1:2:1`) or cumulative breakpoints (`25:75:100`), with preset chips in the panel;
@@ -145,7 +145,7 @@ Import existing Slidev projects into SiYuan:
 - **`Slidev Pro: Sync slides.md to workspace`** writes via kernel API for isolated rendering;
 - **`Slidev Pro: Probe local DevServer (localhost:3030)`** checks the local engine status.
 
-See the [Pro mode setup guide](./SiYuan%20Slidev%20Pro%20模式系统配置与用户指南.md) for environment details.
+See the [Pro mode setup guide](./思源笔记即现演示插件%20(siyuan-live-slides)%20Pro%20模式系统配置与用户指南.md) for environment details.
 
 ---
 

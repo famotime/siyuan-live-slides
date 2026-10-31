@@ -44,7 +44,7 @@ describe("WebSandboxBridge (沙箱通信管道)", () => {
     window.dispatchEvent(
       new MessageEvent("message", {
         data: {
-          source: "siyuan-slidev-client",
+          source: "siyuan-slides-client",
           action: "CLIENT_READY",
           payload: {},
         },
@@ -55,7 +55,7 @@ describe("WebSandboxBridge (沙箱通信管道)", () => {
     expect(mockPostMessage).toHaveBeenCalledTimes(1)
     expect(mockPostMessage).toHaveBeenCalledWith(
       expect.objectContaining({
-        source: "siyuan-slidev-host",
+        source: "siyuan-slides-host",
         action: "NAVIGATE_PAGE",
         payload: { pageIndex: 2 },
       }),
@@ -80,7 +80,7 @@ describe("WebSandboxBridge (沙箱通信管道)", () => {
     window.dispatchEvent(
       new MessageEvent("message", {
         data: {
-          source: "siyuan-slidev-client",
+          source: "siyuan-slides-client",
           action: "CLIENT_READY",
           payload: {},
         },
@@ -92,7 +92,7 @@ describe("WebSandboxBridge (沙箱通信管道)", () => {
 
     expect(mockPostMessage).toHaveBeenCalledWith(
       expect.objectContaining({
-        source: "siyuan-slidev-host",
+        source: "siyuan-slides-host",
         action: "TOGGLE_OVERVIEW",
         payload: {},
       }),
@@ -115,7 +115,7 @@ describe("WebSandboxBridge (沙箱通信管道)", () => {
     window.dispatchEvent(
       new MessageEvent("message", {
         data: {
-          source: "siyuan-slidev-client",
+          source: "siyuan-slides-client",
           action: "CLIENT_READY",
           payload: {},
         },
@@ -126,7 +126,7 @@ describe("WebSandboxBridge (沙箱通信管道)", () => {
 
     expect(mockPostMessage).toHaveBeenCalledWith(
       expect.objectContaining({
-        source: "siyuan-slidev-host",
+        source: "siyuan-slides-host",
         action: "UPDATE_SLIDES",
       }),
       "*",
@@ -149,7 +149,7 @@ describe("WebSandboxBridge (沙箱通信管道)", () => {
     window.dispatchEvent(
       new MessageEvent("message", {
         data: {
-          source: "siyuan-slidev-client",
+          source: "siyuan-slides-client",
           action: "SLIDE_CHANGED",
           payload: { currentPage: 3, totalPages: 5, currentBlockId: "block-99" },
         },
@@ -162,7 +162,7 @@ describe("WebSandboxBridge (沙箱通信管道)", () => {
     window.dispatchEvent(
       new MessageEvent("message", {
         data: {
-          source: "siyuan-slidev-client",
+          source: "siyuan-slides-client",
           action: "BLOCK_CLICKED",
           payload: { clickedBlockId: "item-101", currentPage: 3 },
         },
@@ -236,8 +236,8 @@ describe("EngineManager (双模引擎调度器)", () => {
     })
     vi.spyOn(manager.scaffolder, "scaffold").mockResolvedValue({
       success: true,
-      slidesPath: "/data/storage/petal/siyuan-slidev/pro-workspace/slides.md",
-      packageJsonPath: "/data/storage/petal/siyuan-slidev/pro-workspace/package.json",
+      slidesPath: "/data/storage/petal/siyuan-live-slides/pro-workspace/slides.md",
+      packageJsonPath: "/data/storage/petal/siyuan-live-slides/pro-workspace/package.json",
     })
     vi.spyOn(manager.processManager, "startServer").mockResolvedValue({
       success: true,
@@ -294,12 +294,12 @@ describe("CliDevServerBridge (Slidev 标准 Markdown 构建与同步)", () => {
 
     const result = await manager.cliBridge.syncToWorkspaceFile(
       sampleDoc,
-      "/data/storage/petal/siyuan-slidev/slides.md",
+      "/data/storage/petal/siyuan-live-slides/slides.md",
       mockPutFile,
     )
 
     expect(result.success).toBe(true)
-    expect(result.path).toBe("/data/storage/petal/siyuan-slidev/slides.md")
+    expect(result.path).toBe("/data/storage/petal/siyuan-live-slides/slides.md")
     expect(mockPutFile).toHaveBeenCalledTimes(1)
     expect(manager.cliBridge.getLastSyncTime()).toBeTypeOf("number")
   })

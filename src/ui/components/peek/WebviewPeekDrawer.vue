@@ -10,7 +10,7 @@
           aria-label="后退"
           @click="goBack"
         >
-          <SlidevIcon name="arrow-left" />
+          <SlidesIcon name="arrow-left" />
         </button>
 
         <!-- 前进 -->
@@ -20,7 +20,7 @@
           aria-label="前进"
           @click="goForward"
         >
-          <SlidevIcon name="arrow-right" />
+          <SlidesIcon name="arrow-right" />
         </button>
 
         <!-- 刷新 -->
@@ -29,7 +29,7 @@
           :aria-label="isLoading ? '正在加载...' : '刷新页面'"
           @click="reload"
         >
-          <SlidevIcon name="refresh" />
+          <SlidesIcon name="refresh" />
         </button>
       </div>
 
@@ -48,7 +48,7 @@
           :aria-label="isCopied ? '已复制地址！' : '复制网址'"
           @click="copyUrl"
         >
-          <SlidevIcon name="copy" />
+          <SlidesIcon name="copy" />
         </button>
       </div>
 
@@ -60,7 +60,7 @@
           :aria-label="viewMode === 'mobile' ? '当前为手机视图，点击切换为桌面视图' : '当前为桌面视图，点击切换为手机视图'"
           @click="toggleViewMode"
         >
-          <SlidevIcon :name="viewMode === 'mobile' ? 'mobile' : 'desktop'" />
+          <SlidesIcon :name="viewMode === 'mobile' ? 'mobile' : 'desktop'" />
         </button>
 
         <!-- 显式缩放控制器 -->
@@ -71,7 +71,7 @@
             :disabled="zoomFactor <= 0.5"
             @click="zoomOut"
           >
-            <SlidevIcon name="minus" />
+            <SlidesIcon name="minus" />
           </button>
           <button
             class="spm-zoom-badge b3-tooltips b3-tooltips__s"
@@ -86,7 +86,7 @@
             :disabled="zoomFactor >= 2.5"
             @click="zoomIn"
           >
-            <SlidevIcon name="plus" />
+            <SlidesIcon name="plus" />
           </button>
         </div>
 
@@ -96,7 +96,7 @@
           aria-label="在系统默认浏览器中打开 ↗"
           @click="openInSystemBrowser"
         >
-          <SlidevIcon name="external-link" />
+          <SlidesIcon name="external-link" />
           <span>外跳</span>
         </button>
       </div>
@@ -161,7 +161,7 @@
           v-if="loadError"
           class="spm-load-error"
         >
-          <SlidevIcon
+          <SlidesIcon
             name="alert"
             class="spm-load-error__icon"
           />
@@ -178,7 +178,7 @@
               aria-label="重试"
               @click="retryAfterError"
             >
-              <SlidevIcon name="refresh" />
+              <SlidesIcon name="refresh" />
               <span>重试</span>
             </button>
             <button
@@ -186,7 +186,7 @@
               aria-label="用系统浏览器打开"
               @click="openInSystemBrowser"
             >
-              <SlidevIcon name="external-link" />
+              <SlidesIcon name="external-link" />
               <span>用系统浏览器打开 ↗</span>
             </button>
           </div>
@@ -203,7 +203,7 @@ export type TViewMode = 'desktop' | 'mobile'
 export const MOBILE_USER_AGENT =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1'
 
-export const STORAGE_KEY_VIEW_MODE = 'siyuan-slidev-peek-view-mode'
+export const STORAGE_KEY_VIEW_MODE = 'siyuan-slides-peek-view-mode'
 
 let cachedViewMode: TViewMode = 'desktop'
 
@@ -271,7 +271,7 @@ export function describePeekNetError(errorDescription: string): string {
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
-import SlidevIcon from '@/ui/components/SlidevIcon.vue'
+import SlidesIcon from '@/ui/components/SlidesIcon.vue'
 import { isDesktopEnvironment, isRemoteKernelHost, getRuntimeModule } from '@/engine/runtime-node'
 import { resolvePeekUrl } from '@/utils/peek-url'
 

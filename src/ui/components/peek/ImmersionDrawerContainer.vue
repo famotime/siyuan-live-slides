@@ -37,7 +37,7 @@
             :aria-label="isMaximized ? '还原抽屉宽度 (70%)' : '最大化填满视口 (100%)'"
             @click="toggleMaximize"
           >
-            <SlidevIcon :name="isMaximized ? 'minimize' : 'maximize'" />
+            <SlidesIcon :name="isMaximized ? 'minimize' : 'maximize'" />
           </button>
 
           <!-- 关闭抽屉 -->
@@ -46,7 +46,7 @@
             aria-label="关闭速览 (ESC)"
             @click="handleClose"
           >
-            <SlidevIcon name="close" />
+            <SlidesIcon name="close" />
           </button>
         </div>
       </div>
@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import SlidevIcon from '@/ui/components/SlidevIcon.vue'
+import SlidesIcon from '@/ui/components/SlidesIcon.vue'
 
 const props = withDefaults(
   defineProps<{

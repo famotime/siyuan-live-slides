@@ -18,7 +18,7 @@
     >
       <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
         <div style="font-size: 11px; display: flex; align-items: center; gap: 6px; flex: 1;">
-          <SlidevIcon name="sparkles" />
+          <SlidesIcon name="sparkles" />
           <span>检测到本页横向超级块列宽比例：<b>{{ detectedSbRatio }}</b></span>
         </div>
         <button
@@ -27,7 +27,7 @@
           style="padding: 2px 8px; height: 26px; font-size: 11px; flex-shrink: 0; background: var(--b3-theme-primary); color: #fff; display: inline-flex; align-items: center; gap: 4px;"
           @click="$emit('applySuperBlockLayout', detectedSbInfo || { recommendedLayout: 'two-cols', ratio: detectedSbRatio })"
         >
-          <SlidevIcon name="columns" />
+          <SlidesIcon name="columns" />
           <span>设为分栏</span>
         </button>
       </div>
@@ -38,7 +38,7 @@
       <div class="spm-control-header">
         <div class="spm-control-title-group">
           <div class="spm-control-title">
-            <SlidevIcon name="ratio" />
+            <SlidesIcon name="ratio" />
             <span>分栏比例 (Ratio)</span>
           </div>
           <span class="spm-control-desc">设置各列横向空间占比，默认平均分配</span>
@@ -76,7 +76,7 @@
           style="padding: 0 8px; height: 26px; font-size: 11px; white-space: nowrap; flex-shrink: 0;"
           @click="$emit('update:pageLayoutRatio', detectedSbRatio)"
         >
-          <SlidevIcon name="sparkles" />
+          <SlidesIcon name="sparkles" />
           <span>读取</span>
         </button>
         <button
@@ -86,7 +86,7 @@
           style="opacity: 0.45; cursor: not-allowed; padding: 0 8px; height: 26px; font-size: 11px; white-space: nowrap; flex-shrink: 0;"
           aria-label="当前页未检测到调整过列宽的横向超级块"
         >
-          <SlidevIcon name="sparkles" />
+          <SlidesIcon name="sparkles" />
           <span>读取</span>
         </button>
 
@@ -97,19 +97,19 @@
           style="padding: 0 8px; height: 26px; font-size: 11px; white-space: nowrap; flex-shrink: 0;"
           @click="onResetRatioToEqual"
         >
-          <SlidevIcon name="reset" />
+          <SlidesIcon name="reset" />
           <span>重置</span>
         </button>
       </div>
 
       <!-- 超级块宽度检测提示信息（取消独立的应用此比例按钮） -->
       <div v-if="detectedSbRatio" style="margin-top: 6px; font-size: 11px; opacity: 0.85; display: flex; align-items: center; gap: 4px;">
-        <SlidevIcon name="ratio" />
+        <SlidesIcon name="ratio" />
         <span>检测到思源超级块宽度：</span>
         <code style="background: rgba(125, 125, 125, 0.15); padding: 1px 4px; border-radius: 3px; font-weight: bold;">{{ detectedSbRatio }}</code>
       </div>
       <div v-else style="margin-top: 6px; font-size: 11px; opacity: 0.6; display: flex; align-items: center; gap: 4px;">
-        <SlidevIcon name="ratio" />
+        <SlidesIcon name="ratio" />
         <span>未检测到调宽超级块（默认各列平均分配）</span>
       </div>
     </div>
@@ -125,7 +125,7 @@
       <div class="spm-control-header">
         <div class="spm-control-title-group">
           <div class="spm-control-title">
-            <SlidevIcon name="sparkles" />
+            <SlidesIcon name="sparkles" />
             <span>页面动态蒙版 (Dynamic Mask)</span>
           </div>
           <span class="spm-control-desc">随着点击操作分段展露正文内容</span>
@@ -167,7 +167,7 @@
             aria-label="输入规则：&#10;• 权重比例（项数决定步数）：如 1:1 (2步等分)、1:1:1 (3步等分)、1:2:1 (按权重累计分段)&#10;• 绝对百分比：如 25:75:100 或 30:80 (指定每步展开的累计百分比)&#10;• 每次点击或按空格/向右键展露下一段，全部揭开后翻页"
             style="cursor: help; opacity: 0.75; display: inline-flex; align-items: center; gap: 3px; font-size: 11px;"
           >
-            <SlidevIcon name="help" />
+            <SlidesIcon name="help" />
             <span>输入规则</span>
           </span>
         </div>
@@ -252,7 +252,7 @@
       <div class="spm-control-header">
         <div class="spm-control-title-group">
           <div class="spm-control-title">
-            <SlidevIcon name="ratio" />
+            <SlidesIcon name="ratio" />
             <span>页面间距 (Spacing)</span>
           </div>
           <span class="spm-control-desc">覆盖本页内边距与顶部标题间距</span>
@@ -295,7 +295,7 @@
       <div class="spm-control-header">
         <div class="spm-control-title-group">
           <div class="spm-control-title">
-            <SlidevIcon name="palette" />
+            <SlidesIcon name="palette" />
             <span>页面背景 (Background)</span>
           </div>
           <span class="spm-control-desc">设置当前页特定底色或壁纸</span>
@@ -329,7 +329,7 @@
       <div class="spm-control-header">
         <div class="spm-control-title-group">
           <div class="spm-control-title">
-            <SlidevIcon name="image" />
+            <SlidesIcon name="image" />
             <span>页面图片 (Image)</span>
           </div>
           <span class="spm-control-desc">图文分栏或页面专属配图 URL / 资源路径</span>
@@ -360,7 +360,7 @@
       <div class="spm-control-header">
         <div class="spm-control-title-group">
           <div class="spm-control-title">
-            <SlidevIcon name="presenter" />
+            <SlidesIcon name="presenter" />
             <span>演讲者提词 (Notes)</span>
           </div>
           <span class="spm-control-desc">正文备注块驱动 · 仅演讲者视图可见</span>
@@ -370,7 +370,7 @@
           aria-label="AI 自动生成本页讲稿提示块"
           @click="$emit('generateNotes')"
         >
-          <SlidevIcon name="sparkles" />
+          <SlidesIcon name="sparkles" />
           <span>AI 讲稿</span>
         </button>
       </div>
@@ -390,7 +390,7 @@
             aria-label="在正文编辑区定位并高亮此讲稿备注块"
             @click="$emit('locateNoteBlock')"
           >
-            <SlidevIcon name="search" />
+            <SlidesIcon name="search" />
             <span>定位讲稿块</span>
           </button>
           <button
@@ -398,7 +398,7 @@
             aria-label="在本页末尾追加新的讲稿提示块"
             @click="$emit('addNoteBlock')"
           >
-            <SlidevIcon name="insert-below" />
+            <SlidesIcon name="insert-below" />
             <span>追加讲稿块</span>
           </button>
         </div>
@@ -412,7 +412,7 @@
           aria-label="在当前页末尾插入默认演讲备注提示块"
           @click="$emit('addNoteBlock')"
         >
-          <SlidevIcon name="insert-below" />
+          <SlidesIcon name="insert-below" />
           <span>添加讲稿备注块</span>
         </button>
       </div>
@@ -427,7 +427,7 @@
             aria-label="在所有尚未配置讲稿的页面末尾批量追加讲稿提示块"
             @click="$emit('batchAppendNotes')"
           >
-            <SlidevIcon name="insert-below" />
+            <SlidesIcon name="insert-below" />
             <span>全部追加</span>
           </button>
           <button
@@ -437,7 +437,7 @@
             aria-label="批量物理删除正文中的全部讲稿备注块（涉及全部页）"
             @click="$emit('batchDeleteNotes')"
           >
-            <SlidevIcon name="trash" />
+            <SlidesIcon name="trash" />
             <span>全部删除</span>
           </button>
         </div>
@@ -457,7 +457,7 @@
           aria-label="在此分页符之后插入新的空白分页"
           @click="$emit('insertDividerAfter')"
         >
-          <SlidevIcon name="insert-below" />
+          <SlidesIcon name="insert-below" />
           <span>插入新页</span>
         </button>
         <button
@@ -465,7 +465,7 @@
           aria-label="彻底删除当前分页符（合并前后页面）"
           @click="$emit('deleteDivider')"
         >
-          <SlidevIcon name="trash" />
+          <SlidesIcon name="trash" />
           <span>删除此页</span>
         </button>
       </div>
@@ -477,7 +477,7 @@
 import { computed } from 'vue'
 import LayoutPicker from '@/ui/components/LayoutPicker.vue'
 import TransitionSelector from '@/ui/components/TransitionSelector.vue'
-import SlidevIcon from '@/ui/components/SlidevIcon.vue'
+import SlidesIcon from '@/ui/components/SlidesIcon.vue'
 
 const props = defineProps<{
   pageLayout: string

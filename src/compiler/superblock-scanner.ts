@@ -1,11 +1,11 @@
-import type { ISiYuanBlockNode } from "../types/slidev-protocol"
+import type { ISiYuanBlockNode } from "../types/slides-protocol"
 import {
   ATTR_ELEM_SLOT,
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_LAYOUT_RATIO,
   ROLE_IMAGE_LEFT,
   ROLE_IMAGE_RIGHT,
-} from "../types/slidev-protocol"
+} from "../types/slides-protocol"
 import { isPageBreak } from "./scope-mapper"
 
 import {
@@ -263,7 +263,7 @@ export interface ITagChangeRecord {
 }
 
 /**
- * 遍历扫描块树，为图文超级块中的图片自动标记或自适应更新 custom-slidev-layout="image-left" / "image-right"
+ * 遍历扫描块树，为图文超级块中的图片自动标记或自适应更新 custom-slides-layout="image-left" / "image-right"
  */
 export function scanAndTagSuperBlocks(
   blocks: ISiYuanBlockNode[],

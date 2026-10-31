@@ -1,6 +1,6 @@
 # Joplin 与 Obsidian 同类演示插件深度调研与参考
 
-在个人知识管理（PKM）领域，将日常沉淀的笔记无缝转化为专业演示稿（Slides）一直是高频核心诉求。为了为思源笔记 Slidev 插件（以下简称 **SiYuan Slidev**）提供严谨的架构定位与产品设计参考，本报告对 Joplin 与 Obsidian 生态中主流的演示类插件进行了全景调研、架构剖析与优缺点横向对比。
+在个人知识管理（PKM）领域，将日常沉淀的笔记无缝转化为专业演示稿（Slides）一直是高频核心诉求。为了为思源笔记即现演示插件（以下简称 **SiYuan Live Slides**）提供严谨的架构定位与产品设计参考，本报告对 Joplin 与 Obsidian 生态中主流的演示类插件进行了全景调研、架构剖析与优缺点横向对比。
 
 ---
 
@@ -82,7 +82,7 @@ Joplin 由于其相对保守的扩展机制与富文本/Markdown 双模编辑架
 
 ## 3. 竞品横向对比矩阵
 
-| 评估维度 | Obsidian Adv Slides | Obsidian Marp | 社区 Slidev 试验版 | Joplin Slides | **SiYuan Slidev（本案规划）** |
+| 评估维度 | Obsidian Adv Slides | Obsidian Marp | 社区 Slidev 试验版 | Joplin Slides | **SiYuan Live Slides（本案规划）** |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **底层技术基座** | Reveal.js (传统 JS) | Marpit (静态排版) | Slidev CLI (外部服务) | Reveal.js (基础版) | **Slidev 内置轻量引擎 + Pro CLI** |
 | **正文纯净度 (零污染)** | ❌ 差 (大量 HTML 注释) | ⚠️ 中 (Frontmatter + 局部注释) | ⚠️ 中 (需手写 Frontmatter) | ⭕ 好 (仅能用原生语法) | **✅ 极致 (100% 块属性驱动，正文 0 污染)** |
@@ -101,7 +101,7 @@ Joplin 由于其相对保守的扩展机制与富文本/Markdown 双模编辑架
 
 ### 4.1 彻底消灭“正文注释污染”——依托思源独特的块属性（Block Attributes）
 - **竞品教训**：Obsidian Advanced Slides 虽然功能多，但正文被 `<!-- .element ... -->` 弄得千疮百孔，严重破坏了个人知识库的长期沉淀与阅读价值。
-- **思源解法**：思源笔记拥有极其优秀的**块级存储与 Inline Attribute List (IAL)** 机制。我们将所有幻灯片元数据（分页标记、Layout 版式、过渡效果、`v-click` 序列、甚至演讲者私有备注）全部保存在各块的 `custom-slidev-*` 属性中。
+- **思源解法**：思源笔记拥有极其优秀的**块级存储与 Inline Attribute List (IAL)** 机制。我们将所有幻灯片元数据（分页标记、Layout 版式、过渡效果、`v-click` 序列、甚至演讲者私有备注）全部保存在各块的 `custom-slides-*` 属性中。
 - **效果**：用户在编辑笔记时是一篇排版优美的正常笔记；打开演示时，插件自动从块属性中提取元数据编译为 Slidev 结构，实现**“笔记阅读无感，演示功能全开”**。
 
 ### 4.2 终结“配置代码化”——可视化块交互与悬浮工具栏

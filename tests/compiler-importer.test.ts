@@ -2,11 +2,11 @@ import fs from "fs"
 import path from "path"
 import { describe, expect, it } from "vitest"
 import {
-  parseSlidevPresentation,
+  parseSlidesPresentation,
   parseYamlFrontmatter,
-  splitSlidevMarkdownChunks,
+  splitSlidesMarkdownChunks,
   stripInlineComment,
-} from "../src/compiler/slidev-importer"
+} from "../src/compiler/slides-importer"
 
 describe("Slidev Importer Core Tests", () => {
   it("should strip inline comments while preserving quoted hashes", () => {
@@ -51,7 +51,7 @@ layout: center
 
 # Slide 2
 `
-    const chunks = splitSlidevMarkdownChunks(md)
+    const chunks = splitSlidesMarkdownChunks(md)
     expect(chunks.length).toBe(2)
   })
 
@@ -92,14 +92,14 @@ background: /assets/bg.png
 .custom { color: red; }
 </style>
 `
-    const res = parseSlidevPresentation(md)
+    const res = parseSlidesPresentation(md)
 
     expect(res.docTitle).toBe("Test Presentation")
-    expect(res.docRootAttrs["custom-slidev-theme"]).toBe("default")
-    expect(res.docRootAttrs["custom-slidev-aspect-ratio"]).toBe("16/9")
-    expect(res.docRootAttrs["custom-slidev-color-schema"]).toBe("dark")
-    expect(res.docRootAttrs["custom-slidev-glowSeed"]).toBe("100")
-    expect(res.docRootAttrs["custom-slidev-custom-css"]).toContain(".custom { color: red; }")
+    expect(res.docRootAttrs["custom-slides-theme"]).toBe("default")
+    expect(res.docRootAttrs["custom-slides-aspect-ratio"]).toBe("16/9")
+    expect(res.docRootAttrs["custom-slides-color-schema"]).toBe("dark")
+    expect(res.docRootAttrs["custom-slides-glowSeed"]).toBe("100")
+    expect(res.docRootAttrs["custom-slides-custom-css"]).toContain(".custom { color: red; }")
 
     expect(res.slides.length).toBe(2)
 
@@ -113,8 +113,8 @@ background: /assets/bg.png
 
     // Slide 2
     const s2 = res.slides[1]
-    expect(s2.pageAttrs["custom-slidev-layout"]).toBe("two-cols")
-    expect(s2.pageAttrs["custom-slidev-background"]).toBe("/assets/bg.png")
+    expect(s2.pageAttrs["custom-slides-layout"]).toBe("two-cols")
+    expect(s2.pageAttrs["custom-slides-background"]).toBe("/assets/bg.png")
     expect(s2.rawMarkdown).not.toContain("::right::")
     expect(s2.rawMarkdown).not.toContain("<style>")
 
@@ -141,7 +141,7 @@ layout: center
 
 # Sub Page Content
 `
-    const res = parseSlidevPresentation(mainMd, {
+    const res = parseSlidesPresentation(mainMd, {
       virtualFiles: {
         "./pages/sub.md": subMd,
       },
@@ -149,7 +149,7 @@ layout: center
 
     expect(res.slides.length).toBe(2)
     expect(res.slides[1].rawMarkdown).toContain("# Sub Page Content")
-    expect(res.slides[1].pageAttrs["custom-slidev-layout"]).toBe("center")
+    expect(res.slides[1].pageAttrs["custom-slides-layout"]).toBe("center")
   })
 
   // 针对真实 slidev-templates 仓库的回归测试
@@ -161,11 +161,11 @@ layout: center
       if (!fs.existsSync(target)) return
 
       const content = fs.readFileSync(target, "utf-8")
-      const res = parseSlidevPresentation(content)
+      const res = parseSlidesPresentation(content)
 
       expect(res.docTitle).toBe("Editorial Grid — Make the Decision Visible")
-      expect(res.docRootAttrs["custom-slidev-theme"]).toBe("default")
-      expect(res.docRootAttrs["custom-slidev-class"]).toBe("editorial-deck")
+      expect(res.docRootAttrs["custom-slides-theme"]).toBe("default")
+      expect(res.docRootAttrs["custom-slides-class"]).toBe("editorial-deck")
       expect(res.totalSlides).toBe(8)
       expect(res.customCss).toBeDefined()
       expect(res.customCss).toContain(".cover-grid")
@@ -176,11 +176,11 @@ layout: center
       if (!fs.existsSync(target)) return
 
       const content = fs.readFileSync(target, "utf-8")
-      const res = parseSlidevPresentation(content)
+      const res = parseSlidesPresentation(content)
 
       expect(res.docTitle).toContain("Project Aurora: Rethinking Developer Workflows")
-      expect(res.docRootAttrs["custom-slidev-theme"]).toBe("neko-style")
-      expect(res.docRootAttrs["custom-slidev-color-schema"]).toBe("dark")
+      expect(res.docRootAttrs["custom-slides-theme"]).toBe("neko-style")
+      expect(res.docRootAttrs["custom-slides-color-schema"]).toBe("dark")
       expect(res.totalSlides).toBe(16)
       expect(res.stats.totalNotes).toBeGreaterThanOrEqual(16)
       expect(res.stats.discoveredAssets).toContain("./qr-repo.png")

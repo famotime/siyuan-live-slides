@@ -1,5 +1,5 @@
-import type { ISiYuanBlockNode } from "../types/slidev-protocol"
-import { ATTR_ELEM_CLICK } from "../types/slidev-protocol"
+import type { ISiYuanBlockNode } from "../types/slides-protocol"
+import { ATTR_ELEM_CLICK } from "../types/slides-protocol"
 
 export interface IAnimationInjection {
   blockId: string

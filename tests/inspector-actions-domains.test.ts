@@ -39,7 +39,7 @@ function buildCtx() {
     currentSlideNoteBlockId: computed(() => ""),
     currentSlideLayout: computed(() => "default"),
     isNoteBlock: computed(() => false),
-    elemClick: computed(() => ctx.activeBlockAttrs.value["custom-slidev-click"] || ""),
+    elemClick: computed(() => ctx.activeBlockAttrs.value["custom-slides-click"] || ""),
     videoAutoplay: computed(() => false),
     videoLoop: computed(() => false),
     videoMuted: computed(() => true),
@@ -70,10 +70,10 @@ describe("attr-persistence (属性持久化领域模块)", () => {
     const setAttrsSpy = vi.spyOn(apiModule, "setBlockAttrs").mockResolvedValue({} as any)
     const syncDomSpy = vi.spyOn(domSyncModule, "syncDomBlockAttrs").mockImplementation(() => {})
 
-    await persistence.saveAttr("custom-slidev-theme", "default")
+    await persistence.saveAttr("custom-slides-theme", "default")
 
-    expect(setAttrsSpy).toHaveBeenCalledWith("doc-001", { "custom-slidev-theme": "default" })
-    expect(syncDomSpy).toHaveBeenCalledWith("doc-001", { "custom-slidev-theme": "default" })
+    expect(setAttrsSpy).toHaveBeenCalledWith("doc-001", { "custom-slides-theme": "default" })
+    expect(syncDomSpy).toHaveBeenCalledWith("doc-001", { "custom-slides-theme": "default" })
 
     setAttrsSpy.mockRestore()
     syncDomSpy.mockRestore()
@@ -83,12 +83,12 @@ describe("attr-persistence (属性持久化领域模块)", () => {
     const setAttrsSpy = vi.spyOn(apiModule, "setBlockAttrs").mockResolvedValue({} as any)
     vi.spyOn(domSyncModule, "syncDomBlockAttrs").mockImplementation(() => {})
 
-    await persistence.savePageAttr("custom-slidev-transition", "fade")
+    await persistence.savePageAttr("custom-slides-transition", "fade")
 
     // 激活块是普通段落 block-101，但页面属性必须落到分页符 div-1
-    expect(setAttrsSpy).toHaveBeenCalledWith("div-1", { "custom-slidev-transition": "fade" })
+    expect(setAttrsSpy).toHaveBeenCalledWith("div-1", { "custom-slides-transition": "fade" })
     // 目标不是激活块时不应污染激活块属性字典
-    expect(ctx.activeBlockAttrs.value["custom-slidev-transition"]).toBeUndefined()
+    expect(ctx.activeBlockAttrs.value["custom-slides-transition"]).toBeUndefined()
 
     setAttrsSpy.mockRestore()
   })
@@ -99,10 +99,10 @@ describe("attr-persistence (属性持久化领域模块)", () => {
     const setAttrsSpy = vi.spyOn(apiModule, "setBlockAttrs").mockResolvedValue({} as any)
     vi.spyOn(domSyncModule, "syncDomBlockAttrs").mockImplementation(() => {})
 
-    await persistence.savePageAttr("custom-slidev-transition", "fade")
+    await persistence.savePageAttr("custom-slides-transition", "fade")
 
-    expect(setAttrsSpy).toHaveBeenCalledWith("block-101", { "custom-slidev-transition": "fade" })
-    expect(ctx.activeBlockAttrs.value["custom-slidev-transition"]).toBe("fade")
+    expect(setAttrsSpy).toHaveBeenCalledWith("block-101", { "custom-slides-transition": "fade" })
+    expect(ctx.activeBlockAttrs.value["custom-slides-transition"]).toBe("fade")
 
     setAttrsSpy.mockRestore()
   })
@@ -112,11 +112,11 @@ describe("attr-persistence (属性持久化领域模块)", () => {
     const setAttrsSpy = vi.spyOn(apiModule, "setBlockAttrs").mockResolvedValue({} as any)
     vi.spyOn(domSyncModule, "syncDomBlockAttrs").mockImplementation(() => {})
 
-    await persistence.saveAttr("custom-slidev-click", "+1")
+    await persistence.saveAttr("custom-slides-click", "+1")
 
     // 一次写目标块自身，一次联动写父容器
-    expect(setAttrsSpy).toHaveBeenCalledWith("block-101", { "custom-slidev-click": "+1" })
-    expect(setAttrsSpy).toHaveBeenCalledWith("sb-parent", { "custom-slidev-click": "+1" })
+    expect(setAttrsSpy).toHaveBeenCalledWith("block-101", { "custom-slides-click": "+1" })
+    expect(setAttrsSpy).toHaveBeenCalledWith("sb-parent", { "custom-slides-click": "+1" })
     expect(ctx.parentContainerClicks.value).toBe("+1")
 
     setAttrsSpy.mockRestore()
@@ -126,10 +126,10 @@ describe("attr-persistence (属性持久化领域模块)", () => {
     const setAttrsSpy = vi.spyOn(apiModule, "setBlockAttrs").mockResolvedValue({} as any)
     vi.spyOn(domSyncModule, "syncDomBlockAttrs").mockImplementation(() => {})
 
-    await persistence.saveDocAttr("custom-slidev-theme", "seriph")
+    await persistence.saveDocAttr("custom-slides-theme", "seriph")
 
     expect(ctx.latestDoc.value.config.theme).toBe("seriph")
-    expect(setAttrsSpy).toHaveBeenCalledWith("doc-001", { "custom-slidev-theme": "seriph" })
+    expect(setAttrsSpy).toHaveBeenCalledWith("doc-001", { "custom-slides-theme": "seriph" })
 
     setAttrsSpy.mockRestore()
   })
@@ -138,7 +138,7 @@ describe("attr-persistence (属性持久化领域模块)", () => {
     const setAttrsSpy = vi.spyOn(apiModule, "setBlockAttrs").mockRejectedValue(new Error("kernel down"))
     vi.spyOn(domSyncModule, "syncDomBlockAttrs").mockImplementation(() => {})
 
-    await persistence.saveAttr("custom-slidev-click", "+1")
+    await persistence.saveAttr("custom-slides-click", "+1")
 
     expect(ctx.saveStatus.value).toBe("同步失败")
     expect(ctx.plugin.compileCurrentDocument).not.toHaveBeenCalled()
@@ -155,8 +155,8 @@ describe("attr-persistence (属性持久化领域模块)", () => {
     await persistence.applyPageLayoutAndRatio("two-cols", "1-2")
 
     expect(setAttrsSpy).toHaveBeenCalledWith("div-1", {
-      "custom-slidev-layout": "two-cols",
-      "custom-slidev-layout-ratio": "1-2",
+      "custom-slides-layout": "two-cols",
+      "custom-slides-layout-ratio": "1-2",
     })
     expect(slide.frontmatter.layout).toBe("two-cols")
     expect(slide.frontmatter.layoutRatio).toBe("1-2")
@@ -189,7 +189,7 @@ describe("notes-actions (备注与 AI 领域模块)", () => {
 
     expect(newId).toBe("note-new")
     expect(insertSpy).toHaveBeenCalledWith("markdown", expect.stringContaining("演讲备注"), "div-2")
-    expect(setAttrsSpy).toHaveBeenCalledWith("note-new", { "custom-slidev-note": "true" })
+    expect(setAttrsSpy).toHaveBeenCalledWith("note-new", { "custom-slides-note": "true" })
     expect(ctx.plugin.compileCurrentDocument).toHaveBeenCalled()
 
     insertSpy.mockRestore()
@@ -244,13 +244,13 @@ describe("layout-actions (版式与元素指令领域模块)", () => {
   })
 
   it("onElemSlotChange 重复点击相同栏位时应清空 slot", async () => {
-    ctx.activeBlockAttrs.value["custom-slidev-slot"] = "left"
+    ctx.activeBlockAttrs.value["custom-slides-slot"] = "left"
     const setAttrsSpy = vi.spyOn(apiModule, "setBlockAttrs").mockResolvedValue({} as any)
     vi.spyOn(domSyncModule, "syncDomBlockAttrs").mockImplementation(() => {})
 
     await layout.onElemSlotChange("left")
 
-    expect(setAttrsSpy).toHaveBeenCalledWith("block-101", { "custom-slidev-slot": "" })
+    expect(setAttrsSpy).toHaveBeenCalledWith("block-101", { "custom-slides-slot": "" })
 
     setAttrsSpy.mockRestore()
   })
@@ -263,7 +263,7 @@ describe("layout-actions (版式与元素指令领域模块)", () => {
 
     await layout.onSetTwoColsContrast()
 
-    expect(setAttrsSpy).toHaveBeenCalledWith("block-101", { "custom-slidev-slot": "col-1" })
+    expect(setAttrsSpy).toHaveBeenCalledWith("block-101", { "custom-slides-slot": "col-1" })
     expect(showMsgSpy).toHaveBeenCalledWith("已将当前块设置为第 1 栏 (col-1)")
 
     setAttrsSpy.mockRestore()
@@ -277,7 +277,7 @@ describe("layout-actions (版式与元素指令领域模块)", () => {
     await layout.onToggleVideoMuted()
 
     // ctx.videoMuted 初始为 true → 翻转为 false
-    expect(setAttrsSpy).toHaveBeenCalledWith("block-101", { "custom-slidev-muted": "false" })
+    expect(setAttrsSpy).toHaveBeenCalledWith("block-101", { "custom-slides-muted": "false" })
 
     setAttrsSpy.mockRestore()
   })

@@ -4,7 +4,7 @@ import vm from "vm"
 import { describe, expect, it, vi } from "vitest"
 import { WebSandboxBridge } from "../src/engine/web-sandbox-bridge"
 import { buildStandaloneHtml } from "../src/export/single-html-exporter"
-import type { ISlidevDocument } from "../src/types/slidev-protocol"
+import type { ISlidesDocument } from "../src/types/slides-protocol"
 
 describe("Native Slidev Interactive HTML Blocks & Icons", () => {
   const snippet1 = `<div @click="$slidev.nav.next" class="mt-12 py-1" hover:bg="white op-10">
@@ -21,9 +21,9 @@ describe("Native Slidev Interactive HTML Blocks & Icons", () => {
 </div>`
 
   it("should verify Web Sandbox assets and HTML script integrity", () => {
-    const indexPath = path.resolve(__dirname, "../public/slidev-client/index.html")
-    const unocssPath = path.resolve(__dirname, "../public/slidev-client/assets/unocss.attributify.global.js")
-    const vuePath = path.resolve(__dirname, "../public/slidev-client/assets/vue.global.prod.js")
+    const indexPath = path.resolve(__dirname, "../public/slides-client/index.html")
+    const unocssPath = path.resolve(__dirname, "../public/slides-client/assets/unocss.attributify.global.js")
+    const vuePath = path.resolve(__dirname, "../public/slides-client/assets/vue.global.prod.js")
 
     expect(fs.existsSync(indexPath)).toBe(true)
     expect(fs.existsSync(unocssPath)).toBe(true)
@@ -43,7 +43,7 @@ describe("Native Slidev Interactive HTML Blocks & Icons", () => {
 
   it("should successfully compile user snippets in Vue runtime environment", () => {
     const vueCode = fs.readFileSync(
-      path.resolve(__dirname, "../public/slidev-client/assets/vue.global.prod.js"),
+      path.resolve(__dirname, "../public/slides-client/assets/vue.global.prod.js"),
       "utf-8",
     )
     const sandboxCtx: any = {}
@@ -71,7 +71,7 @@ describe("Native Slidev Interactive HTML Blocks & Icons", () => {
     // 模拟 message 事件派发
     const mockEvent = {
       data: {
-        source: "siyuan-slidev-client",
+        source: "siyuan-slides-client",
         action: "OPEN_IN_EDITOR",
         payload: {
           blockId: "20231019-abc1234",
@@ -89,7 +89,7 @@ describe("Native Slidev Interactive HTML Blocks & Icons", () => {
   })
 
   it("should render icons and styles in Standalone HTML export", () => {
-    const mockDoc: ISlidevDocument = {
+    const mockDoc: ISlidesDocument = {
       docId: "doc-1",
       config: { theme: "default", aspectRatio: "16/9" },
       fullMarkdown: "",

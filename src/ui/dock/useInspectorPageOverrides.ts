@@ -10,7 +10,7 @@ export interface IPageAttrSource {
 }
 
 export interface IPageAttrResolveOptions {
-  /** 目标属性常量 (custom-slidev-*) */
+  /** 目标属性常量 (custom-slides-*) */
   attrKey: string
   /** 覆写层也缺失时的取值函数（通常读取目标页 frontmatter 并带默认值） */
   fallback: () => string

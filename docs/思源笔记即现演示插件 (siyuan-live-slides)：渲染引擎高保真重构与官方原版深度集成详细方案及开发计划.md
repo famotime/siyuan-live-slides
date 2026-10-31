@@ -1,4 +1,4 @@
-# 思源笔记 Slidev 插件：渲染引擎高保真重构与官方原版深度集成详细方案及开发计划
+# 思源笔记即现演示插件：渲染引擎高保真重构与官方原版深度集成详细方案及开发计划
 
 ---
 
@@ -6,10 +6,10 @@
 
 ### 1.1 当前集成机制复盘：Mock 沙箱仿真层的技术债务与渲染短板
 
-在当前版本的 `siyuan-slidev` 中，系统采用的是 **“零污染元数据映射 + 自制轻量仿真沙箱（Mock Sandbox）+ 外部 Pro 桥接”** 的组合架构：
+在当前版本的 `siyuan-live-slides` 中，系统采用的是 **“零污染元数据映射 + 自制轻量仿真沙箱（Mock Sandbox）+ 外部 Pro 桥接”** 的组合架构：
 
-1. **元数据映射层**：在 [slidev-ast-builder.ts](file:///d:/MyCodingProjects/siyuan-slidev/src/compiler/slidev-ast-builder.ts) 中，插件将思源笔记的原生分割线（`NodeThematicBreak`）识别为分页符（`---`），并将思源的自定义块属性（IAL，如 `custom-slidev-layout`、`custom-slidev-transition`、`custom-slidev-clicks`、`custom-slidev-shiki-lines`）解析为 Slidev 的 Frontmatter 和属性。
-2. **当前内置渲染机制**：位于 [public/slidev-client/index.html](file:///d:/MyCodingProjects/siyuan-slidev/public/slidev-client/index.html)。其实质是一个手写的 HTML 仿真页面，在 `<iframe>` 中加载 Vue 3 单文件脚本，并通过一段**极其简陋的手写正则表达式与字符串替换函数（`renderBlockHtml`）**将块内容转换为 HTML。
+1. **元数据映射层**：在 [slides-ast-builder.ts](file:///d:/MyCodingProjects/siyuan-live-slides/src/compiler/slides-ast-builder.ts) 中，插件将思源笔记的原生分割线（`NodeThematicBreak`）识别为分页符（`---`），并将思源的自定义块属性（IAL，如 `custom-slides-layout`、`custom-slides-transition`、`custom-slides-clicks`、`custom-slides-shiki-lines`）解析为 Slidev 的 Frontmatter 和属性。
+2. **当前内置渲染机制**：位于 [public/slides-client/index.html](file:///d:/MyCodingProjects/siyuan-live-slides/public/slides-client/index.html)。其实质是一个手写的 HTML 仿真页面，在 `<iframe>` 中加载 Vue 3 单文件脚本，并通过一段**极其简陋的手写正则表达式与字符串替换函数（`renderBlockHtml`）**将块内容转换为 HTML。
 3. **渲染效果不足的根本原因**：
    - **Markdown 解析极度残缺**：手写正则只处理了顶层 `# `、` ``` `、`> ` 和行内加粗，无法支持复杂 GFM 规范、嵌套列表、表格、任务清单、脚注、内联 HTML 等。
    - **完全缺失 Shiki 语法高亮引擎**：原生 Slidev 最惊艳的技术底牌是 Shiki 代码高亮、行聚焦（`{1-3|5|all}`）与代码平滑过渡（Magic Move），而当前沙箱仅输出了纯文本 `<pre><code>`，代码毫无色彩。
@@ -63,12 +63,12 @@
 ┌────────────────────────────────────────────────────────────────────────┐
 │                     思源笔记宿主层 (SiYuan Note Host)                  │
 ├────────────────────────────────────────────────────────────────────────┤
-│  思源块树 + IAL 属性 (custom-slidev-*) │ WebSocket 增量事务 (ws-main)  │
+│  思源块树 + IAL 属性 (custom-slides-*) │ WebSocket 增量事务 (ws-main)  │
 └──────────────────┬─────────────────────────────────┬───────────────────┘
                    │                                 │
                    ▼                                 ▼
 ┌───────────────────────────────────────┐ ┌──────────────────────────────┐
-│  AST 编译器 (slidev-ast-builder.ts)   │ │ 增量防抖调度 (debounce-ctrl) │
+│  AST 编译器 (slides-ast-builder.ts)   │ │ 增量防抖调度 (debounce-ctrl) │
 └──────────────────┬────────────────────┘ └──────────┬───────────────────┘
                    │                                 │
                    ▼                                 ▼
@@ -90,7 +90,7 @@
 ┌────────────────────────────────────────────────────────────────────────┐
 │                    统一视窗呈现与双向联动控制层                        │
 ├────────────────────────────────────────────────────────────────────────┤
-│  下方分屏预览页签 (SlidevPreviewTab)  │  右侧演示配置面板 (Inspector)  │
+│  下方分屏预览页签 (SlidesPreviewTab)  │  右侧演示配置面板 (Inspector)  │
 │  统一 postMessage 通信中枢            │  双向光标跟随与块级反向定位    │
 └────────────────────────────────────────────────────────────────────────┘
 ```
@@ -112,11 +112,11 @@
 无论底层运行哪套引擎，对上层 UI（分屏预览页签、右侧 Dock、双屏演讲者视窗）提供**统一的抽象通信契约**：
 
 ```typescript
-export interface ISlidevEngineBridge {
+export interface ISlidesEngineBridge {
   readonly mode: 'builtin-hifi' | 'native-pro';
   attach(iframe: HTMLIFrameElement): void;
   detach(): void;
-  updateContent(doc: ISlidevDocument, markdown: string): Promise<void>;
+  updateContent(doc: ISlidesDocument, markdown: string): Promise<void>;
   navigateToPage(pageNo: number): void;
   highlightBlock(blockId: string): void;
   onPageChanged(callback: (page: number, total: number) => void): () => void;
@@ -130,7 +130,7 @@ export interface ISlidevEngineBridge {
 
 ### 3.1 废弃手写正则，构建基于 Markdown-it 的现代解析管道
 
-彻底移除 [public/slidev-client/index.html](file:///d:/MyCodingProjects/siyuan-slidev/public/slidev-client/index.html) 中仅支持几行简单匹配的 `renderBlockHtml` 函数，构建现代编译管线：
+彻底移除 [public/slides-client/index.html](file:///d:/MyCodingProjects/siyuan-live-slides/public/slides-client/index.html) 中仅支持几行简单匹配的 `renderBlockHtml` 函数，构建现代编译管线：
 1. **依赖选型**：
    - 引入轻量级 `markdown-it`（纯 JS，体积仅约 100KB），配合常用扩展：
      - `markdown-it-task-lists`（任务列表支持）；
@@ -174,7 +174,7 @@ export interface ISlidevEngineBridge {
 ### 3.5 `<v-click>` 渐进显隐与 `<v-mark>` 手绘圈点支持
 
 1. **细粒度步进状态机**：
-   - 沙箱内部维护 `currentStep` 计数器，检测元素上的 `v-click` 或思源块属性 `custom-slidev-clicks`。
+   - 沙箱内部维护 `currentStep` 计数器，检测元素上的 `v-click` 或思源块属性 `custom-slides-clicks`。
    - 未到达步进时赋予 `.v-click-hidden`（透明或折叠），步进触发时施加平滑淡入（`fade`）或上滑（`slide-up`）动画。
 2. **Rough Notation 手绘标记**：
    - 引入轻量级 `rough-notation` 库，支持在关键词上添加手绘圈选（`circle`）、荧光笔下划线（`underline`）与方框强调（`box`），提升演示的说服力。
@@ -244,7 +244,7 @@ export class NativeSlidevProcessManager {
 ### 4.2 零配置工作空间与临时 Slidev 工程自动编排
 
 用户无需手动新建文件夹与配置文件，插件在思源存储目录下全自动维护托管工程：
-1. **工作空间路径**：`/data/storage/petal/siyuan-slidev/pro-workspace/`。
+1. **工作空间路径**：`/data/storage/petal/siyuan-live-slides/pro-workspace/`。
 2. **自动化脚手架编排**：
    - 自动生成轻量级 `package.json`，声明所需依赖；
    - 自动维护 `slides.md` 入口文件；
@@ -310,7 +310,7 @@ src/
 │   ├── native-pro/                           # [轨道2] 官方原生 Pro 引擎
 │   │   ├── process-manager.ts                # Node 子进程守护与生命周期控制
 │   │   ├── workspace-scaffolder.ts           # 自动工程生成与磁盘写入
-│   │   ├── native-slidev-bridge.ts           # ?embedded=true 官方协议适配器
+│   │   ├── native-slides-bridge.ts           # ?embedded=true 官方协议适配器
 │   │   └── env-detector.ts                   # 本地 Node/npm/Slidev 环境探测器
 │   └── types/
 │       └── engine-contract.ts                # 统一引擎接口契约
@@ -328,10 +328,10 @@ export interface IEngineStatus {
   error?: string;
 }
 
-export interface ISlidevEngine {
+export interface ISlidesEngine {
   readonly mode: TEngineMode;
   init(container: HTMLElement): Promise<void>;
-  updateDocument(doc: ISlidevDocument, rawMarkdown: string): Promise<void>;
+  updateDocument(doc: ISlidesDocument, rawMarkdown: string): Promise<void>;
   navigateToPage(page: number): void;
   highlightBlock(blockId: string): void;
   destroy(): void;
@@ -340,7 +340,7 @@ export interface ISlidevEngine {
 
 ### 5.3 演示视窗工具条与设置面板交互升级
 
-1. **分屏页签工具条 (`SlidevPreviewTab.vue`)**：
+1. **分屏页签工具条 (`SlidesPreviewTab.vue`)**：
    - 增加**引擎状态徽章**：
      - `🟢 高保真内置 (0依赖)`：点击可切换到 Pro 模式；
      - `🚀 官方 Pro 模式 (localhost:3030)`：悬停显示端口与 Vite HMR 状态，点击可一键重启或降级。
@@ -358,7 +358,7 @@ export interface ISlidevEngine {
 
 ```mermaid
 gantt
-    title 思源 Slidev 渲染引擎高保真重构与官方原版集成开发计划
+    title 即现演示 渲染引擎高保真重构与官方原版集成开发计划
     dateFormat  YYYY-MM-DD
     section 阶段一：内置沙箱高保真重构
     废弃简陋正则，接入 markdown-it 完整编译链       :milestone, m1, 2026-10-06, 0d
@@ -396,14 +396,14 @@ gantt
 - **TypeScript 类型检查**：严格类型检查通过 (`npm run typecheck`，0 errors)。
 - **生产构建与打包打包**：通过 `vite build` 打包验证，`package.zip` 自动化打包成功。
 - **核心文件覆盖**：
-  - [src/export/markdown-renderer.ts](file:///d:/MyCodingProjects/siyuan-slidev/src/export/markdown-renderer.ts)（高保真 Markdown 解析与 Shiki 聚光灯、表格、公式、Callout 转换）
-  - [public/slidev-client/index.html](file:///d:/MyCodingProjects/siyuan-slidev/public/slidev-client/index.html)（高保真 Web 沙箱与 Ambient Glow 暗色极客环境光晕）
-  - [src/engine/env-detector.ts](file:///d:/MyCodingProjects/siyuan-slidev/src/engine/env-detector.ts)（跨平台环境探测器）
-  - [src/engine/workspace-scaffolder.ts](file:///d:/MyCodingProjects/siyuan-slidev/src/engine/workspace-scaffolder.ts)（官方 Pro 临时工程编排器）
-  - [src/engine/process-manager.ts](file:///d:/MyCodingProjects/siyuan-slidev/src/engine/process-manager.ts)（子进程守护与生命周期管理）
-  - [src/engine/native-slidev-bridge.ts](file:///d:/MyCodingProjects/siyuan-slidev/src/engine/native-slidev-bridge.ts)（官方标准嵌入协议适配器）
-  - [src/engine/engine-manager.ts](file:///d:/MyCodingProjects/siyuan-slidev/src/engine/engine-manager.ts)（双轨统一调度与无缝降级控制器）
-  - [src/ui/tab/SlidevPreviewTab.vue](file:///d:/MyCodingProjects/siyuan-slidev/src/ui/tab/SlidevPreviewTab.vue)（双轨引擎切换徽章与视窗呈现）
+  - [src/export/markdown-renderer.ts](file:///d:/MyCodingProjects/siyuan-live-slides/src/export/markdown-renderer.ts)（高保真 Markdown 解析与 Shiki 聚光灯、表格、公式、Callout 转换）
+  - [public/slides-client/index.html](file:///d:/MyCodingProjects/siyuan-live-slides/public/slides-client/index.html)（高保真 Web 沙箱与 Ambient Glow 暗色极客环境光晕）
+  - [src/engine/env-detector.ts](file:///d:/MyCodingProjects/siyuan-live-slides/src/engine/env-detector.ts)（跨平台环境探测器）
+  - [src/engine/workspace-scaffolder.ts](file:///d:/MyCodingProjects/siyuan-live-slides/src/engine/workspace-scaffolder.ts)（官方 Pro 临时工程编排器）
+  - [src/engine/process-manager.ts](file:///d:/MyCodingProjects/siyuan-live-slides/src/engine/process-manager.ts)（子进程守护与生命周期管理）
+  - [src/engine/native-slides-bridge.ts](file:///d:/MyCodingProjects/siyuan-live-slides/src/engine/native-slides-bridge.ts)（官方标准嵌入协议适配器）
+  - [src/engine/engine-manager.ts](file:///d:/MyCodingProjects/siyuan-live-slides/src/engine/engine-manager.ts)（双轨统一调度与无缝降级控制器）
+  - [src/ui/tab/SlidesPreviewTab.vue](file:///d:/MyCodingProjects/siyuan-live-slides/src/ui/tab/SlidesPreviewTab.vue)（双轨引擎切换徽章与视窗呈现）
 
 ---
 

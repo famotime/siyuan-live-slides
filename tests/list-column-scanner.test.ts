@@ -6,7 +6,7 @@ import {
   isInvalidListSuperBlock,
   scanAndTagListSuperBlocks,
 } from "../src/compiler/list-column-scanner"
-import type { ISiYuanBlockNode } from "../src/types/slidev-protocol"
+import type { ISiYuanBlockNode } from "../src/types/slides-protocol"
 
 describe("ListColumnScanner (多栏列表超级块扫描与槽位分配)", () => {
   it("extractListUnits 应正确提取列表或横向分栏中的独立列表项单元", () => {

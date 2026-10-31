@@ -1,5 +1,5 @@
     (function() {
-      const data = window.__SLIDEV_DATA__ || { slides: [] };
+      const data = window.__SLIDES_DATA__ || { slides: [] };
       const slides = data.slides || [];
       let currentIndex = 0;
 
@@ -25,12 +25,12 @@
       let overviewBuilt = false;
       let overviewObserver = null;
       const overviewOverlay = document.createElement("div");
-      overviewOverlay.className = "slidev-overview";
+      overviewOverlay.className = "slides-overview";
       overviewOverlay.style.display = "none";
       const overviewGrid = document.createElement("div");
-      overviewGrid.className = "slidev-overview-grid";
+      overviewGrid.className = "slides-overview-grid";
       const overviewHint = document.createElement("div");
-      overviewHint.className = "slidev-overview-hint";
+      overviewHint.className = "slides-overview-hint";
       overviewHint.textContent = "← → ↑ ↓ 移动 · Enter 跳转 · 数字直达 · Esc / O 关闭";
       overviewOverlay.appendChild(overviewGrid);
       overviewOverlay.appendChild(overviewHint);
@@ -39,7 +39,7 @@
         if (e.target === overviewOverlay) closeOverview();
       });
       const overviewStyle = document.createElement("style");
-      overviewStyle.textContent = ".slidev-overview{position:fixed;inset:0;z-index:900;overflow-y:auto;background:rgba(13,16,22,0.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);padding:36px 44px 20px;box-sizing:border-box;}.slidev-overview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(236px,1fr));gap:18px;max-width:1440px;margin:0 auto;}.slidev-overview-card{cursor:pointer;border-radius:10px;border:2px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);overflow:hidden;transition:border-color 0.15s ease,transform 0.15s ease,box-shadow 0.15s ease;}.slidev-overview-card:hover{border-color:rgba(255,255,255,0.38);transform:translateY(-2px);}.slidev-overview-card.is-active{border-color:var(--slide-accent,#3b82f6);box-shadow:0 0 0 1px var(--slide-accent,#3b82f6),0 8px 24px rgba(0,0,0,0.4);}.slidev-overview-canvas-box{position:relative;overflow:hidden;background:var(--slide-bg,#ffffff);}.slidev-overview-canvas{position:absolute;top:0;left:0;transform-origin:top left;pointer-events:none;}.slidev-overview-canvas *{scrollbar-width:none;}.slidev-overview-caption{display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:12px;color:rgba(255,255,255,0.72);border-top:1px solid rgba(255,255,255,0.08);background:rgba(13,16,22,0.6);}.slidev-overview-page-no{flex-shrink:0;font-variant-numeric:tabular-nums;font-weight:600;color:#f4f4f5;background:rgba(255,255,255,0.16);border-radius:8px;padding:0 7px;line-height:18px;}.slidev-overview-page-no.is-current{background:var(--slide-accent,#10b981);color:#0b1210;}.slidev-overview-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;user-select:none;}.slidev-overview-hint{text-align:center;margin:18px 0 8px;font-size:12px;color:rgba(255,255,255,0.45);user-select:none;}";
+      overviewStyle.textContent = ".slides-overview{position:fixed;inset:0;z-index:900;overflow-y:auto;background:rgba(13,16,22,0.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);padding:36px 44px 20px;box-sizing:border-box;}.slides-overview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(236px,1fr));gap:18px;max-width:1440px;margin:0 auto;}.slides-overview-card{cursor:pointer;border-radius:10px;border:2px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);overflow:hidden;transition:border-color 0.15s ease,transform 0.15s ease,box-shadow 0.15s ease;}.slides-overview-card:hover{border-color:rgba(255,255,255,0.38);transform:translateY(-2px);}.slides-overview-card.is-active{border-color:var(--slide-accent,#3b82f6);box-shadow:0 0 0 1px var(--slide-accent,#3b82f6),0 8px 24px rgba(0,0,0,0.4);}.slides-overview-canvas-box{position:relative;overflow:hidden;background:var(--slide-bg,#ffffff);}.slides-overview-canvas{position:absolute;top:0;left:0;transform-origin:top left;pointer-events:none;}.slides-overview-canvas *{scrollbar-width:none;}.slides-overview-caption{display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:12px;color:rgba(255,255,255,0.72);border-top:1px solid rgba(255,255,255,0.08);background:rgba(13,16,22,0.6);}.slides-overview-page-no{flex-shrink:0;font-variant-numeric:tabular-nums;font-weight:600;color:#f4f4f5;background:rgba(255,255,255,0.16);border-radius:8px;padding:0 7px;line-height:18px;}.slides-overview-page-no.is-current{background:var(--slide-accent,#10b981);color:#0b1210;}.slides-overview-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;user-select:none;}.slides-overview-hint{text-align:center;margin:18px 0 8px;font-size:12px;color:rgba(255,255,255,0.45);user-select:none;}";
       document.head.appendChild(overviewStyle);
 
       const baseWidth = 980;
@@ -65,7 +65,7 @@
         viewport.style.width = baseWidth + "px";
         viewport.style.height = baseHeight + "px";
         viewport.style.transform = "translate(-50%, -50%) scale(" + scale + ")";
-        viewport.style.setProperty("--slidev-slide-scale", scale);
+        viewport.style.setProperty("--slides-slide-scale", scale);
         if (isFull) document.body.classList.add("is-fullscreen");
         else document.body.classList.remove("is-fullscreen");
       }
@@ -192,7 +192,7 @@
         const div = document.createElement("div");
         div.className = "slide-block" + (extraClass ? " " + extraClass : "");
         if (block && block.motion && block.motion.preset && block.motion.preset !== "none") {
-          div.classList.add("slidev-motion-" + block.motion.preset.toLowerCase());
+          div.classList.add("slides-motion-" + block.motion.preset.toLowerCase());
           if (typeof block.motion.duration === "number" && block.motion.duration > 0) {
             div.style.setProperty("--motion-duration", block.motion.duration + "ms");
           }
@@ -202,7 +202,7 @@
         }
         const md = block.rawMarkdown || block.content || "";
 
-        if (md.includes('class="slidev-block-ref"') || md.includes('class="slidev-ref-tag"')) {
+        if (md.includes('class="slides-block-ref"') || md.includes('class="slides-ref-tag"')) {
           div.innerHTML = md;
           return div;
         }
@@ -259,7 +259,7 @@
           div.innerHTML = "<h" + level + ">" + th + "</h" + level + ">";
         }
         else if (md.startsWith("```")) {
-          const customMaxHeight = block?.attributes?.["custom-slidev-max-height"] || block?.attrs?.["custom-slidev-max-height"] || block?.maxHeight || "";
+          const customMaxHeight = block?.attributes?.["custom-slides-max-height"] || block?.attrs?.["custom-slides-max-height"] || block?.maxHeight || "";
           const heightStyle = customMaxHeight ? ' style="max-height:' + customMaxHeight + ';overflow-y:auto;"' : "";
           div.innerHTML = "<pre" + heightStyle + "><code>" + md.slice(3, -3) + "</code></pre>";
         }
@@ -267,10 +267,10 @@
         else if ((/<video/i.test(md) || (block && (block.type === "video" || block.type === "NodeVideo"))) && !/^(s*)([-*+]|d+.)s+/m.test(md) && !hasHeadingTag && !md.includes("
 ")) {
           div.classList.add("slide-video-container", "slide-media-container", "slide-media-block");
-          const isAutoplay = block && block.attributes && block.attributes["custom-slidev-autoplay"] === "true";
-          const isLoop = block && block.attributes && block.attributes["custom-slidev-loop"] === "true";
-          const isMuted = block && block.attributes && (block.attributes["custom-slidev-muted"] === "true" || isAutoplay);
-          const hideControls = block && block.attributes && block.attributes["custom-slidev-controls"] === "false";
+          const isAutoplay = block && block.attributes && block.attributes["custom-slides-autoplay"] === "true";
+          const isLoop = block && block.attributes && block.attributes["custom-slides-loop"] === "true";
+          const isMuted = block && block.attributes && (block.attributes["custom-slides-muted"] === "true" || isAutoplay);
+          const hideControls = block && block.attributes && block.attributes["custom-slides-controls"] === "false";
           let videoHtml = md;
           if (hideControls) videoHtml = videoHtml.replace(/controls(?:="[^"]*")?/gi, "").trim();
           else if (!videoHtml.includes("controls")) videoHtml = videoHtml.replace("<video", "<video controls");
@@ -329,10 +329,10 @@
                     vHtml += " " + lines[i].trim();
                   }
                 }
-                const isAutoplay = block && block.attributes && block.attributes["custom-slidev-autoplay"] === "true";
-                const isLoop = block && block.attributes && block.attributes["custom-slidev-loop"] === "true";
-                const isMuted = block && block.attributes && (block.attributes["custom-slidev-muted"] === "true" || isAutoplay);
-                const hideControls = block && block.attributes && block.attributes["custom-slidev-controls"] === "false";
+                const isAutoplay = block && block.attributes && block.attributes["custom-slides-autoplay"] === "true";
+                const isLoop = block && block.attributes && block.attributes["custom-slides-loop"] === "true";
+                const isMuted = block && block.attributes && (block.attributes["custom-slides-muted"] === "true" || isAutoplay);
+                const hideControls = block && block.attributes && block.attributes["custom-slides-controls"] === "false";
                 if (hideControls) vHtml = vHtml.replace(/controls(?:="[^"]*")?/gi, "").trim();
                 else if (!vHtml.includes("controls")) vHtml = vHtml.replace("<video", "<video controls");
                 if (isAutoplay && !vHtml.includes("autoplay")) vHtml = vHtml.replace("<video", "<video autoplay playsinline");
@@ -578,11 +578,11 @@
         function createMaskElements() {
           if (!currentMaskConfig) return null;
           const layer = document.createElement("div");
-          layer.className = "slidev-mask-layer slidev-mask-layer--" + currentMaskConfig.style + " slidev-mask-layer--" + currentMaskConfig.direction;
+          layer.className = "slides-mask-layer slides-mask-layer--" + currentMaskConfig.style + " slides-mask-layer--" + currentMaskConfig.direction;
           const overlay = document.createElement("div");
-          overlay.className = "slidev-mask-overlay";
+          overlay.className = "slides-mask-overlay";
           const divider = document.createElement("div");
-          divider.className = "slidev-mask-divider-line";
+          divider.className = "slides-mask-divider-line";
           divider.style.opacity = "0";
           layer.appendChild(overlay);
           layer.appendChild(divider);
@@ -594,7 +594,7 @@
 
         if (slide.frontmatter?.layout === "two-cols") {
           const bodyWrap = document.createElement("div");
-          bodyWrap.className = "slidev-mask-body-container" + (currentMaskConfig ? " slidev-mask-body-container--has-mask" : "");
+          bodyWrap.className = "slides-mask-body-container" + (currentMaskConfig ? " slides-mask-body-container--has-mask" : "");
           bodyWrap.style.display = "flex";
           bodyWrap.style.flexDirection = "row";
           bodyWrap.style.gap = "2rem";
@@ -618,8 +618,8 @@
           const isCover = slide.frontmatter?.layout === "cover";
           const leftFirstH = !isCover ? leftList.find(isHeadingBlock) : null;
           const rightFirstH = !isCover ? rightList.find(isHeadingBlock) : null;
-          for (const b of leftList) leftCol.appendChild(renderBlock(b, b === leftFirstH ? "slidev-col-first-heading-block" : ""));
-          for (const b of rightList) rightCol.appendChild(renderBlock(b, b === rightFirstH ? "slidev-col-first-heading-block" : ""));
+          for (const b of leftList) leftCol.appendChild(renderBlock(b, b === leftFirstH ? "slides-col-first-heading-block" : ""));
+          for (const b of rightList) rightCol.appendChild(renderBlock(b, b === rightFirstH ? "slides-col-first-heading-block" : ""));
           bodyWrap.appendChild(leftCol);
           bodyWrap.appendChild(rightCol);
 
@@ -671,7 +671,7 @@
           const headerDiv = document.createElement("div");
           headerDiv.className = "layout-header-section";
           const gridDiv = document.createElement("div");
-          gridDiv.className = (isClover ? "layout-clover-grid pdf-clover-wrapper" : ("layout-cols-wrapper layout-cols-grid " + (targetCols === 2 ? "pdf-two-cols-wrapper layout-two-cols-grid" : (targetCols === 3 ? "pdf-three-cols-wrapper layout-three-cols-grid" : "")))) + (isSuperBlockCols ? " has-superblock-cols" : "") + (currentMaskConfig ? " slidev-mask-body-container slidev-mask-body-container--has-mask" : "");
+          gridDiv.className = (isClover ? "layout-clover-grid pdf-clover-wrapper" : ("layout-cols-wrapper layout-cols-grid " + (targetCols === 2 ? "pdf-two-cols-wrapper layout-two-cols-grid" : (targetCols === 3 ? "pdf-three-cols-wrapper layout-three-cols-grid" : "")))) + (isSuperBlockCols ? " has-superblock-cols" : "") + (currentMaskConfig ? " slides-mask-body-container slides-mask-body-container--has-mask" : "");
 
           const gridCols = isClover ? "repeat(2, minmax(0, 1fr))" : parseRatioToGridCols(slide.frontmatter?.layoutRatio, targetCols);
           if (gridCols) gridDiv.style.gridTemplateColumns = gridCols;
@@ -704,7 +704,7 @@
           }
 
           const headerFirstH = !isCover ? headerBlocks.find(isHeadingBlock) : null;
-          for (const b of headerBlocks) headerDiv.appendChild(renderBlock(b, b === headerFirstH ? "slidev-page-first-heading-block" : ""));
+          for (const b of headerBlocks) headerDiv.appendChild(renderBlock(b, b === headerFirstH ? "slides-page-first-heading-block" : ""));
           containerDiv.appendChild(headerDiv);
 
           colsList.forEach((colBlocks, idx) => {
@@ -712,7 +712,7 @@
             colDiv.className = "pdf-col pdf-col--" + (idx + 1) + " col-" + (idx + 1) + (targetCols === 2 && idx === 0 ? " pdf-col--left" : "") + (targetCols === 2 && idx === 1 ? " pdf-col--right" : "");
             const cleaned = cleanColList(colBlocks);
             const colFirstH = !isCover ? (cleaned.find(isHeadingBlock) || cleaned[0]) : null;
-            for (const b of cleaned) colDiv.appendChild(renderBlock(b, b === colFirstH ? "slidev-col-first-heading-block" : ""));
+            for (const b of cleaned) colDiv.appendChild(renderBlock(b, b === colFirstH ? "slides-col-first-heading-block" : ""));
             gridDiv.appendChild(colDiv);
           });
 
@@ -730,11 +730,11 @@
           const pageFirstH = !isCover ? allBlocks.find(isHeadingBlock) : null;
 
           if (pageFirstH) {
-            container.appendChild(renderBlock(pageFirstH, "slidev-page-first-heading-block"));
+            container.appendChild(renderBlock(pageFirstH, "slides-page-first-heading-block"));
           }
 
           const bodyWrap = document.createElement("div");
-          bodyWrap.className = "slidev-mask-body-container" + (currentMaskConfig ? " slidev-mask-body-container--has-mask" : "");
+          bodyWrap.className = "slides-mask-body-container" + (currentMaskConfig ? " slides-mask-body-container--has-mask" : "");
           bodyWrap.style.display = "flex";
           bodyWrap.style.flexDirection = isImageRight ? "row" : "row-reverse";
           bodyWrap.style.gap = "2rem";
@@ -776,11 +776,11 @@
           const pageFirstH = !isCover ? validBlocks.find(isHeadingBlock) : null;
 
           if (pageFirstH) {
-            container.appendChild(renderBlock(pageFirstH, "slidev-page-first-heading-block"));
+            container.appendChild(renderBlock(pageFirstH, "slides-page-first-heading-block"));
           }
 
           const bodyWrap = document.createElement("div");
-          bodyWrap.className = "slidev-mask-body-container" + (currentMaskConfig ? " slidev-mask-body-container--has-mask" : "");
+          bodyWrap.className = "slides-mask-body-container" + (currentMaskConfig ? " slides-mask-body-container--has-mask" : "");
 
           for (const block of validBlocks) {
             if (block === pageFirstH) continue;
@@ -842,7 +842,7 @@
       }
 
       // Lightbox 控制逻辑
-      const lightbox = document.getElementById("slidev-lightbox");
+      const lightbox = document.getElementById("slides-lightbox");
       const lightboxContent = document.getElementById("lightbox-content");
       const lightboxClose = document.getElementById("lightbox-close");
       let isLightboxOpen = false;
@@ -860,7 +860,7 @@
 
       function updateLightboxImgTransform(animate) {
         if (!lightboxContent) return;
-        const img = lightboxContent.querySelector(".slidev-lightbox-img");
+        const img = lightboxContent.querySelector(".slides-lightbox-img");
         if (!img) return;
         img.style.transformOrigin = "center center";
         img.style.transform = "translate(" + lightboxTranslateX + "px, " + lightboxTranslateY + "px) scale(" + lightboxScale + ")";
@@ -884,7 +884,7 @@
         resetLightboxZoom();
         if (type === "video") {
           const v = document.createElement("video");
-          v.className = "slidev-lightbox-video";
+          v.className = "slides-lightbox-video";
           v.src = src;
           v.controls = true;
           v.autoplay = true;
@@ -892,7 +892,7 @@
           lightboxContent.appendChild(v);
         } else {
           const img = document.createElement("img");
-          img.className = "slidev-lightbox-img";
+          img.className = "slides-lightbox-img";
           img.src = src;
           img.alt = alt || "";
           lightboxContent.appendChild(img);
@@ -915,7 +915,7 @@
 
       function handleLightboxWheel(e) {
         if (!lightboxContent || lightboxMediaType !== "image") return;
-        const img = lightboxContent.querySelector(".slidev-lightbox-img");
+        const img = lightboxContent.querySelector(".slides-lightbox-img");
         if (!img) return;
         e.preventDefault();
         e.stopPropagation();
@@ -951,7 +951,7 @@
       if (lightboxContent) {
         lightboxContent.addEventListener("pointerdown", (e) => {
           if (e.button !== 0 || lightboxMediaType !== "image" || lightboxScale <= 1.0) return;
-          const img = lightboxContent.querySelector(".slidev-lightbox-img");
+          const img = lightboxContent.querySelector(".slides-lightbox-img");
           if (!img || (e.target !== img && !img.contains(e.target))) return;
           e.preventDefault();
           e.stopPropagation();
@@ -984,7 +984,7 @@
         const onLightboxPointerEnd = (e) => {
           if (!isLightboxDragging) return;
           isLightboxDragging = false;
-          const img = lightboxContent ? lightboxContent.querySelector(".slidev-lightbox-img") : null;
+          const img = lightboxContent ? lightboxContent.querySelector(".slides-lightbox-img") : null;
           if (img && img.releasePointerCapture) {
             try { img.releasePointerCapture(e.pointerId); } catch (_) {}
           }
@@ -995,7 +995,7 @@
 
         lightboxContent.addEventListener("dblclick", (e) => {
           if (lightboxMediaType !== "image") return;
-          const img = lightboxContent.querySelector(".slidev-lightbox-img");
+          const img = lightboxContent.querySelector(".slides-lightbox-img");
           if (!img || (e.target !== img && !img.contains(e.target))) return;
           e.preventDefault();
           e.stopPropagation();
@@ -1236,15 +1236,15 @@
         const canvasH = Math.round(baseHeight * scale);
         slides.forEach((slide, idx) => {
           const card = document.createElement("div");
-          card.className = "slidev-overview-card";
+          card.className = "slides-overview-card";
           card.dataset.idx = String(idx);
           const box = document.createElement("div");
-          box.className = "slidev-overview-canvas-box";
+          box.className = "slides-overview-canvas-box";
           box.style.height = canvasH + "px";
           const fm = slide.frontmatter || {};
           const spacing = (fm.spacing && fm.spacing !== "inherit") ? fm.spacing : ((data.config && data.config.spacing) || "normal");
           const canvas = document.createElement("div");
-          canvas.className = "slidev-overview-canvas slide-content layout-" + (fm.layout || "default") + " spacing-" + spacing;
+          canvas.className = "slides-overview-canvas slide-content layout-" + (fm.layout || "default") + " spacing-" + spacing;
           canvas.style.width = baseWidth + "px";
           canvas.style.height = baseHeight + "px";
           canvas.style.transform = "scale(" + scale + ")";
@@ -1260,15 +1260,15 @@
           }
           box.appendChild(canvas);
           const caption = document.createElement("div");
-          caption.className = "slidev-overview-caption";
+          caption.className = "slides-overview-caption";
           const pageNo = document.createElement("span");
-          pageNo.className = "slidev-overview-page-no";
+          pageNo.className = "slides-overview-page-no";
           pageNo.textContent = String(idx + 1);
           caption.appendChild(pageNo);
           const title = getSlideOverviewTitle(slide);
           if (title) {
             const titleEl = document.createElement("span");
-            titleEl.className = "slidev-overview-title";
+            titleEl.className = "slides-overview-title";
             titleEl.textContent = title;
             caption.appendChild(titleEl);
           }
@@ -1287,7 +1287,7 @@
         if (!card || card.dataset.rendered === "1") return;
         const idx = Number(card.dataset.idx);
         const slide = slides[idx];
-        const canvas = card.querySelector(".slidev-overview-canvas");
+        const canvas = card.querySelector(".slides-overview-canvas");
         if (slide && canvas) buildOverviewThumbInto(canvas, slide);
         card.dataset.rendered = "1";
       }
@@ -1314,7 +1314,7 @@
       function updateOverviewCurrentMark() {
         const cards = overviewGrid.children;
         for (let i = 0; i < cards.length; i++) {
-          const pageNo = cards[i].querySelector(".slidev-overview-page-no");
+          const pageNo = cards[i].querySelector(".slides-overview-page-no");
           if (pageNo) pageNo.classList.toggle("is-current", i === currentIndex);
         }
       }
@@ -1502,7 +1502,7 @@
       function canElementScrollY(el, deltaY) {
         let cur = el;
         while (cur && cur !== document.body && cur !== document.documentElement) {
-          if (cur.classList && (cur.classList.contains("slidev-viewport") || cur.classList.contains("slidev-stage") || cur.classList.contains("slide-container"))) {
+          if (cur.classList && (cur.classList.contains("slides-viewport") || cur.classList.contains("slides-stage") || cur.classList.contains("slide-container"))) {
             break;
           }
           const style = window.getComputedStyle(cur);
@@ -1554,7 +1554,7 @@
             return;
           }
           const target = e.target instanceof Element ? e.target : e.target?.parentElement;
-          const isMediaItself = target && target.closest && target.closest(".slidev-lightbox-img, .slidev-lightbox-video");
+          const isMediaItself = target && target.closest && target.closest(".slides-lightbox-img, .slides-lightbox-video");
           if (!isMediaItself) {
             e.stopPropagation();
             closeLightbox();
@@ -1592,7 +1592,7 @@
         if (selection.length > 0) return;
 
         const isComponent = targetEl.closest(
-          ".slide-block, .controls-bar, .image-right-img-container, .image-left-img-container, .controls, img, video, audio, button, a, input, textarea, select, [data-clickable], [data-ref-id], .slidev-toc, .empty-state"
+          ".slide-block, .controls-bar, .image-right-img-container, .image-left-img-container, .controls, img, video, audio, button, a, input, textarea, select, [data-clickable], [data-ref-id], .slides-toc, .empty-state"
         );
         if (isComponent) return;
 

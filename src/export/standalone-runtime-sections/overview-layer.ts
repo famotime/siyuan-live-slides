@@ -154,15 +154,15 @@ export function getOverviewLayerSection(): string {
         const canvasH = Math.round(baseHeight * scale);
         slides.forEach((slide, idx) => {
           const card = document.createElement("div");
-          card.className = "slidev-overview-card";
+          card.className = "slides-overview-card";
           card.dataset.idx = String(idx);
           const box = document.createElement("div");
-          box.className = "slidev-overview-canvas-box";
+          box.className = "slides-overview-canvas-box";
           box.style.height = canvasH + "px";
           const fm = slide.frontmatter || {};
           const spacing = (fm.spacing && fm.spacing !== "inherit") ? fm.spacing : ((data.config && data.config.spacing) || "normal");
           const canvas = document.createElement("div");
-          canvas.className = "slidev-overview-canvas slide-content layout-" + (fm.layout || "default") + " spacing-" + spacing;
+          canvas.className = "slides-overview-canvas slide-content layout-" + (fm.layout || "default") + " spacing-" + spacing;
           canvas.style.width = baseWidth + "px";
           canvas.style.height = baseHeight + "px";
           canvas.style.transform = "scale(" + scale + ")";
@@ -178,15 +178,15 @@ export function getOverviewLayerSection(): string {
           }
           box.appendChild(canvas);
           const caption = document.createElement("div");
-          caption.className = "slidev-overview-caption";
+          caption.className = "slides-overview-caption";
           const pageNo = document.createElement("span");
-          pageNo.className = "slidev-overview-page-no";
+          pageNo.className = "slides-overview-page-no";
           pageNo.textContent = String(idx + 1);
           caption.appendChild(pageNo);
           const title = getSlideOverviewTitle(slide);
           if (title) {
             const titleEl = document.createElement("span");
-            titleEl.className = "slidev-overview-title";
+            titleEl.className = "slides-overview-title";
             titleEl.textContent = title;
             caption.appendChild(titleEl);
           }
@@ -205,7 +205,7 @@ export function getOverviewLayerSection(): string {
         if (!card || card.dataset.rendered === "1") return;
         const idx = Number(card.dataset.idx);
         const slide = slides[idx];
-        const canvas = card.querySelector(".slidev-overview-canvas");
+        const canvas = card.querySelector(".slides-overview-canvas");
         if (slide && canvas) buildOverviewThumbInto(canvas, slide);
         card.dataset.rendered = "1";
       }
@@ -232,7 +232,7 @@ export function getOverviewLayerSection(): string {
       function updateOverviewCurrentMark() {
         const cards = overviewGrid.children;
         for (let i = 0; i < cards.length; i++) {
-          const pageNo = cards[i].querySelector(".slidev-overview-page-no");
+          const pageNo = cards[i].querySelector(".slides-overview-page-no");
           if (pageNo) pageNo.classList.toggle("is-current", i === currentIndex);
         }
       }

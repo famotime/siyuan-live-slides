@@ -70,7 +70,7 @@ describe("DirectiveWrapper (指令包装与语法工具函数)", () => {
   })
 
   it("extractCleanNoteText 应完整剥离思源提示块与标题头", () => {
-    const rawCallout = `> [!NOTE] 💡 演讲备注\n> 第一点提词\n> 第二点提词\n{: custom-slidev-note="true"}`
+    const rawCallout = `> [!NOTE] 💡 演讲备注\n> 第一点提词\n> 第二点提词\n{: custom-slides-note="true"}`
     const cleaned = extractCleanNoteText(rawCallout)
     expect(cleaned).toBe("第一点提词\n第二点提词")
   })

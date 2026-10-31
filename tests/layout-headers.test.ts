@@ -1,16 +1,16 @@
 import { describe, expect, it, vi } from "vitest"
-import { buildSlidevDocument } from "../src/compiler/slidev-ast-builder"
+import { buildSlidesDocument } from "../src/compiler/slides-ast-builder"
 import { renderSlideBlocksToHtml } from "../src/export/markdown-renderer"
 import { WorkspaceScaffolder, THREE_COLS_HEADER_LAYOUT_VUE } from "../src/engine/workspace-scaffolder"
 import type { ISiYuanBlockNode } from "../src/compiler/scope-mapper"
-import type { ISlidevVirtualPage } from "../src/types/slidev-protocol"
+import type { ISlidesVirtualPage } from "../src/types/slides-protocol"
 
 describe("two-cols-header & three-cols-header 多栏表头版式集成测试", () => {
-  describe("1. buildSlidevDocument Markdown 生成与回退推断", () => {
+  describe("1. buildSlidesDocument Markdown 生成与回退推断", () => {
     it("two-cols-header: 正确提取表头与左右分栏 Markdown", () => {
       const docId = "doc-two-cols-hdr"
       const docAttrs = {
-        "custom-slidev-layout": "two-cols-header",
+        "custom-slides-layout": "two-cols-header",
       }
       const blocks: ISiYuanBlockNode[] = [
         {
@@ -29,11 +29,11 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
           id: "b-right",
           type: "p",
           content: "右栏：UI 展示与渲染",
-          ial: { id: "b-right", "custom-slidev-slot": "right" },
+          ial: { id: "b-right", "custom-slides-slot": "right" },
         },
       ]
 
-      const doc = buildSlidevDocument(docId, docAttrs, blocks)
+      const doc = buildSlidesDocument(docId, docAttrs, blocks)
       const page = doc.slides[0]
 
       expect(page.frontmatter.layout).toBe("two-cols-header")
@@ -45,7 +45,7 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
     it("three-cols-header: 自动将未指定 slot 的块默认归入 col-1，支持显式 col-2 / col-3", () => {
       const docId = "doc-three-cols-hdr"
       const docAttrs = {
-        "custom-slidev-layout": "three-cols-header",
+        "custom-slides-layout": "three-cols-header",
       }
       const blocks: ISiYuanBlockNode[] = [
         {
@@ -64,23 +64,23 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
           id: "b-col1-2",
           type: "p",
           content: "第一栏要点 B",
-          ial: { id: "b-col1-2", "custom-slidev-slot": "col-1" },
+          ial: { id: "b-col1-2", "custom-slides-slot": "col-1" },
         },
         {
           id: "b-col2",
           type: "p",
           content: "第二栏服务治理",
-          ial: { id: "b-col2", "custom-slidev-slot": "col-2" },
+          ial: { id: "b-col2", "custom-slides-slot": "col-2" },
         },
         {
           id: "b-col3",
           type: "p",
           content: "第三栏运维可观测性",
-          ial: { id: "b-col3", "custom-slidev-slot": "col-3" },
+          ial: { id: "b-col3", "custom-slides-slot": "col-3" },
         },
       ]
 
-      const doc = buildSlidevDocument(docId, docAttrs, blocks)
+      const doc = buildSlidesDocument(docId, docAttrs, blocks)
       const page = doc.slides[0]
 
       expect(page.frontmatter.layout).toBe("three-cols-header")
@@ -93,7 +93,7 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
     it("three-cols-header: 显式 slot='header' 优先级高于位置或标题", () => {
       const docId = "doc-explicit-hdr"
       const docAttrs = {
-        "custom-slidev-layout": "three-cols-header",
+        "custom-slides-layout": "three-cols-header",
       }
       const blocks: ISiYuanBlockNode[] = [
         {
@@ -106,23 +106,23 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
           id: "b-hdr",
           type: "h",
           markdown: "# 显式声明的特有表头",
-          ial: { id: "b-hdr", "custom-slidev-slot": "header" },
+          ial: { id: "b-hdr", "custom-slides-slot": "header" },
         },
         {
           id: "b-col2",
           type: "p",
           content: "中间栏内容",
-          ial: { id: "b-col2", "custom-slidev-slot": "col-2" },
+          ial: { id: "b-col2", "custom-slides-slot": "col-2" },
         },
         {
           id: "b-col3",
           type: "p",
           content: "右侧栏内容",
-          ial: { id: "b-col3", "custom-slidev-slot": "col-3" },
+          ial: { id: "b-col3", "custom-slides-slot": "col-3" },
         },
       ]
 
-      const doc = buildSlidevDocument(docId, docAttrs, blocks)
+      const doc = buildSlidesDocument(docId, docAttrs, blocks)
       const page = doc.slides[0]
 
       expect(page.rawMarkdown).toContain("# 显式声明的特有表头")
@@ -134,7 +134,7 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
     it("标题行属性级联继承：首个标题行赋予第三栏属性，下方列表项自动继承归入第三栏 (用户真实场景)", () => {
       const docId = "doc-user-scenario"
       const docAttrs = {
-        "custom-slidev-layout": "three-cols-header",
+        "custom-slides-layout": "three-cols-header",
       }
       const blocks: ISiYuanBlockNode[] = [
         {
@@ -145,8 +145,8 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
           content: "Builder",
           ial: {
             id: "b-h-builder",
-            "custom-slidev-slot": "col-3",
-            "custom-slidev-clicks": "+1",
+            "custom-slides-slot": "col-3",
+            "custom-slides-clicks": "+1",
           },
         },
         {
@@ -172,7 +172,7 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
         },
       ]
 
-      const doc = buildSlidevDocument(docId, docAttrs, blocks)
+      const doc = buildSlidesDocument(docId, docAttrs, blocks)
       const page = doc.slides[0]
 
       // 验证 page.blocks 中的 slot 与 clicks 全部正确继承
@@ -198,7 +198,7 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
     it("标题行继承范围：直到遇到另一个同级或高一级标题行时终止继承，且支持子项特意指定覆盖", () => {
       const docId = "doc-scope-boundary"
       const docAttrs = {
-        "custom-slidev-layout": "three-cols-header",
+        "custom-slides-layout": "three-cols-header",
       }
       const blocks: ISiYuanBlockNode[] = [
         // 栏目 1：H3 设为 col-1
@@ -207,7 +207,7 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
           type: "h",
           subType: "h3",
           markdown: "### 模块 A",
-          ial: { id: "h-col1", "custom-slidev-slot": "col-1" },
+          ial: { id: "h-col1", "custom-slides-slot": "col-1" },
         },
         {
           id: "p-col1-inherit",
@@ -219,7 +219,7 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
           id: "p-col1-override",
           type: "p",
           markdown: "特意指定跳到第 2 栏",
-          ial: { id: "p-col1-override", "custom-slidev-slot": "col-2" }, // 特意指定覆盖
+          ial: { id: "p-col1-override", "custom-slides-slot": "col-2" }, // 特意指定覆盖
         },
         // 遇到同级 H3 (模块 B)：继承终止，当前显式设为 col-2
         {
@@ -227,7 +227,7 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
           type: "h",
           subType: "h3",
           markdown: "### 模块 B",
-          ial: { id: "h-col2", "custom-slidev-slot": "col-2" },
+          ial: { id: "h-col2", "custom-slides-slot": "col-2" },
         },
         {
           id: "p-col2-inherit",
@@ -241,7 +241,7 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
           type: "h",
           subType: "h2",
           markdown: "## 高级大章节",
-          ial: { id: "h-col3", "custom-slidev-slot": "col-3" },
+          ial: { id: "h-col3", "custom-slides-slot": "col-3" },
         },
         {
           id: "p-col3-inherit",
@@ -251,7 +251,7 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
         },
       ]
 
-      const doc = buildSlidevDocument(docId, docAttrs, blocks)
+      const doc = buildSlidesDocument(docId, docAttrs, blocks)
       const page = doc.slides[0]
 
       expect(page.blocks.find(b => b.id === "p-col1-inherit")?.slot).toBe("col-1")
@@ -263,7 +263,7 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
 
   describe("2. renderSlideBlocksToHtml 导出渲染", () => {
     it("two-cols-header: 生成完整的 header 与左右双栏容器结构", () => {
-      const slide: ISlidevVirtualPage = {
+      const slide: ISlidesVirtualPage = {
         pageIndex: 1,
         startBlockId: "p1",
         frontmatter: { layout: "two-cols-header" },
@@ -286,7 +286,7 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
     })
 
     it("three-cols-header: 生成完整的 header 与三栏网格容器结构", () => {
-      const slide: ISlidevVirtualPage = {
+      const slide: ISlidesVirtualPage = {
         pageIndex: 1,
         startBlockId: "p1",
         frontmatter: { layout: "three-cols-header" },
@@ -313,7 +313,7 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
     })
 
     it("three-cols-header: 无显式插槽标注时，多个段落块应自动均分至三栏", () => {
-      const slide: ISlidevVirtualPage = {
+      const slide: ISlidesVirtualPage = {
         pageIndex: 1,
         startBlockId: "p1",
         frontmatter: { layout: "three-cols-header" },
@@ -339,7 +339,7 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
     })
 
     it("three-cols-header: 仅单个三项列表块时，应智能拆分为三栏", () => {
-      const slide: ISlidevVirtualPage = {
+      const slide: ISlidesVirtualPage = {
         pageIndex: 1,
         startBlockId: "p1",
         frontmatter: { layout: "three-cols-header" },
@@ -398,11 +398,11 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
       const docId = "doc-test"
       const blocks: ISiYuanBlockNode[] = [
         { id: "b1", type: "h", markdown: "# 封面", ial: { id: "b1" } },
-        { id: "div1", type: "tb", markdown: "---", ial: { id: "div1", "custom-slidev-layout": "three-cols-header" } },
+        { id: "div1", type: "tb", markdown: "---", ial: { id: "div1", "custom-slides-layout": "three-cols-header" } },
         { id: "b2", type: "h", markdown: "# 表头", ial: { id: "b2" } },
         { id: "b3", type: "l", markdown: "- 项目 A\n- 项目 B", ial: { id: "b3" } },
       ]
-      const doc = buildSlidevDocument(docId, {}, blocks)
+      const doc = buildSlidesDocument(docId, {}, blocks)
       expect(doc.slides.length).toBe(2)
       expect(doc.slides[1].frontmatter.layout).toBe("three-cols-header")
       expect(doc.slides[1].startBlockId).toBe("div1")
@@ -454,14 +454,14 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
 
     it("仅首块指定 col-1 (如点击设为第1栏) 时，剩余未标记块自动均分至第 2 栏与第 3 栏，防止单栏堆叠", () => {
       const docId = "doc-col1-only"
-      const docAttrs = { "custom-slidev-layout": "three-cols-header" }
+      const docAttrs = { "custom-slides-layout": "three-cols-header" }
       const blocks: ISiYuanBlockNode[] = [
         { id: "h1", type: "h", markdown: "# 总体架构", ial: { id: "h1" } },
-        { id: "b1", type: "p", markdown: "第一栏重点", ial: { id: "b1", "custom-slidev-slot": "col-1" } },
+        { id: "b1", type: "p", markdown: "第一栏重点", ial: { id: "b1", "custom-slides-slot": "col-1" } },
         { id: "b2", type: "p", markdown: "第二栏内容", ial: { id: "b2" } },
         { id: "b3", type: "p", markdown: "第三栏内容", ial: { id: "b3" } },
       ]
-      const doc = buildSlidevDocument(docId, docAttrs, blocks)
+      const doc = buildSlidesDocument(docId, docAttrs, blocks)
       const page = doc.slides[0]
       expect(page.rawMarkdown).toContain("::col-1::\n\n第一栏重点")
       expect(page.rawMarkdown).toContain("::col-2::\n\n第二栏内容")
@@ -470,7 +470,7 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
 
     it("未标注任何插槽但包含 3 个大纲子标题时，自动按标题将各段内容归属至对应三栏", () => {
       const docId = "doc-3headings"
-      const docAttrs = { "custom-slidev-layout": "three-cols-header" }
+      const docAttrs = { "custom-slides-layout": "three-cols-header" }
       const blocks: ISiYuanBlockNode[] = [
         { id: "h-main", type: "h", markdown: "# 顶层主标题", ial: { id: "h-main" } },
         { id: "h-sub1", type: "h", subType: "h3", markdown: "### 前端工程", ial: { id: "h-sub1" } },
@@ -480,7 +480,7 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
         { id: "h-sub3", type: "h", subType: "h3", markdown: "### 基础设施", ial: { id: "h-sub3" } },
         { id: "p3", type: "p", markdown: "Docker 与 CI", ial: { id: "p3" } },
       ]
-      const doc = buildSlidevDocument(docId, docAttrs, blocks)
+      const doc = buildSlidesDocument(docId, docAttrs, blocks)
       const page = doc.slides[0]
       expect(page.rawMarkdown).toContain("::col-1::\n\n### 前端工程\n\nVue3 与 Vite")
       expect(page.rawMarkdown).toContain("::col-2::\n\n### 后端服务\n\nGolang 与 SQLite")
@@ -511,15 +511,15 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
   describe("5. 通用 cols-header 4 栏自适应与自定义宽度比例测试", () => {
     it("cols-header: 4 栏卡片内容自动均分至 col-1 ~ col-4", () => {
       const docId = "doc-4cols"
-      const docAttrs = { "custom-slidev-layout": "cols-header", "custom-slidev-layout-ratio": "1:1:1:1" }
+      const docAttrs = { "custom-slides-layout": "cols-header", "custom-slides-layout-ratio": "1:1:1:1" }
       const blocks: ISiYuanBlockNode[] = [
-        { id: "h0", type: "h", markdown: "# 核心业务四大支柱", ial: { id: "h0", "custom-slidev-slot": "header" } },
+        { id: "h0", type: "h", markdown: "# 核心业务四大支柱", ial: { id: "h0", "custom-slides-slot": "header" } },
         { id: "p1", type: "p", markdown: "研发支柱", ial: { id: "p1" } },
         { id: "p2", type: "p", markdown: "产品支柱", ial: { id: "p2" } },
         { id: "p3", type: "p", markdown: "运营支柱", ial: { id: "p3" } },
         { id: "p4", type: "p", markdown: "商业支柱", ial: { id: "p4" } },
       ]
-      const doc = buildSlidevDocument(docId, docAttrs, blocks)
+      const doc = buildSlidesDocument(docId, docAttrs, blocks)
       const page = doc.slides[0]
       expect(page.frontmatter.layout).toBe("cols-header")
       expect(page.frontmatter.layoutRatio).toBe("1:1:1:1")

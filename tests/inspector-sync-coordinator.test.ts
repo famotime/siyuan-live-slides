@@ -3,7 +3,7 @@ import { InspectorSyncCoordinator } from "../src/sync/inspector-sync-coordinator
 import { globalDocumentCompiler } from "../src/compiler/document-compiler"
 import * as mainModule from "../src/main"
 import * as domAttrSyncModule from "../src/sync/dom-attr-sync"
-import type { ISlidevDocument } from "../src/types/slidev-protocol"
+import type { ISlidesDocument } from "../src/types/slides-protocol"
 
 describe("InspectorSyncCoordinator (编辑器与配置面板同步协调器)", () => {
   let coordinator: InspectorSyncCoordinator
@@ -42,8 +42,8 @@ describe("InspectorSyncCoordinator (编辑器与配置面板同步协调器)", (
               action: "updateAttrs",
               id: "divider-99",
               data: {
-                old: { "custom-slidev-layout": "cover" },
-                new: { "custom-slidev-layout": "two-cols" },
+                old: { "custom-slides-layout": "cover" },
+                new: { "custom-slides-layout": "two-cols" },
               },
             },
           ],
@@ -54,21 +54,21 @@ describe("InspectorSyncCoordinator (编辑器与配置面板同步协调器)", (
     coordinator.patchThematicBreakTransactions(mockTxData)
 
     expect(setOverrideSpy).toHaveBeenCalledWith("divider-99", expect.objectContaining({
-      "custom-slidev-layout": "two-cols",
+      "custom-slides-layout": "two-cols",
     }))
     expect(syncDomSpy).toHaveBeenCalledWith("divider-99", expect.objectContaining({
-      "custom-slidev-layout": "two-cols",
+      "custom-slides-layout": "two-cols",
     }))
 
     setOverrideSpy.mockRestore()
     syncDomSpy.mockRestore()
   })
 
-  it("purgeStaleDomSlidevAttrs 应遍历文档版式与角色并下发巡检清理", () => {
+  it("purgeStaleDomSlidesAttrs 应遍历文档版式与角色并下发巡检清理", () => {
     (globalThis as any).document = { querySelectorAll: vi.fn(() => []) }
-    const purgeSpy = vi.spyOn(domAttrSyncModule, "purgeStaleDomSlidevAttrs").mockImplementation(() => {})
+    const purgeSpy = vi.spyOn(domAttrSyncModule, "purgeStaleDomSlidesAttrs").mockImplementation(() => {})
 
-    const mockDoc: ISlidevDocument = {
+    const mockDoc: ISlidesDocument = {
       docId: "doc-1",
       config: { theme: "default", aspectRatio: "16/9", highlighter: "shiki" } as any,
       slides: [
@@ -83,7 +83,7 @@ describe("InspectorSyncCoordinator (编辑器与配置面板同步协调器)", (
               type: "p",
               content: "",
               rawMarkdown: "",
-              ial: { "custom-slidev-role": "background" },
+              ial: { "custom-slides-role": "background" },
             },
           ],
           rawMarkdown: "",
@@ -92,12 +92,12 @@ describe("InspectorSyncCoordinator (编辑器与配置面板同步协调器)", (
       fullMarkdown: "",
     }
 
-    coordinator.purgeStaleDomSlidevAttrs(mockDoc)
+    coordinator.purgeStaleDomSlidesAttrs(mockDoc)
 
     expect(purgeSpy).toHaveBeenCalled()
     const validMap = purgeSpy.mock.calls[0][0] as Map<string, Record<string, string>>
-    expect(validMap.get("div-1")?.["custom-slidev-layout"]).toBe("cover")
-    expect(validMap.get("b-1")?.["custom-slidev-role"]).toBe("background")
+    expect(validMap.get("div-1")?.["custom-slides-layout"]).toBe("cover")
+    expect(validMap.get("b-1")?.["custom-slides-role"]).toBe("background")
 
     purgeSpy.mockRestore()
   })

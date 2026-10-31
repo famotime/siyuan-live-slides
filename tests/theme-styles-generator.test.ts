@@ -5,12 +5,12 @@ import {
   generateCompleteSiYuanThemeCss,
   type ISiYuanInlineStylesPayload,
 } from "../src/compiler/theme-styles-generator"
-import { wrapElementDirectives, buildSlidevDocument } from "../src/compiler/slidev-ast-builder"
+import { wrapElementDirectives, buildSlidesDocument } from "../src/compiler/slides-ast-builder"
 import { cleanAndTransformInlineKramdown } from "../src/compiler/html-cleaner"
 import { convertBlockToHtml } from "../src/export/markdown-renderer"
 import { buildStandaloneHtml } from "../src/export/single-html-exporter"
 import { buildPrintableHtml } from "../src/export/pdf-exporter"
-import type { ISlidevDocument } from "../src/types/slidev-protocol"
+import type { ISlidesDocument } from "../src/types/slides-protocol"
 
 describe("Theme Styles Generator (思源笔记调色板与字体样式生成器)", () => {
   it("DEFAULT_SIYUAN_PALETTE_CSS 应包含 13 种内置文字颜色与背景颜色，以及 4 种卡片标牌", () => {
@@ -136,7 +136,7 @@ describe("Theme Styles Generator (思源笔记调色板与字体样式生成器)
   })
 
   it("单文件 HTML 导出 buildStandaloneHtml 应注入思源主题调色板 CSS", () => {
-    const doc: ISlidevDocument = {
+    const doc: ISlidesDocument = {
       docId: "doc-test-styled",
       config: {
         theme: "default",
@@ -166,7 +166,7 @@ describe("Theme Styles Generator (思源笔记调色板与字体样式生成器)
   })
 
   it("PDF 打印导出 buildPrintableHtml 应注入思源主题调色板 CSS", () => {
-    const doc: ISlidevDocument = {
+    const doc: ISlidesDocument = {
       docId: "doc-test-pdf-styled",
       config: {
         theme: "default",
@@ -215,7 +215,7 @@ describe("Theme Styles Generator (思源笔记调色板与字体样式生成器)
     expect(cleanAndTransformInlineKramdown(metaIal)).toBe("正文")
   })
 
-  it("buildSlidevDocument 编译带行内样式的思源标题块时，不泄漏 IAL 且不篡改块级样式", () => {
+  it("buildSlidesDocument 编译带行内样式的思源标题块时，不泄漏 IAL 且不篡改块级样式", () => {
     const rawHeading = '### 聚焦笔记<span data-type="text" style="color: var(--b3-font-color8); font-size: 31px;">领域</span>{: style="color: var(--b3-font-color8); font-size: 31px;"}：从为知笔记到思源笔记'
     const blockNode = {
       id: "heading-1",
@@ -229,7 +229,7 @@ describe("Theme Styles Generator (思源笔记调色板与字体样式生成器)
       },
     }
 
-    const doc = buildSlidevDocument("doc-1", {}, [blockNode])
+    const doc = buildSlidesDocument("doc-1", {}, [blockNode])
     const slideBlock = doc.slides[0].blocks[0]
 
     // 1. 块的 rawMarkdown 中不包含未转义的 {: style=...}

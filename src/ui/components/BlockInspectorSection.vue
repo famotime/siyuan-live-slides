@@ -10,7 +10,7 @@
       <div class="spm-control-header">
         <div class="spm-control-title-group">
           <div class="spm-control-title">
-            <SlidevIcon name="ratio" />
+            <SlidesIcon name="ratio" />
             <span>超级块列宽与布局</span>
           </div>
           <span class="spm-control-desc">读取思源超级块列宽并一键同步到幻灯片分栏</span>
@@ -20,7 +20,7 @@
       <div style="background: var(--b3-theme-surface); border: 1px solid var(--b3-theme-surface-lighter); border-radius: 6px; padding: 10px; margin-bottom: 8px;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
           <div style="font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 4px;">
-            <SlidevIcon name="ratio" />
+            <SlidesIcon name="ratio" />
             <span v-if="detectedSbInfo?.isCustomWidth">已识别自定义列宽比例</span>
             <span v-else>识别到 {{ detectedSbInfo?.colCount || 2 }} 列超级块分栏</span>
           </div>
@@ -40,7 +40,7 @@
           style="background: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.16); color: var(--b3-theme-primary); font-weight: 500; border: 1px solid rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.3);"
           @click="$emit('applySuperBlockLayout', detectedSbInfo)"
         >
-          <SlidevIcon name="sparkles" />
+          <SlidesIcon name="sparkles" />
           <span>应用版式与比例</span>
         </button>
         <button
@@ -48,18 +48,18 @@
           aria-label="仅将提取的比值写入当前页的分栏比例属性"
           @click="$emit('applySuperBlockRatio', detectedSbInfo?.ratio || '1:1')"
         >
-          <SlidevIcon name="check" />
+          <SlidesIcon name="check" />
           <span>应用比例 ({{ detectedSbInfo?.ratio || '1:1' }})</span>
         </button>
       </div>
     </div>
 
-    <!-- 0. 设为讲稿备注 (slidev-note) -->
+    <!-- 0. 设为讲稿备注 (slides-note) -->
     <div class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
           <div class="spm-control-title">
-            <SlidevIcon name="presenter" />
+            <SlidesIcon name="presenter" />
             <span>设为讲稿备注</span>
           </div>
           <span class="spm-control-desc">作为当前页演讲提词，不在幻灯片中渲染</span>
@@ -80,7 +80,7 @@
       <div class="spm-control-header">
         <div class="spm-control-title-group">
           <div class="spm-control-title">
-            <SlidevIcon name="image" />
+            <SlidesIcon name="image" />
             <span>图片角色与分栏 (Image & Layout)</span>
           </div>
           <span class="spm-control-desc">设为幻灯片背景图或图文分栏配图</span>
@@ -99,7 +99,7 @@
           :class="{ active: imageRole === 'background' }"
           @click="$emit('update:imageRole', 'background')"
         >
-          <SlidevIcon name="image" />
+          <SlidesIcon name="image" />
           <span>背景图</span>
         </button>
         <button
@@ -107,7 +107,7 @@
           :class="{ active: imageRole === 'image-left' }"
           @click="$emit('update:imageRole', 'image-left')"
         >
-          <SlidevIcon name="image-left" />
+          <SlidesIcon name="image-left" />
           <span>图左</span>
         </button>
         <button
@@ -115,7 +115,7 @@
           :class="{ active: imageRole === 'image-right' }"
           @click="$emit('update:imageRole', 'image-right')"
         >
-          <SlidevIcon name="image-right" />
+          <SlidesIcon name="image-right" />
           <span>图右</span>
         </button>
       </div>
@@ -126,7 +126,7 @@
       <div class="spm-control-header">
         <div class="spm-control-title-group">
           <div class="spm-control-title">
-            <SlidevIcon name="video" />
+            <SlidesIcon name="video" />
             <span>视频播放设置 (Video Playback)</span>
           </div>
           <span class="spm-control-desc">配置播放器控制条、自动播放与循环</span>
@@ -134,28 +134,28 @@
       </div>
       <div class="spm-video-settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
         <div class="spm-toggle-item" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; background: rgba(125,125,125,0.06); border-radius: 4px;">
-          <span style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><SlidevIcon name="sliders" /> 控制条</span>
+          <span style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><SlidesIcon name="sliders" /> 控制条</span>
           <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="videoControls ? '关闭控制条' : '开启控制条'">
             <input type="checkbox" :checked="Boolean(videoControls)" @change="$emit('toggleVideoControls')" />
             <span class="spm-switch-slider"></span>
           </label>
         </div>
         <div class="spm-toggle-item" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; background: rgba(125,125,125,0.06); border-radius: 4px;">
-          <span style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><SlidevIcon name="video" /> 自动播放</span>
+          <span style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><SlidesIcon name="video" /> 自动播放</span>
           <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="videoAutoplay ? '关闭自动播放' : '开启自动播放'">
             <input type="checkbox" :checked="Boolean(videoAutoplay)" @change="$emit('toggleVideoAutoplay')" />
             <span class="spm-switch-slider"></span>
           </label>
         </div>
         <div class="spm-toggle-item" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; background: rgba(125,125,125,0.06); border-radius: 4px;">
-          <span style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><SlidevIcon name="repeat" /> 循环播放</span>
+          <span style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><SlidesIcon name="repeat" /> 循环播放</span>
           <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="videoLoop ? '关闭循环播放' : '开启循环播放'">
             <input type="checkbox" :checked="Boolean(videoLoop)" @change="$emit('toggleVideoLoop')" />
             <span class="spm-switch-slider"></span>
           </label>
         </div>
         <div class="spm-toggle-item" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; background: rgba(125,125,125,0.06); border-radius: 4px;">
-          <span style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><SlidevIcon name="volume-x" /> 静音播放</span>
+          <span style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><SlidesIcon name="volume-x" /> 静音播放</span>
           <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="videoMuted ? '关闭静音' : '开启静音'">
             <input type="checkbox" :checked="Boolean(videoMuted)" @change="$emit('toggleVideoMuted')" />
             <span class="spm-switch-slider"></span>
@@ -169,7 +169,7 @@
       <div class="spm-control-header">
         <div class="spm-control-title-group">
           <div class="spm-control-title">
-            <SlidevIcon name="step" />
+            <SlidesIcon name="step" />
             <span>逐步呈现 (v-click)</span>
           </div>
           <span class="spm-control-desc">放映时按步长逐个呈现</span>
@@ -204,7 +204,7 @@
         class="spm-inherit-tip"
         style="margin-top: 6px; padding: 4px 8px; background: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.08); border-radius: 4px; font-size: 11px; opacity: 0.85; display: flex; align-items: center; gap: 4px;"
       >
-        <SlidevIcon name="check" />
+        <SlidesIcon name="check" />
         <span>未单独开启逐步呈现：当前跟随整栏同时出现</span>
       </div>
     </div>
@@ -214,7 +214,7 @@
       <div class="spm-control-header">
         <div class="spm-control-title-group">
           <div class="spm-control-title">
-            <SlidevIcon name="motion" />
+            <SlidesIcon name="motion" />
             <span>入场微动效 (v-motion)</span>
           </div>
           <span class="spm-control-desc">为当前块添加平滑位移与渐入动画</span>
@@ -281,7 +281,7 @@
       <div class="spm-control-header">
         <div class="spm-control-title-group">
           <div class="spm-control-title">
-            <SlidevIcon name="columns" />
+            <SlidesIcon name="columns" />
             <span>{{ slotControlTitle }}</span>
           </div>
           <span class="spm-control-desc">{{ slotControlDesc }}</span>
@@ -305,7 +305,7 @@
       <div class="spm-control-header">
         <div class="spm-control-title-group">
           <div class="spm-control-title">
-            <SlidevIcon name="code" />
+            <SlidesIcon name="code" />
             <span>代码逐行聚光 (Shiki)</span>
           </div>
           <span class="spm-control-desc">翻页时动态聚光高亮特定行</span>
@@ -343,7 +343,7 @@
       <div class="spm-control-header">
         <div class="spm-control-title-group">
           <div class="spm-control-title">
-            <SlidevIcon name="code" />
+            <SlidesIcon name="code" />
             <span>代码块限高 (Max Height)</span>
           </div>
           <span class="spm-control-desc">超出限高自动竖向滚动，弱提示滚动条</span>
@@ -389,7 +389,7 @@
           aria-label="在当前块上方插入幻灯片分页线 (---)"
           @click="$emit('insertDividerBefore')"
         >
-          <SlidevIcon name="insert-above" />
+          <SlidesIcon name="insert-above" />
           <span>上方分页</span>
         </button>
 
@@ -398,7 +398,7 @@
           aria-label="在当前块下方插入幻灯片分页线 (---)"
           @click="$emit('insertDividerAfter')"
         >
-          <SlidevIcon name="insert-below" />
+          <SlidesIcon name="insert-below" />
           <span>下方分页</span>
         </button>
 
@@ -407,17 +407,17 @@
           :aria-label="effectiveLayout === 'three-cols-header' ? '将当前块属性设为三栏第1栏归属 (slot: col-1)' : '将当前块属性设为双栏左侧归属 (slot: left)'"
           @click="$emit('setTwoColsContrast')"
         >
-          <SlidevIcon name="columns" />
+          <SlidesIcon name="columns" />
           <span>{{ effectiveLayout === 'three-cols-header' ? '设为第1栏' : '设为双栏' }}</span>
         </button>
 
         <button
           v-if="hasBlockAttrs"
           class="spm-btn-action spm-btn-danger b3-tooltips b3-tooltips__s"
-          aria-label="一键移除本块所有 custom-slidev 属性"
+          aria-label="一键移除本块所有 custom-slides 属性"
           @click="$emit('clearBlockAttrs')"
         >
-          <SlidevIcon name="broom" />
+          <SlidesIcon name="broom" />
           <span>清除属性</span>
         </button>
       </div>
@@ -427,7 +427,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import SlidevIcon from '@/ui/components/SlidevIcon.vue'
+import SlidesIcon from '@/ui/components/SlidesIcon.vue'
 
 const props = defineProps<{
   elemClick: string

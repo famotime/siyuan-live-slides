@@ -5,27 +5,27 @@
 ## 1. 执行摘要与背景梳理 (Executive Summary)
 
 ### 1.1 评测基准与分析目标
-本分析立足于三大核心开源源码资产与规范体系，为思源笔记演示插件 **`siyuan-slidev`** 确立完备的演进基线：
+本分析立足于三大核心开源源码资产与规范体系，为思源笔记演示插件 **`siyuan-live-slides`** 确立完备的演进基线：
 1. **`D:\MyCodingProjects\slidev` 核心仓库**：
    - **`skills/slidev` 语法参考规范**：包含 50+ 个专题 Markdown 说明文档，系统定义了 Slidev 的核心语法、Headmatter/Frontmatter 配置体系、动画与转场模型、Shiki 代码高亮与 Magic Move、LaTeX/Mermaid 图表支持、以及双屏演讲者控制协议等。
    - **`demo/starter/slides.md` 官方全功能示范样板**：作为 Slidev 官方首推的“大满贯”演示样板，该文件串联了从主题配置、封面到动画、代码、图表、组件、拖拽、子页面导入、Monaco 交互等共计 16 张幻灯片的全量语法形态。
 2. **`D:\MyCodingProjects\slidev-templates` 模版生态库**：
    - 包含 `neko-style` 深度打磨的高水准技术演讲系统、`paper-lab` 学术研究模版、`editorial-grid` 叙事提案模版、`terminal-ink` 终端系统模版及组件目录 `COMPONENT-CATALOG.md`、页面范式 `PAGE-PATTERNS.md`、片段集 `snippets/`。
-3. **对照标的：思源笔记插件项目 (`d:\MyCodingProjects\siyuan-slidev`)**：
-   - **导入功能管线**：`src/compiler/slidev-importer.ts`、`src/compiler/html-cleaner.ts`、`src/compiler/asset-importer.ts`。
-   - **编译与数据模型**：`src/compiler/document-compiler.ts`、`src/compiler/slidev-ast-builder.ts`。
-   - **预览与渲染管线**：`src/engine/web-sandbox-bridge.ts`、`src/export/markdown-renderer.ts`、`public/slidev-client/index.html`、`src/export/single-html-exporter.ts`、`src/ui/tab/SlidevPreviewTab.vue`。
+3. **对照标的：思源笔记插件项目 (`d:\MyCodingProjects\siyuan-live-slides`)**：
+   - **导入功能管线**：`src/compiler/slides-importer.ts`、`src/compiler/html-cleaner.ts`、`src/compiler/asset-importer.ts`。
+   - **编译与数据模型**：`src/compiler/document-compiler.ts`、`src/compiler/slides-ast-builder.ts`。
+   - **预览与渲染管线**：`src/engine/web-sandbox-bridge.ts`、`src/export/markdown-renderer.ts`、`public/slides-client/index.html`、`src/export/single-html-exporter.ts`、`src/ui/tab/SlidesPreviewTab.vue`。
 
 目标是精准识别**要实现专业、惊艳、高说服力的优秀演示效果，本插件的导入功能以及预览展示时的渲染功能还需要补齐哪些关键缺失**，并给出具体使用场景和工程级落地开发建议。
 
 ---
 
 ### 1.2 当前插件项目的开发进展基线
-截至当前版本，`siyuan-slidev` 已经构建了非常坚实的技术底座与架构雏形：
-- ✅ **基于思源 IAL 的零污染元数据架构**：将所有版式、动画、备注、高亮等元数据解耦存储于思源块属性（`custom-slidev-*`）与水平分割线中，保障 Markdown 正文纯净。
+截至当前版本，`siyuan-live-slides` 已经构建了非常坚实的技术底座与架构雏形：
+- ✅ **基于思源 IAL 的零污染元数据架构**：将所有版式、动画、备注、高亮等元数据解耦存储于思源块属性（`custom-slides-*`）与水平分割线中，保障 Markdown 正文纯净。
 - ✅ **现代化双重视图交互**：
-  - **下方独立分屏预览页签 (`SlidevPreviewTab`)**：支持 📌 Pin 图钉锁定文档、缩略图抽屉、全屏放映、快捷导出与双向光标跟随联动。
-  - **右侧演示配置面板 (`SlidevInspectorDockView`)**：情境感知切换内容块、分页符、文档全局根属性，支持一键配置 `v-click`、`layout`、`shikiLines` 等。
+  - **下方独立分屏预览页签 (`SlidesPreviewTab`)**：支持 📌 Pin 图钉锁定文档、缩略图抽屉、全屏放映、快捷导出与双向光标跟随联动。
+  - **右侧演示配置面板 (`SlidesInspectorDockView`)**：情境感知切换内容块、分页符、文档全局根属性，支持一键配置 `v-click`、`layout`、`shikiLines` 等。
 - ✅ **AST 编译管道与双模渲染引擎**：
   - 编译器支持分割线切页、思源本地资源代理路径重写（`assets-rewriter.ts`）、块引用深度递归解析（`block-ref-resolver.ts`）。
   - 双模引擎：0 依赖内置轻量 Web 沙箱 + 极客 Pro 模式本地 Slidev CLI (端口 3030) 桥接。
@@ -74,14 +74,14 @@ flowchart TD
     end
 
     subgraph 思源笔记块级映射原则
-        B1["文档根属性 custom-slidev-* 与分割线 IAL 属性"]
-        B2["块属性 custom-slidev-slot 与版式容器适配"]
-        B3["内容块属性 custom-slidev-click 与 step 索引"]
+        B1["文档根属性 custom-slides-* 与分割线 IAL 属性"]
+        B2["块属性 custom-slides-slot 与版式容器适配"]
+        B3["内容块属性 custom-slides-click 与 step 索引"]
         B4["内联 span 属性或块级标注协议"]
-        B5["代码块 custom-slidev-shiki-lines 与关联组属性"]
+        B5["代码块 custom-slides-shiki-lines 与关联组属性"]
         B6["公式块与代码块无损保留 + 沙箱矢量转译"]
         B7["结构化 Toc 自动提取 + 离线 SVG 图标注入"]
-        B8["提词转存 custom-slidev-notes + 双屏广播"]
+        B8["提词转存 custom-slides-notes + 双屏广播"]
     end
 
     A1 --> B1
@@ -99,13 +99,13 @@ flowchart TD
 | 核心维度 | Slidev 语法范式 (`skills` / `starter`) | 思源笔记使用场景价值 | 思源推荐实现机制 (零污染原则) |
 | :--- | :--- | :--- | :--- |
 | **元数据管理** | 首块 Headmatter（`theme`, `aspectRatio`, `transition`, `title`）；各页 Frontmatter（`layout`, `background`, `class`, `image`） | 决定整篇演示文稿的视觉风格与单页版式，完全不应污染 Markdown 正文。 | 首块写入文档根 Block 属性；单页写入分页符 `---`（`tb` 块）的 IAL 属性。 |
-| **版式与插槽** | `layout: cover \| default \| two-cols \| two-cols-header \| image-right \| fact`；插槽语法糖 `::right::`, `::left::` | 满足“标题+双栏对比”、“左图右文”等 90% 汇报需求。 | 页面属性指定 `custom-slidev-layout`，块属性标记 `custom-slidev-slot="right"`。 |
-| **递进动画** | `<div v-click>`、`<v-clicks>` 列表逐项显现、`v-after` 同步出现、`v-click="[2,5]"` 范围控制 | 演讲时逐行引导观众注意力，避免信息一次性过载。 | 内容块属性 `custom-slidev-click="1"`、`custom-slidev-clicks="true"`。 |
+| **版式与插槽** | `layout: cover \| default \| two-cols \| two-cols-header \| image-right \| fact`；插槽语法糖 `::right::`, `::left::` | 满足“标题+双栏对比”、“左图右文”等 90% 汇报需求。 | 页面属性指定 `custom-slides-layout`，块属性标记 `custom-slides-slot="right"`。 |
+| **递进动画** | `<div v-click>`、`<v-clicks>` 列表逐项显现、`v-after` 同步出现、`v-click="[2,5]"` 范围控制 | 演讲时逐行引导观众注意力，避免信息一次性过载。 | 内容块属性 `custom-slides-click="1"`、`custom-slides-clicks="true"`。 |
 | **手绘重点圈点** | `<span v-mark.underline>`、`<span v-mark.circle.orange="8">` (Rough Notation) | 在同一段落或标题内强调关键字、核心指标或结论。 | 行内标记保留或转存属性，沙箱动态渲染手绘图形。 |
-| **代码渐进高亮** | ```` ```ts {all|4|6|6-7|9|all} ````、`[filename]`、`<<< @/snippets/file.ts#region` | 程序员演说核心：逐步突出逻辑重点，免去手动贴多段重复代码。 | 代码块属性 `custom-slidev-shiki-lines`，导入期展开切片引用。 |
-| **代码变形流动** | ````md magic-move 包裹多个代码块平滑过渡 | 架构重构、API 升级对比时的杀手级视觉动画。 | 代码块属性记录 `custom-slidev-magic-move="group-id:step"`。 |
+| **代码渐进高亮** | ```` ```ts {all|4|6|6-7|9|all} ````、`[filename]`、`<<< @/snippets/file.ts#region` | 程序员演说核心：逐步突出逻辑重点，免去手动贴多段重复代码。 | 代码块属性 `custom-slides-shiki-lines`，导入期展开切片引用。 |
+| **代码变形流动** | ````md magic-move 包裹多个代码块平滑过渡 | 架构重构、API 升级对比时的杀手级视觉动画。 | 代码块属性记录 `custom-slides-magic-move="group-id:step"`。 |
 | **图表与公式** | `$$ {1|3|all}` 渐显数学公式；```` ```mermaid ```` 流程图、时序图、思维导图 | 学术分享、系统架构设计、业务流程图解。 | 思源原生公式块与代码块无缝保留，预览沙箱内联引擎直接渲染 SVG。 |
-| **提词与现场播控** | 末尾注释 `<!-- [click] 备注 -->`；快捷键 `Space`/`O`/`B`/`W` | 讲师双屏提示、限时掌控、全景大纲平铺跳页、黑屏聚焦。 | 提词存入 `custom-slidev-notes`，广播通道传递当前点击步数。 |
+| **提词与现场播控** | 末尾注释 `<!-- [click] 备注 -->`；快捷键 `Space`/`O`/`B`/`W` | 讲师双屏提示、限时掌控、全景大纲平铺跳页、黑屏聚焦。 | 提词存入 `custom-slides-notes`，广播通道传递当前点击步数。 |
 
 ---
 
@@ -113,7 +113,7 @@ flowchart TD
 
 下表全面对照 Slidev 核心语法、`slidev-templates` 模版实践与当前插件进展，明确优先级与影响度：
 
-| 评估维度 | 核心功能 / 设置项 | Slidev / 模版现状 | siyuan-slidev 现状 | 用户痛点与影响 | 建议优先级 |
+| 评估维度 | 核心功能 / 设置项 | Slidev / 模版现状 | siyuan-live-slides 现状 | 用户痛点与影响 | 建议优先级 |
 | :--- | :--- | :--- | :--- | :--- | :---: |
 | **动效表现力** | **Rough Notation** 手绘风圈点高亮 | 内置 `<v-mark>`，支持圈出、下划线、荧光笔 | 导入清洗抹除属性，沙箱无绘制引擎 | 无法在段落内精准强调某个关键词、数据或图表局部 | **P0** |
 | **动效表现力** | **Mermaid 图表矢量渲染** | 原生支持 Mermaid，可配 `v-click` 渐进演进 | 沙箱未挂载引擎，仅显示为纯文本代码块 | 复杂架构图、流程图无法图形化展示 | **P0** |
@@ -182,9 +182,9 @@ Slidev Markdown 源码 (含高阶语法)
 - **当前插件问题**：
   在导入思源笔记时，外层的 ````md magic-move` 容器被思源 Lute 引擎或插件分块逻辑解析为多段互相孤立的普通代码块（`c` 块）。每个代码块在思源文档树中没有任何属性能够证明“它们属于同一个 Magic Move 演示序列”，导致在预览渲染时无法将其重构为一个动画容器。
 - **补齐方案**：
-  在 `slidev-importer.ts` 解析阶段，识别四反引号 ````md magic-move` 结构，为该区间内的每一个代码块注入关联元属性：
-  - 块 1：`custom-slidev-magic-move="group-1:1:total-2"`
-  - 块 2：`custom-slidev-magic-move="group-1:2:total-2"`
+  在 `slides-importer.ts` 解析阶段，识别四反引号 ````md magic-move` 结构，为该区间内的每一个代码块注入关联元属性：
+  - 块 1：`custom-slides-magic-move="group-1:1:total-2"`
+  - 块 2：`custom-slides-magic-move="group-1:2:total-2"`
   这样即使在思源主编辑区被视为独立代码块，在渲染引擎中也能通过 `group-1` 重新聚合。
 
 ### 4.3 Gap 3: 数学公式渐进点击修饰符 `{1|3|all}` 丢失
@@ -198,14 +198,14 @@ Slidev Markdown 源码 (含高阶语法)
   $$
   ```
 - **当前插件问题**：
-  在 `slidev-importer.ts` 第 746 行：
+  在 `slides-importer.ts` 第 746 行：
   ```typescript
   body = body.replace(/^\$\$\s+\{[^}]+\}/gm, () => "$$")
   ```
   该逻辑直接将 `{1|3|all}` 替换为普通的 `$$`，直接丢弃了高亮步进信息。
 - **补齐方案**：
   在清洗前提取修饰符内容，将其转化为对应思源数学公式块的块属性：
-  `custom-slidev-math-click="1|3|all"`。在沙箱渲染时据此高亮对应公式行。
+  `custom-slides-math-click="1|3|all"`。在沙箱渲染时据此高亮对应公式行。
 
 ### 4.4 Gap 4: 代码块高级执行修饰符 `{monaco}` / `{monaco-run}` 被简单剥离
 - **Slidev 语法表现**：
@@ -215,14 +215,14 @@ Slidev Markdown 源码 (含高阶语法)
   ```ts {monaco} {height:'300px'}
   ````
 - **当前插件问题**：
-  在 `slidev-importer.ts` 第 744 行：
+  在 `slides-importer.ts` 第 744 行：
   ```typescript
   body = body.replace(/(^```\w+(?:[ \t]+\[[^\]]*\])?)[ \t]+\{[^}]+\}(?:[ \t]+\w+)?/gm, "$1")
   ```
   将所有花括号内容直接抹去。导致导入后无法区分普通代码块、Monaco 编辑器代码块、以及可直接运行控制台代码块。
 - **补齐方案**：
   在清洗前检测花括号内是否包含 `monaco`、`monaco-run`、`monaco-diff`，若存在，则分别写入块属性：
-  `custom-slidev-editor="monaco-run"`，以便后续在预览视窗中激活对应交互运行时。
+  `custom-slides-editor="monaco-run"`，以便后续在预览视窗中激活对应交互运行时。
 
 ### 4.5 Gap 5: 绝对定位与拖拽容器 (`v-drag` / `dragPos`) 无法沉淀为块级布局
 - **Slidev 语法表现**：
@@ -235,10 +235,10 @@ Slidev Markdown 源码 (含高阶语法)
   <v-drag pos="663,206,261,_,-15">内容</v-drag>
   ```
 - **当前插件问题**：
-  当前 `dragPos` 虽被以 JSON 格式保存在 `custom-slidev-dragPos` 中，但对于正文中的 `v-drag="'square'"`，导入器未将其解析为块级相对/绝对坐标属性；用户在思源笔记中看到的是无法拖动的普通图片或文本。
+  当前 `dragPos` 虽被以 JSON 格式保存在 `custom-slides-dragPos` 中，但对于正文中的 `v-drag="'square'"`，导入器未将其解析为块级相对/绝对坐标属性；用户在思源笔记中看到的是无法拖动的普通图片或文本。
 - **补齐方案**：
   将匹配到的定位坐标直接转换为思源块级 CSS 变量或属性：
-  `custom-slidev-pos="548,306,167,_,252"`，并在沙箱中映射为绝对定位样式。
+  `custom-slides-pos="548,306,167,_,252"`，并在沙箱中映射为绝对定位样式。
 
 ### 4.6 Gap 6: 外部子页面切片导入 (`src: ./other.md#range`) 未支持
 - **Slidev 语法表现**：
@@ -252,15 +252,15 @@ Slidev Markdown 源码 (含高阶语法)
   ---
   ```
 - **当前插件问题**：
-  当前 `slidev-importer.ts` 仅按文件路径全量导入子页面，若 `src` 中带有 `#2` 或 `#3-5`，解析器会因找不到该文件名而直接失败或作为占位块处理。
+  当前 `slides-importer.ts` 仅按文件路径全量导入子页面，若 `src` 中带有 `#2` 或 `#3-5`，解析器会因找不到该文件名而直接失败或作为占位块处理。
 - **补齐方案**：
-  在 `slidev-importer.ts` 的 `srcVal` 解析中解析 `#` 之后的页面范围参数（`pageRange`），解析子文档后通过切片数组 `subParsed.slides.slice(start, end)` 进行定向提取。
+  在 `slides-importer.ts` 的 `srcVal` 解析中解析 `#` 之后的页面范围参数（`pageRange`），解析子文档后通过切片数组 `subParsed.slides.slice(start, end)` 进行定向提取。
 
 ---
 
 ## 5. 预览展示与渲染功能关键缺失分析 (Preview & Sandbox Gaps)
 
-针对 `siyuan-slidev` 的分屏预览（`SlidevPreviewTab.vue`）、离线单文件导出（`single-html-exporter.ts`）以及 Web 沙箱运行时（`public/slidev-client/index.html`），对照官方 Starter 运行效果，存在以下关键差距：
+针对 `siyuan-live-slides` 的分屏预览（`SlidesPreviewTab.vue`）、离线单文件导出（`single-html-exporter.ts`）以及 Web 沙箱运行时（`public/slides-client/index.html`），对照官方 Starter 运行效果，存在以下关键差距：
 
 ```
 Slidev 官方 Starter 实际放映表现
@@ -350,7 +350,7 @@ Slidev 官方 Starter 实际放映表现
 - **思源使用场景与痛点**：
   项目立项汇报与年度复盘中必有“演进时间线（Q1 调研 -> Q2 研发 -> Q3 上线 -> Q4 规模化）”。用户在思源中写无序列表显得干瘪单调。
 - **思源原生映射与落地**：
-  - 用户写一个普通的 3~5 项带编号列表，为父列表块标记属性 `custom-slidev-widget="timeline"`。
+  - 用户写一个普通的 3~5 项带编号列表，为父列表块标记属性 `custom-slides-widget="timeline"`。
   - 客户端渲染为横向卡片队列，卡片间带呼吸动效箭头 `→`，自动随 `v-click` 逐个“点亮”。
 
 ### 6.2 特性网格与核心数据指标看板 (FeatureIconGrid & StatsRow)
@@ -358,7 +358,7 @@ Slidev 官方 Starter 实际放映表现
 - **思源使用场景与痛点**：
   做产品发布或性能总结时，需要展示超大数字指标卡片，文字陈述缺乏视觉冲击力。
 - **思源原生映射与落地**：
-  - 用户创建 3 列的表格或特定段落，标记属性 `custom-slidev-widget="stats"`。
+  - 用户创建 3 列的表格或特定段落，标记属性 `custom-slides-widget="stats"`。
   - 客户端渲染为大号渐变粗体字（`font-size: 3.5rem`）搭配灰色大写标签，卡片带磨砂玻璃背景。
 
 ### 6.3 问题对冲与优劣对比模式 (Problem vs Solution Split / Bad vs Good)
@@ -366,7 +366,7 @@ Slidev 官方 Starter 实际放映表现
 - **思源使用场景与痛点**：
   架构评审、方案选型中必有“现状痛点 vs 解决方案”对冲分析。
 - **思源原生映射与落地**：
-  - 用户使用 `two-cols` 版式，左栏设置属性 `custom-slidev-tone="danger"`，右栏设置 `custom-slidev-tone="success"`。
+  - 用户使用 `two-cols` 版式，左栏设置属性 `custom-slides-tone="danger"`，右栏设置 `custom-slides-tone="success"`。
   - 客户端左栏渲染红粉色柔光与警告图标 ⚠️，右栏渲染翠绿色柔光与对勾图标 ✅，并支持随空格先后弹出。
 
 ### 6.4 右侧 Dock 面板内置“演说排版片段库 (Snippets Hub)”
@@ -375,7 +375,7 @@ Slidev 官方 Starter 实际放映表现
 - **落地设计**：
   1. 在右侧 Dock 面板底部增加 **「🧩 常用幻灯片片段库 (Snippets)」**。
   2. 预置精选高频片段（路线图、指标看板、方案对冲、分层架构图、金句大字报、致谢结束页）。
-  3. 用户点击任一片段按钮，插件调用思源内核 API `insertBlock`，直接将打好 `custom-slidev-*` 属性的一组纯净思源块插入到光标处，用户只需像填空题一样替换文字！
+  3. 用户点击任一片段按钮，插件调用思源内核 API `insertBlock`，直接将打好 `custom-slides-*` 属性的一组纯净思源块插入到光标处，用户只需像填空题一样替换文字！
 
 ### 6.5 思源属性视图 (AV 数据库) 动态投影为幻灯片表格/看板卡片
 - **思源独特价值**：
@@ -416,7 +416,7 @@ Slidev 官方 Starter 实际放映表现
 
 ```mermaid
 gantt
-    title siyuan-slidev 导入与渲染能力补齐演进路线
+    title siyuan-live-slides 导入与渲染能力补齐演进路线
     dateFormat  YYYY-MM-DD
     section Wave 2.5: 基石体验速赢 (Quick Wins)
     Rough Notation (v-mark) 导入清洗与沙箱绘制    :active, p0_1, 2026-10-06, 3d
@@ -443,7 +443,7 @@ gantt
 ### 8.1 P0 级即刻落地设计细节
 
 #### 1. Rough Notation 手绘圈点支持
-- **资源挂载**：在 `public/slidev-client/assets/` 下引入体积仅 ~3KB 的 `rough-notation.iife.js`。
+- **资源挂载**：在 `public/slides-client/assets/` 下引入体积仅 ~3KB 的 `rough-notation.iife.js`。
 - **导入器适配 (`html-cleaner.ts`)**：
   重构规则 1.3，对带有 `v-mark` 属性的行内标签进行结构化转义：
   ```typescript
@@ -474,10 +474,10 @@ gantt
 
 #### 4. Shiki Magic Move 关联组还原
 - **数据协议扩展**：
-  在 `src/types/slidev-protocol.ts` 中增加：`ATTR_BLOCK_MAGIC_MOVE = "custom-slidev-magic-move"`。
+  在 `src/types/slides-protocol.ts` 中增加：`ATTR_BLOCK_MAGIC_MOVE = "custom-slides-magic-move"`。
 - **导入器解析**：
   当检测到 ````md magic-move 包裹层时，自动为区间内的每个子代码块打上：
-  `custom-slidev-magic-move="<uuid>:<step>"`。
+  `custom-slides-magic-move="<uuid>:<step>"`。
 - **沙箱重构**：
   沙箱在渲染时将具备相同 `<uuid>` 的代码块组合为一个动态容器，利用 CSS opacity/transform 配合高亮行聚焦，模拟出近似 Magic Move 的渐变飞行动效。
 
@@ -498,4 +498,4 @@ gantt
 2. **“轻量开箱即用”性能红线**：
    内置沙箱必须维持极速启动（渲染延迟 < 100ms）。对于较为庞大的特性（如完整的 Shiki Magic Move AST 解析、Monaco Editor 运行沙箱），应当采取**分级策略**：沙箱内使用轻量级 CSS 补间/轻量库，而将全功能 AST 级计算委托给本地 Slidev CLI Pro 模式。
 3. **向后兼容与平滑降级**：
-   新增的块属性（如 `custom-slidev-glow`, `custom-slidev-widget`）在旧版本或不认识该属性的导出器中应当优雅降级（例如 `widget="timeline"` 在不支持的环境下安全回退为标准有序列表），确保用户知识资产永不过期、永不损坏。
+   新增的块属性（如 `custom-slides-glow`, `custom-slides-widget`）在旧版本或不认识该属性的导出器中应当优雅降级（例如 `widget="timeline"` 在不支持的环境下安全回退为标准有序列表），确保用户知识资产永不过期、永不损坏。

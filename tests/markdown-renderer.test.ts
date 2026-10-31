@@ -7,7 +7,7 @@ import {
   renderMarkdownTable,
   renderSlideBlocksToHtml,
 } from "../src/export/markdown-renderer"
-import type { ISlidevBlockItem, ISlidevVirtualPage } from "../src/types/slidev-protocol"
+import type { ISlidesBlockItem, ISlidesVirtualPage } from "../src/types/slides-protocol"
 
 describe("MarkdownRenderer (导出模块与沙箱通用高保真渲染引擎)", () => {
   it("escapeHtml 应正确转义 HTML 关键字符", () => {
@@ -65,7 +65,7 @@ describe("MarkdownRenderer (导出模块与沙箱通用高保真渲染引擎)", 
     expect(convertBlockToHtml({ id: "b3", rawMarkdown: "### 标题 3" })).toContain("<h3>标题 3</h3>")
 
     // 代码块与 Shiki 聚光行号聚焦高亮
-    const codeBlock: ISlidevBlockItem = {
+    const codeBlock: ISlidesBlockItem = {
       id: "b4",
       rawMarkdown: "```ts {1-2|4}\nconst a = 123\nconst b = 456\nconst c = 789\nconst d = 999\n```",
     }
@@ -77,14 +77,14 @@ describe("MarkdownRenderer (导出模块与沙箱通用高保真渲染引擎)", 
     expect(codeHtml).toContain("<span class=\"line-no\">1</span>")
 
     // 独立 KaTeX 数学公式块
-    const mathBlock: ISlidevBlockItem = {
+    const mathBlock: ISlidesBlockItem = {
       id: "b_math",
       rawMarkdown: "$$\n\\int_{0}^{1} x^2 dx = \\frac{1}{3}\n$$",
     }
     expect(convertBlockToHtml(mathBlock)).toContain("katex-display")
 
     // Callout 警示框
-    const calloutBlock: ISlidevBlockItem = {
+    const calloutBlock: ISlidesBlockItem = {
       id: "b_callout",
       rawMarkdown: "::: warning\n请注意演示环境安全\n:::",
     }
@@ -93,21 +93,21 @@ describe("MarkdownRenderer (导出模块与沙箱通用高保真渲染引擎)", 
     expect(calloutHtml).toContain("请注意演示环境安全")
 
     // 任务清单
-    const taskBlock: ISlidevBlockItem = {
+    const taskBlock: ISlidesBlockItem = {
       id: "b_task",
       rawMarkdown: "- [x] 已完成任务项",
     }
     expect(convertBlockToHtml(taskBlock)).toContain('type="checkbox" disabled="" checked=""')
 
     // 引用块
-    const quoteBlock: ISlidevBlockItem = {
+    const quoteBlock: ISlidesBlockItem = {
       id: "b5",
       rawMarkdown: "> 重点结论",
     }
     expect(convertBlockToHtml(quoteBlock)).toContain('<blockquote class="pdf-quote"><p>重点结论</p></blockquote>')
 
     // 图片
-    const imgBlock: ISlidevBlockItem = {
+    const imgBlock: ISlidesBlockItem = {
       id: "b6",
       rawMarkdown: "![架构图](assets/arch.png)",
     }
@@ -117,7 +117,7 @@ describe("MarkdownRenderer (导出模块与沙箱通用高保真渲染引擎)", 
     expect(convertBlockToHtml({ id: "b7", rawMarkdown: "- 列表项 1" })).toContain("<li>列表项 1</li>")
     expect(convertBlockToHtml({ id: "b8", rawMarkdown: "1. 排序项 1" })).toContain("<li>排序项 1</li>")
 
-    const multiListBlock: ISlidevBlockItem = {
+    const multiListBlock: ISlidesBlockItem = {
       id: "b_multi",
       rawMarkdown: "- 📝 **Text-based** - Markdown\n- 🎨 **Themable** - Themes\n- 🧑‍💻 **Developer Friendly** - Code",
     }
@@ -128,27 +128,27 @@ describe("MarkdownRenderer (导出模块与沙箱通用高保真渲染引擎)", 
     expect(multiHtml).toContain("<ul class=\"pdf-list pdf-list--unordered\">")
 
     // 已解析的思源引用 HTML 直接保留
-    const refBlock: ISlidevBlockItem = {
+    const refBlock: ISlidesBlockItem = {
       id: "b9",
-      rawMarkdown: '<span class="slidev-block-ref">引用内容</span>',
+      rawMarkdown: '<span class="slides-block-ref">引用内容</span>',
     }
-    expect(convertBlockToHtml(refBlock)).toContain('class="slidev-block-ref"')
+    expect(convertBlockToHtml(refBlock)).toContain('class="slides-block-ref"')
 
     // 带微动效与时长延迟参数的段落
-    const motionBlock: ISlidevBlockItem = {
+    const motionBlock: ISlidesBlockItem = {
       id: "b10",
       rawMarkdown: "微动效段落内容",
       motion: { preset: "slide-up", duration: 400, delay: 100 },
     }
     const motionHtml = convertBlockToHtml(motionBlock)
-    expect(motionHtml).toContain("slidev-motion-slide-up")
+    expect(motionHtml).toContain("slides-motion-slide-up")
     expect(motionHtml).toContain("--motion-duration:400ms")
     expect(motionHtml).toContain("--motion-delay:100ms")
   })
 
   it("renderSlideBlocksToHtml 应正确支持 two-cols, two-cols-header 与 fact 布局", () => {
     // 1. two-cols
-    const slideTwoCols: ISlidevVirtualPage = {
+    const slideTwoCols: ISlidesVirtualPage = {
       pageIndex: 1,
       startBlockId: "p1",
       frontmatter: { layout: "two-cols" },
@@ -165,7 +165,7 @@ describe("MarkdownRenderer (导出模块与沙箱通用高保真渲染引擎)", 
     expect(htmlTwoCols).toContain("右侧内容")
 
     // 2. two-cols-header
-    const slideHeaderCols: ISlidevVirtualPage = {
+    const slideHeaderCols: ISlidesVirtualPage = {
       pageIndex: 2,
       startBlockId: "p2",
       frontmatter: { layout: "two-cols-header" },
@@ -184,7 +184,7 @@ describe("MarkdownRenderer (导出模块与沙箱通用高保真渲染引擎)", 
     expect(htmlHeaderCols).toContain("方案 B")
 
     // 3. fact
-    const slideFact: ISlidevVirtualPage = {
+    const slideFact: ISlidesVirtualPage = {
       pageIndex: 3,
       startBlockId: "p3",
       frontmatter: { layout: "fact" },

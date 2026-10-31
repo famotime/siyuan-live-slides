@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { NativeSlidevBridge } from "../src/engine/native-slidev-bridge"
+import { NativeSlidesBridge } from "../src/engine/native-slides-bridge"
 
 class MockWindow extends EventTarget {
   postMessage = vi.fn()
@@ -22,9 +22,9 @@ afterEach(() => {
   delete (globalThis as any).MessageEvent
 })
 
-describe("NativeSlidevBridge (官方标准通信适配桥接器)", () => {
+describe("NativeSlidesBridge (官方标准通信适配桥接器)", () => {
   it("navigateToPage 应发送遵循 Slidev 规范的 postMessage", () => {
-    const bridge = new NativeSlidevBridge()
+    const bridge = new NativeSlidesBridge()
     const mockPostMessage = vi.fn()
     const mockIframe = {
       contentWindow: { postMessage: mockPostMessage },
@@ -47,7 +47,7 @@ describe("NativeSlidevBridge (官方标准通信适配桥接器)", () => {
   })
 
   it("应正确接收并分发来自 Slidev 的 update-state 消息", () => {
-    const bridge = new NativeSlidevBridge()
+    const bridge = new NativeSlidesBridge()
     const pageHandler = vi.fn()
     bridge.onPageChanged(pageHandler)
 

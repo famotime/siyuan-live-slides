@@ -41,7 +41,7 @@ describe("PDF Template Styles Generator (PDF 打印讲义样式生成器)", () =
     expect(css).toContain(".pdf-slide-page.theme-dark")
     expect(css).toContain(".pdf-slide-page.spacing-compact")
     expect(css).toContain(".pdf-slide-page.spacing-loose")
-    expect(css).toContain(".slidev-ref-tag, a.slidev-ref-tag")
+    expect(css).toContain(".slides-ref-tag, a.slides-ref-tag")
     expect(css).toContain("border-bottom: 1px dashed currentColor")
   })
 })

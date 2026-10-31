@@ -2,7 +2,7 @@ import { type ComputedRef, type Ref } from "vue"
 import { setBlockAttrs } from "@/api"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
 import { syncDomBlockAttrs } from "@/sync/dom-attr-sync"
-import type { ISlidevDocument, ISlidevVirtualPage } from "@/types/slidev-protocol"
+import type { ISlidesDocument, ISlidesVirtualPage } from "@/types/slides-protocol"
 import {
   ATTR_DOC_ASPECT_RATIO,
   ATTR_DOC_DEFAULT_TRANSITION,
@@ -10,7 +10,7 @@ import {
   ATTR_ELEM_CLICK,
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_LAYOUT_RATIO,
-} from "@/types/slidev-protocol"
+} from "@/types/slides-protocol"
 
 export interface IInspectorActionsContext {
   activeBlockId: Ref<string>
@@ -22,8 +22,8 @@ export interface IInspectorActionsContext {
   currentPageDividerLayout: Ref<string>
   parentContainerId?: Ref<string>
   parentContainerClicks?: Ref<string>
-  latestDoc: Ref<ISlidevDocument | null>
-  targetSlide: ComputedRef<ISlidevVirtualPage | null>
+  latestDoc: Ref<ISlidesDocument | null>
+  targetSlide: ComputedRef<ISlidesVirtualPage | null>
   currentSlideNoteBlockId: ComputedRef<string>
   currentSlideLayout: ComputedRef<string>
   isNoteBlock: ComputedRef<boolean>

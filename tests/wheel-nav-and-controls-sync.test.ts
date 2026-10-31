@@ -3,15 +3,15 @@ import path from "node:path"
 import { describe, expect, it } from "vitest"
 import { buildStandaloneHtml } from "../src/export/single-html-exporter"
 import { generateStandaloneExportStyles } from "../src/export/standalone-template-styles"
-import type { ISlidevDocument } from "../src/types/slidev-protocol"
+import type { ISlidesDocument } from "../src/types/slides-protocol"
 
 describe("Wheel Navigation, Auto-hidden Controls Bar & Page Number Strong Sync", () => {
-  const indexHtmlPath = path.resolve(__dirname, "../public/slidev-client/index.html")
+  const indexHtmlPath = path.resolve(__dirname, "../public/slides-client/index.html")
   const indexHtml = fs.readFileSync(indexHtmlPath, "utf-8")
-  const presenterHtmlPath = path.resolve(__dirname, "../public/slidev-client/presenter.html")
+  const presenterHtmlPath = path.resolve(__dirname, "../public/slides-client/presenter.html")
   const presenterHtml = fs.readFileSync(presenterHtmlPath, "utf-8")
 
-  const dummyDoc: ISlidevDocument = {
+  const dummyDoc: ISlidesDocument = {
     docId: "doc-wheel-test",
     config: {
       theme: "default",

@@ -1,8 +1,8 @@
 import fs from "fs"
 import path from "path"
 import { describe, expect, it } from "vitest"
-import { parseSlidevPresentation, splitSlidevMarkdownChunks } from "../src/compiler/slidev-importer"
-import { buildSlidevDocument } from "../src/compiler/slidev-ast-builder"
+import { parseSlidesPresentation, splitSlidesMarkdownChunks } from "../src/compiler/slides-importer"
+import { buildSlidesDocument } from "../src/compiler/slides-ast-builder"
 
 describe("Full Audit: Starter Demo Import & Round-trip", () => {
   const starterPath = "D:/MyCodingProjects/slidev/demo/starter/slides.md"
@@ -14,13 +14,13 @@ describe("Full Audit: Starter Demo Import & Round-trip", () => {
     const subContent = fs.readFileSync(subPath, "utf-8")
 
     const snippetContent = fs.existsSync(snippetPath) ? fs.readFileSync(snippetPath, "utf-8") : ""
-    const res = parseSlidevPresentation(content, {
+    const res = parseSlidesPresentation(content, {
       virtualFiles: {
         "./pages/imported-slides.md": subContent,
         "@/snippets/external.ts": snippetContent,
       },
     })
-    const resWithoutVirtual = parseSlidevPresentation(content)
+    const resWithoutVirtual = parseSlidesPresentation(content)
     console.log("Without virtual files total slides:", resWithoutVirtual.totalSlides)
     const s14Without = resWithoutVirtual.slides[13]
     console.log("Slide 14 without virtual files:", JSON.stringify(s14Without))
@@ -34,9 +34,9 @@ describe("Full Audit: Starter Demo Import & Round-trip", () => {
     // 验证 Slide 4 在指定 cleanSlots: false 时可保留插槽，默认时保留 Toc 完整
     const s4 = res.slides[3]
     expect(s4.rawMarkdown).toContain('<Toc minDepth="1" maxDepth="1" />')
-    expect(s4.pageAttrs["custom-slidev-layout"]).toBe("two-cols")
+    expect(s4.pageAttrs["custom-slides-layout"]).toBe("two-cols")
 
-    const resKeepSlots = parseSlidevPresentation(content, {
+    const resKeepSlots = parseSlidesPresentation(content, {
       cleanSlots: false,
       virtualFiles: {
         "./pages/imported-slides.md": subContent,
@@ -54,9 +54,9 @@ describe("Full Audit: Starter Demo Import & Round-trip", () => {
     expect(s6.rawMarkdown).toContain("````` ````md magic-move `````")
 
     // 验证 Slide 1 中的 YAML 布尔值
-    expect(res.docRootAttrs["custom-slidev-drawings"]).toBe(JSON.stringify({ persist: false }))
+    expect(res.docRootAttrs["custom-slides-drawings"]).toBe(JSON.stringify({ persist: false }))
 
-    const resBaseDir = parseSlidevPresentation(content, {
+    const resBaseDir = parseSlidesPresentation(content, {
       baseDir: "D:/MyCodingProjects/slidev/demo/starter",
     })
     expect(resBaseDir.totalSlides).toBe(16)
@@ -67,7 +67,7 @@ describe("Full Audit: Starter Demo Import & Round-trip", () => {
 
   it("should accurately round-trip compile into SiYuan blocks and build valid SlidevDocument", () => {
     const content = fs.readFileSync(starterPath, "utf-8")
-    const res = parseSlidevPresentation(content, {
+    const res = parseSlidesPresentation(content, {
       baseDir: "D:/MyCodingProjects/slidev/demo/starter",
       cleanSlots: false,
     })
@@ -141,7 +141,7 @@ describe("Full Audit: Starter Demo Import & Round-trip", () => {
       flushCode()
     })
 
-    const doc = buildSlidevDocument("doc-starter", res.docRootAttrs, mockBlocks)
+    const doc = buildSlidesDocument("doc-starter", res.docRootAttrs, mockBlocks)
     doc.slides.forEach((s, i) => {
       console.log(`Page ${i + 1}: layout=${s.frontmatter.layout}, first block:`, s.blocks[0]?.rawMarkdown?.slice(0, 40))
     })
@@ -177,7 +177,7 @@ Content of slide 1
 Content of slide 2`
 
     // 验证不以 --- 开头的输入会自动在第一段补充 ---
-    const parsed = parseSlidevPresentation(rawNoFrontmatter)
+    const parsed = parseSlidesPresentation(rawNoFrontmatter)
     expect(parsed.totalSlides).toBe(2)
     expect(parsed.slides[0].rawMarkdown).toContain("# Page 1 Without Frontmatter")
     expect(parsed.slides[1].rawMarkdown).toContain("# Page 2")
@@ -187,7 +187,7 @@ Content of slide 2`
 
     // 验证本身以 --- 开头的文件，输出的 flattenedMarkdown 同样规范以 --- 开头
     const starterContent = fs.readFileSync(starterPath, "utf-8")
-    const parsedStarter = parseSlidevPresentation(starterContent)
+    const parsedStarter = parseSlidesPresentation(starterContent)
     expect(parsedStarter.flattenedMarkdown.startsWith("---\n\n")).toBe(true)
   })
 })

@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest"
 import { extractBlockRefs, resolveBlockRefsSync } from "../src/compiler/block-ref-resolver"
 import { formatInlineMarkdown } from "../src/export/markdown-renderer"
 import { convertHtmlToCleanMarkdown } from "../src/compiler/html-cleaner"
-import { buildSlidevDocument } from "../src/compiler/slidev-ast-builder"
-import type { ISiYuanBlockNode } from "../src/types/slidev-protocol"
+import { buildSlidesDocument } from "../src/compiler/slides-ast-builder"
+import type { ISiYuanBlockNode } from "../src/types/slides-protocol"
 
 describe("BlockRef & SiYuan Links (思源笔记文档与块链接全屏展示与跳转解析)", () => {
   it("应准确抽取思源单引号与双引号块引用标记 (含书名号与中文特殊标点)", () => {
@@ -37,7 +37,7 @@ describe("BlockRef & SiYuan Links (思源笔记文档与块链接全屏展示与
 
     expect(resolved).toContain('href="siyuan://blocks/20260625214150-d151ljw"')
     expect(resolved).toContain('data-ref-id="20260625214150-d151ljw"')
-    expect(resolved).toContain('class="slidev-ref-tag"')
+    expect(resolved).toContain('class="slides-ref-tag"')
     expect(resolved).toContain("🔗 《福格行为模型》")
 
     expect(resolved).toContain('href="siyuan://blocks/20260801083216-m7enl4c"')
@@ -51,7 +51,7 @@ describe("BlockRef & SiYuan Links (思源笔记文档与块链接全屏展示与
 
     expect(html).toContain('<a href="siyuan://blocks/20260625214150-d151ljw"')
     expect(html).toContain('data-ref-id="20260625214150-d151ljw"')
-    expect(html).toContain('class="slidev-ref-tag"')
+    expect(html).toContain('class="slides-ref-tag"')
     expect(html).toContain("🔗 《福格行为模型》")
     // 确保绝对没有被误转义成字面量文本
     expect(html).not.toContain("&lt;a")
@@ -62,14 +62,14 @@ describe("BlockRef & SiYuan Links (思源笔记文档与块链接全屏展示与
     const html1 = formatInlineMarkdown(mdLink)
     expect(html1).toContain('<a href="siyuan://blocks/20260625214150-d151ljw"')
     expect(html1).toContain('data-ref-id="20260625214150-d151ljw"')
-    expect(html1).toContain('class="slidev-ref-tag"')
+    expect(html1).toContain('class="slides-ref-tag"')
     expect(html1).toContain("🔗 福格模型全解")
 
     const rawUri = "直接访问 siyuan://blocks/20260801083216-m7enl4c 进行深钻"
     const html2 = formatInlineMarkdown(rawUri)
     expect(html2).toContain('<a href="siyuan://blocks/20260801083216-m7enl4c"')
     expect(html2).toContain('data-ref-id="20260801083216-m7enl4c"')
-    expect(html2).toContain('class="slidev-ref-tag"')
+    expect(html2).toContain('class="slides-ref-tag"')
   })
 
   it("convertHtmlToCleanMarkdown 应正确将思源 Protyle 富文本 block-ref 与 a 标签转换为 Markdown 块引用与链接", () => {
@@ -80,7 +80,7 @@ describe("BlockRef & SiYuan Links (思源笔记文档与块链接全屏展示与
     expect(cleaned).toContain("[不言：不书。](siyuan://blocks/20260801083216-m7enl4c)")
   })
 
-  it("buildSlidevDocument 应成功将思源单引号块引用编译为带交互属性的虚拟幻灯片块", () => {
+  it("buildSlidesDocument 应成功将思源单引号块引用编译为带交互属性的虚拟幻灯片块", () => {
     const blocks: ISiYuanBlockNode[] = [
       {
         id: "b-nav",
@@ -102,7 +102,7 @@ describe("BlockRef & SiYuan Links (思源笔记文档与块链接全屏展示与
       },
     ]
 
-    const doc = buildSlidevDocument("doc-nav", {}, blocks, {})
+    const doc = buildSlidesDocument("doc-nav", {}, blocks, {})
     expect(doc.slides.length).toBe(1)
     const slide = doc.slides[0]
 

@@ -105,7 +105,7 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
       expect(html).toContain('<body data-normalize-headings="true">')
     })
 
-    it("renderSlideBlocksToHtml 应正确为非封面页首标题标记 slidev-page-first-heading-block", () => {
+    it("renderSlideBlocksToHtml 应正确为非封面页首标题标记 slides-page-first-heading-block", () => {
       const slide = {
         pageIndex: 2,
         frontmatter: { layout: "default" },
@@ -116,11 +116,11 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
         ],
       }
       const html = renderSlideBlocksToHtml(slide as any)
-      expect(html).toContain("slidev-page-first-heading-block")
-      expect(html).toMatch(/class="[^"]*slidev-page-first-heading-block[^"]*"[^>]*><h4/)
+      expect(html).toContain("slides-page-first-heading-block")
+      expect(html).toMatch(/class="[^"]*slides-page-first-heading-block[^"]*"[^>]*><h4/)
     })
 
-    it("renderSlideBlocksToHtml 应为存在超级块的表头多栏布局各栏首个标题标记 slidev-col-first-heading-block", () => {
+    it("renderSlideBlocksToHtml 应为存在超级块的表头多栏布局各栏首个标题标记 slides-col-first-heading-block", () => {
       const slide = {
         pageIndex: 3,
         frontmatter: { layout: "cols-header" },
@@ -131,8 +131,8 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
         ],
       }
       const html = renderSlideBlocksToHtml(slide as any)
-      expect(html).toContain("slidev-col-first-heading-block")
-      expect(html).toMatch(/class="[^"]*slidev-col-first-heading-block[^"]*"[^>]*><h4/)
+      expect(html).toContain("slides-col-first-heading-block")
+      expect(html).toMatch(/class="[^"]*slides-col-first-heading-block[^"]*"[^>]*><h4/)
       expect(html).toContain("has-superblock-cols")
     })
   })
@@ -187,7 +187,7 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
         content: "### 分栏首标题",
         rawMarkdown: "### 分栏首标题",
       }
-      const html = convertBlockToHtml(block as any, { extraClassName: "slidev-col-first-heading-block" })
+      const html = convertBlockToHtml(block as any, { extraClassName: "slides-col-first-heading-block" })
       expect(html).toContain('<h3 class="slide-list-item-title">分栏首标题</h3>')
     })
 
@@ -200,13 +200,13 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
 
       // 后代选择器包含 h1~h6 居中，且限定在 has-superblock-cols 范围
       expect(htmlCss).toContain(".has-superblock-cols .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6)")
-      expect(htmlCss).toContain(".has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title)")
+      expect(htmlCss).toContain(".has-superblock-cols .slides-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title)")
       expect(pdfCss).toContain(".has-superblock-cols .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6)")
-      expect(pdfCss).toContain(".has-superblock-cols .slidev-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title)")
+      expect(pdfCss).toContain(".has-superblock-cols .slides-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title)")
 
       // 固定特定标题大小选项中同样包含居中声明，两者协同无冲突
-      expect(htmlCss).toContain('data-normalize-headings="true"] .has-superblock-cols .slidev-col-first-heading-block')
-      expect(pdfCss).toContain('data-normalize-headings="true"] .has-superblock-cols .slidev-col-first-heading-block')
+      expect(htmlCss).toContain('data-normalize-headings="true"] .has-superblock-cols .slides-col-first-heading-block')
+      expect(pdfCss).toContain('data-normalize-headings="true"] .has-superblock-cols .slides-col-first-heading-block')
     })
   })
 
@@ -215,8 +215,8 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
       const { getStandaloneClientRuntimeScript } = await import("../src/export/standalone-client-runtime")
       const script = getStandaloneClientRuntimeScript()
       expect(script).toContain("function isHeadingBlock(b)")
-      expect(script).toContain("slidev-page-first-heading-block")
-      expect(script).toContain("slidev-col-first-heading-block")
+      expect(script).toContain("slides-page-first-heading-block")
+      expect(script).toContain("slides-col-first-heading-block")
     })
 
     it("CliDevServerBridge.buildStandardSlidevMarkdown 在开启 normalizeHeadingSizes 时应注入规范化样式", async () => {
@@ -261,10 +261,10 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
       expect(pdfCss).toContain(".pdf-slide:not(.layout-cover) > :is(.pdf-block, .slide-block):first-child")
     })
 
-    it("public/slidev-client/index.html 应在 setup 中返回 config 与 isNormalizeHeadings 并绑定至 DOM", async () => {
+    it("public/slides-client/index.html 应在 setup 中返回 config 与 isNormalizeHeadings 并绑定至 DOM", async () => {
       const fs = await import("fs")
       const path = await import("path")
-      const html = fs.readFileSync(path.resolve(__dirname, "../public/slidev-client/index.html"), "utf-8")
+      const html = fs.readFileSync(path.resolve(__dirname, "../public/slides-client/index.html"), "utf-8")
       expect(html).toContain(":data-normalize-headings=\"isNormalizeHeadings ? 'true' : null\"")
       expect(html).toMatch(/return\s*\{[^}]*\bconfig\b[^}]*\bisNormalizeHeadings\b/)
       expect(html).toContain("const isNormalizeHeadings = computed(() => Boolean(config.value?.normalizeHeadingSizes))")
@@ -286,7 +286,7 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
         rawMarkdown: "### 分栏首标题",
         isColFirst: true,
       }
-      const html1 = convertBlockToHtml(colFirstBlock as any, { extraClassName: "slidev-col-first-heading-block" })
+      const html1 = convertBlockToHtml(colFirstBlock as any, { extraClassName: "slides-col-first-heading-block" })
       expect(html1).toContain('<h3 class="slide-list-item-title">分栏首标题</h3>')
 
       const normalListBlock = {
@@ -309,9 +309,9 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
 
       // 居中与标题规格化限定在 has-superblock-cols 范围
       expect(htmlCss).toContain(".has-superblock-cols .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6)")
-      expect(htmlCss).toContain(".has-superblock-cols .slidev-col-first-heading-block")
+      expect(htmlCss).toContain(".has-superblock-cols .slides-col-first-heading-block")
       expect(pdfCss).toContain(".has-superblock-cols .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6)")
-      expect(pdfCss).toContain(".has-superblock-cols .slidev-col-first-heading-block")
+      expect(pdfCss).toContain(".has-superblock-cols .slides-col-first-heading-block")
 
       // 图左与图右完全排除在规范化与居中之外
       expect(htmlCss).toContain("layout-image-left, .layout-image-right")
@@ -333,7 +333,7 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
       }
       const sbHtml = renderSlideBlocksToHtml(sbSlide as any)
       expect(sbHtml).toContain("has-superblock-cols")
-      expect(sbHtml).toContain("slidev-col-first-heading-block")
+      expect(sbHtml).toContain("slides-col-first-heading-block")
 
       // 场景 2: 无超级块分栏插槽的普通列表页面（即便是 cols-header 版式）
       const normalListSlide = {
@@ -347,7 +347,7 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
       }
       const normalHtml = renderSlideBlocksToHtml(normalListSlide as any)
       expect(normalHtml).not.toContain("has-superblock-cols")
-      expect(normalHtml).not.toContain("slidev-col-first-heading-block")
+      expect(normalHtml).not.toContain("slides-col-first-heading-block")
     })
   })
 })

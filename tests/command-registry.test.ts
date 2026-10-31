@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 import { registerPluginCommands } from "../src/plugin/command-registry"
-import type { ISlidevPluginHost } from "../src/plugin/command-registry"
+import type { ISlidesPluginHost } from "../src/plugin/command-registry"
 
 describe("CommandRegistry (插件命令注册器)", () => {
   it("应成功注册全套 13 项命令并包含对应的 langKey", () => {
@@ -20,26 +20,26 @@ describe("CommandRegistry (插件命令注册器)", () => {
       latestCompiledDoc: null,
     }
 
-    registerPluginCommands(mockPlugin as ISlidevPluginHost)
+    registerPluginCommands(mockPlugin as ISlidesPluginHost)
 
     expect(mockPlugin.addCommand).toHaveBeenCalledTimes(13)
     const registeredKeys = commands.map(c => c.langKey)
-    expect(registeredKeys).toContain("slidevPresentation")
-    expect(registeredKeys).toContain("slidevImport")
-    expect(registeredKeys).toContain("slidevInitAttrs")
-    expect(registeredKeys).toContain("slidevAiSplit")
-    expect(registeredKeys).toContain("slidevAiNotes")
-    expect(registeredKeys).toContain("slidevBatchTransitions")
-    expect(registeredKeys).toContain("slidevExportTemplates")
-    expect(registeredKeys).toContain("slidevBatchReplaceTransition")
-    expect(registeredKeys).toContain("slidevPresenterMode")
-    expect(registeredKeys).toContain("slidevExportCliMd")
-    expect(registeredKeys).toContain("slidevProbeCliDevServer")
-    expect(registeredKeys).toContain("slidevSyncToCliWorkspace")
-    expect(registeredKeys).toContain("slidevExportImagesZip")
+    expect(registeredKeys).toContain("slidesPresentation")
+    expect(registeredKeys).toContain("slidesImport")
+    expect(registeredKeys).toContain("slidesInitAttrs")
+    expect(registeredKeys).toContain("slidesAiSplit")
+    expect(registeredKeys).toContain("slidesAiNotes")
+    expect(registeredKeys).toContain("slidesBatchTransitions")
+    expect(registeredKeys).toContain("slidesExportTemplates")
+    expect(registeredKeys).toContain("slidesBatchReplaceTransition")
+    expect(registeredKeys).toContain("slidesPresenterMode")
+    expect(registeredKeys).toContain("slidesExportCliMd")
+    expect(registeredKeys).toContain("slidesProbeCliDevServer")
+    expect(registeredKeys).toContain("slidesSyncToCliWorkspace")
+    expect(registeredKeys).toContain("slidesExportImagesZip")
 
-    // 测试 slidevPresentation 执行
-    const presentationCmd = commands.find(c => c.langKey === "slidevPresentation")
+    // 测试 slidesPresentation 执行
+    const presentationCmd = commands.find(c => c.langKey === "slidesPresentation")
     presentationCmd.execute()
     expect(mockPlugin.openBottomPreviewTab).toHaveBeenCalled()
   })

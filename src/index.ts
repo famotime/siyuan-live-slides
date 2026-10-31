@@ -24,7 +24,7 @@ import {
   updateInspectorCurrentBlock,
 } from "@/main"
 import { registerPluginCommands } from "@/plugin/command-registry"
-import type { ISlidevPluginHost } from "@/plugin/command-registry"
+import type { ISlidesPluginHost } from "@/plugin/command-registry"
 import {
   buildPreviewTabTitle as buildTabTitle,
   fetchDocumentTitle as fetchDocTitle,
@@ -34,14 +34,14 @@ import { globalInspectorSyncCoordinator } from "@/sync/inspector-sync-coordinato
 import { globalCompileConsumerGate, HIDDEN_CONSUMER_COMPILE_DELAY_MS } from "@/sync/compile-consumer-gate"
 import { CompileScheduler } from "@/sync/compile-scheduler"
 import { InspectorSyncThrottle } from "@/sync/inspector-sync-cache"
-import type { ISlidevDocument } from "@/types/slidev-protocol"
+import type { ISlidesDocument } from "@/types/slides-protocol"
 import "@/index.scss"
 
 /** 自动编译防抖时长：编辑器事务停歇该时长后才向内核发起编译 */
 const AUTO_COMPILE_DEBOUNCE_MS = 150
 
 // 专属 SVG 幻灯片放映图标
-const ICON_SLIDEV_SVG = `<symbol id="iconSlidev" viewBox="0 0 1024 1024">
+const ICON_SLIDES_SVG = `<symbol id="iconSlides" viewBox="0 0 1024 1024">
   <path fill="currentColor" d="M128 160h768c35.3 0 64 28.7 64 64v480c0 35.3-28.7 64-64 64H128c-35.3 0-64-28.7-64-64V224c0-35.3 28.7-64 64-64z m64 64v480h640V224H192z m128 640h384v64H320z"/>
   <path fill="currentColor" d="M416 336l256 144-256 144z"/>
 </symbol>`
@@ -53,18 +53,18 @@ import {
   setRuntimeSettings,
   SETTINGS_STORAGE_NAME,
 } from "./settings"
-import type { ISlidevGlobalSettings } from "./settings"
+import type { ISlidesGlobalSettings } from "./settings"
 
-const DOCK_TYPE = "slidev-dock"
-const TAB_TYPE = "slidev-preview-tab"
-const PRESENTER_TAB_TYPE = "slidev-presenter-tab"
+const DOCK_TYPE = "slides-dock"
+const TAB_TYPE = "slides-preview-tab"
+const PRESENTER_TAB_TYPE = "slides-presenter-tab"
 const STORAGE_NAME = SETTINGS_STORAGE_NAME
 
-export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPluginHost {
+export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesPluginHost {
   public isMobile = false
   public currentDocId = ""
   public previewTab: any = null
-  public latestCompiledDoc: ISlidevDocument | null = null
+  public latestCompiledDoc: ISlidesDocument | null = null
   public cliBridge = new CliDevServerBridge()
   private debounceTimer: number | null = null
   private activeCursorBlockId = ""
@@ -90,12 +90,12 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
     await this.loadGlobalSettings()
 
     // 1. 注册图标
-    this.addIcons(ICON_SLIDEV_SVG)
+    this.addIcons(ICON_SLIDES_SVG)
 
     // 2. 注册顶栏快捷放映入口 (在文档下方分屏)
     this.addTopBar({
-      id: "slidev-topbar-play",
-      icon: "iconSlidev",
+      id: "slides-topbar-play",
+      icon: "iconSlides",
       title: "即现演示",
       position: "right",
       callback: () => {
@@ -148,8 +148,8 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
       config: {
         position: "RightTop",
         size: { width: 320, height: 0 },
-        icon: "iconSlidev",
-        title: "Slidev 演示配置",
+        icon: "iconSlides",
+        title: "即现演示配置",
       },
       data: {},
       type: DOCK_TYPE,
@@ -173,8 +173,8 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
     }
     this.eventBus.on("switch-protyle", this.onSwitchProtyleBound)
     this.eventBus.on("ws-main", this.onWsMainBound)
-    this.eventBus.on("slidev:request-compile" as any, () => this.compileCurrentDocument())
-    this.eventBus.on("slidev:block-clicked" as any, this.onBlockClickedBound)
+    this.eventBus.on("slides:request-compile" as any, () => this.compileCurrentDocument())
+    this.eventBus.on("slides:block-clicked" as any, this.onBlockClickedBound)
     this.eventBus.on("click-editorcontent" as any, this.onClickEditorContentBound)
 
     // 7. 监听编辑器选区变动与点击（双向光标联动中枢）
@@ -213,7 +213,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
     }
   }
 
-  async loadGlobalSettings(): Promise<ISlidevGlobalSettings> {
+  async loadGlobalSettings(): Promise<ISlidesGlobalSettings> {
     try {
       const stored = await this.loadData(STORAGE_NAME)
       const normalized = normalizeGlobalSettings(stored)
@@ -225,7 +225,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
     }
   }
 
-  async saveGlobalSettings(nextSettings?: Partial<ISlidevGlobalSettings>): Promise<ISlidevGlobalSettings> {
+  async saveGlobalSettings(nextSettings?: Partial<ISlidesGlobalSettings>): Promise<ISlidesGlobalSettings> {
     const current = getRuntimeSettings()
     const updated = setRuntimeSettings({
       ...current,
@@ -234,7 +234,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
     try {
       await this.saveData(STORAGE_NAME, updated)
     } catch (err) {
-      console.error("保存 Slidev 全局配置失败", err)
+      console.error("保存即现全局配置失败", err)
     }
     const docId = this.currentDocId || this.getActiveDocumentId()
     if (docId) {
@@ -286,7 +286,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
       custom: {
         id: this.name + TAB_TYPE,
         title: initialTitle,
-        icon: "iconSlidev",
+        icon: "iconSlides",
         data: { docId: this.currentDocId },
       },
       position: "bottom",
@@ -313,7 +313,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
       custom: {
         id: this.name + PRESENTER_TAB_TYPE,
         title: "演讲者控制台",
-        icon: "iconSlidev",
+        icon: "iconSlides",
         data: {},
       },
       position: "right",
@@ -335,8 +335,8 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
     if (frontEnd === "browser-desktop" || frontEnd === "browser-mobile") {
       if (typeof window !== "undefined" && typeof window.open === "function") {
         window.open(
-          "/plugins/siyuan-slidev/slidev-client/index.html",
-          "SlidevBigScreenWindow",
+          "/plugins/siyuan-live-slides/slides-client/index.html",
+          "SlidesBigScreenWindow",
           "width=1280,height=760,menubar=no,toolbar=no,location=no,status=no",
         )
       }
@@ -352,7 +352,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
         custom: {
           id: this.name + TAB_TYPE,
           title: initialTitle,
-          icon: "iconSlidev",
+          icon: "iconSlides",
           data: { docId: this.currentDocId },
         },
         position: "bottom",
@@ -653,10 +653,10 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
   }
 
   /**
-   * 提取并编译当前文档为 Slidev 演示模型，推送给 Dock
+   * 提取并编译当前文档为即现演示模型，推送给 Dock
    */
   /**
-   * 编译指定文档为 Slidev 演示模型，推送给 Dock 与预览页签
+   * 编译指定文档为即现演示模型，推送给 Dock 与预览页签
    *
    * @param targetDocId 目标文档 id，缺省取当前文档
    * @param options.reason "auto" 表示由编辑器事件驱动，需要经过消费者门闩与单飞合并；
@@ -694,7 +694,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
     }
 
     try {
-      const slidevDoc = await globalDocumentCompiler.compile(docId)
+      const slidesDoc = await globalDocumentCompiler.compile(docId)
       // P0-3：代际校验——期间有更新的编译请求时丢弃过期结果；
       // 仅当明确知道用户已切到其它文档时（currentDocId 非空且不一致）才不回写，避免首编译阶段空 id 导致结果被误丢
       const docSwitchedAway = Boolean(this.currentDocId) && docId !== this.currentDocId
@@ -702,15 +702,15 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
         if (!this.currentDocId) {
           this.currentDocId = docId
         }
-        this.latestCompiledDoc = slidevDoc
-        updateDockDocument(slidevDoc, docId)
+        this.latestCompiledDoc = slidesDoc
+        updateDockDocument(slidesDoc, docId)
         void this.updatePreviewTabHeader("", docId)
 
-        // 全量巡检并清除 Protyle 编辑区中的陈旧/残留 Slidev DOM 属性与角标
-        this.purgeStaleDomSlidevAttrs(slidevDoc)
+        // 全量巡检并清除 Protyle 编辑区中的陈旧/残留即现 DOM 属性与角标
+        this.purgeStaleDomSlidesAttrs(slidesDoc)
       }
     } catch (err) {
-      console.error("[SiYuanSlidev] Failed to compile document:", err)
+      console.error("[SiYuanLiveSlides] Failed to compile document:", err)
     } finally {
       const pendingDocId = this.compileScheduler.finish()
       // 补跑被合并的请求：重新走脏标记与防抖，保证"编辑器静默后才编译"
@@ -720,7 +720,7 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
     }
   }
 
-  public purgeStaleDomSlidevAttrs(doc: ISlidevDocument): void {
-    globalInspectorSyncCoordinator.purgeStaleDomSlidevAttrs(doc)
+  public purgeStaleDomSlidesAttrs(doc: ISlidesDocument): void {
+    globalInspectorSyncCoordinator.purgeStaleDomSlidesAttrs(doc)
   }
 }
