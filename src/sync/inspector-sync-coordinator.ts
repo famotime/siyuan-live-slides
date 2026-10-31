@@ -5,7 +5,7 @@ import {
   updateInspectorCurrentBlock,
 } from "@/main"
 import { purgeStaleDomSlidevAttrs as purgeStaleDomAttrs, syncDomBlockAttrs } from "@/sync/dom-attr-sync"
-import { mirrorBlockSelection } from "@/sync/selection-mirror"
+import { mirrorBlockSelection, clearBlockSelectionHighlight } from "@/sync/selection-mirror"
 import { BlockAttrCache, buildCompiledIalIndex } from "@/sync/inspector-sync-cache"
 import type { ISlidevDocument } from "@/types/slidev-protocol"
 import {
@@ -158,8 +158,53 @@ export class InspectorSyncCoordinator {
     app: any,
     currentDocId: string,
     latestCompiledDoc: ISlidevDocument | null,
+    page?: number,
   ): boolean {
-    if (!blockId) return false
+    if (!blockId) {
+      clearBlockSelectionHighlight()
+      // 演示/预览界面取消高亮（再次点击同一对象 / 点击空白 / 按 Esc）
+      // 保持思源编辑器现状不滚动，右侧配置面板退回当前页面的「幻灯片页面配置 (Page Inspector)」
+      const targetPageIndex = typeof page === "number" && page > 0 ? page : 1
+      const currentSlide = latestCompiledDoc?.slides?.[targetPageIndex - 1] || latestCompiledDoc?.slides?.[0]
+      if (currentSlide) {
+        const divId = currentSlide.startBlockId || ""
+        const pageLayout = currentSlide.frontmatter?.layout || ""
+        const initialAttrs: Record<string, string> = {
+          "custom-slidev-layout": pageLayout,
+          ...(currentSlide.frontmatter as any),
+        }
+        updateInspectorCurrentBlock({
+          id: divId,
+          rootId: currentDocId,
+          type: "NodeThematicBreak",
+          attrs: initialAttrs,
+          isDivider: true,
+          isCode: false,
+          isImage: false,
+          pageDividerId: divId,
+          pageDividerLayout: pageLayout,
+        })
+        void this.resolveBlockAttrs(divId, latestCompiledDoc).then(attrs => {
+          if (attrs && Object.keys(attrs).length > 0) {
+            updateInspectorCurrentBlock({
+              id: divId,
+              rootId: currentDocId,
+              type: "NodeThematicBreak",
+              attrs: { ...initialAttrs, ...attrs },
+              isDivider: true,
+              isCode: false,
+              isImage: false,
+              pageDividerId: divId,
+              pageDividerLayout: pageLayout,
+            })
+          }
+        })
+        return true
+      } else {
+        void this.switchToDocGlobalInspector(currentDocId)
+        return true
+      }
+    }
 
     // 1. 反向平滑定位并高亮目标思源块（带 openTab 降级）
     const located = mirrorBlockSelection(blockId, app)

@@ -5503,6 +5503,18 @@
         }
 
         function onBlockClick(blockId, e) {
+          if (highlightedBlockId.value && highlightedBlockId.value === blockId) {
+            highlightedBlockId.value = ""
+            window.parent.postMessage({
+              source: "siyuan-slidev-client",
+              action: "BLOCK_CLICKED",
+              payload: {
+                currentPage: currentPageIndex.value,
+                clickedBlockId: ""
+              }
+            }, "*")
+            return
+          }
           if (e && e.target) {
             const img = e.target.closest('img')
             if (img && img.src && !img.closest('.slidev-lightbox')) {
@@ -6057,6 +6069,19 @@
               e.preventDefault()
               return
             }
+            if (e.key === "Escape" && highlightedBlockId.value) {
+              highlightedBlockId.value = ""
+              window.parent.postMessage({
+                source: "siyuan-slidev-client",
+                action: "BLOCK_CLICKED",
+                payload: {
+                  currentPage: currentPageIndex.value,
+                  clickedBlockId: ""
+                }
+              }, "*")
+              e.preventDefault()
+              return
+            }
             if (e.key === "o" || e.key === "O") {
               e.preventDefault()
               toggleOverview()
@@ -6263,6 +6288,19 @@
             '.slide-block, .controls-bar, .image-right-img-container, .image-left-img-container, img, video, audio, button, a, input, textarea, select, [data-clickable], [data-ref-id], .slidev-toc, .empty-state'
           )
           if (isComponent) return
+
+          // 空白区域点击：若当前存在对象高亮，清除高亮并通知宿主
+          if (highlightedBlockId.value) {
+            highlightedBlockId.value = ""
+            window.parent.postMessage({
+              source: "siyuan-slidev-client",
+              action: "BLOCK_CLICKED",
+              payload: {
+                currentPage: currentPageIndex.value,
+                clickedBlockId: ""
+              }
+            }, "*")
+          }
 
           // 屏幕左右对半翻页调度：左侧向前（步骤/上一页），右侧向后（步骤/下一页）
           const isLeft = e.clientX < window.innerWidth / 2
@@ -6643,6 +6681,9 @@
         // 双向监听页码与总页数变动，确保沙箱与宿主始终 100% 强同步
         watch(currentPageIndex, (newVal, oldVal) => {
           if (newVal !== oldVal) {
+            if (highlightedBlockId.value) {
+              highlightedBlockId.value = ""
+            }
             notifySlideChanged()
             broadcastSync()
           }

@@ -203,7 +203,7 @@ import ImmersionDrawerContainer from '@/ui/components/peek/ImmersionDrawerContai
 import ProtylePeekDrawer from '@/ui/components/peek/ProtylePeekDrawer.vue'
 import WebviewPeekDrawer from '@/ui/components/peek/WebviewPeekDrawer.vue'
 import { CursorTracker } from '@/sync/cursor-tracker'
-import { mirrorBlockSelection } from '@/sync/selection-mirror'
+import { mirrorBlockSelection, clearBlockSelectionHighlight } from '@/sync/selection-mirror'
 import { getRuntimeModule } from '@/engine/runtime-node'
 import { resolvePeekUrl, fileUrlToPath } from '@/utils/peek-url'
 import { buildStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'
@@ -322,10 +322,15 @@ onMounted(() => {
   unbindBlockClicked = sandboxBridge.onBlockClicked((blockId, page) => {
     currentPage.value = page
     cursorTracker.setActiveBlockId(blockId)
+    if (!blockId) {
+      clearBlockSelectionHighlight()
+    }
     if (plugin && typeof (plugin as any).handleBlockClickedFromSlide === 'function') {
       ;(plugin as any).handleBlockClickedFromSlide(blockId, page)
     } else {
-      mirrorBlockSelection(blockId, (plugin as any)?.app)
+      if (blockId) {
+        mirrorBlockSelection(blockId, (plugin as any)?.app)
+      }
     }
   })
 

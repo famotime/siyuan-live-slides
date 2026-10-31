@@ -519,14 +519,14 @@ export default class SiYuanSlidevPlugin extends SyPlugin implements ISlidevPlugi
   /**
    * 幻灯片点击回传，反向平滑定位到思源块并同步配置面板
    */
-  public handleBlockClickedFromSlide(blockId: string, _page?: number): boolean {
-    if (!blockId) return false
+  public handleBlockClickedFromSlide(blockId: string, page?: number): boolean {
     this.activeCursorBlockId = blockId
     return globalInspectorSyncCoordinator.handleBlockClickedFromSlide(
       blockId,
       this.app,
       this.currentDocId,
       this.latestCompiledDoc,
+      page,
     )
   }
 
