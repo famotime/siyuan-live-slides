@@ -594,7 +594,7 @@ export function convertBlockToHtml(
     }
     if (isLoop) attrParts.push("loop")
     if (isMuted) attrParts.push("muted")
-    attrParts.push('preload="metadata"')
+    attrParts.push('preload="auto"')
     if (src) {
       attrParts.push(`src="${src}"`)
     }

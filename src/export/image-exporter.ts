@@ -1,6 +1,9 @@
 import JSZip from "jszip"
 import { WebSandboxBridge } from "../engine/web-sandbox-bridge"
+import { resolveDocumentTitle, sanitizeFileName } from "../plugin/preview-tab-title"
 import type { ISlidevDocument } from "../types/slidev-protocol"
+
+export { resolveDocumentTitle, sanitizeFileName }
 
 export interface IImageExportOptions {
   title?: string
@@ -106,7 +109,7 @@ export async function exportAllSlidesZip(
   options?: IImageExportOptions,
 ): Promise<{ success: boolean; total?: number; error?: string }> {
   const images: Array<{ pageIndex: number; dataUrl: string }> = []
-  const safeTitle = (options?.title || "presentation").replace(/[/\\?%*:|"<>]/g, "_").trim() || "presentation"
+  const safeTitle = sanitizeFileName(options?.title || "presentation")
 
   return new Promise((resolve) => {
     let unsubs: Array<() => void> = []
@@ -142,7 +145,7 @@ export async function exportAllSlidesZip(
           zip.file(`slide-${padIdx}.${ext}`, base64Data, { base64: true })
         }
         const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" })
-        const ok = downloadBlob(`${safeTitle}-slides.zip`, blob)
+        const ok = downloadBlob(`${safeTitle}.zip`, blob)
         resolve({ success: ok, total: images.length })
       } catch (err: any) {
         resolve({ success: false, error: err?.message || String(err) })
@@ -205,7 +208,8 @@ export async function runHeadlessImageExport(
       const res = await exportCurrentSlideImage(bridge, options)
       return { success: res.success, total: 1, error: res.error }
     } else {
-      return await exportAllSlidesZip(bridge, { ...options, title: options?.title || doc.config.title })
+      const title = options?.title || (await resolveDocumentTitle(doc, doc.docId))
+      return await exportAllSlidesZip(bridge, { ...options, title })
     }
   } catch (err: any) {
     return { success: false, error: err?.message || String(err) }

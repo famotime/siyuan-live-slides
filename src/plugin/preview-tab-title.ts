@@ -118,3 +118,75 @@ export async function updatePreviewTabHeader(
     }
   }
 }
+
+/**
+ * 净化文件名中的非法字符
+ */
+export function sanitizeFileName(name: string): string {
+  const cleaned = (name || "")
+    .replace(/[/\\?%*:|"<>]/g, "_")
+    .replace(/_+/g, "_")
+    .trim()
+    .replace(/^_+|_+$/g, "")
+  return cleaned || "presentation"
+}
+
+/**
+ * 统一多级解析当前演示文稿的文档真实标题
+ * 优先顺序：
+ * 1. 宿主/插件提供的 fetchDocumentTitle(docId)
+ * 2. 活跃 Protyle 编辑区 DOM (.protyle-title__input)
+ * 3. doc.config.title (若非默认 presentation 占位符)
+ * 4. 第一张幻灯片的首个一级标题 (H1)
+ * 5. 降级为 "presentation"
+ */
+export async function resolveDocumentTitle(
+  doc?: ISlidevDocument | null,
+  docId?: string,
+  hostOrPlugin?: any,
+): Promise<string> {
+  const targetDocId = docId || doc?.docId || ""
+
+  // 1. 尝试通过插件宿主解析真实文档标题
+  if (hostOrPlugin && typeof hostOrPlugin.fetchDocumentTitle === "function" && targetDocId) {
+    try {
+      const title = await hostOrPlugin.fetchDocumentTitle(targetDocId)
+      if (title && title.trim()) {
+        return sanitizeFileName(title)
+      }
+    } catch {}
+  }
+
+  // 2. 尝试从 DOM 活跃编辑区提取
+  if (typeof document !== "undefined") {
+    try {
+      const activeTitleEl = (
+        (targetDocId ? document.querySelector(`.protyle-title[data-node-id="${targetDocId}"] .protyle-title__input`) : null) ||
+        (targetDocId ? document.querySelector(`.protyle[data-doc-id="${targetDocId}"] .protyle-title__input`) : null) ||
+        document.querySelector(".layout__wnd--active .protyle-title__input") ||
+        document.querySelector(".protyle-title__input")
+      ) as HTMLElement | null
+      const domTitle = (activeTitleEl?.innerText || activeTitleEl?.textContent || "").trim()
+      if (domTitle) {
+        return sanitizeFileName(domTitle)
+      }
+    } catch {}
+  }
+
+  // 3. 从文档配置提取
+  if (doc?.config?.title && doc.config.title.trim() && doc.config.title.trim().toLowerCase() !== "presentation") {
+    return sanitizeFileName(doc.config.title)
+  }
+
+  // 4. 从第一页幻灯片 H1 提取
+  if (doc?.slides && doc.slides.length > 0) {
+    const firstSlide = doc.slides[0]
+    const h1Block = firstSlide.blocks?.find((b: any) => b.type === "h" || b.type === "NodeHeading")
+    const h1Text = (h1Block?.content || "").replace(/^#+\s*/, "").trim()
+    if (h1Text) {
+      return sanitizeFileName(h1Text)
+    }
+  }
+
+  return "presentation"
+}

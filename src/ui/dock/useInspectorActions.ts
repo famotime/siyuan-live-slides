@@ -1,7 +1,7 @@
 import { showMessage } from "siyuan"
 import { triggerPdfExport } from "@/export/pdf-exporter"
 import { buildStandaloneHtml, downloadHtmlFile } from "@/export/single-html-exporter"
-import { runHeadlessImageExport } from "@/export/image-exporter"
+import { runHeadlessImageExport, resolveDocumentTitle } from "@/export/image-exporter"
 import { createAttrPersistence, type IInspectorActionsContext } from "./actions/attr-persistence"
 import { createNotesActions } from "./actions/notes-actions"
 import { createLayoutActions } from "./actions/layout-actions"
@@ -25,15 +25,17 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
   const notes = createNotesActions(ctx, { triggerSaveNotice })
   const layout = createLayoutActions(ctx, { saveAttr, saveAttrs, savePageAttr })
 
-  function onExportHtml() {
+  async function onExportHtml() {
     if (!ctx.latestDoc.value) {
       showMessage("请先在主编辑区打开幻灯片文档")
       return
     }
-    const html = buildStandaloneHtml(ctx.latestDoc.value)
-    const ok = downloadHtmlFile("presentation.html", html)
+    const doc = ctx.latestDoc.value
+    const title = await resolveDocumentTitle(doc, ctx.currentDocId?.value, ctx.plugin)
+    const html = buildStandaloneHtml(doc)
+    const ok = downloadHtmlFile(`${title}.html`, html)
     if (ok) {
-      showMessage("已开始下载单文件离线 HTML 演示包")
+      showMessage(`已开始下载单文件离线 HTML 演示包 (${title}.html)`)
     }
   }
 
@@ -55,7 +57,7 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     }
     showMessage("正在启动后台沙箱并逐页导出幻灯片图片...")
     const doc = ctx.latestDoc.value
-    const title = (ctx as any).docTitle?.value || doc.config.title || "presentation"
+    const title = await resolveDocumentTitle(doc, ctx.currentDocId?.value, ctx.plugin)
     const res = await runHeadlessImageExport(doc, {
       title,
       onProgress: (current, total) => {
@@ -63,7 +65,7 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
       },
     })
     if (res.success) {
-      showMessage(`🎉 成功导出 ${res.total || 0} 张幻灯片高清图片并已保存为 ZIP 压缩包！`, 4000)
+      showMessage(`🎉 成功导出 ${res.total || 0} 张幻灯片高清图片并已保存为 ${title}.zip！`, 4000)
     } else {
       showMessage(`导出图片失败：${res.error || "未知异常"}`)
     }

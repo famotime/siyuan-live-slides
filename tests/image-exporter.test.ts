@@ -5,6 +5,8 @@ import {
   downloadDataUrl,
   exportAllSlidesZip,
   exportCurrentSlideImage,
+  resolveDocumentTitle,
+  sanitizeFileName,
 } from "../src/export/image-exporter"
 
 describe("ImageExporter (幻灯片图片导出器单元测试)", () => {
@@ -107,7 +109,7 @@ describe("ImageExporter (幻灯片图片导出器单元测试)", () => {
     expect(result.success).toBe(true)
     expect(result.total).toBe(2)
     expect(progressTracker).toEqual([1, 2])
-    expect(mockAnchor.download).toBe("My Presentation-slides.zip")
+    expect(mockAnchor.download).toBe("My Presentation.zip")
     expect(clickSpy).toHaveBeenCalled()
 
     // 恢复
@@ -132,5 +134,45 @@ describe("ImageExporter (幻灯片图片导出器单元测试)", () => {
     const result = await exportPromise
     expect(result.success).toBe(false)
     expect(result.error).toBe("Canvas render failed")
+  })
+
+  describe("resolveDocumentTitle & sanitizeFileName (文档名称解析与清洗)", () => {
+    it("sanitizeFileName 应清洗非法文件名字符", () => {
+      expect(sanitizeFileName("产品/架构\\分析:2026?*|<demo>")).toBe("产品_架构_分析_2026_demo")
+      expect(sanitizeFileName("")).toBe("presentation")
+      expect(sanitizeFileName("   ")).toBe("presentation")
+    })
+
+    it("resolveDocumentTitle 应优先从插件宿主 fetchDocumentTitle 提取真实思源文档标题", async () => {
+      const mockPlugin = {
+        fetchDocumentTitle: vi.fn(async (docId: string) => `思源文档-${docId}`),
+      }
+      const title = await resolveDocumentTitle(null, "doc-123", mockPlugin)
+      expect(title).toBe("思源文档-doc-123")
+    })
+
+    it("resolveDocumentTitle 当宿主不可用时应从 doc.config.title 提取", async () => {
+      const mockDoc: any = {
+        config: { title: "商业路演计划" },
+        slides: [],
+      }
+      const title = await resolveDocumentTitle(mockDoc, "doc-456")
+      expect(title).toBe("商业路演计划")
+    })
+
+    it("resolveDocumentTitle 当 config 为空时应从首页 H1 标题提取", async () => {
+      const mockDoc: any = {
+        config: { title: "" },
+        slides: [
+          {
+            blocks: [
+              { type: "h", content: "# AI Agent 智能助手架构" },
+            ],
+          },
+        ],
+      }
+      const title = await resolveDocumentTitle(mockDoc)
+      expect(title).toBe("AI Agent 智能助手架构")
+    })
   })
 })

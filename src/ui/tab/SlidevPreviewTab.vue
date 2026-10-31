@@ -213,6 +213,7 @@ import {
   exportCurrentSlideImage,
   downloadDataUrl,
   copyDataUrlToClipboard,
+  resolveDocumentTitle,
 } from '@/export/image-exporter'
 import { getRuntimeSettings, buildSiYuanWebUrl } from '@/settings'
 import { createPageJumpInput, isEditableTarget } from './page-jump-input'
@@ -607,7 +608,7 @@ async function onExportAllImages() {
     return
   }
   showMessage('正在逐页导出幻灯片图片...', 2000)
-  const title = latestDoc.config.title || (plugin as any)?.currentDocId || 'presentation'
+  const title = await resolveDocumentTitle(latestDoc, (plugin as any)?.currentDocId, plugin)
   const res = await exportAllSlidesZip(sandboxBridge, {
     title,
     onProgress: (current, total) => {
@@ -615,7 +616,7 @@ async function onExportAllImages() {
     },
   })
   if (res.success) {
-    showMessage(`🎉 成功导出 ${res.total || 0} 张高清图片并打包为 ZIP！`, 4000)
+    showMessage(`🎉 成功导出 ${res.total || 0} 张高清图片并保存为 ${title}.zip！`, 4000)
   } else {
     showMessage(`导出图片失败：${res.error || '未知异常'}`)
   }
@@ -629,10 +630,12 @@ async function onExportCurrentSlide() {
   showMessage('正在导出当前幻灯片图片...', 1500)
   const res = await exportCurrentSlideImage(sandboxBridge)
   if (res.success && res.dataUrl) {
-    const title = latestDoc.config.title || 'presentation'
+    const title = await resolveDocumentTitle(latestDoc, (plugin as any)?.currentDocId, plugin)
     const page = currentPage.value || 1
-    downloadDataUrl(`${title}-slide-${page}.png`, res.dataUrl)
-    showMessage(`已下载当前页（第 ${page} 页）高清图片`)
+    const total = totalPages.value || 1
+    const filename = total > 1 ? `${title}-${page}.png` : `${title}.png`
+    downloadDataUrl(filename, res.dataUrl)
+    showMessage(`已下载当前页高清图片 (${filename})`)
   } else {
     showMessage(`导出当前页图片失败：${res.error || '未知异常'}`)
   }
@@ -650,9 +653,12 @@ async function onCopyCurrentSlide() {
     if (ok) {
       showMessage(`已成功将第 ${currentPage.value || 1} 页幻灯片复制到剪贴板！`)
     } else {
+      const title = await resolveDocumentTitle(latestDoc, (plugin as any)?.currentDocId, plugin)
       const page = currentPage.value || 1
-      downloadDataUrl(`slide-${page}.png`, res.dataUrl)
-      showMessage(`剪贴板权限不可用，已自动下载为 slide-${page}.png`)
+      const total = totalPages.value || 1
+      const filename = total > 1 ? `${title}-${page}.png` : `${title}.png`
+      downloadDataUrl(filename, res.dataUrl)
+      showMessage(`剪贴板权限不可用，已自动下载为 ${filename}`)
     }
   } else {
     showMessage(`复制失败：${res.error || '未知异常'}`)

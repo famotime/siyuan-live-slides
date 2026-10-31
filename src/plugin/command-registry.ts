@@ -17,7 +17,7 @@ import { mirrorBlockSelection } from "@/sync/selection-mirror"
 import { PropertyManagerBridge } from "@/synergy/property-manager-bridge"
 import type { ISiYuanBlockNode, ISlidevDocument } from "@/types/slidev-protocol"
 import type { CliDevServerBridge } from "@/engine/cli-devserver-bridge"
-import { runHeadlessImageExport } from "@/export/image-exporter"
+import { runHeadlessImageExport, resolveDocumentTitle } from "@/export/image-exporter"
 
 export interface ISlidevPluginHost extends Plugin {
   currentDocId: string
@@ -326,7 +326,7 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
       }
       showMessage("正在启动后台沙箱并逐页导出幻灯片图片...")
       const doc = plugin.latestCompiledDoc
-      const title = doc.config.title || plugin.currentDocId || "presentation"
+      const title = await resolveDocumentTitle(doc, plugin.currentDocId, plugin)
       const res = await runHeadlessImageExport(doc, {
         title,
         onProgress: (current, total) => {
@@ -334,7 +334,7 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
         },
       })
       if (res.success) {
-        showMessage(`🎉 成功导出 ${res.total || 0} 张幻灯片高清图片并已保存为 ZIP 压缩包！`, 4000)
+        showMessage(`🎉 成功导出 ${res.total || 0} 张幻灯片高清图片并已保存为 ${title}.zip！`, 4000)
       } else {
         showMessage(`导出图片失败：${res.error || "未知异常"}`)
       }

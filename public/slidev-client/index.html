@@ -4949,7 +4949,7 @@
                 }
                 if (isLoop) attrParts.push("loop")
                 if (isMuted) attrParts.push("muted")
-                attrParts.push('preload="metadata"')
+                attrParts.push('preload="auto"')
                 if (src) attrParts.push(`src="${src}"`)
 
                 const innerContentMatch = videoRaw.match(/<video[^>]*>([\s\S]*?)<\/video>/i)
@@ -5218,7 +5218,7 @@
             }
             if (isLoop) attrParts.push("loop")
             if (isMuted) attrParts.push("muted")
-            attrParts.push('preload="metadata"')
+            attrParts.push('preload="auto"')
             if (src) {
               attrParts.push(`src="${src}"`)
             }
@@ -5410,7 +5410,7 @@
               if (isAutoplay) attrParts.push("autoplay playsinline")
               if (isLoop) attrParts.push("loop")
               if (isMuted) attrParts.push("muted")
-              attrParts.push('preload="metadata"')
+              attrParts.push('preload="auto"')
               if (src) attrParts.push(`src="${src}"`)
 
               const innerContentMatch = trimmedSub.match(/<video[^>]*>([\s\S]*?)<\/video>/i)
@@ -6274,6 +6274,75 @@
           syncAutoplayVideos()
         }
 
+        function generateVideoFallbackPoster(w, h) {
+          const width = Math.max(w || 640, 200)
+          const height = Math.max(h || 360, 120)
+          const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+            <rect width="100%" height="100%" fill="#18181b" rx="6"/>
+            <circle cx="${width / 2}" cy="${height / 2}" r="32" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+            <polygon points="${width / 2 - 8},${height / 2 - 14} ${width / 2 + 14},${height / 2} ${width / 2 - 8},${height / 2 + 14}" fill="#ffffff"/>
+          </svg>`
+          return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+        }
+
+        async function captureVideoSnapshot(video) {
+          if (!video) return null
+          const poster = video.getAttribute("poster") || video.poster
+
+          try {
+            if (video.readyState < 2 && (video.currentSrc || video.src)) {
+              video.preload = "auto"
+              video.crossOrigin = "anonymous"
+              try {
+                video.load()
+              } catch (e) {}
+              await new Promise(resolve => {
+                let resolved = false
+                const done = () => {
+                  if (!resolved) {
+                    resolved = true
+                    cleanup()
+                    resolve()
+                  }
+                }
+                const cleanup = () => {
+                  video.removeEventListener("loadeddata", done)
+                  video.removeEventListener("canplay", done)
+                  video.removeEventListener("seeked", done)
+                  video.removeEventListener("error", done)
+                }
+                video.addEventListener("loadeddata", done, { once: true })
+                video.addEventListener("canplay", done, { once: true })
+                video.addEventListener("seeked", done, { once: true })
+                video.addEventListener("error", done, { once: true })
+                setTimeout(done, 160)
+              })
+            }
+
+            const vw = video.videoWidth || video.clientWidth || 640
+            const vh = video.videoHeight || video.clientHeight || 360
+
+            if (vw > 0 && vh > 0) {
+              const canvas = document.createElement("canvas")
+              canvas.width = vw
+              canvas.height = vh
+              const ctx = canvas.getContext("2d")
+              if (ctx) {
+                ctx.drawImage(video, 0, 0, vw, vh)
+                const dataUrl = canvas.toDataURL("image/png")
+                if (dataUrl && dataUrl.length > 200) {
+                  return dataUrl
+                }
+              }
+            }
+          } catch (err) {
+            console.warn("[slidev-capture] 视频帧提取异常，降级海报处理:", err)
+          }
+
+          if (poster) return poster
+          return generateVideoFallbackPoster(video.clientWidth || 640, video.clientHeight || 360)
+        }
+
         // 幻灯片逐页导出图片核心逻辑
         async function runImageCapture(opts) {
           const mode = opts?.mode || "all"
@@ -6314,7 +6383,13 @@
             height: baseHeight.value,
             canvasWidth: baseWidth,
             canvasHeight: baseHeight.value,
-            cacheBust: false
+            cacheBust: false,
+            filter: (node) => {
+              if (node && node.tagName === "VIDEO") {
+                return false
+              }
+              return true
+            }
           }
 
           const captureSinglePage = async (pageIdx) => {
@@ -6331,10 +6406,45 @@
 
             await new Promise(r => setTimeout(r, 60))
 
-            if (format === "jpeg") {
-              return await window.htmlToImage.toJpeg(vp, { ...captureOptions, quality: 0.95 })
+            const videoEls = Array.from(vp.querySelectorAll("video"))
+            const restoreVideoFns = []
+
+            for (const video of videoEls) {
+              const snapshotUrl = await captureVideoSnapshot(video)
+              if (snapshotUrl) {
+                const img = document.createElement("img")
+                img.className = (video.className || "") + " slidev-video-export-snapshot"
+                img.src = snapshotUrl
+                img.style.cssText = video.style.cssText
+                const comp = window.getComputedStyle(video)
+                img.style.display = "block"
+                img.style.width = comp.width || (video.offsetWidth ? `${video.offsetWidth}px` : "100%")
+                img.style.height = comp.height || (video.offsetHeight ? `${video.offsetHeight}px` : "auto")
+                img.style.objectFit = comp.objectFit || "contain"
+                img.style.borderRadius = comp.borderRadius || "6px"
+                img.style.boxShadow = comp.boxShadow || "none"
+                img.style.margin = comp.margin || "0"
+
+                const parent = video.parentNode
+                if (parent) {
+                  parent.replaceChild(img, video)
+                  restoreVideoFns.push(() => {
+                    if (img.parentNode === parent) {
+                      parent.replaceChild(video, img)
+                    }
+                  })
+                }
+              }
             }
-            return await window.htmlToImage.toPng(vp, captureOptions)
+
+            try {
+              if (format === "jpeg") {
+                return await window.htmlToImage.toJpeg(vp, { ...captureOptions, quality: 0.95 })
+              }
+              return await window.htmlToImage.toPng(vp, captureOptions)
+            } finally {
+              restoreVideoFns.forEach(fn => fn())
+            }
           }
 
           if (mode === "current") {
