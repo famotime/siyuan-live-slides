@@ -428,6 +428,28 @@
       box-shadow: none !important;
     }
 
+    /* 图片导出捕获模式强重置规则：防止 absolute + 50% 居中导致光栅化严重偏移 */
+    .slide-stage-container.is-capturing {
+      display: block !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: visible !important;
+    }
+
+    .slide-viewport.is-capturing,
+    .is-capturing .slide-viewport {
+      position: static !important;
+      left: auto !important;
+      top: auto !important;
+      right: auto !important;
+      bottom: auto !important;
+      inset: auto !important;
+      transform: none !important;
+      margin: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+
     .slide-content-wrapper {
       position: relative;
       width: 100%;
@@ -2529,14 +2551,14 @@
     <div
       ref="stageContainerRef"
       class="slide-stage-container"
-      :class="{ 'is-fullscreen': isFullscreenMode }"
+      :class="{ 'is-fullscreen': isFullscreenMode, 'is-capturing': isCapturingImages }"
       :data-theme="currentThemeMode"
       :data-slidev-theme="currentSlidevTheme"
       :data-normalize-headings="isNormalizeHeadings ? 'true' : null"
     >
       <div
         class="slide-viewport"
-        :class="['slidev-theme-' + currentSlidevTheme]"
+        :class="['slidev-theme-' + currentSlidevTheme, { 'is-capturing': isCapturingImages }]"
         :data-spacing="currentSpacing"
         :data-normalize-headings="isNormalizeHeadings ? 'true' : null"
         :style="viewportStyle"
@@ -3653,6 +3675,22 @@
         })
 
         const viewportStyle = computed(() => {
+          if (isCapturingImages.value) {
+            return {
+              width: `${baseWidth}px`,
+              height: `${baseHeight.value}px`,
+              position: "static",
+              left: "auto",
+              top: "auto",
+              right: "auto",
+              bottom: "auto",
+              transform: "none",
+              margin: "0px",
+              borderRadius: "0px",
+              boxShadow: "none",
+              ...pageBackgroundStyle.value
+            }
+          }
           return {
             width: `${baseWidth}px`,
             height: `${baseHeight.value}px`,
@@ -6263,22 +6301,19 @@
 
           isCaptureCancelled = false
           isCapturingImages.value = true
+          await nextTick()
 
           if (showOverview.value) {
             showOverview.value = false
+            await nextTick()
           }
 
           const captureOptions = {
             pixelRatio: scale,
             width: baseWidth,
             height: baseHeight.value,
-            style: {
-              transform: "none",
-              left: "0px",
-              top: "0px",
-              margin: "0px",
-              position: "relative"
-            },
+            canvasWidth: baseWidth,
+            canvasHeight: baseHeight.value,
             cacheBust: false
           }
 
@@ -6325,6 +6360,7 @@
               }, "*")
             } finally {
               isCapturingImages.value = false
+              await nextTick()
             }
             return
           }
@@ -6384,6 +6420,7 @@
             await nextTick()
             currentStep.value = originalStep
             isCapturingImages.value = false
+            await nextTick()
           }
         }
 
