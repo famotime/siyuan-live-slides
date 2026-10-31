@@ -852,6 +852,9 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       object-fit: contain;
       border-radius: 8px;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+      user-select: none;
+      -webkit-user-drag: none;
+      touch-action: none;
     }
     .slidev-lightbox-video {
       max-width: 92vw;

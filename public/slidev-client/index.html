@@ -1714,6 +1714,9 @@
       object-fit: contain;
       border-radius: 8px;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+      user-select: none;
+      -webkit-user-drag: none;
+      touch-action: none;
     }
     .slidev-lightbox-video {
       max-width: 92vw;
@@ -2519,6 +2522,7 @@
   </style>
   <script src="./assets/vue.global.prod.js"></script>
   <script src="./assets/unocss.attributify.global.js"></script>
+  <script src="./assets/html-to-image.js"></script>
 </head>
 <body>
   <div id="app" :data-normalize-headings="isNormalizeHeadings ? 'true' : null">
@@ -2940,16 +2944,23 @@
         <div
           v-if="activeLightbox"
           class="slidev-lightbox"
-          @click.stop="closeLightbox"
+          @click.stop="onLightboxBackdropClick"
         >
           <button class="slidev-lightbox-close" @click.stop="closeLightbox" aria-label="关闭 (Esc)">✕</button>
-          <div class="slidev-lightbox-content" @click.stop="closeLightbox">
+          <div class="slidev-lightbox-content" @click.stop="onLightboxBackdropClick">
             <img
               v-if="activeLightbox.type === 'img'"
               :src="activeLightbox.src"
               :alt="activeLightbox.alt"
               class="slidev-lightbox-img"
-              @click.stop
+              :class="{ 'is-zoomed': lightboxScale > 1, 'is-dragging': isLightboxDragging }"
+              :style="lightboxImgStyle"
+              @pointerdown="onLightboxPointerDown"
+              @pointermove="onLightboxPointerMove"
+              @pointerup="onLightboxPointerUp"
+              @pointercancel="onLightboxPointerUp"
+              @dblclick.stop="onLightboxDblClick"
+              @click.stop="onLightboxImgClick"
             />
             <video
               v-else-if="activeLightbox.type === 'video'"
@@ -3580,6 +3591,8 @@
         const currentStep = ref(0) // 当前页内 v-click 步进计数
         const highlightedBlockId = ref("")
         const isKeyboardFrozen = ref(false)
+        const isCapturingImages = ref(false)
+        let isCaptureCancelled = false
         const config = ref({
           theme: "default",
           aspectRatio: "16/9",
@@ -3706,11 +3719,164 @@
         })
 
         const activeLightbox = ref(null)
+        const lightboxScale = ref(1.0)
+        const lightboxTranslateX = ref(0)
+        const lightboxTranslateY = ref(0)
+        const isLightboxDragging = ref(false)
+
+        let lightboxDragStartX = 0
+        let lightboxDragStartY = 0
+        let lightboxInitialTx = 0
+        let lightboxInitialTy = 0
+        let lightboxHasMoved = false
+
+        function resetLightboxZoom() {
+          lightboxScale.value = 1.0
+          lightboxTranslateX.value = 0
+          lightboxTranslateY.value = 0
+          isLightboxDragging.value = false
+          lightboxHasMoved = false
+        }
+
         function openLightbox(type, src, alt = '') {
+          resetLightboxZoom()
           activeLightbox.value = { type, src, alt }
         }
+
         function closeLightbox() {
           activeLightbox.value = null
+          resetLightboxZoom()
+        }
+
+        const lightboxImgStyle = computed(() => {
+          return {
+            transformOrigin: 'center center',
+            transform: `translate(${lightboxTranslateX.value}px, ${lightboxTranslateY.value}px) scale(${lightboxScale.value})`,
+            cursor: lightboxScale.value > 1.0
+              ? (isLightboxDragging.value ? 'grabbing' : 'grab')
+              : 'zoom-in',
+            transition: isLightboxDragging.value ? 'none' : 'transform 0.12s cubic-bezier(0.16, 1, 0.3, 1)'
+          }
+        })
+
+        function handleLightboxWheel(e) {
+          e.preventDefault()
+          e.stopPropagation()
+          if (Math.abs(e.deltaY) < 1) return
+
+          const factor = e.deltaY < 0 ? 1.2 : 1 / 1.2
+          const currentScale = lightboxScale.value
+          let nextScale = currentScale * factor
+
+          if (nextScale <= 1.02) {
+            resetLightboxZoom()
+            return
+          }
+          if (nextScale > 5.0) {
+            nextScale = 5.0
+          }
+
+          const imgEl = document.querySelector('.slidev-lightbox-img')
+          if (imgEl && imgEl.getBoundingClientRect) {
+            const rect = imgEl.getBoundingClientRect()
+            const currentCenterX = rect.left + rect.width / 2
+            const currentCenterY = rect.top + rect.height / 2
+            const origCenterX = currentCenterX - lightboxTranslateX.value
+            const origCenterY = currentCenterY - lightboxTranslateY.value
+
+            const nextTx = (e.clientX - origCenterX) * (1 - nextScale / currentScale) + lightboxTranslateX.value * (nextScale / currentScale)
+            const nextTy = (e.clientY - origCenterY) * (1 - nextScale / currentScale) + lightboxTranslateY.value * (nextScale / currentScale)
+
+            lightboxTranslateX.value = Math.round(nextTx * 10) / 10
+            lightboxTranslateY.value = Math.round(nextTy * 10) / 10
+          }
+
+          lightboxScale.value = Math.round(nextScale * 1000) / 1000
+        }
+
+        function onLightboxPointerDown(e) {
+          if (e.button !== 0 || lightboxScale.value <= 1.0) return
+          e.preventDefault()
+          e.stopPropagation()
+          isLightboxDragging.value = true
+          lightboxDragStartX = e.clientX
+          lightboxDragStartY = e.clientY
+          lightboxInitialTx = lightboxTranslateX.value
+          lightboxInitialTy = lightboxTranslateY.value
+          lightboxHasMoved = false
+
+          const target = e.currentTarget || e.target
+          if (target && target.setPointerCapture) {
+            try {
+              target.setPointerCapture(e.pointerId)
+            } catch (_) {}
+          }
+        }
+
+        function onLightboxPointerMove(e) {
+          if (!isLightboxDragging.value) return
+          e.preventDefault()
+          e.stopPropagation()
+          const dx = e.clientX - lightboxDragStartX
+          const dy = e.clientY - lightboxDragStartY
+          if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+            lightboxHasMoved = true
+          }
+          lightboxTranslateX.value = Math.round((lightboxInitialTx + dx) * 10) / 10
+          lightboxTranslateY.value = Math.round((lightboxInitialTy + dy) * 10) / 10
+        }
+
+        function onLightboxPointerUp(e) {
+          if (!isLightboxDragging.value) return
+          e.preventDefault()
+          e.stopPropagation()
+          isLightboxDragging.value = false
+          const target = e.currentTarget || e.target
+          if (target && target.releasePointerCapture) {
+            try {
+              target.releasePointerCapture(e.pointerId)
+            } catch (_) {}
+          }
+        }
+
+        function onLightboxImgClick(e) {
+          if (lightboxHasMoved) {
+            e.preventDefault()
+            e.stopPropagation()
+            lightboxHasMoved = false
+            return
+          }
+        }
+
+        function onLightboxBackdropClick(e) {
+          if (lightboxHasMoved) {
+            lightboxHasMoved = false
+            return
+          }
+          closeLightbox()
+        }
+
+        function onLightboxDblClick(e) {
+          e.preventDefault()
+          e.stopPropagation()
+          if (lightboxScale.value > 1.05 || lightboxTranslateX.value !== 0 || lightboxTranslateY.value !== 0) {
+            resetLightboxZoom()
+          } else {
+            const targetScale = 2.0
+            const imgEl = e.currentTarget || e.target
+            if (imgEl && imgEl.getBoundingClientRect) {
+              const rect = imgEl.getBoundingClientRect()
+              const currentCenterX = rect.left + rect.width / 2
+              const currentCenterY = rect.top + rect.height / 2
+              const origCenterX = currentCenterX - lightboxTranslateX.value
+              const origCenterY = currentCenterY - lightboxTranslateY.value
+              const nextTx = (e.clientX - origCenterX) * (1 - targetScale / 1.0)
+              const nextTy = (e.clientY - origCenterY) * (1 - targetScale / 1.0)
+              lightboxTranslateX.value = Math.round(nextTx * 10) / 10
+              lightboxTranslateY.value = Math.round(nextTy * 10) / 10
+            }
+            lightboxScale.value = targetScale
+          }
         }
 
         function getLayoutGridStyle(slide, defaultCols = 2) {
@@ -3753,6 +3919,7 @@
 
         // 转场动画类
         const transitionClass = computed(() => {
+          if (isCapturingImages.value) return ""
           const t = currentSlide.value?.frontmatter?.transition || config.value.defaultTransition || "slide-left"
           return `transition-${t}`
         })
@@ -5899,7 +6066,12 @@
         }
 
         function onWheel(e) {
-          if (activeLightbox && activeLightbox.value) return
+          if (activeLightbox && activeLightbox.value) {
+            if (activeLightbox.value.type === 'img') {
+              handleLightboxWheel(e)
+            }
+            return
+          }
           // 总览打开时滚轮交给总览列表原生滚动，不触发翻页
           if (showOverview.value) return
           if (isKeyboardFrozen && isKeyboardFrozen.value) return
@@ -5955,6 +6127,12 @@
 
           // 核心保护：若媒体灯箱处于打开放大状态，点击媒体外部自动关闭返回，绝不翻页！
           if (activeLightbox && activeLightbox.value) {
+            if (lightboxHasMoved) {
+              lightboxHasMoved = false
+              e.preventDefault()
+              e.stopPropagation()
+              return
+            }
             const target = e.target instanceof Element ? e.target : e.target?.parentElement
             const isMediaItself = target && target.closest && target.closest('.slidev-lightbox-img, .slidev-lightbox-video')
             if (!isMediaItself) {
@@ -6058,6 +6236,157 @@
           syncAutoplayVideos()
         }
 
+        // 幻灯片逐页导出图片核心逻辑
+        async function runImageCapture(opts) {
+          const mode = opts?.mode || "all"
+          const scale = opts?.scale || 2
+          const format = opts?.format || "png"
+
+          if (!window.htmlToImage) {
+            window.parent.postMessage({
+              source: "siyuan-slidev-client",
+              action: "CAPTURE_ERROR",
+              payload: { captureError: "沙箱内部 html-to-image 截图组件未就绪" }
+            }, "*")
+            return
+          }
+
+          const vp = stageContainerRef.value ? stageContainerRef.value.querySelector(".slide-viewport") : null
+          if (!vp) {
+            window.parent.postMessage({
+              source: "siyuan-slidev-client",
+              action: "CAPTURE_ERROR",
+              payload: { captureError: "未找到 .slide-viewport 视口元素" }
+            }, "*")
+            return
+          }
+
+          isCaptureCancelled = false
+          isCapturingImages.value = true
+
+          if (showOverview.value) {
+            showOverview.value = false
+          }
+
+          const captureOptions = {
+            pixelRatio: scale,
+            width: baseWidth,
+            height: baseHeight.value,
+            style: {
+              transform: "none",
+              left: "0px",
+              top: "0px",
+              margin: "0px",
+              position: "relative"
+            },
+            cacheBust: false
+          }
+
+          const captureSinglePage = async (pageIdx) => {
+            currentPageIndex.value = pageIdx
+            await nextTick()
+            currentStep.value = maxStepInCurrentSlide.value
+            await nextTick()
+
+            try {
+              if (document.fonts && document.fonts.ready) {
+                await document.fonts.ready
+              }
+            } catch (e) {}
+
+            await new Promise(r => setTimeout(r, 60))
+
+            if (format === "jpeg") {
+              return await window.htmlToImage.toJpeg(vp, { ...captureOptions, quality: 0.95 })
+            }
+            return await window.htmlToImage.toPng(vp, captureOptions)
+          }
+
+          if (mode === "current") {
+            try {
+              const dataUrl = await captureSinglePage(currentPageIndex.value)
+              window.parent.postMessage({
+                source: "siyuan-slidev-client",
+                action: "CAPTURE_PAGE_DONE",
+                payload: {
+                  captureResult: {
+                    pageIndex: currentPageIndex.value,
+                    dataUrl: dataUrl,
+                    total: 1,
+                    mode: "current"
+                  }
+                }
+              }, "*")
+            } catch (err) {
+              window.parent.postMessage({
+                source: "siyuan-slidev-client",
+                action: "CAPTURE_ERROR",
+                payload: { captureError: String(err && err.message ? err.message : err) }
+              }, "*")
+            } finally {
+              isCapturingImages.value = false
+            }
+            return
+          }
+
+          const originalPage = currentPageIndex.value
+          const originalStep = currentStep.value
+          const total = totalPages.value || 1
+
+          try {
+            for (let i = 1; i <= total; i++) {
+              if (isCaptureCancelled) break
+
+              window.parent.postMessage({
+                source: "siyuan-slidev-client",
+                action: "CAPTURE_PROGRESS",
+                payload: {
+                  captureProgress: {
+                    current: i,
+                    total: total,
+                    pageIndex: i
+                  }
+                }
+              }, "*")
+
+              const dataUrl = await captureSinglePage(i)
+              if (isCaptureCancelled) break
+
+              window.parent.postMessage({
+                source: "siyuan-slidev-client",
+                action: "CAPTURE_PAGE_DONE",
+                payload: {
+                  captureResult: {
+                    pageIndex: i,
+                    dataUrl: dataUrl,
+                    total: total,
+                    mode: "all"
+                  }
+                }
+              }, "*")
+            }
+
+            if (!isCaptureCancelled) {
+              window.parent.postMessage({
+                source: "siyuan-slidev-client",
+                action: "CAPTURE_COMPLETE",
+                payload: { totalPages: total }
+              }, "*")
+            }
+          } catch (err) {
+            window.parent.postMessage({
+              source: "siyuan-slidev-client",
+              action: "CAPTURE_ERROR",
+              payload: { captureError: String(err && err.message ? err.message : err) }
+            }, "*")
+          } finally {
+            currentPageIndex.value = originalPage
+            await nextTick()
+            currentStep.value = originalStep
+            isCapturingImages.value = false
+          }
+        }
+
         // 监听来自宿主 (Plugin Host) 的 postMessage 消息
         function onHostMessage(event) {
           const data = event.data
@@ -6151,6 +6480,15 @@
 
             case "TOGGLE_OVERVIEW":
               toggleOverview()
+              break
+
+            case "START_IMAGE_EXPORT":
+              runImageCapture(data.payload?.captureOptions)
+              break
+
+            case "CANCEL_IMAGE_EXPORT":
+              isCaptureCancelled = true
+              isCapturingImages.value = false
               break
           }
         }
@@ -6294,6 +6632,17 @@
           activeLightbox,
           openLightbox,
           closeLightbox,
+          lightboxScale,
+          lightboxTranslateX,
+          lightboxTranslateY,
+          isLightboxDragging,
+          lightboxImgStyle,
+          onLightboxPointerDown,
+          onLightboxPointerMove,
+          onLightboxPointerUp,
+          onLightboxImgClick,
+          onLightboxBackdropClick,
+          onLightboxDblClick,
           getHeadingNormalizeClass,
           currentSlideMaskConfig,
           maskLayerStyle,

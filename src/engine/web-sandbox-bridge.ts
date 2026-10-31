@@ -17,6 +17,10 @@ export type TBlockClickedHandler = (clickedBlockId: string, currentPage: number)
 export type TOpenInEditorHandler = (blockId: string, currentPage: number) => void
 export type TClientReadyHandler = () => void
 export type TOpenPresenterHandler = () => void
+export type TCaptureProgressHandler = (progress: { current: number; total: number; pageIndex: number }) => void
+export type TCapturePageDoneHandler = (result: { pageIndex: number; dataUrl: string; total: number; mode?: "current" | "all" }) => void
+export type TCaptureCompleteHandler = (result: { total: number }) => void
+export type TCaptureErrorHandler = (error: string) => void
 
 export interface IOpenPeekDrawerDetail {
   peekType: "siyuan" | "web"
@@ -38,6 +42,10 @@ export class WebSandboxBridge {
   private openPeekDrawerHandlers: TOpenPeekDrawerHandler[] = []
   private toggleFullscreenHandlers: (() => void)[] = []
   private openPresenterHandlers: TOpenPresenterHandler[] = []
+  private captureProgressHandlers: TCaptureProgressHandler[] = []
+  private capturePageDoneHandlers: TCapturePageDoneHandler[] = []
+  private captureCompleteHandlers: TCaptureCompleteHandler[] = []
+  private captureErrorHandlers: TCaptureErrorHandler[] = []
 
   constructor() {
     this.handleWindowMessage = this.handleWindowMessage.bind(this)
@@ -150,6 +158,48 @@ export class WebSandboxBridge {
    */
   public toggleOverview(): void {
     this.postMessage("TOGGLE_OVERVIEW", {})
+  }
+
+  /**
+   * 启动图片导出（逐页或当前页）
+   */
+  public startImageExport(options: { mode: "current" | "all"; scale?: number; format?: "png" | "jpeg" }): void {
+    this.postMessage("START_IMAGE_EXPORT", { captureOptions: options })
+  }
+
+  /**
+   * 取消进行中的图片导出
+   */
+  public cancelImageExport(): void {
+    this.postMessage("CANCEL_IMAGE_EXPORT", {})
+  }
+
+  public onCaptureProgress(handler: TCaptureProgressHandler): () => void {
+    this.captureProgressHandlers.push(handler)
+    return () => {
+      this.captureProgressHandlers = this.captureProgressHandlers.filter(h => h !== handler)
+    }
+  }
+
+  public onCapturePageDone(handler: TCapturePageDoneHandler): () => void {
+    this.capturePageDoneHandlers.push(handler)
+    return () => {
+      this.capturePageDoneHandlers = this.capturePageDoneHandlers.filter(h => h !== handler)
+    }
+  }
+
+  public onCaptureComplete(handler: TCaptureCompleteHandler): () => void {
+    this.captureCompleteHandlers.push(handler)
+    return () => {
+      this.captureCompleteHandlers = this.captureCompleteHandlers.filter(h => h !== handler)
+    }
+  }
+
+  public onCaptureError(handler: TCaptureErrorHandler): () => void {
+    this.captureErrorHandlers.push(handler)
+    return () => {
+      this.captureErrorHandlers = this.captureErrorHandlers.filter(h => h !== handler)
+    }
   }
 
   public onSlideChanged(handler: TSlideChangedHandler): () => void {
@@ -287,6 +337,34 @@ export class WebSandboxBridge {
       case "OPEN_PRESENTER":
         for (const handler of this.openPresenterHandlers) {
           handler()
+        }
+        break
+
+      case "CAPTURE_PROGRESS":
+        if (data.payload.captureProgress) {
+          for (const handler of this.captureProgressHandlers) {
+            handler(data.payload.captureProgress)
+          }
+        }
+        break
+
+      case "CAPTURE_PAGE_DONE":
+        if (data.payload.captureResult) {
+          for (const handler of this.capturePageDoneHandlers) {
+            handler(data.payload.captureResult)
+          }
+        }
+        break
+
+      case "CAPTURE_COMPLETE":
+        for (const handler of this.captureCompleteHandlers) {
+          handler({ total: data.payload.totalPages || 0 })
+        }
+        break
+
+      case "CAPTURE_ERROR":
+        for (const handler of this.captureErrorHandlers) {
+          handler(data.payload.captureError || "未知沙箱截图异常")
         }
         break
     }

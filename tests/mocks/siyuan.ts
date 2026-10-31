@@ -11,7 +11,7 @@ export class Plugin {
   addTab = () => {}
   addDock = () => {}
 }
-export const showMessage = (_msg: string) => {}
+export const showMessage = (_msg: string, ..._args: any[]) => {}
 export const confirm = (
   _title: string,
   _text: string,

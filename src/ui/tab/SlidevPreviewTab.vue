@@ -84,6 +84,40 @@
           <SlidevIcon name="export-pdf" />
         </button>
 
+        <!-- 导出图片 -->
+        <div class="spm-export-image-dropdown" style="position: relative; display: inline-flex; align-items: center;">
+          <button
+            class="spm-icon-btn b3-tooltips b3-tooltips__s"
+            aria-label="导出幻灯片为图片包 (ZIP)"
+            @click="onExportAllImages"
+          >
+            <SlidevIcon name="export-image" />
+          </button>
+          <button
+            class="spm-icon-btn b3-tooltips b3-tooltips__s"
+            style="padding: 2px 2px; margin-left: -4px;"
+            aria-label="更多图片导出选项"
+            @click.stop="showImageExportMenu = !showImageExportMenu"
+          >
+            <SlidevIcon name="chevron-down" />
+          </button>
+          <div
+            v-if="showImageExportMenu"
+            class="b3-menu b3-menu--context"
+            style="position: absolute; top: calc(100% + 4px); right: 0; z-index: 100; min-width: 190px; box-shadow: var(--b3-point-shadow); border-radius: 4px; background: var(--b3-theme-surface);"
+          >
+            <button class="b3-menu__item" @click="onExportAllImages(); showImageExportMenu = false">
+              <span class="b3-menu__label">📦 导出全篇为图片包 (ZIP)</span>
+            </button>
+            <button class="b3-menu__item" @click="onExportCurrentSlide(); showImageExportMenu = false">
+              <span class="b3-menu__label">🖼️ 导出当前页为图片 (PNG)</span>
+            </button>
+            <button class="b3-menu__item" @click="onCopyCurrentSlide(); showImageExportMenu = false">
+              <span class="b3-menu__label">📋 复制当前页至剪贴板</span>
+            </button>
+          </div>
+        </div>
+
         <!-- 重新编译 -->
         <button
           class="spm-icon-btn b3-tooltips b3-tooltips__s"
@@ -174,6 +208,12 @@ import { getRuntimeModule } from '@/engine/runtime-node'
 import { resolvePeekUrl, fileUrlToPath } from '@/utils/peek-url'
 import { buildStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'
 import { triggerPdfExport } from '@/export/pdf-exporter'
+import {
+  exportAllSlidesZip,
+  exportCurrentSlideImage,
+  downloadDataUrl,
+  copyDataUrlToClipboard,
+} from '@/export/image-exporter'
 import { getRuntimeSettings, buildSiYuanWebUrl } from '@/settings'
 import { createPageJumpInput, isEditableTarget } from './page-jump-input'
 import type { ISlidevDocument } from '@/types/slidev-protocol'
@@ -191,6 +231,7 @@ const isFullscreen = ref(false)
 const sandboxIframeRef = ref<HTMLIFrameElement | null>(null)
 const currentPage = ref(1)
 const totalPages = ref(1)
+const showImageExportMenu = ref(false)
 
 // 沉浸式速览抽屉状态
 const isDrawerOpen = ref(false)
@@ -557,6 +598,64 @@ function onExportPdf() {
   const ok = triggerPdfExport(latestDoc)
   if (ok) {
     showMessage('已唤起打印视窗，请在打印选项中选择「另存为 PDF」')
+  }
+}
+
+async function onExportAllImages() {
+  if (!latestDoc) {
+    showMessage('请先在主编辑区打开幻灯片文档')
+    return
+  }
+  showMessage('正在逐页导出幻灯片图片...', 2000)
+  const title = latestDoc.config.title || (plugin as any)?.currentDocId || 'presentation'
+  const res = await exportAllSlidesZip(sandboxBridge, {
+    title,
+    onProgress: (current, total) => {
+      showMessage(`正在导出幻灯片图片 (${current} / ${total})...`, 1500)
+    },
+  })
+  if (res.success) {
+    showMessage(`🎉 成功导出 ${res.total || 0} 张高清图片并打包为 ZIP！`, 4000)
+  } else {
+    showMessage(`导出图片失败：${res.error || '未知异常'}`)
+  }
+}
+
+async function onExportCurrentSlide() {
+  if (!latestDoc) {
+    showMessage('请先在主编辑区打开幻灯片文档')
+    return
+  }
+  showMessage('正在导出当前幻灯片图片...', 1500)
+  const res = await exportCurrentSlideImage(sandboxBridge)
+  if (res.success && res.dataUrl) {
+    const title = latestDoc.config.title || 'presentation'
+    const page = currentPage.value || 1
+    downloadDataUrl(`${title}-slide-${page}.png`, res.dataUrl)
+    showMessage(`已下载当前页（第 ${page} 页）高清图片`)
+  } else {
+    showMessage(`导出当前页图片失败：${res.error || '未知异常'}`)
+  }
+}
+
+async function onCopyCurrentSlide() {
+  if (!latestDoc) {
+    showMessage('请先在主编辑区打开幻灯片文档')
+    return
+  }
+  showMessage('正在复制当前幻灯片截图到剪贴板...', 1500)
+  const res = await exportCurrentSlideImage(sandboxBridge)
+  if (res.success && res.dataUrl) {
+    const ok = await copyDataUrlToClipboard(res.dataUrl)
+    if (ok) {
+      showMessage(`已成功将第 ${currentPage.value || 1} 页幻灯片复制到剪贴板！`)
+    } else {
+      const page = currentPage.value || 1
+      downloadDataUrl(`slide-${page}.png`, res.dataUrl)
+      showMessage(`剪贴板权限不可用，已自动下载为 slide-${page}.png`)
+    }
+  } else {
+    showMessage(`复制失败：${res.error || '未知异常'}`)
   }
 }
 

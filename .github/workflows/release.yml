@@ -8,21 +8,23 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       # Checkout
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Install Node.js
       - name: Install Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           registry-url: "https://registry.npmjs.org"
 
-        # Install pnpm
+      # Install pnpm
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         id: pnpm-install
         with:
           version: 8
@@ -37,7 +39,7 @@ jobs:
 
       # Setup pnpm cache
       - name: Setup pnpm cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -48,9 +50,24 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      # Build for production, 这一步会生成一个 package.zip
+      # Build for production
       - name: Build for production
         run: pnpm build
+
+      # Extract release notes from CHANGELOG.md
+      - name: Extract Changelog
+        shell: bash
+        run: |
+          node -e "
+            const fs = require('fs');
+            const content = fs.readFileSync('CHANGELOG.md', 'utf8');
+            const tag = process.env.GITHUB_REF_NAME || '';
+            const cleanTag = tag.replace(/^v/, '');
+            const regex = new RegExp('##\\\\s*\\\\[?(?:v)?' + cleanTag.replace(/\\./g, '\\\\.') + '\\\\]?[^\\\\r\\\\n]*\\\\r?\\\\n([\\\\s\\\\S]*?)(?=\\\\r?\\\\n##\\\\s|$)');
+            const match = content.match(regex);
+            const body = match ? match[1].trim() : '';
+            fs.writeFileSync('RELEASE_NOTES.md', body);
+          "
 
       - name: Release
         uses: ncipollo/release-action@v1
@@ -58,5 +75,7 @@ jobs:
           allowUpdates: true
           artifactErrorsFailBuild: true
           artifacts: "package.zip"
+          bodyFile: "RELEASE_NOTES.md"
           token: ${{ secrets.GITHUB_TOKEN }}
-          prerelease: true
+          prerelease: false
+          makeLatest: true

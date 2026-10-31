@@ -237,6 +237,15 @@
           <SlidevIcon name="export-pdf" />
           <span>导出 PDF</span>
         </button>
+
+        <button
+          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          aria-label="逐页导出高清图片包 (ZIP)"
+          @click="$emit('exportImages')"
+        >
+          <SlidevIcon name="export-image" />
+          <span>导出图片</span>
+        </button>
       </div>
     </div>
   </div>
@@ -314,5 +323,6 @@ defineEmits<{
   (e: 'aiAutoSplit'): void
   (e: 'exportHtml'): void
   (e: 'exportPdf'): void
+  (e: 'exportImages'): void
 }>()
 </script>

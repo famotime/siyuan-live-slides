@@ -1,6 +1,7 @@
 import { showMessage } from "siyuan"
 import { triggerPdfExport } from "@/export/pdf-exporter"
 import { buildStandaloneHtml, downloadHtmlFile } from "@/export/single-html-exporter"
+import { runHeadlessImageExport } from "@/export/image-exporter"
 import { createAttrPersistence, type IInspectorActionsContext } from "./actions/attr-persistence"
 import { createNotesActions } from "./actions/notes-actions"
 import { createLayoutActions } from "./actions/layout-actions"
@@ -47,6 +48,27 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     }
   }
 
+  async function onExportImages() {
+    if (!ctx.latestDoc.value) {
+      showMessage("请先在主编辑区打开幻灯片文档")
+      return
+    }
+    showMessage("正在启动后台沙箱并逐页导出幻灯片图片...")
+    const doc = ctx.latestDoc.value
+    const title = (ctx as any).docTitle?.value || doc.config.title || "presentation"
+    const res = await runHeadlessImageExport(doc, {
+      title,
+      onProgress: (current, total) => {
+        showMessage(`正在导出幻灯片图片 (${current} / ${total})...`, 2000)
+      },
+    })
+    if (res.success) {
+      showMessage(`🎉 成功导出 ${res.total || 0} 张幻灯片高清图片并已保存为 ZIP 压缩包！`, 4000)
+    } else {
+      showMessage(`导出图片失败：${res.error || "未知异常"}`)
+    }
+  }
+
   return {
     triggerSaveNotice,
     saveAttrs,
@@ -82,5 +104,6 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     applyCloverLayout: layout.applyCloverLayout,
     onExportHtml,
     onExportPdf,
+    onExportImages,
   }
 }

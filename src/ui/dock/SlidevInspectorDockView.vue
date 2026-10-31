@@ -159,6 +159,7 @@
         @ai-auto-split="onAiAutoSplit"
         @export-html="onExportHtml"
         @export-pdf="onExportPdf"
+        @export-images="onExportImages"
       />
     </div>
 
@@ -736,6 +737,7 @@ const {
   onDeleteCurrentBlock,
   onExportHtml,
   onExportPdf,
+  onExportImages,
 } = useInspectorActions({
   activeBlockId,
   activeBlockType,

@@ -51,6 +51,7 @@ export interface ISlidevPluginConfig {
   colorSchema: "auto" | "dark" | "light"
   spacing?: "compact" | "normal" | "loose"
   normalizeHeadingSizes?: boolean
+  title?: string
 }
 
 /** 页面版式类型 */

@@ -23,7 +23,12 @@ export function getKeyboardScrollInitSection(): string {
       }
 
       window.addEventListener("wheel", (e) => {
-        if (isLightboxOpen) return;
+        if (isLightboxOpen) {
+          if (typeof handleLightboxWheel === "function") {
+            handleLightboxWheel(e);
+          }
+          return;
+        }
         // 总览打开时滚轮交给总览列表原生滚动，不触发翻页
         if (overviewOpen) return;
         if (Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
@@ -46,6 +51,11 @@ export function getKeyboardScrollInitSection(): string {
 
       document.addEventListener("click", (e) => {
         if (isLightboxOpen) {
+          if (typeof lightboxHasMoved !== "undefined" && lightboxHasMoved) {
+            lightboxHasMoved = false;
+            e.stopPropagation();
+            return;
+          }
           const target = e.target instanceof Element ? e.target : e.target?.parentElement;
           const isMediaItself = target && target.closest && target.closest(".slidev-lightbox-img, .slidev-lightbox-video");
           if (!isMediaItself) {

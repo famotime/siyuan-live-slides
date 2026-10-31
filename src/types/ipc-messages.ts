@@ -16,6 +16,8 @@ export type THostToSlidevAction =
   | "FREEZE_KEYBOARD_NAV"
   | "FULLSCREEN_CHANGED"
   | "TOGGLE_OVERVIEW"
+  | "START_IMAGE_EXPORT"
+  | "CANCEL_IMAGE_EXPORT"
 
 export interface IHostToSlidevMessage {
   source: "siyuan-slidev-host"
@@ -39,6 +41,12 @@ export interface IHostToSlidevMessage {
     isFullscreen?: boolean
     // 思源主题与字体样式 CSS 变量定义
     customThemeCss?: string
+    // 图片导出选项
+    captureOptions?: {
+      mode: "current" | "all"
+      scale?: number
+      format?: "png" | "jpeg"
+    }
   }
 }
 
@@ -55,6 +63,10 @@ export type TSlidevToHostAction =
   | "OPEN_PEEK_DRAWER"
   | "REQUEST_TOGGLE_FULLSCREEN"
   | "OPEN_PRESENTER"
+  | "CAPTURE_PROGRESS"
+  | "CAPTURE_PAGE_DONE"
+  | "CAPTURE_COMPLETE"
+  | "CAPTURE_ERROR"
 
 export interface ISlidevToHostMessage {
   source: "siyuan-slidev-client"
@@ -82,5 +94,18 @@ export interface ISlidevToHostMessage {
     peekType?: "siyuan" | "web"
     url?: string
     title?: string
+    // 幻灯片逐页导出图片回调载荷
+    captureProgress?: {
+      current: number
+      total: number
+      pageIndex: number
+    }
+    captureResult?: {
+      pageIndex: number
+      dataUrl: string
+      total: number
+      mode?: "current" | "all"
+    }
+    captureError?: string
   }
 }

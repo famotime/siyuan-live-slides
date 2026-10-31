@@ -17,6 +17,7 @@ import { mirrorBlockSelection } from "@/sync/selection-mirror"
 import { PropertyManagerBridge } from "@/synergy/property-manager-bridge"
 import type { ISiYuanBlockNode, ISlidevDocument } from "@/types/slidev-protocol"
 import type { CliDevServerBridge } from "@/engine/cli-devserver-bridge"
+import { runHeadlessImageExport } from "@/export/image-exporter"
 
 export interface ISlidevPluginHost extends Plugin {
   currentDocId: string
@@ -305,6 +306,37 @@ export function registerPluginCommands(plugin: ISlidevPluginHost): void {
         showMessage(`已成功同步最新 slides.md 至工作空间：${res.path}`)
       } else {
         showMessage(`同步失败：${res.error}`)
+      }
+    },
+  })
+
+  // 13. 导出幻灯片为图片包 (ZIP)
+  plugin.addCommand({
+    langKey: "slidevExportImagesZip",
+    langText: "Slidev: 逐页导出幻灯片为高清图片包 (ZIP)",
+    hotkey: "",
+    enabled: () => true,
+    execute: async () => {
+      if (!plugin.latestCompiledDoc) {
+        await plugin.compileCurrentDocument()
+      }
+      if (!plugin.latestCompiledDoc) {
+        showMessage("请先打开并放映一篇思源笔记文档")
+        return
+      }
+      showMessage("正在启动后台沙箱并逐页导出幻灯片图片...")
+      const doc = plugin.latestCompiledDoc
+      const title = doc.config.title || plugin.currentDocId || "presentation"
+      const res = await runHeadlessImageExport(doc, {
+        title,
+        onProgress: (current, total) => {
+          showMessage(`正在导出幻灯片图片 (${current} / ${total})...`, 2000)
+        },
+      })
+      if (res.success) {
+        showMessage(`🎉 成功导出 ${res.total || 0} 张幻灯片高清图片并已保存为 ZIP 压缩包！`, 4000)
+      } else {
+        showMessage(`导出图片失败：${res.error || "未知异常"}`)
       }
     },
   })
