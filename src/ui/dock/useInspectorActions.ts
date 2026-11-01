@@ -1,3 +1,4 @@
+import { ref } from "vue"
 import { showMessage } from "siyuan"
 import { triggerPdfExport } from "@/export/pdf-exporter"
 import { buildStandaloneHtml, downloadHtmlFile } from "@/export/single-html-exporter"
@@ -50,24 +51,35 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     }
   }
 
+  const isExportingImages = ref(false)
+
   async function onExportImages() {
+    if (isExportingImages.value) {
+      showMessage("正在导出图片中，请稍候...", 2000)
+      return
+    }
     if (!ctx.latestDoc.value) {
       showMessage("请先在主编辑区打开幻灯片文档")
       return
     }
-    showMessage("正在启动后台沙箱并逐页导出幻灯片图片...")
-    const doc = ctx.latestDoc.value
-    const title = await resolveDocumentTitle(doc, ctx.currentDocId?.value, ctx.plugin)
-    const res = await runHeadlessImageExport(doc, {
-      title,
-      onProgress: (current, total) => {
-        showMessage(`正在导出幻灯片图片 (${current} / ${total})...`, 2000)
-      },
-    })
-    if (res.success) {
-      showMessage(`🎉 成功导出 ${res.total || 0} 张幻灯片高清图片并已保存为 ${title}.zip！`, 4000)
-    } else {
-      showMessage(`导出图片失败：${res.error || "未知异常"}`)
+    isExportingImages.value = true
+    try {
+      showMessage("正在启动后台沙箱并逐页导出幻灯片图片...")
+      const doc = ctx.latestDoc.value
+      const title = await resolveDocumentTitle(doc, ctx.currentDocId?.value, ctx.plugin)
+      const res = await runHeadlessImageExport(doc, {
+        title,
+        onProgress: (current, total) => {
+          showMessage(`正在导出幻灯片图片 (${current} / ${total})...`, 2000)
+        },
+      })
+      if (res.success) {
+        showMessage(`🎉 成功导出 ${res.total || 0} 张幻灯片高清图片并已保存为 ${title}.zip！`, 4000)
+      } else {
+        showMessage(`导出图片失败：${res.error || "未知异常"}`)
+      }
+    } finally {
+      isExportingImages.value = false
     }
   }
 
@@ -104,6 +116,7 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     onDeleteCurrentBlock: layout.onDeleteCurrentBlock,
     resetSuperBlockWidth: layout.resetSuperBlockWidth,
     applyCloverLayout: layout.applyCloverLayout,
+    isExportingImages,
     onExportHtml,
     onExportPdf,
     onExportImages,

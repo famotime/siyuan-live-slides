@@ -260,6 +260,12 @@ export class WebSandboxBridge {
       return
     }
 
+    // 若当前 Bridge 实例已绑定具体 iframe，且事件携带了非空的 source 引用，要求来源与当前 iframe 严格匹配
+    // 杜绝前台预览沙箱与后台无头导出沙箱的 postMessage 交叉感染
+    if (this.iframe?.contentWindow && event.source && event.source !== this.iframe.contentWindow) {
+      return
+    }
+
     switch (data.action) {
       case "CLIENT_READY":
         this.isReady = true

@@ -240,11 +240,13 @@
 
         <button
           class="spm-btn-action b3-tooltips b3-tooltips__s"
-          aria-label="逐页导出高清图片包 (ZIP)"
+          :class="{ 'is-loading': isExportingImages }"
+          :disabled="isExportingImages"
+          :aria-label="isExportingImages ? '正在逐页导出高清图片包，请稍候...' : '逐页导出高清图片包 (ZIP)'"
           @click="$emit('exportImages')"
         >
           <SlidesIcon name="export-image" />
-          <span>导出图片</span>
+          <span>{{ isExportingImages ? '正在导出...' : '导出图片' }}</span>
         </button>
       </div>
     </div>
@@ -311,6 +313,7 @@ defineProps<{
   docAspectRatio: string
   docDefaultTransition: string
   docSpacing?: string
+  isExportingImages?: boolean
 }>()
 
 defineEmits<{

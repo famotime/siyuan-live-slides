@@ -5624,6 +5624,10 @@
           instance.appContext.config.globalProperties.$slidev = slidesContext
         }
 
+        const urlParams = typeof window !== "undefined" && window.location ? new URLSearchParams(window.location.search) : null
+        const isHeadless = urlParams ? (urlParams.get("headless") === "true" || urlParams.get("export") === "true") : false
+        let isExternalSyncing = false
+
         function notifySlideChanged() {
           window.parent.postMessage({
             source: "siyuan-slides-client",
@@ -5636,10 +5640,10 @@
               currentBlockId: currentSlide.value?.startBlockId || ""
             }
           }, "*")
-          // 双屏跨窗口同步：向广播频道同步当前页码与步进（BroadcastChannel 不回环至发送者自身；
-          // try/catch 兼顾频道尚未初始化的时序窗口）
+          // 双屏跨窗口同步：向广播频道同步当前页码与步进
+          // 注意：无头静默沙箱或截图导出过程中切断广播，防止翻页消息污染前台预览；外部同步时不反弹广播
           try {
-            if (broadcastChannel) {
+            if (!isHeadless && broadcastChannel && !isCapturingImages.value && !isExternalSyncing) {
               broadcastChannel.postMessage({
                 type: "SYNC_PAGE",
                 page: currentPageIndex.value,
@@ -5650,38 +5654,56 @@
           } catch (e) {}
         }
 
-        // 双向广播频道用于双屏演讲者模式同步
+        // 双向广播频道用于双屏演讲者模式同步（无头静默沙箱模式下禁用，防止翻页污染前台大屏与演讲者端）
         let broadcastChannel = null
-        try {
-          broadcastChannel = new BroadcastChannel("siyuan-slides-sync")
-          broadcastChannel.onmessage = (e) => {
-            if (e.data?.type === "SYNC_PAGE" && typeof e.data.page === "number") {
-              currentPageIndex.value = Math.max(1, Math.min(e.data.page, totalPages.value || 1))
-              currentStep.value = typeof e.data.step === "number" ? Math.max(0, e.data.step) : 0
-              notifySlideChanged()
-              nextTick(() => {
+        if (!isHeadless) {
+          try {
+            broadcastChannel = new BroadcastChannel("siyuan-slides-sync")
+            broadcastChannel.onmessage = (e) => {
+              if (e.data?.type === "SYNC_PAGE" && typeof e.data.page === "number") {
+                const targetPage = Math.max(1, Math.min(e.data.page, totalPages.value || 1))
+                const targetStep = typeof e.data.step === "number" ? Math.max(0, e.data.step) : 0
+                if (currentPageIndex.value !== targetPage || currentStep.value !== targetStep) {
+                  isExternalSyncing = true
+                  currentPageIndex.value = targetPage
+                  currentStep.value = targetStep
+                  // 仅向宿主上报状态变更，严禁在此再次向 broadcastChannel 广播产生 Ping-Pong 风暴
+                  window.parent.postMessage({
+                    source: "siyuan-slides-client",
+                    action: "SLIDE_CHANGED",
+                    payload: {
+                      currentPage: currentPageIndex.value,
+                      totalPages: totalPages.value,
+                      currentStep: currentStep.value,
+                      maxStep: maxStepInCurrentSlide.value,
+                      currentBlockId: currentSlide.value?.startBlockId || ""
+                    }
+                  }, "*")
+                  nextTick(() => {
+                    isExternalSyncing = false
+                    syncAutoplayVideos()
+                  })
+                }
+              } else if (e.data?.type === "NEXT_STEP") {
+                nextStepOrSlide()
                 syncAutoplayVideos()
-              })
-            } else if (e.data?.type === "NEXT_STEP") {
-              nextStepOrSlide()
-              syncAutoplayVideos()
-            } else if (e.data?.type === "PREV_STEP") {
-              prevStepOrSlide()
-              syncAutoplayVideos()
-            } else if (e.data?.type === "SYNC_SLIDES") {
-              if (e.data.slides) slides.value = e.data.slides
-              if (e.data.config) config.value = { ...config.value, ...e.data.config }
-            } else if (e.data?.type === "REQUEST_SYNC") {
-              if (slides.value && slides.value.length > 0) {
-                broadcastSync()
+              } else if (e.data?.type === "PREV_STEP") {
+                prevStepOrSlide()
+                syncAutoplayVideos()
+              } else if (e.data?.type === "SYNC_SLIDES") {
+                if (e.data.slides) slides.value = e.data.slides
+                if (e.data.config) config.value = { ...config.value, ...e.data.config }
+              } else if (e.data?.type === "REQUEST_SYNC") {
+                if (slides.value && slides.value.length > 0) {
+                  broadcastSync()
+                }
               }
             }
-          }
-        } catch (e) {}
-
+          } catch (e) {}
+        }
 
         function broadcastSync() {
-          if (!broadcastChannel) return
+          if (isHeadless || !broadcastChannel || isCapturingImages.value || isExternalSyncing) return
           try {
             broadcastChannel.postMessage({
               type: "SYNC_PAGE",
@@ -6687,7 +6709,9 @@
               highlightedBlockId.value = ""
             }
             notifySlideChanged()
-            broadcastSync()
+            if (!isExternalSyncing && !isCapturingImages.value && !isHeadless) {
+              broadcastSync()
+            }
           }
         })
         watch(totalPages, () => {
@@ -6729,9 +6753,9 @@
             }
           }, "*")
           notifySlideChanged()
-          // 独立弹出窗口或跨窗口恢复时，主动向广播信道请求在播数据与步进状态
+          // 独立弹出窗口或跨窗口恢复时，主动向广播信道请求在播数据与步进状态（无头沙箱绝不请求）
           try {
-            if (broadcastChannel && (!slides.value || slides.value.length === 0)) {
+            if (!isHeadless && broadcastChannel && (!slides.value || slides.value.length === 0)) {
               broadcastChannel.postMessage({ type: "REQUEST_SYNC" })
             }
           } catch (e) {}

@@ -150,6 +150,7 @@
         :doc-aspect-ratio="docAspectRatio"
         :doc-default-transition="docDefaultTransition"
         :doc-spacing="docSpacing"
+        :is-exporting-images="isExportingImages"
         @update:doc-theme="onDocThemeChange"
         @update:doc-aspect-ratio="onDocAspectRatioChange"
         @update:doc-default-transition="onDocTransitionChange"
@@ -738,6 +739,7 @@ const {
   onExportHtml,
   onExportPdf,
   onExportImages,
+  isExportingImages,
 } = useInspectorActions({
   activeBlockId,
   activeBlockType,

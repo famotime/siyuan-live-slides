@@ -311,12 +311,17 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
   })
 
   // 13. 导出幻灯片为图片包 (ZIP)
+  let isCommandExportingImages = false
   plugin.addCommand({
     langKey: "slidesExportImagesZip",
     langText: "即现: 逐页导出幻灯片为高清图片包 (ZIP)",
     hotkey: "",
     enabled: () => true,
     execute: async () => {
+      if (isCommandExportingImages) {
+        showMessage("正在导出图片中，请稍候...", 2000)
+        return
+      }
       if (!plugin.latestCompiledDoc) {
         await plugin.compileCurrentDocument()
       }
@@ -324,19 +329,24 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
         showMessage("请先打开并放映一篇思源笔记文档")
         return
       }
-      showMessage("正在启动后台沙箱并逐页导出幻灯片图片...")
-      const doc = plugin.latestCompiledDoc
-      const title = await resolveDocumentTitle(doc, plugin.currentDocId, plugin)
-      const res = await runHeadlessImageExport(doc, {
-        title,
-        onProgress: (current, total) => {
-          showMessage(`正在导出幻灯片图片 (${current} / ${total})...`, 2000)
-        },
-      })
-      if (res.success) {
-        showMessage(`🎉 成功导出 ${res.total || 0} 张幻灯片高清图片并已保存为 ${title}.zip！`, 4000)
-      } else {
-        showMessage(`导出图片失败：${res.error || "未知异常"}`)
+      isCommandExportingImages = true
+      try {
+        showMessage("正在启动后台沙箱并逐页导出幻灯片图片...")
+        const doc = plugin.latestCompiledDoc
+        const title = await resolveDocumentTitle(doc, plugin.currentDocId, plugin)
+        const res = await runHeadlessImageExport(doc, {
+          title,
+          onProgress: (current, total) => {
+            showMessage(`正在导出幻灯片图片 (${current} / ${total})...`, 2000)
+          },
+        })
+        if (res.success) {
+          showMessage(`🎉 成功导出 ${res.total || 0} 张幻灯片高清图片并已保存为 ${title}.zip！`, 4000)
+        } else {
+          showMessage(`导出图片失败：${res.error || "未知异常"}`)
+        }
+      } finally {
+        isCommandExportingImages = false
       }
     },
   })

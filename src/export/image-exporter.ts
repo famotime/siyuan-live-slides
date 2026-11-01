@@ -76,10 +76,22 @@ export async function exportCurrentSlideImage(
 ): Promise<{ success: boolean; dataUrl?: string; error?: string }> {
   return new Promise((resolve) => {
     let unsubs: Array<() => void> = []
+    let timeoutTimer: any = null
+
     const cleanup = () => {
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer)
+        timeoutTimer = null
+      }
       unsubs.forEach(fn => fn())
       unsubs = []
     }
+
+    // 单页超时 20 秒兜底，防止沙箱卡死导致 Promise 永远挂死
+    timeoutTimer = setTimeout(() => {
+      cleanup()
+      resolve({ success: false, error: "单页截图超时（沙箱无响应）" })
+    }, 20000)
 
     const unsubPage = bridge.onCapturePageDone((res) => {
       cleanup()
@@ -113,17 +125,38 @@ export async function exportAllSlidesZip(
 
   return new Promise((resolve) => {
     let unsubs: Array<() => void> = []
+    let timeoutTimer: any = null
+
     const cleanup = () => {
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer)
+        timeoutTimer = null
+      }
       unsubs.forEach(fn => fn())
       unsubs = []
     }
 
+    // 单页/步骤心跳超时重置：若连续 35 秒没有任何进度推进则判为超时熔断
+    const resetTimeout = () => {
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer)
+      }
+      timeoutTimer = setTimeout(() => {
+        cleanup()
+        resolve({ success: false, error: "幻灯片逐页导出超时（沙箱无响应）" })
+      }, 35000)
+    }
+
+    resetTimeout()
+
     const unsubProgress = bridge.onCaptureProgress((p) => {
+      resetTimeout()
       options?.onProgress?.(p.current, p.total, p.pageIndex)
     })
     unsubs.push(unsubProgress)
 
     const unsubPage = bridge.onCapturePageDone((res) => {
+      resetTimeout()
       if (res.mode === "all" || !res.mode) {
         images.push({ pageIndex: res.pageIndex, dataUrl: res.dataUrl })
       }
@@ -186,7 +219,8 @@ export async function runHeadlessImageExport(
   iframe.style.height = "1080px"
   iframe.style.opacity = "0"
   iframe.style.pointerEvents = "none"
-  iframe.src = "/plugins/siyuan-live-slides/slides-client/index.html"
+  // 注入 headless=true 参数，让沙箱内部坚决不接入 BroadcastChannel，实现 100% 独立静默导出
+  iframe.src = "/plugins/siyuan-live-slides/slides-client/index.html?headless=true"
   document.body.appendChild(iframe)
 
   const bridge = new WebSandboxBridge()

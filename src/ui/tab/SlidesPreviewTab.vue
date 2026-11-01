@@ -607,23 +607,34 @@ function onExportPdf() {
   }
 }
 
+const isExportingAllImages = ref(false)
+
 async function onExportAllImages() {
+  if (isExportingAllImages.value) {
+    showMessage('正在逐页导出幻灯片图片中，请稍候...', 2000)
+    return
+  }
   if (!latestDoc) {
     showMessage('请先在主编辑区打开幻灯片文档')
     return
   }
-  showMessage('正在逐页导出幻灯片图片...', 2000)
-  const title = await resolveDocumentTitle(latestDoc, (plugin as any)?.currentDocId, plugin)
-  const res = await exportAllSlidesZip(sandboxBridge, {
-    title,
-    onProgress: (current, total) => {
-      showMessage(`正在导出幻灯片图片 (${current} / ${total})...`, 1500)
-    },
-  })
-  if (res.success) {
-    showMessage(`🎉 成功导出 ${res.total || 0} 张高清图片并保存为 ${title}.zip！`, 4000)
-  } else {
-    showMessage(`导出图片失败：${res.error || '未知异常'}`)
+  isExportingAllImages.value = true
+  try {
+    showMessage('正在逐页导出幻灯片图片...', 2000)
+    const title = await resolveDocumentTitle(latestDoc, (plugin as any)?.currentDocId, plugin)
+    const res = await exportAllSlidesZip(sandboxBridge, {
+      title,
+      onProgress: (current, total) => {
+        showMessage(`正在导出幻灯片图片 (${current} / ${total})...`, 1500)
+      },
+    })
+    if (res.success) {
+      showMessage(`🎉 成功导出 ${res.total || 0} 张高清图片并保存为 ${title}.zip！`, 4000)
+    } else {
+      showMessage(`导出图片失败：${res.error || '未知异常'}`)
+    }
+  } finally {
+    isExportingAllImages.value = false
   }
 }
 
