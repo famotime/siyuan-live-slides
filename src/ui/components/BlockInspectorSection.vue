@@ -35,7 +35,7 @@
 
       <div class="spm-action-grid">
         <button
-          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          class="spm-btn-action b3-tooltips b3-tooltips__se"
           aria-label="一键将当前页版式切换为对应双栏/三栏，并写入此列宽比例"
           style="background: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.16); color: var(--b3-theme-primary); font-weight: 500; border: 1px solid rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.3);"
           @click="$emit('applySuperBlockLayout', detectedSbInfo)"
@@ -44,7 +44,7 @@
           <span>应用版式与比例</span>
         </button>
         <button
-          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          class="spm-btn-action b3-tooltips b3-tooltips__sw"
           aria-label="仅将提取的比值写入当前页的分栏比例属性"
           @click="$emit('applySuperBlockRatio', detectedSbInfo?.ratio || '1:1')"
         >
@@ -135,28 +135,28 @@
       <div class="spm-video-settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
         <div class="spm-toggle-item" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; background: rgba(125,125,125,0.06); border-radius: 4px;">
           <span style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><SlidesIcon name="sliders" /> 控制条</span>
-          <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="videoControls ? '关闭控制条' : '开启控制条'">
+          <label class="spm-switch b3-tooltips b3-tooltips__se" :aria-label="videoControls ? '关闭控制条' : '开启控制条'">
             <input type="checkbox" :checked="Boolean(videoControls)" @change="$emit('toggleVideoControls')" />
             <span class="spm-switch-slider"></span>
           </label>
         </div>
         <div class="spm-toggle-item" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; background: rgba(125,125,125,0.06); border-radius: 4px;">
           <span style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><SlidesIcon name="video" /> 自动播放</span>
-          <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="videoAutoplay ? '关闭自动播放' : '开启自动播放'">
+          <label class="spm-switch b3-tooltips b3-tooltips__sw" :aria-label="videoAutoplay ? '关闭自动播放' : '开启自动播放'">
             <input type="checkbox" :checked="Boolean(videoAutoplay)" @change="$emit('toggleVideoAutoplay')" />
             <span class="spm-switch-slider"></span>
           </label>
         </div>
         <div class="spm-toggle-item" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; background: rgba(125,125,125,0.06); border-radius: 4px;">
           <span style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><SlidesIcon name="repeat" /> 循环播放</span>
-          <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="videoLoop ? '关闭循环播放' : '开启循环播放'">
+          <label class="spm-switch b3-tooltips b3-tooltips__se" :aria-label="videoLoop ? '关闭循环播放' : '开启循环播放'">
             <input type="checkbox" :checked="Boolean(videoLoop)" @change="$emit('toggleVideoLoop')" />
             <span class="spm-switch-slider"></span>
           </label>
         </div>
         <div class="spm-toggle-item" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; background: rgba(125,125,125,0.06); border-radius: 4px;">
           <span style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><SlidesIcon name="volume-x" /> 静音播放</span>
-          <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="videoMuted ? '关闭静音' : '开启静音'">
+          <label class="spm-switch b3-tooltips b3-tooltips__sw" :aria-label="videoMuted ? '关闭静音' : '开启静音'">
             <input type="checkbox" :checked="Boolean(videoMuted)" @change="$emit('toggleVideoMuted')" />
             <span class="spm-switch-slider"></span>
           </label>
@@ -385,7 +385,7 @@
       </div>
       <div class="spm-action-grid">
         <button
-          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          class="spm-btn-action b3-tooltips b3-tooltips__se"
           aria-label="在当前块上方插入幻灯片分页线 (---)"
           @click="$emit('insertDividerBefore')"
         >
@@ -394,7 +394,7 @@
         </button>
 
         <button
-          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          class="spm-btn-action b3-tooltips b3-tooltips__sw"
           aria-label="在当前块下方插入幻灯片分页线 (---)"
           @click="$emit('insertDividerAfter')"
         >
@@ -403,7 +403,7 @@
         </button>
 
         <button
-          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          class="spm-btn-action b3-tooltips b3-tooltips__se"
           :aria-label="effectiveLayout === 'three-cols-header' ? '将当前块属性设为三栏第1栏归属 (slot: col-1)' : '将当前块属性设为双栏左侧归属 (slot: left)'"
           @click="$emit('setTwoColsContrast')"
         >
@@ -413,7 +413,7 @@
 
         <button
           v-if="hasBlockAttrs"
-          class="spm-btn-action spm-btn-danger b3-tooltips b3-tooltips__s"
+          class="spm-btn-action spm-btn-danger b3-tooltips b3-tooltips__sw"
           aria-label="一键移除本块所有 custom-slides 属性"
           @click="$emit('clearBlockAttrs')"
         >

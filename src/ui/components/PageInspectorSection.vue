@@ -22,8 +22,8 @@
           <span>检测到本页横向超级块列宽比例：<b>{{ detectedSbRatio }}</b></span>
         </div>
         <button
-          class="spm-btn-action b3-tooltips b3-tooltips__w"
-          aria-label="一键将本页版式设为分栏并应用超级块列宽"
+          class="spm-btn-action b3-tooltips b3-tooltips__sw"
+          aria-label="一键应用超级块列宽并设为分栏"
           style="padding: 2px 8px; height: 26px; font-size: 11px; flex-shrink: 0; background: var(--b3-theme-primary); color: #fff; display: inline-flex; align-items: center; gap: 4px;"
           @click="$emit('applySuperBlockLayout', detectedSbInfo || { recommendedLayout: 'two-cols', ratio: detectedSbRatio })"
         >
@@ -71,8 +71,8 @@
         <!-- 读取按钮：读取即应用，移动到输入框右侧 -->
         <button
           v-if="detectedSbRatio"
-          class="spm-icon-btn b3-tooltips b3-tooltips__w"
-          :aria-label="`从当前页思源超级块读取实际宽度比例 (${detectedSbRatio}) 并应用`"
+          class="spm-icon-btn b3-tooltips b3-tooltips__sw"
+          :aria-label="`读取超级块列宽比例 (${detectedSbRatio}) 并应用`"
           style="padding: 0 8px; height: 26px; font-size: 11px; white-space: nowrap; flex-shrink: 0;"
           @click="$emit('update:pageLayoutRatio', detectedSbRatio)"
         >
@@ -81,7 +81,7 @@
         </button>
         <button
           v-else
-          class="spm-icon-btn b3-tooltips b3-tooltips__w"
+          class="spm-icon-btn b3-tooltips b3-tooltips__sw"
           disabled
           style="opacity: 0.45; cursor: not-allowed; padding: 0 8px; height: 26px; font-size: 11px; white-space: nowrap; flex-shrink: 0;"
           aria-label="当前页未检测到调整过列宽的横向超级块"
@@ -92,8 +92,8 @@
 
         <!-- 重置按钮：同行紧跟在读取按钮之后，重置渲染比例并清空文档超级块自定义列宽 -->
         <button
-          class="spm-icon-btn b3-tooltips b3-tooltips__w"
-          aria-label="重置渲染比例为平均分布，并立即重置文档中超级块内容分布比例"
+          class="spm-icon-btn b3-tooltips b3-tooltips__sw"
+          aria-label="重置为等宽平均分布"
           style="padding: 0 8px; height: 26px; font-size: 11px; white-space: nowrap; flex-shrink: 0;"
           @click="onResetRatioToEqual"
         >
@@ -177,7 +177,7 @@
         <div style="display: flex; align-items: center; justify-content: space-between;">
           <div style="font-size: 11px; opacity: 0.85; font-weight: 500;">展露比例 / 断点</div>
           <span
-            class="b3-tooltips b3-tooltips__w"
+            class="b3-tooltips b3-tooltips__sw"
             :aria-label="maskHelpTooltip"
             style="cursor: help; opacity: 0.75; display: inline-flex; align-items: center; gap: 3px; font-size: 11px;"
           >
@@ -196,20 +196,14 @@
             {{ preset.label }}
           </button>
         </div>
-        <div
-          class="b3-tooltips b3-tooltips__n"
-          style="width: 100%; display: block;"
-          aria-label="输入权重比例（如 1:2:1）或绝对累计百分比断点（如 25:75:100），冒号项数决定点击步数"
-        >
-          <input
-            :value="effectiveMaskRatio"
-            class="spm-input"
-            style="width: 100%;"
-            placeholder="自定义比例或断点（如 1:2:1 或 25:75:100）"
-            @input="$emit('update:pageMaskRatio', ($event.target as HTMLInputElement).value)"
-            @change="$emit('update:pageMaskRatio', ($event.target as HTMLInputElement).value)"
-          />
-        </div>
+        <input
+          :value="effectiveMaskRatio"
+          class="spm-input"
+          style="width: 100%;"
+          placeholder="自定义比例或断点（如 1:2:1 或 25:75:100）"
+          @input="$emit('update:pageMaskRatio', ($event.target as HTMLInputElement).value)"
+          @change="$emit('update:pageMaskRatio', ($event.target as HTMLInputElement).value)"
+        />
         <div style="font-size: 10.5px; opacity: 0.6; line-height: 1.35; margin-top: -2px;">
           {{ (pageMask === 'clockwise' || pageMask === 'counter-clockwise' || pageMask === 'cw' || pageMask === 'ccw') ? '时钟走时蒙版：默认 4 步旋转展露（1:1:1:1，每步 25% 扇形面积）' : '提示：支持权重比（如 1:2:1）或绝对断点（如 25:75:100），冒号项数决定点击步数' }}
         </div>
@@ -380,7 +374,7 @@
           <span class="spm-control-desc">正文备注块驱动 · 仅演讲者视图可见</span>
         </div>
         <button
-          class="spm-btn-text b3-tooltips b3-tooltips__w"
+          class="spm-btn-text b3-tooltips b3-tooltips__sw"
           aria-label="AI 自动生成本页讲稿提示块"
           @click="$emit('generateNotes')"
         >
@@ -400,7 +394,7 @@
         </div>
         <div class="spm-action-grid" style="margin-top: 6px;">
           <button
-            class="spm-btn-action b3-tooltips b3-tooltips__s"
+            class="spm-btn-action b3-tooltips b3-tooltips__se"
             aria-label="在正文编辑区定位并高亮此讲稿备注块"
             @click="$emit('locateNoteBlock')"
           >
@@ -408,7 +402,7 @@
             <span>定位讲稿块</span>
           </button>
           <button
-            class="spm-btn-action b3-tooltips b3-tooltips__s"
+            class="spm-btn-action b3-tooltips b3-tooltips__sw"
             aria-label="在本页末尾追加新的讲稿提示块"
             @click="$emit('addNoteBlock')"
           >
@@ -435,7 +429,7 @@
       <div class="spm-batch-actions-box" style="margin-top: 8px; border-top: 1px dashed var(--b3-border-color, #e2e8f0); padding-top: 8px;">
         <div class="spm-action-grid">
           <button
-            class="spm-btn-action b3-tooltips b3-tooltips__s"
+            class="spm-btn-action b3-tooltips b3-tooltips__se"
             :disabled="isBatchProcessing"
             :style="isBatchProcessing ? 'opacity: 0.5; cursor: not-allowed;' : ''"
             aria-label="在所有尚未配置讲稿的页面末尾批量追加讲稿提示块"
@@ -445,7 +439,7 @@
             <span>全部追加</span>
           </button>
           <button
-            class="spm-btn-action spm-btn-danger b3-tooltips b3-tooltips__s"
+            class="spm-btn-action spm-btn-danger b3-tooltips b3-tooltips__sw"
             :disabled="isBatchProcessing"
             :style="isBatchProcessing ? 'opacity: 0.5; cursor: not-allowed;' : ''"
             aria-label="批量物理删除正文中的全部讲稿备注块（涉及全部页）"
@@ -467,7 +461,7 @@
       </div>
       <div class="spm-action-grid">
         <button
-          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          class="spm-btn-action b3-tooltips b3-tooltips__se"
           aria-label="在此分页符之后插入新的空白分页"
           @click="$emit('insertDividerAfter')"
         >
@@ -475,7 +469,7 @@
           <span>插入新页</span>
         </button>
         <button
-          class="spm-btn-action spm-btn-danger b3-tooltips b3-tooltips__s"
+          class="spm-btn-action spm-btn-danger b3-tooltips b3-tooltips__sw"
           aria-label="彻底删除当前分页符（合并前后页面）"
           @click="$emit('deleteDivider')"
         >

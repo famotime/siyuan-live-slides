@@ -14,7 +14,7 @@
       <div class="spm-inspector-topbar-actions">
         <!-- 导入 Slidev 演示文档 -->
         <button
-          class="spm-icon-btn b3-tooltips b3-tooltips__s"
+          class="spm-icon-btn b3-tooltips b3-tooltips__sw"
           aria-label="导入 Slidev 演示文档 (.md / .zip)"
           @click="showImportDialog = true"
         >
@@ -24,7 +24,7 @@
 
         <!-- 快捷打开下方分屏预览 -->
         <button
-          class="spm-icon-btn is-primary b3-tooltips b3-tooltips__s"
+          class="spm-icon-btn is-primary b3-tooltips b3-tooltips__sw"
           aria-label="在下方分屏开启幻灯片预览 (Alt+P)"
           @click="onOpenBottomPreview"
         >
@@ -39,7 +39,7 @@
       <div class="spm-target-info">
         <span class="spm-target-tag" :class="targetTagClass">{{ targetTagLabel }}</span>
         <span
-          class="spm-target-id b3-tooltips b3-tooltips__s"
+          class="spm-target-id b3-tooltips b3-tooltips__se"
           :aria-label="copyNotice || '点击复制 ID: ' + (activeBlockId || currentDocId)"
           @click="onCopyBlockId"
         >

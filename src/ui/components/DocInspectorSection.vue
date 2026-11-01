@@ -78,9 +78,9 @@
       </div>
       <div class="spm-segmented-group">
         <button
-          class="spm-segmented-item b3-tooltips b3-tooltips__s"
+          class="spm-segmented-item b3-tooltips b3-tooltips__se"
           :class="{ active: (docSpacing || 'normal') === 'compact' }"
-          aria-label="紧凑排版：上下 20px / 左右 36px，释放垂直空间，适配图文分栏"
+          aria-label="紧凑排版：上下 20px / 左右 36px"
           @click="$emit('update:docSpacing', 'compact')"
         >
           紧凑 (Compact)
@@ -88,15 +88,15 @@
         <button
           class="spm-segmented-item b3-tooltips b3-tooltips__s"
           :class="{ active: (docSpacing || 'normal') === 'normal' }"
-          aria-label="标准排版：上下 32px / 左右 48px，协调美观（推荐默认）"
+          aria-label="标准排版：上下 32px / 左右 48px（推荐默认）"
           @click="$emit('update:docSpacing', 'normal')"
         >
           标准 (Normal)
         </button>
         <button
-          class="spm-segmented-item b3-tooltips b3-tooltips__s"
+          class="spm-segmented-item b3-tooltips b3-tooltips__sw"
           :class="{ active: (docSpacing || 'normal') === 'loose' }"
-          aria-label="宽松排版：上下 48px / 左右 56px，大留白适合极简大字"
+          aria-label="宽松排版：上下 48px / 左右 56px"
           @click="$emit('update:docSpacing', 'loose')"
         >
           宽松 (Loose)
@@ -194,7 +194,7 @@
       </div>
       <div class="spm-action-grid">
         <button
-          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          class="spm-btn-action b3-tooltips b3-tooltips__sw"
           aria-label="在当前文档下方开启分屏同步预览 (Alt+P)"
           @click="$emit('openBottomPreview')"
         >
@@ -203,7 +203,7 @@
         </button>
 
         <button
-          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          class="spm-btn-action b3-tooltips b3-tooltips__sw"
           aria-label="打开双屏演讲者控制台视窗 (Alt+M)"
           @click="$emit('openPresenter')"
         >
@@ -212,7 +212,7 @@
         </button>
 
         <button
-          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          class="spm-btn-action b3-tooltips b3-tooltips__se"
           aria-label="智能分析长文本结构并给出大纲分页插入建议"
           @click="$emit('aiAutoSplit')"
         >
@@ -221,7 +221,7 @@
         </button>
 
         <button
-          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          class="spm-btn-action b3-tooltips b3-tooltips__sw"
           aria-label="打包导出离线单文件 HTML 幻灯片"
           @click="$emit('exportHtml')"
         >
@@ -230,7 +230,7 @@
         </button>
 
         <button
-          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          class="spm-btn-action b3-tooltips b3-tooltips__se"
           aria-label="打印生成 16:9 高清演示 PDF 讲义"
           @click="$emit('exportPdf')"
         >
