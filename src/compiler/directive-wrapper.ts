@@ -314,6 +314,94 @@ export function distributeNColumns<
     return cols
   }
 
+  // 1.5 若 rem 仅有 1 个单块，优先尝试细粒度拆分（Markdown 列表/HTML 列表/多段落）。
+  if (rem.length === 1) {
+    const single = rem[0]
+    const s = (single.slot || "").trim()
+    const colMatch = s.match(/^col-(\d+)$/i)
+    const explicitColIdx = colMatch ? parseInt(colMatch[1], 10) : null
+
+    const text = (single.rawMarkdown || single.content || "").trim()
+
+    // 1.5.1 Markdown 列表项
+    const lines = text.split(/\r?\n/)
+    const itemStartIndices: number[] = []
+    for (let i = 0; i < lines.length; i++) {
+      if (/^[ \t]*[-*+]\s+|^[ \t]*\d+\.\s+/.test(lines[i])) itemStartIndices.push(i)
+    }
+    if (itemStartIndices.length >= n) {
+      const cols: T[][] = Array.from({ length: n }, () => [])
+      let cur = 0
+      for (let i = 0; i < n; i++) {
+        const remainingCols = n - i
+        const remainingItems = itemStartIndices.length - cur
+        const take = Math.ceil(remainingItems / remainingCols)
+        const start = itemStartIndices[cur]
+        const end = cur + take < itemStartIndices.length ? itemStartIndices[cur + take] : lines.length
+        const itemsText = lines.slice(start, end).join("\n")
+        cols[i] = [{
+          ...single,
+          id: i === 0 ? single.id : `${single.id}-col${i + 1}`,
+          rawMarkdown: itemsText,
+          content: itemsText,
+        }]
+        cur += take
+      }
+      return cols
+    }
+
+    // 1.5.2 HTML 列表项
+    const liMatches = text.match(/<li[\s\S]*?<\/li>/gi)
+    if (liMatches && liMatches.length >= n) {
+      const cols: T[][] = Array.from({ length: n }, () => [])
+      let cur = 0
+      for (let i = 0; i < n; i++) {
+        const remainingCols = n - i
+        const remainingItems = liMatches.length - cur
+        const take = Math.ceil(remainingItems / remainingCols)
+        const ul = `<ul>\n${liMatches.slice(cur, cur + take).join("\n")}\n</ul>`
+        cols[i] = [{
+          ...single,
+          id: i === 0 ? single.id : `${single.id}-col${i + 1}`,
+          rawMarkdown: ul,
+          content: ul,
+        }]
+        cur += take
+      }
+      return cols
+    }
+
+    // 1.5.3 纯文本多段落
+    const paras = text.split(/\r?\n\s*\r?\n/).filter(p => p.trim() !== "")
+    if (paras.length >= n) {
+      const cols: T[][] = Array.from({ length: n }, () => [])
+      let cur = 0
+      for (let i = 0; i < n; i++) {
+        const remainingCols = n - i
+        const remainingItems = paras.length - cur
+        const take = Math.ceil(remainingItems / remainingCols)
+        const pText = paras.slice(cur, cur + take).join("\n\n")
+        cols[i] = [{
+          ...single,
+          id: i === 0 ? single.id : `${single.id}-col${i + 1}`,
+          rawMarkdown: pText,
+          content: pText,
+        }]
+        cur += take
+      }
+      return cols
+    }
+
+    // 若显式指定了 col-X（如 col-3），尊重显式插槽；若仅为历史残余 slot="right" 或无 slot，安全归入第 1 栏
+    if (explicitColIdx && explicitColIdx >= 1 && explicitColIdx <= n) {
+      const cols: T[][] = Array.from({ length: n }, () => [])
+      cols[explicitColIdx - 1] = [single]
+      return cols
+    }
+
+    return [[single], ...Array.from({ length: n - 1 }, () => [])]
+  }
+
   const getColIndex = (b: T): number | null => {
     const s = (b.slot || "").trim()
     if (!s) return null
@@ -344,6 +432,17 @@ export function distributeNColumns<
         }
         cols[currentIdx - 1].push(b)
       }
+
+      // 防御孤立残余插槽：若未显式指定 col-N（如仅残留 slot="right"）且第 1 栏为空，
+      // 避免前栏大面积留白导致内容偏置在右侧或右下角
+      const hasExplicitColN = rem.some(b => /^col-\d+$/i.test((b.slot || "").trim()))
+      if (!hasExplicitColN && cols[0].length === 0) {
+        const nonEmptyCols = cols.filter(c => c.length > 0)
+        if (nonEmptyCols.length === 1) {
+          return [nonEmptyCols[0], ...Array.from({ length: n - 1 }, () => [])]
+        }
+      }
+
       return cols
     }
 
@@ -412,81 +511,6 @@ export function distributeNColumns<
       cols[i] = [rem[i]]
     }
     return cols
-  }
-
-  // 6. 仅 1 个内容块时的细粒度拆分
-  if (rem.length === 1) {
-    const single = rem[0]
-    const text = (single.rawMarkdown || single.content || "").trim()
-
-    // 6.1 Markdown 列表项
-    const lines = text.split(/\r?\n/)
-    const itemStartIndices: number[] = []
-    for (let i = 0; i < lines.length; i++) {
-      if (/^[ \t]*[-*+]\s+|^[ \t]*\d+\.\s+/.test(lines[i])) itemStartIndices.push(i)
-    }
-    if (itemStartIndices.length >= n) {
-      const cols: T[][] = Array.from({ length: n }, () => [])
-      let cur = 0
-      for (let i = 0; i < n; i++) {
-        const remainingCols = n - i
-        const remainingItems = itemStartIndices.length - cur
-        const take = Math.ceil(remainingItems / remainingCols)
-        const start = itemStartIndices[cur]
-        const end = cur + take < itemStartIndices.length ? itemStartIndices[cur + take] : lines.length
-        const itemsText = lines.slice(start, end).join("\n")
-        cols[i] = [{
-          ...single,
-          id: i === 0 ? single.id : `${single.id}-col${i + 1}`,
-          rawMarkdown: itemsText,
-          content: itemsText,
-        }]
-        cur += take
-      }
-      return cols
-    }
-
-    // 6.2 HTML 列表项
-    const liMatches = text.match(/<li[\s\S]*?<\/li>/gi)
-    if (liMatches && liMatches.length >= n) {
-      const cols: T[][] = Array.from({ length: n }, () => [])
-      let cur = 0
-      for (let i = 0; i < n; i++) {
-        const remainingCols = n - i
-        const remainingItems = liMatches.length - cur
-        const take = Math.ceil(remainingItems / remainingCols)
-        const ul = `<ul>\n${liMatches.slice(cur, cur + take).join("\n")}\n</ul>`
-        cols[i] = [{
-          ...single,
-          id: i === 0 ? single.id : `${single.id}-col${i + 1}`,
-          rawMarkdown: ul,
-          content: ul,
-        }]
-        cur += take
-      }
-      return cols
-    }
-
-    // 6.3 纯文本多段落
-    const paras = text.split(/\r?\n\s*\r?\n/).filter(p => p.trim() !== "")
-    if (paras.length >= n) {
-      const cols: T[][] = Array.from({ length: n }, () => [])
-      let cur = 0
-      for (let i = 0; i < n; i++) {
-        const remainingCols = n - i
-        const remainingItems = paras.length - cur
-        const take = Math.ceil(remainingItems / remainingCols)
-        const pText = paras.slice(cur, cur + take).join("\n\n")
-        cols[i] = [{
-          ...single,
-          id: i === 0 ? single.id : `${single.id}-col${i + 1}`,
-          rawMarkdown: pText,
-          content: pText,
-        }]
-        cur += take
-      }
-      return cols
-    }
   }
 
   const cols: T[][] = Array.from({ length: n }, () => [])

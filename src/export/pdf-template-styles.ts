@@ -726,6 +726,8 @@ export function generatePdfExportStyles(options?: {
       .slides-mask-divider-line {
         display: none !important;
         opacity: 0 !important;
+        mask: none !important;
+        -webkit-mask: none !important;
       }
       .slides-mask-body-container {
         clip-path: none !important;

@@ -63,7 +63,7 @@ export function getOverviewLayerSection(): string {
           let colsList = [];
           for (let i = 0; i < targetCols; i++) colsList.push([]);
           const hasExplicitCols = rem.some((b) => b.slot && (b.slot.startsWith("col-") || b.slot === "left" || b.slot === "right" || b.slot === "center"));
-          if (hasExplicitCols) {
+          if (hasExplicitCols && rem.length > 1) {
             for (const b of rem) {
               let idx = 0;
               if (b.slot === "left" || b.slot === "col-1") idx = 0;
@@ -75,6 +75,15 @@ export function getOverviewLayerSection(): string {
               }
               colsList[idx].push(b);
             }
+            const hasExplicitColN = rem.some(b => /^col-\d+$/i.test((b.slot || "").trim()));
+            if (!hasExplicitColN && colsList[0].length === 0) {
+              const nonEmptyCols = colsList.filter(c => c.length > 0);
+              if (nonEmptyCols.length === 1) {
+                colsList = [nonEmptyCols[0], ...Array.from({ length: targetCols - 1 }, () => [])];
+              }
+            }
+          } else if (rem.length === 1) {
+            colsList[0] = [rem[0]];
           } else {
             let cur = 0;
             for (let i = 0; i < targetCols; i++) {

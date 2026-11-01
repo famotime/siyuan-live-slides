@@ -158,9 +158,79 @@ const gridStyle = computed(() => {
 `
 
 export const CLOVER_LAYOUT_VUE = `<script setup lang="ts">
-import { useSlots } from 'vue'
+import { computed, useSlots } from 'vue'
+
+const props = defineProps({
+  mask: {
+    type: String,
+    default: '',
+  },
+  maskStyle: {
+    type: String,
+    default: 'solid',
+  },
+  maskInitial: {
+    type: String,
+    default: 'hidden',
+  },
+  clicks: {
+    type: [Number, String],
+    default: 0,
+  },
+})
 
 const slots = useSlots()
+
+const isClockMask = computed(() => {
+  const m = props.mask || ''
+  return m === 'clockwise' || m === 'counter-clockwise' || m === 'cw' || m === 'ccw'
+})
+
+const currentClockClicks = computed(() => {
+  // 优先取 Slidev 全局 $slidev.nav.clicks，否则降级为 props.clicks
+  // @ts-ignore
+  const navClicks = typeof window !== 'undefined' && (window as any).$slidev?.nav?.clicks
+  return typeof navClicks === 'number' ? navClicks : Number(props.clicks || 0)
+})
+
+const clockPercent = computed(() => {
+  if (!isClockMask.value) return 100
+  const isInitRev = props.maskInitial === 'revealed'
+  const step = currentClockClicks.value
+  const bps = [25, 50, 75, 100]
+  if (step <= 0) return isInitRev ? bps[0] : 0
+  const effectiveIdx = isInitRev ? step : (step - 1)
+  if (effectiveIdx >= bps.length) return 100
+  return bps[effectiveIdx] || 100
+})
+
+const clockNeedleAngle = computed(() => {
+  const isCw = props.mask === 'clockwise' || props.mask === 'cw'
+  const sweepDeg = Math.min(360, Math.max(0, (clockPercent.value / 100) * 360))
+  return isCw ? (-180 + sweepDeg) : (-90 - sweepDeg)
+})
+
+const clockMaskOverlayStyle = computed(() => {
+  if (!isClockMask.value) return {}
+  const p = clockPercent.value
+  const isCw = props.mask === 'clockwise' || props.mask === 'cw'
+  const sweepDeg = Math.min(360, Math.max(0, (p / 100) * 360))
+  let maskGrad = ''
+  if (sweepDeg <= 0) {
+    maskGrad = 'conic-gradient(from 0deg at 50% 50%, #000 0deg, #000 360deg)'
+  } else if (sweepDeg >= 360) {
+    maskGrad = 'conic-gradient(from 0deg at 50% 50%, transparent 0deg, transparent 360deg)'
+  } else if (isCw) {
+    maskGrad = \`conic-gradient(from 270deg at 50% 50%, transparent 0deg, transparent \${sweepDeg}deg, #000 \${sweepDeg}deg, #000 360deg)\`
+  } else {
+    const remDeg = 360 - sweepDeg
+    maskGrad = \`conic-gradient(from 0deg at 50% 50%, #000 0deg, #000 \${remDeg}deg, transparent \${remDeg}deg, transparent 360deg)\`
+  }
+  return {
+    WebkitMaskImage: maskGrad,
+    maskImage: maskGrad,
+  }
+})
 </script>
 
 <template>
@@ -168,18 +238,46 @@ const slots = useSlots()
     <div class="header-section mb-4 w-full">
       <slot />
     </div>
-    <div class="grid grid-cols-2 grid-rows-2 gap-6 flex-1 items-stretch">
-      <div class="col-1 min-w-0 h-full max-h-full overflow-hidden break-words [overflow-wrap:break-word] [word-break:break-word]">
-        <slot name="col-1" />
+    <div class="relative flex-1 min-h-0 overflow-hidden">
+      <div class="grid grid-cols-2 grid-rows-2 gap-6 w-full h-full items-stretch">
+        <div class="col-1 min-w-0 h-full max-h-full overflow-hidden break-words [overflow-wrap:break-word] [word-break:break-word]">
+          <slot name="col-1" />
+        </div>
+        <div class="col-2 min-w-0 h-full max-h-full overflow-hidden break-words [overflow-wrap:break-word] [word-break:break-word]">
+          <slot name="col-2" />
+        </div>
+        <div class="col-3 min-w-0 h-full max-h-full overflow-hidden break-words [overflow-wrap:break-word] [word-break:break-word]">
+          <slot name="col-3" />
+        </div>
+        <div class="col-4 min-w-0 h-full max-h-full overflow-hidden break-words [overflow-wrap:break-word] [word-break:break-word]">
+          <slot name="col-4" />
+        </div>
       </div>
-      <div class="col-2 min-w-0 h-full max-h-full overflow-hidden break-words [overflow-wrap:break-word] [word-break:break-word]">
-        <slot name="col-2" />
-      </div>
-      <div class="col-3 min-w-0 h-full max-h-full overflow-hidden break-words [overflow-wrap:break-word] [word-break:break-word]">
-        <slot name="col-3" />
-      </div>
-      <div class="col-4 min-w-0 h-full max-h-full overflow-hidden break-words [overflow-wrap:break-word] [word-break:break-word]">
-        <slot name="col-4" />
+      <div
+        v-if="isClockMask"
+        class="slides-mask-layer slides-mask-layer--clock pointer-events-none absolute inset-0 z-50 transition-opacity duration-300"
+        :class="props.maskStyle === 'blur' ? 'slides-mask-layer--blur' : 'slides-mask-layer--solid'"
+        :style="{ opacity: clockPercent >= 100 ? 0 : 1 }"
+      >
+        <div
+          class="slides-mask-overlay absolute inset-0 w-full h-full"
+          :class="props.maskStyle === 'blur' ? 'backdrop-blur-xl bg-white/70 dark:bg-black/70' : 'bg-[var(--slide-bg,#fff)] dark:bg-[var(--slide-bg,#121214)]'"
+          :style="clockMaskOverlayStyle"
+        />
+        <div
+          class="slides-mask-divider-line slides-mask-divider-line--clock absolute pointer-events-none transition-all duration-300"
+          :style="{
+            top: '50%',
+            left: '50%',
+            width: '55%',
+            height: '2.5px',
+            transformOrigin: '0% 50%',
+            transform: \`translateY(-50%) rotate(\${clockNeedleAngle}deg)\`,
+            opacity: (clockPercent <= 0 || clockPercent >= 100) ? 0 : 1,
+            background: 'linear-gradient(90deg, var(--slide-accent, #3b82f6) 0%, var(--slide-accent, #3b82f6) 75%, transparent 100%)',
+            boxShadow: '0 0 10px var(--slide-accent, #3b82f6), 0 0 4px var(--slide-accent, #3b82f6)',
+          }"
+        />
       </div>
     </div>
   </div>

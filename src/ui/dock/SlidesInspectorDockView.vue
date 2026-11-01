@@ -784,8 +784,14 @@ function onLayoutRatioChange(val: string) {
   savePageAttr(ATTR_PAGE_LAYOUT_RATIO, val)
 }
 
-function onMaskChange(val: string) {
-  savePageAttr(ATTR_PAGE_MASK, val)
+async function onMaskChange(val: string) {
+  await savePageAttr(ATTR_PAGE_MASK, val)
+  const isClock = val === 'clockwise' || val === 'counter-clockwise' || val === 'cw' || val === 'ccw'
+  if (isClock) {
+    if (!pageMaskRatio.value || pageMaskRatio.value === '1:1') {
+      await savePageAttr(ATTR_PAGE_MASK_RATIO, '1:1:1:1')
+    }
+  }
 }
 
 function onMaskRatioChange(val: string) {

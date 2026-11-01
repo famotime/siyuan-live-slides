@@ -70,6 +70,16 @@ export function getKeyboardScrollInitSection(): string {
         const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
         if (!targetEl || !targetEl.closest) return;
 
+        const hasPendingMask = currentMaskConfig && (currentMaskStep < currentMaskConfig.totalSteps);
+        if (hasPendingMask) {
+          const isBottomControls = targetEl.closest(".controls-bar, .controls, .slides-toc");
+          if (isBottomControls) return;
+          e.preventDefault();
+          e.stopPropagation();
+          goNext();
+          return;
+        }
+
         const refEl = targetEl.closest("[data-ref-id]");
         if (refEl) {
           const id = refEl.getAttribute("data-ref-id");

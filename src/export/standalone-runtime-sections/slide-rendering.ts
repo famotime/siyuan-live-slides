@@ -27,11 +27,14 @@ export function getSlideRenderingSection(): string {
         maskOverlayEl = null;
         maskDividerEl = null;
         const maskDir = slide.frontmatter?.mask;
-        if (maskDir === "down" || maskDir === "right") {
-          const ratioInfo = parseMaskRatio(slide.frontmatter.maskRatio);
+        const isClock = maskDir === "clockwise" || maskDir === "counter-clockwise" || maskDir === "cw" || maskDir === "ccw";
+        if (maskDir === "down" || maskDir === "right" || isClock) {
+          const isClover = slide.frontmatter?.layout === "clover";
+          const ratioInfo = parseMaskRatio(slide.frontmatter.maskRatio, (isClock || isClover) ? 4 : 2);
           const isInitRev = slide.frontmatter.maskInitial === "revealed";
           currentMaskConfig = {
-            direction: maskDir,
+            direction: isClock ? ((maskDir === "cw" || maskDir === "clockwise") ? "clockwise" : "counter-clockwise") : maskDir,
+            isClock: isClock,
             totalSteps: isInitRev ? Math.max(0, ratioInfo.steps - 1) : ratioInfo.steps,
             rawSteps: ratioInfo.steps,
             breakpoints: ratioInfo.breakpoints,
@@ -47,12 +50,16 @@ export function getSlideRenderingSection(): string {
         function createMaskElements() {
           if (!currentMaskConfig) return null;
           const layer = document.createElement("div");
-          layer.className = "slides-mask-layer slides-mask-layer--" + currentMaskConfig.style + " slides-mask-layer--" + currentMaskConfig.direction;
+          layer.className = "slides-mask-layer slides-mask-layer--" + currentMaskConfig.style + " slides-mask-layer--" + currentMaskConfig.direction + (currentMaskConfig.isClock ? " slides-mask-layer--clock" : "");
           const overlay = document.createElement("div");
           overlay.className = "slides-mask-overlay";
           const divider = document.createElement("div");
-          divider.className = "slides-mask-divider-line";
+          divider.className = "slides-mask-divider-line" + (currentMaskConfig.isClock ? " slides-mask-divider-line--clock" : "");
           divider.style.opacity = "0";
+          if (currentMaskConfig.isClock) {
+            const isCw = currentMaskConfig.direction === "clockwise" || currentMaskConfig.direction === "cw";
+            divider.style.transform = isCw ? "translateY(-50%) rotate(-180deg)" : "translateY(-50%) rotate(-90deg)";
+          }
           layer.appendChild(overlay);
           layer.appendChild(divider);
           maskLayerEl = layer;
@@ -149,7 +156,7 @@ export function getSlideRenderingSection(): string {
           let colsList = [];
           for (let i = 0; i < targetCols; i++) colsList.push([]);
           const hasExplicitCols = rem.some(b => b.slot && (b.slot.startsWith("col-") || b.slot === "left" || b.slot === "right" || b.slot === "center"));
-          if (hasExplicitCols) {
+          if (hasExplicitCols && rem.length > 1) {
             for (const b of rem) {
               let idx = 0;
               if (b.slot === "left" || b.slot === "col-1") idx = 0;
@@ -161,6 +168,15 @@ export function getSlideRenderingSection(): string {
               }
               colsList[idx].push(b);
             }
+            const hasExplicitColN = rem.some(b => /^col-\d+$/i.test((b.slot || "").trim()));
+            if (!hasExplicitColN && colsList[0].length === 0) {
+              const nonEmptyCols = colsList.filter(c => c.length > 0);
+              if (nonEmptyCols.length === 1) {
+                colsList = [nonEmptyCols[0], ...Array.from({ length: targetCols - 1 }, () => [])];
+              }
+            }
+          } else if (rem.length === 1) {
+            colsList[0] = [rem[0]];
           } else {
             let cur = 0;
             for (let i = 0; i < targetCols; i++) {

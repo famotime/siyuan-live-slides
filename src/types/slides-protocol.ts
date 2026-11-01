@@ -88,31 +88,48 @@ export interface ISlidePageFrontmatter {
   class?: string
   clicks?: number
   layoutRatio?: string
-  mask?: "down" | "right" | string
+  mask?: "down" | "right" | "clockwise" | "counter-clockwise" | "cw" | "ccw" | string
   maskRatio?: string
   maskStyle?: "solid" | "blur" | string
   maskInitial?: "hidden" | "revealed" | string
   [key: string]: any
 }
 
+/** 判断是否为顺时针时钟蒙版 */
+export function isClockwiseMask(mask?: string): boolean {
+  return mask === "clockwise" || mask === "cw"
+}
+
+/** 判断是否为逆时针时钟蒙版 */
+export function isCounterClockwiseMask(mask?: string): boolean {
+  return mask === "counter-clockwise" || mask === "ccw"
+}
+
+/** 判断是否为任意时钟旋转蒙版 */
+export function isClockMask(mask?: string): boolean {
+  return isClockwiseMask(mask) || isCounterClockwiseMask(mask)
+}
+
 /**
  * 解析动态蒙版分段比例或断点
  * 支持形式：
- * 1. 权重比例：如 "1:1" -> [50, 100], "1:1:1" -> [33.33, 66.67, 100], "1:2:1" -> [25, 75, 100]
+ * 1. 权重比例：如 "1:1" -> [50, 100], "1:1:1" -> [33.33, 66.67, 100], "1:2:1" -> [25, 75, 100], "1:1:1:1" -> [25, 50, 75, 100]
  * 2. 绝对累计百分比断点：如 "25:75:100" -> [25, 75, 100], "30:80" -> [30, 80, 100]
- * 默认回退：[50, 100]
+ * 默认回退：2 步 [50, 100]，若指定 defaultSteps=4 则回退 4 步 [25, 50, 75, 100]
  */
-export function parseMaskRatio(ratioStr?: string): { steps: number; breakpoints: number[] } {
+export function parseMaskRatio(ratioStr?: string, defaultSteps = 2): { steps: number; breakpoints: number[] } {
+  const fallbackBreakpoints = defaultSteps === 4 ? [25, 50, 75, 100] : [50, 100]
+  const fallbackSteps = defaultSteps === 4 ? 4 : 2
   if (!ratioStr || typeof ratioStr !== "string") {
-    return { steps: 2, breakpoints: [50, 100] }
+    return { steps: fallbackSteps, breakpoints: fallbackBreakpoints }
   }
   const clean = ratioStr.trim()
-  if (!clean) {
-    return { steps: 2, breakpoints: [50, 100] }
+  if (!clean || (defaultSteps === 4 && (clean === "1:1" || clean === "1"))) {
+    return { steps: fallbackSteps, breakpoints: fallbackBreakpoints }
   }
   const parts = clean.split(":").map(p => parseFloat(p.trim())).filter(n => !isNaN(n) && n > 0)
   if (parts.length === 0) {
-    return { steps: 2, breakpoints: [50, 100] }
+    return { steps: fallbackSteps, breakpoints: fallbackBreakpoints }
   }
   if (parts.length === 1) {
     const val = Math.min(100, Math.max(1, parts[0]))
@@ -136,7 +153,7 @@ export function parseMaskRatio(ratioStr?: string): { steps: number; breakpoints:
   // 否则作为权重计算累计百分比（如 1:2:1 或 1:1:1）
   const totalWeight = parts.reduce((acc, cur) => acc + cur, 0)
   if (totalWeight <= 0) {
-    return { steps: 2, breakpoints: [50, 100] }
+    return { steps: fallbackSteps, breakpoints: fallbackBreakpoints }
   }
   let accumulated = 0
   const bps: number[] = []

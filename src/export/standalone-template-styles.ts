@@ -1229,5 +1229,37 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       transform: translateX(-50%);
       background: linear-gradient(180deg, transparent 0%, var(--slide-accent, #3b82f6) 6%, var(--slide-accent, #3b82f6) 94%, transparent 100%);
       box-shadow: 0 0 10px var(--slide-accent, #3b82f6), 0 0 4px var(--slide-accent, #3b82f6);
+    }
+    .slides-mask-layer--clockwise,
+    .slides-mask-layer--counter-clockwise,
+    .slides-mask-layer--cw,
+    .slides-mask-layer--ccw,
+    .slides-mask-layer--clock {
+      transform: none !important;
+    }
+    .slides-mask-layer--clockwise .slides-mask-divider-line,
+    .slides-mask-layer--counter-clockwise .slides-mask-divider-line,
+    .slides-mask-layer--cw .slides-mask-divider-line,
+    .slides-mask-layer--ccw .slides-mask-divider-line,
+    .slides-mask-layer--clock .slides-mask-divider-line,
+    .slides-mask-divider-line--clock,
+    .slides-mask-divider-line--clockwise,
+    .slides-mask-divider-line--counter-clockwise {
+      top: 50%;
+      left: 50%;
+      right: auto;
+      bottom: auto;
+      width: 55%;
+      height: 2.5px;
+      transform-origin: 0% 50%;
+      transform: translateY(-50%) rotate(-180deg);
+      background: linear-gradient(90deg, var(--slide-accent, #3b82f6) 0%, var(--slide-accent, #3b82f6) 75%, transparent 100%);
+      box-shadow: 0 0 10px var(--slide-accent, #3b82f6), 0 0 4px var(--slide-accent, #3b82f6);
+      transition: transform 0.42s cubic-bezier(0.2, 0, 0, 1), opacity 0.3s ease;
+      will-change: transform, opacity;
+    }
+    .slides-mask-layer--counter-clockwise .slides-mask-divider-line,
+    .slides-mask-divider-line--counter-clockwise {
+      transform: translateY(-50%) rotate(-90deg);
     }`;
 }

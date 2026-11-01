@@ -477,13 +477,7 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
         }
       }
 
-      // 3. 若未找到符合条件的 4 组件超级块，友好提示并阻止切换
-      if (!found || found.itemIds.length !== 4) {
-        showMessage("当前页面未找到包含 4 个组件的超级块（需包含 4 个列表项或 4 个子块）", 4000, "info")
-        return false
-      }
-
-      // 4. 执行设置：配置 clover 版式与 col-1 ~ col-4 插槽
+      // 3. 执行设置：配置 clover 版式
       const pageTargetId = ctx.currentPageDividerId.value || ctx.currentDocId.value
       if (pageTargetId) {
         ctx.currentPageDividerLayout.value = "clover"
@@ -498,20 +492,22 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
         await setBlockAttrs(pageTargetId, { [ATTR_PAGE_LAYOUT]: "clover" }).catch(() => {})
       }
 
-      // 配置表头（若有）
-      if (found.headerId) {
-        globalDocumentCompiler.setBlockAttrOverride(found.headerId, { [ATTR_ELEM_SLOT]: "header" })
-        syncDomBlockAttrs(found.headerId, { [ATTR_ELEM_SLOT]: "header" })
-        await setBlockAttrs(found.headerId, { [ATTR_ELEM_SLOT]: "header" }).catch(() => {})
-      }
+      // 4. 若匹配到超级块或组件，自动补全表头与 col-1 ~ col-N 插槽
+      if (found && found.itemIds.length > 0) {
+        if (found.headerId) {
+          globalDocumentCompiler.setBlockAttrOverride(found.headerId, { [ATTR_ELEM_SLOT]: "header" })
+          syncDomBlockAttrs(found.headerId, { [ATTR_ELEM_SLOT]: "header" })
+          await setBlockAttrs(found.headerId, { [ATTR_ELEM_SLOT]: "header" }).catch(() => {})
+        }
 
-      // 配置 4 个组件的插槽 col-1 ~ col-4
-      for (let i = 0; i < 4; i++) {
-        const itemId = found.itemIds[i]
-        const slotName = `col-${i + 1}`
-        globalDocumentCompiler.setBlockAttrOverride(itemId, { [ATTR_ELEM_SLOT]: slotName })
-        syncDomBlockAttrs(itemId, { [ATTR_ELEM_SLOT]: slotName })
-        await setBlockAttrs(itemId, { [ATTR_ELEM_SLOT]: slotName }).catch(() => {})
+        const slotCount = Math.min(4, found.itemIds.length)
+        for (let i = 0; i < slotCount; i++) {
+          const itemId = found.itemIds[i]
+          const slotName = `col-${i + 1}`
+          globalDocumentCompiler.setBlockAttrOverride(itemId, { [ATTR_ELEM_SLOT]: slotName })
+          syncDomBlockAttrs(itemId, { [ATTR_ELEM_SLOT]: slotName })
+          await setBlockAttrs(itemId, { [ATTR_ELEM_SLOT]: slotName }).catch(() => {})
+        }
       }
 
       showMessage("已将本页版式设为四叶草（田字型）布局")

@@ -339,18 +339,14 @@ describe("Clover Layout (四叶草 2x2 田字型布局规范测试)", () => {
       actions = useInspectorActions(ctx)
     })
 
-    it("当未找到包含 4 个组件的超级块时，应弹出友好提示并阻止切换（返回 false，不修改版式）", async () => {
+    it("即使未找到包含 4 个组件的超级块，也应允许直接切换为 clover 版式并返回 true（取消必须包含 4 组件超级块的限制）", async () => {
       // 当前页 AST 为空，DOM 中也无超级块
       const success = await actions.applyCloverLayout()
 
-      expect(success).toBe(false)
-      expect(showMessageSpy).toHaveBeenCalledWith(
-        "当前页面未找到包含 4 个组件的超级块（需包含 4 个列表项或 4 个子块）",
-        4000,
-        "info"
-      )
-      // 版式保持原有值不变
-      expect(ctx.currentPageDividerLayout.value).toBe("default")
+      expect(success).toBe(true)
+      expect(ctx.currentPageDividerLayout.value).toBe("clover")
+      expect(ctx.plugin.compileCurrentDocument).toHaveBeenCalled()
+      expect(showMessageSpy).toHaveBeenCalledWith("已将本页版式设为四叶草（田字型）布局")
     })
 
     it("当在当前页 AST 中成功匹配到 4 组件超级块时，应配置 clover 版式与 col-1~4 插槽并返回 true", async () => {
