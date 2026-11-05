@@ -1,0 +1,81 @@
+/**
+ * 功能开关（Feature Flags）构建期配置
+ *
+ * 编辑下方 FEATURE_FLAGS 常量来控制发布版本中启用哪些功能。
+ * 修改后需重新构建（npm run build）才能生效。
+ * 开关为纯构建期常量：关闭某功能时，其 UI 入口不渲染、命令面板命令不注册，
+ * 但功能代码仍打包进 bundle（仅裁剪入口，不做死代码消除）。
+ *
+ * 示例 — 发布一个不带 AI 讲稿、导入与演讲者视图功能的版本：
+ *
+ *   const FEATURE_FLAGS: FeatureFlagConfig = {
+ *     proMode: true,
+ *     presenterMode: false,
+ *     exportHtml: true,
+ *     exportPdf: true,
+ *     exportImage: true,
+ *     import: false,
+ *     aiScript: false,
+ *   }
+ *
+ * 各开关控制的入口范围：
+ *   'proMode'       — Pro 模式（本地 Slidev CLI DevServer）：预览页签内引擎切换
+ *                     徽章按钮 + 三条「即现 Pro」命令（导出 slides.md / 探测
+ *                     DevServer / 同步至 CLI workspace）
+ *   'presenterMode' — 演讲者视图（双屏演讲者控制台）：DocInspectorSection
+ *                     「演讲者视图」按钮 + 预览页签演讲者图标（含沙箱放映内的
+ *                     呼起请求）+ 命令 slidesPresenterMode。注意：讲稿体系
+ *                     （讲稿块管理、备注开关）不受此开关影响
+ *   'exportHtml'  — 导出离线单文件 HTML：Dock「导出 HTML」按钮 + 预览页签工具栏图标
+ *   'exportPdf'   — 导出 PDF 讲义：Dock「导出 PDF」按钮 + 预览页签工具栏图标
+ *   'exportImage' — 逐页导出图片：Dock「导出图片」按钮 + 预览页签图片导出下拉
+ *                   （全篇 ZIP / 当前页 PNG / 复制剪贴板）+ 命令 slidesExportImagesZip
+ *   'import'      — 导入 Slidev 演示文档：Dock 顶栏「导入」按钮 + 导入对话框
+ *                   + 命令 slidesImport
+ *   'aiScript'    — AI 讲稿生成类入口：PageInspectorSection「AI 讲稿」按钮
+ *                   + DocInspectorSection「AI 智能分页」按钮 + 命令 slidesAiNotes /
+ *                   slidesAiSplit。注意：手动讲稿体系（讲稿块定位/追加/批量管理、
+ *                   「设为讲稿备注」开关）不受此开关影响
+ *
+ * 永远保留、不受任何开关影响：沙箱预览全链路（顶栏「即现演示」、预览页签、
+ * Dock 分屏预览按钮、独立窗口放映、slidesPresentation 命令）、headless 图片
+ * 导出实现层、核心与协同命令。演讲者视图为独立开关（presenterMode）。
+ */
+
+// ── 类型定义 ──
+
+/** 可独立开关的功能 key */
+export type FeatureKey =
+  | 'proMode'
+  | 'presenterMode'
+  | 'exportHtml'
+  | 'exportPdf'
+  | 'exportImage'
+  | 'import'
+  | 'aiScript';
+
+export type FeatureFlagConfig = Record<FeatureKey, boolean>;
+
+// ── 编辑此对象来控制功能可见性 ──
+
+const FEATURE_FLAGS: FeatureFlagConfig = {
+  proMode: true,
+  presenterMode: true,
+  exportHtml: true,
+  exportPdf: true,
+  exportImage: true,
+  import: true,
+  aiScript: true,
+};
+
+// ── 工具函数 ──
+
+/** 功能是否已被构建期配置关闭（入口不渲染、命令不注册） */
+export function isFeatureDisabled(key: FeatureKey): boolean {
+  return FEATURE_FLAGS[key] === false;
+}
+
+/** 功能是否启用（UI 入口渲染、命令注册） */
+export function isFeatureEnabled(key: FeatureKey): boolean {
+  return !isFeatureDisabled(key);
+}

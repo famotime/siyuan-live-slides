@@ -8,6 +8,7 @@ import { WebSandboxBridge } from './engine/web-sandbox-bridge'
 import { globalCompileConsumerGate } from './sync/compile-consumer-gate'
 import type { ICompileConsumerHost } from './sync/compile-consumer-gate'
 import type { IActiveBlockInfo, ISlidesDocument } from './types/slides-protocol'
+import { isFeatureDisabled } from './feature-flags/feature-flags'
 
 export const globalSandboxBridge = new WebSandboxBridge()
 
@@ -187,6 +188,10 @@ export function updateInspectorCurrentBlock(info: IActiveBlockInfo): void {
 }
 
 export function openDockImportDialog(): boolean {
+  // import 开关关闭时导入功能整体下架，不响应外部唤起
+  if (isFeatureDisabled('import')) {
+    return false
+  }
   if (inspectorDockInstance?.openImportDialog) {
     inspectorDockInstance.openImportDialog()
     return true

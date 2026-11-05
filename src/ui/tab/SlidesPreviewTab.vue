@@ -34,8 +34,9 @@
           <span>{{ isPinned ? '已锁定' : '跟随' }}</span>
         </button>
 
-        <!-- 🚀 双轨引擎切换徽章 -->
+        <!-- 🚀 双轨引擎切换徽章（proMode 开关关闭时隐藏入口） -->
         <button
+          v-if="isFeatureEnabled('proMode')"
           class="spm-icon-btn b3-tooltips b3-tooltips__s"
           :class="{ 'is-primary': engineMode === 'pro-cli' }"
           :aria-label="engineMode === 'pro-cli' ? '当前：官方原生 Pro 模式 (localhost:' + activeProPort + ')，点击切回沙箱' : '当前：内置高保真沙箱，点击切换官方原生 Pro 模式'"
@@ -57,8 +58,9 @@
           <SlidesIcon name="columns" />
         </button>
 
-        <!-- 双屏演讲者视图 -->
+        <!-- 双屏演讲者视图（presenterMode 开关关闭时隐藏入口） -->
         <button
+          v-if="isFeatureEnabled('presenterMode')"
           class="spm-icon-btn b3-tooltips b3-tooltips__s"
           aria-label="双屏演讲者视图 (Presenter Mode ⌥M)"
           @click="onOpenPresenter"
@@ -66,8 +68,9 @@
           <SlidesIcon name="presenter" />
         </button>
 
-        <!-- 导出离线单文件 HTML -->
+        <!-- 导出离线单文件 HTML（exportHtml 开关关闭时隐藏入口） -->
         <button
+          v-if="isFeatureEnabled('exportHtml')"
           class="spm-icon-btn b3-tooltips b3-tooltips__s"
           aria-label="导出单文件 HTML 演示包"
           @click="onExportHtml"
@@ -75,8 +78,9 @@
           <SlidesIcon name="export-html" />
         </button>
 
-        <!-- 导出 PDF -->
+        <!-- 导出 PDF（exportPdf 开关关闭时隐藏入口） -->
         <button
+          v-if="isFeatureEnabled('exportPdf')"
           class="spm-icon-btn b3-tooltips b3-tooltips__s"
           aria-label="导出 16:9 PDF 演示讲义"
           @click="onExportPdf"
@@ -84,8 +88,12 @@
           <SlidesIcon name="export-pdf" />
         </button>
 
-        <!-- 导出图片 -->
-        <div class="spm-export-image-dropdown" style="position: relative; display: inline-flex; align-items: center;">
+        <!-- 导出图片（exportImage 开关关闭时隐藏入口） -->
+        <div
+          v-if="isFeatureEnabled('exportImage')"
+          class="spm-export-image-dropdown"
+          style="position: relative; display: inline-flex; align-items: center;"
+        >
           <button
             class="spm-icon-btn b3-tooltips b3-tooltips__s"
             aria-label="导出幻灯片为图片包 (ZIP)"
@@ -216,6 +224,7 @@ import {
   resolveDocumentTitle,
 } from '@/export/image-exporter'
 import { getRuntimeSettings, buildSiYuanWebUrl } from '@/settings'
+import { isFeatureEnabled } from '@/feature-flags/feature-flags'
 import { createPageJumpInput, isEditableTarget } from './page-jump-input'
 import type { ISlidesDocument } from '@/types/slides-protocol'
 

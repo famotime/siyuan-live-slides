@@ -202,7 +202,9 @@
           <span>分屏预览</span>
         </button>
 
+        <!-- 演讲者视图（presenterMode 开关关闭时隐藏入口） -->
         <button
+          v-if="isFeatureEnabled('presenterMode')"
           class="spm-btn-action b3-tooltips b3-tooltips__sw"
           aria-label="打开双屏演讲者控制台视窗 (Alt+M)"
           @click="$emit('openPresenter')"
@@ -212,6 +214,7 @@
         </button>
 
         <button
+          v-if="isFeatureEnabled('aiScript')"
           class="spm-btn-action b3-tooltips b3-tooltips__se"
           aria-label="智能分析长文本结构并给出大纲分页插入建议"
           @click="$emit('aiAutoSplit')"
@@ -221,6 +224,7 @@
         </button>
 
         <button
+          v-if="isFeatureEnabled('exportHtml')"
           class="spm-btn-action b3-tooltips b3-tooltips__sw"
           aria-label="打包导出离线单文件 HTML 幻灯片"
           @click="$emit('exportHtml')"
@@ -230,6 +234,7 @@
         </button>
 
         <button
+          v-if="isFeatureEnabled('exportPdf')"
           class="spm-btn-action b3-tooltips b3-tooltips__se"
           aria-label="打印生成 16:9 高清演示 PDF 讲义"
           @click="$emit('exportPdf')"
@@ -239,6 +244,7 @@
         </button>
 
         <button
+          v-if="isFeatureEnabled('exportImage')"
           class="spm-btn-action b3-tooltips b3-tooltips__s"
           :class="{ 'is-loading': isExportingImages }"
           :disabled="isExportingImages"
@@ -258,6 +264,7 @@ import { inject } from 'vue'
 import SlidesIcon from '@/ui/components/SlidesIcon.vue'
 import TransitionSelector from '@/ui/components/TransitionSelector.vue'
 import { globalSettingsState, setRuntimeSettings } from '@/settings'
+import { isFeatureEnabled } from '@/feature-flags/feature-flags'
 
 const plugin = inject<any>('plugin')
 const globalSettings = globalSettingsState

@@ -12,8 +12,9 @@
       </div>
 
       <div class="spm-inspector-topbar-actions">
-        <!-- 导入 Slidev 演示文档 -->
+        <!-- 导入 Slidev 演示文档（import 开关关闭时隐藏入口） -->
         <button
+          v-if="isFeatureEnabled('import')"
           class="spm-icon-btn b3-tooltips b3-tooltips__sw"
           aria-label="导入 Slidev 演示文档 (.md / .zip)"
           @click="showImportDialog = true"
@@ -164,9 +165,9 @@
       />
     </div>
 
-    <!-- 导入 Slidev 演示对话框 -->
+    <!-- 导入 Slidev 演示对话框（import 开关关闭时不渲染） -->
     <SlidesImportDialog
-      v-if="showImportDialog"
+      v-if="showImportDialog && isFeatureEnabled('import')"
       @close="showImportDialog = false"
       @success="onImportSuccess"
     />
@@ -191,6 +192,8 @@ import {
 import { resolveTargetSlide, isDividerBlockType } from '@/sync/inspector-slide-resolver'
 import { useInspectorActions } from '@/ui/dock/useInspectorActions'
 import { createPageAttrResolver } from '@/ui/dock/useInspectorPageOverrides'
+import { isFeatureEnabled } from '@/feature-flags/feature-flags'
+import { runAiAutoSplit } from '@/plugin/ai-auto-split-action'
 import type {
   IActiveBlockInfo,
   ISlidesDocument,
@@ -871,8 +874,9 @@ function onOpenPresenter() {
 }
 
 function onAiAutoSplit() {
-  if (plugin?.executeCommand) {
-    plugin.executeCommand('slidesAiSplit')
+  // 思源 Plugin 类没有 executeCommand，直接调用抽出的分页回调
+  if (plugin && isFeatureEnabled('aiScript')) {
+    void runAiAutoSplit(plugin)
   }
 }
 

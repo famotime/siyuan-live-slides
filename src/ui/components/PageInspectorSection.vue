@@ -374,6 +374,7 @@
           <span class="spm-control-desc">正文备注块驱动 · 仅演讲者视图可见</span>
         </div>
         <button
+          v-if="isFeatureEnabled('aiScript')"
           class="spm-btn-text b3-tooltips b3-tooltips__sw"
           aria-label="AI 自动生成本页讲稿提示块"
           @click="$emit('generateNotes')"
@@ -486,6 +487,7 @@ import { computed } from 'vue'
 import LayoutPicker from '@/ui/components/LayoutPicker.vue'
 import TransitionSelector from '@/ui/components/TransitionSelector.vue'
 import SlidesIcon from '@/ui/components/SlidesIcon.vue'
+import { isFeatureEnabled } from '@/feature-flags/feature-flags'
 
 const props = defineProps<{
   pageLayout: string

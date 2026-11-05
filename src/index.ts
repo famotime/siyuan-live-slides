@@ -10,6 +10,7 @@ import {
 import { getBlockAttrs } from "@/api"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
 import { CliDevServerBridge } from "@/engine/cli-devserver-bridge"
+import { isFeatureDisabled } from "@/feature-flags/feature-flags"
 import {
   globalSandboxBridge,
   isPreviewTabMounted,
@@ -305,6 +306,10 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
    * 若预览页签（大屏放映端）尚未开启，则顺带拉起，保证有应答 SYNC 的沙箱。
    */
   public async openPresenterTab(): Promise<void> {
+    // presenterMode 开关关闭时演讲者视图整体下架，不响应任何唤起（含沙箱放映内请求）
+    if (isFeatureDisabled("presenterMode")) {
+      return
+    }
     if (!isPreviewTabMounted()) {
       await this.openBottomPreviewTab()
     }
