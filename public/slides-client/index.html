@@ -5595,18 +5595,6 @@
         }
 
         function onBlockClick(blockId, e) {
-          if (highlightedBlockId.value && highlightedBlockId.value === blockId) {
-            highlightedBlockId.value = ""
-            window.parent.postMessage({
-              source: "siyuan-slides-client",
-              action: "BLOCK_CLICKED",
-              payload: {
-                currentPage: currentPageIndex.value,
-                clickedBlockId: ""
-              }
-            }, "*")
-            return
-          }
           if (e && e.target) {
             const img = e.target.closest('img')
             if (img && img.src && !img.closest('.slides-lightbox')) {
@@ -5620,12 +5608,94 @@
               openLightbox('video', vid.src)
               return
             }
+            const refEl = e.target.closest('[data-ref-id]')
+            if (refEl) {
+              const refBlockId = refEl.getAttribute('data-ref-id')
+              if (refBlockId) {
+                e.preventDefault()
+                e.stopPropagation()
+                const blockTitle = (refEl.innerText || refEl.title || '').trim()
+                window.parent.postMessage({
+                  source: "siyuan-slides-client",
+                  action: "OPEN_PEEK_DRAWER",
+                  payload: {
+                    peekType: "siyuan",
+                    blockId: refBlockId,
+                    title: blockTitle
+                  }
+                }, "*")
+                return
+              }
+            }
+            const linkEl = e.target.closest('a')
+            if (linkEl) {
+              const href = linkEl.getAttribute('href') || ''
+              if (href.startsWith('siyuan://blocks/')) {
+                e.preventDefault()
+                e.stopPropagation()
+                const cleanBlockId = href.replace('siyuan://blocks/', '').split('?')[0]
+                const blockTitle = (linkEl.innerText || linkEl.title || '').trim()
+                window.parent.postMessage({
+                  source: "siyuan-slides-client",
+                  action: "OPEN_PEEK_DRAWER",
+                  payload: {
+                    peekType: "siyuan",
+                    blockId: cleanBlockId,
+                    title: blockTitle
+                  }
+                }, "*")
+                return
+              } else if (/^https?:\/\//i.test(href)) {
+                e.preventDefault()
+                e.stopPropagation()
+                window.parent.postMessage({
+                  source: "siyuan-slides-client",
+                  action: "OPEN_PEEK_DRAWER",
+                  payload: {
+                    peekType: "web",
+                    url: href,
+                    title: (linkEl.innerText || linkEl.title || '').trim()
+                  }
+                }, "*")
+                return
+              } else if (isPeekableLocalHtml(href)) {
+                e.preventDefault()
+                e.stopPropagation()
+                window.parent.postMessage({
+                  source: "siyuan-slides-client",
+                  action: "OPEN_PEEK_DRAWER",
+                  payload: {
+                    peekType: "web",
+                    url: resolvePeekHref(href),
+                    title: (linkEl.innerText || linkEl.title || '').trim()
+                  }
+                }, "*")
+                return
+              }
+            }
           }
-          if (e && e.target && (e.target.closest('button') || e.target.closest('a') || e.target.closest('[data-clickable]'))) {
-            highlightedBlockId.value = blockId
+
+          // 核心逻辑：若当前已处于高亮强调色方框且再次点击同一对象，取消方框并通知宿主；否则单选互斥高亮该对象
+          if (highlightedBlockId.value && highlightedBlockId.value === blockId) {
+            highlightedBlockId.value = ""
+            if (e && typeof e.stopPropagation === 'function') {
+              e.stopPropagation()
+            }
+            window.parent.postMessage({
+              source: "siyuan-slides-client",
+              action: "BLOCK_CLICKED",
+              payload: {
+                currentPage: currentPageIndex.value,
+                clickedBlockId: ""
+              }
+            }, "*")
             return
           }
+
           highlightedBlockId.value = blockId
+          if (e && typeof e.stopPropagation === 'function') {
+            e.stopPropagation()
+          }
           window.parent.postMessage({
             source: "siyuan-slides-client",
             action: "BLOCK_CLICKED",
@@ -6185,19 +6255,6 @@
               e.preventDefault()
               return
             }
-            if (e.key === "Escape" && highlightedBlockId.value) {
-              highlightedBlockId.value = ""
-              window.parent.postMessage({
-                source: "siyuan-slides-client",
-                action: "BLOCK_CLICKED",
-                payload: {
-                  currentPage: currentPageIndex.value,
-                  clickedBlockId: ""
-                }
-              }, "*")
-              e.preventDefault()
-              return
-            }
             if (e.key === "o" || e.key === "O") {
               e.preventDefault()
               toggleOverview()
@@ -6432,23 +6489,10 @@
           const selection = window.getSelection ? window.getSelection().toString().trim() : ""
           if (selection.length > 0) return
 
-          // 空白区域点击：若当前存在对象高亮
-          if (highlightedBlockId.value) {
-            highlightedBlockId.value = ""
-            window.parent.postMessage({
-              source: "siyuan-slides-client",
-              action: "BLOCK_CLICKED",
-              payload: {
-                currentPage: currentPageIndex.value,
-                clickedBlockId: ""
-              }
-            }, "*")
-          }
-
-          // 页面组件排查：若在常规预览模式下且当前页已无未完成步进，点击普通块保持属性面板选中
+          // 页面组件排查：若点击命中页面组件或功能控制元素且无未展露步进，不触发翻页
           const isComponent = targetEl.closest('.slide-block, .controls-bar, .image-right-img-container, .image-left-img-container, img, video, audio, .empty-state')
           const hasPendingSteps = currentStep.value < maxStepInCurrentSlide.value
-          if (isComponent && !isFullscreenMode.value && !hasPendingSteps) return
+          if (isComponent && !hasPendingSteps) return
 
           // 屏幕左右对半翻页调度：左侧向前（步骤/上一页），右侧向后（步骤/下一页）
           const isLeft = e.clientX < window.innerWidth / 2

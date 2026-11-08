@@ -1,6 +1,7 @@
 import fs from "node:fs"
 import path from "node:path"
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
+import SiYuanLiveSlidesPlugin from "../src/index"
 import { InspectorSyncCoordinator } from "../src/sync/inspector-sync-coordinator"
 import * as mainModule from "../src/main"
 import * as selectionMirrorModule from "../src/sync/selection-mirror"
@@ -12,18 +13,22 @@ describe("Block Selection Highlight Toggle (演示与预览界面块级蓝色边
   const indexHtml = fs.readFileSync(indexHtmlPath, "utf-8")
 
   describe("1. 内置沙箱播放器交互 (public/slides-client/index.html)", () => {
-    it("再次点击同一个对象时应清空 highlightedBlockId 并通知宿主 clickedBlockId 为空", () => {
+    it("再次点击同一个对象时应清空 highlightedBlockId 并通知宿主 clickedBlockId 为空，且阻止事件冒泡", () => {
       expect(indexHtml).toContain("if (highlightedBlockId.value && highlightedBlockId.value === blockId)")
       expect(indexHtml).toMatch(/highlightedBlockId\.value\s*=\s*""[\s\S]*?action:\s*"BLOCK_CLICKED"[\s\S]*?clickedBlockId:\s*""/)
+      expect(indexHtml).toMatch(/highlightedBlockId\.value\s*=\s*""[\s\S]*?e\.stopPropagation\(\)/)
     })
 
-    it("按下 Escape 键时若有对象高亮应取消高亮并通知宿主", () => {
-      expect(indexHtml).toContain("if (e.key === \"Escape\" && highlightedBlockId.value)")
-      expect(indexHtml).toMatch(/if\s*\(e\.key\s*===\s*"Escape"\s*&&\s*highlightedBlockId\.value\)[\s\S]*?highlightedBlockId\.value\s*=\s*""/)
+    it("若命中子元素图片、视频或超链接，优先响应媒体放大或链接跳转，不直接取消方框", () => {
+      expect(indexHtml).toMatch(/const img = e\.target\.closest\('img'\)[\s\S]*?openLightbox\('img'/)
+      expect(indexHtml).toMatch(/const linkEl = e\.target\.closest\('a'\)[\s\S]*?OPEN_PEEK_DRAWER/)
     })
 
-    it("点击幻灯片空白区域时应清除对象高亮并通知宿主", () => {
-      expect(indexHtml).toMatch(/\/\/ 空白区域点击：若当前存在对象高亮[\s\S]*?if\s*\(highlightedBlockId\.value\)[\s\S]*?highlightedBlockId\.value\s*=\s*""/)
+    it("精简模式：按下 Escape 键或点击空白区域时不取消对象高亮，仅允许再次点击该对象本身取消", () => {
+      // 验证未在 keydown 中将 Escape 键与 highlightedBlockId 绑定清空逻辑
+      expect(indexHtml).not.toMatch(/if\s*\(e\.key\s*===\s*"Escape"\s*&&\s*highlightedBlockId\.value\)/)
+      // 验证未在 onDocumentClick 中因空白点击而清空 highlightedBlockId
+      expect(indexHtml).not.toMatch(/\/\/ 空白区域点击：若当前存在对象高亮/)
     })
 
     it("页码切换 (watch currentPageIndex) 时应自动重置清除高亮", () => {
@@ -220,6 +225,68 @@ describe("Block Selection Highlight Toggle (演示与预览界面块级蓝色边
 
       expect(staleEl.style.outline).toBe("")
       expect(staleEl.classList.contains("protyle-wysiwyg--select")).toBe(false)
+    })
+  })
+
+  describe("4. 宿主选区防回弹机制 (Anti-Bounce)", () => {
+    it("从幻灯片取消高亮后，selectionchange 事件不得将已取消的块反向重新激活", () => {
+      const plugin = new SiYuanLiveSlidesPlugin({} as any)
+      const navigateSpy = vi.spyOn(mainModule, "navigateDockToBlock").mockImplementation(() => {})
+
+      // 1. 模拟在幻灯片中点击激活 block-abc
+      plugin.handleBlockClickedFromSlide("block-abc", 1)
+      expect((plugin as any).activeCursorBlockId).toBe("block-abc")
+      expect((plugin as any).cancelledCursorBlockId).toBe("")
+
+      // 2. 模拟在幻灯片中再次点击 block-abc 取消高亮
+      plugin.handleBlockClickedFromSlide("", 1)
+      expect((plugin as any).activeCursorBlockId).toBe("")
+      expect((plugin as any).cancelledCursorBlockId).toBe("block-abc")
+
+      // 3. 模拟此时思源发生 selectionchange，光标仍在 block-abc 上
+      const mockAnchor = {
+        nodeType: 1,
+        closest: (sel: string) => {
+          if (sel === ".protyle-wysiwyg") return {}
+          if (sel === "[data-node-id]") return {
+            getAttribute: (attr: string) => attr === "data-node-id" ? "block-abc" : "", closest: () => null
+          }
+          return null
+        }
+      }
+      const origWindow = (globalThis as any).window
+      const origNode = (globalThis as any).Node
+      ;(globalThis as any).window = {
+        getSelection: () => ({ rangeCount: 1, anchorNode: mockAnchor })
+      }
+      ;(globalThis as any).Node = { ELEMENT_NODE: 1 }
+
+      try {
+        ;(plugin as any).onSelectionChange()
+
+        // 验证：绝对不得触发 navigateDockToBlock 把 block-abc 反打回沙箱！
+        expect(navigateSpy).not.toHaveBeenCalled()
+
+        // 4. 当用户在思源编辑器中鼠标真正点击了该块时，解除防回弹限制并正常联动
+        ;(plugin as any).onEditorClick({
+          target: {
+            closest: (sel: string) => {
+              if (sel === ".protyle-wysiwyg") return {}
+              if (sel === "[data-node-id]") return {
+                getAttribute: (attr: string) => attr === "data-node-id" ? "block-abc" : "",
+                closest: () => null,
+                querySelector: () => null,
+                querySelectorAll: () => [],
+              }
+              return null
+            }
+          }
+        } as any)
+        expect((plugin as any).cancelledCursorBlockId).toBe("")
+      } finally {
+        ;(globalThis as any).window = origWindow
+        ;(globalThis as any).Node = origNode
+      }
     })
   })
 })

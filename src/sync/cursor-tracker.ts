@@ -84,6 +84,9 @@ export class CursorTracker {
    */
   public setActiveBlockId(blockId: string): void {
     this.activeBlockId = blockId
+    if (!blockId) {
+      this.debounceCtrl.cancel("cursor-navigate")
+    }
     const page = this.getPageByBlockId(blockId)
     if (page) {
       this.activePageIndex = page

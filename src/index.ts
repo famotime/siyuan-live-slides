@@ -69,6 +69,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
   public cliBridge = new CliDevServerBridge()
   private debounceTimer: number | null = null
   private activeCursorBlockId = ""
+  private cancelledCursorBlockId = ""
   // P0 优化：编译消费者门闩 + 脏文档 + 单飞/代际调度
   private compileScheduler = new CompileScheduler()
   private dirtyDocId: string | null = null
@@ -388,6 +389,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
     const docId = (protyle as any)?.block?.rootID
     const docTitle = (protyle as any)?.title?.editElement?.textContent?.trim() || ""
     if (docId && docId !== this.currentDocId) {
+      this.cancelledCursorBlockId = ""
       this.currentDocId = docId
       this.activeCursorBlockId = docId
       const attrs = await getBlockAttrs(docId).catch(() => ({}))
@@ -525,7 +527,13 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
    * 幻灯片点击回传，反向平滑定位到思源块并同步配置面板
    */
   public handleBlockClickedFromSlide(blockId: string, page?: number): boolean {
-    this.activeCursorBlockId = blockId
+    if (!blockId) {
+      this.cancelledCursorBlockId = this.activeCursorBlockId
+      this.activeCursorBlockId = ""
+    } else {
+      this.cancelledCursorBlockId = ""
+      this.activeCursorBlockId = blockId
+    }
     return globalInspectorSyncCoordinator.handleBlockClickedFromSlide(
       blockId,
       this.app,
@@ -576,6 +584,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
     const blockId = blockEl.getAttribute("data-node-id")
     const blockType = blockEl.getAttribute("data-type") || ""
     if (blockId) {
+      this.cancelledCursorBlockId = ""
       if (!this.currentDocId) {
         this.currentDocId = this.resolveDocIdFromElement(target) || ""
       }
@@ -635,6 +644,9 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
         this.markCompileDirty(this.currentDocId)
       }
       if (blockId !== this.activeCursorBlockId) {
+        if (blockId === this.cancelledCursorBlockId) {
+          return
+        }
         this.activeCursorBlockId = blockId
         navigateDockToBlock(blockId)
       }

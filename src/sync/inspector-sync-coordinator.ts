@@ -210,8 +210,10 @@ export class InspectorSyncCoordinator {
     const located = mirrorBlockSelection(blockId, app)
 
     // 2. 尝试从 DOM 或通过 API 获取块信息，同步右侧演示配置面板
-    const blockEl = (document.querySelector(`.protyle-wysiwyg [data-node-id="${blockId}"]`) ||
-      document.querySelector(`[data-node-id="${blockId}"]`)) as HTMLElement | null
+    const blockEl = typeof document !== "undefined"
+      ? ((document.querySelector(`.protyle-wysiwyg [data-node-id="${blockId}"]`) ||
+          document.querySelector(`[data-node-id="${blockId}"]`)) as HTMLElement | null)
+      : null
 
     const blockType = blockEl?.getAttribute("data-type") || ""
     if (blockEl) {
@@ -275,7 +277,7 @@ export class InspectorSyncCoordinator {
     let effectiveType = blockType
 
     // 智能识别 Callout 提示块容器：若当前选中的是提示块内部的段落等子元素，检查外层 Callout 是否属于讲稿备注
-    const calloutEl = blockEl.closest('[data-type="NodeCallout"]') as HTMLElement | null
+    const calloutEl = typeof blockEl?.closest === "function" ? (blockEl.closest('[data-type="NodeCallout"]') as HTMLElement | null) : null
     if (calloutEl && calloutEl !== blockEl) {
       const calloutId = calloutEl.getAttribute("data-node-id")
       if (calloutId) {
