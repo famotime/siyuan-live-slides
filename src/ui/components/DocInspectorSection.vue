@@ -213,6 +213,17 @@
           <span>演讲者视图</span>
         </button>
 
+        <!-- 识别讲稿块 -->
+        <button
+          class="spm-btn-action b3-tooltips b3-tooltips__sw"
+          aria-label="识别各页分隔线前未设属性的提示块/引用块为标准讲稿备注"
+          :disabled="isBatchProcessing"
+          @click="$emit('identifyNotes')"
+        >
+          <SlidesIcon name="notes" />
+          <span>识别讲稿块</span>
+        </button>
+
         <button
           v-if="isFeatureEnabled('aiScript')"
           class="spm-btn-action b3-tooltips b3-tooltips__se"
@@ -321,6 +332,7 @@ defineProps<{
   docDefaultTransition: string
   docSpacing?: string
   isExportingImages?: boolean
+  isBatchProcessing?: boolean
 }>()
 
 defineEmits<{
@@ -330,6 +342,7 @@ defineEmits<{
   (e: 'update:docSpacing', val: string): void
   (e: 'openBottomPreview'): void
   (e: 'openPresenter'): void
+  (e: 'identifyNotes'): void
   (e: 'aiAutoSplit'): void
   (e: 'exportHtml'): void
   (e: 'exportPdf'): void

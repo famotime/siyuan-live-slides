@@ -16,6 +16,7 @@ import { syncDomBlockAttrs } from "@/sync/dom-attr-sync"
 import { mirrorBlockSelection } from "@/sync/selection-mirror"
 import type { ISlidesVirtualPage } from "@/types/slides-protocol"
 import { ATTR_ELEM_NOTE } from "@/types/slides-protocol"
+import { identifyAndNormalizeDocumentNotes } from "@/sync/notes-normalizer"
 import type { IInspectorActionsContext } from "./attr-persistence"
 
 export interface INotesActionsDeps {
@@ -31,6 +32,7 @@ export interface INotesActions {
   onGenerateNotesWithAI: () => Promise<void>
   onBatchAppendNotes: () => Promise<void>
   onBatchDeleteNotes: () => Promise<void>
+  onIdentifyNotesBlocks: () => Promise<void>
 }
 
 /**
@@ -342,6 +344,32 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
     )
   }
 
+  async function onIdentifyNotesBlocks() {
+    const docId = ctx.currentDocId.value || ctx.plugin?.currentDocId
+    if (!docId) {
+      showMessage("请先在主编辑区打开幻灯片文档")
+      return
+    }
+    if (isBatchProcessing.value) {
+      showMessage("正在批量处理中，请稍候...")
+      return
+    }
+
+    isBatchProcessing.value = true
+    try {
+      await identifyAndNormalizeDocumentNotes(docId, {
+        onSuccessNotice: triggerSaveNotice,
+        compileFn: async () => {
+          if (ctx.plugin) {
+            await ctx.plugin.compileCurrentDocument()
+          }
+        },
+      })
+    } finally {
+      isBatchProcessing.value = false
+    }
+  }
+
   return {
     isBatchProcessing,
     createNoteBlockOnCurrentSlide,
@@ -351,5 +379,6 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
     onGenerateNotesWithAI,
     onBatchAppendNotes,
     onBatchDeleteNotes,
+    onIdentifyNotesBlocks,
   }
 }

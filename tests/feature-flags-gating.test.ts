@@ -55,6 +55,7 @@ function createMockPlugin() {
 const CORE_KEYS = [
   "slidesPresentation",
   "slidesInitAttrs",
+  "slidesIdentifyNotes",
   "slidesBatchTransitions",
   "slidesExportTemplates",
   "slidesBatchReplaceTransition",
@@ -66,18 +67,18 @@ describe("FeatureFlags 门控 (命令条件注册)", () => {
     vi.clearAllMocks()
   })
 
-  it("默认（无关闭项）注册全部 13 条命令", () => {
+  it("默认（无关闭项）注册全部 14 条命令", () => {
     const { mockPlugin, commands } = createMockPlugin()
     registerPluginCommands(mockPlugin)
-    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(13)
-    expect(commands.map(c => c.langKey)).toHaveLength(13)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(14)
+    expect(commands.map(c => c.langKey)).toHaveLength(14)
   })
 
   it("关闭 import 开关后 slidesImport 不注册", () => {
     gatingState.disabled.add("import")
     const { mockPlugin, commands } = createMockPlugin()
     registerPluginCommands(mockPlugin)
-    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(12)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(13)
     expect(commands.map(c => c.langKey)).not.toContain("slidesImport")
   })
 
@@ -85,7 +86,7 @@ describe("FeatureFlags 门控 (命令条件注册)", () => {
     gatingState.disabled.add("aiScript")
     const { mockPlugin, commands } = createMockPlugin()
     registerPluginCommands(mockPlugin)
-    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(11)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(12)
     const keys = commands.map(c => c.langKey)
     expect(keys).not.toContain("slidesAiSplit")
     expect(keys).not.toContain("slidesAiNotes")
@@ -95,7 +96,7 @@ describe("FeatureFlags 门控 (命令条件注册)", () => {
     gatingState.disabled.add("proMode")
     const { mockPlugin, commands } = createMockPlugin()
     registerPluginCommands(mockPlugin)
-    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(10)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(11)
     const keys = commands.map(c => c.langKey)
     expect(keys).not.toContain("slidesExportCliMd")
     expect(keys).not.toContain("slidesProbeCliDevServer")
@@ -106,7 +107,7 @@ describe("FeatureFlags 门控 (命令条件注册)", () => {
     gatingState.disabled.add("exportImage")
     const { mockPlugin, commands } = createMockPlugin()
     registerPluginCommands(mockPlugin)
-    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(12)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(13)
     expect(commands.map(c => c.langKey)).not.toContain("slidesExportImagesZip")
   })
 
@@ -114,7 +115,7 @@ describe("FeatureFlags 门控 (命令条件注册)", () => {
     gatingState.disabled.add("presenterMode")
     const { mockPlugin, commands } = createMockPlugin()
     registerPluginCommands(mockPlugin)
-    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(12)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(13)
     expect(commands.map(c => c.langKey)).not.toContain("slidesPresenterMode")
   })
 
@@ -124,7 +125,7 @@ describe("FeatureFlags 门控 (命令条件注册)", () => {
     )
     const { mockPlugin, commands } = createMockPlugin()
     registerPluginCommands(mockPlugin)
-    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(5)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(6)
     expect(commands.map(c => c.langKey).sort()).toEqual([...CORE_KEYS].sort())
   })
 

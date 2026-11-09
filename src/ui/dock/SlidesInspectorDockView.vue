@@ -152,12 +152,14 @@
         :doc-default-transition="docDefaultTransition"
         :doc-spacing="docSpacing"
         :is-exporting-images="isExportingImages"
+        :is-batch-processing="isBatchProcessing"
         @update:doc-theme="onDocThemeChange"
         @update:doc-aspect-ratio="onDocAspectRatioChange"
         @update:doc-default-transition="onDocTransitionChange"
         @update:doc-spacing="onDocSpacingChange"
         @open-bottom-preview="onOpenBottomPreview"
         @open-presenter="onOpenPresenter"
+        @identify-notes="onIdentifyNotesBlocks"
         @ai-auto-split="onAiAutoSplit"
         @export-html="onExportHtml"
         @export-pdf="onExportPdf"
@@ -728,6 +730,7 @@ const {
   isBatchProcessing,
   onBatchAppendNotes,
   onBatchDeleteNotes,
+  onIdentifyNotesBlocks,
   toggleElemClick,
   onElemClickStepChange,
   onElemMotionChange,

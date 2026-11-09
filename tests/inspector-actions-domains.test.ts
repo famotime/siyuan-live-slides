@@ -13,6 +13,7 @@ import * as apiModule from "../src/api"
 import * as domSyncModule from "../src/sync/dom-attr-sync"
 import * as siyuanModule from "siyuan"
 import { globalDocumentCompiler } from "../src/compiler/document-compiler"
+import { ATTR_ELEM_NOTE } from "../src/types/slides-protocol"
 
 /**
  * RF-016 领域级单测：直接针对 attr-persistence / notes-actions / layout-actions
@@ -226,6 +227,41 @@ describe("notes-actions (备注与 AI 领域模块)", () => {
 
     confirmSpy.mockRestore()
     insertSpy.mockRestore()
+  })
+
+  it("onIdentifyNotesBlocks 应支持全流程编排并在完成后重编文档", async () => {
+    const getChildSpy = vi.spyOn(apiModule, "getChildBlocks").mockResolvedValue([
+      { id: "p-1", type: "p", markdown: "内容" },
+      { id: "note-1", type: "b", markdown: "> 口播讲稿" },
+      { id: "tb-1", type: "tb", markdown: "---" },
+    ] as any)
+    const updateSpy = vi.spyOn(apiModule, "updateBlock").mockResolvedValue({} as any)
+    const setAttrsSpy = vi.spyOn(apiModule, "setBlockAttrs").mockResolvedValue({} as any)
+    vi.spyOn(domSyncModule, "syncDomBlockAttrs").mockImplementation(() => {})
+
+    await notes.onIdentifyNotesBlocks()
+
+    expect(updateSpy).toHaveBeenCalledWith(
+      "markdown",
+      expect.stringContaining("> [!NOTE] 💡 演讲备注\n> 口播讲稿"),
+      "note-1"
+    )
+    expect(setAttrsSpy).toHaveBeenCalledWith("note-1", { [ATTR_ELEM_NOTE]: "true" })
+    expect(ctx.plugin.compileCurrentDocument).toHaveBeenCalled()
+
+    getChildSpy.mockRestore()
+    updateSpy.mockRestore()
+    setAttrsSpy.mockRestore()
+  })
+
+  it("onIdentifyNotesBlocks 处理中时应被并发守卫拦截", async () => {
+    notes.isBatchProcessing.value = true
+    const showMsgSpy = vi.spyOn(siyuanModule, "showMessage").mockImplementation(() => {})
+
+    await notes.onIdentifyNotesBlocks()
+
+    expect(showMsgSpy).toHaveBeenCalledWith("正在批量处理中，请稍候...")
+    showMsgSpy.mockRestore()
   })
 })
 

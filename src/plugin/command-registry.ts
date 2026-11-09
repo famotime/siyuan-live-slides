@@ -15,6 +15,7 @@ import { openDockImportDialog } from "@/main"
 import { runAiAutoSplit } from "@/plugin/ai-auto-split-action"
 import { mirrorBlockSelection } from "@/sync/selection-mirror"
 import { PropertyManagerBridge } from "@/synergy/property-manager-bridge"
+import { identifyAndNormalizeDocumentNotes } from "@/sync/notes-normalizer"
 import type { ISlidesDocument } from "@/types/slides-protocol"
 import type { CliDevServerBridge } from "@/engine/cli-devserver-bridge"
 import { runHeadlessImageExport, resolveDocumentTitle } from "@/export/image-exporter"
@@ -141,6 +142,34 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
       },
     })
   }
+
+  // 6. 识别正文讲稿块并规范化
+  plugin.addCommand({
+    langKey: "slidesIdentifyNotes",
+    langText: "即现演示: 识别正文讲稿块并规范化",
+    hotkey: "",
+    enabled: () => true,
+    execute: async () => {
+      let docId = plugin.currentDocId
+      if (!docId) {
+        const activeEl = document.querySelector(".protyle-content[data-doc-id]")
+        docId = activeEl?.getAttribute("data-doc-id") || ""
+        if (docId) {
+          plugin.currentDocId = docId
+        }
+      }
+      if (!docId) {
+        showMessage("请先在主编辑区打开幻灯片文档")
+        return
+      }
+
+      await identifyAndNormalizeDocumentNotes(docId, {
+        compileFn: async () => {
+          await plugin.compileCurrentDocument(docId)
+        },
+      })
+    },
+  })
 
   // 6. 统计全库转场效果分布
   plugin.addCommand({

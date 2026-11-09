@@ -103,6 +103,7 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     isBatchProcessing: notes.isBatchProcessing,
     onBatchAppendNotes: notes.onBatchAppendNotes,
     onBatchDeleteNotes: notes.onBatchDeleteNotes,
+    onIdentifyNotesBlocks: notes.onIdentifyNotesBlocks,
     toggleElemClick: layout.toggleElemClick,
     onElemClickStepChange: layout.onElemClickStepChange,
     onElemMotionChange: layout.onElemMotionChange,
