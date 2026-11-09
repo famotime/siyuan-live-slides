@@ -67,7 +67,7 @@ export function buildPrintableHtml(doc: ISlidesDocument, options?: IPdfExportOpt
     ${generatePdfExportStyles({ pageRatio, customInlineStyles: options?.customInlineStyles })}
   </style>
 </head>
-<body data-normalize-headings="${doc.config.normalizeHeadingSizes ? 'true' : 'false'}">
+<body data-normalize-headings="${doc.config.normalizeHeadingSizes ? 'true' : 'false'}" data-hide-unordered-markers="${doc.config.showUnorderedListMarkers === false ? 'true' : 'false'}" data-hide-ordered-markers="${doc.config.showOrderedListMarkers === false ? 'true' : 'false'}">
   ${slidesHtml}
 </body>
 </html>`

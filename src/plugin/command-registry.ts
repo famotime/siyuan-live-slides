@@ -16,6 +16,7 @@ import { runAiAutoSplit } from "@/plugin/ai-auto-split-action"
 import { mirrorBlockSelection } from "@/sync/selection-mirror"
 import { PropertyManagerBridge } from "@/synergy/property-manager-bridge"
 import { identifyAndNormalizeDocumentNotes } from "@/sync/notes-normalizer"
+import { runAutoAnimationForDocument } from "@/sync/auto-animation-normalizer"
 import type { ISlidesDocument } from "@/types/slides-protocol"
 import type { CliDevServerBridge } from "@/engine/cli-devserver-bridge"
 import { runHeadlessImageExport, resolveDocumentTitle } from "@/export/image-exporter"
@@ -165,6 +166,34 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
 
       await identifyAndNormalizeDocumentNotes(docId, {
         compileFn: async () => {
+          await plugin.compileCurrentDocument(docId)
+        },
+      })
+    },
+  })
+
+  // 7. 智能配置演示动效
+  plugin.addCommand({
+    langKey: "slidesAutoAnimate",
+    langText: "即现演示: 智能配置演示动效",
+    hotkey: "",
+    enabled: () => true,
+    execute: async () => {
+      let docId = plugin.currentDocId
+      if (!docId) {
+        const activeEl = document.querySelector(".protyle-content[data-doc-id]")
+        docId = activeEl?.getAttribute("data-doc-id") || ""
+        if (docId) {
+          plugin.currentDocId = docId
+        }
+      }
+      if (!docId) {
+        showMessage("请先在主编辑区打开幻灯片文档")
+        return
+      }
+
+      await runAutoAnimationForDocument(docId, {
+        compileCurrentDocFn: async () => {
           await plugin.compileCurrentDocument(docId)
         },
       })

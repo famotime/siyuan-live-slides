@@ -65,7 +65,7 @@ ${generateStandaloneExportStyles(options?.customInlineStyles)}
   </script>
 </head>
 <body>
-  <div id="app" data-normalize-headings="${doc.config.normalizeHeadingSizes ? 'true' : 'false'}">
+  <div id="app" data-normalize-headings="${doc.config.normalizeHeadingSizes ? 'true' : 'false'}" data-hide-unordered-markers="${doc.config.showUnorderedListMarkers === false ? 'true' : 'false'}" data-hide-ordered-markers="${doc.config.showOrderedListMarkers === false ? 'true' : 'false'}">
     <div class="slide-viewport slides-theme-${doc.config.theme || 'default'}" id="viewport" data-slides-theme="${doc.config.theme || 'default'}">
       <div class="slide-content" id="slide-container"></div>
     </div>

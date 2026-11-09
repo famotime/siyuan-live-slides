@@ -185,6 +185,55 @@
       </div>
     </div>
 
+    <!-- 列表前缀标记 (List Markers) -->
+    <div class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div class="spm-control-title">
+            <SlidesIcon name="list" />
+            <span>列表前缀标记</span>
+          </div>
+          <span class="spm-control-desc">分别控制正文中无序列表圆点与有序列表数字序号的呈现</span>
+        </div>
+      </div>
+      <div class="spm-list-markers-toggles" style="display: flex; gap: 8px; margin-top: 8px;">
+        <div
+          class="spm-marker-toggle-item"
+          style="flex: 1; display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: var(--b3-theme-surface); border: 1px solid var(--b3-border-color); border-radius: 4px;"
+        >
+          <span style="font-size: 12px; color: var(--b3-theme-on-surface);">无序圆点</span>
+          <label
+            class="spm-switch b3-tooltips b3-tooltips__w"
+            :aria-label="globalSettings.showUnorderedListMarkers ? '关闭无序列表圆点显示' : '开启无序列表圆点显示'"
+          >
+            <input
+              type="checkbox"
+              :checked="globalSettings.showUnorderedListMarkers"
+              @change="onToggleUnorderedMarkers(($event.target as HTMLInputElement).checked)"
+            />
+            <span class="spm-switch-slider"></span>
+          </label>
+        </div>
+        <div
+          class="spm-marker-toggle-item"
+          style="flex: 1; display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: var(--b3-theme-surface); border: 1px solid var(--b3-border-color); border-radius: 4px;"
+        >
+          <span style="font-size: 12px; color: var(--b3-theme-on-surface);">有序序号</span>
+          <label
+            class="spm-switch b3-tooltips b3-tooltips__w"
+            :aria-label="globalSettings.showOrderedListMarkers ? '关闭有序列表序号显示' : '开启有序列表序号显示'"
+          >
+            <input
+              type="checkbox"
+              :checked="globalSettings.showOrderedListMarkers"
+              @change="onToggleOrderedMarkers(($event.target as HTMLInputElement).checked)"
+            />
+            <span class="spm-switch-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
     <!-- 演示全局核心动作组 -->
     <div class="spm-card-control">
       <div class="spm-control-header">
@@ -222,6 +271,17 @@
         >
           <SlidesIcon name="notes" />
           <span>识别讲稿块</span>
+        </button>
+
+        <!-- 智能设置动效 -->
+        <button
+          class="spm-btn-action b3-tooltips b3-tooltips__sw"
+          aria-label="自动为正文各页标题及首块之外的后续内容块配置顺延 (+1) 逐步呈现动效"
+          :disabled="isBatchProcessing"
+          @click="$emit('autoAnimate')"
+        >
+          <SlidesIcon name="step" />
+          <span>智能动效</span>
         </button>
 
         <button
@@ -315,6 +375,26 @@ async function onToggleNormalizeHeadings(enabled: boolean) {
   }
 }
 
+async function onToggleUnorderedMarkers(enabled: boolean) {
+  setRuntimeSettings({ showUnorderedListMarkers: enabled })
+  if (plugin && typeof plugin.saveGlobalSettings === 'function') {
+    await plugin.saveGlobalSettings({ showUnorderedListMarkers: enabled })
+  }
+  if (plugin && typeof plugin.compileCurrentDocument === 'function') {
+    plugin.compileCurrentDocument(plugin.currentDocId || plugin.getActiveDocumentId?.())
+  }
+}
+
+async function onToggleOrderedMarkers(enabled: boolean) {
+  setRuntimeSettings({ showOrderedListMarkers: enabled })
+  if (plugin && typeof plugin.saveGlobalSettings === 'function') {
+    await plugin.saveGlobalSettings({ showOrderedListMarkers: enabled })
+  }
+  if (plugin && typeof plugin.compileCurrentDocument === 'function') {
+    plugin.compileCurrentDocument(plugin.currentDocId || plugin.getActiveDocumentId?.())
+  }
+}
+
 function onWebServeUrlInput(val: string) {
   setRuntimeSettings({ webServeUrl: val })
 }
@@ -343,6 +423,7 @@ defineEmits<{
   (e: 'openBottomPreview'): void
   (e: 'openPresenter'): void
   (e: 'identifyNotes'): void
+  (e: 'autoAnimate'): void
   (e: 'aiAutoSplit'): void
   (e: 'exportHtml'): void
   (e: 'exportPdf'): void

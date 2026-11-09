@@ -94,6 +94,8 @@
                 :data-theme="activeColorSchema"
                 :data-slides-theme="activeSlidesTheme"
                 :data-normalize-headings="isNormalizeHeadings ? 'true' : 'false'"
+                :data-hide-unordered-markers="isHideUnorderedMarkers ? 'true' : 'false'"
+                :data-hide-ordered-markers="isHideOrderedMarkers ? 'true' : 'false'"
                 :style="{
                   width: slideAspect.baseWidth + 'px',
                   height: slideAspect.baseHeight + 'px',
@@ -144,6 +146,8 @@
                 :data-theme="activeColorSchema"
                 :data-slides-theme="activeSlidesTheme"
                 :data-normalize-headings="isNormalizeHeadings ? 'true' : 'false'"
+                :data-hide-unordered-markers="isHideUnorderedMarkers ? 'true' : 'false'"
+                :data-hide-ordered-markers="isHideOrderedMarkers ? 'true' : 'false'"
                 :style="{
                   width: slideAspect.baseWidth + 'px',
                   height: slideAspect.baseHeight + 'px',
@@ -339,6 +343,8 @@ const slideAspect = computed(() => parseSlideAspectRatio(docConfig.value?.aspect
 const activeSlidesTheme = computed(() => docConfig.value?.theme || 'default')
 const activeColorSchema = computed(() => (docConfig.value?.colorSchema === 'light' ? 'light' : 'dark'))
 const isNormalizeHeadings = computed(() => Boolean(docConfig.value?.normalizeHeadingSizes))
+const isHideUnorderedMarkers = computed(() => docConfig.value?.showUnorderedListMarkers === false)
+const isHideOrderedMarkers = computed(() => docConfig.value?.showOrderedListMarkers === false)
 
 const currentThumbMetrics = computed(() =>
   computeThumbnailScale(
@@ -1902,6 +1908,22 @@ defineExpose({
     line-height: 1.3 !important;
     margin-bottom: 8px !important;
     text-align: center !important;
+  }
+
+  &[data-hide-unordered-markers="true"] ul,
+  &[data-hide-unordered-markers="true"] .pdf-list--unordered,
+  &[data-hide-unordered-markers="true"] ul > li {
+    list-style: none !important;
+    list-style-type: none !important;
+    padding-left: 0 !important;
+  }
+
+  &[data-hide-ordered-markers="true"] ol,
+  &[data-hide-ordered-markers="true"] .pdf-list--ordered,
+  &[data-hide-ordered-markers="true"] ol > li {
+    list-style: none !important;
+    list-style-type: none !important;
+    padding-left: 0 !important;
   }
 
   /* 多媒体自适应约束 */

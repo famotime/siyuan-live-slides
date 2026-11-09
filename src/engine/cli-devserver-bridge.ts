@@ -122,9 +122,43 @@ export class CliDevServerBridge {
       return `${header}${contentBody}${notesFooter}`
     }).join("\n\n")
 
-    let styleFooter = ""
+    const customStyles: string[] = []
     if (doc.config.normalizeHeadingSizes) {
-      styleFooter = `\n\n<style>\n/* Specific Heading Normalization */\n.slidev-layout:not(.cover) > :is(h1, h2, h3, h4, h5, h6):first-child {\n  font-size: 1.7rem !important;\n}\n.two-cols-header-top :is(h1, h2, h3, h4, h5, h6),\n.cols-header-top :is(h1, h2, h3, h4, h5, h6),\n.layout-header-section :is(h1, h2, h3, h4, h5, h6) {\n  font-size: 1.7rem !important;\n}\n:is(.two-cols-left, .two-cols-right, .col, .col-1, .col-2, .col-3, .three-cols-col) > :is(h1, h2, h3, h4, h5, h6):first-child {\n  font-size: 1.3rem !important;\n}\n</style>`
+      customStyles.push(`/* Specific Heading Normalization */
+.slidev-layout:not(.cover) > :is(h1, h2, h3, h4, h5, h6):first-child {
+  font-size: 1.7rem !important;
+}
+.two-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+.cols-header-top :is(h1, h2, h3, h4, h5, h6),
+.layout-header-section :is(h1, h2, h3, h4, h5, h6) {
+  font-size: 1.7rem !important;
+}
+:is(.two-cols-left, .two-cols-right, .col, .col-1, .col-2, .col-3, .three-cols-col) > :is(h1, h2, h3, h4, h5, h6):first-child {
+  font-size: 1.3rem !important;
+}`)
+    }
+
+    if (doc.config.showUnorderedListMarkers === false) {
+      customStyles.push(`/* Hide Unordered List Bullets */
+ul, .slidev-layout ul, .slidev-layout li:has(ul) {
+  list-style: none !important;
+  list-style-type: none !important;
+  padding-left: 0 !important;
+}`)
+    }
+
+    if (doc.config.showOrderedListMarkers === false) {
+      customStyles.push(`/* Hide Ordered List Numbers */
+ol, .slidev-layout ol, .slidev-layout li:has(ol) {
+  list-style: none !important;
+  list-style-type: none !important;
+  padding-left: 0 !important;
+}`)
+    }
+
+    let styleFooter = ""
+    if (customStyles.length > 0) {
+      styleFooter = `\n\n<style>\n${customStyles.join("\n\n")}\n</style>`
     }
 
     return `${globalHeader}${slidesMarkdown}${styleFooter}\n`

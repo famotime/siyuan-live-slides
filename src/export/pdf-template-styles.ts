@@ -607,6 +607,58 @@ export function generatePdfExportStyles(options?: {
       margin-bottom: 8px !important;
       text-align: center !important;
     }
+    /* 基础列表项前缀样式 */
+    .slide-block ul,
+    .slide-list--unordered,
+    .pdf-list--unordered {
+      list-style: disc !important;
+      list-style-type: disc !important;
+    }
+    .slide-block ol,
+    .slide-list--ordered,
+    .pdf-list--ordered {
+      list-style: decimal !important;
+      list-style-type: decimal !important;
+    }
+    .slide-block li,
+    .slide-list-item,
+    .pdf-list-item,
+    .pdf-list li {
+      display: list-item !important;
+    }
+
+    /* 隐藏无序列表前缀标记 */
+    [data-hide-unordered-markers="true"] :is(ul, .slide-list, .slide-list--unordered, .pdf-list, .pdf-list--unordered),
+    [data-hide-unordered-markers="true"] :is(ul, .slide-list, .slide-list--unordered, .pdf-list, .pdf-list--unordered) > li,
+    [data-hide-unordered-markers="true"] li.slide-list-item,
+    [data-hide-unordered-markers="true"] ul > li {
+      list-style: none !important;
+      list-style-type: none !important;
+      padding-left: 0 !important;
+      margin-left: 0 !important;
+    }
+    [data-hide-unordered-markers="true"] :is(ul, .slide-list, .slide-list--unordered, .pdf-list, .pdf-list--unordered) > li::marker,
+    [data-hide-unordered-markers="true"] li.slide-list-item::marker {
+      content: "" !important;
+      display: none !important;
+    }
+
+    /* 隐藏有序列表前缀标记 */
+    [data-hide-ordered-markers="true"] :is(ol, .slide-list, .slide-list--ordered, .pdf-list, .pdf-list--ordered),
+    [data-hide-ordered-markers="true"] :is(ol, .slide-list, .slide-list--ordered, .pdf-list, .pdf-list--ordered) > li,
+    [data-hide-ordered-markers="true"] li.slide-list-item,
+    [data-hide-ordered-markers="true"] ol > li {
+      list-style: none !important;
+      list-style-type: none !important;
+      padding-left: 0 !important;
+      margin-left: 0 !important;
+    }
+    [data-hide-ordered-markers="true"] :is(ol, .slide-list, .slide-list--ordered, .pdf-list, .pdf-list--ordered) > li::marker,
+    [data-hide-ordered-markers="true"] li.slide-list-item::marker {
+      content: "" !important;
+      display: none !important;
+    }
+
     .slide-list-item-desc,
     .pdf-list li > p {
       margin-top: 4px !important;

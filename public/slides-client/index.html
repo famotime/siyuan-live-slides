@@ -927,6 +927,36 @@
       text-align: center !important;
     }
 
+    /* 隐藏无序列表前缀标记 */
+    :is(.slide-stage-container[data-hide-unordered-markers="true"], [data-hide-unordered-markers="true"]) :is(ul, .slide-list, .slide-list--unordered, .pdf-list--unordered),
+    :is(.slide-stage-container[data-hide-unordered-markers="true"], [data-hide-unordered-markers="true"]) :is(ul, .slide-list, .slide-list--unordered, .pdf-list--unordered) > li,
+    :is(.slide-stage-container[data-hide-unordered-markers="true"], [data-hide-unordered-markers="true"]) li.slide-list-item {
+      list-style: none !important;
+      list-style-type: none !important;
+      padding-left: 0 !important;
+      margin-left: 0 !important;
+    }
+    :is(.slide-stage-container[data-hide-unordered-markers="true"], [data-hide-unordered-markers="true"]) :is(ul, .slide-list, .slide-list--unordered, .pdf-list--unordered) > li::marker,
+    :is(.slide-stage-container[data-hide-unordered-markers="true"], [data-hide-unordered-markers="true"]) li.slide-list-item::marker {
+      content: "" !important;
+      display: none !important;
+    }
+
+    /* 隐藏有序列表前缀标记 */
+    :is(.slide-stage-container[data-hide-ordered-markers="true"], [data-hide-ordered-markers="true"]) :is(ol, .slide-list, .slide-list--ordered, .pdf-list--ordered),
+    :is(.slide-stage-container[data-hide-ordered-markers="true"], [data-hide-ordered-markers="true"]) :is(ol, .slide-list, .slide-list--ordered, .pdf-list--ordered) > li,
+    :is(.slide-stage-container[data-hide-ordered-markers="true"], [data-hide-ordered-markers="true"]) li.slide-list-item {
+      list-style: none !important;
+      list-style-type: none !important;
+      padding-left: 0 !important;
+      margin-left: 0 !important;
+    }
+    :is(.slide-stage-container[data-hide-ordered-markers="true"], [data-hide-ordered-markers="true"]) :is(ol, .slide-list, .slide-list--ordered, .pdf-list--ordered) > li::marker,
+    :is(.slide-stage-container[data-hide-ordered-markers="true"], [data-hide-ordered-markers="true"]) li.slide-list-item::marker {
+      content: "" !important;
+      display: none !important;
+    }
+
     /* 图左与图右版式完全保留用户原始标题大小，不受规范化影响 */
     :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) :is(.layout-image-left, .layout-image-right, .image-left-content, .image-right-content) :is(h1, h2, h3, h4, h5, h6) {
       text-align: left !important;
@@ -1459,9 +1489,20 @@
       flex-direction: column;
       gap: 6px;
     }
+    .slide-block ul,
+    .slide-list--unordered {
+      list-style: disc !important;
+      list-style-type: disc !important;
+    }
+    .slide-block ol,
+    .slide-list--ordered {
+      list-style: decimal !important;
+      list-style-type: decimal !important;
+    }
     .slide-block li, .slide-list-item {
       font-size: 1.15rem;
       line-height: 1.6;
+      display: list-item !important;
     }
     .slide-task-item {
       list-style: none;
@@ -2579,7 +2620,7 @@
   <script src="./assets/html-to-image.js"></script>
 </head>
 <body>
-  <div id="app" :data-normalize-headings="isNormalizeHeadings ? 'true' : null">
+  <div id="app" :data-normalize-headings="isNormalizeHeadings ? 'true' : null" :data-hide-unordered-markers="isHideUnorderedMarkers ? 'true' : null" :data-hide-ordered-markers="isHideOrderedMarkers ? 'true' : null">
     <div
       ref="stageContainerRef"
       class="slide-stage-container"
@@ -2587,12 +2628,16 @@
       :data-theme="currentThemeMode"
       :data-slides-theme="currentSlidesTheme"
       :data-normalize-headings="isNormalizeHeadings ? 'true' : null"
+      :data-hide-unordered-markers="isHideUnorderedMarkers ? 'true' : null"
+      :data-hide-ordered-markers="isHideOrderedMarkers ? 'true' : null"
     >
       <div
         class="slide-viewport"
         :class="['slides-theme-' + currentSlidesTheme, { 'is-capturing': isCapturingImages }]"
         :data-spacing="currentSpacing"
         :data-normalize-headings="isNormalizeHeadings ? 'true' : null"
+        :data-hide-unordered-markers="isHideUnorderedMarkers ? 'true' : null"
+        :data-hide-ordered-markers="isHideOrderedMarkers ? 'true' : null"
         :style="viewportStyle"
       >
         <div class="ambient-glow" v-if="isDarkTheme"></div>
@@ -3971,6 +4016,8 @@
         const currentThemeMode = computed(() => isDarkTheme.value ? "dark" : "light")
         const currentSlidesTheme = computed(() => config.value?.theme || "default")
         const isNormalizeHeadings = computed(() => Boolean(config.value?.normalizeHeadingSizes))
+        const isHideUnorderedMarkers = computed(() => config.value?.showUnorderedListMarkers === false)
+        const isHideOrderedMarkers = computed(() => config.value?.showOrderedListMarkers === false)
 
         // 页面背景样式
         const pageBackgroundStyle = computed(() => {
@@ -6949,6 +6996,8 @@
         return {
           config,
           isNormalizeHeadings,
+          isHideUnorderedMarkers,
+          isHideOrderedMarkers,
           slides,
           currentPageIndex,
           totalPages,

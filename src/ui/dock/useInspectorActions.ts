@@ -24,7 +24,13 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
   } = createAttrPersistence(ctx)
 
   const notes = createNotesActions(ctx, { triggerSaveNotice })
-  const layout = createLayoutActions(ctx, { saveAttr, saveAttrs, savePageAttr })
+  const layout = createLayoutActions(ctx, {
+    saveAttr,
+    saveAttrs,
+    savePageAttr,
+    triggerSaveNotice,
+    isBatchProcessing: notes.isBatchProcessing,
+  })
 
   async function onExportHtml() {
     if (!ctx.latestDoc.value) {
@@ -117,6 +123,7 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     onDeleteCurrentBlock: layout.onDeleteCurrentBlock,
     resetSuperBlockWidth: layout.resetSuperBlockWidth,
     applyCloverLayout: layout.applyCloverLayout,
+    onAutoAnimateDocument: layout.onAutoAnimateDocument,
     isExportingImages,
     onExportHtml,
     onExportPdf,

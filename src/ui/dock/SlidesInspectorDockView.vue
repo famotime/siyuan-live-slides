@@ -160,6 +160,7 @@
         @open-bottom-preview="onOpenBottomPreview"
         @open-presenter="onOpenPresenter"
         @identify-notes="onIdentifyNotesBlocks"
+        @auto-animate="onAutoAnimateDocument"
         @ai-auto-split="onAiAutoSplit"
         @export-html="onExportHtml"
         @export-pdf="onExportPdf"
@@ -731,6 +732,7 @@ const {
   onBatchAppendNotes,
   onBatchDeleteNotes,
   onIdentifyNotesBlocks,
+  onAutoAnimateDocument,
   toggleElemClick,
   onElemClickStepChange,
   onElemMotionChange,

@@ -4,6 +4,8 @@ export interface ISlidesGlobalSettings {
   enableWebServeJump: boolean
   webServeUrl: string
   normalizeHeadingSizes: boolean
+  showUnorderedListMarkers: boolean
+  showOrderedListMarkers: boolean
 }
 
 export const SETTINGS_STORAGE_NAME = 'slides-config.json'
@@ -12,6 +14,8 @@ export const DEFAULT_GLOBAL_SETTINGS: ISlidesGlobalSettings = {
   enableWebServeJump: false,
   webServeUrl: 'http://127.0.0.1:6806',
   normalizeHeadingSizes: false,
+  showUnorderedListMarkers: true,
+  showOrderedListMarkers: true,
 }
 
 export const globalSettingsState = reactive<ISlidesGlobalSettings>({
@@ -30,6 +34,14 @@ export function normalizeGlobalSettings(val: unknown): ISlidesGlobalSettings {
         ? s.webServeUrl.trim()
         : DEFAULT_GLOBAL_SETTINGS.webServeUrl,
     normalizeHeadingSizes: Boolean(s.normalizeHeadingSizes),
+    showUnorderedListMarkers:
+      s.showUnorderedListMarkers !== undefined
+        ? Boolean(s.showUnorderedListMarkers)
+        : DEFAULT_GLOBAL_SETTINGS.showUnorderedListMarkers,
+    showOrderedListMarkers:
+      s.showOrderedListMarkers !== undefined
+        ? Boolean(s.showOrderedListMarkers)
+        : DEFAULT_GLOBAL_SETTINGS.showOrderedListMarkers,
   }
 }
 
@@ -46,6 +58,12 @@ export function setRuntimeSettings(val: Partial<ISlidesGlobalSettings> | unknown
   }
   if (s.normalizeHeadingSizes !== undefined) {
     globalSettingsState.normalizeHeadingSizes = Boolean(s.normalizeHeadingSizes)
+  }
+  if (s.showUnorderedListMarkers !== undefined) {
+    globalSettingsState.showUnorderedListMarkers = Boolean(s.showUnorderedListMarkers)
+  }
+  if (s.showOrderedListMarkers !== undefined) {
+    globalSettingsState.showOrderedListMarkers = Boolean(s.showOrderedListMarkers)
   }
   return { ...globalSettingsState }
 }

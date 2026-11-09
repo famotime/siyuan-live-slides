@@ -11,6 +11,8 @@ import {
   ATTR_DOC_HIGHLIGHTER,
   ATTR_DOC_THEME,
   ATTR_DOC_SPACING,
+  ATTR_DOC_SHOW_UNORDERED_LIST_MARKERS,
+  ATTR_DOC_SHOW_ORDERED_LIST_MARKERS,
   ATTR_PAGE_SPACING,
   ATTR_ELEM_CLICK,
   ATTR_ELEM_MOTION,
@@ -47,6 +49,8 @@ export const DEFAULT_SLIDES_CONFIG: ISlidesPluginConfig = {
   colorSchema: "auto",
   spacing: "normal",
   normalizeHeadingSizes: false,
+  showUnorderedListMarkers: true,
+  showOrderedListMarkers: true,
 }
 
 /**
@@ -57,8 +61,23 @@ export function parseDocumentConfig(
 ): ISlidesPluginConfig {
   const globalSettings = getRuntimeSettings()
   if (!attrs) {
-    return { ...DEFAULT_SLIDES_CONFIG, normalizeHeadingSizes: globalSettings.normalizeHeadingSizes }
+    return {
+      ...DEFAULT_SLIDES_CONFIG,
+      normalizeHeadingSizes: globalSettings.normalizeHeadingSizes,
+      showUnorderedListMarkers: globalSettings.showUnorderedListMarkers,
+      showOrderedListMarkers: globalSettings.showOrderedListMarkers,
+    }
   }
+
+  const showUnorderedListMarkers =
+    attrs[ATTR_DOC_SHOW_UNORDERED_LIST_MARKERS] !== undefined
+      ? attrs[ATTR_DOC_SHOW_UNORDERED_LIST_MARKERS] !== "false"
+      : globalSettings.showUnorderedListMarkers
+
+  const showOrderedListMarkers =
+    attrs[ATTR_DOC_SHOW_ORDERED_LIST_MARKERS] !== undefined
+      ? attrs[ATTR_DOC_SHOW_ORDERED_LIST_MARKERS] !== "false"
+      : globalSettings.showOrderedListMarkers
 
   return {
     theme: attrs[ATTR_DOC_THEME]?.trim() || DEFAULT_SLIDES_CONFIG.theme,
@@ -68,6 +87,8 @@ export function parseDocumentConfig(
     colorSchema: (attrs[ATTR_DOC_COLOR_SCHEMA]?.trim() as any) || DEFAULT_SLIDES_CONFIG.colorSchema,
     spacing: (attrs[ATTR_DOC_SPACING]?.trim() as any) || DEFAULT_SLIDES_CONFIG.spacing,
     normalizeHeadingSizes: globalSettings.normalizeHeadingSizes,
+    showUnorderedListMarkers,
+    showOrderedListMarkers,
   }
 }
 

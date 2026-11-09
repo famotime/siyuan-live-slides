@@ -23,12 +23,15 @@ import {
   ROLE_IMAGE_LEFT,
   ROLE_IMAGE_RIGHT,
 } from "@/types/slides-protocol"
+import { runAutoAnimationForDocument } from "@/sync/auto-animation-normalizer"
 import type { IInspectorActionsContext } from "./attr-persistence"
 
 export interface ILayoutActionsDeps {
   saveAttr: (key: string, value: string) => Promise<void>
   saveAttrs: (attrs: Record<string, string>) => Promise<void>
   savePageAttr: (key: string, value: string) => Promise<void>
+  triggerSaveNotice?: (msg?: string) => void
+  isBatchProcessing?: any
 }
 
 /**
@@ -522,6 +525,36 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
     }
   }
 
+  async function onAutoAnimateDocument() {
+    const docId = ctx.currentDocId.value || ctx.plugin?.currentDocId
+    if (!docId) {
+      showMessage("请先在主编辑区打开幻灯片文档")
+      return
+    }
+    if (deps.isBatchProcessing?.value) {
+      showMessage("正在批量处理中，请稍候...")
+      return
+    }
+
+    if (deps.isBatchProcessing) {
+      deps.isBatchProcessing.value = true
+    }
+    try {
+      await runAutoAnimationForDocument(docId, {
+        onSuccessNotice: deps.triggerSaveNotice,
+        compileCurrentDocFn: async () => {
+          if (ctx.plugin) {
+            await ctx.plugin.compileCurrentDocument()
+          }
+        },
+      })
+    } finally {
+      if (deps.isBatchProcessing) {
+        deps.isBatchProcessing.value = false
+      }
+    }
+  }
+
   return {
     onToggleVideoAutoplay,
     onToggleVideoLoop,
@@ -541,5 +574,6 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
     onDeleteCurrentBlock,
     resetSuperBlockWidth,
     applyCloverLayout,
+    onAutoAnimateDocument,
   }
 }

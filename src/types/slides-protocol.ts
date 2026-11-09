@@ -10,6 +10,8 @@ export const ATTR_DOC_HIGHLIGHTER = "custom-slides-highlighter"
 export const ATTR_DOC_DEFAULT_TRANSITION = "custom-slides-default-transition"
 export const ATTR_DOC_COLOR_SCHEMA = "custom-slides-color-schema"
 export const ATTR_DOC_SPACING = "custom-slides-spacing"
+export const ATTR_DOC_SHOW_UNORDERED_LIST_MARKERS = "custom-slides-show-unordered-list-markers"
+export const ATTR_DOC_SHOW_ORDERED_LIST_MARKERS = "custom-slides-show-ordered-list-markers"
 
 // 2. 幻灯片页面级属性常量 (Page Scope，承载于水平分割线或根块)
 export const ATTR_PAGE_SLIDE = "custom-slides-slide"
@@ -51,6 +53,8 @@ export interface ISlidesPluginConfig {
   colorSchema: "auto" | "dark" | "light"
   spacing?: "compact" | "normal" | "loose"
   normalizeHeadingSizes?: boolean
+  showUnorderedListMarkers?: boolean
+  showOrderedListMarkers?: boolean
   title?: string
 }
 

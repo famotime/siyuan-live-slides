@@ -102,7 +102,7 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
       }
 
       const html = buildPrintableHtml(testDoc)
-      expect(html).toContain('<body data-normalize-headings="true">')
+      expect(html).toContain('data-normalize-headings="true"')
     })
 
     it("renderSlideBlocksToHtml 应正确为非封面页首标题标记 slides-page-first-heading-block", () => {

@@ -190,6 +190,11 @@ export function buildSlidesDocument(
         parentClicks?: string
         parentContainerId?: string
         defaultSlot?: string
+        isParentListUnpacked?: boolean
+        listContext?: {
+          isOrdered?: boolean
+          itemIndex?: number
+        }
       },
     ) => {
       if (!currentPage.allBlockIds) {
@@ -378,7 +383,9 @@ export function buildSlidesDocument(
           isColContext
         )
       ) {
-        for (const childNode of itemNode.children) {
+        const isOrderedList = /^\s*\d+\.\s+/m.test(itemNode.markdown || "") || itemNode.subType === "o" || (itemNode as any).subtype === "o"
+        for (let idx = 0; idx < itemNode.children.length; idx++) {
+          const childNode = itemNode.children[idx]
           if (elemAttrs.slot && (!childNode.ial || !childNode.ial[ATTR_ELEM_SLOT])) {
             if (!childNode.ial) childNode.ial = {}
             childNode.ial[ATTR_ELEM_SLOT] = elemAttrs.slot
@@ -387,22 +394,29 @@ export function buildSlidesDocument(
             ...inheritedContext,
             parentClicks: elemAttrs.clicks || inheritedContext?.parentClicks,
             defaultSlot: elemAttrs.slot || inheritedContext?.defaultSlot,
+            isParentListUnpacked: true,
+            listContext: {
+              isOrdered: isOrderedList,
+              itemIndex: idx + 1,
+            },
           })
         }
         return
       }
 
+      const isParentListUnpacked = Boolean(inheritedContext?.isParentListUnpacked)
       const shouldUnpackListItem =
         Boolean(itemNode.children && itemNode.children.length >= 2) ||
         Boolean(elemAttrs.clicks) ||
         Boolean(itemNode.children?.some(c => c.ial?.[ATTR_ELEM_CLICK])) ||
+        isParentListUnpacked ||
         (!itemNode.markdown && Boolean(itemNode.children && itemNode.children.length > 0))
 
       if (
         isListItemNode(itemNode) &&
         itemNode.children &&
         itemNode.children.length > 0 &&
-        (isColContext || Boolean(elemAttrs.clicks) || Boolean(itemNode.children.some(c => c.ial?.[ATTR_ELEM_CLICK]))) &&
+        (isColContext || isParentListUnpacked || Boolean(elemAttrs.clicks) || Boolean(itemNode.children.some(c => c.ial?.[ATTR_ELEM_CLICK]))) &&
         shouldUnpackListItem
       ) {
         // 查找首个有内容的有效子块（代表主容器自身的主文本）
@@ -430,11 +444,35 @@ export function buildSlidesDocument(
           const isThisFirstValid = isFirstValidChild && hasContent
 
           if (isThisFirstValid) {
-            if (childNode.markdown) {
-              childNode.markdown = cleanCardListItemMarkdown(childNode.markdown)
-            }
-            if (childNode.content) {
-              childNode.content = cleanCardListItemMarkdown(childNode.content)
+            if (isColContext) {
+              // 仅在分栏卡片布局下，列表项作为卡片，首行标题才清洗列表前缀
+              if (childNode.markdown) {
+                childNode.markdown = cleanCardListItemMarkdown(childNode.markdown)
+              }
+              if (childNode.content) {
+                childNode.content = cleanCardListItemMarkdown(childNode.content)
+              }
+            } else {
+              // 在常规正文列表（单栏）逐步呈现动效下，列表项必须完整保留或补齐标准的列表前缀符号！
+              const isOrdered = Boolean(inheritedContext?.listContext?.isOrdered)
+              const itemIdx = inheritedContext?.listContext?.itemIndex || 1
+              const prefix = isOrdered ? `${itemIdx}. ` : "- "
+
+              const ensureListPrefix = (text?: string): string => {
+                if (!text) return prefix.trim()
+                const trimmed = text.trim()
+                if (/^[-*+]\s+/.test(trimmed) || /^\d+\.\s+/.test(trimmed)) {
+                  return text
+                }
+                return `${prefix}${text}`
+              }
+
+              if (childNode.markdown) {
+                childNode.markdown = ensureListPrefix(childNode.markdown)
+              }
+              if (childNode.content) {
+                childNode.content = ensureListPrefix(childNode.content)
+              }
             }
             isFirstValidChild = false
           }
@@ -452,6 +490,11 @@ export function buildSlidesDocument(
             }
             delete childToProcess.ial[ATTR_ELEM_CLICK]
             delete childToProcess.ial["custom-slides-click"]
+          } else if (!hasMultipleChildren && containerClicks) {
+            childToProcess = {
+              ...childNode,
+              ial: { ...(childNode.ial || {}), [ATTR_ELEM_CLICK]: containerClicks },
+            }
           }
 
           processBlockNode(childToProcess, {
@@ -825,7 +868,7 @@ export function buildSlidesDocument(
     } else {
       // 常规单栏布局
       for (const block of contentBlocks) {
-        parts.push(wrapElementDirectives(block.rawMarkdown, block.clicks, block.motion, block.attributes?.style))
+        parts.push(wrapElementDirectives(block.rawMarkdown, block.clicks || block.parentClicks, block.motion, block.attributes?.style))
       }
     }
 

@@ -328,4 +328,31 @@ describe("layout-actions (版式与元素指令领域模块)", () => {
 
     insertSpy.mockRestore()
   })
+
+  it("onAutoAnimateDocument 应成功扫描正文页并完成顺延动效写入", async () => {
+    ctx.latestDoc.value.slides = [
+      { pageIndex: 1, frontmatter: {}, blocks: [{ id: "h0", type: "h" }] },
+      {
+        pageIndex: 2,
+        frontmatter: {},
+        blocks: [
+          { id: "h1", type: "h", rawMarkdown: "## 标题" },
+          { id: "p1", type: "p", rawMarkdown: "首块" },
+          { id: "p2", type: "p", rawMarkdown: "次块" },
+        ],
+      },
+    ]
+
+    const setAttrsSpy = vi.spyOn(apiModule, "setBlockAttrs").mockResolvedValue({} as any)
+    vi.spyOn(domSyncModule, "syncDomBlockAttrs").mockImplementation(() => {})
+    const compileSpy = vi.spyOn(globalDocumentCompiler, "compile").mockResolvedValue(ctx.latestDoc.value)
+
+    await layout.onAutoAnimateDocument()
+
+    expect(setAttrsSpy).toHaveBeenCalledWith("p2", { "custom-slides-click": "+1" })
+    expect(ctx.plugin.compileCurrentDocument).toHaveBeenCalled()
+
+    setAttrsSpy.mockRestore()
+    compileSpy.mockRestore()
+  })
 })
