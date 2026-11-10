@@ -3,6 +3,7 @@ import path from "node:path"
 import { describe, expect, it } from "vitest"
 import { mapElementAttrs } from "../src/compiler/scope-mapper"
 import { SLIDES_CUSTOM_STYLES_CSS } from "../src/engine/workspace-scaffolder"
+import { wrapElementDirectives } from "../src/compiler/directive-wrapper"
 import { convertBlockToHtml } from "../src/export/markdown-renderer"
 import { buildPrintableHtml } from "../src/export/pdf-exporter"
 import { buildStandaloneHtml } from "../src/export/single-html-exporter"
@@ -122,5 +123,34 @@ describe("Code Block Wrapping & Subtle Scrollbar (代码块换行、无横向滚
     expect(SLIDES_CUSTOM_STYLES_CSS).toContain("scrollbar-width: thin")
     expect(SLIDES_CUSTOM_STYLES_CSS).toContain("rgba(0, 0, 0, 0.15)")
     expect(SLIDES_CUSTOM_STYLES_CSS).toContain("rgba(255, 255, 255, 0.20)")
+  })
+
+  it("wrapElementDirectives 应将 maxHeight 转换为包含 max-height 与 overflow-y:auto 的内联样式", () => {
+    const md = "```ts\nconsole.log(1)\n```"
+    const wrapped = wrapElementDirectives(md, undefined, undefined, undefined, "320px")
+    expect(wrapped).toContain("max-height:320px")
+    expect(wrapped).toContain("overflow-y:auto")
+  })
+
+  it("markdown-renderer 遇到纯数字高度配置时应自动补齐 px 单位并正常渲染", () => {
+    const block: ISlidesBlockItem = {
+      id: "b-num-height",
+      type: "c",
+      content: "```ts\nconsole.log(1)\n```",
+      rawMarkdown: "```ts\nconsole.log(1)\n```",
+      attrs: {
+        [ATTR_ELEM_MAX_HEIGHT]: "350",
+      },
+    }
+    const html = convertBlockToHtml(block)
+    expect(html).toContain('style="max-height:350px;overflow-y:auto;"')
+  })
+
+  it("Web Sandbox HTML 模版应包含选中代码块控制垂直滚动、未选中默认翻页的调度逻辑", () => {
+    const indexPath = path.resolve(__dirname, "../public/slides-client/index.html")
+    const clientHtml = fs.readFileSync(indexPath, "utf-8")
+    expect(clientHtml).toContain("targetPre && isSelected")
+    expect(clientHtml).toContain("targetPre.scrollTop += deltaY")
+    expect(clientHtml).toContain(".slide-block.highlighted pre::-webkit-scrollbar-thumb")
   })
 })

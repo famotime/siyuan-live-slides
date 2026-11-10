@@ -156,10 +156,13 @@ export function wrapElementDirectives(
   clicks?: string,
   motion?: ISlidesMotionConfig,
   style?: string,
+  maxHeight?: string,
 ): string {
   const hasClicks = clicks !== undefined && clicks !== null && clicks.trim() !== ""
   const motionConfig = getMotionDirectives(motion)
-  const cleanStyle = style?.trim()
+  const normMaxHeight = maxHeight ? (/^\d+$/.test(maxHeight.trim()) ? `${maxHeight.trim()}px` : maxHeight.trim()) : ""
+  const heightStyle = normMaxHeight ? `max-height:${normMaxHeight};overflow-y:auto` : ""
+  const cleanStyle = [style?.trim(), heightStyle].filter(Boolean).join(";")
   const hasStyle = cleanStyle !== undefined && cleanStyle !== ""
 
   const styleAttr = hasStyle ? ` style="${cleanStyle.replace(/"/g, "&quot;")}" class="slide-styled-block"` : ""

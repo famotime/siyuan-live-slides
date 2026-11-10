@@ -1160,6 +1160,10 @@
       background: rgba(59, 130, 246, 0.08);
     }
 
+    .slide-block.highlighted pre::-webkit-scrollbar-thumb {
+      background: var(--slide-accent, rgba(59, 130, 246, 0.6)) !important;
+    }
+
     .slide-block.highlighted {
       position: relative !important;
       z-index: 20 !important;
@@ -5263,7 +5267,8 @@
               const lineNo = idx + 1
               return `<span class="code-line shiki-focus"><span class="line-no">${lineNo}</span><span class="line-content">${highlightCode(line, 'ts')}</span></span>`
             }).join("\n")
-            const customMaxHeight = block?.attrs?.["custom-slides-max-height"] || block?.maxHeight || ""
+            const rawMaxHeight = block?.attrs?.["custom-slides-max-height"] || block?.attributes?.["custom-slides-max-height"] || block?.maxHeight || ""
+            const customMaxHeight = rawMaxHeight ? (/^\d+$/.test(String(rawMaxHeight).trim()) ? String(rawMaxHeight).trim() + "px" : String(rawMaxHeight).trim()) : ""
             const heightStyle = customMaxHeight ? ` style="max-height:${customMaxHeight};overflow-y:auto;"` : ""
             return `<pre class="shiki-container"${heightStyle}><span class="lang-badge">TS</span><code>${formattedLines}</code></pre>`
           }
@@ -5319,7 +5324,8 @@
               ? `<div class="shiki-slider-controls"><button class="shiki-slider-btn">◀</button><div class="shiki-slider-bar"><div class="shiki-slider-fill"></div></div><button class="shiki-slider-btn">▶</button></div>`
               : ""
 
-            const customMaxHeight = block?.attrs?.["custom-slides-max-height"] || block?.maxHeight || ""
+            const rawMaxHeight = block?.attrs?.["custom-slides-max-height"] || block?.attributes?.["custom-slides-max-height"] || block?.maxHeight || ""
+            const customMaxHeight = rawMaxHeight ? (/^\d+$/.test(String(rawMaxHeight).trim()) ? String(rawMaxHeight).trim() + "px" : String(rawMaxHeight).trim()) : ""
             const heightStyle = customMaxHeight ? ` style="max-height:${customMaxHeight};overflow-y:auto;"` : ""
 
             return `<pre class="${containerClass}"${heightStyle}>${filenameHtml}${langBadge}<code>${formattedLines}</code>${sliderHtml}</pre>`
@@ -6330,21 +6336,31 @@
 
         function canElementScrollY(el, deltaY) {
           let cur = el
+          let targetPre = null
+          let isSelected = false
           while (cur && cur !== document.body && cur !== document.documentElement) {
-            if (cur.classList && (cur.classList.contains('slides-viewport') || cur.classList.contains('slides-stage') || cur.classList.contains('slides-container'))) {
-              break
+            if (cur.tagName === 'PRE' || (cur.classList && cur.classList.contains('shiki-container'))) {
+              targetPre = cur
             }
-            const style = window.getComputedStyle(cur)
-            const overflowY = style.overflowY
-            if (overflowY === 'auto' || overflowY === 'scroll') {
-              const maxScroll = cur.scrollHeight - cur.clientHeight
-              if (maxScroll > 2) {
-                if (deltaY > 0 && cur.scrollTop < maxScroll - 1) return true
-                if (deltaY < 0 && cur.scrollTop > 1) return true
+            if (cur.classList && cur.classList.contains('slide-block')) {
+              const blockId = cur.getAttribute('data-block-id')
+              if (cur.classList.contains('highlighted') || (highlightedBlockId && highlightedBlockId.value && blockId === highlightedBlockId.value)) {
+                isSelected = true
               }
+              break
             }
             cur = cur.parentElement
           }
+
+          // 仅在当前代码块处于选中状态时，才控制该代码块的垂直滚动
+          if (targetPre && isSelected) {
+            const maxScroll = targetPre.scrollHeight - targetPre.clientHeight
+            if (maxScroll > 1) {
+              targetPre.scrollTop += deltaY
+              return true
+            }
+          }
+          // 其余情况一律返回 false，由滚轮默认调度翻页
           return false
         }
 

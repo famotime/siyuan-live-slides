@@ -166,8 +166,10 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
   }
 
   function onElemMaxHeightChange(val: string) {
-    ctx.elemMaxHeight.value = val
-    saveAttr(ATTR_ELEM_MAX_HEIGHT, val)
+    const trimmed = val ? val.trim() : ""
+    const normalized = /^\d+$/.test(trimmed) ? `${trimmed}px` : trimmed
+    ctx.elemMaxHeight.value = normalized
+    saveAttr(ATTR_ELEM_MAX_HEIGHT, normalized)
   }
 
   async function onSetTwoColsContrast() {

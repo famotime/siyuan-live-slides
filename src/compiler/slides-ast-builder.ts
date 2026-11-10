@@ -660,6 +660,10 @@ export function buildSlidesDocument(
         if (combinedIal["custom-slides-controls"]) effectiveAttrs["custom-slides-controls"] = combinedIal["custom-slides-controls"]
       }
 
+      const normMaxHeight = elemAttrs.maxHeight
+        ? (/^\d+$/.test(elemAttrs.maxHeight.trim()) ? `${elemAttrs.maxHeight.trim()}px` : elemAttrs.maxHeight.trim())
+        : undefined
+
       const blockItem: ISlidesBlockItem = {
         id: itemNode.id,
         type: itemNode.type,
@@ -670,8 +674,10 @@ export function buildSlidesDocument(
         parentContainerId: inheritedContext?.parentContainerId,
         motion: effectiveMotion,
         shikiLines: elemAttrs.shikiLines,
+        maxHeight: normMaxHeight,
         slot: effectiveSlot,
         attributes: effectiveAttrs,
+        attrs: effectiveAttrs,
         rawNode: itemNode,
       }
 
@@ -705,7 +711,7 @@ export function buildSlidesDocument(
     const renderBlocks = (list: ISlidesBlockItem[]) =>
       list
         .filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
-        .map(b => wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion, b.attributes?.style))
+        .map(b => wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion, b.attributes?.style, b.maxHeight))
         .join("\n\n")
 
     const cleanFirstListBlock = (list: ISlidesBlockItem[]) => {
@@ -729,7 +735,7 @@ export function buildSlidesDocument(
       if (!parentClicks) {
         return colList
           .filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
-          .map(b => wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion, b.attributes?.style))
+          .map(b => wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion, b.attributes?.style, b.maxHeight))
           .join("\n\n")
       }
 
@@ -757,7 +763,7 @@ export function buildSlidesDocument(
           baseGroup.push(b)
         } else {
           flushBaseGroup()
-          resultParts.push(wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion, b.attributes?.style))
+          resultParts.push(wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion, b.attributes?.style, b.maxHeight))
         }
       }
 
@@ -868,7 +874,7 @@ export function buildSlidesDocument(
     } else {
       // 常规单栏布局
       for (const block of contentBlocks) {
-        parts.push(wrapElementDirectives(block.rawMarkdown, block.clicks || block.parentClicks, block.motion, block.attributes?.style))
+        parts.push(wrapElementDirectives(block.rawMarkdown, block.clicks || block.parentClicks, block.motion, block.attributes?.style, block.maxHeight))
       }
     }
 
