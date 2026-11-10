@@ -164,4 +164,11 @@ describe("Blank Area Mouse Click Navigation (空白区域鼠标左键左右翻�
     expect(resSelection).toBe(false)
     expect(onNext).toHaveBeenCalledTimes(1) // 未增加
   })
+
+  it("客户端 index.html 中点击命中对象时绝不因未完成步进 (hasPendingSteps/蒙版) 而穿透触发翻页", () => {
+    // 确保 index.html 中的 isComponent 拦截不携带 !hasPendingSteps 穿透条件
+    expect(indexHtml).not.toMatch(/if\s*\(isComponent\s*&&\s*!hasPendingSteps\)\s*return/)
+    // 确保命中组件时直接 return 抑制翻页
+    expect(indexHtml).toMatch(/if\s*\(isComponent\)\s*return/)
+  })
 })

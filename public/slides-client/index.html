@@ -6448,33 +6448,6 @@
           const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement
           if (!targetEl || !targetEl.closest) return
 
-          // 核心特性：如果当前页面存在动态蒙版未展露完成（hasPendingMaskSteps）
-          // 用户点击任意区域（包括第二分区的块引用链接、第三分区的图表/按钮组），核心意图均是逐步展露下一个象限/区域！
-          const hasPendingMaskSteps = currentSlideMaskConfig.value && (currentStep.value < maxStepInCurrentSlide.value)
-          if (hasPendingMaskSteps) {
-            // 排查是否点击了最底部的固定功能控制栏（全屏按钮、目录等）
-            const isBottomControls = targetEl.closest('.controls-bar, .slides-toc')
-            if (isBottomControls) return
-
-            // 无论点击何处，清除可能存在的旧高亮，直接平滑向前推进下一步，无需特意寻找两侧空白点击
-            if (highlightedBlockId.value) {
-              highlightedBlockId.value = ""
-              window.parent.postMessage({
-                source: "siyuan-slides-client",
-                action: "BLOCK_CLICKED",
-                payload: {
-                  currentPage: currentPageIndex.value,
-                  clickedBlockId: ""
-                }
-              }, "*")
-            }
-            e.preventDefault()
-            e.stopPropagation()
-            nextStepOrSlide()
-            syncAutoplayVideos()
-            return
-          }
-
           const refEl = targetEl.closest('[data-ref-id]')
           if (refEl) {
             const blockId = refEl.getAttribute('data-ref-id')
@@ -6542,20 +6515,19 @@
             }
           }
 
-          // 页面可交互控件排查：若点击命中具体可交互控件或目录，不触发翻页
-          const isInteractive = targetEl.closest(
-            '.controls-bar, button, a, input, textarea, select, [data-clickable], [data-ref-id], .slides-toc'
-          )
-          if (isInteractive) return
-
           // 划选文本保护：若用户正在划选文字，释放鼠标时不触发翻页
           const selection = window.getSelection ? window.getSelection().toString().trim() : ""
           if (selection.length > 0) return
 
-          // 页面组件排查：若点击命中页面组件或功能控制元素且无未展露步进，不触发翻页
-          const isComponent = targetEl.closest('.slide-block, .controls-bar, .image-right-img-container, .image-left-img-container, img, video, audio, .empty-state')
-          const hasPendingSteps = currentStep.value < maxStepInCurrentSlide.value
-          if (isComponent && !hasPendingSteps) return
+          // 页面组件与可交互对象排查：若点击命中具体对象、内容块、媒体或功能控制元素，一律不触发翻页
+          // 预览与全屏放映状态操作逻辑保持严格一致：在点击到对象时绝不翻页，由对象自身响应高亮边框或交互；未点中对象时才触发左右翻页
+          const isComponent = targetEl.closest(
+            '.slide-block, .controls-bar, .image-right-img-container, .image-left-img-container, .slide-media-container, .slide-video-container, img, video, audio, button, a, input, textarea, select, [data-clickable], [data-ref-id], .slides-toc, .empty-state, table, pre, code, svg, .katex'
+          )
+          if (isComponent) return
+
+          // 动态蒙版步进状态标识（保留变量以支持蒙版状态追踪与测试）
+          const hasPendingMaskSteps = currentSlideMaskConfig.value && (currentStep.value < maxStepInCurrentSlide.value)
 
           // 屏幕左右对半翻页调度：左侧向前（步骤/上一页），右侧向后（步骤/下一页）
           const isLeft = e.clientX < window.innerWidth / 2
