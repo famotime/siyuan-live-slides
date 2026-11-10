@@ -71,6 +71,28 @@ describe("P0 优化：编译调度器（单飞合并 + 代际丢弃）", () => {
     // 重置后旧代际号必须失效
     expect(scheduler.isStale(1)).toBe(true)
   })
+
+  it("FSM-1 显式状态机与批处理防丢: docA 编译中到达 docB 和 docC 时全部保留", () => {
+    const scheduler = new CompileScheduler()
+    expect(scheduler.currentState).toBe("IDLE")
+
+    const gen = scheduler.tryBegin("doc-A")
+    expect(gen).not.toBeNull()
+    expect(scheduler.currentState).toBe("COMPILING")
+
+    // 并发切换文档 B 和 C
+    expect(scheduler.tryBegin("doc-B")).toBeNull()
+    expect(scheduler.tryBegin("doc-C")).toBeNull()
+    expect(scheduler.pendingList).toEqual(["doc-B", "doc-C"])
+    expect(scheduler.pending).toBe("doc-C")
+
+    // finishBatch 返回全部待补跑集合，状态重置为 IDLE
+    const batch = scheduler.finishBatch()
+    expect(batch).toEqual(["doc-B", "doc-C"])
+    expect(scheduler.currentState).toBe("IDLE")
+    expect(scheduler.isRunning).toBe(false)
+    expect(scheduler.pendingList).toEqual([])
+  })
 })
 
 describe("P0 优化：编译消费者门闩（无可见消费者时不编译）", () => {

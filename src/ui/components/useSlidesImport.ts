@@ -200,15 +200,19 @@ export async function executeSlidesImport(
     throw new Error('思源内核创建文档失败，未返回有效 DocumentId')
   }
 
-  // 3. 设置文档根属性 (Doc Attrs 与第 1 页 Page Attrs 融合，确保第一页版式如 image-right、image 等完整持久化)
-  const firstSlideAttrs = presentation.slides[0]?.pageAttrs || {}
-  await setAttrsFn(newDocId, { ...firstSlideAttrs, ...presentation.docRootAttrs })
+  // 3 & 4. 设置文档根属性、各页分割线属性与插槽属性（FSM-10: 带有明确上下文的容错封装）
+  try {
+    const firstSlideAttrs = presentation.slides[0]?.pageAttrs || {}
+    await setAttrsFn(newDocId, { ...firstSlideAttrs, ...presentation.docRootAttrs })
 
-  // 4. 设置各页分割线属性与插槽属性
-  const rawBlocks: any[] = await getChildBlocksFn(newDocId).catch(() => [])
-  if (Array.isArray(rawBlocks) && rawBlocks.length > 0) {
-    await backfillDividerAttributes(rawBlocks, presentation.slides, setAttrsFn)
-    await backfillSlotAttributes(rawBlocks, setAttrsFn)
+    const rawBlocks: any[] = await getChildBlocksFn(newDocId).catch(() => [])
+    if (Array.isArray(rawBlocks) && rawBlocks.length > 0) {
+      await backfillDividerAttributes(rawBlocks, presentation.slides, setAttrsFn)
+      await backfillSlotAttributes(rawBlocks, setAttrsFn)
+    }
+  } catch (backfillErr: any) {
+    console.warn('[SlidesImport] 版式属性回填阶段遇到警告:', backfillErr)
+    showMessageFn(`⚠️ 文档已创建(${safeTitle})，但部分版式属性回填未完全完成: ${backfillErr.message || String(backfillErr)}`, 6000)
   }
 
   showMessageFn(`🎉 成功导入 Slidev 演示文档《${safeTitle}》！`)
@@ -308,7 +312,10 @@ export function useSlidesImport(pluginInstance?: any) {
     errorMessage.value = ''
   }
 
+  let fileProcessGeneration = 0
+
   async function processFile(file: File) {
+    const currentGen = ++fileProcessGeneration
     errorMessage.value = ''
     selectedFile.value = file
     selectedFileName.value = file.name
@@ -318,7 +325,9 @@ export function useSlidesImport(pluginInstance?: any) {
       const isZip = file.name.toLowerCase().endsWith('.zip')
       if (isZip) {
         const buffer = await file.arrayBuffer()
+        if (currentGen !== fileProcessGeneration) return
         const zipRes = await extractSlidesZip(buffer)
+        if (currentGen !== fileProcessGeneration) return
         if (!zipRes.entryMarkdown) {
           errorMessage.value = '未在 Zip 压缩包中找到 slides.md 或任何有效的 Markdown 入口文件'
           return
@@ -330,11 +339,13 @@ export function useSlidesImport(pluginInstance?: any) {
           cleanSlots: false,
           virtualFiles: zipRes.virtualFiles,
         })
+        if (currentGen !== fileProcessGeneration) return
         parsedPresentation.value = parsed
         customDocTitle.value = parsed.docTitle || file.name.replace(/\.zip$/i, '')
       } else {
         // .md 文件
         const text = await file.text()
+        if (currentGen !== fileProcessGeneration) return
         extractedAssets.value = []
         const filePath = (file as any).path || ''
         const baseDir = filePath ? filePath.replace(/[\\/][^\\/]+$/, '') : ''
@@ -344,10 +355,12 @@ export function useSlidesImport(pluginInstance?: any) {
           cleanSlots: false,
           baseDir: baseDir || undefined,
         })
+        if (currentGen !== fileProcessGeneration) return
         parsedPresentation.value = parsed
         customDocTitle.value = parsed.docTitle || file.name.replace(/\.md$/i, '')
       }
     } catch (err: any) {
+      if (currentGen !== fileProcessGeneration) return
       console.error('解析文件失败:', err)
       errorMessage.value = `解析文件失败: ${err.message || String(err)}`
     }

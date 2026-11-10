@@ -22,6 +22,23 @@ export class InspectorSyncCoordinator {
     doc: null,
     map: new Map(),
   }
+  private locatingLockUntil = 0
+  private lockedTargetBlockId = ""
+  private lastKnownPageDividerId = ""
+  private lastKnownDocId = ""
+
+  /**
+   * 判定当前是否处于沙箱反向定位的平滑滚动锁定窗口中（FSM-2 缺陷修复：杜绝沿途 selectionchange 震荡回弹）
+   */
+  public isLocatingLocked(blockId?: string): boolean {
+    if (Date.now() < this.locatingLockUntil) {
+      if (blockId && blockId === this.lockedTargetBlockId) {
+        return false // 目标块本身允许同步
+      }
+      return true // 沿途其他过渡块屏蔽同步
+    }
+    return false
+  }
 
   /**
    * 解析块属性：即时覆盖层 → 编译模型 IAL → 带 TTL 的内核查询
@@ -207,6 +224,9 @@ export class InspectorSyncCoordinator {
     }
 
     // 1. 反向平滑定位并高亮目标思源块（带 openTab 降级）
+    // FSM-2 缺陷修复：开启 500ms 定位锁定窗口，杜绝平滑滚动期间沿途 selectionchange 产生双向震荡回弹
+    this.lockedTargetBlockId = blockId
+    this.locatingLockUntil = Date.now() + 500
     const located = mirrorBlockSelection(blockId, app)
 
     // 2. 尝试从 DOM 或通过 API 获取块信息，同步右侧演示配置面板
@@ -272,6 +292,11 @@ export class InspectorSyncCoordinator {
     currentDocId: string,
     latestCompiledDoc: ISlidesDocument | null,
   ): Promise<void> {
+    // FSM-2 缺陷修复：处于反向平滑定位锁定时，屏蔽中间过渡块的同步
+    if (this.isLocatingLocked(blockId)) {
+      return
+    }
+
     let effectiveEl = blockEl
     let effectiveId = blockId
     let effectiveType = blockType
@@ -354,6 +379,18 @@ export class InspectorSyncCoordinator {
         if (!pageDividerLayout && matchedSlide.frontmatter?.layout) {
           pageDividerLayout = matchedSlide.frontmatter.layout
         }
+      }
+    }
+
+    // FSM-3 缺陷修复：若当前通过 DOM 或编译模型确定了分页符，记录为当前文档的最近已知有效分页符
+    if (pageDividerId) {
+      this.lastKnownDocId = currentDocId
+      this.lastKnownPageDividerId = pageDividerId
+    } else if (currentDocId && this.lastKnownDocId === currentDocId && this.lastKnownPageDividerId) {
+      // 容错保护：若当前块位于长文档中且前置分页符因虚拟滚动已被卸载，未命中文档首页时安全继承上一已知有效分页符，杜绝局部版式错写至文档根
+      const isTopElementAtOrigin = !topBlockEl.previousElementSibling && (topBlockEl.parentElement?.scrollTop || 0) === 0
+      if (!isTopElementAtOrigin) {
+        pageDividerId = this.lastKnownPageDividerId
       }
     }
 

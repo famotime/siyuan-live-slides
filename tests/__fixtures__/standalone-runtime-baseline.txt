@@ -191,7 +191,8 @@
           updateMaskVisual();
           return;
         }
-        renderSlide(currentIndex - 1);
+        // FSM-9 优化：回退至上一页时传递 backward 方向，使上一页遮罩处于完全展开状态
+        renderSlide(currentIndex - 1, "backward");
       }
 
       function cleanCardListItemMarkdown(rawMarkdown) {
@@ -571,7 +572,7 @@
         return div;
       }
 
-      function renderSlide(idx) {
+      function renderSlide(idx, direction) {
         if (slides.length === 0) return;
         currentIndex = Math.max(0, Math.min(idx, slides.length - 1));
         const slide = slides[currentIndex];
@@ -593,6 +594,8 @@
           container.style.width = "100%";
           container.style.height = "100%";
           container.style.transform = "none";
+        }
+
         maskOverlayEl = null;
         maskDividerEl = null;
         const maskDir = slide.frontmatter?.mask;
@@ -610,7 +613,8 @@
             isInitialRevealed: isInitRev,
             style: slide.frontmatter.maskStyle || "solid",
           };
-          currentMaskStep = 0;
+          // FSM-9 优化：后退进入历史页时，遮罩与逐步呈现处于全部揭开完成状态，避免上一页重新变为全黑遮盖
+          currentMaskStep = (direction === "backward") ? currentMaskConfig.totalSteps : 0;
         } else {
           currentMaskConfig = null;
           currentMaskStep = 0;

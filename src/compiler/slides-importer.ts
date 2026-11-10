@@ -113,14 +113,41 @@ export function splitSlidesMarkdownChunks(markdown: string): string[] {
       slice(i)
 
       const next = lines[i + 1]
-      // 若下行非空，说明当前 --- 是 Frontmatter 起始符，向前跳过闭合 ---
-      if (next && next.trim() && line.replace(/^-+/, "").trim() === "") {
-        start = i
-        for (i += 1; i < lines.length; i++) {
-          if (lines[i].trimEnd() === "---") {
+      // 严格判定是否为 Frontmatter 起始符：
+      // 1. 当前行必须是纯破折号分割线（---...）且下一行非空
+      // 2. 后面必须存在匹配的闭合 ---（且两者之间绝不能跨越正文代码块 fence）
+      // 3. 两者之间必须包含顶级 YAML 键值对（支持行首带有 # 注释的合法 YAML 块），杜绝误吞纯 Markdown 标题或正文
+      let isFrontmatterStart = false
+      let closingIndex = -1
+
+      const trimmedNext = next ? next.trim() : ""
+      if (line.replace(/^-+/, "").trim() === "" && trimmedNext.length > 0) {
+        for (let j = i + 1; j < lines.length; j++) {
+          const curTrim = lines[j].trimEnd()
+          if (curTrim.startsWith("```")) {
+            // 遇到代码块，说明已处于幻灯片正文区域，绝非 Frontmatter
+            break
+          }
+          if (curTrim === "---") {
+            closingIndex = j
             break
           }
         }
+        if (closingIndex !== -1 && closingIndex - i <= 60) {
+          const innerLines = lines.slice(i + 1, closingIndex)
+          const hasYamlKey = innerLines.some(l => {
+            const trimmed = l.trim()
+            return trimmed.length > 0 && !trimmed.startsWith("#") && /^[a-zA-Z0-9_$-]+\s*:\s*.*/.test(trimmed)
+          })
+          if (hasYamlKey) {
+            isFrontmatterStart = true
+          }
+        }
+      }
+
+      if (isFrontmatterStart && closingIndex !== -1) {
+        start = i
+        i = closingIndex
       }
     } else if (line.trimStart().startsWith("```")) {
       // 跳过代码块内部的 ---
@@ -383,15 +410,15 @@ export function parseSlidesPresentation(
       protectedBody = protectedBody.replace(/<!--(?![\s\S]*?TODO:)[\s\S]*?-->/g, "").trim()
     }
 
-    // 恢复受保护的代码块
+    // 恢复受保护的代码块（使用函数式替换，杜绝代码中 $1, $PATH, $$ 导致正则捕获组意外替换）
     for (let i = 0; i < codeTokens.length; i++) {
-      protectedBody = protectedBody.replace(`__CODE_TOKEN_NOTE_${i}__`, codeTokens[i])
+      protectedBody = protectedBody.replace(`__CODE_TOKEN_NOTE_${i}__`, () => codeTokens[i])
     }
     body = protectedBody
 
     if (pageNotes) {
       for (let i = 0; i < codeTokens.length; i++) {
-        pageNotes = pageNotes.replace(`__CODE_TOKEN_NOTE_${i}__`, codeTokens[i])
+        pageNotes = pageNotes.replace(`__CODE_TOKEN_NOTE_${i}__`, () => codeTokens[i])
       }
       // 转换为正文讲稿备注提示块 (NodeCallout)，并绑定 custom-slides-note="true"
       const noteLines = pageNotes.split(/\r?\n/).map(l => `> ${l}`).join("\n")

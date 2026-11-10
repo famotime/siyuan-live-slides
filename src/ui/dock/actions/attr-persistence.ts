@@ -152,7 +152,17 @@ export function createAttrPersistence(ctx: IInspectorActionsContext): IAttrPersi
                          ctx.activeBlockType.value === "NodeThematicBreakBlock" ||
                          ctx.activeBlockType.value === "hr" ||
                          ctx.activeBlockType.value === "thematicbreak"
-    return ctx.currentPageDividerId.value || (isCurDivider ? ctx.activeBlockId.value : "") || ctx.currentDocId.value
+    if (isCurDivider && ctx.activeBlockId.value) {
+      return ctx.activeBlockId.value
+    }
+    if (ctx.currentPageDividerId.value) {
+      return ctx.currentPageDividerId.value
+    }
+    // FSM-3 缺陷防御：优先从当前虚拟页提取分页符 ID，防止虚拟滚动卸载 DOM 时误将局部页面版式写入文档根
+    if (ctx.targetSlide.value?.startBlockId && ctx.targetSlide.value.startBlockId !== ctx.currentDocId.value) {
+      return ctx.targetSlide.value.startBlockId
+    }
+    return ctx.currentDocId.value
   }
 
   async function savePageAttr(key: string, value: string) {

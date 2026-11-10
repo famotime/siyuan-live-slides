@@ -410,10 +410,12 @@ watch(
   { flush: 'post' },
 )
 
-// 演讲时长计时器
+// 演讲时长计时器 (FSM-8 优化：基于绝对时间戳计算，彻底免疫后台标签页节流带来的时钟漂移)
 const elapsedSeconds = ref(0)
 const isTimerRunning = ref(true)
 let timerInterval: number | null = null
+let timerStartedAt = Date.now()
+let accumulatedElapsedMs = 0
 
 const formattedTime = computed(() => {
   const m = String(Math.floor(elapsedSeconds.value / 60)).padStart(2, '0')
@@ -421,11 +423,27 @@ const formattedTime = computed(() => {
   return `${m}:${s}`
 })
 
+function updateTimerTick() {
+  if (isTimerRunning.value) {
+    const totalMs = accumulatedElapsedMs + (Date.now() - timerStartedAt)
+    elapsedSeconds.value = Math.floor(totalMs / 1000)
+  }
+}
+
 function toggleTimer() {
-  isTimerRunning.value = !isTimerRunning.value
+  if (isTimerRunning.value) {
+    accumulatedElapsedMs += Date.now() - timerStartedAt
+    isTimerRunning.value = false
+  } else {
+    timerStartedAt = Date.now()
+    isTimerRunning.value = true
+    updateTimerTick()
+  }
 }
 
 function resetTimer() {
+  timerStartedAt = Date.now()
+  accumulatedElapsedMs = 0
   elapsedSeconds.value = 0
 }
 
@@ -688,11 +706,12 @@ function onWheel(e: WheelEvent) {
 let unbindSlideChanged: (() => void) | null = null
 
 onMounted(() => {
-  timerInterval = window.setInterval(() => {
-    if (isTimerRunning.value) {
-      elapsedSeconds.value++
-    }
-  }, 1000)
+  timerStartedAt = Date.now()
+  accumulatedElapsedMs = 0
+  timerInterval = window.setInterval(updateTimerTick, 500)
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', updateTimerTick)
+  }
 
   updateWallClock()
   clockInterval = window.setInterval(updateWallClock, 1000)
@@ -729,6 +748,9 @@ onUnmounted(() => {
   if (timerInterval) {
     window.clearInterval(timerInterval)
     timerInterval = null
+  }
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('visibilitychange', updateTimerTick)
   }
   if (clockInterval) {
     window.clearInterval(clockInterval)

@@ -468,18 +468,18 @@ export function convertHtmlToCleanMarkdown(html: string): string {
   text = text.replace(/<(?:div|section|header|footer|main|article|nav|aside)\b[^>]*>/gi, "")
   text = text.replace(/<\/?span\b[^>]*>/gi, "")
 
-  // 23. 恢复受保护的 Vue 元素、Script 块与代码块
+  // 23. 恢复受保护的 Vue 元素、Script 块与代码块（使用函数式替换，杜绝 $1, $PATH 等被误判为正则捕获组）
   for (let i = 0; i < vueCompTokens.length; i++) {
-    text = text.replace(`__VUE_COMP_TOKEN_${i}__`, vueCompTokens[i])
+    text = text.replace(`__VUE_COMP_TOKEN_${i}__`, () => vueCompTokens[i])
   }
   for (let i = 0; i < vueDivTokens.length; i++) {
-    text = text.replace(`__VUE_DIV_TOKEN_${i}__`, vueDivTokens[i])
+    text = text.replace(`__VUE_DIV_TOKEN_${i}__`, () => vueDivTokens[i])
   }
   for (let i = 0; i < scriptBlocks.length; i++) {
-    text = text.replace(`__SCRIPT_TOKEN_${i}__`, scriptBlocks[i])
+    text = text.replace(`__SCRIPT_TOKEN_${i}__`, () => scriptBlocks[i])
   }
   for (let i = 0; i < codeBlocks.length; i++) {
-    text = text.replace(`__CODE_TOKEN_${i}__`, codeBlocks[i])
+    text = text.replace(`__CODE_TOKEN_${i}__`, () => codeBlocks[i])
   }
 
   // 24. 规范化连续换行与行首尾空格

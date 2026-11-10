@@ -637,6 +637,11 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
     const blockId = blockEl?.getAttribute("data-node-id")
     const blockType = blockEl?.getAttribute("data-type") || ""
     if (blockEl && blockId) {
+      // FSM-2 缺陷修复：反向定位平滑滚动期间屏蔽沿途中间过渡块的选区触发
+      if (globalInspectorSyncCoordinator.isLocatingLocked(blockId)) {
+        return
+      }
+
       if (!this.currentDocId) {
         this.currentDocId = this.resolveDocIdFromElement(el) || ""
       }
@@ -729,10 +734,14 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
     } catch (err) {
       console.error("[SiYuanLiveSlides] Failed to compile document:", err)
     } finally {
-      const pendingDocId = this.compileScheduler.finish()
-      // 补跑被合并的请求：重新走脏标记与防抖，保证"编辑器静默后才编译"
+      const pendingBatch = this.compileScheduler.finishBatch()
+      const pendingDocId = pendingBatch.length > 0 ? pendingBatch[0] : this.compileScheduler.finish()
+      // 补跑被合并的请求：重新走脏标记与防抖，保证全部待编译文档均不遗漏，且"编辑器静默后才编译"
       if (pendingDocId) {
         this.markCompileDirty(pendingDocId)
+      }
+      for (let i = 1; i < pendingBatch.length; i++) {
+        this.markCompileDirty(pendingBatch[i])
       }
     }
   }

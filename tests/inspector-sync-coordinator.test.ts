@@ -101,4 +101,16 @@ describe("InspectorSyncCoordinator (编辑器与配置面板同步协调器)", (
 
     purgeSpy.mockRestore()
   })
+
+  it("FSM-2 缺陷修复: 反向定位平滑滚动期间应锁定过渡块同步，目标块放行", () => {
+    // 初始状态下无锁定
+    expect(coordinator.isLocatingLocked("block-any")).toBe(false)
+
+    // 模拟沙箱点击回传激活定位
+    coordinator.handleBlockClickedFromSlide("target-block-1", null, "doc-1", null)
+
+    // 锁定窗口内：过渡块被屏蔽，目标块本身被放行
+    expect(coordinator.isLocatingLocked("transition-block-2")).toBe(true)
+    expect(coordinator.isLocatingLocked("target-block-1")).toBe(false)
+  })
 })

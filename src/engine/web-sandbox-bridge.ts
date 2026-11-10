@@ -76,7 +76,15 @@ export class WebSandboxBridge {
   }
 
   /**
+   * 重置就绪状态（iframe 刷新或异常重载时调用）
+   */
+  public resetReady(): void {
+    this.isReady = false
+  }
+
+  /**
    * 宿主向沙箱发送消息
+   * FSM-6 优化：未就绪阶段采用 Last-Write-Wins (LWW) 对状态类消息就地覆盖合并，杜绝握手瞬间消息风暴与连续重绘
    */
   public postMessage(action: THostToSlidesAction, payload: IHostToSlidesMessage["payload"]): void {
     const message: IHostToSlidesMessage = {
@@ -86,7 +94,19 @@ export class WebSandboxBridge {
     }
 
     if (!this.iframe?.contentWindow || !this.isReady) {
-      this.pendingMessages.push(message)
+      if (action === "UPDATE_SLIDES" || action === "NAVIGATE_PAGE") {
+        const existingIdx = this.pendingMessages.findIndex(m => m.action === action)
+        if (existingIdx !== -1) {
+          this.pendingMessages[existingIdx] = message
+        } else {
+          this.pendingMessages.push(message)
+        }
+      } else {
+        if (this.pendingMessages.length >= 50) {
+          this.pendingMessages.shift()
+        }
+        this.pendingMessages.push(message)
+      }
       return
     }
 

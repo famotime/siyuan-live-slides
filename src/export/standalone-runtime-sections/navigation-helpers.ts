@@ -139,7 +139,8 @@ export function getNavigationHelpersSection(): string {
           updateMaskVisual();
           return;
         }
-        renderSlide(currentIndex - 1);
+        // FSM-9 优化：回退至上一页时传递 backward 方向，使上一页遮罩处于完全展开状态
+        renderSlide(currentIndex - 1, "backward");
       }
 
 `;

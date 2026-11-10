@@ -208,24 +208,39 @@ export class NativeSlidesProcessManager {
 
   /**
    * 优雅安全终止 Slidev 进程
+   * FSM-7 优化：支持异步等待进程树彻底销毁，杜绝端口释放延迟与启动孤儿进程竞态
    */
-  public stopServer(): void {
+  public async stopServer(): Promise<void> {
     if (this.childProcess) {
+      const proc = this.childProcess
+      this.childProcess = null
       try {
-        this.childProcess.kill("SIGTERM")
+        proc.kill("SIGTERM")
         const isWin = getPlatform() === "win32"
-        if (isWin && this.childProcess.pid && !this.customSpawner) {
+        if (isWin && proc.pid && !this.customSpawner) {
           const execFn = getRuntimeModule("child_process")?.exec
           if (execFn) {
-            execFn(`taskkill /pid ${this.childProcess.pid} /T /F`, () => {})
+            await new Promise<void>(resolve => {
+              const timer = setTimeout(resolve, 400)
+              execFn(`taskkill /pid ${proc.pid} /T /F`, () => {
+                clearTimeout(timer)
+                resolve()
+              })
+            })
           } else {
-            import("node:child_process").then(({ exec }) => {
-              exec(`taskkill /pid ${this.childProcess?.pid} /T /F`, () => {})
-            }).catch(() => {})
+            const cp = await import("node:child_process").catch(() => null)
+            if (cp?.exec) {
+              await new Promise<void>(resolve => {
+                const timer = setTimeout(resolve, 400)
+                cp.exec(`taskkill /pid ${proc.pid} /T /F`, () => {
+                  clearTimeout(timer)
+                  resolve()
+                })
+              })
+            }
           }
         }
       } catch {}
-      this.childProcess = null
     }
     this.isRunning = false
     this.activePort = null

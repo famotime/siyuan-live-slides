@@ -2,7 +2,7 @@
  * 整页幻灯片装配渲染与版式容器分发
  */
 export function getSlideRenderingSection(): string {
-  return `      function renderSlide(idx) {
+  return `      function renderSlide(idx, direction) {
         if (slides.length === 0) return;
         currentIndex = Math.max(0, Math.min(idx, slides.length - 1));
         const slide = slides[currentIndex];
@@ -24,6 +24,8 @@ export function getSlideRenderingSection(): string {
           container.style.width = "100%";
           container.style.height = "100%";
           container.style.transform = "none";
+        }
+
         maskOverlayEl = null;
         maskDividerEl = null;
         const maskDir = slide.frontmatter?.mask;
@@ -41,7 +43,8 @@ export function getSlideRenderingSection(): string {
             isInitialRevealed: isInitRev,
             style: slide.frontmatter.maskStyle || "solid",
           };
-          currentMaskStep = 0;
+          // FSM-9 优化：后退进入历史页时，遮罩与逐步呈现处于全部揭开完成状态，避免上一页重新变为全黑遮盖
+          currentMaskStep = (direction === "backward") ? currentMaskConfig.totalSteps : 0;
         } else {
           currentMaskConfig = null;
           currentMaskStep = 0;

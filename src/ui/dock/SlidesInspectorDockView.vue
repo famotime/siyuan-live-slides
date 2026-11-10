@@ -784,7 +784,8 @@ async function onLayoutChange(val: string) {
       return
     }
   } else {
-    saveAttr(ATTR_PAGE_LAYOUT, val)
+    // 页面版式必须作为页面级属性写入分页符或首页根，严禁作为普通块属性写入当前选中的段落
+    savePageAttr(ATTR_PAGE_LAYOUT, val)
   }
 }
 

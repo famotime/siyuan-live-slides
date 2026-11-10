@@ -152,6 +152,61 @@ layout: center
     expect(res.slides[1].pageAttrs["custom-slides-layout"]).toBe("center")
   })
 
+  it("FSM-4 词法扫描优化: 页面无 frontmatter 且紧随 Markdown 标题时绝不吞噬正文", () => {
+    const md = `---
+layout: cover
+---
+# 封面页
+封面简介
+
+---
+# 第二页标题 (无 frontmatter)
+这里是第二页的核心论述正文
+- 列表项 A
+- 列表项 B
+
+---
+# 第三页标题
+这里是第三页正文
+`
+    const chunks = splitSlidesMarkdownChunks(md)
+    expect(chunks.length).toBe(3)
+    expect(chunks[0]).toContain("# 封面页")
+    expect(chunks[1]).toContain("# 第二页标题 (无 frontmatter)")
+    expect(chunks[1]).toContain("这里是第二页的核心论述正文")
+    expect(chunks[2]).toContain("# 第三页标题")
+    expect(chunks[2]).toContain("这里是第三页正文")
+
+    const res = parseSlidesPresentation(md)
+    expect(res.totalSlides).toBe(3)
+    expect(res.slides[1].rawMarkdown).toContain("# 第二页标题 (无 frontmatter)")
+    expect(res.slides[1].rawMarkdown).toContain("这里是第二页的核心论述正文")
+  })
+
+  it("FSM-5 正则占位符替换优化: 代码块与演讲备注包含 $1, $PATH, $$ 等特殊符号时绝不被误判篡改", () => {
+    const md = `---
+title: Token Safety Test
+---
+
+# Code with Regex Tokens
+
+\`\`\`bash
+echo "$1 is first arg and $PATH is path"
+export COST="\\$100"
+\`\`\`
+
+<!--
+讲稿备注中包含 LaTeX 公式: $$E=mc^2$$ 以及 $VAR 符号
+-->
+`
+    const res = parseSlidesPresentation(md)
+    const firstSlide = res.slides[0]
+    expect(firstSlide.rawMarkdown).toContain('$1 is first arg and $PATH is path')
+    expect(firstSlide.rawMarkdown).toContain('export COST="\\$100"')
+    expect(firstSlide.notes).toContain('$$E=mc^2$$')
+    expect(firstSlide.notes).toContain('$VAR')
+  })
+
   // 针对真实 slidev-templates 仓库的回归测试
   describe("Real slidev-templates regression tests", () => {
     const templatesDir = "D:\\MyCodingProjects\\slidev-templates"

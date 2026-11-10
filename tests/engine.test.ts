@@ -65,6 +65,50 @@ describe("WebSandboxBridge (沙箱通信管道)", () => {
     bridge.detach()
   })
 
+  it("FSM-6 优化: 握手等待期高频 UPDATE_SLIDES 应执行 LWW 合并，就绪后仅冲刷最后一份", () => {
+    const bridge = new WebSandboxBridge()
+    const mockPostMessage = vi.fn()
+    const mockIframe = {
+      contentWindow: {
+        postMessage: mockPostMessage,
+      },
+    } as unknown as HTMLIFrameElement
+
+    bridge.attach(mockIframe)
+
+    // 连续推送 3 次大文档更新
+    bridge.updateSlides([], undefined, "# Version 1")
+    bridge.updateSlides([], undefined, "# Version 2")
+    bridge.updateSlides([], undefined, "# Version 3 (Final)")
+
+    // 此时尚未就绪，不应触发 postMessage
+    expect(mockPostMessage).not.toHaveBeenCalled()
+
+    // 模拟客户端就绪握手
+    window.dispatchEvent(
+      new MessageEvent("message", {
+        data: {
+          source: "siyuan-slides-client",
+          action: "CLIENT_READY",
+          payload: {},
+        },
+      }),
+    )
+
+    // 冲刷时仅向沙箱发送合并后的最新版本 1 次，杜绝连续多次重绘卡顿
+    expect(mockPostMessage).toHaveBeenCalledTimes(1)
+    expect(mockPostMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: "siyuan-slides-host",
+        action: "UPDATE_SLIDES",
+        payload: expect.objectContaining({ fullMarkdown: "# Version 3 (Final)" }),
+      }),
+      "*",
+    )
+
+    bridge.detach()
+  })
+
   it("toggleOverview 应发送 TOGGLE_OVERVIEW 消息切换缩略图总览", () => {
     const bridge = new WebSandboxBridge()
     const mockPostMessage = vi.fn()
