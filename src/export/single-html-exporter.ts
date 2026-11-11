@@ -20,7 +20,7 @@ export function buildStandaloneHtml(
   const title = options?.title || "即现演示文稿"
   let processedSlides = doc.slides
 
-  // 若提供 Base64 字典，将各块中匹配到的本地资产 URL 替换为 Base64
+  // 若提供 Base64 字典，将各块及 frontmatter 中匹配到的本地资产 URL 替换为 Base64
   if (options?.inlineAssetBase64Map && Object.keys(options.inlineAssetBase64Map).length > 0) {
     const map = options.inlineAssetBase64Map
     processedSlides = doc.slides.map(slide => {
@@ -39,7 +39,26 @@ export function buildStandaloneHtml(
         }
         return { ...b, rawMarkdown: md }
       })
-      return { ...slide, rawMarkdown: slideMd, blocks: newBlocks }
+
+      let frontmatter = slide.frontmatter ? { ...slide.frontmatter } : slide.frontmatter
+      if (frontmatter) {
+        if (typeof frontmatter.background === "string") {
+          for (const [assetPath, b64] of Object.entries(map)) {
+            if (frontmatter.background.includes(assetPath)) {
+              frontmatter.background = frontmatter.background.split(assetPath).join(b64)
+            }
+          }
+        }
+        if (typeof frontmatter.image === "string") {
+          for (const [assetPath, b64] of Object.entries(map)) {
+            if (frontmatter.image.includes(assetPath)) {
+              frontmatter.image = frontmatter.image.split(assetPath).join(b64)
+            }
+          }
+        }
+      }
+
+      return { ...slide, rawMarkdown: slideMd, blocks: newBlocks, frontmatter }
     })
   }
 

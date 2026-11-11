@@ -59,24 +59,6 @@ export function isListItemBlock(block: any): boolean {
 }
 
 /**
- * 判断块是否为列表容器 (NodeList / l)
- */
-export function isListContainer(block: any): boolean {
-  if (!block) return false
-  const t = String(block.type || "").toLowerCase()
-  return t === "l" || t === "nodelist" || t === "list"
-}
-
-/**
- * 判断块是否为超级块容器 (NodeSuperBlock / s / sb)
- */
-export function isSuperBlockContainer(block: any): boolean {
-  if (!block) return false
-  const t = String(block.type || "").toLowerCase()
-  return t === "s" || t === "sb" || t === "nodesuperblock"
-}
-
-/**
  * 按阅读顺序展平单页幻灯片的所有有效内容项（深入列表项与超级块子块，自动排除备注块与分隔线）
  */
 export function flattenSlideContentItems(blocks: ISlidesBlockItem[]): IAnimatableItem[] {

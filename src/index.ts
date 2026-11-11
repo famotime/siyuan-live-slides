@@ -206,7 +206,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
     }
   }
 
-  async onDataChanged(reason?: "sync" | "overwrite") {
+  async onDataChanged(_reason?: "sync" | "overwrite") {
     // 跨端同步或外部配置更新时重新载入全局配置
     await this.loadGlobalSettings()
     // 跨端同步或外部文件覆写时轻量重新编译，避免宿主触发全量重载（交由门闩与防抖决定是否真正编译）

@@ -200,7 +200,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
     },
   })
 
-  // 6. 统计全库转场效果分布
+  // 8. 统计全库转场效果分布
   plugin.addCommand({
     langKey: "slidesBatchTransitions",
     langText: "即现协同: 统计全库转场效果分布",
@@ -215,7 +215,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
     },
   })
 
-  // 7. 复制即现预设属性模板至剪贴板
+  // 9. 复制即现预设属性模板至剪贴板
   plugin.addCommand({
     langKey: "slidesExportTemplates",
     langText: "即现协同: 复制即现预设属性模板至剪贴板",
@@ -233,7 +233,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
     },
   })
 
-  // 8. 批量替换全库淡入淡出转场为滑动
+  // 10. 批量替换全库淡入淡出转场为滑动
   plugin.addCommand({
     langKey: "slidesBatchReplaceTransition",
     langText: "即现协同: 批量替换全库淡入淡出转场为滑动 (fade -> slide-left)",
@@ -252,7 +252,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
     },
   })
 
-  // 9. 打开双屏演讲者控制台（以思源页签承载，避免桌面端 window.open 被甩至系统浏览器；
+  // 11. 打开双屏演讲者控制台（以思源页签承载，避免桌面端 window.open 被甩至系统浏览器；
   // presenterMode 开关关闭时不注册）
   if (!isFeatureDisabled("presenterMode")) {
     plugin.addCommand({
@@ -266,9 +266,9 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
     })
   }
 
-  // 10-12. Pro 模式命令组（proMode 开关关闭时整组不注册）
+  // 12-14. Pro 模式命令组（proMode 开关关闭时整组不注册）
   if (!isFeatureDisabled("proMode")) {
-    // 10. 导出 Slidev 标准 slides.md 文档 (下载到本地)
+    // 12. 导出 Slidev 标准 slides.md 文档 (下载到本地)
     plugin.addCommand({
       langKey: "slidesExportCliMd",
       langText: "即现 Pro: 导出 Slidev 标准 slides.md 文档 (下载到本地)",
@@ -292,7 +292,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
       },
     })
 
-    // 11. 检测本地 Slidev CLI DevServer 状态
+    // 13. 检测本地 Slidev CLI DevServer 状态
     plugin.addCommand({
       langKey: "slidesProbeCliDevServer",
       langText: "即现 Pro: 检测本地 Slidev CLI DevServer 状态 (localhost:3030)",
@@ -309,7 +309,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
       },
     })
 
-    // 12. 同步 slides.md 至思源工作空间存储目录
+    // 14. 同步 slides.md 至思源工作空间存储目录
     plugin.addCommand({
       langKey: "slidesSyncToCliWorkspace",
       langText: "即现 Pro: 同步 slides.md 至思源工作空间存储目录",
@@ -337,7 +337,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
     })
   }
 
-  // 13. 导出幻灯片为图片包 (ZIP)（exportImage 开关关闭时不注册）
+  // 15. 导出幻灯片为图片包 (ZIP)（exportImage 开关关闭时不注册）
   if (!isFeatureDisabled("exportImage")) {
     let isCommandExportingImages = false
     plugin.addCommand({

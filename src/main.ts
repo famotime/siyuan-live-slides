@@ -54,7 +54,7 @@ export function mountPreviewTab(element: HTMLElement, pluginInstance: Plugin): a
   return mounted
 }
 
-export function unmountPreviewTab(element: HTMLElement): void {
+export function unmountPreviewTab(_element?: HTMLElement): void {
   if (disposePreviewConsumer) {
     disposePreviewConsumer()
     disposePreviewConsumer = null
@@ -88,7 +88,7 @@ export function mountPresenterTab(element: HTMLElement, pluginInstance: Plugin):
   return presenterTabInstance
 }
 
-export function unmountPresenterTab(element: HTMLElement): void {
+export function unmountPresenterTab(_element?: HTMLElement): void {
   if (presenterTabApp) {
     presenterTabApp.unmount()
     presenterTabApp = null
@@ -106,8 +106,8 @@ function broadcastDocToRemoteSandbox(doc: ISlidesDocument): void {
     const channel = new BroadcastChannel('siyuan-slides-sync')
     channel.postMessage({
       type: 'SYNC_SLIDES',
-      slides: JSON.parse(JSON.stringify(doc.slides || [])),
-      config: JSON.parse(JSON.stringify(doc.config || {})),
+      slides: doc.slides || [],
+      config: doc.config || {},
     })
     channel.close()
   } catch (err) {
@@ -135,7 +135,7 @@ export function mountInspectorDock(element: HTMLElement, pluginInstance: Plugin)
   return mounted
 }
 
-export function unmountInspectorDock(element: HTMLElement): void {
+export function unmountInspectorDock(_element?: HTMLElement): void {
   if (disposeDockConsumer) {
     disposeDockConsumer()
     disposeDockConsumer = null

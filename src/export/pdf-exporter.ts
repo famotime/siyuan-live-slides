@@ -1,4 +1,4 @@
-import type { ISlidesBlock, ISlidesDocument, ISlidesVirtualPage } from "../types/slides-protocol"
+import type { ISlidesDocument } from "../types/slides-protocol"
 import {
   convertBlockToHtml,
   escapeHtml,
@@ -7,7 +7,6 @@ import {
 } from "./markdown-renderer"
 import {
   generatePdfExportStyles,
-  getPageSizeCss,
 } from "./pdf-template-styles"
 import type { TPdfPageRatio } from "./pdf-template-styles"
 

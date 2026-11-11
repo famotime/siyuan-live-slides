@@ -11,7 +11,6 @@ export interface INotesGenerationResult {
  */
 export function generateSpeakerNotes(
   slide: ISlidesVirtualPage,
-  customPromptFn?: (pageContent: string) => Promise<string>,
 ): string {
   const blocks = (slide.blocks || []).filter(b => {
     const text = (b.content || b.rawMarkdown || "").trim()

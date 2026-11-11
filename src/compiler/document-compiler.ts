@@ -1,4 +1,5 @@
 import { getBlockAttrs, getChildBlocks, getDocBlocksOrders, getInlineStyles, setBlockAttrs, sql } from "../api"
+import { parseKramdownIAL } from "./ast-crawler"
 import { extractBlockRefs } from "./block-ref-resolver"
 import { buildSlidesDocument } from "./slides-ast-builder"
 import { generateCompleteSiYuanThemeCss } from "./theme-styles-generator"
@@ -9,27 +10,12 @@ import {
   ITrackedListSuperBlock,
 } from "./superblock-scanner"
 import type { ISiYuanBlockNode, ISlidesDocument } from "../types/slides-protocol"
-import { ATTR_PAGE_LAYOUT, ATTR_PAGE_LAYOUT_RATIO } from "../types/slides-protocol"
+import { ATTR_PAGE_LAYOUT } from "../types/slides-protocol"
 
 /**
- * 辅助解析思源数据库中的 IAL 字段文本为键值对字典
+ * 辅助解析思源数据库中的 IAL 字段文本为键值对字典（复用 parseKramdownIAL 保持一致性）
  */
-export function parseIALString(ialStr: string): Record<string, string> {
-  const result: Record<string, string> = {}
-  if (!ialStr || typeof ialStr !== "string") {
-    return result
-  }
-  const clean = ialStr.replace(/^\{:\s*/, "").replace(/\s*\}$/, "")
-  const regex = /([\w-]+)=(?:"([^"]*)"|'([^']*)'|(\S+))/g
-  let match: RegExpExecArray | null
-
-  while ((match = regex.exec(clean)) !== null) {
-    const key = match[1]
-    const val = match[2] ?? match[3] ?? match[4] ?? ""
-    result[key] = val
-  }
-  return result
-}
+export const parseIALString = parseKramdownIAL
 
 /** 索引行是否为容器块（其 content/markdown 为整棵子树的序列化） */
 function isContainerRow(row: any): boolean {
@@ -641,17 +627,23 @@ export class DocumentCompilerService {
       })
       this.trackedListSuperBlocks.set(docId, listScanRes.newTracked)
 
-      // 6. 扫描所有块中的思源块引用 ((block-id))
+      // 6. 递归扫描所有块及子块中的思源块引用 ((block-id))
       const allRefIds = new Set<string>()
-      for (const node of blockNodes) {
-        const text = node.markdown || node.content || ""
-        if (text.includes("((")) {
-          const refs = extractBlockRefs(text)
-          for (const ref of refs) {
-            allRefIds.add(ref.blockId)
+      const collectRefsRecursively = (nodes: ISiYuanBlockNode[]) => {
+        for (const node of nodes) {
+          const text = node.markdown || node.content || ""
+          if (text.includes("((")) {
+            const refs = extractBlockRefs(text)
+            for (const ref of refs) {
+              allRefIds.add(ref.blockId)
+            }
+          }
+          if (node.children && node.children.length > 0) {
+            collectRefsRecursively(node.children)
           }
         }
       }
+      collectRefsRecursively(blockNodes)
 
       // 7. 批量检索引用的源内容
       const refContentMap: Record<string, string> = {}

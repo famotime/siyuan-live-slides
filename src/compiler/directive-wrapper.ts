@@ -1,6 +1,5 @@
 import type {
   ISiYuanBlockNode,
-  ISlidesBlockItem,
   ISlidesMotionConfig,
 } from "../types/slides-protocol"
 

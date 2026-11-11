@@ -593,15 +593,16 @@ function onOpenPresenter() {
   }
 }
 
-function onExportHtml() {
+async function onExportHtml() {
   if (!latestDoc) {
     showMessage('请先在主编辑区打开幻灯片文档')
     return
   }
-  const html = buildStandaloneHtml(latestDoc)
-  const ok = downloadHtmlFile('presentation.html', html)
+  const title = await resolveDocumentTitle(latestDoc, (plugin as any)?.currentDocId, plugin)
+  const html = buildStandaloneHtml(latestDoc, { title })
+  const ok = downloadHtmlFile(`${title}.html`, html)
   if (ok) {
-    showMessage('已开始下载单文件离线 HTML 演示包')
+    showMessage(`已开始下载单文件离线 HTML 演示包 (${title}.html)`)
   }
 }
 

@@ -1,4 +1,5 @@
 import {
+  ATTR_PAGE_LAYOUT,
   ATTR_PAGE_TRANSITION,
 } from "../types/slides-protocol"
 import type { ISlidesPresetTemplate } from "./preset-templates"
@@ -61,7 +62,7 @@ export class PropertyManagerBridge {
     sqlExecutor: (sqlStr: string) => Promise<any[]>,
     setAttrsFn: (blockId: string, attrs: Record<string, string>) => Promise<any>,
   ): Promise<{ updatedCount: number }> {
-    const findSql = `SELECT block_id FROM attributes WHERE name = 'custom-slides-layout' AND value = '${fromLayout}'`
+    const findSql = `SELECT block_id FROM attributes WHERE name = '${ATTR_PAGE_LAYOUT}' AND value = '${fromLayout}'`
     const rows = await sqlExecutor(findSql)
     let updatedCount = 0
 
@@ -69,7 +70,7 @@ export class PropertyManagerBridge {
       for (const row of rows) {
         const blockId = row.block_id || row.blockId
         if (blockId) {
-          await setAttrsFn(blockId, { "custom-slides-layout": toLayout })
+          await setAttrsFn(blockId, { [ATTR_PAGE_LAYOUT]: toLayout })
           updatedCount++
         }
       }

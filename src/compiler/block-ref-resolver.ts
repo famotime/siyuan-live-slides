@@ -51,7 +51,7 @@ export function resolveBlockRefsSync(
   const regex = new RegExp(BLOCK_REF_REGEX.source, "g")
   return content.replace(
     regex,
-    (match, blockId, singleAnchor, doubleAnchor, rawAnchor) => {
+    (_match, blockId, singleAnchor, doubleAnchor, rawAnchor) => {
       const anchor = (singleAnchor ?? doubleAnchor ?? rawAnchor ?? "").trim()
 
       // 若缓存中存在源块内容，直接展开并附带引用样式

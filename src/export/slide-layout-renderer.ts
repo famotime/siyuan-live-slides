@@ -1,6 +1,6 @@
 import type { ISlidesBlockItem, ISlidesVirtualPage } from "../types/slides-protocol"
 import { isColsHeaderLayout } from "../types/slides-protocol"
-import { distributeNColumns, distributeThreeColumns } from "../compiler/slides-ast-builder"
+import { distributeNColumns } from "../compiler/slides-ast-builder"
 import { cleanCardListItemMarkdown, isListItemNode, parseRatioToGridCols } from "../utils"
 import { convertBlockToHtml, escapeHtml } from "./markdown-renderer"
 import type { IBlockRenderOptions } from "./markdown-renderer"

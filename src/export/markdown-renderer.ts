@@ -115,7 +115,7 @@ export function formatInlineMarkdown(text: string): string {
 
   // 3. 处理标准 Markdown 行内语法与思源链接标记
   // 3.0 思源块引用 ((block-id 'anchor')) / ((block-id "anchor")) / ((block-id))
-  res = res.replace(/\(\(([0-9a-zA-Z-]+)(?:\s*(?:&#039;([^&#]*)&#039;|&quot;([^&]*)&quot;|'([^']*)'|"([^"]*)"|([^\)]+?)))?\s*\)\)/g, (match, blockId, singleEscaped, doubleEscaped, singleRaw, doubleRaw, plainRaw) => {
+  res = res.replace(/\(\(([0-9a-zA-Z-]+)(?:\s*(?:&#039;([^&#]*)&#039;|&quot;([^&]*)&quot;|'([^']*)'|"([^"]*)"|([^\)]+?)))?\s*\)\)/g, (_match, blockId, singleEscaped, doubleEscaped, singleRaw, doubleRaw, plainRaw) => {
     const anchor = (singleEscaped ?? doubleEscaped ?? singleRaw ?? doubleRaw ?? plainRaw ?? "").trim()
     const text = anchor || `Ref(${blockId.slice(0, 8)})`
     return `<a href="siyuan://blocks/${blockId}" data-ref-id="${blockId}" class="slides-ref-tag">🔗 ${text}</a>`
@@ -125,14 +125,14 @@ export function formatInlineMarkdown(text: string): string {
   res = res.replace(/\$([^$\n]+)\$/g, '<span class="katex-inline font-math"><em>$1</em></span>')
 
   // 3.1.5 行内图片语法 ![alt](src)（必须在普通超链接之前匹配，防止将图片解析为破坏链接）
-  res = res.replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, url) => {
+  res = res.replace(/!\[(.*?)\]\((.*?)\)/g, (_match, alt, url) => {
     const isGif = /\.gif(?:\?|$)/i.test(url)
     const cls = isGif ? "slide-inline-img list-item-gif" : "slide-inline-img"
     return `<img alt="${alt}" src="${url}" class="${cls}" />`
   })
 
   // 3.2 链接 [title](url) 与思源协议链接增强
-  res = res.replace(/\[(.*?)\]\((.*?)\)/g, (match, title, url) => {
+  res = res.replace(/\[(.*?)\]\((.*?)\)/g, (_match, title, url) => {
     if (url.startsWith("siyuan://blocks/")) {
       const blockId = url.replace("siyuan://blocks/", "").split("?")[0]
       return `<a href="${url}" data-ref-id="${blockId}" class="slides-ref-tag">🔗 ${title}</a>`
@@ -141,7 +141,7 @@ export function formatInlineMarkdown(text: string): string {
   })
 
   // 3.2.1 裸思源协议链接 (如 siyuan://blocks/20260625214150-d151ljw)
-  res = res.replace(/(^|[\s(])(siyuan:\/\/blocks\/([0-9a-zA-Z-]+)(?:\?[^\s\)]*)?)/g, (match, prefix, url, blockId) => {
+  res = res.replace(/(^|[\s(])(siyuan:\/\/blocks\/([0-9a-zA-Z-]+)(?:\?[^\s\)]*)?)/g, (_match, prefix, url, blockId) => {
     return `${prefix}<a href="${url}" data-ref-id="${blockId}" class="slides-ref-tag">🔗 ${url}</a>`
   })
 
@@ -213,7 +213,7 @@ export function escapeCodeHtml(str: string): string {
     .replace(/"/g, "&quot;")
 }
 
-export function highlightCode(code: string, lang = "ts"): string {
+export function highlightCode(code: string, _lang = "ts"): string {
   if (!code) return ""
   if (code.trim().startsWith("//")) {
     return `<span class="token-comment">${escapeCodeHtml(code)}</span>`

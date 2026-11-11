@@ -2,7 +2,6 @@ import type { ISiYuanBlockNode } from "../types/slides-protocol"
 import {
   ATTR_ELEM_SLOT,
   ATTR_PAGE_LAYOUT,
-  ATTR_PAGE_LAYOUT_RATIO,
   isColsHeaderLayout,
 } from "../types/slides-protocol"
 import { isPageBreak } from "./scope-mapper"

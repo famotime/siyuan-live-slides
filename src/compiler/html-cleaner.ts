@@ -442,7 +442,7 @@ export function convertHtmlToCleanMarkdown(html: string): string {
   text = text.replace(/<ol\b[^>]*>([\s\S]*?)<\/ol>/gi, "\n$1\n")
 
   // 21. 链接与引用
-  text = text.replace(/<a\b([^>]*)href=["'](.*?)["']([^>]*)>([\s\S]*?)<\/a>/gi, (match, prefix, href, suffix, inner) => {
+  text = text.replace(/<a\b([^>]*)href=["'](.*?)["']([^>]*)>([\s\S]*?)<\/a>/gi, (match, _prefix, href, _suffix, inner) => {
     const trimmed = inner.trim()
     if (trimmed.includes("<") || trimmed.includes("\n")) {
       return match

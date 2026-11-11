@@ -39,7 +39,7 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     }
     const doc = ctx.latestDoc.value
     const title = await resolveDocumentTitle(doc, ctx.currentDocId?.value, ctx.plugin)
-    const html = buildStandaloneHtml(doc)
+    const html = buildStandaloneHtml(doc, { title })
     const ok = downloadHtmlFile(`${title}.html`, html)
     if (ok) {
       showMessage(`已开始下载单文件离线 HTML 演示包 (${title}.html)`)

@@ -1,12 +1,9 @@
 import type { ISiYuanBlockNode } from "../types/slides-protocol"
 import {
-  ATTR_ELEM_SLOT,
   ATTR_PAGE_LAYOUT,
-  ATTR_PAGE_LAYOUT_RATIO,
   ROLE_IMAGE_LEFT,
   ROLE_IMAGE_RIGHT,
 } from "../types/slides-protocol"
-import { isPageBreak } from "./scope-mapper"
 
 import {
   cleanCardListItemMarkdown,

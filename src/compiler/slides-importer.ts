@@ -12,7 +12,6 @@ import {
   ATTR_PAGE_MASK_RATIO,
   ATTR_PAGE_MASK_STYLE,
   ATTR_PAGE_MASK_INITIAL,
-  ATTR_PAGE_NOTES,
   ATTR_PAGE_TRANSITION,
 } from "../types/slides-protocol"
 import {

@@ -2,7 +2,6 @@ import type {
   IHostToSlidesMessage,
   ISlidesToHostMessage,
   THostToSlidesAction,
-  TSlidesToHostAction,
 } from "../types/ipc-messages"
 import type { ISlidesPluginConfig, ISlidesVirtualPage } from "../types/slides-protocol"
 

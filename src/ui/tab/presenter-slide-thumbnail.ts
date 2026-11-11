@@ -192,7 +192,7 @@ export function renderPresenterSlideThumbnailHtml(
   })
 
   // 缩略图内的视频统一强制静音并移除原生控制条干扰，避免与主放映端产生双重音轨
-  const safeBlocksHtml = rawBlocksHtml.replace(/<video\b([^>]*)>/gi, (match, attrs: string) => {
+  const safeBlocksHtml = rawBlocksHtml.replace(/<video\b([^>]*)>/gi, (_match, attrs: string) => {
     let nextAttrs = attrs.replace(/\bcontrols\b/gi, "").trim()
     if (!/\bmuted\b/i.test(nextAttrs)) {
       nextAttrs += " muted"

@@ -2,8 +2,6 @@ import { describe, expect, it, vi, beforeEach } from "vitest"
 import {
   isHeadingBlock,
   isListItemBlock,
-  isListContainer,
-  isSuperBlockContainer,
   flattenSlideContentItems,
   scanSlideForAutoAnimation,
   scanDocumentForAutoAnimation,
@@ -29,21 +27,11 @@ describe("auto-animation-normalizer (智能动效配置编排)", () => {
       expect(isHeadingBlock(null)).toBe(false)
     })
 
-    it("正确识别列表项 (i / NodeListItem) 与列表容器 (l / NodeList)", () => {
+    it("正确识别列表项 (i / NodeListItem)", () => {
       expect(isListItemBlock({ type: "i" })).toBe(true)
       expect(isListItemBlock({ type: "NodeListItem" })).toBe(true)
       expect(isListItemBlock({ type: "l" })).toBe(false)
-
-      expect(isListContainer({ type: "l" })).toBe(true)
-      expect(isListContainer({ type: "NodeList" })).toBe(true)
-      expect(isListContainer({ type: "p" })).toBe(false)
-    })
-
-    it("正确识别超级块容器 (s / sb / NodeSuperBlock)", () => {
-      expect(isSuperBlockContainer({ type: "s" })).toBe(true)
-      expect(isSuperBlockContainer({ type: "sb" })).toBe(true)
-      expect(isSuperBlockContainer({ type: "NodeSuperBlock" })).toBe(true)
-      expect(isSuperBlockContainer({ type: "p" })).toBe(false)
+      expect(isListItemBlock(null)).toBe(false)
     })
   })
 
