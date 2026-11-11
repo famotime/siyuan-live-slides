@@ -10,7 +10,7 @@
         <div class="spm-control-title-group">
           <div class="spm-control-title">
             <SlidesIcon name="palette" />
-            <span>幻灯片主题 (Theme)</span>
+            <span>幻灯片主题</span>
           </div>
           <span class="spm-control-desc">全局幻灯片视觉设计范式</span>
         </div>
@@ -35,7 +35,7 @@
         <div class="spm-control-title-group">
           <div class="spm-control-title">
             <SlidesIcon name="ratio" />
-            <span>画幅比例 (Aspect Ratio)</span>
+            <span>画幅比例</span>
           </div>
           <span class="spm-control-desc">演讲屏幕投影宽高比</span>
         </div>
@@ -71,7 +71,7 @@
         <div class="spm-control-title-group">
           <div class="spm-control-title">
             <SlidesIcon name="ratio" />
-            <span>间距风格 (Spacing)</span>
+            <span>间距风格</span>
           </div>
           <span class="spm-control-desc">内边距与顶部标题下边距预设</span>
         </div>
@@ -83,7 +83,7 @@
           aria-label="紧凑排版：上下 20px / 左右 36px"
           @click="$emit('update:docSpacing', 'compact')"
         >
-          紧凑 (Compact)
+          紧凑
         </button>
         <button
           class="spm-segmented-item b3-tooltips b3-tooltips__s"
@@ -91,7 +91,7 @@
           aria-label="标准排版：上下 32px / 左右 48px（推荐默认）"
           @click="$emit('update:docSpacing', 'normal')"
         >
-          标准 (Normal)
+          标准
         </button>
         <button
           class="spm-segmented-item b3-tooltips b3-tooltips__sw"
@@ -99,7 +99,7 @@
           aria-label="宽松排版：上下 48px / 左右 56px"
           @click="$emit('update:docSpacing', 'loose')"
         >
-          宽松 (Loose)
+          宽松
         </button>
       </div>
     </div>
@@ -128,7 +128,7 @@
         <div class="spm-control-title-group">
           <div class="spm-control-title">
             <SlidesIcon name="external-link" />
-            <span>本地网络伺服预览 (Web Serve)</span>
+            <span>本地网络伺服预览</span>
           </div>
           <span class="spm-control-desc">点击文档/块链接以 Webview 抽屉呈现，支持外跳</span>
         </div>

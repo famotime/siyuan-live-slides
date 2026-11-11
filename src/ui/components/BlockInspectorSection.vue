@@ -81,7 +81,7 @@
         <div class="spm-control-title-group">
           <div class="spm-control-title">
             <SlidesIcon name="image" />
-            <span>图片角色与分栏 (Image & Layout)</span>
+            <span>图片角色与分栏</span>
           </div>
           <span class="spm-control-desc">设为幻灯片背景图或图文分栏配图</span>
         </div>
@@ -127,7 +127,7 @@
         <div class="spm-control-title-group">
           <div class="spm-control-title">
             <SlidesIcon name="video" />
-            <span>视频播放设置 (Video Playback)</span>
+            <span>视频播放设置</span>
           </div>
           <span class="spm-control-desc">配置播放器控制条、自动播放与循环</span>
         </div>
@@ -170,7 +170,7 @@
         <div class="spm-control-title-group">
           <div class="spm-control-title">
             <SlidesIcon name="step" />
-            <span>逐步呈现 (v-click)</span>
+            <span>逐步呈现</span>
           </div>
           <span class="spm-control-desc">放映时按步长逐个呈现</span>
         </div>
@@ -194,7 +194,7 @@
           :class="{ active: elemClick === step }"
           @click="$emit('update:elemClick', step)"
         >
-          {{ step === '+1' ? '顺延 (+1)' : step === 'hide' ? '隐藏 (hide)' : '第 ' + step + ' 步' }}
+          {{ step === '+1' ? '顺延 (+1)' : step === 'hide' ? '隐藏' : '第 ' + step + ' 步' }}
         </button>
       </div>
 
@@ -215,11 +215,11 @@
         <div class="spm-control-title-group">
           <div class="spm-control-title">
             <SlidesIcon name="motion" />
-            <span>入场微动效 (v-motion)</span>
+            <span>入场微动效</span>
           </div>
           <span class="spm-control-desc">为当前块添加平滑位移与渐入动画</span>
         </div>
-        <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="hasMotion ? '关闭微动效' : '开启微动效 (slide-up)'">
+        <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="hasMotion ? '关闭微动效' : '开启微动效'">
           <input
             type="checkbox"
             :checked="hasMotion"
@@ -306,7 +306,7 @@
         <div class="spm-control-title-group">
           <div class="spm-control-title">
             <SlidesIcon name="code" />
-            <span>代码逐行聚光 (Shiki)</span>
+            <span>代码逐行聚光</span>
           </div>
           <span class="spm-control-desc">翻页时动态聚光高亮特定行</span>
         </div>
@@ -344,7 +344,7 @@
         <div class="spm-control-title-group">
           <div class="spm-control-title">
             <SlidesIcon name="code" />
-            <span>代码块限高 (Max Height)</span>
+            <span>代码块限高</span>
           </div>
           <span class="spm-control-desc">超出限高自动竖向滚动，弱提示滚动条</span>
         </div>
@@ -404,7 +404,7 @@
 
         <button
           class="spm-btn-action b3-tooltips b3-tooltips__se"
-          :aria-label="effectiveLayout === 'three-cols-header' ? '将当前块属性设为三栏第1栏归属 (slot: col-1)' : '将当前块属性设为双栏左侧归属 (slot: left)'"
+          :aria-label="effectiveLayout === 'three-cols-header' ? '将当前块属性设为三栏第1栏归属' : '将当前块属性设为双栏左侧归属'"
           @click="$emit('setTwoColsContrast')"
         >
           <SlidesIcon name="columns" />
@@ -493,10 +493,10 @@ const detectedColumnsCount = computed(() => {
 
 const slotControlTitle = computed(() => {
   const l = effectiveLayout.value
-  if (l === 'cols-header') return '多栏插槽归属 (Slot)'
-  if (l === 'three-cols-header') return '三栏插槽归属 (Slot)'
-  if (l === 'two-cols-header') return '带表头双栏插槽 (Slot)'
-  return '多栏插槽归属 (Slot)'
+  if (l === 'cols-header') return '多栏插槽归属'
+  if (l === 'three-cols-header') return '三栏插槽归属'
+  if (l === 'two-cols-header') return '带表头双栏插槽'
+  return '多栏插槽归属'
 })
 
 const slotControlDesc = computed(() => {
@@ -582,13 +582,13 @@ const emit = defineEmits<{
 }>()
 
 const motionPresets = [
-  { label: '上浮 (slide-up)', value: 'slide-up' },
-  { label: '淡入 (fade-in)', value: 'fade-in' },
-  { label: '下沉 (slide-down)', value: 'slide-down' },
-  { label: '左滑 (slide-left)', value: 'slide-left' },
-  { label: '右滑 (slide-right)', value: 'slide-right' },
-  { label: '缩放 (zoom-in)', value: 'zoom-in' },
-  { label: '弹性 (bounce)', value: 'bounce' },
+  { label: '上浮', value: 'slide-up' },
+  { label: '淡入', value: 'fade-in' },
+  { label: '下沉', value: 'slide-down' },
+  { label: '左滑', value: 'slide-left' },
+  { label: '右滑', value: 'slide-right' },
+  { label: '缩放', value: 'zoom-in' },
+  { label: '弹性', value: 'bounce' },
 ]
 
 const parsedMotion = computed(() => {

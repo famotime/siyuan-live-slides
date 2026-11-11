@@ -104,7 +104,7 @@ describe("Inspector State Machine (演示配置面板状态推断)", () => {
       const state = resolveBlockSlotState("three-cols-header", "")
       expect(state.effectiveLayout).toBe("three-cols-header")
       expect(state.isMultiColsLayout).toBe(true)
-      expect(state.slotControlTitle).toBe("三栏插槽归属 (Slot)")
+      expect(state.slotControlTitle).toBe("三栏插槽归属")
       expect(state.actionButtonText).toBe("设为第1栏")
       expect(state.availableSlots).toEqual([
         { value: "", label: "默认" },
@@ -119,7 +119,7 @@ describe("Inspector State Machine (演示配置面板状态推断)", () => {
       const state = resolveBlockSlotState("three-cols-header", "header")
       expect(state.effectiveLayout).toBe("three-cols-header")
       expect(state.isMultiColsLayout).toBe(true)
-      expect(state.slotControlTitle).toBe("三栏插槽归属 (Slot)")
+      expect(state.slotControlTitle).toBe("三栏插槽归属")
       expect(state.actionButtonText).toBe("设为第1栏")
       expect(state.isSlotActive("header")).toBe(true)
       expect(state.availableSlots.map(s => s.value)).toEqual(["", "header", "col-1", "col-2", "col-3"])
@@ -129,7 +129,7 @@ describe("Inspector State Machine (演示配置面板状态推断)", () => {
       const state = resolveBlockSlotState("default", "col-1")
       expect(state.effectiveLayout).toBe("three-cols-header")
       expect(state.isMultiColsLayout).toBe(true)
-      expect(state.slotControlTitle).toBe("三栏插槽归属 (Slot)")
+      expect(state.slotControlTitle).toBe("三栏插槽归属")
       expect(state.actionButtonText).toBe("设为第1栏")
       expect(state.availableSlots.map(s => s.value)).toEqual(["", "header", "col-1", "col-2", "col-3"])
       expect(state.isSlotActive("col-1")).toBe(true)
@@ -256,10 +256,10 @@ export function resolveBlockSlotState(currentSlideLayout: string, elemSlot: stri
   const isMultiColsLayout = ['two-cols', 'two-cols-header', 'three-cols-header'].includes(effectiveLayout)
 
   const slotControlTitle = effectiveLayout === 'three-cols-header'
-    ? '三栏插槽归属 (Slot)'
+    ? '三栏插槽归属'
     : effectiveLayout === 'two-cols-header'
-    ? '带表头双栏插槽 (Slot)'
-    : '多栏插槽归属 (Slot)'
+    ? '带表头双栏插槽'
+    : '多栏插槽归属'
 
   let availableSlots: Array<{ value: string; label: string }> = []
   if (effectiveLayout === 'three-cols-header') {

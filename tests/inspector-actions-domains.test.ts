@@ -300,7 +300,7 @@ describe("layout-actions (版式与元素指令领域模块)", () => {
     await layout.onSetTwoColsContrast()
 
     expect(setAttrsSpy).toHaveBeenCalledWith("block-101", { "custom-slides-slot": "col-1" })
-    expect(showMsgSpy).toHaveBeenCalledWith("已将当前块设置为第 1 栏 (col-1)")
+    expect(showMsgSpy).toHaveBeenCalledWith("已将当前块设置为第 1 栏")
 
     setAttrsSpy.mockRestore()
     showMsgSpy.mockRestore()

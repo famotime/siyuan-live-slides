@@ -9,6 +9,8 @@ import {
   ATTR_ELEM_CLICK,
   ATTR_ELEM_MOTION,
   ATTR_ELEM_SLOT,
+  ATTR_ELEM_ROLE,
+  ATTR_PAGE_LAYOUT,
   ATTR_PAGE_LAYOUT_RATIO,
   isColsHeaderLayout,
 } from "../types/slides-protocol"
@@ -191,6 +193,7 @@ export function buildSlidesDocument(
         parentContainerId?: string
         defaultSlot?: string
         isParentListUnpacked?: boolean
+        isListItem?: boolean
         listContext?: {
           isOrdered?: boolean
           itemIndex?: number
@@ -371,13 +374,30 @@ export function buildSlidesDocument(
         currentPage.frontmatter.layout === "two-cols"
       )
 
-      // 展开带有分栏插槽或显式拆分的列表容器子项 (NodeList 'l')
+      // 展开带有分栏插槽、显式拆分、多子块复合项或多媒体的列表容器子项 (NodeList 'l')
+      const hasUnpackChild = Boolean(
+        itemNode.children &&
+        itemNode.children.some(c =>
+          c.ial?.[ATTR_ELEM_SLOT] ||
+          c.ial?.[ATTR_ELEM_CLICK] ||
+          (c.children && c.children.length >= 2) ||
+          (c.children && c.children.some(sub =>
+            sub.ial?.[ATTR_ELEM_CLICK] ||
+            sub.ial?.[ATTR_ELEM_SLOT] ||
+            sub.ial?.[ATTR_ELEM_ROLE] ||
+            sub.ial?.[ATTR_PAGE_LAYOUT] ||
+            sub.ial?.["custom-slides-role"] ||
+            sub.ial?.["custom-slides-layout"]
+          ))
+        )
+      )
+
       if (
         (itemNode.type === "l" || itemNode.type === "NodeList" || itemNode.type === "list") &&
         itemNode.children &&
         itemNode.children.length > 0 &&
         (
-          itemNode.children.some(c => c.ial?.[ATTR_ELEM_SLOT] || c.ial?.[ATTR_ELEM_CLICK]) ||
+          hasUnpackChild ||
           elemAttrs.slot ||
           elemAttrs.clicks ||
           isColContext
@@ -395,6 +415,7 @@ export function buildSlidesDocument(
             parentClicks: elemAttrs.clicks || inheritedContext?.parentClicks,
             defaultSlot: elemAttrs.slot || inheritedContext?.defaultSlot,
             isParentListUnpacked: true,
+            isListItem: true,
             listContext: {
               isOrdered: isOrderedList,
               itemIndex: idx + 1,
@@ -444,8 +465,20 @@ export function buildSlidesDocument(
           const isThisFirstValid = isFirstValidChild && hasContent
 
           if (isThisFirstValid) {
-            if (isColContext) {
-              // 仅在分栏卡片布局下，列表项作为卡片，首行标题才清洗列表前缀
+            // 判定当前是否真正属于多栏卡片容器：
+            // 仅在四叶草 clover、表头多栏 cols-header 或双栏 two-cols 卡片，且非图文分栏 (image-right/image-left) 下，
+            // 列表项作为多栏的独立卡片时，才清洗首行标题的列表标记；
+            // 在常规正文（单栏、图文混排 image-right/image-left）下，列表项必须完整保留或补齐标准的列表前缀符号！
+            const isImageLayout = currentPage.frontmatter.layout === "image-right" || currentPage.frontmatter.layout === "image-left"
+            const isCardCol = !isImageLayout && Boolean(
+              currentPage.frontmatter.layout === "clover" ||
+              isColsHeaderLayout(currentPage.frontmatter.layout) ||
+              currentPage.frontmatter.layout === "two-cols" ||
+              inheritedContext?.defaultSlot
+            )
+
+            if (isCardCol) {
+              // 仅在真正的分栏卡片布局下，列表项作为卡片，首行标题才清洗列表前缀
               if (childNode.markdown) {
                 childNode.markdown = cleanCardListItemMarkdown(childNode.markdown)
               }
@@ -453,7 +486,7 @@ export function buildSlidesDocument(
                 childNode.content = cleanCardListItemMarkdown(childNode.content)
               }
             } else {
-              // 在常规正文列表（单栏）逐步呈现动效下，列表项必须完整保留或补齐标准的列表前缀符号！
+              // 在常规正文列表（单栏、图文混排等）下，列表项必须完整保留或补齐标准的列表前缀符号！
               const isOrdered = Boolean(inheritedContext?.listContext?.isOrdered)
               const itemIdx = inheritedContext?.listContext?.itemIndex || 1
               const prefix = isOrdered ? `${itemIdx}. ` : "- "
@@ -498,9 +531,11 @@ export function buildSlidesDocument(
           }
 
           processBlockNode(childToProcess, {
+            ...inheritedContext,
             parentClicks: containerClicks,
             parentContainerId: containerId,
             defaultSlot: targetSlot,
+            isListItem: true,
           })
         }
         return
@@ -664,6 +699,7 @@ export function buildSlidesDocument(
         ? (/^\d+$/.test(elemAttrs.maxHeight.trim()) ? `${elemAttrs.maxHeight.trim()}px` : elemAttrs.maxHeight.trim())
         : undefined
 
+      const isListItem = Boolean(inheritedContext?.isListItem || isListItemNode(itemNode))
       const blockItem: ISlidesBlockItem = {
         id: itemNode.id,
         type: itemNode.type,
@@ -679,6 +715,7 @@ export function buildSlidesDocument(
         attributes: effectiveAttrs,
         attrs: effectiveAttrs,
         rawNode: itemNode,
+        isListItem,
       }
 
       currentPage.blocks.push(blockItem)

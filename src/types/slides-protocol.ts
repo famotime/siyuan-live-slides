@@ -200,6 +200,7 @@ export interface ISlidesBlockItem {
   children?: ISlidesBlockItem[] | any[]
   rawNode?: ISiYuanBlockNode
   isColFirst?: boolean
+  isListItem?: boolean
 }
 
 export type ISlidesBlock = ISlidesBlockItem

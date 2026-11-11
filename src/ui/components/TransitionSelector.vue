@@ -11,7 +11,6 @@
       >
         <div class="spm-transition-meta">
           <span class="spm-transition-label">{{ trans.label }}</span>
-          <span class="spm-transition-name">({{ trans.name }})</span>
         </div>
         <!-- 悬停动效预览小方块 -->
         <div class="spm-transition-preview-box">
@@ -35,11 +34,11 @@ const emit = defineEmits<{
 }>()
 
 const transitions = [
-  { name: 'slide-left', label: '向左滑入', desc: '向左滑入 (slide-left)：页面从右侧向左平滑推入，最通用标准的横向幻灯片动效' },
-  { name: 'slide-right', label: '向右滑入', desc: '向右滑入 (slide-right)：页面从左侧向右平滑推入，适合倒序回退或逆向章节叙述' },
-  { name: 'slide-up', label: '向上推入', desc: '向上推入 (slide-up)：页面从底部向上平滑推入，适合纵向展开或纵深层级展示' },
-  { name: 'fade', label: '淡入淡出', desc: '淡入淡出 (fade)：透明度平滑渐变过度，典雅柔和，适合学术长篇与沉浸叙事' },
-  { name: 'zoom', label: '缩放进入', desc: '缩放进入 (zoom)：页面由中心向外平滑放大，富有动感冲击力，适合聚焦重点' },
+  { name: 'slide-left', label: '向左滑入', desc: '向左滑入：页面从右侧向左平滑推入，最通用标准的横向幻灯片动效' },
+  { name: 'slide-right', label: '向右滑入', desc: '向右滑入：页面从左侧向右平滑推入，适合倒序回退或逆向章节叙述' },
+  { name: 'slide-up', label: '向上推入', desc: '向上推入：页面从底部向上平滑推入，适合纵向展开或纵深层级展示' },
+  { name: 'fade', label: '淡入淡出', desc: '淡入淡出：透明度平滑渐变过度，典雅柔和，适合学术长篇与沉浸叙事' },
+  { name: 'zoom', label: '缩放进入', desc: '缩放进入：页面由中心向外平滑放大，富有动感冲击力，适合聚焦重点' },
 ]
 
 function selectTransition(name: string) {

@@ -176,7 +176,7 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
     const isThreeCols = ctx.currentSlideLayout.value === "three-cols-header"
     const slotVal = isThreeCols ? "col-1" : "left"
     await saveAttr(ATTR_ELEM_SLOT, slotVal)
-    showMessage(isThreeCols ? "已将当前块设置为第 1 栏 (col-1)" : "已将当前块设置为双栏左栏 (left)")
+    showMessage(isThreeCols ? "已将当前块设置为第 1 栏" : "已将当前块设置为双栏左栏")
   }
 
   async function onClearBlockAttrs() {
@@ -231,7 +231,7 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
     if (!ctx.activeBlockId.value) return
     try {
       await insertBlock("markdown", "---", ctx.activeBlockId.value, undefined)
-      showMessage("已在上方插入分页符 (---)")
+      showMessage("已在上方插入分页符")
       if (ctx.plugin) ctx.plugin.compileCurrentDocument()
     } catch (e) {
       showMessage("插入分页符失败")
@@ -243,7 +243,7 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
     if (!targetId) return
     try {
       await insertBlock("markdown", "---", undefined, targetId)
-      showMessage("已在下方插入分页符 (---)")
+      showMessage("已在下方插入分页符")
       if (ctx.plugin) ctx.plugin.compileCurrentDocument()
     } catch (e) {
       showMessage("插入分页符失败")

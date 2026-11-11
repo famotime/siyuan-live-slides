@@ -39,7 +39,7 @@
         <div class="spm-control-title-group">
           <div class="spm-control-title">
             <SlidesIcon name="ratio" />
-            <span>分栏比例 (Ratio)</span>
+            <span>分栏比例</span>
           </div>
           <span class="spm-control-desc">设置各列横向空间占比，默认平均分配</span>
         </div>
@@ -126,7 +126,7 @@
         <div class="spm-control-title-group">
           <div class="spm-control-title">
             <SlidesIcon name="sparkles" />
-            <span>页面动态蒙版 (Dynamic Mask)</span>
+            <span>页面动态蒙版</span>
           </div>
           <span class="spm-control-desc">随着点击操作分段展露正文内容</span>
         </div>
@@ -261,7 +261,7 @@
         <div class="spm-control-title-group">
           <div class="spm-control-title">
             <SlidesIcon name="ratio" />
-            <span>页面间距 (Spacing)</span>
+            <span>页面间距</span>
           </div>
           <span class="spm-control-desc">覆盖本页内边距与顶部标题间距</span>
         </div>
@@ -304,7 +304,7 @@
         <div class="spm-control-title-group">
           <div class="spm-control-title">
             <SlidesIcon name="palette" />
-            <span>页面背景 (Background)</span>
+            <span>页面背景</span>
           </div>
           <span class="spm-control-desc">设置当前页特定底色或壁纸</span>
         </div>
@@ -338,7 +338,7 @@
         <div class="spm-control-title-group">
           <div class="spm-control-title">
             <SlidesIcon name="image" />
-            <span>页面图片 (Image)</span>
+            <span>页面图片</span>
           </div>
           <span class="spm-control-desc">图文分栏或页面专属配图 URL / 资源路径</span>
         </div>
@@ -369,7 +369,7 @@
         <div class="spm-control-title-group">
           <div class="spm-control-title">
             <SlidesIcon name="presenter" />
-            <span>演讲者提词 (Notes)</span>
+            <span>演讲者提词</span>
           </div>
           <span class="spm-control-desc">正文备注块驱动 · 仅演讲者视图可见</span>
         </div>

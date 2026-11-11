@@ -4,7 +4,7 @@
     <button
       class="spm-bar-btn"
       :class="{ active: Boolean(currentClick) }"
-      title="切换当前块按翻页键逐步出现 (v-click)"
+      title="切换当前块按翻页键逐步出现"
       @click="toggleClick"
     >
       <SlidesIcon name="step" />
@@ -16,7 +16,7 @@
     <button
       class="spm-bar-btn"
       :class="{ active: Boolean(currentMotion) }"
-      title="切换当前块入场微动效 (v-motion)"
+      title="切换当前块入场微动效"
       @click="cycleMotion"
     >
       <SlidesIcon name="motion" />
@@ -27,7 +27,7 @@
     <button
       class="spm-bar-btn"
       :class="{ active: Boolean(currentSlot) }"
-      title="设置在双栏布局中的归属 (left / right)"
+      title="设置在双栏布局中的归属"
       @click="cycleSlot"
     >
       <SlidesIcon name="columns" />
