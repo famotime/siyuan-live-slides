@@ -59,12 +59,12 @@ export type FeatureFlagConfig = Record<FeatureKey, boolean>;
 // ── 编辑此对象来控制功能可见性 ──
 
 const FEATURE_FLAGS: FeatureFlagConfig = {
-  proMode: true,
+  proMode: false,
   presenterMode: true,
-  exportHtml: true,
-  exportPdf: true,
+  exportHtml: false,
+  exportPdf: false,
   exportImage: true,
-  import: true,
+  import: false,
   aiScript: true,
 };
 
