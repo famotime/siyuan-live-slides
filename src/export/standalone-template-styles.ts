@@ -404,26 +404,38 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     .slide-content.spacing-compact,
     .slide-viewport[data-spacing="compact"] .slide-content,
     [data-slides-spacing="compact"] {
-      --slides-padding-y: 20px;
-      --slides-padding-x: 36px;
+      --slides-padding-y: 16px;
+      --slides-padding-x: 28px;
+      --slides-block-gap: 8px;
+      --slides-list-gap: 4px;
+      --slides-cols-gap: 20px;
+      --slides-title-margin-bottom: 8px;
       --slides-header-gap: 10px;
-      --slides-title-margin-bottom: 6px;
+      --slides-line-height: 1.45;
     }
     .slide-content.spacing-normal,
     .slide-viewport[data-spacing="normal"] .slide-content,
     [data-slides-spacing="normal"] {
       --slides-padding-y: 32px;
       --slides-padding-x: 48px;
+      --slides-block-gap: 14px;
+      --slides-list-gap: 6px;
+      --slides-cols-gap: 32px;
+      --slides-title-margin-bottom: 12px;
       --slides-header-gap: 16px;
-      --slides-title-margin-bottom: 10px;
+      --slides-line-height: 1.6;
     }
     .slide-content.spacing-loose,
     .slide-viewport[data-spacing="loose"] .slide-content,
     [data-slides-spacing="loose"] {
-      --slides-padding-y: 48px;
-      --slides-padding-x: 56px;
+      --slides-padding-y: 52px;
+      --slides-padding-x: 72px;
+      --slides-block-gap: 22px;
+      --slides-list-gap: 10px;
+      --slides-cols-gap: 44px;
+      --slides-title-margin-bottom: 18px;
       --slides-header-gap: 24px;
-      --slides-title-margin-bottom: 16px;
+      --slides-line-height: 1.75;
     }
 
     .layout-cover { justify-content: center; align-items: center; text-align: center; }
@@ -438,7 +450,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       display: grid;
       grid-template-columns: var(--slide-grid-cols, minmax(0, 1fr) minmax(0, 1fr));
       grid-template-rows: minmax(0, 1fr) !important;
-      gap: 32px;
+      gap: var(--slides-cols-gap, 32px);
       width: 100%;
       height: 100%;
       min-height: 0 !important;
@@ -474,7 +486,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       display: grid;
       grid-template-columns: var(--slide-grid-cols, minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr));
       grid-template-rows: minmax(0, 1fr) !important;
-      gap: 24px;
+      gap: calc(var(--slides-cols-gap, 32px) * 0.75);
       width: 100%;
       height: 100%;
       min-height: 0 !important;
@@ -489,7 +501,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
       grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
-      gap: 20px;
+      gap: calc(var(--slides-cols-gap, 32px) * 0.625);
       width: 100%;
       height: 100%;
       min-height: 0 !important;
@@ -507,7 +519,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     .pdf-col {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: var(--slides-block-gap, 14px);
       min-width: 0;
       width: 100%;
       max-width: 100%;
@@ -571,7 +583,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       font-size: 1.7rem !important;
       font-weight: 600 !important;
       line-height: 1.25 !important;
-      margin-bottom: 10px !important;
+      margin-bottom: var(--slides-title-margin-bottom, 10px) !important;
     }
 
     [data-normalize-headings="true"] .has-superblock-cols .slides-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
@@ -616,7 +628,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       box-sizing: border-box;
     }
     .image-right-content, .image-left-content {
-      padding: 44px 50px;
+      padding: var(--slides-padding-y, 32px) var(--slides-padding-x, 48px);
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
@@ -642,20 +654,20 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       object-position: center;
       display: block;
     }
-    .slide-block { margin-bottom: 14px; line-height: 1.6; }
-    .slide-block h1 { font-size: 2.2rem; margin-bottom: 12px; }
-    .slide-block h2 { font-size: 1.7rem; margin-bottom: 10px; }
-    .slide-block p { font-size: 1.15rem; }
+    .slide-block { margin-bottom: var(--slides-block-gap, 14px); line-height: var(--slides-line-height, 1.6); }
+    .slide-block h1 { font-size: 2.2rem; margin-bottom: var(--slides-title-margin-bottom, 12px); }
+    .slide-block h2 { font-size: 1.7rem; margin-bottom: calc(var(--slides-title-margin-bottom, 10px) * 0.85); }
+    .slide-block p { font-size: 1.15rem; line-height: var(--slides-line-height, 1.6); }
     .slide-block ul, .slide-block ol, .pdf-list {
       padding-left: 28px;
-      margin: 8px 0;
+      margin: calc(var(--slides-block-gap, 14px) * 0.6) 0;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: var(--slides-list-gap, 6px);
     }
     .slide-block li, .pdf-list li {
       font-size: 1.15rem;
-      line-height: 1.6;
+      line-height: var(--slides-line-height, 1.6);
     }
     .pdf-task-item {
       list-style: none;
@@ -735,11 +747,11 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     .pdf-col .pdf-list-item {
       padding-left: 0.2em !important;
       margin-left: 0 !important;
-      margin-bottom: 6px !important;
+      margin-bottom: var(--slides-list-gap, 6px) !important;
       flex: 0 0 auto !important;
       height: auto !important;
       display: list-item !important;
-      line-height: 1.6 !important;
+      line-height: var(--slides-line-height, 1.6) !important;
     }
 
     .layout-two-cols ul ul,

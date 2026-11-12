@@ -1660,24 +1660,36 @@ defineExpose({
   }
 
   .slide-content.spacing-compact {
-    --slides-padding-y: 20px;
-    --slides-padding-x: 36px;
+    --slides-padding-y: 16px;
+    --slides-padding-x: 28px;
+    --slides-block-gap: 8px;
+    --slides-list-gap: 4px;
+    --slides-cols-gap: 20px;
+    --slides-title-margin-bottom: 8px;
     --slides-header-gap: 10px;
-    --slides-title-margin-bottom: 6px;
+    --slides-line-height: 1.45;
   }
 
   .slide-content.spacing-normal {
     --slides-padding-y: 32px;
     --slides-padding-x: 48px;
+    --slides-block-gap: 14px;
+    --slides-list-gap: 6px;
+    --slides-cols-gap: 32px;
+    --slides-title-margin-bottom: 12px;
     --slides-header-gap: 16px;
-    --slides-title-margin-bottom: 10px;
+    --slides-line-height: 1.6;
   }
 
   .slide-content.spacing-loose {
-    --slides-padding-y: 48px;
-    --slides-padding-x: 56px;
+    --slides-padding-y: 52px;
+    --slides-padding-x: 72px;
+    --slides-block-gap: 22px;
+    --slides-list-gap: 10px;
+    --slides-cols-gap: 44px;
+    --slides-title-margin-bottom: 18px;
     --slides-header-gap: 24px;
-    --slides-title-margin-bottom: 16px;
+    --slides-line-height: 1.75;
   }
 
   /* Cover, Center, Fact 版式 */
@@ -1817,7 +1829,7 @@ defineExpose({
     display: grid;
     grid-template-columns: var(--slide-grid-cols, minmax(0, 1fr) minmax(0, 1fr));
     grid-template-rows: minmax(0, 1fr) !important;
-    gap: 28px;
+    gap: var(--slides-cols-gap, 32px);
     width: 100%;
     height: 100%;
     min-height: 0 !important;
@@ -1832,7 +1844,7 @@ defineExpose({
     display: grid;
     grid-template-columns: var(--slide-grid-cols, repeat(3, minmax(0, 1fr)));
     grid-template-rows: minmax(0, 1fr) !important;
-    gap: 24px;
+    gap: calc(var(--slides-cols-gap, 32px) * 0.75);
     width: 100%;
     height: 100%;
     min-height: 0 !important;
@@ -1847,7 +1859,7 @@ defineExpose({
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
-    gap: 20px;
+    gap: calc(var(--slides-cols-gap, 32px) * 0.625);
     width: 100%;
     height: 100%;
     min-height: 0 !important;
@@ -1862,7 +1874,7 @@ defineExpose({
   .two-cols-right {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--slides-block-gap, 14px);
     min-width: 0;
     width: 100%;
     max-width: 100%;
@@ -1879,8 +1891,8 @@ defineExpose({
   /* 基础块与排版 */
   .slide-block,
   .pdf-block {
-    margin-bottom: 12px;
-    line-height: 1.6;
+    margin-bottom: var(--slides-block-gap, 14px);
+    line-height: var(--slides-line-height, 1.6);
   }
 
   .slide-styled-block {
@@ -1897,11 +1909,11 @@ defineExpose({
     -webkit-box-decoration-break: clone;
   }
 
-  .slide-block h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 12px; }
-  .slide-block h2 { font-size: 1.7rem; font-weight: 600; margin-bottom: 10px; }
-  .slide-block h3 { font-size: 1.3rem; font-weight: 600; margin-bottom: 8px; }
+  .slide-block h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: var(--slides-title-margin-bottom, 12px); }
+  .slide-block h2 { font-size: 1.7rem; font-weight: 600; margin-bottom: calc(var(--slides-title-margin-bottom, 10px) * 0.85); }
+  .slide-block h3 { font-size: 1.3rem; font-weight: 600; margin-bottom: calc(var(--slides-title-margin-bottom, 8px) * 0.75); }
   .slide-block h4 { font-size: 1.15rem; font-weight: 600; margin-bottom: 6px; }
-  .slide-block p { font-size: 1.15rem; line-height: 1.6; }
+  .slide-block p { font-size: 1.15rem; line-height: var(--slides-line-height, 1.6); }
 
   /* 列表与多栏列表项 */
   div.pdf-list-item {
@@ -1915,10 +1927,10 @@ defineExpose({
   .slide-block ol,
   .pdf-list {
     padding-left: 1.35em;
-    margin: 6px 0;
+    margin: calc(var(--slides-block-gap, 14px) * 0.6) 0;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--slides-list-gap, 6px);
   }
 
   .slide-block ul,

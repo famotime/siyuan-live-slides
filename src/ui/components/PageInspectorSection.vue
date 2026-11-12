@@ -263,7 +263,7 @@
             <SlidesIcon name="ratio" />
             <span>页面间距</span>
           </div>
-          <span class="spm-control-desc">覆盖本页内边距与顶部标题间距</span>
+          <span class="spm-control-desc">覆盖本页内衬、内容间隙与正文行距</span>
         </div>
       </div>
       <div class="spm-segmented-group">
@@ -275,22 +275,25 @@
           继承全局
         </button>
         <button
-          class="spm-segmented-item"
+          class="spm-segmented-item b3-tooltips b3-tooltips__s"
           :class="{ active: pageSpacing === 'compact' }"
+          aria-label="紧凑排版：外衬 16/28px，块距 8px，行高 1.45"
           @click="$emit('update:pageSpacing', 'compact')"
         >
           紧凑
         </button>
         <button
-          class="spm-segmented-item"
+          class="spm-segmented-item b3-tooltips b3-tooltips__s"
           :class="{ active: pageSpacing === 'normal' }"
+          aria-label="标准排版：外衬 32/48px，块距 14px，行高 1.60"
           @click="$emit('update:pageSpacing', 'normal')"
         >
           标准
         </button>
         <button
-          class="spm-segmented-item"
+          class="spm-segmented-item b3-tooltips b3-tooltips__sw"
           :class="{ active: pageSpacing === 'loose' }"
+          aria-label="宽松排版：外衬 52/72px，块距 22px，行高 1.75"
           @click="$emit('update:pageSpacing', 'loose')"
         >
           宽松

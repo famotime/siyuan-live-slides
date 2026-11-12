@@ -104,14 +104,14 @@
             <SlidesIcon name="ratio" />
             <span>间距风格</span>
           </div>
-          <span class="spm-control-desc">内边距与顶部标题下边距预设</span>
+          <span class="spm-control-desc">内衬、内容间隙与正文行距预设</span>
         </div>
       </div>
       <div class="spm-segmented-group">
         <button
           class="spm-segmented-item b3-tooltips b3-tooltips__se"
           :class="{ active: (docSpacing || 'normal') === 'compact' }"
-          aria-label="紧凑排版：上下 20px / 左右 36px"
+          aria-label="紧凑排版：外衬 16/28px，块距 8px，行高 1.45"
           @click="$emit('update:docSpacing', 'compact')"
         >
           紧凑
@@ -119,7 +119,7 @@
         <button
           class="spm-segmented-item b3-tooltips b3-tooltips__s"
           :class="{ active: (docSpacing || 'normal') === 'normal' }"
-          aria-label="标准排版：上下 32px / 左右 48px（推荐默认）"
+          aria-label="标准排版：外衬 32/48px，块距 14px，行高 1.60（推荐默认）"
           @click="$emit('update:docSpacing', 'normal')"
         >
           标准
@@ -127,7 +127,7 @@
         <button
           class="spm-segmented-item b3-tooltips b3-tooltips__sw"
           :class="{ active: (docSpacing || 'normal') === 'loose' }"
-          aria-label="宽松排版：上下 48px / 左右 56px"
+          aria-label="宽松排版：外衬 52/72px，块距 22px，行高 1.75"
           @click="$emit('update:docSpacing', 'loose')"
         >
           宽松
