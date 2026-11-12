@@ -73,7 +73,6 @@
         :detected-sb-ratio="detectedSbRatio"
         :detected-sb-info="detectedSbInfo"
         :page-transition="pageTransition"
-        :page-background="pageBackground"
         :page-spacing="pageSpacing"
         :page-image="pageImage"
         :page-notes="currentSlideNotes"
@@ -87,7 +86,6 @@
         @apply-super-block-layout="onApplySuperBlockLayout"
         @reset-superblock-ratio="onResetSuperBlockRatio"
         @update:page-transition="onTransitionChange"
-        @update:page-background="onBackgroundChange"
         @update:page-spacing="onPageSpacingChange"
         @update:page-image="onImageChange"
         @add-note-block="onAddNoteBlock"
@@ -148,12 +146,14 @@
       <DocInspectorSection
         v-else
         :doc-theme="docTheme"
+        :doc-background="docBackground"
         :doc-aspect-ratio="docAspectRatio"
         :doc-default-transition="docDefaultTransition"
         :doc-spacing="docSpacing"
         :is-exporting-images="isExportingImages"
         :is-batch-processing="isBatchProcessing"
         @update:doc-theme="onDocThemeChange"
+        @update:doc-background="onDocBackgroundChange"
         @update:doc-aspect-ratio="onDocAspectRatioChange"
         @update:doc-default-transition="onDocTransitionChange"
         @update:doc-spacing="onDocSpacingChange"
@@ -206,6 +206,7 @@ import {
   ATTR_DOC_ASPECT_RATIO,
   ATTR_DOC_DEFAULT_TRANSITION,
   ATTR_DOC_SPACING,
+  ATTR_DOC_BACKGROUND,
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_LAYOUT_RATIO,
   ATTR_PAGE_MASK,
@@ -673,6 +674,7 @@ const docTheme = computed(() => latestDoc.value?.config?.theme || activeBlockAtt
 const docAspectRatio = computed(() => latestDoc.value?.config?.aspectRatio || activeBlockAttrs.value[ATTR_DOC_ASPECT_RATIO] || '16/9')
 const docDefaultTransition = computed(() => latestDoc.value?.config?.defaultTransition || activeBlockAttrs.value[ATTR_DOC_DEFAULT_TRANSITION] || 'slide-left')
 const docSpacing = computed(() => latestDoc.value?.config?.spacing || activeBlockAttrs.value[ATTR_DOC_SPACING] || 'normal')
+const docBackground = computed(() => latestDoc.value?.config?.background || activeBlockAttrs.value[ATTR_DOC_BACKGROUND] || '')
 
 const imageRole = computed(() => {
   const role = activeBlockAttrs.value[ATTR_ELEM_ROLE] || activeBlockAttrs.value['slides-role']
@@ -834,11 +836,6 @@ function onTransitionChange(val: string) {
   saveAttr(ATTR_PAGE_TRANSITION, val)
 }
 
-function onBackgroundChange(val: string) {
-  pageBackground.value = val
-  saveAttr(ATTR_PAGE_BACKGROUND, val)
-}
-
 function onImageChange(val: string) {
   pageImage.value = val
   saveAttr(ATTR_PAGE_IMAGE, val)
@@ -851,6 +848,10 @@ function onPageSpacingChange(val: string) {
 // 场景 C 事件
 function onDocThemeChange(theme: string) {
   saveDocAttr(ATTR_DOC_THEME, theme)
+}
+
+function onDocBackgroundChange(val: string) {
+  saveDocAttr(ATTR_DOC_BACKGROUND, val)
 }
 
 function onDocAspectRatioChange(ratio: string) {

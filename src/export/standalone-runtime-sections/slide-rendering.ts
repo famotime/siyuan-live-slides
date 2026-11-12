@@ -26,6 +26,21 @@ export function getSlideRenderingSection(): string {
           container.style.transform = "none";
         }
 
+        const slideBg = slide.frontmatter?.background || (data.config && data.config.background);
+        if (slideBg) {
+          if (/^(http|\\/|data:|assets\\/)/.test(slideBg)) {
+            container.style.backgroundImage = 'url("' + slideBg + '")';
+            container.style.backgroundSize = "cover";
+            container.style.backgroundPosition = "center";
+          } else {
+            container.style.backgroundImage = "none";
+            container.style.background = slideBg;
+          }
+        } else {
+          container.style.backgroundImage = "none";
+          container.style.background = "";
+        }
+
         maskOverlayEl = null;
         maskDividerEl = null;
         const maskDir = slide.frontmatter?.mask;

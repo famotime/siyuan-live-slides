@@ -29,6 +29,37 @@
       </div>
     </div>
 
+    <!-- 演示背景 (Presentation Background) -->
+    <div class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div class="spm-control-title">
+            <SlidesIcon name="palette" />
+            <span>演示背景</span>
+          </div>
+          <span class="spm-control-desc">全篇幻灯片统一底色、微渐变或壁纸</span>
+        </div>
+      </div>
+      <div class="spm-quick-chips">
+        <button
+          v-for="bg in presetBackgrounds"
+          :key="bg.value"
+          class="spm-chip"
+          :class="{ active: (docBackground || '') === bg.value }"
+          @click="$emit('update:docBackground', bg.value)"
+        >
+          {{ bg.label }}
+        </button>
+      </div>
+      <input
+        :value="docBackground || ''"
+        class="spm-input"
+        placeholder="自定义颜色 (#1e1e24)、渐变或资源路径 (assets/...)"
+        @input="$emit('update:docBackground', ($event.target as HTMLInputElement).value)"
+        @change="$emit('update:docBackground', ($event.target as HTMLInputElement).value)"
+      />
+    </div>
+
     <!-- 画幅比例 -->
     <div class="spm-card-control">
       <div class="spm-control-header">
@@ -287,11 +318,11 @@
         <button
           v-if="isFeatureEnabled('aiScript')"
           class="spm-btn-action b3-tooltips b3-tooltips__se"
-          aria-label="智能分析长文本结构并给出大纲分页插入建议"
+          aria-label="智能分析长文本大纲与篇幅，自动插入分页线"
           @click="$emit('aiAutoSplit')"
         >
           <SlidesIcon name="sparkles" />
-          <span>AI 智能分页</span>
+          <span>智能分页</span>
         </button>
 
         <button
@@ -406,8 +437,20 @@ function onWebServeUrlChange(val: string) {
   }
 }
 
+const presetBackgrounds = [
+  { label: '默认', value: '' },
+  { label: '极简白', value: '#ffffff' },
+  { label: '柔和灰', value: '#f8fafc' },
+  { label: '暗黑 #1e1e24', value: '#1e1e24' },
+  { label: '极夜 #0f172a', value: '#0f172a' },
+  { label: '雅蓝渐变', value: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' },
+  { label: '极光渐变', value: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)' },
+  { label: '晨雾渐变', value: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)' },
+]
+
 defineProps<{
   docTheme: string
+  docBackground?: string
   docAspectRatio: string
   docDefaultTransition: string
   docSpacing?: string
@@ -417,6 +460,7 @@ defineProps<{
 
 defineEmits<{
   (e: 'update:docTheme', val: string): void
+  (e: 'update:docBackground', val: string): void
   (e: 'update:docAspectRatio', val: string): void
   (e: 'update:docDefaultTransition', val: string): void
   (e: 'update:docSpacing', val: string): void

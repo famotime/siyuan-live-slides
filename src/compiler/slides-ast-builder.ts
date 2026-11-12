@@ -85,12 +85,16 @@ export function buildSlidesDocument(
 
   // 1. 初始化第一页（封面页或默认页）
   const initialPageAttrs = parsePageAttrs(docAttrs)
+  const globalBackground = config.background
+    ? rewriteSingleAssetUrl(config.background, options)
+    : undefined
   let currentPage: ISlidesVirtualPage = {
     pageIndex: 1,
     startBlockId: docId,
     frontmatter: {
       layout: initialPageAttrs.frontmatter.layout || "cover",
       ...initialPageAttrs.frontmatter,
+      ...(globalBackground ? { background: globalBackground } : {}),
     },
     notes: "",
     noteBlocks: [],
@@ -202,12 +206,14 @@ export function buildSlidesDocument(
           currentPage.frontmatter.layout = pageMeta.frontmatter.layout
         }
         Object.assign(currentPage.frontmatter, pageMeta.frontmatter)
-        // 防御：若分割线未单独声明 image/background，继承文档级头部配置
+        // 严格统一：背景由全局演示背景主导，忽略分割线自带的背景
+        delete currentPage.frontmatter.background
+        // 防御：若分割线未单独声明 image，继承文档级头部配置
         if (!pageMeta.frontmatter.image && initialPageAttrs.frontmatter.image) {
           currentPage.frontmatter.image = initialPageAttrs.frontmatter.image
         }
-        if (!pageMeta.frontmatter.background && initialPageAttrs.frontmatter.background) {
-          currentPage.frontmatter.background = initialPageAttrs.frontmatter.background
+        if (globalBackground) {
+          currentPage.frontmatter.background = globalBackground
         }
         if (currentPage.frontmatter.background) {
           currentPage.frontmatter.background = rewriteSingleAssetUrl(
@@ -232,12 +238,16 @@ export function buildSlidesDocument(
         frontmatter: {
           layout: pageMeta.frontmatter.layout || "default",
           ...pageMeta.frontmatter,
+          ...(globalBackground ? { background: globalBackground } : {}),
         },
         notes: "",
         noteBlocks: [],
         blocks: [],
         rawMarkdown: "",
         allBlockIds: [node.id],
+      }
+      if (!globalBackground) {
+        delete currentPage.frontmatter.background
       }
 
       // 如果背景路径是本地 assets，予以重写

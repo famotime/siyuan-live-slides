@@ -5,6 +5,7 @@ import { syncDomBlockAttrs } from "@/sync/dom-attr-sync"
 import type { ISlidesDocument, ISlidesVirtualPage } from "@/types/slides-protocol"
 import {
   ATTR_DOC_ASPECT_RATIO,
+  ATTR_DOC_BACKGROUND,
   ATTR_DOC_DEFAULT_TRANSITION,
   ATTR_DOC_THEME,
   ATTR_ELEM_CLICK,
@@ -32,7 +33,7 @@ export interface IInspectorActionsContext {
   videoLoop: ComputedRef<boolean>
   videoMuted: ComputedRef<boolean>
   videoControls: ComputedRef<boolean>
-  pageBackground: Ref<string>
+  pageBackground?: Ref<string>
   pageImage: Ref<string>
   elemShikiLines: Ref<string>
   elemMaxHeight: Ref<string>
@@ -253,6 +254,7 @@ export function createAttrPersistence(ctx: IInspectorActionsContext): IAttrPersi
       if (key === ATTR_DOC_THEME) ctx.latestDoc.value.config.theme = value
       if (key === ATTR_DOC_ASPECT_RATIO) ctx.latestDoc.value.config.aspectRatio = value
       if (key === ATTR_DOC_DEFAULT_TRANSITION) ctx.latestDoc.value.config.defaultTransition = value
+      if (key === ATTR_DOC_BACKGROUND) ctx.latestDoc.value.config.background = value
     }
     triggerSaveNotice("更新中...")
     try {

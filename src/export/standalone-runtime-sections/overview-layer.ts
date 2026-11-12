@@ -175,7 +175,7 @@ export function getOverviewLayerSection(): string {
           canvas.style.width = baseWidth + "px";
           canvas.style.height = baseHeight + "px";
           canvas.style.transform = "scale(" + scale + ")";
-          const bg = fm.background;
+          const bg = fm.background || (data.config && data.config.background);
           if (bg) {
             if (/^(http|\/|data:|assets\/)/.test(bg)) {
               canvas.style.backgroundImage = 'url("' + bg + '")';

@@ -63,6 +63,10 @@ export class CliDevServerBridge {
       `transition: ${config.defaultTransition || "slide-left"}`,
     ]
 
+    if (config.background) {
+      frontmatterLines.push(`background: ${config.background}`)
+    }
+
     if (config.colorSchema && config.colorSchema !== "auto") {
       frontmatterLines.push(`colorSchema: ${config.colorSchema}`)
     }

@@ -17,17 +17,6 @@
       @change="onTransitionChange"
     />
 
-    <!-- 背景设置 -->
-    <div class="spm-form-item">
-      <label class="spm-form-label">页面背景</label>
-      <input
-        v-model="background"
-        class="spm-input"
-        placeholder="assets/bg.jpg 或颜色值 (#1e1e24)"
-        @blur="saveBackground"
-      />
-    </div>
-
     <div class="spm-popover-footer">
       <span class="spm-save-hint">{{ saveHint }}</span>
     </div>
@@ -44,7 +33,6 @@ import TransitionSelector from './TransitionSelector.vue'
 import {
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_TRANSITION,
-  ATTR_PAGE_BACKGROUND,
 } from '@/types/slides-protocol'
 
 const props = defineProps<{
@@ -59,13 +47,11 @@ const emit = defineEmits<{
 
 const layout = ref(props.initialAttrs?.[ATTR_PAGE_LAYOUT] || 'default')
 const transition = ref(props.initialAttrs?.[ATTR_PAGE_TRANSITION] || 'slide-left')
-const background = ref(props.initialAttrs?.[ATTR_PAGE_BACKGROUND] || '')
 const saveHint = ref('')
 
 watch(() => props.initialAttrs, (newAttrs) => {
   layout.value = newAttrs?.[ATTR_PAGE_LAYOUT] || 'default'
   transition.value = newAttrs?.[ATTR_PAGE_TRANSITION] || 'slide-left'
-  background.value = newAttrs?.[ATTR_PAGE_BACKGROUND] || ''
 }, { deep: true })
 
 async function updateAttr(key: string, value: string) {
@@ -91,10 +77,6 @@ function onLayoutChange(val: string) {
 
 function onTransitionChange(val: string) {
   updateAttr(ATTR_PAGE_TRANSITION, val)
-}
-
-function saveBackground() {
-  updateAttr(ATTR_PAGE_BACKGROUND, background.value.trim())
 }
 </script>
 

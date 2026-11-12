@@ -10,6 +10,7 @@ export const ATTR_DOC_HIGHLIGHTER = "custom-slides-highlighter"
 export const ATTR_DOC_DEFAULT_TRANSITION = "custom-slides-default-transition"
 export const ATTR_DOC_COLOR_SCHEMA = "custom-slides-color-schema"
 export const ATTR_DOC_SPACING = "custom-slides-spacing"
+export const ATTR_DOC_BACKGROUND = "custom-slides-background"
 export const ATTR_DOC_SHOW_UNORDERED_LIST_MARKERS = "custom-slides-show-unordered-list-markers"
 export const ATTR_DOC_SHOW_ORDERED_LIST_MARKERS = "custom-slides-show-ordered-list-markers"
 
@@ -52,6 +53,7 @@ export interface ISlidesPluginConfig {
   defaultTransition: string
   colorSchema: "auto" | "dark" | "light"
   spacing?: "compact" | "normal" | "loose"
+  background?: string
   normalizeHeadingSizes?: boolean
   showUnorderedListMarkers?: boolean
   showOrderedListMarkers?: boolean

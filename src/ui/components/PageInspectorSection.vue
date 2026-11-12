@@ -298,37 +298,6 @@
       </div>
     </div>
 
-    <!-- 页面背景 -->
-    <div class="spm-card-control">
-      <div class="spm-control-header">
-        <div class="spm-control-title-group">
-          <div class="spm-control-title">
-            <SlidesIcon name="palette" />
-            <span>页面背景</span>
-          </div>
-          <span class="spm-control-desc">设置当前页特定底色或壁纸</span>
-        </div>
-      </div>
-      <div class="spm-quick-chips">
-        <button
-          v-for="bg in presetBackgrounds"
-          :key="bg.value"
-          class="spm-chip"
-          :class="{ active: pageBackground === bg.value }"
-          @click="$emit('update:pageBackground', bg.value)"
-        >
-          {{ bg.label }}
-        </button>
-      </div>
-      <input
-        :value="pageBackground"
-        class="spm-input"
-        placeholder="自定义颜色代码或资源路径"
-        @input="$emit('update:pageBackground', ($event.target as HTMLInputElement).value)"
-        @change="$emit('update:pageBackground', ($event.target as HTMLInputElement).value)"
-      />
-    </div>
-
     <!-- 页面图片/分栏配图 (Image) -->
     <div
       v-if="pageLayout === 'image-right' || pageLayout === 'image-left' || pageImage"
@@ -492,7 +461,6 @@ import { isFeatureEnabled } from '@/feature-flags/feature-flags'
 const props = defineProps<{
   pageLayout: string
   pageTransition: string
-  pageBackground: string
   pageSpacing?: string
   pageImage?: string
   pageNotes?: string
@@ -510,7 +478,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:pageLayout', val: string): void
   (e: 'update:pageTransition', val: string): void
-  (e: 'update:pageBackground', val: string): void
   (e: 'update:pageSpacing', val: string): void
   (e: 'update:pageImage', val: string): void
   (e: 'update:pageLayoutRatio', val: string): void
@@ -657,13 +624,6 @@ const notePreviewSnippet = computed(() => {
   const clean = props.pageNotes.replace(/[\r\n]+/g, ' ').trim()
   return clean.length > 50 ? clean.slice(0, 50) + '...' : clean
 })
-
-const presetBackgrounds = [
-  { label: '默认', value: '' },
-  { label: '暗黑 #1e1e24', value: '#1e1e24' },
-  { label: '极夜 #0f172a', value: '#0f172a' },
-  { label: '极简白 #ffffff', value: '#ffffff' },
-]
 
 const presetImages = [
   { label: '默认封面', value: 'https://cover.sli.dev' },

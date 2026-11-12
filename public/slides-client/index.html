@@ -4026,7 +4026,7 @@
         // 页面背景样式
         const pageBackgroundStyle = computed(() => {
           if (!currentSlide.value) return {}
-          const bg = currentSlide.value.frontmatter?.background
+          const bg = currentSlide.value.frontmatter?.background || config.value?.background
           if (!bg) return {}
           if (bg.startsWith("http") || bg.startsWith("/") || bg.startsWith("data:") || bg.startsWith("assets/")) {
             return {
@@ -6025,7 +6025,7 @@
         }
 
         function getSlideBackgroundStyleObj(slide) {
-          const bg = slide?.frontmatter?.background
+          const bg = slide?.frontmatter?.background || config.value?.background
           if (!bg) return {}
           if (/^(http|\/|data:|assets\/)/.test(bg)) {
             return { backgroundImage: 'url("' + bg + '")', backgroundSize: "cover", backgroundPosition: "center" }

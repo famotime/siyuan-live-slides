@@ -87,8 +87,8 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
       if (ctx.activeBlockAttrs.value[ATTR_PAGE_BACKGROUND] === "true") {
         updates[ATTR_PAGE_BACKGROUND] = ""
       }
-      if (pageContainerId && imgUrl && ctx.pageBackground.value === imgUrl) {
-        ctx.pageBackground.value = ""
+      if (pageContainerId && imgUrl && ctx.pageBackground?.value === imgUrl) {
+        if (ctx.pageBackground) ctx.pageBackground.value = ""
         await setBlockAttrs(pageContainerId, { [ATTR_PAGE_BACKGROUND]: "" }).catch(() => {})
         globalDocumentCompiler.setBlockAttrOverride(pageContainerId, { [ATTR_PAGE_BACKGROUND]: "" })
         syncDomBlockAttrs(pageContainerId, { [ATTR_PAGE_BACKGROUND]: "" })
@@ -115,7 +115,7 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
         [ATTR_PAGE_LAYOUT]: "",
       }
       if (pageContainerId && imgUrl) {
-        ctx.pageBackground.value = imgUrl
+        if (ctx.pageBackground) ctx.pageBackground.value = imgUrl
         await setBlockAttrs(pageContainerId, { [ATTR_PAGE_BACKGROUND]: imgUrl }).catch(() => {})
         globalDocumentCompiler.setBlockAttrOverride(pageContainerId, { [ATTR_PAGE_BACKGROUND]: imgUrl })
         syncDomBlockAttrs(pageContainerId, { [ATTR_PAGE_BACKGROUND]: imgUrl })
@@ -219,7 +219,7 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
     ctx.activeBlockAttrs.value = {}
     ctx.elemShikiLines.value = ""
     ctx.elemMaxHeight.value = ""
-    ctx.pageBackground.value = ""
+    if (ctx.pageBackground) ctx.pageBackground.value = ""
     ctx.pageImage.value = ""
     showMessage("已清除本块演示属性")
     if (ctx.plugin) {
