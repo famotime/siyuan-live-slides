@@ -22,6 +22,31 @@ export interface IPdfExportOptions {
   customInlineStyles?: any
 }
 
+function isLightColor(colorStr?: string): boolean | null {
+  if (!colorStr || typeof colorStr !== "string") return null
+  const s = colorStr.trim().toLowerCase()
+  if (["white", "#fff", "#ffffff", "snow", "ivory", "ghostwhite", "floralwhite", "aliceblue", "whitesmoke", "seashell", "beige", "oldlace", "linen", "antiquewhite", "lightyellow", "lightcyan", "papayawhip", "blanchedalmond", "cornsilk"].includes(s)) return true
+  if (["black", "#000", "#000000", "transparent"].includes(s)) return false
+  if (s.startsWith("#")) {
+    let hex = s.slice(1)
+    if (hex.length === 3) hex = hex.split("").map(c => c + c).join("")
+    if (hex.length >= 6) {
+      const r = parseInt(hex.substring(0, 2), 16)
+      const g = parseInt(hex.substring(2, 4), 16)
+      const b = parseInt(hex.substring(4, 6), 16)
+      if (!isNaN(r) && !isNaN(g) && !isNaN(b)) return (0.299 * r + 0.587 * g + 0.114 * b) > 140
+    }
+  }
+  const rgbMatch = s.match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/)
+  if (rgbMatch) {
+    const r = parseInt(rgbMatch[1], 10)
+    const g = parseInt(rgbMatch[2], 10)
+    const b = parseInt(rgbMatch[3], 10)
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 140
+  }
+  return null
+}
+
 /**
  * 构建高保真可打印 / 导出 PDF 的独立 HTML 结构
  */
@@ -30,7 +55,8 @@ export function buildPrintableHtml(doc: ISlidesDocument, options?: IPdfExportOpt
   const pageRatio = options?.pageRatio || "16:9"
   const showNotes = options?.showNotes ?? true
   const showPageNumber = options?.showPageNumber ?? true
-  const theme = options?.theme || "light"
+  const globalTheme = options?.theme || "light"
+  const slidesTheme = doc.config.theme || "default"
 
   const slidesHtml = doc.slides.map((slide, idx) => {
     const layout = slide.frontmatter.layout || "default"
@@ -39,8 +65,13 @@ export function buildPrintableHtml(doc: ISlidesDocument, options?: IPdfExportOpt
     const contentHtml = renderSlideBlocksToHtml(slide)
     const pageNumText = `${idx + 1} / ${doc.slides.length}`
 
+    const bg = slide.frontmatter.background || doc.config.background
+    const isLightBg = isLightColor(bg)
+    const pageTheme = isLightBg === true ? "light" : (isLightBg === false ? "dark" : globalTheme)
+    const bgStyle = bg && !/^(http|\/|data:|assets\/)/.test(bg) ? `background: ${escapeHtml(bg)};` : ""
+
     return `
-      <section class="pdf-slide-page layout-${layout} theme-${theme} spacing-${spacing}">
+      <section class="pdf-slide-page layout-${layout} theme-${pageTheme} spacing-${spacing} slides-theme-${slidesTheme}" data-slides-theme="${slidesTheme}" style="${bgStyle}">
         <header class="pdf-slide-header">
           <span class="pdf-doc-title">${escapeHtml(title)}</span>
           ${showPageNumber ? `<span class="pdf-page-badge">P. ${pageNumText}</span>` : ""}

@@ -82,6 +82,93 @@ export function generatePdfExportStyles(options?: {
       background: #0f1117;
       color: #f1f5f9;
     }
+
+    /* 1. 默认科技主题 Default (Modern Tech) */
+    .pdf-slide-page.slides-theme-default {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    .pdf-slide-page.slides-theme-default.theme-light {
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    .pdf-slide-page.slides-theme-default.theme-dark {
+      background: #090d16;
+      color: #f1f5f9;
+    }
+    .slides-theme-default .pdf-block h1 { color: #059669; }
+    .theme-dark.slides-theme-default .pdf-block h1 { color: #10b981; }
+    .slides-theme-default:not(.layout-cover) .layout-header-section h1,
+    .slides-theme-default:not(.layout-cover) .layout-header-section h2,
+    .slides-theme-default:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h1,
+    .slides-theme-default:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h2 {
+      border-left: 4px solid #059669;
+      padding-left: 12px;
+    }
+    .theme-dark.slides-theme-default:not(.layout-cover) .layout-header-section h1,
+    .theme-dark.slides-theme-default:not(.layout-cover) .layout-header-section h2,
+    .theme-dark.slides-theme-default:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h1,
+    .theme-dark.slides-theme-default:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h2 {
+      border-left-color: #10b981;
+    }
+
+    /* 2. 优雅衬线主题 Seriph (Editorial Academic) */
+    .pdf-slide-page.slides-theme-seriph {
+      font-family: "PT Serif", "Charter", "Georgia", "Cambria", "Times New Roman", "Source Han Serif SC", "Noto Serif SC", "Songti SC", "SimSun", serif;
+      letter-spacing: 0.015em;
+    }
+    .pdf-slide-page.slides-theme-seriph.theme-light {
+      background: #fcfbf7;
+      color: #231f1d;
+    }
+    .pdf-slide-page.slides-theme-seriph.theme-dark {
+      background: #171513;
+      color: #f5f2eb;
+    }
+    .slides-theme-seriph .pdf-block h1 { color: #b45309; }
+    .theme-dark.slides-theme-seriph .pdf-block h1 { color: #f59e0b; }
+    .slides-theme-seriph:not(.layout-cover) .layout-header-section h1,
+    .slides-theme-seriph:not(.layout-cover) .layout-header-section h2,
+    .slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h1,
+    .slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h2 {
+      border-bottom: 1.5px solid rgba(180, 83, 9, 0.45);
+      padding-bottom: 6px;
+      display: inline-block;
+    }
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .layout-header-section h1,
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .layout-header-section h2,
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h1,
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h2 {
+      border-bottom-color: rgba(245, 158, 11, 0.45);
+    }
+
+    /* 3. 极简发布会主题 Apple Basic (Swiss Minimal) */
+    .pdf-slide-page.slides-theme-apple-basic {
+      font-family: -apple-system, "SF Pro Display", "SF Pro Text", BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+      letter-spacing: -0.025em;
+    }
+    .pdf-slide-page.slides-theme-apple-basic.theme-light {
+      background: #ffffff;
+      color: #000000;
+    }
+    .pdf-slide-page.slides-theme-apple-basic.theme-dark {
+      background: #000000;
+      color: #ffffff;
+    }
+    .slides-theme-apple-basic .pdf-block h1 {
+      color: #000000;
+      font-weight: 800;
+      letter-spacing: -0.035em;
+    }
+    .theme-dark.slides-theme-apple-basic .pdf-block h1 {
+      color: #ffffff;
+      font-weight: 800;
+      letter-spacing: -0.035em;
+    }
+    .slides-theme-apple-basic .pdf-code,
+    .slides-theme-apple-basic pre {
+      border-radius: 14px !important;
+      border-left: none !important;
+    }
     .pdf-slide-header {
       font-size: 13px;
       color: #64748b;

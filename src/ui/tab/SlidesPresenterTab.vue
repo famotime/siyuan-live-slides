@@ -1563,50 +1563,72 @@ defineExpose({
   --slide-accent: #10b981;
   --slide-code-bg: #1e1e24;
   --slide-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --slide-accent: #10b981;
+  --slide-accent-secondary: #06b6d4;
 
   &[data-theme="light"] {
-    --slide-bg: #ffffff;
-    --slide-text: #1e293b;
+    --slide-bg: #f8fafc;
+    --slide-text: #0f172a;
+    --slide-text-secondary: #475569;
     --slide-accent: #059669;
-    --slide-code-bg: #f8fafc;
+    --slide-accent-secondary: #0284c7;
+    --slide-code-bg: #f1f5f9;
   }
 
   &[data-theme="dark"] {
-    --slide-bg: #121214;
-    --slide-text: #e2e8f0;
-    --slide-accent: #34d399;
-    --slide-code-bg: #1e1e24;
+    --slide-bg: #090d16;
+    --slide-text: #f1f5f9;
+    --slide-text-secondary: #94a3b8;
+    --slide-accent: #10b981;
+    --slide-accent-secondary: #38bdf8;
+    --slide-code-bg: #0f172a;
   }
 
   &.slides-theme-seriph {
     --slide-font: "PT Serif", "Charter", "Georgia", "Cambria", "Times New Roman", "Source Han Serif SC", "Noto Serif SC", "Songti SC", "SimSun", serif;
-    --slide-accent: #f59e0b;
+    --slide-accent: #b45309;
+    --slide-accent-secondary: #9a3412;
+    letter-spacing: 0.02em;
+
     &[data-theme="light"] {
-      --slide-bg: #fdfbf7;
-      --slide-text: #2a2521;
+      --slide-bg: #fcfbf7;
+      --slide-text: #231f1d;
+      --slide-text-secondary: #57534e;
       --slide-accent: #b45309;
-      --slide-code-bg: #f4efe6;
+      --slide-accent-secondary: #9a3412;
+      --slide-code-bg: #f5f0e6;
     }
     &[data-theme="dark"] {
-      --slide-bg: #1c1a17;
-      --slide-text: #e8e3d9;
+      --slide-bg: #171513;
+      --slide-text: #f5f2eb;
+      --slide-text-secondary: #a8a29e;
       --slide-accent: #f59e0b;
-      --slide-code-bg: #26231f;
+      --slide-accent-secondary: #fb923c;
+      --slide-code-bg: #24201c;
     }
   }
 
   &.slides-theme-apple-basic {
     --slide-font: -apple-system, "SF Pro Display", "SF Pro Text", BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
-    --slide-accent: #2997ff;
+    --slide-accent: #0071e3;
+    --slide-accent-secondary: #0077ed;
+    letter-spacing: -0.025em;
+
     &[data-theme="light"] {
       --slide-bg: #ffffff;
-      --slide-text: #1d1d1f;
+      --slide-text: #000000;
+      --slide-text-secondary: #6e6e73;
       --slide-accent: #0071e3;
+      --slide-accent-secondary: #0077ed;
+      --slide-code-bg: #f5f5f7;
     }
     &[data-theme="dark"] {
       --slide-bg: #000000;
-      --slide-text: #f5f5f7;
+      --slide-text: #ffffff;
+      --slide-text-secondary: #86868b;
       --slide-accent: #2997ff;
+      --slide-accent-secondary: #64d2ff;
+      --slide-code-bg: #161617;
     }
   }
 
@@ -1684,9 +1706,61 @@ defineExpose({
 
   &.slides-theme-default .layout-cover h1,
   &.slides-theme-default .layout-cover .slide-block h1 {
-    background: linear-gradient(135deg, #10b981, #06b6d4) !important;
+    background: linear-gradient(135deg, var(--slide-accent), var(--slide-accent-secondary)) !important;
     -webkit-background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
+  }
+
+  &.slides-theme-default:not(.layout-cover) .layout-header-section h1,
+  &.slides-theme-default:not(.layout-cover) .layout-header-section h2,
+  &.slides-theme-default:not(.layout-cover) .cols-header-top h1,
+  &.slides-theme-default:not(.layout-cover) .cols-header-top h2,
+  &.slides-theme-default:not(.layout-cover) .two-cols-header-top h1,
+  &.slides-theme-default:not(.layout-cover) .two-cols-header-top h2,
+  &.slides-theme-default:not(.layout-cover) .slide-content > .slide-block:first-child h1,
+  &.slides-theme-default:not(.layout-cover) .slide-content > .slide-block:first-child h2 {
+    border-left: 4px solid var(--slide-accent);
+    padding-left: 14px;
+    letter-spacing: -0.015em;
+  }
+
+  &.slides-theme-seriph .layout-cover h1 {
+    color: var(--slide-accent) !important;
+    border-bottom: 2px solid var(--slide-accent);
+    display: inline-block;
+    padding-bottom: 10px;
+  }
+
+  &.slides-theme-seriph:not(.layout-cover) .layout-header-section h1,
+  &.slides-theme-seriph:not(.layout-cover) .layout-header-section h2,
+  &.slides-theme-seriph:not(.layout-cover) .cols-header-top h1,
+  &.slides-theme-seriph:not(.layout-cover) .cols-header-top h2,
+  &.slides-theme-seriph:not(.layout-cover) .two-cols-header-top h1,
+  &.slides-theme-seriph:not(.layout-cover) .two-cols-header-top h2,
+  &.slides-theme-seriph:not(.layout-cover) .slide-content > .slide-block:first-child h1,
+  &.slides-theme-seriph:not(.layout-cover) .slide-content > .slide-block:first-child h2 {
+    border-bottom: 1.5px solid color-mix(in srgb, var(--slide-accent) 45%, transparent);
+    padding-bottom: 6px;
+    display: inline-block;
+  }
+
+  &.slides-theme-apple-basic .layout-cover h1 {
+    color: var(--slide-text) !important;
+    letter-spacing: -0.045em !important;
+  }
+
+  &.slides-theme-apple-basic:not(.layout-cover) .layout-header-section h1,
+  &.slides-theme-apple-basic:not(.layout-cover) .layout-header-section h2,
+  &.slides-theme-apple-basic:not(.layout-cover) .cols-header-top h1,
+  &.slides-theme-apple-basic:not(.layout-cover) .cols-header-top h2,
+  &.slides-theme-apple-basic:not(.layout-cover) .two-cols-header-top h1,
+  &.slides-theme-apple-basic:not(.layout-cover) .two-cols-header-top h2,
+  &.slides-theme-apple-basic:not(.layout-cover) .slide-content > .slide-block:first-child h1,
+  &.slides-theme-apple-basic:not(.layout-cover) .slide-content > .slide-block:first-child h2 {
+    border: none !important;
+    padding: 0 !important;
+    letter-spacing: -0.04em !important;
+    font-weight: 800 !important;
   }
 
   .layout-cover h2,

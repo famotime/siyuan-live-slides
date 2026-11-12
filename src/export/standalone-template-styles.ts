@@ -19,23 +19,88 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       --slide-accent: #60a5fa;
     }
 
-    /* 1. 默认科技主题 Default */
+    /* 1. 默认科技主题 Default (Modern Tech / Digital Geek) */
     [data-slides-theme="default"],
     .slides-theme-default {
       --slide-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
       --slide-accent: #10b981;
+      --slide-accent-secondary: #06b6d4;
     }
     [data-theme="light"][data-slides-theme="default"],
-    [data-theme="light"] .slides-theme-default {
-      --slide-bg: #ffffff;
-      --slide-text: #1e293b;
+    [data-theme="light"] .slides-theme-default,
+    .slide-viewport[data-theme="light"].slides-theme-default,
+    .slide-viewport[data-theme="light"] {
+      --slide-bg: #f8fafc;
+      --slide-text: #0f172a;
+      --slide-text-secondary: #475569;
+      --slide-code-bg: #f1f5f9;
+      --slide-code-border: rgba(15, 23, 42, 0.12);
       --slide-accent: #059669;
+      --slide-accent-secondary: #0284c7;
+      --slide-card-bg: rgba(255, 255, 255, 0.85);
+      --slide-card-border: rgba(148, 163, 184, 0.35);
+      --slide-card-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
     }
     [data-theme="dark"][data-slides-theme="default"],
-    [data-theme="dark"] .slides-theme-default {
-      --slide-bg: #121214;
-      --slide-text: #e2e8f0;
-      --slide-accent: #34d399;
+    [data-theme="dark"] .slides-theme-default,
+    .slide-viewport[data-theme="dark"].slides-theme-default,
+    .slide-viewport:not([data-theme="light"]) {
+      --slide-bg: #090d16;
+      --slide-text: #f1f5f9;
+      --slide-text-secondary: #94a3b8;
+      --slide-code-bg: #0f172a;
+      --slide-code-border: rgba(56, 189, 248, 0.22);
+      --slide-accent: #10b981;
+      --slide-accent-secondary: #38bdf8;
+      --slide-card-bg: rgba(15, 23, 42, 0.7);
+      --slide-card-border: rgba(56, 189, 248, 0.2);
+      --slide-card-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    }
+    /* 单页为 light 时高特异性覆盖，即使外层是 dark 也强制生效 */
+    [data-theme="dark"] .slide-viewport[data-theme="light"],
+    .slide-viewport[data-theme="light"] {
+      color: var(--slide-text) !important;
+    }
+    [data-theme="dark"] .slide-viewport[data-theme="light"].slides-theme-default,
+    .slide-viewport[data-theme="light"].slides-theme-default {
+      --slide-text: #0f172a !important;
+      --slide-text-secondary: #475569 !important;
+      --slide-accent: #059669 !important;
+    }
+    [data-theme="dark"] .slide-viewport[data-theme="light"].slides-theme-seriph,
+    .slide-viewport[data-theme="light"].slides-theme-seriph {
+      --slide-text: #231f1d !important;
+      --slide-text-secondary: #57534e !important;
+      --slide-accent: #b45309 !important;
+    }
+    [data-theme="dark"] .slide-viewport[data-theme="light"].slides-theme-apple-basic,
+    .slide-viewport[data-theme="light"].slides-theme-apple-basic {
+      --slide-text: #000000 !important;
+      --slide-text-secondary: #6e6e73 !important;
+      --slide-accent: #0071e3 !important;
+    }
+    /* 单页为 dark 时高特异性覆盖，即使外层是 light 也强制生效 */
+    [data-theme="light"] .slide-viewport[data-theme="dark"],
+    .slide-viewport[data-theme="dark"] {
+      color: var(--slide-text) !important;
+    }
+    [data-theme="light"] .slide-viewport[data-theme="dark"].slides-theme-default,
+    .slide-viewport[data-theme="dark"].slides-theme-default {
+      --slide-text: #f1f5f9 !important;
+      --slide-text-secondary: #94a3b8 !important;
+      --slide-accent: #10b981 !important;
+    }
+    [data-theme="light"] .slide-viewport[data-theme="dark"].slides-theme-seriph,
+    .slide-viewport[data-theme="dark"].slides-theme-seriph {
+      --slide-text: #f5f2eb !important;
+      --slide-text-secondary: #a8a29e !important;
+      --slide-accent: #f59e0b !important;
+    }
+    [data-theme="light"] .slide-viewport[data-theme="dark"].slides-theme-apple-basic,
+    .slide-viewport[data-theme="dark"].slides-theme-apple-basic {
+      --slide-text: #ffffff !important;
+      --slide-text-secondary: #86868b !important;
+      --slide-accent: #2997ff !important;
     }
     .slides-theme-default .layout-cover h1,
     .slides-theme-default .layout-cover .slide-block h1 {
@@ -44,7 +109,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       line-height: 1.15 !important;
       letter-spacing: -0.025em !important;
       margin-bottom: 18px !important;
-      background: linear-gradient(135deg, #10b981, #06b6d4) !important;
+      background: linear-gradient(135deg, var(--slide-accent), var(--slide-accent-secondary)) !important;
       -webkit-background-clip: text !important;
       -webkit-text-fill-color: transparent !important;
     }
@@ -52,39 +117,78 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     .slides-theme-default .layout-cover .slide-block h2 {
       font-size: 1.85rem !important;
       font-weight: 600 !important;
-      opacity: 0.85 !important;
+      color: var(--slide-text-secondary) !important;
       margin-bottom: 12px !important;
     }
     .slides-theme-default .layout-cover p,
     .slides-theme-default .layout-cover .slide-block p {
       font-size: 1.45rem !important;
       line-height: 1.5 !important;
-      opacity: 0.85 !important;
+      color: var(--slide-text-secondary) !important;
+    }
+    /* 默认科技风：非 cover 页首标题带科技 Accent 垂直指示条 */
+    .slides-theme-default:not(.layout-cover) .layout-header-section h1,
+    .slides-theme-default:not(.layout-cover) .layout-header-section h2,
+    .slides-theme-default:not(.layout-cover) .cols-header-top h1,
+    .slides-theme-default:not(.layout-cover) .cols-header-top h2,
+    .slides-theme-default:not(.layout-cover) .two-cols-header-top h1,
+    .slides-theme-default:not(.layout-cover) .two-cols-header-top h2,
+    .slides-theme-default:not(.layout-cover) .slide-content > .slide-block:first-child h1,
+    .slides-theme-default:not(.layout-cover) .slide-content > .slide-block:first-child h2 {
+      border-left: 4px solid var(--slide-accent);
+      padding-left: 14px;
+      letter-spacing: -0.015em;
+    }
+    .slides-theme-default blockquote {
+      border-left: 3px solid var(--slide-accent) !important;
+      background: color-mix(in srgb, var(--slide-accent) 8%, transparent) !important;
+      border-radius: 4px;
+      padding: 12px 18px !important;
+    }
+    .slides-theme-default pre {
+      border: 1px solid var(--slide-code-border) !important;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18) !important;
+      border-radius: 8px !important;
     }
 
-    /* 2. 优雅衬线主题 Seriph */
+    /* 2. 优雅衬线主题 Seriph (典雅学术书卷风) */
     [data-slides-theme="seriph"],
     .slides-theme-seriph {
       --slide-font: "PT Serif", "Charter", "Georgia", "Cambria", "Times New Roman", "Source Han Serif SC", "Noto Serif SC", "Songti SC", "SimSun", serif;
       --slide-accent: #b45309;
-      letter-spacing: 0.015em;
+      --slide-accent-secondary: #9a3412;
+      letter-spacing: 0.02em;
     }
     [data-theme="light"][data-slides-theme="seriph"],
     [data-theme="light"] .slides-theme-seriph {
-      --slide-bg: #fdfbf7;
-      --slide-text: #2a2521;
+      --slide-bg: #fcfbf7;
+      --slide-text: #231f1d;
+      --slide-text-secondary: #57534e;
+      --slide-code-bg: #f5f0e6;
+      --slide-code-border: rgba(180, 83, 9, 0.2);
       --slide-accent: #b45309;
+      --slide-accent-secondary: #9a3412;
+      --slide-card-bg: rgba(255, 255, 255, 0.75);
+      --slide-card-border: rgba(180, 83, 9, 0.25);
+      --slide-card-shadow: 0 2px 10px rgba(41, 37, 36, 0.04);
     }
     [data-theme="dark"][data-slides-theme="seriph"],
     [data-theme="dark"] .slides-theme-seriph {
-      --slide-bg: #1c1a17;
-      --slide-text: #e8e3d9;
+      --slide-bg: #171513;
+      --slide-text: #f5f2eb;
+      --slide-text-secondary: #a8a29e;
+      --slide-code-bg: #24201c;
+      --slide-code-border: rgba(245, 158, 11, 0.22);
       --slide-accent: #f59e0b;
+      --slide-accent-secondary: #fb923c;
+      --slide-card-bg: rgba(32, 28, 24, 0.8);
+      --slide-card-border: rgba(245, 158, 11, 0.22);
+      --slide-card-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
     }
     .slides-theme-seriph,
     .slides-theme-seriph .slide-content {
       font-family: var(--slide-font) !important;
-      line-height: 1.72;
+      line-height: 1.75;
     }
     .slides-theme-seriph h1,
     .slides-theme-seriph h2,
@@ -99,28 +203,89 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       -webkit-text-fill-color: initial !important;
       color: var(--slide-accent) !important;
       font-size: 3.4rem !important;
+      font-weight: 700 !important;
       border-bottom: 2px solid var(--slide-accent);
       display: inline-block;
       padding-bottom: 10px;
+      margin-bottom: 24px;
+    }
+    .slides-theme-seriph .layout-cover p {
+      font-style: italic;
+      color: var(--slide-text-secondary);
+    }
+    /* 优雅学术风：非 cover 页首标题带典雅细下划线 */
+    .slides-theme-seriph:not(.layout-cover) .layout-header-section h1,
+    .slides-theme-seriph:not(.layout-cover) .layout-header-section h2,
+    .slides-theme-seriph:not(.layout-cover) .cols-header-top h1,
+    .slides-theme-seriph:not(.layout-cover) .cols-header-top h2,
+    .slides-theme-seriph:not(.layout-cover) .two-cols-header-top h1,
+    .slides-theme-seriph:not(.layout-cover) .two-cols-header-top h2,
+    .slides-theme-seriph:not(.layout-cover) .slide-content > .slide-block:first-child h1,
+    .slides-theme-seriph:not(.layout-cover) .slide-content > .slide-block:first-child h2 {
+      border-bottom: 1.5px solid color-mix(in srgb, var(--slide-accent) 45%, transparent);
+      padding-bottom: 6px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+    .slides-theme-seriph blockquote {
+      position: relative;
+      font-style: italic;
+      border-left: 2px solid var(--slide-accent) !important;
+      background: color-mix(in srgb, var(--slide-accent) 6%, transparent) !important;
+      padding: 14px 20px 14px 28px !important;
+      border-radius: 4px;
+      margin: 12px 0 !important;
+    }
+    .slides-theme-seriph blockquote::before {
+      content: "“";
+      position: absolute;
+      left: 8px;
+      top: 6px;
+      font-size: 2rem;
+      line-height: 1;
+      color: var(--slide-accent);
+      opacity: 0.6;
+      font-family: Georgia, serif;
+    }
+    .slides-theme-seriph pre {
+      border: 1px solid var(--slide-code-border) !important;
+      border-radius: 4px !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
     }
 
-    /* 3. 极简发布会主题 Apple Basic */
+    /* 3. 极简发布会主题 Apple Basic (苹果 Keynote / 瑞士纯粹主义) */
     [data-slides-theme="apple-basic"],
     .slides-theme-apple-basic {
       --slide-font: -apple-system, "SF Pro Display", "SF Pro Text", BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
       --slide-accent: #0071e3;
+      --slide-accent-secondary: #0077ed;
+      letter-spacing: -0.025em;
     }
     [data-theme="light"][data-slides-theme="apple-basic"],
     [data-theme="light"] .slides-theme-apple-basic {
       --slide-bg: #ffffff;
-      --slide-text: #1d1d1f;
+      --slide-text: #000000;
+      --slide-text-secondary: #6e6e73;
+      --slide-code-bg: #f5f5f7;
+      --slide-code-border: transparent;
       --slide-accent: #0071e3;
+      --slide-accent-secondary: #0077ed;
+      --slide-card-bg: #f5f5f7;
+      --slide-card-border: transparent;
+      --slide-card-shadow: none;
     }
     [data-theme="dark"][data-slides-theme="apple-basic"],
     [data-theme="dark"] .slides-theme-apple-basic {
       --slide-bg: #000000;
-      --slide-text: #f5f5f7;
+      --slide-text: #ffffff;
+      --slide-text-secondary: #86868b;
+      --slide-code-bg: #161617;
+      --slide-code-border: transparent;
       --slide-accent: #2997ff;
+      --slide-accent-secondary: #64d2ff;
+      --slide-card-bg: #161617;
+      --slide-card-border: transparent;
+      --slide-card-shadow: none;
     }
     .slides-theme-apple-basic,
     .slides-theme-apple-basic .slide-content {
@@ -137,12 +302,69 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       -webkit-background-clip: initial !important;
       -webkit-text-fill-color: initial !important;
       color: var(--slide-text) !important;
-      font-size: 3.8rem !important;
-      letter-spacing: -0.04em !important;
+      font-size: 4rem !important;
+      font-weight: 800 !important;
+      letter-spacing: -0.045em !important;
+      margin-bottom: 12px;
     }
     .slides-theme-apple-basic .layout-cover p {
-      color: #86868b !important;
+      color: var(--slide-text-secondary) !important;
       font-size: 1.35rem !important;
+      font-weight: 500 !important;
+      opacity: 1 !important;
+    }
+    /* 极简发布会风：绝对去装饰化，特大字重力量感，无边框与线条 */
+    .slides-theme-apple-basic:not(.layout-cover) .layout-header-section h1,
+    .slides-theme-apple-basic:not(.layout-cover) .layout-header-section h2,
+    .slides-theme-apple-basic:not(.layout-cover) .cols-header-top h1,
+    .slides-theme-apple-basic:not(.layout-cover) .cols-header-top h2,
+    .slides-theme-apple-basic:not(.layout-cover) .two-cols-header-top h1,
+    .slides-theme-apple-basic:not(.layout-cover) .two-cols-header-top h2,
+    .slides-theme-apple-basic:not(.layout-cover) .slide-content > .slide-block:first-child h1,
+    .slides-theme-apple-basic:not(.layout-cover) .slide-content > .slide-block:first-child h2 {
+      border: none !important;
+      padding: 0 !important;
+      letter-spacing: -0.04em !important;
+      font-weight: 800 !important;
+    }
+    .slides-theme-apple-basic pre {
+      border-radius: 16px !important;
+      border: none !important;
+      background: var(--slide-code-bg) !important;
+      box-shadow: none !important;
+    }
+    .slides-theme-apple-basic blockquote {
+      border-left: none !important;
+      background: var(--slide-card-bg) !important;
+      border-radius: 14px !important;
+      padding: 18px 24px !important;
+      font-size: 1.15rem !important;
+      color: var(--slide-text) !important;
+    }
+
+    /* 复杂背景防穿透文字保护 (Text Scrim & Backdrop Protection) */
+    .slide-viewport[style*="background-image"] .slide-content h1,
+    .slide-viewport[style*="background-image"] .slide-content h2,
+    .slide-viewport[style*="background-image"] .slide-content h3,
+    .slide-viewport[style*="background-image"] .slide-content p,
+    .slide-viewport[style*="background-image"] .slide-content li {
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75), 0 2px 8px rgba(0, 0, 0, 0.45);
+    }
+    [data-theme="light"].slide-viewport[style*="background-image"] .slide-content h1,
+    [data-theme="light"].slide-viewport[style*="background-image"] .slide-content h2,
+    [data-theme="light"].slide-viewport[style*="background-image"] .slide-content h3,
+    [data-theme="light"].slide-viewport[style*="background-image"] .slide-content p,
+    [data-theme="light"].slide-viewport[style*="background-image"] .slide-content li {
+      text-shadow: 0 1px 3px rgba(255, 255, 255, 0.85);
+    }
+    .slide-viewport[style*="background-image"] .layout-cols-grid > div,
+    .slide-viewport[style*="background-image"] .layout-two-cols-grid > div,
+    .slide-viewport[style*="background-image"] .layout-three-cols-grid > div,
+    .slide-viewport[style*="background-image"] .two-cols-left,
+    .slide-viewport[style*="background-image"] .two-cols-right,
+    .slide-viewport[style*="background-image"] .pdf-col {
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }

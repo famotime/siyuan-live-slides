@@ -26,7 +26,34 @@ export function getSlideRenderingSection(): string {
           container.style.transform = "none";
         }
 
+        function isLightColor(colorStr) {
+          if (!colorStr || typeof colorStr !== 'string') return null;
+          const s = colorStr.trim().toLowerCase();
+          if (['white', '#fff', '#ffffff', 'snow', 'ivory', 'ghostwhite', 'floralwhite', 'aliceblue', 'whitesmoke', 'seashell', 'beige', 'oldlace', 'linen', 'antiquewhite', 'lightyellow', 'lightcyan', 'papayawhip', 'blanchedalmond', 'cornsilk'].includes(s)) return true;
+          if (['black', '#000', '#000000', 'transparent'].includes(s)) return false;
+          if (s.startsWith('#')) {
+            let hex = s.slice(1);
+            if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+            if (hex.length >= 6) {
+              const r = parseInt(hex.substring(0, 2), 16);
+              const g = parseInt(hex.substring(2, 4), 16);
+              const b = parseInt(hex.substring(4, 6), 16);
+              if (!isNaN(r) && !isNaN(g) && !isNaN(b)) return (0.299 * r + 0.587 * g + 0.114 * b) > 140;
+            }
+          }
+          const rgbMatch = s.match(/rgba?\\s*\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)/);
+          if (rgbMatch) {
+            const r = parseInt(rgbMatch[1], 10);
+            const g = parseInt(rgbMatch[2], 10);
+            const b = parseInt(rgbMatch[3], 10);
+            return (0.299 * r + 0.587 * g + 0.114 * b) > 140;
+          }
+          return null;
+        }
+
         const slideBg = slide.frontmatter?.background || (data.config && data.config.background);
+        const isLightBg = isLightColor(slideBg);
+        const curTheme = data.config?.theme || "default";
         if (slideBg) {
           if (/^(http|\\/|data:|assets\\/)/.test(slideBg)) {
             container.style.backgroundImage = 'url("' + slideBg + '")';
@@ -39,6 +66,21 @@ export function getSlideRenderingSection(): string {
         } else {
           container.style.backgroundImage = "none";
           container.style.background = "";
+        }
+        if (isLightBg === true) {
+          if (viewport) viewport.setAttribute("data-theme", "light");
+          const textColor = curTheme === "apple-basic" ? "#000000" : (curTheme === "seriph" ? "#231f1d" : "#0f172a");
+          container.style.color = textColor;
+          container.style.setProperty("--slide-text", textColor);
+        } else if (isLightBg === false) {
+          if (viewport) viewport.setAttribute("data-theme", "dark");
+          const textColor = curTheme === "apple-basic" ? "#ffffff" : (curTheme === "seriph" ? "#f5f2eb" : "#f1f5f9");
+          container.style.color = textColor;
+          container.style.setProperty("--slide-text", textColor);
+        } else {
+          if (viewport) viewport.removeAttribute("data-theme");
+          container.style.color = "";
+          container.style.removeProperty("--slide-text");
         }
 
         maskOverlayEl = null;
