@@ -29,6 +29,7 @@ describe("列表项解包与对齐一致性 (解决同列表块末项偏左问�
         {
           id: "item-3",
           type: "i",
+          ial: { "custom-slides-slot": "col-2" },
           markdown: "* 这是 Builder 的美好时代，也是产品经理的\n  ### Enjoy Building!\n  ![space](assets/space.jpg)",
           children: [
             { id: "p-3", type: "p", markdown: "这是 Builder 的美好时代，也是产品经理的", content: "这是 Builder 的美好时代，也是产品经理的" },
@@ -39,7 +40,7 @@ describe("列表项解包与对齐一致性 (解决同列表块末项偏左问�
       ],
     }
 
-    const doc = buildSlidesDocument("doc-1", { "custom-slides-layout": "image-right" }, [
+    const doc = buildSlidesDocument("doc-1", {}, [
       { id: "heading-1", type: "h", markdown: "# 结语", content: "结语" },
       listNode,
     ])
@@ -104,7 +105,10 @@ describe("列表项解包与对齐一致性 (解决同列表块末项偏左问�
       ],
     }
 
-    const doc = buildSlidesDocument("doc-slot", { "custom-slides-layout": "image-right" }, [listNode])
+    const doc = buildSlidesDocument("doc-slot", {}, [
+      listNode,
+      { id: "img-1", type: "p", markdown: "![img](test.png)", ial: { "custom-slides-role": "image-right" } },
+    ])
     const slide = doc.slides[0]
 
     const b1 = slide.blocks.find(b => b.id === "p-slot-1")
@@ -181,5 +185,60 @@ describe("列表项解包与对齐一致性 (解决同列表块末项偏左问�
     expect(html2).toContain("<ol")
     expect(html1).toContain("pdf-list-item")
     expect(html2).toContain("pdf-list-item")
+  })
+
+  it("场景 5：即使列表项因特殊原因 rawMarkdown 丢失前缀符号，若 isListItem 为 true，渲染器防御兜底生成列表容器保持对齐", () => {
+    const rawBlock = {
+      id: "p-no-prefix",
+      type: "p",
+      content: "无前缀的特殊列表项文本",
+      rawMarkdown: "无前缀的特殊列表项文本",
+      isListItem: true,
+      rawNode: { id: "p-no-prefix", type: "p" },
+    }
+
+    const html = convertBlockToHtml(rawBlock as any)
+    expect(html).toContain("pdf-list-item")
+    expect(html).toContain("<ul")
+    expect(html).toContain("<li")
+    expect(html).toContain("无前缀的特殊列表项文本")
+  })
+
+  it("场景 6：配图位于列表下方独立块且文档未配置 layout 时，整页通过预扫描提前识别为 image-right 且列表项均保留列表前缀", () => {
+    const doc = buildSlidesDocument("doc-scan", {}, [
+      { id: "h1", type: "h", markdown: "# 总结页面" },
+      {
+        id: "list-1",
+        type: "l",
+        children: [
+          {
+            id: "it-1",
+            type: "i",
+            children: [{ id: "p-it-1", type: "p", markdown: "项一" }],
+          },
+          {
+            id: "it-2",
+            type: "i",
+            ial: { "custom-slides-slot": "col-2" },
+            children: [{ id: "p-it-2", type: "p", markdown: "项二（带插槽）" }],
+          },
+        ],
+      },
+      {
+        id: "img-space-below",
+        type: "p",
+        markdown: "![space](assets/space.png)",
+        ial: { "custom-slides-role": "image-right" },
+      },
+    ])
+
+    const slide = doc.slides[0]
+    expect(slide.frontmatter.layout).toBe("image-right")
+    expect(slide.frontmatter.image).toBe("/assets/space.png")
+
+    const b1 = slide.blocks.find(b => b.id === "p-it-1")
+    const b2 = slide.blocks.find(b => b.id === "p-it-2")
+    expect(b1?.rawMarkdown).toBe("- 项一")
+    expect(b2?.rawMarkdown).toBe("- 项二（带插槽）")
   })
 })

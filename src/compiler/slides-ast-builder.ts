@@ -110,12 +110,84 @@ export function buildSlidesDocument(
       options,
     )
   }
+
+  // 页面级顶层图文分栏（image-left / image-right）预扫描
+  // 确保配图位于幻灯片正文或复合列表项底部时，该页的 layout 与 image 提前就绪，避免正文列表项误判为多栏卡片
+  const getPageNodes = (startIndex: number): ISiYuanBlockNode[] => {
+    const res: ISiYuanBlockNode[] = []
+    for (let i = startIndex; i < blocks.length; i++) {
+      if (i > startIndex && isPageBreak(blocks[i])) break
+      res.push(blocks[i])
+    }
+    return res
+  }
+
+  const detectPageTopLevelLayout = (pageNodes: ISiYuanBlockNode[]) => {
+    let foundLayout: string | undefined
+    let foundImage: string | undefined
+    let foundRatio: string | undefined
+
+    const scanNode = (node: ISiYuanBlockNode) => {
+      if (foundLayout) return
+
+      const sb = detectSuperBlockImageLayout(node)
+      if (sb) {
+        foundLayout = sb.layout
+        foundImage = sb.imageUrl
+        foundRatio = sb.ratio
+        return
+      }
+
+      const rawMd = extractBlockMarkdown(node)
+      const combinedIal = node.ial ? { ...node.ial } : {}
+      const elemAttrs = parseElementAttrs(combinedIal)
+      if (elemAttrs.imageLayout === "image-left" || elemAttrs.imageLayout === "image-right") {
+        const imgUrl = extractImageUrl(rawMd, node.content)
+        if (imgUrl) {
+          foundLayout = elemAttrs.imageLayout
+          foundImage = imgUrl
+          foundRatio = node.ial?.[ATTR_PAGE_LAYOUT_RATIO]
+          return
+        }
+      }
+
+      if (node.children && node.children.length > 0) {
+        for (const child of node.children) {
+          scanNode(child)
+          if (foundLayout) return
+        }
+      }
+    }
+
+    for (const n of pageNodes) {
+      scanNode(n)
+      if (foundLayout) break
+    }
+
+    return { foundLayout, foundImage, foundRatio }
+  }
+
+  const applyPreScannedLayout = (page: ISlidesVirtualPage, pageNodes: ISiYuanBlockNode[]) => {
+    const { foundLayout, foundImage, foundRatio } = detectPageTopLevelLayout(pageNodes)
+    if (foundLayout) {
+      page.frontmatter.layout = foundLayout
+      if (foundImage) {
+        page.frontmatter.image = rewriteSingleAssetUrl(foundImage, options)
+      }
+      if (foundRatio && !page.frontmatter.layoutRatio) {
+        page.frontmatter.layoutRatio = foundRatio
+      }
+    }
+  }
+
+  applyPreScannedLayout(currentPage, getPageNodes(0))
   slides.push(currentPage)
 
   // 2. 遍历所有块节点进行三层作用域归类
   let headingStack: IHeadingScope[] = []
 
-  for (const node of blocks) {
+  for (let nodeIdx = 0; nodeIdx < blocks.length; nodeIdx++) {
+    const node = blocks[nodeIdx]
     if (isPageBreak(node)) {
       // 开启新页时重置标题层级栈
       headingStack = []
@@ -149,6 +221,7 @@ export function buildSlidesDocument(
             options,
           )
         }
+        applyPreScannedLayout(currentPage, getPageNodes(nodeIdx + 1))
         continue
       }
 
@@ -181,6 +254,7 @@ export function buildSlidesDocument(
         )
       }
 
+      applyPreScannedLayout(currentPage, getPageNodes(nodeIdx + 1))
       slides.push(currentPage)
       continue
     }
@@ -470,11 +544,15 @@ export function buildSlidesDocument(
             // 列表项作为多栏的独立卡片时，才清洗首行标题的列表标记；
             // 在常规正文（单栏、图文混排 image-right/image-left）下，列表项必须完整保留或补齐标准的列表前缀符号！
             const isImageLayout = currentPage.frontmatter.layout === "image-right" || currentPage.frontmatter.layout === "image-left"
-            const isCardCol = !isImageLayout && Boolean(
+            const isMultiColsPage = !isImageLayout && Boolean(
               currentPage.frontmatter.layout === "clover" ||
               isColsHeaderLayout(currentPage.frontmatter.layout) ||
-              currentPage.frontmatter.layout === "two-cols" ||
-              inheritedContext?.defaultSlot
+              currentPage.frontmatter.layout === "two-cols"
+            )
+            const isCardCol = isMultiColsPage && Boolean(
+              inheritedContext?.defaultSlot ||
+              elemAttrs.slot ||
+              itemNode.ial?.[ATTR_ELEM_SLOT]
             )
 
             if (isCardCol) {

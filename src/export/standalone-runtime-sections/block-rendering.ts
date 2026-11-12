@@ -123,7 +123,11 @@ export function getBlockRenderingSection(): string {
           div.setAttribute("data-autoplay", isAutoplay ? "true" : "false");
           div.innerHTML = videoHtml;
         }
-        else if (/^(\s*)([-*+]|\d+\.)\s+/m.test(md) || (md.includes("\n") && /^(\s*)([-*+]|\d+\.)\s+/m.test(md.split("\n").slice(1).join("\n")))) {
+        else if (
+          /^(\s*)([-*+]|\d+\.)\s+/m.test(md) ||
+          (md.includes("\n") && /^(\s*)([-*+]|\d+\.)\s+/m.test(md.split("\n").slice(1).join("\n"))) ||
+          ((block && (block.isListItem || block.type === "i")) && !block.isColFirst)
+        ) {
           div.classList.add("pdf-list-item");
           const lines = md.split("\n");
           let isOrdered = false;
@@ -184,6 +188,11 @@ export function getBlockRenderingSection(): string {
             } else {
               leadLines.push(tr);
             }
+          }
+
+          if (items.length === 0 && (block && (block.isListItem || block.type === "i")) && !block.isColFirst) {
+            items.push({ type: "unordered", level: 0, text: md, media: [] });
+            leadLines.length = 0;
           }
 
           let leadHtml = "";

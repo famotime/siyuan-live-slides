@@ -320,10 +320,14 @@
           div.setAttribute("data-autoplay", isAutoplay ? "true" : "false");
           div.innerHTML = videoHtml;
         }
-        else if (/^(s*)([-*+]|d+.)s+/m.test(md) || (md.includes("
+        else if (
+          /^(s*)([-*+]|d+.)s+/m.test(md) ||
+          (md.includes("
 ") && /^(s*)([-*+]|d+.)s+/m.test(md.split("
 ").slice(1).join("
-")))) {
+"))) ||
+          ((block && (block.isListItem || block.type === "i")) && !block.isColFirst)
+        ) {
           div.classList.add("pdf-list-item");
           const lines = md.split("
 ");
@@ -386,6 +390,11 @@
             } else {
               leadLines.push(tr);
             }
+          }
+
+          if (items.length === 0 && (block && (block.isListItem || block.type === "i")) && !block.isColFirst) {
+            items.push({ type: "unordered", level: 0, text: md, media: [] });
+            leadLines.length = 0;
           }
 
           let leadHtml = "";

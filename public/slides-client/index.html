@@ -4991,7 +4991,15 @@
         function renderMarkdownList(md, block) {
           const lines = md.split("\n")
           const hasListItems = lines.some(line => /^(\s*)([-*+]|\d+\.)\s+/.test(line))
-          if (!hasListItems) return null
+          if (!hasListItems) {
+            // 防御性兜底：若当前块为列表项 (isListItem || type === 'i') 且非分栏首行标题 (isColFirst)，
+            // 即使由于各种原因丢失了前缀符号，也强制作为单项列表包裹在 <ul><li> 中输出，
+            // 彻底杜绝列表项退化为段落导致左侧缩进对齐不一致
+            if ((block?.isListItem || block?.type === 'i') && !block?.isColFirst) {
+              return `<ul class="slide-list slide-list--unordered">\n<li class="slide-list-item">${formatInlineMarkdown(md)}</li>\n</ul>`
+            }
+            return null
+          }
 
           const leadLines = []
           const items = []
