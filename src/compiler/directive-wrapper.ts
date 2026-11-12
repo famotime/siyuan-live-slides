@@ -148,6 +148,26 @@ export function getMotionDirectives(motion?: ISlidesMotionConfig): {
 }
 
 /**
+ * 规范化元素或代码块的最大限高属性
+ * 支持纯数字自动补齐 px、支持百分比 % 与历史 vh 转换为幻灯片容器高度单位 cqh
+ */
+export function normalizeMaxHeight(maxHeight?: string): string {
+  if (!maxHeight) return ""
+  const trimmed = maxHeight.trim()
+  if (!trimmed) return ""
+  if (/^\d+$/.test(trimmed)) {
+    return `${trimmed}px`
+  }
+  if (/^(\d+(?:\.\d+)?)%$/.test(trimmed)) {
+    return `${trimmed.slice(0, -1)}cqh`
+  }
+  if (/^(\d+(?:\.\d+)?)vh$/.test(trimmed)) {
+    return `${trimmed.slice(0, -2)}cqh`
+  }
+  return trimmed
+}
+
+/**
  * 包装带有 v-click、custom-slides-motion 以及块级 style 样式的块
  */
 export function wrapElementDirectives(
@@ -159,7 +179,7 @@ export function wrapElementDirectives(
 ): string {
   const hasClicks = clicks !== undefined && clicks !== null && clicks.trim() !== ""
   const motionConfig = getMotionDirectives(motion)
-  const normMaxHeight = maxHeight ? (/^\d+$/.test(maxHeight.trim()) ? `${maxHeight.trim()}px` : maxHeight.trim()) : ""
+  const normMaxHeight = normalizeMaxHeight(maxHeight)
   const heightStyle = normMaxHeight ? `max-height:${normMaxHeight};overflow-y:auto` : ""
   const cleanStyle = [style?.trim(), heightStyle].filter(Boolean).join(";")
   const hasStyle = cleanStyle !== undefined && cleanStyle !== ""

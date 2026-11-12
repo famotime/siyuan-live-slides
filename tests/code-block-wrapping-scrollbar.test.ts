@@ -3,7 +3,7 @@ import path from "node:path"
 import { describe, expect, it } from "vitest"
 import { mapElementAttrs } from "../src/compiler/scope-mapper"
 import { SLIDES_CUSTOM_STYLES_CSS } from "../src/engine/workspace-scaffolder"
-import { wrapElementDirectives } from "../src/compiler/directive-wrapper"
+import { normalizeMaxHeight, wrapElementDirectives } from "../src/compiler/directive-wrapper"
 import { convertBlockToHtml } from "../src/export/markdown-renderer"
 import { buildPrintableHtml } from "../src/export/pdf-exporter"
 import { buildStandaloneHtml } from "../src/export/single-html-exporter"
@@ -144,6 +144,43 @@ describe("Code Block Wrapping & Subtle Scrollbar (代码块换行、无横向滚
     }
     const html = convertBlockToHtml(block)
     expect(html).toContain('style="max-height:350px;overflow-y:auto;"')
+  })
+
+  it("normalizeMaxHeight 应正确处理纯数字、百分比以及 vh 视口单位转换", () => {
+    expect(normalizeMaxHeight("")).toBe("")
+    expect(normalizeMaxHeight("320")).toBe("320px")
+    expect(normalizeMaxHeight("400px")).toBe("400px")
+    expect(normalizeMaxHeight("50%")).toBe("50cqh")
+    expect(normalizeMaxHeight("60%")).toBe("60cqh")
+    expect(normalizeMaxHeight("50vh")).toBe("50cqh")
+    expect(normalizeMaxHeight("40vh")).toBe("40cqh")
+    expect(normalizeMaxHeight("50cqh")).toBe("50cqh")
+  })
+
+  it("markdown-renderer 遇到百分比高度 50% 与 50vh 时应转换为 50cqh 容器查询限高", () => {
+    const blockPct: ISlidesBlockItem = {
+      id: "b-pct-height",
+      type: "c",
+      content: "```ts\nconsole.log(1)\n```",
+      rawMarkdown: "```ts\nconsole.log(1)\n```",
+      attrs: {
+        [ATTR_ELEM_MAX_HEIGHT]: "50%",
+      },
+    }
+    const htmlPct = convertBlockToHtml(blockPct)
+    expect(htmlPct).toContain('style="max-height:50cqh;overflow-y:auto;"')
+
+    const blockVh: ISlidesBlockItem = {
+      id: "b-vh-height",
+      type: "c",
+      content: "```ts\nconsole.log(1)\n```",
+      rawMarkdown: "```ts\nconsole.log(1)\n```",
+      attrs: {
+        [ATTR_ELEM_MAX_HEIGHT]: "50vh",
+      },
+    }
+    const htmlVh = convertBlockToHtml(blockVh)
+    expect(htmlVh).toContain('style="max-height:50cqh;overflow-y:auto;"')
   })
 
   it("Web Sandbox HTML 模版应包含选中代码块控制垂直滚动、未选中默认翻页的调度逻辑", () => {

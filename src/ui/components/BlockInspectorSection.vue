@@ -351,10 +351,10 @@
       </div>
       <div class="spm-quick-chips">
         <button
-          v-for="h in ['240px', '320px', '400px', '50vh']"
+          v-for="h in ['240px', '320px', '400px', '50%']"
           :key="h"
           class="spm-chip"
-          :class="{ active: elemMaxHeight === h }"
+          :class="{ active: elemMaxHeight === h || (h === '50%' && (elemMaxHeight === '50vh' || elemMaxHeight === '50%')) }"
           @click="$emit('update:elemMaxHeight', h)"
         >
           {{ h }}
@@ -370,7 +370,7 @@
       <input
         :value="elemMaxHeight"
         class="spm-input"
-        placeholder="自适应高度，或输入 350px、50vh"
+        placeholder="自适应高度，或输入 350px、50%"
         @input="$emit('update:elemMaxHeight', ($event.target as HTMLInputElement).value)"
         @change="$emit('update:elemMaxHeight', ($event.target as HTMLInputElement).value)"
       />

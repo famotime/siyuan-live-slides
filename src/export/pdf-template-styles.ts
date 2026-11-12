@@ -58,6 +58,7 @@ export function generatePdfExportStyles(options?: {
       position: relative;
       background: #ffffff;
       overflow: hidden;
+      container-type: size;
     }
     .pdf-slide-page.spacing-compact {
       --slides-padding-y: 20px;

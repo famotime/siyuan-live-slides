@@ -298,7 +298,15 @@
           div.innerHTML = "<h" + level + ">" + th + "</h" + level + ">";
         }
         else if (md.startsWith("```")) {
-          const customMaxHeight = block?.attributes?.["custom-slides-max-height"] || block?.attrs?.["custom-slides-max-height"] || block?.maxHeight || "";
+          var rawMaxH = block?.attributes?.["custom-slides-max-height"] || block?.attrs?.["custom-slides-max-height"] || block?.maxHeight || "";
+          var customMaxHeight = "";
+          if (rawMaxH) {
+            var sMaxH = String(rawMaxH).trim();
+            if (/^\d+$/.test(sMaxH)) customMaxHeight = sMaxH + "px";
+            else if (/^(\d+(?:\.\d+)?)%$/.test(sMaxH)) customMaxHeight = sMaxH.replace("%", "cqh");
+            else if (/^(\d+(?:\.\d+)?)vh$/.test(sMaxH)) customMaxHeight = sMaxH.replace("vh", "cqh");
+            else customMaxHeight = sMaxH;
+          }
           const heightStyle = customMaxHeight ? ' style="max-height:' + customMaxHeight + ';overflow-y:auto;"' : "";
           div.innerHTML = "<pre" + heightStyle + "><code>" + md.slice(3, -3) + "</code></pre>";
         }

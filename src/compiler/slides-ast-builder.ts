@@ -39,6 +39,7 @@ import {
   wrapVClickDirective,
   getMotionDirectives,
   wrapElementDirectives,
+  normalizeMaxHeight,
   extractCleanNoteText,
   getBlockHeadingLevel,
   distributeThreeColumns,
@@ -784,7 +785,7 @@ export function buildSlidesDocument(
       }
 
       const normMaxHeight = elemAttrs.maxHeight
-        ? (/^\d+$/.test(elemAttrs.maxHeight.trim()) ? `${elemAttrs.maxHeight.trim()}px` : elemAttrs.maxHeight.trim())
+        ? normalizeMaxHeight(elemAttrs.maxHeight)
         : undefined
 
       const isListItem = Boolean(inheritedContext?.isListItem || isListItemNode(itemNode))

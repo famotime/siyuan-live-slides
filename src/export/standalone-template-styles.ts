@@ -160,6 +160,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       transform: translate(-50%, -50%) scale(var(--slides-slide-scale, 1));
       transform-origin: center center; will-change: transform;
       transition: background 0.3s ease, color 0.3s ease, border-radius 0.2s ease, box-shadow 0.2s ease;
+      container-type: size;
     }
     :fullscreen .slide-viewport, .is-fullscreen .slide-viewport {
       border-radius: 0 !important; box-shadow: none !important;

@@ -420,6 +420,7 @@
       transform-origin: center center;
       will-change: transform;
       transition: background 0.3s ease, color 0.3s ease, border-radius 0.2s ease, box-shadow 0.2s ease;
+      container-type: size;
     }
 
     :fullscreen .slide-viewport,
@@ -5231,6 +5232,16 @@
           return `${leadHtml}<${listTag} class="${listClass}">\n${itemsHtml}\n</${listTag}>`
         }
 
+        function normalizeClientMaxHeight(val) {
+          if (!val) return ""
+          const s = String(val).trim()
+          if (!s) return ""
+          if (/^\d+$/.test(s)) return s + "px"
+          if (/^(\d+(?:\.\d+)?)%$/.test(s)) return s.replace("%", "cqh")
+          if (/^(\d+(?:\.\d+)?)vh$/.test(s)) return s.replace("vh", "cqh")
+          return s
+        }
+
         // 高保真 Markdown / 块级转换
         function renderBlockHtml(block) {
           if (!block) return ""
@@ -5276,7 +5287,7 @@
               return `<span class="code-line shiki-focus"><span class="line-no">${lineNo}</span><span class="line-content">${highlightCode(line, 'ts')}</span></span>`
             }).join("\n")
             const rawMaxHeight = block?.attrs?.["custom-slides-max-height"] || block?.attributes?.["custom-slides-max-height"] || block?.maxHeight || ""
-            const customMaxHeight = rawMaxHeight ? (/^\d+$/.test(String(rawMaxHeight).trim()) ? String(rawMaxHeight).trim() + "px" : String(rawMaxHeight).trim()) : ""
+            const customMaxHeight = normalizeClientMaxHeight(rawMaxHeight)
             const heightStyle = customMaxHeight ? ` style="max-height:${customMaxHeight};overflow-y:auto;"` : ""
             return `<pre class="shiki-container"${heightStyle}><span class="lang-badge">TS</span><code>${formattedLines}</code></pre>`
           }
@@ -5333,7 +5344,7 @@
               : ""
 
             const rawMaxHeight = block?.attrs?.["custom-slides-max-height"] || block?.attributes?.["custom-slides-max-height"] || block?.maxHeight || ""
-            const customMaxHeight = rawMaxHeight ? (/^\d+$/.test(String(rawMaxHeight).trim()) ? String(rawMaxHeight).trim() + "px" : String(rawMaxHeight).trim()) : ""
+            const customMaxHeight = normalizeClientMaxHeight(rawMaxHeight)
             const heightStyle = customMaxHeight ? ` style="max-height:${customMaxHeight};overflow-y:auto;"` : ""
 
             return `<pre class="${containerClass}"${heightStyle}>${filenameHtml}${langBadge}<code>${formattedLines}</code>${sliderHtml}</pre>`

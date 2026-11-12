@@ -408,6 +408,11 @@ a.slides-ref-tag:hover {
   background: color-mix(in srgb, var(--slides-theme-primary, #10b981) 15%, transparent);
 }
 
+/* 幻灯片容器查询支持与代码块换行、弱提示滚动条样式 */
+.slidev-page, .slidev-layout {
+  container-type: size;
+}
+
 /* 代码块自动换行与无横向滚动条 */
 pre,
 pre code {

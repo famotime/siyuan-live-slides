@@ -1,5 +1,6 @@
 import type { ISlidesBlockItem, ISlidesVirtualPage } from "../types/slides-protocol"
 import { cleanAndTransformInlineKramdown } from "../compiler/html-cleaner"
+import { normalizeMaxHeight } from "../compiler/directive-wrapper"
 import {
   formatLeadContent,
   formatListItemContent,
@@ -503,7 +504,7 @@ export function convertBlockToHtml(
     }).join("\n")
     const codeClass = options?.codeClassName || "pdf-code shiki-container"
     const rawMaxHeight = block.attrs?.["custom-slides-max-height"] || block.attributes?.["custom-slides-max-height"] || block.maxHeight || ""
-    const customMaxHeight = rawMaxHeight ? (/^\d+$/.test(String(rawMaxHeight).trim()) ? `${String(rawMaxHeight).trim()}px` : String(rawMaxHeight).trim()) : ""
+    const customMaxHeight = normalizeMaxHeight(String(rawMaxHeight || ""))
     const heightStyle = customMaxHeight ? ` style="max-height:${escapeHtml(customMaxHeight)};overflow-y:auto;"` : ""
     return `<div class="${containerClass}"${motionStyle}><pre class="${codeClass}"${heightStyle}><span class="lang-badge">TS</span><code>${formattedLines}</code></pre></div>`
   }
@@ -556,7 +557,7 @@ export function convertBlockToHtml(
     const filenameHtml = filename ? `<span class="code-filename">${escapeHtml(filename)}</span>` : ""
 
     const rawMaxHeight = block.attrs?.["custom-slides-max-height"] || block.attributes?.["custom-slides-max-height"] || block.maxHeight || ""
-    const customMaxHeight = rawMaxHeight ? (/^\d+$/.test(String(rawMaxHeight).trim()) ? `${String(rawMaxHeight).trim()}px` : String(rawMaxHeight).trim()) : ""
+    const customMaxHeight = normalizeMaxHeight(String(rawMaxHeight || ""))
     const heightStyle = customMaxHeight ? ` style="max-height:${escapeHtml(customMaxHeight)};overflow-y:auto;"` : ""
 
     return `<div class="${containerClass}"${motionStyle}><pre class="${codeClass}"${heightStyle}>${filenameHtml}${langBadge}<code>${formattedLines}</code></pre></div>`
