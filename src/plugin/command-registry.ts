@@ -12,7 +12,7 @@ import { generateSpeakerNotesWithAI } from "@/ai/notes-generator"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
 import { isFeatureDisabled } from "@/feature-flags/feature-flags"
 import { openDockImportDialog } from "@/main"
-import { runAiAutoSplit } from "@/plugin/ai-auto-split-action"
+import { clearSlideDividers, runAiAutoSplit } from "@/plugin/ai-auto-split-action"
 import { mirrorBlockSelection } from "@/sync/selection-mirror"
 import { PropertyManagerBridge } from "@/synergy/property-manager-bridge"
 import { identifyAndNormalizeDocumentNotes } from "@/sync/notes-normalizer"
@@ -84,14 +84,22 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
     },
   })
 
-  // 4. AI 智能大纲断页建议与自动分页（aiScript 开关关闭时不注册）
+  // 4. 智能大纲断页建议与自动分页（aiScript 开关关闭时不注册）
   if (!isFeatureDisabled("aiScript")) {
     plugin.addCommand({
       langKey: "slidesAiSplit",
-      langText: "即现 AI: 智能大纲断页建议与自动分页",
+      langText: "即现: 智能大纲断页建议与自动分页",
       hotkey: "",
       enabled: () => true,
       execute: () => runAiAutoSplit(plugin),
+    })
+
+    plugin.addCommand({
+      langKey: "slidesClearDividers",
+      langText: "即现: 清除当前文档分页线",
+      hotkey: "",
+      enabled: () => true,
+      execute: () => clearSlideDividers(plugin),
     })
   }
 

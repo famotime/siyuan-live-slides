@@ -162,6 +162,7 @@
         @identify-notes="onIdentifyNotesBlocks"
         @auto-animate="onAutoAnimateDocument"
         @ai-auto-split="onAiAutoSplit"
+        @clear-dividers="onClearDividers"
         @export-html="onExportHtml"
         @export-pdf="onExportPdf"
         @export-images="onExportImages"
@@ -196,7 +197,7 @@ import { resolveTargetSlide, isDividerBlockType } from '@/sync/inspector-slide-r
 import { useInspectorActions } from '@/ui/dock/useInspectorActions'
 import { createPageAttrResolver } from '@/ui/dock/useInspectorPageOverrides'
 import { isFeatureEnabled } from '@/feature-flags/feature-flags'
-import { runAiAutoSplit } from '@/plugin/ai-auto-split-action'
+import { clearSlideDividers, runAiAutoSplit } from '@/plugin/ai-auto-split-action'
 import type {
   IActiveBlockInfo,
   ISlidesDocument,
@@ -884,6 +885,12 @@ function onAiAutoSplit() {
   // 思源 Plugin 类没有 executeCommand，直接调用抽出的分页回调
   if (plugin && isFeatureEnabled('aiScript')) {
     void runAiAutoSplit(plugin)
+  }
+}
+
+function onClearDividers() {
+  if (plugin && isFeatureEnabled('aiScript')) {
+    void clearSlideDividers(plugin)
   }
 }
 

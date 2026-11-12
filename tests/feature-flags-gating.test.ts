@@ -17,8 +17,10 @@ vi.mock("@/api", async (importOriginal) => {
     getChildBlocks: vi.fn(async () => [
       { id: "b1", type: "h", subType: "h2", content: "第一章", markdown: "# 第一章" },
       { id: "b2", type: "p", subType: "", content: "正文", markdown: "正文" },
+      { id: "d1", type: "tb", markdown: "---" },
     ]),
     insertBlock: vi.fn(async () => ({})),
+    deleteBlock: vi.fn(async () => []),
     setBlockAttrs: vi.fn(async () => ({})),
   }
 })
@@ -29,8 +31,8 @@ vi.mock("@/ai/auto-splitter", () => ({
 
 import { registerPluginCommands } from "../src/plugin/command-registry"
 import type { ISlidesPluginHost } from "../src/plugin/command-registry"
-import { runAiAutoSplit } from "../src/plugin/ai-auto-split-action"
-import { getChildBlocks, insertBlock, setBlockAttrs } from "@/api"
+import { clearSlideDividers, runAiAutoSplit } from "../src/plugin/ai-auto-split-action"
+import { deleteBlock, getChildBlocks, insertBlock, setBlockAttrs } from "@/api"
 
 function createMockPlugin() {
   const commands: any[] = []
@@ -68,18 +70,18 @@ describe("FeatureFlags 门控 (命令条件注册)", () => {
     vi.clearAllMocks()
   })
 
-  it("默认（无关闭项）注册全部 15 条命令", () => {
+  it("默认（无关闭项）注册全部 16 条命令", () => {
     const { mockPlugin, commands } = createMockPlugin()
     registerPluginCommands(mockPlugin)
-    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(15)
-    expect(commands.map(c => c.langKey)).toHaveLength(15)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(16)
+    expect(commands.map(c => c.langKey)).toHaveLength(16)
   })
 
   it("关闭 import 开关后 slidesImport 不注册", () => {
     gatingState.disabled.add("import")
     const { mockPlugin, commands } = createMockPlugin()
     registerPluginCommands(mockPlugin)
-    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(14)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(15)
     expect(commands.map(c => c.langKey)).not.toContain("slidesImport")
   })
 
@@ -90,6 +92,7 @@ describe("FeatureFlags 门控 (命令条件注册)", () => {
     expect(mockPlugin.addCommand).toHaveBeenCalledTimes(13)
     const keys = commands.map(c => c.langKey)
     expect(keys).not.toContain("slidesAiSplit")
+    expect(keys).not.toContain("slidesClearDividers")
     expect(keys).not.toContain("slidesAiNotes")
   })
 
@@ -97,7 +100,7 @@ describe("FeatureFlags 门控 (命令条件注册)", () => {
     gatingState.disabled.add("proMode")
     const { mockPlugin, commands } = createMockPlugin()
     registerPluginCommands(mockPlugin)
-    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(12)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(13)
     const keys = commands.map(c => c.langKey)
     expect(keys).not.toContain("slidesExportCliMd")
     expect(keys).not.toContain("slidesProbeCliDevServer")
@@ -108,7 +111,7 @@ describe("FeatureFlags 门控 (命令条件注册)", () => {
     gatingState.disabled.add("exportImage")
     const { mockPlugin, commands } = createMockPlugin()
     registerPluginCommands(mockPlugin)
-    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(14)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(15)
     expect(commands.map(c => c.langKey)).not.toContain("slidesExportImagesZip")
   })
 
@@ -116,7 +119,7 @@ describe("FeatureFlags 门控 (命令条件注册)", () => {
     gatingState.disabled.add("presenterMode")
     const { mockPlugin, commands } = createMockPlugin()
     registerPluginCommands(mockPlugin)
-    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(14)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(15)
     expect(commands.map(c => c.langKey)).not.toContain("slidesPresenterMode")
   })
 
@@ -139,7 +142,7 @@ describe("FeatureFlags 门控 (命令条件注册)", () => {
     await splitCmd.execute()
 
     expect(getChildBlocks).toHaveBeenCalledWith("doc-1")
-    expect(insertBlock).toHaveBeenCalledWith("markdown", "---", undefined, "b1")
+    expect(insertBlock).toHaveBeenCalledWith("markdown", "---", "b1", undefined)
     expect(setBlockAttrs).toHaveBeenCalledWith("b1", { "custom-slides-layout": "default" })
     expect(mockPlugin.compileCurrentDocument).toHaveBeenCalledWith("doc-1")
   })
@@ -157,5 +160,12 @@ describe("FeatureFlags 门控 (命令条件注册)", () => {
     await runAiAutoSplit(mockPlugin)
     expect(insertBlock).not.toHaveBeenCalled()
     expect(mockPlugin.compileCurrentDocument).not.toHaveBeenCalled()
+  })
+
+  it("clearSlideDividers 可一键识别并删除物理分割线块", async () => {
+    const { mockPlugin } = createMockPlugin()
+    await clearSlideDividers(mockPlugin)
+    expect(deleteBlock).toHaveBeenCalledWith("d1")
+    expect(mockPlugin.compileCurrentDocument).toHaveBeenCalledWith("doc-1")
   })
 })

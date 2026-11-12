@@ -9,7 +9,7 @@ import { registerPluginCommands } from "../src/plugin/command-registry"
 import type { ISlidesPluginHost } from "../src/plugin/command-registry"
 
 describe("CommandRegistry (插件命令注册器)", () => {
-  it("应成功注册全套 15 项命令并包含对应的 langKey", () => {
+  it("应成功注册全套 16 项命令并包含对应的 langKey", () => {
     const commands: any[] = []
     const mockPlugin: any = {
       addCommand: vi.fn((cmd: any) => {
@@ -28,12 +28,13 @@ describe("CommandRegistry (插件命令注册器)", () => {
 
     registerPluginCommands(mockPlugin as ISlidesPluginHost)
 
-    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(15)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(16)
     const registeredKeys = commands.map(c => c.langKey)
     expect(registeredKeys).toContain("slidesPresentation")
     expect(registeredKeys).toContain("slidesImport")
     expect(registeredKeys).toContain("slidesInitAttrs")
     expect(registeredKeys).toContain("slidesAiSplit")
+    expect(registeredKeys).toContain("slidesClearDividers")
     expect(registeredKeys).toContain("slidesAiNotes")
     expect(registeredKeys).toContain("slidesIdentifyNotes")
     expect(registeredKeys).toContain("slidesAutoAnimate")

@@ -326,6 +326,16 @@
         </button>
 
         <button
+          v-if="isFeatureEnabled('aiScript')"
+          class="spm-btn-action b3-tooltips b3-tooltips__sw"
+          aria-label="一键清除当前文档中的所有幻灯片分页线"
+          @click="$emit('clearDividers')"
+        >
+          <SlidesIcon name="trash" />
+          <span>清除分页</span>
+        </button>
+
+        <button
           v-if="isFeatureEnabled('exportHtml')"
           class="spm-btn-action b3-tooltips b3-tooltips__sw"
           aria-label="打包导出离线单文件 HTML 幻灯片"
@@ -469,6 +479,7 @@ defineEmits<{
   (e: 'identifyNotes'): void
   (e: 'autoAnimate'): void
   (e: 'aiAutoSplit'): void
+  (e: 'clearDividers'): void
   (e: 'exportHtml'): void
   (e: 'exportPdf'): void
   (e: 'exportImages'): void
