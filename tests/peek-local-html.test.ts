@@ -8,7 +8,6 @@ import {
   resolvePeekUrl,
   withHTMLAssetIFrameParam,
 } from "../src/utils/peek-url"
-import { SLIDES_PEEK_INTERCEPTOR_SETUP_TS } from "../src/engine/workspace-scaffolder"
 import { isRemoteKernelHost } from "../src/engine/runtime-node"
 
 const PROJECT_ROOT = path.resolve(__dirname, "..")
@@ -204,15 +203,12 @@ describe("速览抽屉：远程内核模式降级", () => {
 describe("本地 HTML 链接速览：客户端拦截器与宿主归一化逻辑一致性", () => {
   const sandboxSource = fs.readFileSync(SANDBOX_CLIENT_PATH, "utf-8")
 
-  it("沙箱播放器与脚手架生成的拦截器都应内置本地 HTML 判定与绝对化函数", () => {
-    for (const source of [sandboxSource, SLIDES_PEEK_INTERCEPTOR_SETUP_TS]) {
-      expect(source).toContain("isPeekableLocalHtml")
-      expect(source).toContain("resolvePeekHref")
-      expect(source).toContain("本地 HTML 链接")
-    }
-    // 两个客户端都必须把本地 HTML 链接转交宿主抽屉，而非在沙箱内原地跳转
+  it("沙箱播放器应内置本地 HTML 判定与绝对化函数", () => {
+    expect(sandboxSource).toContain("isPeekableLocalHtml")
+    expect(sandboxSource).toContain("resolvePeekHref")
+    expect(sandboxSource).toContain("本地 HTML 链接")
+    // 必须把本地 HTML 链接转交宿主抽屉，而非在沙箱内原地跳转
     expect(sandboxSource).toContain("} else if (isPeekableLocalHtml(href)) {")
-    expect(SLIDES_PEEK_INTERCEPTOR_SETUP_TS).toContain("} else if (isPeekableLocalHtml(href)) {")
   })
 
   it("沙箱播放器内联判定函数应与 peek-url 的 isLocalHtmlHref 行为一致", () => {
@@ -222,27 +218,15 @@ describe("本地 HTML 链接速览：客户端拦截器与宿主归一化逻辑�
     }
   })
 
-  it("脚手架生成的拦截器内联判定函数应与 peek-url 的 isLocalHtmlHref 行为一致", () => {
-    const inlinePredicate = evalInlineFunction(SLIDES_PEEK_INTERCEPTOR_SETUP_TS, "isPeekableLocalHtml", true)
-    for (const [href, expected] of LOCAL_HTML_CASES) {
-      expect(inlinePredicate(href), `Pro 模式内联判定 isPeekableLocalHtml(${JSON.stringify(href)})`).toBe(expected)
-    }
-  })
-
-  it("两个客户端内联的 resolvePeekHref 都应把思源资产链接指向内核 /assets/ 静态服务", () => {
-    for (const [source, isTs] of [
-      [sandboxSource, false],
-      [SLIDES_PEEK_INTERCEPTOR_SETUP_TS, true],
-    ] as Array<[string, boolean]>) {
-      const resolveHref = evalInlineFunction(source, "resolvePeekHref", isTs)
-      expect(resolveHref("assets/demo.html")).toBe("/assets/demo.html")
-      expect(resolveHref("./assets/sub/demo.html")).toBe("/assets/sub/demo.html")
-      expect(resolveHref("/assets/demo.html")).toBe("/assets/demo.html")
-      // 非资产链接保持原样转交宿主，避免 Pro 模式被解析到 Slidev dev server 域名
-      expect(resolveHref("demo.html")).toBe("demo.html")
-      expect(resolveHref("docs/demo.html")).toBe("docs/demo.html")
-      expect(resolveHref("file:///D:/SiYuan/data/assets/demo.html")).toBe("file:///D:/SiYuan/data/assets/demo.html")
-    }
+  it("沙箱内联的 resolvePeekHref 应把思源资产链接指向内核 /assets/ 静态服务", () => {
+    const resolveHref = evalInlineFunction(sandboxSource, "resolvePeekHref", false)
+    expect(resolveHref("assets/demo.html")).toBe("/assets/demo.html")
+    expect(resolveHref("./assets/sub/demo.html")).toBe("/assets/sub/demo.html")
+    expect(resolveHref("/assets/demo.html")).toBe("/assets/demo.html")
+    // 非资产链接保持原样转交宿主
+    expect(resolveHref("demo.html")).toBe("demo.html")
+    expect(resolveHref("docs/demo.html")).toBe("docs/demo.html")
+    expect(resolveHref("file:///D:/SiYuan/data/assets/demo.html")).toBe("file:///D:/SiYuan/data/assets/demo.html")
   })
 
   it("抽屉宿主与微型浏览器都应接入 resolvePeekUrl，工作区外文件外跳系统浏览器", () => {

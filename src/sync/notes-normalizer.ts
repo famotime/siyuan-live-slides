@@ -60,7 +60,7 @@ export function isCalloutOrBlockquote(block: any): boolean {
  * 判断块是否已符合标准讲稿块规范（已打标且具备标准提示块标题）
  */
 export function isStandardNoteBlock(markdown: string, attrs?: Record<string, string>): boolean {
-  const hasAttr = attrs?.[ATTR_ELEM_NOTE] === "true" || attrs?.["slides-note"] === "true"
+  const hasAttr = attrs?.[ATTR_ELEM_NOTE] === "true"
   if (!hasAttr) return false
   const trimmed = (markdown || "").trim()
   return /^>\s*\[!NOTE\]\s*(?:💡\s*)?(?:演讲备注|讲稿备注)/i.test(trimmed)
@@ -142,7 +142,7 @@ export async function scanDocumentForCandidateNotes(
       ...overrideAttrs,
     }
 
-    if (!blockAttrs[ATTR_ELEM_NOTE] && !blockAttrs["slides-note"] && deps?.getBlockAttrsFn) {
+    if (!blockAttrs[ATTR_ELEM_NOTE] && deps?.getBlockAttrsFn) {
       const fetchedAttrs = await deps.getBlockAttrsFn(candidateBlock.id).catch(() => ({}))
       blockAttrs = { ...blockAttrs, ...fetchedAttrs, ...overrideAttrs }
     }

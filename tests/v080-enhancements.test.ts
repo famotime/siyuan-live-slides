@@ -210,42 +210,13 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
     })
   })
 
-  describe("5. 离线客户端运行时与 Pro CLI 模式中的标题规范化全面生效验证", () => {
+  describe("5. 离线客户端运行时与导出样式中的标题规范化全面生效验证", () => {
     it("getStandaloneClientRuntimeScript 应包含 isHeadingBlock 与页首/栏首打标逻辑", async () => {
       const { getStandaloneClientRuntimeScript } = await import("../src/export/standalone-client-runtime")
       const script = getStandaloneClientRuntimeScript()
       expect(script).toContain("function isHeadingBlock(b)")
       expect(script).toContain("slides-page-first-heading-block")
       expect(script).toContain("slides-col-first-heading-block")
-    })
-
-    it("CliDevServerBridge.buildStandardSlidevMarkdown 在开启 normalizeHeadingSizes 时应注入规范化样式", async () => {
-      const { CliDevServerBridge } = await import("../src/engine/cli-devserver-bridge")
-      const bridge = new CliDevServerBridge()
-      const doc = {
-        docId: "doc-cli-test",
-        title: "CLI Normalization Test",
-        config: {
-          theme: "default",
-          aspectRatio: "16/9",
-          highlighter: "shiki" as const,
-          defaultTransition: "slide-left",
-          colorSchema: "dark" as const,
-          normalizeHeadingSizes: true,
-        },
-        slides: [
-          {
-            pageIndex: 1,
-            frontmatter: { layout: "default" },
-            blocks: [{ id: "b1", type: "h", content: "### 页首标题", rawMarkdown: "### 页首标题" }],
-          },
-        ],
-      }
-      const md = bridge.buildStandardSlidevMarkdown(doc as any)
-      expect(md).toContain("<style>")
-      expect(md).toContain("Specific Heading Normalization")
-      expect(md).toContain("font-size: 1.7rem !important;")
-      expect(md).toContain("font-size: 1.3rem !important;")
     })
 
     it("单文件导出与 PDF 导出样式应包含后置强力覆盖规则以防被列表项字号覆写", async () => {

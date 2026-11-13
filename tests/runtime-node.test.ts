@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest"
 import {
-  getMergedSystemEnv,
   getPlatform,
   getRuntimeModule,
   getRuntimeProcess,
@@ -19,16 +18,10 @@ describe("runtime-node (跨端 Node/Electron 自适应适配器)", () => {
     expect(["win32", "darwin", "linux"]).toContain(platform)
   })
 
-  it("应能安全获取 process 和环境变量", () => {
+  it("应能安全获取 process 对象", () => {
     const proc = getRuntimeProcess()
     expect(proc).toBeDefined()
     expect(proc?.versions?.node).toBeDefined()
-
-    const env = getMergedSystemEnv()
-    expect(env).toBeDefined()
-    const pathKey = Object.keys(env).find(k => k.toLowerCase() === "path")
-    expect(pathKey).toBeDefined()
-    expect(env[pathKey!]).toContain("nodejs")
   })
 
   it("应能安全加载原生模块", () => {

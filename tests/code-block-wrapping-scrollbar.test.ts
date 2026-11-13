@@ -2,8 +2,7 @@ import fs from "node:fs"
 import path from "node:path"
 import { describe, expect, it } from "vitest"
 import { mapElementAttrs } from "../src/compiler/scope-mapper"
-import { SLIDES_CUSTOM_STYLES_CSS } from "../src/engine/workspace-scaffolder"
-import { normalizeMaxHeight, wrapElementDirectives } from "../src/compiler/directive-wrapper"
+import { normalizeMaxHeight } from "../src/compiler/directive-wrapper"
 import { convertBlockToHtml } from "../src/export/markdown-renderer"
 import { buildPrintableHtml } from "../src/export/pdf-exporter"
 import { buildStandaloneHtml } from "../src/export/single-html-exporter"
@@ -114,22 +113,6 @@ describe("Code Block Wrapping & Subtle Scrollbar (代码块换行、无横向滚
     expect(html).toContain("overflow-wrap: anywhere !important")
     expect(html).toContain(".code-line")
     expect(html).toContain("align-items: flex-start !important")
-  })
-
-  it("Slidev Pro 本地工程 SLIDES_CUSTOM_STYLES_CSS 应包含自动换行与弱提示滚动条样式", () => {
-    expect(SLIDES_CUSTOM_STYLES_CSS).toContain("overflow-x: hidden !important")
-    expect(SLIDES_CUSTOM_STYLES_CSS).toContain("overflow-y: auto !important")
-    expect(SLIDES_CUSTOM_STYLES_CSS).toContain("white-space: pre-wrap !important")
-    expect(SLIDES_CUSTOM_STYLES_CSS).toContain("scrollbar-width: thin")
-    expect(SLIDES_CUSTOM_STYLES_CSS).toContain("rgba(0, 0, 0, 0.15)")
-    expect(SLIDES_CUSTOM_STYLES_CSS).toContain("rgba(255, 255, 255, 0.20)")
-  })
-
-  it("wrapElementDirectives 应将 maxHeight 转换为包含 max-height 与 overflow-y:auto 的内联样式", () => {
-    const md = "```ts\nconsole.log(1)\n```"
-    const wrapped = wrapElementDirectives(md, undefined, undefined, undefined, "320px")
-    expect(wrapped).toContain("max-height:320px")
-    expect(wrapped).toContain("overflow-y:auto")
   })
 
   it("markdown-renderer 遇到纯数字高度配置时应自动补齐 px 单位并正常渲染", () => {

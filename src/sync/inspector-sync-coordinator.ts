@@ -309,7 +309,7 @@ export class InspectorSyncCoordinator {
         const calloutAttrs = await this.resolveBlockAttrs(calloutId, latestCompiledDoc)
         const override = globalDocumentCompiler.getBlockAttrOverride(calloutId) || {}
         const mergedAttrs = { ...calloutAttrs, ...override }
-        if (mergedAttrs[ATTR_ELEM_NOTE] || mergedAttrs["slides-note"]) {
+        if (mergedAttrs[ATTR_ELEM_NOTE]) {
           effectiveEl = calloutEl
           effectiveId = calloutId
           effectiveType = "NodeCallout"

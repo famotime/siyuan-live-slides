@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 import { buildSlidesDocument } from "../src/compiler/slides-ast-builder"
 import { renderSlideBlocksToHtml } from "../src/export/markdown-renderer"
-import { WorkspaceScaffolder, THREE_COLS_HEADER_LAYOUT_VUE } from "../src/engine/workspace-scaffolder"
 import type { ISiYuanBlockNode } from "../src/compiler/scope-mapper"
 import type { ISlidesVirtualPage } from "../src/types/slides-protocol"
 
@@ -38,8 +37,8 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
 
       expect(page.frontmatter.layout).toBe("two-cols-header")
       expect(page.rawMarkdown).toContain("# 核心架构全景")
-      expect(page.rawMarkdown).toContain("::left::\n\n左栏：数据层与存储")
-      expect(page.rawMarkdown).toContain("::right::\n\n右栏：UI 展示与渲染")
+      expect(page.blocks.find(b => b.slot === "left" || b.slot === "col-1")?.rawMarkdown).toContain("左栏：数据层与存储")
+      expect(page.blocks.find(b => b.slot === "right" || b.slot === "col-2")?.rawMarkdown).toContain("右栏：UI 展示与渲染")
     })
 
     it("three-cols-header: 自动将未指定 slot 的块默认归入 col-1，支持显式 col-2 / col-3", () => {
@@ -85,9 +84,10 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
 
       expect(page.frontmatter.layout).toBe("three-cols-header")
       expect(page.rawMarkdown).toContain("# 微服务三横向体系")
-      expect(page.rawMarkdown).toContain("::col-1::\n\n第一栏要点 A\n\n第一栏要点 B")
-      expect(page.rawMarkdown).toContain("::col-2::\n\n第二栏服务治理")
-      expect(page.rawMarkdown).toContain("::col-3::\n\n第三栏运维可观测性")
+      const col1Texts = page.blocks.filter(b => b.slot === "col-1").map(b => b.rawMarkdown).join("\n\n")
+      expect(col1Texts).toContain("第一栏要点 A\n\n第一栏要点 B")
+      expect(page.blocks.find(b => b.slot === "col-2")?.rawMarkdown).toContain("第二栏服务治理")
+      expect(page.blocks.find(b => b.slot === "col-3")?.rawMarkdown).toContain("第三栏运维可观测性")
     })
 
     it("three-cols-header: 显式 slot='header' 优先级高于位置或标题", () => {
@@ -125,10 +125,10 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
       const doc = buildSlidesDocument(docId, docAttrs, blocks)
       const page = doc.slides[0]
 
-      expect(page.rawMarkdown).toContain("# 显式声明的特有表头")
-      expect(page.rawMarkdown).toContain("::col-1::\n\n这是正文前置段落")
-      expect(page.rawMarkdown).toContain("::col-2::\n\n中间栏内容")
-      expect(page.rawMarkdown).toContain("::col-3::\n\n右侧栏内容")
+      expect(page.blocks.find(b => b.slot === "header")?.rawMarkdown).toContain("# 显式声明的特有表头")
+      expect(page.blocks.find(b => b.slot === "col-1")?.rawMarkdown).toContain("这是正文前置段落")
+      expect(page.blocks.find(b => b.slot === "col-2")?.rawMarkdown).toContain("中间栏内容")
+      expect(page.blocks.find(b => b.slot === "col-3")?.rawMarkdown).toContain("右侧栏内容")
     })
 
     it("标题行属性级联继承：首个标题行赋予第三栏属性，下方列表项自动继承归入第三栏 (用户真实场景)", () => {
@@ -146,7 +146,7 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
           ial: {
             id: "b-h-builder",
             "custom-slides-slot": "col-3",
-            "custom-slides-clicks": "+1",
+            "custom-slides-click": "+1",
           },
         },
         {
@@ -187,8 +187,6 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
       expect(item2?.slot).toBe("col-3")
       expect(item3?.slot).toBe("col-3")
 
-      // 生成的 Markdown 应归入 ::col-3::
-      expect(page.rawMarkdown).toContain("::col-3::")
       expect(page.rawMarkdown).toContain("### Builder")
       expect(page.rawMarkdown).toContain("- 24年开始接触AI，从AI生图开始")
       expect(page.rawMarkdown).toContain("- “诗词学堂”：25年第一届创新大赛三等奖")
@@ -361,38 +359,6 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
     })
   })
 
-  describe("3. WorkspaceScaffolder 官方 Slidev Pro 模式自定义布局自动注入", () => {
-    it("当页面包含 three-cols-header 时，应自动写入 layouts/three-cols-header.vue", async () => {
-      const docWithThreeCols = {
-        docId: "doc-tc-scaffold",
-        config: { theme: "default" },
-        fullMarkdown: "",
-        slides: [
-          {
-            pageIndex: 1,
-            startBlockId: "p1",
-            frontmatter: { layout: "three-cols-header" },
-            notes: "",
-            blocks: [],
-            rawMarkdown: "",
-          },
-        ],
-      }
-
-      const scaffolder = new WorkspaceScaffolder({ workspacePath: "/test/pro-workspace" })
-      const mockPutFile = vi.fn().mockResolvedValue({ code: 0 })
-
-      const res = await scaffolder.scaffold(docWithThreeCols as any, mockPutFile)
-      expect(res.success).toBe(true)
-      // 应写入 package.json, slides.md, snippets/external.ts, 以及 layouts/three-cols-header.vue
-      expect(mockPutFile).toHaveBeenCalledWith(
-        "/test/pro-workspace/layouts/three-cols-header.vue",
-        false,
-        expect.anything(),
-      )
-    })
-  })
-
   describe("4. 页面设置表头三栏与右侧块配置联动测试", () => {
     it("当分页符设置为 three-cols-header 后，选择所属页面的正文或嵌套子块时，应正确识别为 three-cols-header 版式", () => {
       const docId = "doc-test"
@@ -463,9 +429,9 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
       ]
       const doc = buildSlidesDocument(docId, docAttrs, blocks)
       const page = doc.slides[0]
-      expect(page.rawMarkdown).toContain("::col-1::\n\n第一栏重点")
-      expect(page.rawMarkdown).toContain("::col-2::\n\n第二栏内容")
-      expect(page.rawMarkdown).toContain("::col-3::\n\n第三栏内容")
+      expect(page.blocks.find(b => b.slot === "col-1")?.rawMarkdown).toContain("第一栏重点")
+      expect(page.blocks.find(b => b.slot === "col-2")?.rawMarkdown).toContain("第二栏内容")
+      expect(page.blocks.find(b => b.slot === "col-3")?.rawMarkdown).toContain("第三栏内容")
     })
 
     it("未标注任何插槽但包含 3 个大纲子标题时，自动按标题将各段内容归属至对应三栏", () => {
@@ -482,9 +448,12 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
       ]
       const doc = buildSlidesDocument(docId, docAttrs, blocks)
       const page = doc.slides[0]
-      expect(page.rawMarkdown).toContain("::col-1::\n\n### 前端工程\n\nVue3 与 Vite")
-      expect(page.rawMarkdown).toContain("::col-2::\n\n### 后端服务\n\nGolang 与 SQLite")
-      expect(page.rawMarkdown).toContain("::col-3::\n\n### 基础设施\n\nDocker 与 CI")
+      const col1 = page.blocks.filter(b => b.slot === "col-1").map(b => b.rawMarkdown).join("\n\n")
+      const col2 = page.blocks.filter(b => b.slot === "col-2").map(b => b.rawMarkdown).join("\n\n")
+      const col3 = page.blocks.filter(b => b.slot === "col-3").map(b => b.rawMarkdown).join("\n\n")
+      expect(col1).toContain("### 前端工程\n\nVue3 与 Vite")
+      expect(col2).toContain("### 后端服务\n\nGolang 与 SQLite")
+      expect(col3).toContain("### 基础设施\n\nDocker 与 CI")
     })
 
     it("BlockInspectorSection isSlotActive 在 three-cols-header 下兼容映射 left/center/right 历史标记", () => {
@@ -523,10 +492,10 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
       const page = doc.slides[0]
       expect(page.frontmatter.layout).toBe("cols-header")
       expect(page.frontmatter.layoutRatio).toBe("1:1:1:1")
-      expect(page.rawMarkdown).toContain("::col-1::\n\n研发支柱")
-      expect(page.rawMarkdown).toContain("::col-2::\n\n产品支柱")
-      expect(page.rawMarkdown).toContain("::col-3::\n\n运营支柱")
-      expect(page.rawMarkdown).toContain("::col-4::\n\n商业支柱")
+      expect(page.blocks.find(b => b.slot === "col-1")?.rawMarkdown).toContain("研发支柱")
+      expect(page.blocks.find(b => b.slot === "col-2")?.rawMarkdown).toContain("产品支柱")
+      expect(page.blocks.find(b => b.slot === "col-3")?.rawMarkdown).toContain("运营支柱")
+      expect(page.blocks.find(b => b.slot === "col-4")?.rawMarkdown).toContain("商业支柱")
     })
 
     it("cols-header: renderSlideBlocksToHtml 渲染 4 栏网格容器与对应 grid-template-columns", () => {
@@ -549,32 +518,6 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
       expect(html).toContain("grid-template-columns: 2fr 3fr 3fr 2fr;")
       expect(html).toContain("pdf-col--1")
       expect(html).toContain("pdf-col--4")
-    })
-
-    it("WorkspaceScaffolder: 当页面包含 cols-header 时，自动写入 layouts/cols-header.vue", async () => {
-      const { WorkspaceScaffolder } = await import("../src/engine/workspace-scaffolder")
-      const scaffolder = new WorkspaceScaffolder({ workspacePath: "/test/workspace" })
-      const putFileFn = vi.fn().mockResolvedValue({ success: true })
-      const doc = {
-        docId: "doc-cols",
-        title: "Cols Header Demo",
-        config: { theme: "default" },
-        slides: [
-          {
-            pageIndex: 1,
-            startBlockId: "b1",
-            frontmatter: { layout: "cols-header" },
-            blocks: [],
-            notes: "",
-            rawMarkdown: "# 演示",
-          },
-        ],
-      } as any
-
-      const result = await scaffolder.scaffold(doc, putFileFn)
-      expect(result.success).toBe(true)
-      const writtenPaths = putFileFn.mock.calls.map(call => call[0])
-      expect(writtenPaths).toContain("/test/workspace/layouts/cols-header.vue")
     })
   })
 })

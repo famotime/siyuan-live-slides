@@ -128,38 +128,6 @@ export function getPlatform(): string {
 }
 
 /**
- * 获取经过宿主系统补充的完整 PATH 与系统环境变量字典
- */
-export function getMergedSystemEnv(): Record<string, string> {
-  const proc = getRuntimeProcess()
-  const baseEnv: Record<string, string> = { ...(proc?.env || {}) }
-
-  // 保证基本系统变量存在（针对 Windows GUI 进程偶发 PATH 缺失的自愈逻辑）
-  const platform = getPlatform()
-  if (platform === "win32") {
-    const defaultPaths = [
-      "C:\\Program Files\\nodejs",
-      "C:\\Program Files (x86)\\nodejs",
-      proc?.env?.APPDATA ? `${proc.env.APPDATA}\\npm` : "",
-      proc?.env?.USERPROFILE ? `${proc.env.USERPROFILE}\\AppData\\Roaming\\npm` : "",
-    ].filter(Boolean)
-
-    const existingPathKey = Object.keys(baseEnv).find(k => k.toLowerCase() === "path") || "PATH"
-    const currentPath = baseEnv[existingPathKey] || ""
-    const newPathParts = currentPath.split(";").filter(Boolean)
-
-    for (const p of defaultPaths) {
-      if (p && !newPathParts.some(item => item.toLowerCase() === p.toLowerCase())) {
-        newPathParts.push(p)
-      }
-    }
-    baseEnv[existingPathKey] = newPathParts.join(";")
-  }
-
-  return baseEnv
-}
-
-/**
  * 解析思源虚拟数据路径至本地真实文件系统物理路径
  * 例如: /data/storage/petal/... -> D:/siyuan-plugin-test/data/storage/petal/...
  */
@@ -182,21 +150,4 @@ export function resolvePhysicalPath(virtualPath: string): string {
   }
 
   return virtualPath
-}
-
-/**
- * 获取官方 Slidev Pro 模式的安全独立编译临时工作区物理目录
- * 避免将临时目录置于思源笔记 /data/ 目录下，彻底杜绝 Windows 下 Vite 进程监听与思源内核 putFile 重命名写锁冲突 (filelock.go Access is denied)
- */
-export function getDefaultProWorkspaceDir(): string {
-  const os = getRuntimeModule("os")
-  const path = getRuntimeModule("path")
-  if (os && typeof os.tmpdir === "function") {
-    const tmp = os.tmpdir()
-    if (path && typeof path.join === "function") {
-      return path.join(tmp, "siyuan-live-slides-pro").replace(/\\/g, "/")
-    }
-    return `${tmp}/siyuan-live-slides-pro`.replace(/\\/g, "/")
-  }
-  return "/data/storage/petal/siyuan-live-slides/pro-workspace"
 }

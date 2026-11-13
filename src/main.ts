@@ -167,7 +167,7 @@ export function updateDockDocument(doc: ISlidesDocument, targetDocId?: string): 
     previewTabInstance.updateDocument(doc, targetDocId)
   } else {
     // 即使页签未挂载，沙箱桥接器也自动缓存当前文档数据
-    globalSandboxBridge.updateSlides(doc.slides, doc.config, doc.fullMarkdown)
+    globalSandboxBridge.updateSlides(doc.slides, doc.config)
     broadcastDocToRemoteSandbox(doc)
   }
 

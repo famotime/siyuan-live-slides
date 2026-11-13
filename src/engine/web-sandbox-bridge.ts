@@ -123,7 +123,6 @@ export class WebSandboxBridge {
   public updateSlides(
     slides: ISlidesVirtualPage[],
     config?: ISlidesPluginConfig,
-    fullMarkdown?: string,
     customThemeCss?: string,
   ): void {
     const resolvedConfig = config
@@ -135,7 +134,6 @@ export class WebSandboxBridge {
     this.postMessage("UPDATE_SLIDES", {
       slides,
       config: resolvedConfig,
-      fullMarkdown,
       customThemeCss,
     })
   }

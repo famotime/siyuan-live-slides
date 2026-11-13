@@ -235,7 +235,7 @@ export async function runHeadlessImageExport(
       })
     })
 
-    bridge.updateSlides(doc.slides, doc.config, doc.fullMarkdown)
+    bridge.updateSlides(doc.slides, doc.config)
     await new Promise(r => setTimeout(r, 250))
 
     if (options?.mode === "current") {

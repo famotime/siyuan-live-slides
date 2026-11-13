@@ -3,7 +3,6 @@ import { isFeatureDisabled, isFeatureEnabled } from "../src/feature-flags/featur
 import type { FeatureKey } from "../src/feature-flags/feature-flags"
 
 const ALL_KEYS: FeatureKey[] = [
-  "proMode",
   "presenterMode",
   "exportHtml",
   "exportPdf",

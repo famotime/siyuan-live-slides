@@ -72,9 +72,7 @@ export function flattenSlideContentItems(blocks: ISlidesBlockItem[]): IAnimatabl
       if (
         b.isNote ||
         b.attributes?.[ATTR_ELEM_NOTE] === "true" ||
-        b.attributes?.["slides-note"] === "true" ||
-        b.ial?.[ATTR_ELEM_NOTE] === "true" ||
-        b.ial?.["slides-note"] === "true"
+        b.ial?.[ATTR_ELEM_NOTE] === "true"
       ) {
         continue
       }

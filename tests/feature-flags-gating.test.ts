@@ -43,11 +43,6 @@ function createMockPlugin() {
     openBottomPreviewTab: vi.fn(),
     openPresenterTab: vi.fn(),
     compileCurrentDocument: vi.fn(),
-    cliBridge: {
-      probeServer: vi.fn(),
-      downloadSlidesMd: vi.fn(),
-      syncToWorkspaceFile: vi.fn(),
-    },
     currentDocId: "doc-1",
     latestCompiledDoc: null,
   }
@@ -70,48 +65,37 @@ describe("FeatureFlags 门控 (命令条件注册)", () => {
     vi.clearAllMocks()
   })
 
-  it("默认（无关闭项）注册全部 16 条命令", () => {
+  it("默认（无关闭项）注册全部 13 条命令", () => {
     const { mockPlugin, commands } = createMockPlugin()
     registerPluginCommands(mockPlugin)
-    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(16)
-    expect(commands.map(c => c.langKey)).toHaveLength(16)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(13)
+    expect(commands.map(c => c.langKey)).toHaveLength(13)
   })
 
   it("关闭 import 开关后 slidesImport 不注册", () => {
     gatingState.disabled.add("import")
     const { mockPlugin, commands } = createMockPlugin()
     registerPluginCommands(mockPlugin)
-    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(15)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(12)
     expect(commands.map(c => c.langKey)).not.toContain("slidesImport")
   })
 
-  it("关闭 aiScript 开关后 AI 双命令不注册", () => {
+  it("关闭 aiScript 开关后 AI 三命令不注册", () => {
     gatingState.disabled.add("aiScript")
     const { mockPlugin, commands } = createMockPlugin()
     registerPluginCommands(mockPlugin)
-    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(13)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(10)
     const keys = commands.map(c => c.langKey)
     expect(keys).not.toContain("slidesAiSplit")
     expect(keys).not.toContain("slidesClearDividers")
     expect(keys).not.toContain("slidesAiNotes")
   })
 
-  it("关闭 proMode 开关后三条 Pro 命令整组不注册", () => {
-    gatingState.disabled.add("proMode")
-    const { mockPlugin, commands } = createMockPlugin()
-    registerPluginCommands(mockPlugin)
-    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(13)
-    const keys = commands.map(c => c.langKey)
-    expect(keys).not.toContain("slidesExportCliMd")
-    expect(keys).not.toContain("slidesProbeCliDevServer")
-    expect(keys).not.toContain("slidesSyncToCliWorkspace")
-  })
-
   it("关闭 exportImage 开关后图片导出命令不注册", () => {
     gatingState.disabled.add("exportImage")
     const { mockPlugin, commands } = createMockPlugin()
     registerPluginCommands(mockPlugin)
-    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(15)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(12)
     expect(commands.map(c => c.langKey)).not.toContain("slidesExportImagesZip")
   })
 
@@ -119,12 +103,12 @@ describe("FeatureFlags 门控 (命令条件注册)", () => {
     gatingState.disabled.add("presenterMode")
     const { mockPlugin, commands } = createMockPlugin()
     registerPluginCommands(mockPlugin)
-    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(15)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(12)
     expect(commands.map(c => c.langKey)).not.toContain("slidesPresenterMode")
   })
 
-  it("五组开关全部关闭时仅剩核心与协同命令", () => {
-    ;["import", "aiScript", "proMode", "exportImage", "presenterMode"].forEach(k =>
+  it("四组开关全部关闭时仅剩核心与协同命令", () => {
+    ;["import", "aiScript", "exportImage", "presenterMode"].forEach(k =>
       gatingState.disabled.add(k),
     )
     const { mockPlugin, commands } = createMockPlugin()

@@ -20,7 +20,6 @@ import { distributeNColumns } from "../src/compiler/directive-wrapper"
 import { generateStandaloneExportStyles } from "../src/export/standalone-template-styles"
 import { getStandaloneClientRuntimeScript } from "../src/export/standalone-client-runtime"
 import { generatePdfExportStyles } from "../src/export/pdf-template-styles"
-import { CLOVER_LAYOUT_VUE } from "../src/engine/workspace-scaffolder"
 
 describe("Clover Clock Mask (四叶草排版时钟蒙版规范与功能测试)", () => {
   describe("1. 协议与类型定义及断点解析", () => {
@@ -115,8 +114,6 @@ describe("Clover Clock Mask (四叶草排版时钟蒙版规范与功能测试)",
       expect(slide.frontmatter.mask).toBe("counter-clockwise")
       expect(slide.frontmatter.maskStyle).toBe("solid")
       expect(slide.frontmatter.maskInitial).toBe("hidden")
-      expect(slide.rawMarkdown).toContain("layout: clover")
-      expect(slide.rawMarkdown).toContain("mask: counter-clockwise")
     })
 
     it("parseSlidesPresentation 导入 Slidev Markdown 应完整还原思源块属性", () => {
@@ -179,19 +176,7 @@ maskInitial: revealed
     })
   })
 
-  describe("5. Slidev CLI 模式脚手架组件 (CLOVER_LAYOUT_VUE)", () => {
-    it("CLOVER_LAYOUT_VUE 应注入时钟蒙版图层、响应式角向渐变与指针", () => {
-      expect(CLOVER_LAYOUT_VUE).toContain("isClockMask")
-      expect(CLOVER_LAYOUT_VUE).toContain("clockNeedleAngle")
-      expect(CLOVER_LAYOUT_VUE).toContain("clockMaskOverlayStyle")
-      expect(CLOVER_LAYOUT_VUE).toContain("conic-gradient(from 270deg")
-      expect(CLOVER_LAYOUT_VUE).toContain("conic-gradient(from 0deg")
-      expect(CLOVER_LAYOUT_VUE).toContain("slides-mask-divider-line--clock")
-      expect(CLOVER_LAYOUT_VUE).toContain("$slidev?.nav?.clicks")
-    })
-  })
-
-  describe("6. PDF 打印讲义无遮挡导出", () => {
+  describe("5. PDF 打印讲义无遮挡导出", () => {
     it("generatePdfExportStyles 应在打印介质中完全禁用时钟蒙版图层与指针", () => {
       const pdfCss = generatePdfExportStyles()
       expect(pdfCss).toContain(".slides-mask-layer")

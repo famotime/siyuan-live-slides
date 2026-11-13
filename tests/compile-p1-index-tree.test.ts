@@ -158,11 +158,14 @@ describe("P1-1：快速路径与既有路径的等价性与 N+1 消除", () => {
     expect(fastDoc.slides.map((s) => s.frontmatter.layout)).toEqual(
       slowDoc.slides.map((s) => s.frontmatter.layout),
     )
-    expect(fastDoc.fullMarkdown).toBe(slowDoc.fullMarkdown)
+    expect(fastDoc.slides.map((s) => s.rawMarkdown)).toEqual(
+      slowDoc.slides.map((s) => s.rawMarkdown),
+    )
+    const fastMd = fastDoc.slides.map((s) => s.rawMarkdown).join("\n\n---\n\n")
     // 两栏内容均须存在
-    expect(fastDoc.fullMarkdown).toContain("左栏")
-    expect(fastDoc.fullMarkdown).toContain("右栏")
-    expect(fastDoc.fullMarkdown).toContain("正文一")
+    expect(fastMd).toContain("左栏")
+    expect(fastMd).toContain("右栏")
+    expect(fastMd).toContain("正文一")
   })
 
   it("索引缺少实时顶层块（新增）时应按实时数据补齐，且不丢块、不退化为慢路径", async () => {
@@ -171,7 +174,7 @@ describe("P1-1：快速路径与既有路径的等价性与 N+1 消除", () => {
     const deps = makeDeps(staleRows)
     const doc = await new DocumentCompilerService(deps).compile(DOC)
 
-    expect(doc.fullMarkdown).toContain("正文一")
+    expect(doc.slides.map((s) => s.rawMarkdown).join("\n")).toContain("正文一")
     // 新增块为叶子段落，无需重建子树 → 仍只调用 1 次 getChildBlocks
     expect(deps.getChildBlocks).toHaveBeenCalledTimes(1)
   })
@@ -258,10 +261,11 @@ describe("P1-1：索引滞后时预览不得落后一步（回归）", () => {
     const doc = await new DocumentCompilerService(deps).compile(DOC)
 
     // 必须显示实时内容，而不是索引中的旧内容
-    expect(doc.fullMarkdown).toContain("新内容")
-    expect(doc.fullMarkdown).not.toContain("旧内容")
+    const md = doc.slides.map((s) => s.rawMarkdown).join("\n\n---\n\n")
+    expect(md).toContain("新内容")
+    expect(md).not.toContain("旧内容")
     // 容器子块取自索引 → 证明走的是快速路径（回退路径会为 sb1 再调一次 getChildBlocks）
-    expect(doc.fullMarkdown).toContain("左栏")
+    expect(md).toContain("左栏")
     expect(deps.getChildBlocks).toHaveBeenCalledTimes(1)
   })
 
@@ -294,8 +298,9 @@ describe("P1-1：索引滞后时预览不得落后一步（回归）", () => {
 
     const doc = await new DocumentCompilerService(deps).compile(DOC)
 
-    expect(doc.fullMarkdown).toContain("新列表")
-    expect(doc.fullMarkdown).not.toContain("旧列表")
+    const md = doc.slides.map((s) => s.rawMarkdown).join("\n\n---\n\n")
+    expect(md).toContain("新列表")
+    expect(md).not.toContain("旧列表")
     // 只重建滞后的 l1 子树（含其内部列表项容器）；未滞后的 l2 子树不得被遍历
     const calledIds = deps.getChildBlocks.mock.calls.map((c) => c[0])
     expect(calledIds).toContain(DOC)
@@ -328,7 +333,7 @@ describe("P1-1：超级块分栏顺序必须以实时文档序为准（回归：
     }
 
     const doc = await new DocumentCompilerService(deps).compile(DOC)
-    const md = doc.fullMarkdown
+    const md = doc.slides.map((s) => s.rawMarkdown).join("\n\n---\n\n")
 
     const left = md.indexOf("左栏")
     const middle = md.indexOf("中栏")
@@ -363,7 +368,7 @@ describe("P1-1：超级块分栏顺序必须以实时文档序为准（回归：
     }
 
     const doc = await new DocumentCompilerService(deps).compile(DOC)
-    const md = doc.fullMarkdown
+    const md = doc.slides.map((s) => s.rawMarkdown).join("\n\n---\n\n")
     expect(md.indexOf("左栏")).toBeLessThan(md.indexOf("右栏"))
     expect(deps.getChildBlocks.mock.calls.length).toBeGreaterThan(1)
   })

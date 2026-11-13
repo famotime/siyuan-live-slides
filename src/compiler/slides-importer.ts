@@ -2,12 +2,12 @@ import {
   ATTR_DOC_ASPECT_RATIO,
   ATTR_DOC_COLOR_SCHEMA,
   ATTR_DOC_DEFAULT_TRANSITION,
-  ATTR_DOC_HIGHLIGHTER,
   ATTR_DOC_THEME,
   ATTR_PAGE_BACKGROUND,
   ATTR_PAGE_CLASS,
   ATTR_PAGE_IMAGE,
   ATTR_PAGE_LAYOUT,
+  ATTR_PAGE_LAYOUT_RATIO,
   ATTR_PAGE_MASK,
   ATTR_PAGE_MASK_RATIO,
   ATTR_PAGE_MASK_STYLE,
@@ -224,15 +224,28 @@ export function parseSlidesPresentation(
     }
   }
 
+  function normalizeImportedLayout(rawLayout: unknown, targetAttrs: Record<string, string>, frontmatterObj: Record<string, any>) {
+    const layoutStr = String(rawLayout)
+    if (layoutStr === "two-cols-header") {
+      targetAttrs[ATTR_PAGE_LAYOUT] = "cols-header"
+    } else if (layoutStr === "three-cols-header") {
+      targetAttrs[ATTR_PAGE_LAYOUT] = "cols-header"
+      if (!frontmatterObj.layoutRatio && !frontmatterObj["layout-ratio"]) {
+        targetAttrs[ATTR_PAGE_LAYOUT_RATIO] = "1:1:1"
+      }
+    } else {
+      targetAttrs[ATTR_PAGE_LAYOUT] = layoutStr
+    }
+  }
+
   function applyHeadmatter(parsedHead: Record<string, any>) {
     docTitle = parsedHead.title || ""
     if (parsedHead.theme) docRootAttrs[ATTR_DOC_THEME] = String(parsedHead.theme)
     if (parsedHead.aspectRatio) docRootAttrs[ATTR_DOC_ASPECT_RATIO] = String(parsedHead.aspectRatio)
-    if (parsedHead.highlighter) docRootAttrs[ATTR_DOC_HIGHLIGHTER] = String(parsedHead.highlighter)
     if (parsedHead.transition) docRootAttrs[ATTR_DOC_DEFAULT_TRANSITION] = String(parsedHead.transition)
     if (parsedHead.colorSchema) docRootAttrs[ATTR_DOC_COLOR_SCHEMA] = String(parsedHead.colorSchema)
 
-    if (parsedHead.layout) docRootAttrs[ATTR_PAGE_LAYOUT] = String(parsedHead.layout)
+    if (parsedHead.layout) normalizeImportedLayout(parsedHead.layout, docRootAttrs, parsedHead)
     if (parsedHead.background) docRootAttrs[ATTR_PAGE_BACKGROUND] = String(parsedHead.background)
     if (parsedHead.image) docRootAttrs[ATTR_PAGE_IMAGE] = String(parsedHead.image)
     if (parsedHead.class) docRootAttrs[ATTR_PAGE_CLASS] = String(parsedHead.class)
@@ -310,7 +323,7 @@ export function parseSlidesPresentation(
 
       // 构建除 src 外继承给子页面的 frontmatter 控制属性 (如 hide: false 等)
       const inheritedAttrs: Record<string, string> = {}
-      if (frontmatter.layout) inheritedAttrs[ATTR_PAGE_LAYOUT] = String(frontmatter.layout)
+      if (frontmatter.layout) normalizeImportedLayout(frontmatter.layout, inheritedAttrs, frontmatter)
       if (frontmatter.transition) inheritedAttrs[ATTR_PAGE_TRANSITION] = String(frontmatter.transition)
       if (frontmatter.background) inheritedAttrs[ATTR_PAGE_BACKGROUND] = String(frontmatter.background)
       if (frontmatter.image) inheritedAttrs[ATTR_PAGE_IMAGE] = String(frontmatter.image)
@@ -349,7 +362,7 @@ export function parseSlidesPresentation(
     }
 
     const pageAttrs: Record<string, string> = {}
-    if (frontmatter.layout) pageAttrs[ATTR_PAGE_LAYOUT] = String(frontmatter.layout)
+    if (frontmatter.layout) normalizeImportedLayout(frontmatter.layout, pageAttrs, frontmatter)
     if (frontmatter.transition) pageAttrs[ATTR_PAGE_TRANSITION] = String(frontmatter.transition)
     if (frontmatter.background) pageAttrs[ATTR_PAGE_BACKGROUND] = String(frontmatter.background)
     if (frontmatter.image) pageAttrs[ATTR_PAGE_IMAGE] = String(frontmatter.image)

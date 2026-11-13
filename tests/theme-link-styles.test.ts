@@ -1,7 +1,6 @@
 import fs from "node:fs"
 import path from "node:path"
 import { describe, expect, it } from "vitest"
-import { SLIDES_CUSTOM_STYLES_CSS, WorkspaceScaffolder } from "../src/engine/workspace-scaffolder"
 import { buildPrintableHtml } from "../src/export/pdf-exporter"
 import { buildStandaloneHtml } from "../src/export/single-html-exporter"
 import type { ISlidesDocument } from "../src/types/slides-protocol"
@@ -78,11 +77,5 @@ describe("Theme Link & Ref Styles (超链接与块引用 Slidev 规范与主题�
     expect(html).toContain("border-bottom: 1px dashed currentColor")
     expect(html).toContain(".slides-ref-tag, a.slides-ref-tag")
     expect(html).toContain(".slides-block-ref, .pdf-block--ref")
-  })
-
-  it("WorkspaceScaffolder 的 styles/index.css 应包含 Slidev 原生主题色联动样式", () => {
-    expect(SLIDES_CUSTOM_STYLES_CSS).toContain(".slides-ref-tag")
-    expect(SLIDES_CUSTOM_STYLES_CSS).toContain("var(--slides-theme-primary")
-    expect(SLIDES_CUSTOM_STYLES_CSS).toContain("color-mix(in srgb, var(--slides-theme-primary")
   })
 })

@@ -8,7 +8,6 @@ import {
   ATTR_DOC_ASPECT_RATIO,
   ATTR_DOC_COLOR_SCHEMA,
   ATTR_DOC_DEFAULT_TRANSITION,
-  ATTR_DOC_HIGHLIGHTER,
   ATTR_DOC_THEME,
   ATTR_DOC_SPACING,
   ATTR_DOC_BACKGROUND,
@@ -45,7 +44,6 @@ import { getRuntimeSettings } from "../settings"
 export const DEFAULT_SLIDES_CONFIG: ISlidesPluginConfig = {
   theme: "apple-basic",
   aspectRatio: "16/9",
-  highlighter: "shiki",
   defaultTransition: "slide-left",
   colorSchema: "auto",
   spacing: "normal",
@@ -84,11 +82,10 @@ export function parseDocumentConfig(
   return {
     theme: attrs[ATTR_DOC_THEME]?.trim() || DEFAULT_SLIDES_CONFIG.theme,
     aspectRatio: (attrs[ATTR_DOC_ASPECT_RATIO]?.trim() as any) || DEFAULT_SLIDES_CONFIG.aspectRatio,
-    highlighter: (attrs[ATTR_DOC_HIGHLIGHTER]?.trim() as any) || DEFAULT_SLIDES_CONFIG.highlighter,
     defaultTransition: attrs[ATTR_DOC_DEFAULT_TRANSITION]?.trim() || DEFAULT_SLIDES_CONFIG.defaultTransition,
     colorSchema: (attrs[ATTR_DOC_COLOR_SCHEMA]?.trim() as any) || DEFAULT_SLIDES_CONFIG.colorSchema,
     spacing: (attrs[ATTR_DOC_SPACING]?.trim() as any) || DEFAULT_SLIDES_CONFIG.spacing,
-    background: attrs[ATTR_DOC_BACKGROUND]?.trim() || attrs["slides-background"]?.trim() || "",
+    background: attrs[ATTR_DOC_BACKGROUND]?.trim() || "",
     normalizeHeadingSizes: globalSettings.normalizeHeadingSizes,
     showUnorderedListMarkers,
     showOrderedListMarkers,
@@ -245,28 +242,28 @@ export function parseElementAttrs(
     return result
   }
 
-  // 讲稿备注块识别：命中 custom-slides-note 或 slidev-note
-  const noteAttr = attrs[ATTR_ELEM_NOTE] ?? attrs["slides-note"]
+  // 讲稿备注块识别：命中 custom-slides-note
+  const noteAttr = attrs[ATTR_ELEM_NOTE]
   if (noteAttr !== undefined && noteAttr !== null && noteAttr !== "" && noteAttr !== "false" && noteAttr !== "0") {
     result.isNote = true
   }
 
   // 页面背景图识别：命中 custom-slides-role="background" 或 custom-slides-background="true"
-  const roleAttr = attrs[ATTR_ELEM_ROLE] ?? attrs["slides-role"]
-  const bgAttr = attrs[ATTR_PAGE_BACKGROUND] ?? attrs["slides-background"]
+  const roleAttr = attrs[ATTR_ELEM_ROLE]
+  const bgAttr = attrs[ATTR_PAGE_BACKGROUND]
   if (roleAttr === ROLE_BACKGROUND || bgAttr === "true" || bgAttr === "1") {
     result.isBackground = true
   }
 
   // 图左 / 图右图片排版识别：命中 custom-slides-layout="image-left" | "image-right" 或 custom-slides-role
-  const layoutAttr = attrs[ATTR_PAGE_LAYOUT] ?? attrs["slides-layout"]
+  const layoutAttr = attrs[ATTR_PAGE_LAYOUT]
   if (layoutAttr === ROLE_IMAGE_LEFT || layoutAttr === ROLE_IMAGE_RIGHT) {
     result.imageLayout = layoutAttr
   } else if (roleAttr === ROLE_IMAGE_LEFT || roleAttr === ROLE_IMAGE_RIGHT) {
     result.imageLayout = roleAttr
   }
 
-  const clickAttr = attrs[ATTR_ELEM_CLICK] ?? attrs["custom-slides-clicks"] ?? attrs["slides-click"] ?? attrs["slides-clicks"]
+  const clickAttr = attrs[ATTR_ELEM_CLICK]
   if (clickAttr !== undefined && clickAttr !== null) {
     result.clicks = clickAttr.trim()
   }

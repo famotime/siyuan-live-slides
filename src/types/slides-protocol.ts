@@ -6,7 +6,6 @@
 // 1. 文档全局级属性常量 (Document Scope)
 export const ATTR_DOC_THEME = "custom-slides-theme"
 export const ATTR_DOC_ASPECT_RATIO = "custom-slides-aspect-ratio"
-export const ATTR_DOC_HIGHLIGHTER = "custom-slides-highlighter"
 export const ATTR_DOC_DEFAULT_TRANSITION = "custom-slides-default-transition"
 export const ATTR_DOC_COLOR_SCHEMA = "custom-slides-color-schema"
 export const ATTR_DOC_SPACING = "custom-slides-spacing"
@@ -49,7 +48,6 @@ export const ROLE_IMAGE_RIGHT = "image-right"
 export interface ISlidesPluginConfig {
   theme: string
   aspectRatio: "16/9" | "4/3" | "16/10" | string
-  highlighter: "shiki" | "prism"
   defaultTransition: string
   colorSchema: "auto" | "dark" | "light"
   /** 运行时由宿主注入的思源当前明暗模式（不持久化到块属性） */
@@ -222,12 +220,11 @@ export interface ISlidesVirtualPage {
   allBlockIds?: string[]
 }
 
-/** 整个文档解析后生成的虚拟 Slidev 文档模型 */
+/** 整个文档解析后生成的虚拟幻灯片文档模型 */
 export interface ISlidesDocument {
   docId: string
   config: ISlidesPluginConfig
   slides: ISlidesVirtualPage[]
-  fullMarkdown: string
   customThemeCss?: string
 }
 

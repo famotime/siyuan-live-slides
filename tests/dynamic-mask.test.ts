@@ -142,9 +142,7 @@ maskInitial: hidden
       expect(doc.slides[0].frontmatter.mask).toBe("down")
       expect(doc.slides[0].frontmatter.maskRatio).toBe("1:1:1")
       expect(doc.slides[0].frontmatter.maskStyle).toBe("solid")
-      expect(doc.slides[0].rawMarkdown).toContain("mask: down")
-      expect(doc.slides[0].rawMarkdown).toMatch(/maskRatio:\s*["']?1:1:1["']?/)
-      expect(doc.slides[0].rawMarkdown).toContain("maskStyle: solid")
+      expect(doc.slides[0].rawMarkdown).toContain("这是受蒙版保护的第一段")
     })
   })
 

@@ -183,10 +183,8 @@ describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", ()
       expect(vBlock!.rawMarkdown).toContain("<video")
       expect(vBlock!.attributes?.["custom-slides-autoplay"]).toBe("true")
       expect(vBlock!.attributes?.["custom-slides-loop"]).toBe("true")
-
-      // 在生成的 fullMarkdown 中也应包含该视频定义
-      expect(doc.fullMarkdown).toContain("<video")
-      expect(doc.fullMarkdown).toContain("assets/demo.mp4")
+      expect(slide.rawMarkdown).toContain("<video")
+      expect(slide.rawMarkdown).toContain("assets/demo.mp4")
     })
   })
 

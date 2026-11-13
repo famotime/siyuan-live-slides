@@ -1,4 +1,4 @@
-import { showMessage } from "siyuan"
+import { confirm, showMessage } from "siyuan"
 import { deleteBlock, insertBlock, setBlockAttrs } from "@/api"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
 import { extractImageUrl, findFourComponentSuperBlockInPage } from "@/compiler/superblock-scanner"
@@ -185,49 +185,55 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
   async function onClearBlockAttrs() {
     const targetId = ctx.activeBlockId.value
     if (!targetId) return
-    const clearMap = {
-      [ATTR_ELEM_CLICK]: "",
-      [ATTR_ELEM_MOTION]: "",
-      [ATTR_ELEM_SLOT]: "",
-      [ATTR_ELEM_SHIKI_LINES]: "",
-      [ATTR_ELEM_MAX_HEIGHT]: "",
-      [ATTR_ELEM_NOTE]: "",
-      "slides-note": "",
-      [ATTR_PAGE_LAYOUT]: "",
-      [ATTR_PAGE_LAYOUT_RATIO]: "",
-      [ATTR_ELEM_ROLE]: "",
-      [ATTR_PAGE_TRANSITION]: "",
-      [ATTR_PAGE_BACKGROUND]: "",
-      [ATTR_PAGE_IMAGE]: "",
-      [ATTR_VIDEO_AUTOPLAY]: "",
-      [ATTR_VIDEO_LOOP]: "",
-      [ATTR_VIDEO_MUTED]: "",
-      [ATTR_VIDEO_CONTROLS]: "",
-    }
-    syncDomBlockAttrs(targetId, clearMap)
-    await setBlockAttrs(targetId, clearMap)
-    globalDocumentCompiler.clearBlockAttrOverride(targetId)
 
-    if (typeof document !== "undefined") {
-      const activeEl = document.querySelector(`.protyle-wysiwyg [data-node-id="${targetId}"]`) as HTMLElement | null
-      const parentLi = activeEl?.closest('[data-type="NodeListItem"]') as HTMLElement | null
-      const parentLiId = parentLi?.getAttribute("data-node-id")
-      if (parentLiId && parentLiId !== targetId) {
-        syncDomBlockAttrs(parentLiId, clearMap)
-        await setBlockAttrs(parentLiId, clearMap).catch(() => {})
-        globalDocumentCompiler.clearBlockAttrOverride(parentLiId)
+    confirm(
+      "清除块演示属性",
+      "确定要清除当前块的所有演示属性（包含动画、插槽、备注等）吗？此操作无法撤销。",
+      async () => {
+        const clearMap = {
+          [ATTR_ELEM_CLICK]: "",
+          [ATTR_ELEM_MOTION]: "",
+          [ATTR_ELEM_SLOT]: "",
+          [ATTR_ELEM_SHIKI_LINES]: "",
+          [ATTR_ELEM_MAX_HEIGHT]: "",
+          [ATTR_ELEM_NOTE]: "",
+          [ATTR_PAGE_LAYOUT]: "",
+          [ATTR_PAGE_LAYOUT_RATIO]: "",
+          [ATTR_ELEM_ROLE]: "",
+          [ATTR_PAGE_TRANSITION]: "",
+          [ATTR_PAGE_BACKGROUND]: "",
+          [ATTR_PAGE_IMAGE]: "",
+          [ATTR_VIDEO_AUTOPLAY]: "",
+          [ATTR_VIDEO_LOOP]: "",
+          [ATTR_VIDEO_MUTED]: "",
+          [ATTR_VIDEO_CONTROLS]: "",
+        }
+        syncDomBlockAttrs(targetId, clearMap)
+        await setBlockAttrs(targetId, clearMap)
+        globalDocumentCompiler.clearBlockAttrOverride(targetId)
+
+        if (typeof document !== "undefined") {
+          const activeEl = document.querySelector(`.protyle-wysiwyg [data-node-id="${targetId}"]`) as HTMLElement | null
+          const parentLi = activeEl?.closest('[data-type="NodeListItem"]') as HTMLElement | null
+          const parentLiId = parentLi?.getAttribute("data-node-id")
+          if (parentLiId && parentLiId !== targetId) {
+            syncDomBlockAttrs(parentLiId, clearMap)
+            await setBlockAttrs(parentLiId, clearMap).catch(() => {})
+            globalDocumentCompiler.clearBlockAttrOverride(parentLiId)
+          }
+        }
+
+        ctx.activeBlockAttrs.value = {}
+        ctx.elemShikiLines.value = ""
+        ctx.elemMaxHeight.value = ""
+        if (ctx.pageBackground) ctx.pageBackground.value = ""
+        ctx.pageImage.value = ""
+        showMessage("已清除本块演示属性")
+        if (ctx.plugin) {
+          await ctx.plugin.compileCurrentDocument()
+        }
       }
-    }
-
-    ctx.activeBlockAttrs.value = {}
-    ctx.elemShikiLines.value = ""
-    ctx.elemMaxHeight.value = ""
-    if (ctx.pageBackground) ctx.pageBackground.value = ""
-    ctx.pageImage.value = ""
-    showMessage("已清除本块演示属性")
-    if (ctx.plugin) {
-      await ctx.plugin.compileCurrentDocument()
-    }
+    )
   }
 
   async function onInsertDividerBefore() {

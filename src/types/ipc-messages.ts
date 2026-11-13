@@ -33,8 +33,6 @@ export interface IHostToSlidesMessage {
     targetBlockId?: string
     // 全局演示配置 (主题、字体、宽高比)
     config?: ISlidesPluginConfig
-    // 完整 Slidev Markdown (用于 Pro 模式或源码预览)
-    fullMarkdown?: string
     // 是否冻结幻灯片沙箱键盘翻页
     frozen?: boolean
     // 是否全屏状态变更通知

@@ -601,7 +601,7 @@ const isSuperBlock = computed(() => {
 })
 
 const targetPageIndex = computed(() => targetSlide.value?.pageIndex || 1)
-const isNoteBlock = computed(() => Boolean(activeBlockAttrs.value[ATTR_ELEM_NOTE] || activeBlockAttrs.value['slides-note']))
+const isNoteBlock = computed(() => Boolean(activeBlockAttrs.value[ATTR_ELEM_NOTE]))
 
 // 内容块属性绑定
 function isCurrentBlockMainText(): boolean {

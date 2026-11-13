@@ -329,7 +329,7 @@
       <input
         :value="pageImage"
         class="spm-input"
-        placeholder="网络图片 URL (如 https://cover.sli.dev) 或 assets/..."
+        placeholder="网络图片 URL 或思源本地资源路径 (如 assets/...)"
         @input="$emit('update:pageImage', ($event.target as HTMLInputElement).value)"
         @change="$emit('update:pageImage', ($event.target as HTMLInputElement).value)"
       />
@@ -600,7 +600,7 @@ const notePreviewSnippet = computed(() => {
 })
 
 const presetImages = [
-  { label: '默认封面', value: 'https://cover.sli.dev' },
+  { label: '默认封面', value: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=80' },
   { label: '清空配图', value: '' },
 ]
 </script>

@@ -44,7 +44,6 @@ describe("Overview Grid (缩略图总览)", () => {
         rawMarkdown: "# Slide 2",
       },
     ],
-    fullMarkdown: "# Slide 1\n---\n# Slide 2",
   }
 
   describe("1. 布局分组参数化（主渲染路径与缩略图共用）", () => {
@@ -126,10 +125,9 @@ describe("Overview Grid (缩略图总览)", () => {
       expect(bridgeTs).toMatch(/public toggleOverview\(\): void \{\s*this\.postMessage\("TOGGLE_OVERVIEW", \{\}\)\s*\}/)
     })
 
-    it("宿主 o 键应转发总览并移交焦点，Pro 模式提示使用官方原生总览", () => {
+    it("宿主 o 键应转发总览并移交焦点", () => {
       expect(previewTabVue).toMatch(/if \(e\.key === 'o' \|\| e\.key === 'O'\) \{[\s\S]*?onToggleOverview\(\)/)
       expect(previewTabVue).toMatch(/function onToggleOverview\(\) \{[\s\S]*?sandboxBridge\.toggleOverview\(\)[\s\S]*?sandboxIframeRef\.value\?\.focus\(\)/)
-      expect(previewTabVue).toContain("Pro 模式使用官方原生总览：在画面内按 O 呼出")
     })
   })
 

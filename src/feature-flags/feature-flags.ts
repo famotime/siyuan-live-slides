@@ -9,7 +9,6 @@
  * 示例 — 发布一个不带 AI 讲稿、导入与演讲者视图功能的版本：
  *
  *   const FEATURE_FLAGS: FeatureFlagConfig = {
- *     proMode: true,
  *     presenterMode: false,
  *     exportHtml: true,
  *     exportPdf: true,
@@ -19,9 +18,6 @@
  *   }
  *
  * 各开关控制的入口范围：
- *   'proMode'       — Pro 模式（本地 Slidev CLI DevServer）：预览页签内引擎切换
- *                     徽章按钮 + 三条「即现 Pro」命令（导出 slides.md / 探测
- *                     DevServer / 同步至 CLI workspace）
  *   'presenterMode' — 演讲者视图（双屏演讲者控制台）：DocInspectorSection
  *                     「演讲者视图」按钮 + 预览页签演讲者图标（含沙箱放映内的
  *                     呼起请求）+ 命令 slidesPresenterMode。注意：讲稿体系
@@ -46,7 +42,6 @@
 
 /** 可独立开关的功能 key */
 export type FeatureKey =
-  | 'proMode'
   | 'presenterMode'
   | 'exportHtml'
   | 'exportPdf'
@@ -59,9 +54,8 @@ export type FeatureFlagConfig = Record<FeatureKey, boolean>;
 // ── 编辑此对象来控制功能可见性 ──
 
 const FEATURE_FLAGS: FeatureFlagConfig = {
-  proMode: false,
   presenterMode: true,
-  exportHtml: false,
+  exportHtml: true,
   exportPdf: false,
   exportImage: true,
   import: false,

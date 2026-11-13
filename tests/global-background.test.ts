@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { parseDocumentConfig } from "../src/compiler/scope-mapper"
 import { buildSlidesDocument } from "../src/compiler/slides-ast-builder"
-import { CliDevServerBridge } from "../src/engine/cli-devserver-bridge"
 import {
   ATTR_DOC_BACKGROUND,
   ATTR_PAGE_BACKGROUND,
@@ -84,17 +83,5 @@ describe("Global Background (全局演示背景)", () => {
     expect(doc.slides.length).toBe(2)
     expect(doc.slides[0].frontmatter.background).toBe("#ffffff")
     expect(doc.slides[1].frontmatter.background).toBe("/assets/page2-special.png")
-  })
-
-  it("CliDevServerBridge 应在全局 Frontmatter 中注入 background 配置", () => {
-    const bridge = new CliDevServerBridge()
-    const doc = buildSlidesDocument(
-      "doc-devserver",
-      { [ATTR_DOC_BACKGROUND]: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)" },
-      [{ id: "b1", type: "h", content: "Hello", markdown: "# Hello" }],
-    )
-
-    const markdown = bridge.buildStandardSlidevMarkdown(doc)
-    expect(markdown).toContain("background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%)")
   })
 })

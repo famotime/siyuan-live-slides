@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest"
-import { CliDevServerBridge } from "../src/engine/cli-devserver-bridge"
 import { buildPrintableHtml, triggerPdfExport } from "../src/export/pdf-exporter"
 import { buildStandaloneHtml, downloadHtmlFile } from "../src/export/single-html-exporter"
 import { generateStandaloneExportStyles } from "../src/export/standalone-template-styles"
@@ -37,7 +36,6 @@ const dummyDoc: ISlidesDocument = {
       rawMarkdown: "正文内容",
     },
   ],
-  fullMarkdown: "# 主标题\n\n---\n\n正文内容",
 }
 
 describe("Single-File HTML Exporter (单文件离线 HTML 导出)", () => {
@@ -187,7 +185,6 @@ describe("PDF Exporter (高保真 PDF 讲义导出)", () => {
     const richDoc: ISlidesDocument = {
       docId: "rich-1",
       config: dummyDoc.config,
-      fullMarkdown: "",
       slides: [
         {
           pageIndex: 1,
@@ -244,23 +241,5 @@ describe("PDF Exporter (高保真 PDF 讲义导出)", () => {
     const html = buildPrintableHtml(dummyDoc)
     expect(html).toContain("border-bottom: 1px dashed currentColor")
     expect(html).toContain(".slides-ref-tag, a.slides-ref-tag")
-  })
-})
-
-
-describe("CliDevServerBridge (Pro 模式本地 DevServer 桥接)", () => {
-  it("应默认连接 3030 端口并支持配置", () => {
-    const bridge = new CliDevServerBridge()
-    expect(bridge.getUrl()).toBe("http://localhost:3030")
-
-    bridge.setUrl("http://127.0.0.1:4000/")
-    expect(bridge.getUrl()).toBe("http://127.0.0.1:4000")
-  })
-
-  it("在本地无服务时 probeServer 优雅返回 false", async () => {
-    const bridge = new CliDevServerBridge("http://127.0.0.1:59999")
-    const isAlive = await bridge.probeServer(200)
-    expect(isAlive).toBe(false)
-    expect(bridge.isServerConnected()).toBe(false)
   })
 })

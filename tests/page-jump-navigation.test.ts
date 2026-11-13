@@ -90,8 +90,8 @@ describe("Page Jump Navigation (放映中数字+回车跳页)", () => {
       expect(previewTabVue).toMatch(/if \(pageJumpInput\.handleKeydown\(e\)\)\s*\{\s*e\.preventDefault\(\)/)
     })
 
-    it("跳页应按引擎模式分流，并把焦点交还 iframe", () => {
-      expect(previewTabVue).toMatch(/function jumpToPage\(page: number\)[\s\S]*?engineManager\.nativeBridge\.navigateToPage\(page\)[\s\S]*?sandboxBridge\.navigatePage\(page\)/)
+    it("跳页应交由内置沙盒跳转并把焦点交还 iframe", () => {
+      expect(previewTabVue).toMatch(/function jumpToPage\(page: number\)[\s\S]*?sandboxBridge\.navigatePage\(page\)/)
       expect(previewTabVue).toContain("sandboxIframeRef.value?.focus()")
     })
 

@@ -250,14 +250,10 @@ describe("Clover Layout (四叶草 2x2 田字型布局规范测试)", () => {
       const slide = doc.slides[0]
       expect(slide.frontmatter.layout).toBe("clover")
       expect(slide.rawMarkdown).toContain("# 核心四象限模型")
-      expect(slide.rawMarkdown).toContain("::col-1::")
-      expect(slide.rawMarkdown).toContain("重要且紧急")
-      expect(slide.rawMarkdown).toContain("::col-2::")
-      expect(slide.rawMarkdown).toContain("重要不紧急")
-      expect(slide.rawMarkdown).toContain("::col-3::")
-      expect(slide.rawMarkdown).toContain("紧急不重要")
-      expect(slide.rawMarkdown).toContain("::col-4::")
-      expect(slide.rawMarkdown).toContain("不重要不紧急")
+      expect(slide.blocks.find(b => b.slot === "col-1")?.rawMarkdown).toContain("重要且紧急")
+      expect(slide.blocks.find(b => b.slot === "col-2")?.rawMarkdown).toContain("重要不紧急")
+      expect(slide.blocks.find(b => b.slot === "col-3")?.rawMarkdown).toContain("紧急不重要")
+      expect(slide.blocks.find(b => b.slot === "col-4")?.rawMarkdown).toContain("不重要不紧急")
     })
   })
 

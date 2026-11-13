@@ -54,26 +54,6 @@
       </div>
     </div>
 
-    <!-- 0. 设为讲稿备注 (slides-note) -->
-    <div class="spm-card-control">
-      <div class="spm-control-header">
-        <div class="spm-control-title-group">
-          <div class="spm-control-title">
-            <SlidesIcon name="presenter" />
-            <span>设为讲稿备注</span>
-          </div>
-          <span class="spm-control-desc">作为当前页演讲提词，不在幻灯片中渲染</span>
-        </div>
-        <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="isNote ? '取消讲稿备注' : '设为讲稿备注'">
-          <input
-            type="checkbox"
-            :checked="Boolean(isNote)"
-            @change="$emit('toggleNote')"
-          />
-          <span class="spm-switch-slider"></span>
-        </label>
-      </div>
-    </div>
 
     <!-- 0.5 演示图片角色与排版 (Role & Layout) - 仅对图片元素或已打标块显示 -->
     <div v-if="isImage || Boolean(imageRole)" class="spm-card-control">
@@ -404,17 +384,19 @@
 
         <button
           class="spm-btn-action b3-tooltips b3-tooltips__se"
-          :aria-label="effectiveLayout === 'three-cols-header' ? '将当前块属性设为三栏第1栏归属' : '将当前块属性设为双栏左侧归属'"
-          @click="$emit('setTwoColsContrast')"
+          :class="{ 'spm-btn-action--active': Boolean(isNote) }"
+          :aria-label="isNote ? '取消当前块的演示讲稿备注' : '将当前块设为演示讲稿备注'"
+          @click="$emit('toggleNote')"
         >
-          <SlidesIcon name="columns" />
-          <span>{{ effectiveLayout === 'three-cols-header' ? '设为第1栏' : '设为双栏' }}</span>
+          <SlidesIcon name="presenter" />
+          <span>{{ isNote ? '取消备注' : '设为备注' }}</span>
         </button>
 
         <button
-          v-if="hasBlockAttrs"
           class="spm-btn-action spm-btn-danger b3-tooltips b3-tooltips__sw"
-          aria-label="一键移除本块所有 custom-slides 属性"
+          :class="{ 'is-disabled': !hasBlockAttrs }"
+          :disabled="!hasBlockAttrs"
+          :aria-label="hasBlockAttrs ? '一键移除本块所有 custom-slides 演示属性' : '当前块无演示属性'"
           @click="$emit('clearBlockAttrs')"
         >
           <SlidesIcon name="broom" />

@@ -9,7 +9,6 @@ import {
 } from "siyuan"
 import { getBlockAttrs } from "@/api"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
-import { CliDevServerBridge } from "@/engine/cli-devserver-bridge"
 import { isFeatureDisabled } from "@/feature-flags/feature-flags"
 import {
   globalSandboxBridge,
@@ -66,7 +65,6 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
   public currentDocId = ""
   public previewTab: any = null
   public latestCompiledDoc: ISlidesDocument | null = null
-  public cliBridge = new CliDevServerBridge()
   private debounceTimer: number | null = null
   private activeCursorBlockId = ""
   private cancelledCursorBlockId = ""

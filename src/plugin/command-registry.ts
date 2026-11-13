@@ -6,7 +6,6 @@ import {
   setBlockAttrs,
   sql,
   chatAI,
-  putFile,
 } from "@/api"
 import { generateSpeakerNotesWithAI } from "@/ai/notes-generator"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
@@ -18,13 +17,11 @@ import { PropertyManagerBridge } from "@/synergy/property-manager-bridge"
 import { identifyAndNormalizeDocumentNotes } from "@/sync/notes-normalizer"
 import { runAutoAnimationForDocument } from "@/sync/auto-animation-normalizer"
 import type { ISlidesDocument } from "@/types/slides-protocol"
-import type { CliDevServerBridge } from "@/engine/cli-devserver-bridge"
 import { runHeadlessImageExport, resolveDocumentTitle } from "@/export/image-exporter"
 
 export interface ISlidesPluginHost extends Plugin {
   currentDocId: string
   latestCompiledDoc: ISlidesDocument | null
-  cliBridge: CliDevServerBridge
   openBottomPreviewTab(): Promise<void>
   openPresenterTab(): Promise<void>
   compileCurrentDocument(docId?: string): Promise<void>
@@ -274,78 +271,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
     })
   }
 
-  // 12-14. Pro 模式命令组（proMode 开关关闭时整组不注册）
-  if (!isFeatureDisabled("proMode")) {
-    // 12. 导出 Slidev 标准 slides.md 文档 (下载到本地)
-    plugin.addCommand({
-      langKey: "slidesExportCliMd",
-      langText: "即现 Pro: 导出 Slidev 标准 slides.md 文档 (下载到本地)",
-      hotkey: "",
-      enabled: () => true,
-      execute: async () => {
-        if (!plugin.latestCompiledDoc) {
-          await plugin.compileCurrentDocument()
-        }
-        if (!plugin.latestCompiledDoc) {
-          showMessage("请先打开并放映一篇思源笔记文档")
-          return
-        }
-        const ok = plugin.cliBridge.downloadSlidesMd(
-          plugin.latestCompiledDoc,
-          `slides-${plugin.currentDocId || "demo"}.md`,
-        )
-        if (ok) {
-          showMessage("已生成标准 Slidev Markdown 并触发下载，可在本地使用 npx @slidev/cli 运行")
-        }
-      },
-    })
-
-    // 13. 检测本地 Slidev CLI DevServer 状态
-    plugin.addCommand({
-      langKey: "slidesProbeCliDevServer",
-      langText: "即现 Pro: 检测本地 Slidev CLI DevServer 状态 (localhost:3030)",
-      hotkey: "",
-      enabled: () => true,
-      execute: async () => {
-        showMessage("正在探测本地 Slidev CLI DevServer (http://localhost:3030)...")
-        const alive = await plugin.cliBridge.probeServer(1500)
-        if (alive) {
-          showMessage("🟢 本地 Slidev CLI DevServer 运行正常！可直接在浏览器访问 http://localhost:3030")
-        } else {
-          showMessage("⚪ 未检测到运行中的本地 Slidev CLI DevServer (端口 3030 未开启)")
-        }
-      },
-    })
-
-    // 14. 同步 slides.md 至思源工作空间存储目录
-    plugin.addCommand({
-      langKey: "slidesSyncToCliWorkspace",
-      langText: "即现 Pro: 同步 slides.md 至思源工作空间存储目录",
-      hotkey: "",
-      enabled: () => true,
-      execute: async () => {
-        if (!plugin.latestCompiledDoc) {
-          await plugin.compileCurrentDocument()
-        }
-        if (!plugin.latestCompiledDoc) {
-          showMessage("请先打开并放映一篇思源笔记文档")
-          return
-        }
-        const res = await plugin.cliBridge.syncToWorkspaceFile(
-          plugin.latestCompiledDoc,
-          "/data/storage/petal/siyuan-live-slides/slides.md",
-          putFile,
-        )
-        if (res.success) {
-          showMessage(`已成功同步最新 slides.md 至工作空间：${res.path}`)
-        } else {
-          showMessage(`同步失败：${res.error}`)
-        }
-      },
-    })
-  }
-
-  // 15. 导出幻灯片为图片包 (ZIP)（exportImage 开关关闭时不注册）
+  // 12. 导出幻灯片为图片包 (ZIP)（exportImage 开关关闭时不注册）
   if (!isFeatureDisabled("exportImage")) {
     let isCommandExportingImages = false
     plugin.addCommand({

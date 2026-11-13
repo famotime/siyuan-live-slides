@@ -34,11 +34,6 @@ import {
 import { cleanAndTransformInlineKramdown } from "./html-cleaner"
 
 import {
-  stringifyFrontmatter,
-  injectShikiSpotlight,
-  wrapVClickDirective,
-  getMotionDirectives,
-  wrapElementDirectives,
   normalizeMaxHeight,
   extractCleanNoteText,
   getBlockHeadingLevel,
@@ -47,11 +42,6 @@ import {
 } from "./directive-wrapper"
 
 export {
-  stringifyFrontmatter,
-  injectShikiSpotlight,
-  wrapVClickDirective,
-  getMotionDirectives,
-  wrapElementDirectives,
   extractCleanNoteText,
   getBlockHeadingLevel,
   distributeThreeColumns,
@@ -655,11 +645,6 @@ export function buildSlidesDocument(
         return
       }
 
-      // 注入 Shiki 代码高亮行号
-      if (elemAttrs.shikiLines) {
-        rawMd = injectShikiSpotlight(rawMd, elemAttrs.shikiLines)
-      }
-
       // 检查是否为双栏插槽分界标记块: ::right::
       cleanRaw = rawMd.trim()
       const cleanContent = (itemNode.content || "").trim()
@@ -813,32 +798,12 @@ export function buildSlidesDocument(
     processBlockNode(node)
   }
 
-  // 3. 为每一页组装 Slidev 规范 Markdown 片段
+  // 3. 为每一页整理多栏插槽结构与卡片首行清洗，并同步 page.rawMarkdown
   for (let i = 0; i < slides.length; i++) {
     const page = slides[i]
-    const parts: string[] = []
 
-    // 注入 Frontmatter（第一页额外注入全局 config 配置）
-    const fmData = { ...page.frontmatter }
-    if (i === 0) {
-      fmData.theme = config.theme
-      fmData.aspectRatio = config.aspectRatio
-      fmData.highlighter = config.highlighter
-      fmData.transition = page.frontmatter.transition || config.defaultTransition
-    }
-
-    const fmYaml = stringifyFrontmatter(fmData)
-    if (fmYaml) {
-      parts.push(fmYaml)
-    }
-
-    // 组织多栏插槽或常规内容（排除纯分界占位块与纯空白段落）
+    // 组织多栏插槽或常规内容（排除纯分界占位块）
     const contentBlocks = page.blocks.filter(b => b.slot !== "slot-divider-right")
-    const renderBlocks = (list: ISlidesBlockItem[]) =>
-      list
-        .filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
-        .map(b => wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion, b.attributes?.style, b.maxHeight))
-        .join("\n\n")
 
     const cleanFirstListBlock = (list: ISlidesBlockItem[]) => {
       const valid = list.filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
@@ -850,51 +815,6 @@ export function buildSlidesDocument(
         first.rawMarkdown = cleanCardListItemMarkdown(first.rawMarkdown || first.content || "")
         first.content = first.rawMarkdown
       }
-    }
-
-    const renderColList = (colList: ISlidesBlockItem[]) => {
-      if (colList.length === 0) return ""
-      cleanFirstListBlock(colList)
-
-      const parentClicks = colList.find(b => b.parentClicks)?.parentClicks
-
-      if (!parentClicks) {
-        return colList
-          .filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
-          .map(b => wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion, b.attributes?.style, b.maxHeight))
-          .join("\n\n")
-      }
-
-      const resultParts: string[] = []
-      let baseGroup: ISlidesBlockItem[] = []
-
-      const flushBaseGroup = () => {
-        if (baseGroup.length === 0) return
-        const combinedMd = baseGroup
-          .map(b => (b.rawMarkdown || b.content || "").trim())
-          .filter(Boolean)
-          .join("\n\n")
-        if (combinedMd) {
-          resultParts.push(wrapVClickDirective(combinedMd, parentClicks))
-        }
-        baseGroup = []
-      }
-
-      for (const b of colList) {
-        const md = (b.rawMarkdown || b.content || "").trim()
-        if (!md) continue
-
-        const hasSelfClicks = Boolean(b.clicks && b.clicks.trim() !== "")
-        if (!hasSelfClicks) {
-          baseGroup.push(b)
-        } else {
-          flushBaseGroup()
-          resultParts.push(wrapElementDirectives(b.rawMarkdown, b.clicks, b.motion, b.attributes?.style, b.maxHeight))
-        }
-      }
-
-      flushBaseGroup()
-      return resultParts.join("\n\n")
     }
 
     const layout = page.frontmatter.layout || "default"
@@ -966,62 +886,30 @@ export function buildSlidesDocument(
           page.blocks.splice(origIdx, 1, ...decompressedBlocks)
         }
       }
-
-      const headerContent = renderBlocks(headerList)
-      if (headerContent) parts.push(headerContent)
-
-      // 如果是旧版的 two-cols-header 且只有 2 栏，输出 ::left:: 与 ::right:: 保证 Slidev CLI 官方 theme 原生兼容；
-      // 否则输出通用的 ::col-1::, ::col-2::, ..., ::col-N::
-      if (layout === "two-cols-header" && targetCols === 2) {
-        const leftContent = renderColList(cols[0] || [])
-        const rightContent = renderColList(cols[1] || [])
-        if (leftContent) parts.push(`::left::\n\n${leftContent}`)
-        if (rightContent) parts.push(`::right::\n\n${rightContent}`)
-      } else {
-        cols.forEach((colList, colIdx) => {
-          const colContent = renderColList(colList)
-          if (colContent) {
-            parts.push(`::col-${colIdx + 1}::\n\n${colContent}`)
-          }
-        })
-      }
     } else if (layout === "two-cols") {
-      const leftBlocks = contentBlocks.filter(b => b.slot === "left")
       const rightBlocks = contentBlocks.filter(b => b.slot === "right")
-      cleanFirstListBlock(leftBlocks)
-      cleanFirstListBlock(rightBlocks)
-      const leftContent = renderBlocks(leftBlocks.length > 0 ? leftBlocks : contentBlocks.filter(b => b.slot !== "right"))
-      const rightContent = renderBlocks(rightBlocks)
-
-      parts.push(leftContent)
-      if (rightContent) {
-        parts.push(`::right::\n\n${rightContent}`)
+      const defaultBlocks = contentBlocks.filter(b => !b.slot || b.slot === "default")
+      if (rightBlocks.length === 0 && defaultBlocks.length >= 2) {
+        const [, autoRight] = distributeNColumns(defaultBlocks, 2)
+        for (const b of autoRight) {
+          b.slot = "right"
+        }
       }
-    } else {
-      // 常规单栏布局
-      for (const block of contentBlocks) {
-        parts.push(wrapElementDirectives(block.rawMarkdown, block.clicks || block.parentClicks, block.motion, block.attributes?.style, block.maxHeight))
-      }
+      cleanFirstListBlock(contentBlocks.filter(b => b.slot !== "right"))
+      cleanFirstListBlock(contentBlocks.filter(b => b.slot === "right"))
     }
 
-    // 注入演讲者备注 Notes
-    if (page.notes) {
-      parts.push(`<!--\n${page.notes}\n-->`)
-    }
-
-    page.rawMarkdown = parts.join("\n\n").trim()
+    page.rawMarkdown = page.blocks
+      .filter(b => b.slot !== "slot-divider-right")
+      .map(b => b.rawMarkdown || b.content || "")
+      .filter(Boolean)
+      .join("\n\n")
+      .trim()
   }
-
-  // 4. 组装整篇幻灯片的 fullMarkdown
-  const fullMarkdown = slides
-    .map(s => s.rawMarkdown)
-    .filter(Boolean)
-    .join("\n\n---\n\n")
 
   return {
     docId,
     config,
     slides,
-    fullMarkdown,
   }
 }

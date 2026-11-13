@@ -359,10 +359,8 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
 
       expect(page.frontmatter.layout).toBe("cols-header")
       expect(page.rawMarkdown).toContain("# 核心双引擎")
-      expect(page.rawMarkdown).toContain("::col-1::")
-      expect(page.rawMarkdown).toContain("本地引擎\n零网络依赖极速离线放映")
-      expect(page.rawMarkdown).toContain("::col-2::")
-      expect(page.rawMarkdown).toContain("远程协同引擎\n支持多设备实时同步放映")
+      expect(page.blocks.find(b => b.slot === "col-1")?.rawMarkdown).toContain("本地引擎\n零网络依赖极速离线放映")
+      expect(page.blocks.find(b => b.slot === "col-2")?.rawMarkdown).toContain("远程协同引擎\n支持多设备实时同步放映")
 
       // 验证持久化 setBlockAttrs 被调用
       expect(mockSetAttrs).toHaveBeenCalledWith(docId, { [ATTR_PAGE_LAYOUT]: "cols-header" })
@@ -402,9 +400,9 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
 
       expect(page.frontmatter.layout).toBe("cols-header")
       expect(page.rawMarkdown).toContain("# 三阶段战略")
-      expect(page.rawMarkdown).toContain("::col-1::\n\n第一阶段\n打桩稳固基础")
-      expect(page.rawMarkdown).toContain("::col-2::\n\n第二阶段\n全面拓展应用")
-      expect(page.rawMarkdown).toContain("::col-3::\n\n第三阶段\n生态商业繁荣")
+      expect(page.blocks.find(b => b.slot === "col-1")?.rawMarkdown).toContain("第一阶段\n打桩稳固基础")
+      expect(page.blocks.find(b => b.slot === "col-2")?.rawMarkdown).toContain("第二阶段\n全面拓展应用")
+      expect(page.blocks.find(b => b.slot === "col-3")?.rawMarkdown).toContain("第三阶段\n生态商业繁荣")
     })
   })
 
@@ -635,9 +633,9 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
 
       expect(page.frontmatter.layout).toBe("cols-header")
       expect(page.rawMarkdown).toContain("# 战略三支柱")
-      expect(page.rawMarkdown).toContain("::col-1::\n\n支柱一\n组织韧性建设")
-      expect(page.rawMarkdown).toContain("::col-2::\n\n支柱二\n敏捷效能交付")
-      expect(page.rawMarkdown).toContain("::col-3::\n\n支柱三\n全球生态合作")
+      expect(page.blocks.find(b => b.slot === "col-1")?.rawMarkdown).toContain("支柱一\n组织韧性建设")
+      expect(page.blocks.find(b => b.slot === "col-2")?.rawMarkdown).toContain("支柱二\n敏捷效能交付")
+      expect(page.blocks.find(b => b.slot === "col-3")?.rawMarkdown).toContain("支柱三\n全球生态合作")
     })
   })
 
@@ -793,18 +791,14 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       // 1. 验证版式识别为 cols-header
       expect(page.frontmatter.layout).toBe("cols-header")
 
-      // 2. 验证生成的 Slidev Markdown 具备三栏插槽，且三个列表项分别归入独立的栏目
+      // 2. 验证分栏插槽，且三个列表项分别归入独立的栏目
       expect(page.rawMarkdown).toContain("# 个人经历与沉淀")
-      expect(page.rawMarkdown).toContain("::col-1::")
-      expect(page.rawMarkdown).toContain("2024年探索起步\n接触AI与自动化技术")
-      expect(page.rawMarkdown).toContain("::col-2::")
-      expect(page.rawMarkdown).toContain("2025年项目深耕\n荣获创新大赛三等奖")
-      expect(page.rawMarkdown).toContain("::col-3::")
-      expect(page.rawMarkdown).toContain("2026年全面拓展\n进阶资深架构师")
+      expect(page.blocks.find(b => b.slot === "col-1")?.rawMarkdown).toContain("2024年探索起步\n接触AI与自动化技术")
+      expect(page.blocks.find(b => b.slot === "col-2")?.rawMarkdown).toContain("2025年项目深耕\n荣获创新大赛三等奖")
+      expect(page.blocks.find(b => b.slot === "col-3")?.rawMarkdown).toContain("2026年全面拓展\n进阶资深架构师")
 
-      // 3. 验证严禁将前两项合并在 ::left:: 或同一栏内
-      expect(page.rawMarkdown).not.toContain("::left::")
-      expect(page.rawMarkdown).not.toContain("::right::")
+      // 3. 验证严禁将前两项合并在 left / right 栏内
+      expect(page.blocks.some(b => b.slot === "left" || b.slot === "right")).toBe(false)
 
       // 4. 验证持久化 setBlockAttrs 正确写入对应三栏插槽
       expect(mockSetAttrs).toHaveBeenCalledWith(docId, { [ATTR_PAGE_LAYOUT]: "cols-header" })
@@ -878,12 +872,9 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       const page = doc.slides[0]
 
       expect(page.frontmatter.layout).toBe("cols-header")
-      expect(page.rawMarkdown).toContain("::col-1::")
-      expect(page.rawMarkdown).toContain("第一阶段：调研验证")
-      expect(page.rawMarkdown).toContain("::col-2::")
-      expect(page.rawMarkdown).toContain("第二阶段：工程落地")
-      expect(page.rawMarkdown).toContain("::col-3::")
-      expect(page.rawMarkdown).toContain("第三阶段：商业推广")
+      expect(page.blocks.find(b => b.slot === "col-1")?.rawMarkdown).toContain("第一阶段：调研验证")
+      expect(page.blocks.find(b => b.slot === "col-2")?.rawMarkdown).toContain("第二阶段：工程落地")
+      expect(page.blocks.find(b => b.slot === "col-3")?.rawMarkdown).toContain("第三阶段：商业推广")
 
       expect(mockSetAttrs).toHaveBeenCalledWith("item-b-1", { [ATTR_ELEM_SLOT]: "col-1" })
       expect(mockSetAttrs).toHaveBeenCalledWith("item-b-2", { [ATTR_ELEM_SLOT]: "col-2" })
@@ -934,12 +925,9 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       const page = doc.slides[0]
 
       expect(page.frontmatter.layout).toBe("cols-header")
-      expect(page.rawMarkdown).toContain("::col-1::")
-      expect(page.rawMarkdown).toContain("模块 1：网关接入")
-      expect(page.rawMarkdown).toContain("::col-2::")
-      expect(page.rawMarkdown).toContain("模块 2：服务治理")
-      expect(page.rawMarkdown).toContain("::col-3::")
-      expect(page.rawMarkdown).toContain("模块 3：可观测中心")
+      expect(page.blocks.find(b => b.slot === "col-1")?.rawMarkdown).toContain("模块 1：网关接入")
+      expect(page.blocks.find(b => b.slot === "col-2")?.rawMarkdown).toContain("模块 2：服务治理")
+      expect(page.blocks.find(b => b.slot === "col-3")?.rawMarkdown).toContain("模块 3：可观测中心")
 
       expect(mockSetAttrs).toHaveBeenCalledWith("sub-it-1", { [ATTR_ELEM_SLOT]: "col-1" })
       expect(mockSetAttrs).toHaveBeenCalledWith("sub-it-2", { [ATTR_ELEM_SLOT]: "col-2" })
@@ -1007,7 +995,6 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
             rawMarkdown: "## 分栏卡片",
           },
         ],
-        fullMarkdown: "",
         assetMap: {},
       }
 

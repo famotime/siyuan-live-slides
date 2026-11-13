@@ -207,6 +207,47 @@ export COST="\\$100"
     expect(firstSlide.notes).toContain('$VAR')
   })
 
+  it("导入兼容归一化：应将 two-cols-header / three-cols-header 归一化为 cols-header", () => {
+    const md = `---
+theme: default
+---
+
+# 封面
+
+---
+layout: two-cols-header
+---
+
+# 双栏对比
+
+::left::
+左列
+
+::right::
+右列
+
+---
+layout: three-cols-header
+---
+
+# 三栏对比
+
+::col-1::
+一
+
+::col-2::
+二
+
+::col-3::
+三
+`
+    const res = parseSlidesPresentation(md)
+    expect(res.slides).toHaveLength(3)
+    expect(res.slides[1].pageAttrs["custom-slides-layout"]).toBe("cols-header")
+    expect(res.slides[2].pageAttrs["custom-slides-layout"]).toBe("cols-header")
+    expect(res.slides[2].pageAttrs["custom-slides-layout-ratio"]).toBe("1:1:1")
+  })
+
   // 针对真实 slidev-templates 仓库的回归测试
   describe("Real slidev-templates regression tests", () => {
     const templatesDir = "D:\\MyCodingProjects\\slidev-templates"

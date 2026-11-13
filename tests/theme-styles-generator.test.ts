@@ -5,7 +5,7 @@ import {
   generateCompleteSiYuanThemeCss,
   type ISiYuanInlineStylesPayload,
 } from "../src/compiler/theme-styles-generator"
-import { wrapElementDirectives, buildSlidesDocument } from "../src/compiler/slides-ast-builder"
+import { buildSlidesDocument } from "../src/compiler/slides-ast-builder"
 import { cleanAndTransformInlineKramdown } from "../src/compiler/html-cleaner"
 import { convertBlockToHtml } from "../src/export/markdown-renderer"
 import { buildStandaloneHtml } from "../src/export/single-html-exporter"
@@ -96,26 +96,6 @@ describe("Theme Styles Generator (思源笔记调色板与字体样式生成器)
     expect(mergedCss).toContain("/* SiYuan Note Built-in Font & Background Styles for Slidev */")
     expect(mergedCss).toContain("/* Custom Workspace Inline Styles */")
     expect(mergedCss).toContain("--b3-inline-style-custom-red-color: #ff0000;")
-  })
-
-  it("wrapElementDirectives 当传入块级 style 时应生成带 slide-styled-block 和 style 的容器", () => {
-    const rawContent = "## 带有背景色的标题"
-    const styleAttr = "color: var(--b3-font-color1); background-color: var(--b3-font-background2);"
-
-    const wrapped = wrapElementDirectives(rawContent, undefined, undefined, styleAttr)
-    expect(wrapped).toContain(`<div style="${styleAttr}" class="slide-styled-block">`)
-    expect(wrapped).toContain(rawContent)
-    expect(wrapped).toContain("</div>")
-  })
-
-  it("wrapElementDirectives 同时具备 v-click 和 style 时应正确结合 class 和 style", () => {
-    const rawContent = "点击后淡入的卡片"
-    const styleAttr = "background-color: var(--b3-font-background6);"
-
-    const wrapped = wrapElementDirectives(rawContent, "1", undefined, styleAttr)
-    expect(wrapped).toContain(`v-click="1"`)
-    expect(wrapped).toContain(`style="${styleAttr}"`)
-    expect(wrapped).toContain(`class="slide-styled-block"`)
   })
 
   it("convertBlockToHtml 渲染带样式的块时应注入 style 和 slide-styled-block", () => {
@@ -239,8 +219,8 @@ describe("Theme Styles Generator (思源笔记调色板与字体样式生成器)
     // 2. 块本身没有块级 style 属性（不能污染整行标题变成红色或缩小）
     expect(slideBlock.attributes?.style).toBeUndefined()
 
-    // 3. fullMarkdown 也不含有泄漏代码
-    expect(doc.fullMarkdown).not.toContain("{: style=")
+    // 3. 页面原始 Markdown 也不含有泄漏代码
+    expect(doc.slides[0].rawMarkdown).not.toContain("{: style=")
 
     // 4. 导出渲染器 convertBlockToHtml 渲染出的 HTML 正确保留 h3 和 span
     const html = convertBlockToHtml(slideBlock)

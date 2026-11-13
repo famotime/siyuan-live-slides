@@ -124,11 +124,10 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
     } else {
       triggerSaveNotice("取消中...")
       try {
-        await setBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: "", "slides-note": "" })
-        globalDocumentCompiler.setBlockAttrOverride(targetId, { [ATTR_ELEM_NOTE]: "", "slides-note": "" })
-        syncDomBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: "", "slides-note": "" })
+        await setBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: "" })
+        globalDocumentCompiler.setBlockAttrOverride(targetId, { [ATTR_ELEM_NOTE]: "" })
+        syncDomBlockAttrs(targetId, { [ATTR_ELEM_NOTE]: "" })
         delete ctx.activeBlockAttrs.value[ATTR_ELEM_NOTE]
-        delete ctx.activeBlockAttrs.value["slides-note"]
 
         triggerSaveNotice("已取消备注")
         showMessage("已取消讲稿备注")
@@ -356,7 +355,6 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
 
           if (ctx.activeBlockId.value && allNoteBlocks.some(b => b.id === ctx.activeBlockId.value)) {
             delete ctx.activeBlockAttrs.value[ATTR_ELEM_NOTE]
-            delete ctx.activeBlockAttrs.value["slides-note"]
           }
 
           if (ctx.plugin) {

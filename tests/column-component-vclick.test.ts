@@ -342,19 +342,25 @@ describe("表头多栏分栏内组件逐步呈现 (v-click) 级联调度集成�
         aspectRatio: "16/9",
       })
 
-      const rawMd = doc.slides[0].rawMarkdown
+      const blocks = doc.slides[0].blocks
+      const col1Blocks = blocks.filter(b => b.slot === "col-1")
+      const col2Blocks = blocks.filter(b => b.slot === "col-2")
+      expect(col1Blocks.length).toBeGreaterThanOrEqual(3)
+      expect(col2Blocks.length).toBeGreaterThanOrEqual(2)
 
-      // col-1 应该包含：包裹基础层的 <v-click> 以及包裹独立特性的 <v-click>
-      expect(rawMd).toContain("::col-1::")
-      expect(rawMd).toContain("::col-2::")
+      // 验证 col-1 中基础层方案 A 与基础描述共享同一步容器点击组，且独立特性单独触发
+      const schemeABlock = col1Blocks.find(b => b.rawMarkdown.includes("方案 A"))
+      const baseDescBlock = col1Blocks.find(b => b.rawMarkdown.includes("基础描述"))
+      const singleFeatBlock = col1Blocks.find(b => b.rawMarkdown.includes("独立特性"))
+      expect(schemeABlock?.parentClicks).toBe("+1")
+      expect(baseDescBlock?.parentClicks).toBe("+1")
+      expect(singleFeatBlock?.clicks).toBe("+1")
 
-      // 验证 col-1 中基础层方案 A 与描述在同组出现
-      expect(rawMd).toMatch(/<v-click>[\s\S]*方案 A[\s\S]*基础描述[\s\S]*<\/v-click>/)
-      // 验证独立特性单独包裹
-      expect(rawMd).toMatch(/<v-click>[\s\S]*独立特性[\s\S]*<\/v-click>/)
-
-      // 验证 col-2 方案 B 直接裸露输出（无容器 v-click 包裹），而独立亮点有 <v-click>
-      expect(rawMd).toMatch(/方案 B[\s\S]*<v-click>[\s\S]*独立亮点[\s\S]*<\/v-click>/)
+      // 验证 col-2 方案 B 无 clicks，而独立亮点有 clicks
+      const schemeBBlock = col2Blocks.find(b => b.rawMarkdown.includes("方案 B"))
+      const highlightBlock = col2Blocks.find(b => b.rawMarkdown.includes("独立亮点"))
+      expect(schemeBBlock?.clicks).toBeUndefined()
+      expect(highlightBlock?.clicks).toBe("+1")
     })
 
     it("顶层 NodeList 在 cols-header 下自动展开列表项与其多组件，且子组件不受大纲标题 clicks 污染", () => {
@@ -500,10 +506,8 @@ describe("表头多栏分栏内组件逐步呈现 (v-click) 级联调度集成�
       expect(getBlockClickStatus(imgBlock!, 0, plan)).toBe("v-click-hidden")
       expect(getBlockClickStatus(titleBlock!, 1, plan)).toBe("v-click-visible")
       expect(getBlockClickStatus(imgBlock!, 1, plan)).toBe("v-click-visible")
-
-      // Slidev 原生 Markdown 格式化：两者必须合并在同一个 <v-click> 内
-      const rawMd = page.rawMarkdown
-      expect(rawMd).toMatch(/<v-click>[\s\S]*核心特性说明[\s\S]*封面图[\s\S]*<\/v-click>/)
+      expect(page.rawMarkdown).toContain("核心特性说明")
+      expect(page.rawMarkdown).toContain("封面图")
     })
 
     it("场景 4.2：用户光标在首行文本闪烁时设置 +1（思源将属性写入首行段落），图片未单独配置时，文本与图片依然必须在第 1 步共同出现", () => {

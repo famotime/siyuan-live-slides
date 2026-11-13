@@ -1,4 +1,16 @@
-import { DEFAULT_STARTER_SNIPPETS } from "../engine/workspace-scaffolder"
+export const DEFAULT_STARTER_SNIPPETS: Record<string, string> = {
+  "snippets/external.ts": `// Inside ./snippets/external.ts
+// #region snippet
+export function emptyArray<T>(length: number) {
+  return Array.from<T>({ length })
+}
+// #endregion snippet
+
+export function sayHello() {
+  console.log('Hello from snippets/external.ts')
+}
+`,
+}
 
 export interface IImportSnippetOptions {
   virtualFiles?: Record<string, string>
