@@ -4,6 +4,7 @@ import type {
   THostToSlidesAction,
 } from "../types/ipc-messages"
 import type { ISlidesPluginConfig, ISlidesVirtualPage } from "../types/slides-protocol"
+import { detectSiYuanThemeMode } from "../utils/color-utils"
 
 export type TSlideChangedHandler = (
   currentPage: number,
@@ -125,9 +126,15 @@ export class WebSandboxBridge {
     fullMarkdown?: string,
     customThemeCss?: string,
   ): void {
+    const resolvedConfig = config
+      ? {
+          ...config,
+          hostThemeMode: config.hostThemeMode || detectSiYuanThemeMode(),
+        }
+      : undefined
     this.postMessage("UPDATE_SLIDES", {
       slides,
-      config,
+      config: resolvedConfig,
       fullMarkdown,
       customThemeCss,
     })

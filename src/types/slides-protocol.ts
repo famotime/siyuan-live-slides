@@ -52,6 +52,8 @@ export interface ISlidesPluginConfig {
   highlighter: "shiki" | "prism"
   defaultTransition: string
   colorSchema: "auto" | "dark" | "light"
+  /** 运行时由宿主注入的思源当前明暗模式（不持久化到块属性） */
+  hostThemeMode?: "light" | "dark"
   spacing?: "compact" | "normal" | "loose"
   background?: string
   normalizeHeadingSizes?: boolean

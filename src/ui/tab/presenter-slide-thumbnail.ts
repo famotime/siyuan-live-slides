@@ -214,7 +214,7 @@ export function renderPresenterSlideThumbnailHtml(
     .join(" ")
 
   const styleParts: string[] = []
-  const bg = (fm.background || "").trim()
+  const bg = (fm.background || config.background || "").trim()
   if (bg) {
     if (/^(?:https?:\/\/|\/|data:|assets\/|\.\/assets\/)/i.test(bg)) {
       const normalizedBg = bg.startsWith("assets/")

@@ -40,24 +40,46 @@
           <span class="spm-control-desc">全篇幻灯片统一底色、微渐变或壁纸</span>
         </div>
       </div>
-      <div class="spm-quick-chips">
+      <div class="spm-bg-swatch-grid">
         <button
           v-for="bg in presetBackgrounds"
-          :key="bg.value"
-          class="spm-chip"
-          :class="{ active: (docBackground || '') === bg.value }"
+          :key="bg.value || '__default__'"
+          type="button"
+          class="spm-bg-swatch b3-tooltips b3-tooltips__n"
+          :class="{ active: (docBackground || '') === bg.value, 'is-default': !bg.value }"
+          :aria-label="bg.desc"
           @click="$emit('update:docBackground', bg.value)"
         >
-          {{ bg.label }}
+          <span class="spm-bg-swatch-preview" :style="getBgPreviewStyle(bg.value)">
+            <span class="spm-bg-swatch-aa" :class="'is-' + bg.mode">Aa</span>
+            <span v-if="(docBackground || '') === bg.value" class="spm-bg-swatch-check">✓</span>
+          </span>
+          <span class="spm-bg-swatch-label">{{ bg.label }}</span>
         </button>
       </div>
-      <input
-        :value="docBackground || ''"
-        class="spm-input"
-        placeholder="自定义颜色 (#1e1e24)、渐变或资源路径 (assets/...)"
-        @input="$emit('update:docBackground', ($event.target as HTMLInputElement).value)"
-        @change="$emit('update:docBackground', ($event.target as HTMLInputElement).value)"
-      />
+      <div class="spm-bg-input-row">
+        <span
+          class="spm-bg-input-preview"
+          :style="getBgPreviewStyle(docBackground || '')"
+          aria-hidden="true"
+        ></span>
+        <input
+          :value="docBackground || ''"
+          class="spm-input spm-bg-input"
+          placeholder="自定义：#hex / gradient / assets/..."
+          @input="$emit('update:docBackground', ($event.target as HTMLInputElement).value)"
+          @change="$emit('update:docBackground', ($event.target as HTMLInputElement).value)"
+        />
+        <button
+          v-if="docBackground"
+          type="button"
+          class="spm-bg-input-clear b3-tooltips b3-tooltips__nw"
+          aria-label="清除并恢复默认背景"
+          @click="$emit('update:docBackground', '')"
+        >
+          ✕
+        </button>
+      </div>
     </div>
 
     <!-- 画幅比例 -->
@@ -448,15 +470,83 @@ function onWebServeUrlChange(val: string) {
 }
 
 const presetBackgrounds = [
-  { label: '默认', value: '' },
-  { label: '极简白', value: '#ffffff' },
-  { label: '柔和灰', value: '#f8fafc' },
-  { label: '暗黑 #1e1e24', value: '#1e1e24' },
-  { label: '极夜 #0f172a', value: '#0f172a' },
-  { label: '雅蓝渐变', value: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' },
-  { label: '极光渐变', value: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)' },
-  { label: '晨雾渐变', value: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)' },
-]
+  {
+    label: '默认',
+    value: '',
+    mode: 'auto',
+    desc: '跟随当前幻灯片主题与明暗模式自适应底色',
+  },
+  {
+    label: '极简白',
+    value: '#ffffff',
+    mode: 'light',
+    desc: '纯净高对比白底 (#ffffff)，自动切换深色文字',
+  },
+  {
+    label: '暖羊皮',
+    value: '#f5efe6',
+    mode: 'light',
+    desc: '温润护眼米棕纸张底 (#f5efe6)，自动切换深色文字',
+  },
+  {
+    label: '晴空薄荷',
+    value: 'linear-gradient(135deg, #e0f2fe 0%, #dcfce7 100%)',
+    mode: 'light',
+    desc: '清透天蓝至薄荷微渐变，自动切换深色文字',
+  },
+  {
+    label: '晨曦微光',
+    value: 'linear-gradient(135deg, #fef3c7 0%, #fce7f3 100%)',
+    mode: 'light',
+    desc: '柔和暖金至淡樱微渐变，自动切换深色文字',
+  },
+  {
+    label: '曜石炭黑',
+    value: '#18181b',
+    mode: 'dark',
+    desc: '中性深炭黑 (#18181b)，区别于默认深海蓝底',
+  },
+  {
+    label: '松墨深绿',
+    value: '#0d2621',
+    mode: 'dark',
+    desc: '沉稳森林墨绿 (#0d2621)，自动切换浅色文字',
+  },
+  {
+    label: '极光紫青',
+    value: 'linear-gradient(135deg, #1e1b4b 0%, #0f3d4c 100%)',
+    mode: 'dark',
+    desc: '深邃靛紫至极光青渐变，自动切换浅色文字',
+  },
+  {
+    label: '深空靛蓝',
+    value: 'linear-gradient(135deg, #172554 0%, #312e81 100%)',
+    mode: 'dark',
+    desc: '科技深空蓝至暮色紫渐变，自动切换浅色文字',
+  },
+] as const
+
+function getBgPreviewStyle(bgValue: string): Record<string, string> {
+  const bg = (bgValue || '').trim()
+  if (!bg) {
+    return {
+      background: 'linear-gradient(135deg, #f8fafc 50%, #090d16 50%)',
+    }
+  }
+  if (/^(?:https?:\/\/|\/|data:|assets\/|\.\/assets\/)/i.test(bg)) {
+    const normalized = bg.startsWith('assets/')
+      ? `/${bg}`
+      : bg.startsWith('./assets/')
+        ? bg.slice(1)
+        : bg
+    return {
+      backgroundImage: `url("${normalized}")`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+    }
+  }
+  return { background: bg }
+}
 
 defineProps<{
   docTheme: string

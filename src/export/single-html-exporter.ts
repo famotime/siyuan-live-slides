@@ -2,6 +2,7 @@ import type { ISlidesDocument } from "../types/slides-protocol"
 import { escapeHtml } from "./markdown-renderer"
 import { generateStandaloneExportStyles } from "./standalone-template-styles"
 import { getStandaloneClientRuntimeScript } from "./standalone-client-runtime"
+import { resolveEffectiveColorSchema } from "../utils/color-utils"
 
 export interface IStandaloneHtmlOptions {
   title?: string
@@ -62,8 +63,12 @@ export function buildStandaloneHtml(
     })
   }
 
+  const effectiveTheme = resolveEffectiveColorSchema(doc.config.colorSchema)
   const slidesJson = JSON.stringify(processedSlides)
-  const configJson = JSON.stringify(doc.config)
+  const configJson = JSON.stringify({
+    ...doc.config,
+    hostThemeMode: doc.config.hostThemeMode || effectiveTheme,
+  })
 
   return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -84,8 +89,8 @@ ${generateStandaloneExportStyles(options?.customInlineStyles)}
   </script>
 </head>
 <body>
-  <div id="app" data-normalize-headings="${doc.config.normalizeHeadingSizes ? 'true' : 'false'}" data-hide-unordered-markers="${doc.config.showUnorderedListMarkers === false ? 'true' : 'false'}" data-hide-ordered-markers="${doc.config.showOrderedListMarkers === false ? 'true' : 'false'}">
-    <div class="slide-viewport slides-theme-${doc.config.theme || 'default'}" id="viewport" data-slides-theme="${doc.config.theme || 'default'}">
+  <div id="app" data-theme="${effectiveTheme}" data-normalize-headings="${doc.config.normalizeHeadingSizes ? 'true' : 'false'}" data-hide-unordered-markers="${doc.config.showUnorderedListMarkers === false ? 'true' : 'false'}" data-hide-ordered-markers="${doc.config.showOrderedListMarkers === false ? 'true' : 'false'}">
+    <div class="slide-viewport slides-theme-${doc.config.theme || 'default'}" id="viewport" data-theme="${effectiveTheme}" data-slides-theme="${doc.config.theme || 'default'}">
       <div class="slide-content" id="slide-container"></div>
     </div>
     <div class="controls">

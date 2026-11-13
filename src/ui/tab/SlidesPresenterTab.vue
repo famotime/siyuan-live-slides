@@ -91,7 +91,7 @@
               <div
                 class="presenter-thumb-viewport slide-viewport"
                 :class="'slides-theme-' + activeSlidesTheme"
-                :data-theme="activeColorSchema"
+                :data-theme="currentSlideThemeMode"
                 :data-slides-theme="activeSlidesTheme"
                 :data-normalize-headings="isNormalizeHeadings ? 'true' : 'false'"
                 :data-hide-unordered-markers="isHideUnorderedMarkers ? 'true' : 'false'"
@@ -143,7 +143,7 @@
               <div
                 class="presenter-thumb-viewport slide-viewport"
                 :class="'slides-theme-' + activeSlidesTheme"
-                :data-theme="activeColorSchema"
+                :data-theme="nextSlideThemeMode"
                 :data-slides-theme="activeSlidesTheme"
                 :data-normalize-headings="isNormalizeHeadings ? 'true' : 'false'"
                 :data-hide-unordered-markers="isHideUnorderedMarkers ? 'true' : 'false'"
@@ -320,6 +320,12 @@ import {
   parseSlideAspectRatio,
   renderPresenterSlideThumbnailHtml,
 } from './presenter-slide-thumbnail'
+import {
+  detectSiYuanThemeMode,
+  isLightColor,
+  observeSiYuanThemeMode,
+  resolveEffectiveColorSchema,
+} from '@/utils/color-utils'
 
 const plugin = inject<Plugin>('plugin')
 const sandboxBridge = inject<WebSandboxBridge>('sandboxBridge', new WebSandboxBridge())
@@ -339,9 +345,10 @@ const nextPreviewRef = ref<HTMLElement | null>(null)
 const currentContainerSize = ref({ width: 0, height: 0 })
 const nextContainerSize = ref({ width: 0, height: 0 })
 
+const hostThemeMode = ref<'light' | 'dark'>(detectSiYuanThemeMode())
 const slideAspect = computed(() => parseSlideAspectRatio(docConfig.value?.aspectRatio))
 const activeSlidesTheme = computed(() => docConfig.value?.theme || 'default')
-const activeColorSchema = computed(() => (docConfig.value?.colorSchema === 'light' ? 'light' : 'dark'))
+const activeColorSchema = computed(() => resolveEffectiveColorSchema(docConfig.value?.colorSchema, hostThemeMode.value))
 const isNormalizeHeadings = computed(() => Boolean(docConfig.value?.normalizeHeadingSizes))
 const isHideUnorderedMarkers = computed(() => docConfig.value?.showUnorderedListMarkers === false)
 const isHideOrderedMarkers = computed(() => docConfig.value?.showOrderedListMarkers === false)
@@ -468,6 +475,25 @@ const nextSlide = computed(() => {
   if (currentPage.value >= slides.value.length) return null
   return slides.value[currentPage.value] || null
 })
+
+function resolveSlideThemeMode(slide?: ISlidesVirtualPage | null): 'light' | 'dark' {
+  const fm = slide?.frontmatter
+  if (fm?.colorSchema === 'light') return 'light'
+  if (fm?.colorSchema === 'dark') return 'dark'
+  if (typeof fm?.class === 'string') {
+    const classes = fm.class.split(/\s+/)
+    if (classes.includes('light')) return 'light'
+    if (classes.includes('dark')) return 'dark'
+  }
+  const bg = fm?.background || docConfig.value?.background
+  const isLight = isLightColor(bg)
+  if (isLight === true) return 'light'
+  if (isLight === false) return 'dark'
+  return activeColorSchema.value
+}
+
+const currentSlideThemeMode = computed(() => resolveSlideThemeMode(currentSlide.value))
+const nextSlideThemeMode = computed(() => resolveSlideThemeMode(nextSlide.value))
 
 const currentMaxStep = computed(() => {
   if (currentSlide.value) {
@@ -704,8 +730,13 @@ function onWheel(e: WheelEvent) {
 }
 
 let unbindSlideChanged: (() => void) | null = null
+let unobserveTheme: (() => void) | null = null
 
 onMounted(() => {
+  hostThemeMode.value = detectSiYuanThemeMode()
+  unobserveTheme = observeSiYuanThemeMode((mode) => {
+    hostThemeMode.value = mode
+  })
   timerStartedAt = Date.now()
   accumulatedElapsedMs = 0
   timerInterval = window.setInterval(updateTimerTick, 500)
@@ -745,6 +776,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (unobserveTheme) {
+    unobserveTheme()
+    unobserveTheme = null
+  }
   if (timerInterval) {
     window.clearInterval(timerInterval)
     timerInterval = null

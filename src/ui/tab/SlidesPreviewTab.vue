@@ -227,6 +227,7 @@ import { getRuntimeSettings, buildSiYuanWebUrl } from '@/settings'
 import { isFeatureEnabled } from '@/feature-flags/feature-flags'
 import { createPageJumpInput, isEditableTarget } from './page-jump-input'
 import type { ISlidesDocument } from '@/types/slides-protocol'
+import { detectSiYuanThemeMode, observeSiYuanThemeMode } from '@/utils/color-utils'
 
 const plugin = inject<Plugin>('plugin')
 const sandboxBridge = inject<WebSandboxBridge>('sandboxBridge', new WebSandboxBridge())
@@ -315,6 +316,7 @@ let unbindNativePageChanged: (() => void) | null = null
 let unbindOpenPeekDrawer: (() => void) | null = null
 let unbindToggleFullscreen: (() => void) | null = null
 let unbindOpenPresenter: (() => void) | null = null
+let unobserveTheme: (() => void) | null = null
 let latestDoc: ISlidesDocument | null = null
 
 onMounted(() => {
@@ -415,9 +417,24 @@ onMounted(() => {
   if (typeof document !== 'undefined') {
     document.addEventListener('fullscreenchange', onFullscreenChange)
   }
+
+  unobserveTheme = observeSiYuanThemeMode((mode) => {
+    if (latestDoc && engineMode.value === 'web-sandbox') {
+      sandboxBridge.updateSlides(
+        latestDoc.slides,
+        { ...latestDoc.config, hostThemeMode: mode },
+        latestDoc.fullMarkdown,
+        latestDoc.customThemeCss,
+      )
+    }
+  })
 })
 
 onUnmounted(() => {
+  if (unobserveTheme) {
+    unobserveTheme()
+    unobserveTheme = null
+  }
   if (typeof document !== 'undefined') {
     document.removeEventListener('fullscreenchange', onFullscreenChange)
   }
@@ -709,7 +726,12 @@ defineExpose({
     if (engineMode.value === 'pro-cli') {
       engineManager.scaffolder.scaffold(doc, putFile).catch(() => {})
     } else {
-      sandboxBridge.updateSlides(doc.slides, doc.config, doc.fullMarkdown, doc.customThemeCss)
+      sandboxBridge.updateSlides(
+        doc.slides,
+        { ...doc.config, hostThemeMode: detectSiYuanThemeMode() },
+        doc.fullMarkdown,
+        doc.customThemeCss,
+      )
     }
 
     if (plugin && typeof (plugin as any).updatePreviewTabHeader === 'function') {

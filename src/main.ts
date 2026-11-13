@@ -9,6 +9,7 @@ import { globalCompileConsumerGate } from './sync/compile-consumer-gate'
 import type { ICompileConsumerHost } from './sync/compile-consumer-gate'
 import type { IActiveBlockInfo, ISlidesDocument } from './types/slides-protocol'
 import { isFeatureDisabled } from './feature-flags/feature-flags'
+import { detectSiYuanThemeMode } from './utils/color-utils'
 
 export const globalSandboxBridge = new WebSandboxBridge()
 
@@ -107,7 +108,10 @@ function broadcastDocToRemoteSandbox(doc: ISlidesDocument): void {
     channel.postMessage({
       type: 'SYNC_SLIDES',
       slides: doc.slides || [],
-      config: doc.config || {},
+      config: {
+        ...(doc.config || {}),
+        hostThemeMode: doc.config?.hostThemeMode || detectSiYuanThemeMode(),
+      },
     })
     channel.close()
   } catch (err) {
