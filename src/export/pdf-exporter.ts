@@ -32,7 +32,7 @@ export function buildPrintableHtml(doc: ISlidesDocument, options?: IPdfExportOpt
   const showNotes = options?.showNotes ?? true
   const showPageNumber = options?.showPageNumber ?? true
   const globalTheme = options?.theme || resolveEffectiveColorSchema(doc.config.colorSchema)
-  const slidesTheme = doc.config.theme || "default"
+  const slidesTheme = doc.config.theme || "apple-basic"
 
   const slidesHtml = doc.slides.map((slide, idx) => {
     const layout = slide.frontmatter.layout || "default"

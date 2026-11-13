@@ -682,7 +682,8 @@ export class WorkspaceScaffolder {
   /**
    * 生成最小化标准的 Slidev package.json 配置
    */
-  public generatePackageJson(theme = "default"): string {
+  public generatePackageJson(theme = "apple-basic"): string {
+    const slidevTheme = theme === "tech" ? "default" : theme
     const pkg = {
       name: "siyuan-live-slides-pro-workspace",
       type: "module",
@@ -696,8 +697,8 @@ export class WorkspaceScaffolder {
         "@slidev/theme-default": "latest",
       },
     }
-    if (theme && theme !== "default") {
-      (pkg.dependencies as any)[`@slidev/theme-${theme}`] = "latest"
+    if (slidevTheme && slidevTheme !== "default") {
+      (pkg.dependencies as any)[`@slidev/theme-${slidevTheme}`] = "latest"
     }
     return JSON.stringify(pkg, null, 2)
   }

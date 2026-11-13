@@ -6,6 +6,7 @@ import { generatePdfExportStyles } from "../src/export/pdf-template-styles"
 import { buildPrintableHtml } from "../src/export/pdf-exporter"
 import { buildStandaloneHtml } from "../src/export/single-html-exporter"
 import { getSlideRenderingSection } from "../src/export/standalone-runtime-sections/slide-rendering"
+import { parseDocumentConfig } from "../src/compiler/scope-mapper"
 import { detectSiYuanThemeMode, isLightColor, resolveEffectiveColorSchema } from "../src/utils/color-utils"
 import { ISlidesDocument } from "../src/types/slides-protocol"
 
@@ -14,9 +15,9 @@ describe("Theme Design Systems & Contrast Guard (三大主题鲜明特色与亮�
   const indexHtml = fs.readFileSync(indexHtmlPath, "utf-8")
 
   describe("1. 内置沙箱播放端 (public/slides-client/index.html)", () => {
-    it("应包含默认科技主题 (Default) 的专属翡翠/青蓝渐变、科技指示条与 WCAG AAA 高对比度", () => {
-      expect(indexHtml).toContain('[data-slides-theme="default"]')
-      expect(indexHtml).toContain('.slides-theme-default')
+    it("应包含科技主题 (Tech) 的专属翡翠/青蓝渐变、科技指示条与 WCAG AAA 高对比度", () => {
+      expect(indexHtml).toContain('[data-slides-theme="tech"]')
+      expect(indexHtml).toContain('.slides-theme-tech')
       // 亮色深渊墨蓝黑 (17:1 对比度)
       expect(indexHtml).toContain('--slide-text: #0f172a;')
       // 暗色纯净钛白 (18:1 对比度)
@@ -74,7 +75,7 @@ describe("Theme Design Systems & Contrast Guard (三大主题鲜明特色与亮�
     const css = generateStandaloneExportStyles()
 
     it("离线单文件导出包应完整同步三大主题设计规范与对比度", () => {
-      expect(css).toContain('.slides-theme-default')
+      expect(css).toContain('.slides-theme-tech')
       expect(css).toContain('--slide-text: #0f172a;')
       expect(css).toContain('.slides-theme-seriph')
       expect(css).toContain('--slide-bg: #fcfbf7;')
@@ -123,7 +124,7 @@ describe("Theme Design Systems & Contrast Guard (三大主题鲜明特色与亮�
 
     it("generatePdfExportStyles 应注入针对三大主题的打印调色板与排版细节", () => {
       const pdfCss = generatePdfExportStyles()
-      expect(pdfCss).toContain('.pdf-slide-page.slides-theme-default')
+      expect(pdfCss).toContain('.pdf-slide-page.slides-theme-tech')
       expect(pdfCss).toContain('.pdf-slide-page.slides-theme-seriph')
       expect(pdfCss).toContain('.pdf-slide-page.slides-theme-apple-basic')
       expect(pdfCss).toContain('color: #059669;')
@@ -133,7 +134,7 @@ describe("Theme Design Systems & Contrast Guard (三大主题鲜明特色与亮�
     it("buildPrintableHtml 应对亮色渐变背景（如晨雾渐变）自适应切换为 theme-light", () => {
       const mockDoc: ISlidesDocument = {
         config: {
-          theme: "default",
+          theme: "tech",
           aspectRatio: "16/9",
           background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
         },
@@ -327,7 +328,7 @@ describe("Theme Design Systems & Contrast Guard (三大主题鲜明特色与亮�
         title: "Auto Theme Deck",
         fullMarkdown: "# Title",
         config: {
-          theme: "default",
+          theme: "tech",
           aspectRatio: "16/9",
           defaultTransition: "none",
           colorSchema: "auto",
@@ -386,6 +387,110 @@ describe("Theme Design Systems & Contrast Guard (三大主题鲜明特色与亮�
       const presenterTabSource = fs.readFileSync(presenterTabPath, "utf-8")
       expect(presenterTabSource).toContain("resolveEffectiveColorSchema")
       expect(presenterTabSource).toContain("observeSiYuanThemeMode")
+    })
+  })
+
+  describe("7. 封面 + 背景图 + 默认主题标题防浮雕黑芯与实际文字颜色保留", () => {
+    it("沙箱播放端、单文件 HTML 导出与演讲者模式在存在背景图或显式文字色时均应取消透明渐变镂空", () => {
+      const standaloneCss = generateStandaloneExportStyles()
+      const presenterTabSource = fs.readFileSync(path.resolve(__dirname, "../src/ui/tab/SlidesPresenterTab.vue"), "utf-8")
+
+      // 沙箱播放端：背景图与显式文字色保护
+      expect(indexHtml).toContain('.slide-viewport[style*="background-image"] .layout-cover h1')
+      expect(indexHtml).toContain('.slides-theme-tech .layout-cover .slide-block[style^="color:"] h1')
+      expect(indexHtml).toContain('.layout-cover h1 span[style^="color:"]')
+      expect(indexHtml).toContain('-webkit-text-fill-color: initial !important;')
+      expect(indexHtml).toContain('-webkit-text-fill-color: currentColor !important;')
+
+      // 独立 HTML 导出端：背景图（含总览卡片）与显式文字色保护
+      expect(standaloneCss).toContain('.slide-viewport[style*="background-image"] .layout-cover h1')
+      expect(standaloneCss).toContain('.slides-overview-canvas[style*="background-image"].layout-cover h1')
+      expect(standaloneCss).toContain('.slides-theme-tech .layout-cover .slide-block[style^="color:"] h1')
+      expect(standaloneCss).toContain('-webkit-text-fill-color: initial !important;')
+      expect(standaloneCss).toContain('-webkit-text-fill-color: currentColor !important;')
+
+      // 演讲者模式：缩略图背景图与显式文字色保护
+      expect(presenterTabSource).toContain('&.slides-theme-tech .slide-content[style*="background-image"].layout-cover h1')
+      expect(presenterTabSource).toContain('&.slides-theme-tech .layout-cover .slide-block[style^="color:"] h1')
+      expect(presenterTabSource).toContain('-webkit-text-fill-color: initial !important;')
+      expect(presenterTabSource).toContain('-webkit-text-fill-color: currentColor !important;')
+    })
+  })
+
+  describe("8. 幻灯片主题可视化预览小卡片 (DocInspectorSection.vue & index.scss)", () => {
+    it("DocInspectorSection 与全局样式应为三大主题提供 3 列可视化预览小卡片与激活角标", () => {
+      const docInspectorSource = fs.readFileSync(path.resolve(__dirname, "../src/ui/components/DocInspectorSection.vue"), "utf-8")
+      const scssSource = fs.readFileSync(path.resolve(__dirname, "../src/index.scss"), "utf-8")
+
+      expect(docInspectorSource).toContain("spm-theme-card-grid")
+      expect(docInspectorSource).toContain("spm-theme-card-preview")
+      expect(docInspectorSource).toContain("theme-preview--")
+      expect(docInspectorSource).toContain("spm-theme-card-label")
+      expect(docInspectorSource).toContain("极简 apple")
+      expect(docInspectorSource).toContain("科技 tech")
+      expect(docInspectorSource).toContain("优雅 seriph")
+
+      const appleIdx = docInspectorSource.indexOf("value: 'apple-basic'")
+      const techIdx = docInspectorSource.indexOf("value: 'tech'")
+      const seriphIdx = docInspectorSource.indexOf("value: 'seriph'")
+      expect(appleIdx).toBeGreaterThan(-1)
+      expect(techIdx).toBeGreaterThan(appleIdx)
+      expect(seriphIdx).toBeGreaterThan(techIdx)
+      expect(parseDocumentConfig(null).theme).toBe("apple-basic")
+
+      expect(scssSource).toContain(".spm-theme-card-grid")
+      expect(scssSource).toContain(".spm-theme-card-preview")
+      expect(scssSource).toContain("&.theme-preview--tech")
+      expect(scssSource).toContain("&.theme-preview--seriph")
+      expect(scssSource).toContain("&.theme-preview--apple-basic")
+      expect(scssSource).toContain("rgba(16, 185, 129, 0.22)")
+    })
+
+    it("内容页顶部标题在四大渲染端均按三套主题差异化呈现，排除 cover/center/fact 并兼顾背景图与自定义块色", () => {
+      const indexHtml = fs.readFileSync(path.resolve(__dirname, "../public/slides-client/index.html"), "utf-8")
+      const standaloneCss = generateStandaloneExportStyles()
+      const presenterSource = fs.readFileSync(path.resolve(__dirname, "../src/ui/tab/SlidesPresenterTab.vue"), "utf-8")
+      const pdfCss = generatePdfExportStyles()
+
+      // 1. Live Web Sandbox (index.html)
+      expect(indexHtml).toContain(".slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(indexHtml).toContain("two-cols-left")
+      expect(indexHtml).toContain("image-left-content")
+      expect(indexHtml).toContain("image-right-content")
+      expect(indexHtml).toContain("slides-mask-body-container")
+      expect(indexHtml).toContain("slides-page-first-heading-block")
+      expect(indexHtml).toContain("font-weight: 800 !important;")
+      expect(indexHtml).not.toContain("width: 44px;")
+      expect(indexHtml).toContain("color: inherit !important;")
+
+      // 2. Standalone Single-HTML Export
+      expect(standaloneCss).toContain(".slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(standaloneCss).toContain(".slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(standaloneCss).toContain(".slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(standaloneCss).not.toContain("width: 44px;")
+      expect(standaloneCss).toContain(".pdf-col--left > .slide-block:first-child h3")
+      expect(standaloneCss).toContain(".image-left-content > .slide-block:first-child h1")
+      expect(standaloneCss).toContain(".slide-viewport[style*=\"background-image\"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(standaloneCss).toContain(".slide-viewport .slide-block[style^=\"color:\"] h1")
+      expect(standaloneCss).toContain("color: inherit !important;")
+
+      // 3. Presenter Tab Thumbnail Preview
+      expect(presenterSource).toContain("&.slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(presenterSource).toContain("&.slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(presenterSource).toContain("&.slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(presenterSource).not.toContain("width: 44px;")
+      expect(presenterSource).toContain(".slide-content[style*=\"background-image\"]:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(presenterSource).toContain(".slide-block[style^=\"color:\"] h1")
+
+      // 4. PDF Print Export
+      expect(pdfCss).toContain(".slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(pdfCss).toContain(".slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(pdfCss).toContain(".slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(pdfCss).not.toContain("width: 44px;")
+      expect(pdfCss).toContain("color: #059669;")
+      expect(pdfCss).toContain("color: #b45309;")
+      expect(pdfCss).toContain(".pdf-slide-page[style*=\"background-image\"]:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(pdfCss).toContain(".pdf-slide-page .pdf-block[style^=\"color:\"] h1")
     })
   })
 })

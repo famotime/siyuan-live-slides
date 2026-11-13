@@ -15,16 +15,31 @@
           <span class="spm-control-desc">全局幻灯片视觉设计范式</span>
         </div>
       </div>
-      <div class="spm-segmented-group">
+      <div class="spm-theme-card-grid">
         <button
-          v-for="item in themeOptions"
+          v-for="(item, idx) in themeOptions"
           :key="item.value"
-          class="spm-segmented-item b3-tooltips b3-tooltips__s"
-          :class="{ active: docTheme === item.value }"
+          type="button"
+          class="spm-theme-card b3-tooltips"
+          :class="[
+            'is-' + item.value,
+            idx === 0 ? 'b3-tooltips__ne' : idx === themeOptions.length - 1 ? 'b3-tooltips__nw' : 'b3-tooltips__n',
+            { active: docTheme === item.value },
+          ]"
           :aria-label="item.desc"
           @click="$emit('update:docTheme', item.value)"
         >
-          {{ item.label }}
+          <span class="spm-theme-card-preview" :class="'theme-preview--' + item.value" aria-hidden="true">
+            <span class="spm-theme-card-canvas">
+              <span class="spm-theme-card-title">Aa</span>
+              <span class="spm-theme-card-lines">
+                <span class="spm-theme-card-line is-primary"></span>
+                <span class="spm-theme-card-line is-secondary"></span>
+              </span>
+            </span>
+            <span v-if="docTheme === item.value" class="spm-bg-swatch-check">✓</span>
+          </span>
+          <span class="spm-theme-card-label">{{ item.label }}</span>
         </button>
       </div>
     </div>
@@ -424,19 +439,19 @@ const isAdvancedExpanded = ref(false)
 
 const themeOptions = [
   {
-    value: 'default',
-    label: '默认 default',
-    desc: '官方默认科技风：现代无衬线排版与清新代码语法高亮，通用汇报与技术分享首选',
+    value: 'apple-basic',
+    label: '极简 apple',
+    desc: '苹果发布会极简风：大字号、高对比度与极致留白，适合产品发布、方案演讲与纯粹视觉呈现',
+  },
+  {
+    value: 'tech',
+    label: '科技 tech',
+    desc: '科技风：现代无衬线排版、Emerald 绿青双色指示与清新代码语法高亮，通用汇报与技术分享首选',
   },
   {
     value: 'seriph',
     label: '优雅 seriph',
     desc: '典雅学术衬线风：书卷学术质感、衬线字体典雅庄重，适合学术论文、人文讲座与深度阅读',
-  },
-  {
-    value: 'apple-basic',
-    label: '极简 apple',
-    desc: '苹果发布会极简风：大字号、高对比度与极致留白，适合产品发布、方案演讲与纯粹视觉呈现',
   },
 ]
 

@@ -20,15 +20,15 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     }
 
     /* 1. 默认科技主题 Default (Modern Tech / Digital Geek) */
-    [data-slides-theme="default"],
-    .slides-theme-default {
+    [data-slides-theme="tech"],
+    .slides-theme-tech {
       --slide-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
       --slide-accent: #10b981;
       --slide-accent-secondary: #06b6d4;
     }
-    [data-theme="light"][data-slides-theme="default"],
-    [data-theme="light"] .slides-theme-default,
-    .slide-viewport[data-theme="light"].slides-theme-default,
+    [data-theme="light"][data-slides-theme="tech"],
+    [data-theme="light"] .slides-theme-tech,
+    .slide-viewport[data-theme="light"].slides-theme-tech,
     .slide-viewport[data-theme="light"] {
       --slide-bg: #f8fafc;
       --slide-text: #0f172a;
@@ -41,9 +41,9 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       --slide-card-border: rgba(148, 163, 184, 0.35);
       --slide-card-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
     }
-    [data-theme="dark"][data-slides-theme="default"],
-    [data-theme="dark"] .slides-theme-default,
-    .slide-viewport[data-theme="dark"].slides-theme-default,
+    [data-theme="dark"][data-slides-theme="tech"],
+    [data-theme="dark"] .slides-theme-tech,
+    .slide-viewport[data-theme="dark"].slides-theme-tech,
     .slide-viewport:not([data-theme="light"]) {
       --slide-bg: #090d16;
       --slide-text: #f1f5f9;
@@ -61,8 +61,8 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     .slide-viewport[data-theme="light"] {
       color: var(--slide-text) !important;
     }
-    [data-theme="dark"] .slide-viewport[data-theme="light"].slides-theme-default,
-    .slide-viewport[data-theme="light"].slides-theme-default {
+    [data-theme="dark"] .slide-viewport[data-theme="light"].slides-theme-tech,
+    .slide-viewport[data-theme="light"].slides-theme-tech {
       --slide-text: #0f172a !important;
       --slide-text-secondary: #475569 !important;
       --slide-accent: #059669 !important;
@@ -84,8 +84,8 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     .slide-viewport[data-theme="dark"] {
       color: var(--slide-text) !important;
     }
-    [data-theme="light"] .slide-viewport[data-theme="dark"].slides-theme-default,
-    .slide-viewport[data-theme="dark"].slides-theme-default {
+    [data-theme="light"] .slide-viewport[data-theme="dark"].slides-theme-tech,
+    .slide-viewport[data-theme="dark"].slides-theme-tech {
       --slide-text: #f1f5f9 !important;
       --slide-text-secondary: #94a3b8 !important;
       --slide-accent: #10b981 !important;
@@ -102,8 +102,8 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       --slide-text-secondary: #86868b !important;
       --slide-accent: #2997ff !important;
     }
-    .slides-theme-default .layout-cover h1,
-    .slides-theme-default .layout-cover .slide-block h1 {
+    .slides-theme-tech .layout-cover h1,
+    .slides-theme-tech .layout-cover .slide-block h1 {
       font-size: 3.8rem !important;
       font-weight: 800 !important;
       line-height: 1.15 !important;
@@ -113,39 +113,71 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       -webkit-background-clip: text !important;
       -webkit-text-fill-color: transparent !important;
     }
-    .slides-theme-default .layout-cover h2,
-    .slides-theme-default .layout-cover .slide-block h2 {
+    .slides-theme-tech .layout-cover h2,
+    .slides-theme-tech .layout-cover .slide-block h2 {
       font-size: 1.85rem !important;
       font-weight: 600 !important;
       color: var(--slide-text-secondary) !important;
       margin-bottom: 12px !important;
     }
-    .slides-theme-default .layout-cover p,
-    .slides-theme-default .layout-cover .slide-block p {
+    .slides-theme-tech .layout-cover p,
+    .slides-theme-tech .layout-cover .slide-block p {
       font-size: 1.45rem !important;
       line-height: 1.5 !important;
       color: var(--slide-text-secondary) !important;
     }
-    /* 默认科技风：非 cover 页首标题带科技 Accent 垂直指示条 */
-    .slides-theme-default:not(.layout-cover) .layout-header-section h1,
-    .slides-theme-default:not(.layout-cover) .layout-header-section h2,
-    .slides-theme-default:not(.layout-cover) .cols-header-top h1,
-    .slides-theme-default:not(.layout-cover) .cols-header-top h2,
-    .slides-theme-default:not(.layout-cover) .two-cols-header-top h1,
-    .slides-theme-default:not(.layout-cover) .two-cols-header-top h2,
-    .slides-theme-default:not(.layout-cover) .slide-content > .slide-block:first-child h1,
-    .slides-theme-default:not(.layout-cover) .slide-content > .slide-block:first-child h2 {
+    /* 默认科技风：内容页顶部标题带 Accent 垂直指示条与柔和横向高亮底衬 */
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h1,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h2,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h3,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h1,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h2,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h3,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h1,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h2,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h3,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h1,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h2,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h3,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child h1,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child h2,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child h3,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h1,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h2,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h3,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child h1,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child h2,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child h3,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .slide-block:first-child h1,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .slide-block:first-child h2,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .slide-block:first-child h3,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child h1,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child h2,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child h3,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child h1,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child h2,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child h3,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .slide-block:first-child h1,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .slide-block:first-child h2,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .slide-block:first-child h3,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .slide-block:first-child h1,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .slide-block:first-child h2,
+    .slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .slide-block:first-child h3 {
+      color: var(--slide-accent);
       border-left: 4px solid var(--slide-accent);
+      padding: 4px 14px;
       padding-left: 14px;
+      background: linear-gradient(90deg, color-mix(in srgb, var(--slide-accent) 13%, transparent), transparent 76%);
+      border-radius: 0 6px 6px 0;
       letter-spacing: -0.015em;
     }
-    .slides-theme-default blockquote {
+    .slides-theme-tech blockquote {
       border-left: 3px solid var(--slide-accent) !important;
       background: color-mix(in srgb, var(--slide-accent) 8%, transparent) !important;
       border-radius: 4px;
       padding: 12px 18px !important;
     }
-    .slides-theme-default pre {
+    .slides-theme-tech pre {
       border: 1px solid var(--slide-code-border) !important;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18) !important;
       border-radius: 8px !important;
@@ -213,19 +245,94 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       font-style: italic;
       color: var(--slide-text-secondary);
     }
-    /* 优雅学术风：非 cover 页首标题带典雅细下划线 */
-    .slides-theme-seriph:not(.layout-cover) .layout-header-section h1,
-    .slides-theme-seriph:not(.layout-cover) .layout-header-section h2,
-    .slides-theme-seriph:not(.layout-cover) .cols-header-top h1,
-    .slides-theme-seriph:not(.layout-cover) .cols-header-top h2,
-    .slides-theme-seriph:not(.layout-cover) .two-cols-header-top h1,
-    .slides-theme-seriph:not(.layout-cover) .two-cols-header-top h2,
-    .slides-theme-seriph:not(.layout-cover) .slide-content > .slide-block:first-child h1,
-    .slides-theme-seriph:not(.layout-cover) .slide-content > .slide-block:first-child h2 {
+    /* 优雅衬线风：内容页顶部标题学术双线眉批 */
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h1,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h2,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h3,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h1,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h2,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h3,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h1,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h2,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h3,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h1,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h2,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h3,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child h1,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child h2,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child h3,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h1,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h2,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h3,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child h1,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child h2,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child h3,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .slide-block:first-child h1,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .slide-block:first-child h2,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .slide-block:first-child h3,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child h1,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child h2,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child h3,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child h1,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child h2,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child h3,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .slide-block:first-child h1,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .slide-block:first-child h2,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .slide-block:first-child h3,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .slide-block:first-child h1,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .slide-block:first-child h2,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .slide-block:first-child h3 {
+      display: block;
+      position: relative;
+      color: var(--slide-accent);
       border-bottom: 1.5px solid color-mix(in srgb, var(--slide-accent) 45%, transparent);
-      padding-bottom: 6px;
-      display: inline-block;
-      margin-bottom: 12px;
+      padding-bottom: 10px;
+      margin-bottom: 14px;
+    }
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h1::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h2::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h3::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h1::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h2::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h3::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h1::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h2::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h3::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h1::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h2::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h3::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child h1::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child h2::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child h3::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h1::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h2::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h3::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child h1::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child h2::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child h3::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .slide-block:first-child h1::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .slide-block:first-child h2::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .slide-block:first-child h3::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child h1::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child h2::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child h3::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child h1::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child h2::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child h3::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .slide-block:first-child h1::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .slide-block:first-child h2::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .slide-block:first-child h3::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .slide-block:first-child h1::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .slide-block:first-child h2::after,
+    .slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .slide-block:first-child h3::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 3px;
+      height: 1.5px;
+      pointer-events: none;
+      background: linear-gradient(90deg, var(--slide-accent) 0%, color-mix(in srgb, var(--slide-accent) 35%, transparent) 50%, transparent 92%);
     }
     .slides-theme-seriph blockquote {
       position: relative;
@@ -313,17 +420,47 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       font-weight: 500 !important;
       opacity: 1 !important;
     }
-    /* 极简发布会风：绝对去装饰化，特大字重力量感，无边框与线条 */
-    .slides-theme-apple-basic:not(.layout-cover) .layout-header-section h1,
-    .slides-theme-apple-basic:not(.layout-cover) .layout-header-section h2,
-    .slides-theme-apple-basic:not(.layout-cover) .cols-header-top h1,
-    .slides-theme-apple-basic:not(.layout-cover) .cols-header-top h2,
-    .slides-theme-apple-basic:not(.layout-cover) .two-cols-header-top h1,
-    .slides-theme-apple-basic:not(.layout-cover) .two-cols-header-top h2,
-    .slides-theme-apple-basic:not(.layout-cover) .slide-content > .slide-block:first-child h1,
-    .slides-theme-apple-basic:not(.layout-cover) .slide-content > .slide-block:first-child h2 {
+    /* 极简发布会风：彻底去装饰化，高字重、紧凑字距与充沛留白 */
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h1,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h2,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h3,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h1,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h2,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h3,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h1,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h2,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h3,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h1,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h2,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h3,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child h1,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child h2,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child h3,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h1,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h2,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h3,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child h1,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child h2,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child h3,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .slide-block:first-child h1,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .slide-block:first-child h2,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .slide-block:first-child h3,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child h1,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child h2,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child h3,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child h1,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child h2,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child h3,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .slide-block:first-child h1,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .slide-block:first-child h2,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .slide-block:first-child h3,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .slide-block:first-child h1,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .slide-block:first-child h2,
+    .slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .slide-block:first-child h3 {
       border: none !important;
+      background: none !important;
       padding: 0 !important;
+      margin-bottom: 16px !important;
       letter-spacing: -0.04em !important;
       font-weight: 800 !important;
     }
@@ -365,6 +502,120 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     .slide-viewport[style*="background-image"] .pdf-col {
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
+    }
+
+    /* 封面页在背景图或显式设置文字颜色时，禁用透明渐变镂空，避免与 text-shadow 叠加成浮雕黑芯并遵循主题及实际文字色 */
+    .slide-viewport[style*="background-image"] .layout-cover h1,
+    .slide-viewport[style*="background-image"] .layout-cover .slide-block h1,
+    .slides-overview-canvas[style*="background-image"].layout-cover h1,
+    .slides-overview-canvas[style*="background-image"].layout-cover .slide-block h1,
+    .slides-overview-canvas[style*="background-image"] .layout-cover h1,
+    .slides-overview-canvas[style*="background-image"] .layout-cover .slide-block h1,
+    .slides-theme-tech .layout-cover .slide-block[style^="color:"] h1,
+    .slides-theme-tech .layout-cover .slide-block[style*=" color:"] h1,
+    .slides-theme-tech .layout-cover .slide-block[style*=";color:"] h1,
+    .slides-theme-tech .layout-cover h1[style^="color:"],
+    .slides-theme-tech .layout-cover h1[style*=" color:"],
+    .slides-theme-tech .layout-cover h1[style*=";color:"] {
+      background: none !important;
+      -webkit-background-clip: initial !important;
+      -webkit-text-fill-color: initial !important;
+    }
+    .layout-cover h1 span[style^="color:"],
+    .layout-cover h1 span[style*=" color:"],
+    .layout-cover h1 span[style*=";color:"],
+    .layout-cover h1 font[color] {
+      -webkit-background-clip: initial !important;
+      -webkit-text-fill-color: currentColor !important;
+    }
+    /* 当内容页存在背景图时，顶部标题回退至高对比正文字色并配合局部半透明底衬，同时保留主题装饰 */
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h1,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h2,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h3,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h1,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h2,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h3,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h1,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h2,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h3,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h1,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h2,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h3,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child h1,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child h2,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child h3,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h1,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h2,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h3,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child h1,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child h2,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child h3,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .slide-block:first-child h1,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .slide-block:first-child h2,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .slide-block:first-child h3,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child h1,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child h2,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child h3,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child h1,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child h2,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child h3,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .slide-block:first-child h1,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .slide-block:first-child h2,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .slide-block:first-child h3,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .slide-block:first-child h1,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .slide-block:first-child h2,
+    .slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .slide-block:first-child h3 {
+      color: var(--slide-text);
+    }
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h1,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h2,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h3,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h1,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h2,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h3,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h1,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h2,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h3,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h1,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h2,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h3,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child h1,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child h2,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child h3,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h1,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h2,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h3,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child h1,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child h2,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child h3,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .slide-block:first-child h1,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .slide-block:first-child h2,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .slide-block:first-child h3,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child h1,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child h2,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child h3,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child h1,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child h2,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child h3,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .slide-block:first-child h1,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .slide-block:first-child h2,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .slide-block:first-child h3,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .slide-block:first-child h1,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .slide-block:first-child h2,
+    .slides-theme-tech.slide-viewport[style*="background-image"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .slide-block:first-child h3 {
+      background: linear-gradient(90deg, color-mix(in srgb, var(--slide-bg) 42%, transparent), transparent 82%);
+    }
+    /* 用户显式块级前景色优先于主题及背景图默认回退色 */
+    .slide-viewport .slide-block[style^="color:"] h1,
+    .slide-viewport .slide-block[style*=" color:"] h1,
+    .slide-viewport .slide-block[style*=";color:"] h1,
+    .slide-viewport .slide-block[style^="color:"] h2,
+    .slide-viewport .slide-block[style*=" color:"] h2,
+    .slide-viewport .slide-block[style*=";color:"] h2,
+    .slide-viewport .slide-block[style^="color:"] h3,
+    .slide-viewport .slide-block[style*=" color:"] h3,
+    .slide-viewport .slide-block[style*=";color:"] h3 {
+      color: inherit !important;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }

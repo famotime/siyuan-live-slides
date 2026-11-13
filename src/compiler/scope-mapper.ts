@@ -43,7 +43,7 @@ import { getRuntimeSettings } from "../settings"
 
 /** 默认全局配置 */
 export const DEFAULT_SLIDES_CONFIG: ISlidesPluginConfig = {
-  theme: "default",
+  theme: "apple-basic",
   aspectRatio: "16/9",
   highlighter: "shiki",
   defaultTransition: "slide-left",

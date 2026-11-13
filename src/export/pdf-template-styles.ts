@@ -96,31 +96,90 @@ export function generatePdfExportStyles(options?: {
     }
 
     /* 1. 默认科技主题 Default (Modern Tech) */
-    .pdf-slide-page.slides-theme-default {
+    .pdf-slide-page.slides-theme-tech {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
     }
-    .pdf-slide-page.slides-theme-default.theme-light {
+    .pdf-slide-page.slides-theme-tech.theme-light {
       background: #f8fafc;
       color: #0f172a;
     }
-    .pdf-slide-page.slides-theme-default.theme-dark {
+    .pdf-slide-page.slides-theme-tech.theme-dark {
       background: #090d16;
       color: #f1f5f9;
     }
-    .slides-theme-default .pdf-block h1 { color: #059669; }
-    .theme-dark.slides-theme-default .pdf-block h1 { color: #10b981; }
-    .slides-theme-default:not(.layout-cover) .layout-header-section h1,
-    .slides-theme-default:not(.layout-cover) .layout-header-section h2,
-    .slides-theme-default:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h1,
-    .slides-theme-default:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h2 {
+    .slides-theme-tech .pdf-block h1 { color: #059669; }
+    .theme-dark.slides-theme-tech .pdf-block h1 { color: #10b981; }
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h1,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h2,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h3,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h1,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h2,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h3,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h1,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h2,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h3,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h1,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h2,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h3,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h1,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h2,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h3,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h1,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h2,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h3,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h1,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h2,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h3,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h1,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h2,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h3,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h1,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h2,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h3,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h1,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h2,
+    .slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h3 {
+      color: #059669;
       border-left: 4px solid #059669;
-      padding-left: 12px;
+      padding: 4px 14px;
+      padding-left: 14px;
+      background: linear-gradient(90deg, rgba(5, 150, 105, 0.13), transparent 76%);
+      border-radius: 0 6px 6px 0;
+      letter-spacing: -0.015em;
     }
-    .theme-dark.slides-theme-default:not(.layout-cover) .layout-header-section h1,
-    .theme-dark.slides-theme-default:not(.layout-cover) .layout-header-section h2,
-    .theme-dark.slides-theme-default:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h1,
-    .theme-dark.slides-theme-default:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h2 {
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h1,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h2,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h3,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h1,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h2,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h3,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h1,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h2,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h3,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h1,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h2,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h3,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h1,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h2,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h3,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h1,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h2,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h3,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h1,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h2,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h3,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h1,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h2,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h3,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h1,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h2,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h3,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h1,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h2,
+    .theme-dark.slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h3 {
+      color: #10b981;
       border-left-color: #10b981;
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.14), transparent 76%);
     }
 
     /* 2. 优雅衬线主题 Seriph (Editorial Academic) */
@@ -138,19 +197,146 @@ export function generatePdfExportStyles(options?: {
     }
     .slides-theme-seriph .pdf-block h1 { color: #b45309; }
     .theme-dark.slides-theme-seriph .pdf-block h1 { color: #f59e0b; }
-    .slides-theme-seriph:not(.layout-cover) .layout-header-section h1,
-    .slides-theme-seriph:not(.layout-cover) .layout-header-section h2,
-    .slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h1,
-    .slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h2 {
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h1,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h2,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h3,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h1,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h2,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h3,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h1,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h2,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h3,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h1,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h2,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h3,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h1,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h2,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h3,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h1,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h2,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h3,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h1,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h2,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h3,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h1,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h2,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h3,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h1,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h2,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h3,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h1,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h2,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h3 {
+      display: block;
+      position: relative;
+      color: #b45309;
       border-bottom: 1.5px solid rgba(180, 83, 9, 0.45);
-      padding-bottom: 6px;
-      display: inline-block;
+      padding-bottom: 10px;
+      margin-bottom: 14px;
     }
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .layout-header-section h1,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .layout-header-section h2,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h1,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h2 {
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h1::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h2::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h3::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h1::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h2::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h3::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h1::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h2::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h3::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h1::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h2::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h3::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h1::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h2::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h3::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h1::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h2::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h3::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h1::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h2::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h3::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h1::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h2::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h3::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h1::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h2::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h3::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h1::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h2::after,
+    .slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h3::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 3px;
+      height: 1.5px;
+      pointer-events: none;
+      background: linear-gradient(90deg, #b45309 0%, rgba(180, 83, 9, 0.35) 50%, transparent 92%);
+    }
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h1,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h2,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h3,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h1,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h2,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h3,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h1,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h2,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h3,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h1,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h2,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h3,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h1,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h2,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h3,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h1,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h2,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h3,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h1,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h2,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h3,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h1,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h2,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h3,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h1,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h2,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h3,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h1,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h2,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h3 {
+      color: #f59e0b;
       border-bottom-color: rgba(245, 158, 11, 0.45);
+    }
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h1::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h2::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h3::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h1::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h2::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h3::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h1::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h2::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h3::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h1::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h2::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h3::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h1::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h2::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h3::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h1::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h2::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h3::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h1::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h2::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h3::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h1::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h2::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h3::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h1::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h2::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h3::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h1::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h2::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h3::after {
+      background: linear-gradient(90deg, #f59e0b 0%, rgba(245, 158, 11, 0.35) 50%, transparent 92%);
     }
 
     /* 3. 极简发布会主题 Apple Basic (Swiss Minimal) */
@@ -175,6 +361,119 @@ export function generatePdfExportStyles(options?: {
       color: #ffffff;
       font-weight: 800;
       letter-spacing: -0.035em;
+    }
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h1,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h2,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h3,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h1,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h2,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h3,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h1,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h2,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h3,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h1,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h2,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h3,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h1,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h2,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h3,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h1,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h2,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h3,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h1,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h2,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h3,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h1,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h2,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h3,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h1,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h2,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h3,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h1,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h2,
+    .slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h3 {
+      border: none !important;
+      background: none !important;
+      padding: 0 !important;
+      margin-bottom: 16px !important;
+      letter-spacing: -0.04em !important;
+      font-weight: 800 !important;
+    }
+    /* 页面存在背景图时，内容页顶部标题回退高对比文字与局部衬底，保留用户块级前景色 */
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h1,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h2,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h3,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h1,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h2,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top h3,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h1,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h2,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top h3,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h1,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h2,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top h3,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h1,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h2,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h3,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h1,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h2,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-page-first-heading-block h3,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h1,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h2,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h3,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h1,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h2,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .pdf-block:first-child h3,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h1,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h2,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h3,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h1,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h2,
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .slides-mask-body-container > .pdf-block:first-child h3 {
+      color: #0f172a;
+      text-shadow: 0 1px 3px rgba(255, 255, 255, 0.85);
+    }
+    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h1,
+    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h2,
+    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h3,
+    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h1,
+    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h2,
+    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h3,
+    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h1,
+    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h2,
+    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-col--left > .pdf-block:first-child h3,
+    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h1,
+    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h2,
+    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-content-col > .pdf-block:first-child h3 {
+      color: #f8fafc;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+    }
+    .slides-theme-tech.pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h1,
+    .slides-theme-tech.pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h2,
+    .slides-theme-tech.pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h3,
+    .slides-theme-tech.pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h1,
+    .slides-theme-tech.pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h2,
+    .slides-theme-tech.pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h3 {
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.55), transparent 82%);
+    }
+    .slides-theme-tech.theme-dark.pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h1,
+    .slides-theme-tech.theme-dark.pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h2,
+    .slides-theme-tech.theme-dark.pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section h3,
+    .slides-theme-tech.theme-dark.pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h1,
+    .slides-theme-tech.theme-dark.pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h2,
+    .slides-theme-tech.theme-dark.pdf-slide-page[style*="background-image"]:not(.layout-cover):not(.layout-center):not(.layout-fact) .pdf-slide-body > .pdf-block:first-child h3 {
+      background: linear-gradient(90deg, rgba(15, 23, 42, 0.42), transparent 82%);
+    }
+    .pdf-slide-page .pdf-block[style^="color:"] h1,
+    .pdf-slide-page .pdf-block[style*=" color:"] h1,
+    .pdf-slide-page .pdf-block[style*=";color:"] h1,
+    .pdf-slide-page .pdf-block[style^="color:"] h2,
+    .pdf-slide-page .pdf-block[style*=" color:"] h2,
+    .pdf-slide-page .pdf-block[style*=";color:"] h2,
+    .pdf-slide-page .pdf-block[style^="color:"] h3,
+    .pdf-slide-page .pdf-block[style*=" color:"] h3,
+    .pdf-slide-page .pdf-block[style*=";color:"] h3 {
+      color: inherit !important;
     }
     .slides-theme-apple-basic .pdf-code,
     .slides-theme-apple-basic pre {

@@ -139,7 +139,7 @@ describe("Single-File HTML Exporter (单文件离线 HTML 导出)", () => {
     const css = generateStandaloneExportStyles()
     expect(css).toContain(":root")
     expect(css).toContain("--slide-bg")
-    expect(css).toContain(".slides-theme-default")
+    expect(css).toContain(".slides-theme-tech")
     expect(css).toContain(".slides-theme-seriph")
     expect(css).toContain("@keyframes slidesMotionFadeIn")
     expect(css).toContain(".slide-media-container")

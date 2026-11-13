@@ -671,7 +671,7 @@ const videoMuted = computed(() => activeBlockAttrs.value[ATTR_VIDEO_MUTED] === '
 const videoControls = computed(() => activeBlockAttrs.value[ATTR_VIDEO_CONTROLS] !== 'false')
 
 // 文档全局属性绑定
-const docTheme = computed(() => latestDoc.value?.config?.theme || activeBlockAttrs.value[ATTR_DOC_THEME] || 'default')
+const docTheme = computed(() => latestDoc.value?.config?.theme || activeBlockAttrs.value[ATTR_DOC_THEME] || 'apple-basic')
 const docAspectRatio = computed(() => latestDoc.value?.config?.aspectRatio || activeBlockAttrs.value[ATTR_DOC_ASPECT_RATIO] || '16/9')
 const docDefaultTransition = computed(() => latestDoc.value?.config?.defaultTransition || activeBlockAttrs.value[ATTR_DOC_DEFAULT_TRANSITION] || 'slide-left')
 const docSpacing = computed(() => latestDoc.value?.config?.spacing || activeBlockAttrs.value[ATTR_DOC_SPACING] || 'normal')

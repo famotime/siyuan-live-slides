@@ -55,9 +55,10 @@ export class CliDevServerBridge {
    */
   public buildStandardSlidevMarkdown(doc: ISlidesDocument): string {
     const config = doc.config
+    const slidevTheme = config.theme === "tech" ? "default" : (config.theme || "apple-basic")
     const frontmatterLines: string[] = [
       "---",
-      `theme: ${config.theme || "default"}`,
+      `theme: ${slidevTheme}`,
       `aspectRatio: "${config.aspectRatio || "16/9"}"`,
       `highlighter: ${config.highlighter || "shiki"}`,
       `transition: ${config.defaultTransition || "slide-left"}`,

@@ -46,7 +46,7 @@ describe("Scope Mapper (三层作用域解析)", () => {
 
   it("当无文档属性时应提供稳定默认值", () => {
     const config = parseDocumentConfig(null)
-    expect(config.theme).toBe("default")
+    expect(config.theme).toBe("apple-basic")
     expect(config.aspectRatio).toBe("16/9")
     expect(config.defaultTransition).toBe("slide-left")
     expect(config.spacing).toBe("normal")

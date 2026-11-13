@@ -789,13 +789,15 @@ body[data-theme-mode="dark"] .spm-segmented-item.active,
   }
 }
 
-/* 12. 演示背景可视化色卡网格与实时预览输入框 */
+/* 12. 幻灯片主题与演示背景可视化色卡网格与实时预览输入框 */
+.spm-theme-card-grid,
 .spm-bg-swatch-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
 }
 
+.spm-theme-card,
 .spm-bg-swatch {
   display: flex;
   flex-direction: column;
@@ -819,6 +821,7 @@ body[data-theme-mode="dark"] .spm-segmented-item.active,
     border-color: var(--b3-theme-primary, #3b82f6);
     box-shadow: 0 0 0 1px var(--b3-theme-primary, #3b82f6), 0 2px 6px rgba(59, 130, 246, 0.2);
 
+    .spm-theme-card-label,
     .spm-bg-swatch-label {
       color: var(--b3-theme-primary, #3b82f6);
       font-weight: 600;
@@ -826,10 +829,154 @@ body[data-theme-mode="dark"] .spm-segmented-item.active,
   }
 }
 
+:root[data-theme-mode="dark"] .spm-theme-card.active .spm-theme-card-label,
+body[data-theme-mode="dark"] .spm-theme-card.active .spm-theme-card-label,
+.theme--dark .spm-theme-card.active .spm-theme-card-label,
 :root[data-theme-mode="dark"] .spm-bg-swatch.active .spm-bg-swatch-label,
 body[data-theme-mode="dark"] .spm-bg-swatch.active .spm-bg-swatch-label,
 .theme--dark .spm-bg-swatch.active .spm-bg-swatch-label {
   color: #93c5fd;
+}
+
+.spm-theme-card-preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 36px;
+  padding: 5px 7px;
+  border-radius: 4px;
+  border: 1px solid rgba(128, 128, 128, 0.24);
+  overflow: hidden;
+  box-sizing: border-box;
+  pointer-events: none;
+
+  .spm-theme-card-canvas {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 3px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .spm-theme-card-title {
+    font-size: 12px;
+    line-height: 1;
+    display: inline-block;
+  }
+
+  .spm-theme-card-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5px;
+    width: 100%;
+  }
+
+  .spm-theme-card-line {
+    display: block;
+    height: 2px;
+    border-radius: 999px;
+
+    &.is-primary {
+      width: 68%;
+    }
+
+    &.is-secondary {
+      width: 44%;
+    }
+  }
+
+  &.theme-preview--tech {
+    background: linear-gradient(135deg, #090d16 0%, #0f172a 100%);
+
+    .spm-theme-card-canvas {
+      border-left: 2.5px solid #10b981;
+      padding-left: 5px;
+    }
+
+    .spm-theme-card-title {
+      width: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-weight: 800;
+      color: #10b981;
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.22), transparent 85%);
+      border-radius: 0 3px 3px 0;
+      padding: 1px 4px;
+    }
+
+    .spm-theme-card-line.is-primary {
+      background: rgba(148, 163, 184, 0.55);
+    }
+
+    .spm-theme-card-line.is-secondary {
+      background: rgba(56, 189, 248, 0.45);
+    }
+  }
+
+  &.theme-preview--seriph {
+    background: #fcfbf7;
+
+    .spm-theme-card-title {
+      position: relative;
+      display: block;
+      width: 100%;
+      font-family: "PT Serif", "Georgia", "Times New Roman", "Noto Serif SC", serif;
+      font-weight: 700;
+      color: #b45309;
+      border-bottom: 1px solid rgba(180, 83, 9, 0.55);
+      padding-bottom: 3px;
+
+      &::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 1px;
+        height: 1px;
+        background: linear-gradient(90deg, #b45309 0%, rgba(180, 83, 9, 0.35) 55%, transparent 95%);
+      }
+    }
+
+    .spm-theme-card-line.is-primary {
+      background: rgba(87, 83, 78, 0.42);
+    }
+
+    .spm-theme-card-line.is-secondary {
+      background: rgba(180, 83, 9, 0.32);
+    }
+  }
+
+  &.theme-preview--apple-basic {
+    background: #ffffff;
+
+    .spm-theme-card-title {
+      font-family: -apple-system, "SF Pro Display", BlinkMacSystemFont, "PingFang SC", sans-serif;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: #000000;
+    }
+
+    .spm-theme-card-line.is-primary {
+      width: 78%;
+      height: 2px;
+      background: rgba(15, 23, 42, 0.25);
+    }
+
+    .spm-theme-card-line.is-secondary {
+      width: 58%;
+      background: #cbd5e1;
+    }
+  }
+}
+
+.spm-theme-card-label {
+  font-size: 10.5px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .spm-bg-swatch-preview {
