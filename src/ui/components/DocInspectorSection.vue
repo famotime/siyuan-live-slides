@@ -175,118 +175,6 @@
       />
     </div>
 
-    <!-- 本地网络伺服预览 (Web Serve) -->
-    <div class="spm-card-control">
-      <div class="spm-control-header">
-        <div class="spm-control-title-group">
-          <div class="spm-control-title">
-            <SlidesIcon name="external-link" />
-            <span>本地网络伺服预览</span>
-          </div>
-          <span class="spm-control-desc">点击文档/块链接以 Webview 抽屉呈现，支持外跳</span>
-        </div>
-        <label
-          class="spm-switch b3-tooltips b3-tooltips__w"
-          :aria-label="globalSettings.enableWebServeJump ? '关闭本地网络伺服预览' : '开启本地网络伺服预览'"
-        >
-          <input
-            type="checkbox"
-            :checked="globalSettings.enableWebServeJump"
-            @change="onToggleWebServe(($event.target as HTMLInputElement).checked)"
-          />
-          <span class="spm-switch-slider"></span>
-        </label>
-      </div>
-      <div v-if="globalSettings.enableWebServeJump" class="spm-control-body" style="margin-top: 8px;">
-        <input
-          :value="globalSettings.webServeUrl"
-          class="spm-input"
-          placeholder="http://127.0.0.1:6806"
-          spellcheck="false"
-          @keydown.stop
-          @keyup.stop
-          @input="onWebServeUrlInput(($event.target as HTMLInputElement).value)"
-          @change="onWebServeUrlChange(($event.target as HTMLInputElement).value)"
-        />
-        <span class="spm-control-desc" style="display: block; margin-top: 4px; font-size: 11px; opacity: 0.8;">
-          默认伺服地址为 http://127.0.0.1:6806。开启后点击块链接将在 Webview 抽屉中打开，点击抽屉顶部『外跳』可在外部浏览器打开
-        </span>
-      </div>
-    </div>
-
-    <!-- 规范化特定标题大小 (Normalize Heading Sizes) -->
-    <div class="spm-card-control">
-      <div class="spm-control-header">
-        <div class="spm-control-title-group">
-          <div class="spm-control-title">
-            <SlidesIcon name="type" />
-            <span>固定特定标题大小</span>
-          </div>
-          <span class="spm-control-desc">除封面外页首标题按 H2、多栏内首标题按 H3 大小展示</span>
-        </div>
-        <label
-          class="spm-switch b3-tooltips b3-tooltips__w"
-          :aria-label="globalSettings.normalizeHeadingSizes ? '关闭固定特定标题大小' : '开启固定特定标题大小'"
-        >
-          <input
-            type="checkbox"
-            :checked="globalSettings.normalizeHeadingSizes"
-            @change="onToggleNormalizeHeadings(($event.target as HTMLInputElement).checked)"
-          />
-          <span class="spm-switch-slider"></span>
-        </label>
-      </div>
-    </div>
-
-    <!-- 列表前缀标记 (List Markers) -->
-    <div class="spm-card-control">
-      <div class="spm-control-header">
-        <div class="spm-control-title-group">
-          <div class="spm-control-title">
-            <SlidesIcon name="list" />
-            <span>列表前缀标记</span>
-          </div>
-          <span class="spm-control-desc">分别控制正文中无序列表圆点与有序列表数字序号的呈现</span>
-        </div>
-      </div>
-      <div class="spm-list-markers-toggles" style="display: flex; gap: 8px; margin-top: 8px;">
-        <div
-          class="spm-marker-toggle-item"
-          style="flex: 1; display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: var(--b3-theme-surface); border: 1px solid var(--b3-border-color); border-radius: 4px;"
-        >
-          <span style="font-size: 12px; color: var(--b3-theme-on-surface);">无序圆点</span>
-          <label
-            class="spm-switch b3-tooltips b3-tooltips__w"
-            :aria-label="globalSettings.showUnorderedListMarkers ? '关闭无序列表圆点显示' : '开启无序列表圆点显示'"
-          >
-            <input
-              type="checkbox"
-              :checked="globalSettings.showUnorderedListMarkers"
-              @change="onToggleUnorderedMarkers(($event.target as HTMLInputElement).checked)"
-            />
-            <span class="spm-switch-slider"></span>
-          </label>
-        </div>
-        <div
-          class="spm-marker-toggle-item"
-          style="flex: 1; display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: var(--b3-theme-surface); border: 1px solid var(--b3-border-color); border-radius: 4px;"
-        >
-          <span style="font-size: 12px; color: var(--b3-theme-on-surface);">有序序号</span>
-          <label
-            class="spm-switch b3-tooltips b3-tooltips__w"
-            :aria-label="globalSettings.showOrderedListMarkers ? '关闭有序列表序号显示' : '开启有序列表序号显示'"
-          >
-            <input
-              type="checkbox"
-              :checked="globalSettings.showOrderedListMarkers"
-              @change="onToggleOrderedMarkers(($event.target as HTMLInputElement).checked)"
-            />
-            <span class="spm-switch-slider"></span>
-          </label>
-        </div>
-      </div>
-    </div>
-
     <!-- 演示全局核心动作组 -->
     <div class="spm-card-control">
       <div class="spm-control-header">
@@ -390,11 +278,141 @@
         </button>
       </div>
     </div>
+
+    <!-- 高级设置（默认折叠，需手动点击展开） -->
+    <div class="spm-advanced-menu" :class="{ 'is-expanded': isAdvancedExpanded }">
+      <button
+        type="button"
+        class="spm-advanced-toggle"
+        :aria-expanded="isAdvancedExpanded"
+        @click="isAdvancedExpanded = !isAdvancedExpanded"
+      >
+        <span class="spm-advanced-toggle-label">
+          <SlidesIcon name="settings" />
+          <span>高级设置</span>
+        </span>
+        <SlidesIcon name="chevron-right" class="spm-advanced-chevron" />
+      </button>
+
+      <div v-if="isAdvancedExpanded" class="spm-advanced-content">
+        <!-- 本地网络伺服预览 (Web Serve) -->
+        <div class="spm-card-control">
+          <div class="spm-control-header">
+            <div class="spm-control-title-group">
+              <div class="spm-control-title">
+                <SlidesIcon name="external-link" />
+                <span>本地网络伺服预览</span>
+              </div>
+              <span class="spm-control-desc">点击文档/块链接以 Webview 抽屉呈现，支持外跳</span>
+            </div>
+            <label
+              class="spm-switch b3-tooltips b3-tooltips__w"
+              :aria-label="globalSettings.enableWebServeJump ? '关闭本地网络伺服预览' : '开启本地网络伺服预览'"
+            >
+              <input
+                type="checkbox"
+                :checked="globalSettings.enableWebServeJump"
+                @change="onToggleWebServe(($event.target as HTMLInputElement).checked)"
+              />
+              <span class="spm-switch-slider"></span>
+            </label>
+          </div>
+          <div v-if="globalSettings.enableWebServeJump" class="spm-control-body" style="margin-top: 8px;">
+            <input
+              :value="globalSettings.webServeUrl"
+              class="spm-input"
+              placeholder="http://127.0.0.1:6806"
+              spellcheck="false"
+              @keydown.stop
+              @keyup.stop
+              @input="onWebServeUrlInput(($event.target as HTMLInputElement).value)"
+              @change="onWebServeUrlChange(($event.target as HTMLInputElement).value)"
+            />
+            <span class="spm-control-desc" style="display: block; margin-top: 4px; font-size: 11px; opacity: 0.8;">
+              默认伺服地址为 http://127.0.0.1:6806。开启后点击块链接将在 Webview 抽屉中打开，点击抽屉顶部『外跳』可在外部浏览器打开
+            </span>
+          </div>
+        </div>
+
+        <!-- 规范化特定标题大小 (Normalize Heading Sizes) -->
+        <div class="spm-card-control">
+          <div class="spm-control-header">
+            <div class="spm-control-title-group">
+              <div class="spm-control-title">
+                <SlidesIcon name="type" />
+                <span>固定特定标题大小</span>
+              </div>
+              <span class="spm-control-desc">除封面外页首标题按 H2、多栏内首标题按 H3 大小展示</span>
+            </div>
+            <label
+              class="spm-switch b3-tooltips b3-tooltips__w"
+              :aria-label="globalSettings.normalizeHeadingSizes ? '关闭固定特定标题大小' : '开启固定特定标题大小'"
+            >
+              <input
+                type="checkbox"
+                :checked="globalSettings.normalizeHeadingSizes"
+                @change="onToggleNormalizeHeadings(($event.target as HTMLInputElement).checked)"
+              />
+              <span class="spm-switch-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 列表前缀标记 (List Markers) -->
+        <div class="spm-card-control">
+          <div class="spm-control-header">
+            <div class="spm-control-title-group">
+              <div class="spm-control-title">
+                <SlidesIcon name="list" />
+                <span>列表前缀标记</span>
+              </div>
+              <span class="spm-control-desc">分别控制正文中无序列表圆点与有序列表数字序号的呈现</span>
+            </div>
+          </div>
+          <div class="spm-list-markers-toggles" style="display: flex; gap: 8px; margin-top: 8px;">
+            <div
+              class="spm-marker-toggle-item"
+              style="flex: 1; display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: var(--b3-theme-surface); border: 1px solid var(--b3-border-color); border-radius: 4px;"
+            >
+              <span style="font-size: 12px; color: var(--b3-theme-on-surface);">无序圆点</span>
+              <label
+                class="spm-switch b3-tooltips b3-tooltips__w"
+                :aria-label="globalSettings.showUnorderedListMarkers ? '关闭无序列表圆点显示' : '开启无序列表圆点显示'"
+              >
+                <input
+                  type="checkbox"
+                  :checked="globalSettings.showUnorderedListMarkers"
+                  @change="onToggleUnorderedMarkers(($event.target as HTMLInputElement).checked)"
+                />
+                <span class="spm-switch-slider"></span>
+              </label>
+            </div>
+            <div
+              class="spm-marker-toggle-item"
+              style="flex: 1; display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: var(--b3-theme-surface); border: 1px solid var(--b3-border-color); border-radius: 4px;"
+            >
+              <span style="font-size: 12px; color: var(--b3-theme-on-surface);">有序序号</span>
+              <label
+                class="spm-switch b3-tooltips b3-tooltips__w"
+                :aria-label="globalSettings.showOrderedListMarkers ? '关闭有序列表序号显示' : '开启有序列表序号显示'"
+              >
+                <input
+                  type="checkbox"
+                  :checked="globalSettings.showOrderedListMarkers"
+                  @change="onToggleOrderedMarkers(($event.target as HTMLInputElement).checked)"
+                />
+                <span class="spm-switch-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
+import { inject, ref } from 'vue'
 import SlidesIcon from '@/ui/components/SlidesIcon.vue'
 import TransitionSelector from '@/ui/components/TransitionSelector.vue'
 import { globalSettingsState, setRuntimeSettings } from '@/settings'
@@ -402,6 +420,7 @@ import { isFeatureEnabled } from '@/feature-flags/feature-flags'
 
 const plugin = inject<any>('plugin')
 const globalSettings = globalSettingsState
+const isAdvancedExpanded = ref(false)
 
 const themeOptions = [
   {

@@ -935,3 +935,65 @@ body[data-theme-mode="dark"] .spm-bg-swatch.active .spm-bg-swatch-label,
   }
 }
 
+/* 11. 全局配置底部「高级设置」极简折叠菜单 */
+.spm-advanced-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid var(--b3-border-color, #e2e8f0);
+
+  &.is-expanded {
+    .spm-advanced-chevron {
+      transform: rotate(90deg);
+    }
+  }
+}
+
+.spm-advanced-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 4px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--b3-theme-on-surface-light, #64748b);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+
+  &:hover {
+    color: var(--b3-theme-on-surface, #1e293b);
+    background: var(--b3-list-hover, rgba(0, 0, 0, 0.04));
+  }
+}
+
+.spm-advanced-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  .slides-icon {
+    width: 13px;
+    height: 13px;
+    opacity: 0.85;
+  }
+}
+
+.spm-advanced-chevron {
+  width: 13px;
+  height: 13px;
+  opacity: 0.75;
+  transition: transform 0.15s ease;
+}
+
+.spm-advanced-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+
