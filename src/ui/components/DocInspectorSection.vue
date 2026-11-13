@@ -199,7 +199,7 @@
       </div>
       <div class="spm-action-grid">
         <button
-          class="spm-btn-action b3-tooltips b3-tooltips__sw"
+          class="spm-btn-action b3-tooltips b3-tooltips__se"
           aria-label="在当前文档下方开启分屏同步预览 (Alt+P)"
           @click="$emit('openBottomPreview')"
         >
@@ -218,26 +218,48 @@
           <span>演讲者视图</span>
         </button>
 
-        <!-- 识别讲稿块 -->
+        <!-- 增加讲稿块（识别规范化已有候选块 + 为缺少讲稿页新增默认块） -->
         <button
-          class="spm-btn-action b3-tooltips b3-tooltips__sw"
-          aria-label="识别各页分隔线前未设属性的提示块/引用块为标准讲稿备注"
+          class="spm-btn-action b3-tooltips b3-tooltips__se"
+          aria-label="识别已有候选讲稿并为空白页新增默认讲稿块（不会重复添加）"
           :disabled="isBatchProcessing"
-          @click="$emit('identifyNotes')"
+          @click="$emit('addOrIdentifyNotes')"
         >
           <SlidesIcon name="notes" />
-          <span>识别讲稿块</span>
+          <span>增加讲稿块</span>
+        </button>
+
+        <!-- 清除讲稿块 -->
+        <button
+          class="spm-btn-action spm-btn-danger b3-tooltips b3-tooltips__sw"
+          aria-label="物理删除文档中所有页面的全部讲稿备注块（需二次确认）"
+          :disabled="isBatchProcessing"
+          @click="$emit('clearNotes')"
+        >
+          <SlidesIcon name="trash" />
+          <span>清除讲稿块</span>
         </button>
 
         <!-- 智能设置动效 -->
         <button
-          class="spm-btn-action b3-tooltips b3-tooltips__sw"
+          class="spm-btn-action b3-tooltips b3-tooltips__se"
           aria-label="自动为正文各页标题及首块之外的后续内容块配置顺延 (+1) 逐步呈现动效"
           :disabled="isBatchProcessing"
           @click="$emit('autoAnimate')"
         >
           <SlidesIcon name="step" />
           <span>智能动效</span>
+        </button>
+
+        <!-- 清除动效 -->
+        <button
+          class="spm-btn-action spm-btn-danger b3-tooltips b3-tooltips__sw"
+          aria-label="清除所有页面内容块的逐步显现与入场微动效配置（需二次确认）"
+          :disabled="isBatchProcessing"
+          @click="$emit('clearAnimations')"
+        >
+          <SlidesIcon name="trash" />
+          <span>清除动效</span>
         </button>
 
         <button
@@ -262,7 +284,7 @@
 
         <button
           v-if="isFeatureEnabled('exportHtml')"
-          class="spm-btn-action b3-tooltips b3-tooltips__sw"
+          class="spm-btn-action b3-tooltips b3-tooltips__se"
           aria-label="打包导出离线单文件 HTML 幻灯片"
           @click="$emit('exportHtml')"
         >
@@ -272,24 +294,12 @@
 
         <button
           v-if="isFeatureEnabled('exportPdf')"
-          class="spm-btn-action b3-tooltips b3-tooltips__se"
+          class="spm-btn-action b3-tooltips b3-tooltips__sw"
           aria-label="打印生成 16:9 高清演示 PDF 讲义"
           @click="$emit('exportPdf')"
         >
           <SlidesIcon name="export-pdf" />
           <span>导出 PDF</span>
-        </button>
-
-        <button
-          v-if="isFeatureEnabled('exportImage')"
-          class="spm-btn-action b3-tooltips b3-tooltips__s"
-          :class="{ 'is-loading': isExportingImages }"
-          :disabled="isExportingImages"
-          :aria-label="isExportingImages ? '正在逐页导出高清图片包，请稍候...' : '逐页导出高清图片包 (ZIP)'"
-          @click="$emit('exportImages')"
-        >
-          <SlidesIcon name="export-image" />
-          <span>{{ isExportingImages ? '正在导出...' : '导出图片' }}</span>
         </button>
       </div>
     </div>
@@ -588,7 +598,6 @@ defineProps<{
   docAspectRatio: string
   docDefaultTransition: string
   docSpacing?: string
-  isExportingImages?: boolean
   isBatchProcessing?: boolean
 }>()
 
@@ -600,12 +609,13 @@ defineEmits<{
   (e: 'update:docSpacing', val: string): void
   (e: 'openBottomPreview'): void
   (e: 'openPresenter'): void
-  (e: 'identifyNotes'): void
+  (e: 'addOrIdentifyNotes'): void
+  (e: 'clearNotes'): void
   (e: 'autoAnimate'): void
+  (e: 'clearAnimations'): void
   (e: 'aiAutoSplit'): void
   (e: 'clearDividers'): void
   (e: 'exportHtml'): void
   (e: 'exportPdf'): void
-  (e: 'exportImages'): void
 }>()
 </script>

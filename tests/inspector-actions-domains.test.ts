@@ -263,6 +263,84 @@ describe("notes-actions (备注与 AI 领域模块)", () => {
     expect(showMsgSpy).toHaveBeenCalledWith("正在批量处理中，请稍候...")
     showMsgSpy.mockRestore()
   })
+
+  it("onAddOrIdentifyNotesBlocks 应统一识别已有候选讲稿并为其余空白页新增讲稿块（不重复）", async () => {
+    // 第1页：已有标准讲稿（跳过）
+    // 第2页：末尾存在未打标引用块（规范化，不重复插新块）
+    // 第3页：无任何讲稿与候选块（插入默认讲稿块）
+    ctx.latestDoc.value.slides = [
+      { pageIndex: 1, startBlockId: "h-1", noteBlocks: [{ id: "n-1" }], notes: "已有" },
+      { pageIndex: 2, startBlockId: "tb-1", noteBlocks: [], notes: "", blocks: [{ id: "p-2" }, { id: "cand-2" }] },
+      { pageIndex: 3, startBlockId: "tb-2", noteBlocks: [], notes: "", blocks: [{ id: "p-3" }] },
+    ]
+
+    const getChildSpy = vi.spyOn(apiModule, "getChildBlocks").mockResolvedValue([
+      { id: "h-1", type: "h", markdown: "# 第一页" },
+      { id: "n-1", type: "callout", markdown: "> [!NOTE] 💡 演讲备注\n> 已有", ial: { [ATTR_ELEM_NOTE]: "true" } },
+      { id: "tb-1", type: "tb", markdown: "---" },
+      { id: "p-2", type: "p", markdown: "第二页正文" },
+      { id: "cand-2", type: "b", markdown: "> 待识别讲稿" },
+      { id: "tb-2", type: "tb", markdown: "---" },
+      { id: "p-3", type: "p", markdown: "第三页正文" },
+    ] as any)
+
+    let cbPromise: any = null
+    const confirmSpy = vi.spyOn(siyuanModule, "confirm").mockImplementation((title, text, cb) => {
+      expect(title).toBe("增加讲稿块")
+      expect(text).toContain("1 处已有候选讲稿待规范化")
+      expect(text).toContain("1 页暂无讲稿将新增默认讲稿块")
+      cbPromise = cb?.()
+    })
+    const updateSpy = vi.spyOn(apiModule, "updateBlock").mockResolvedValue({} as any)
+    const insertSpy = vi.spyOn(apiModule, "insertBlock").mockResolvedValue([{ id: "new-note-3" }] as any)
+    const setAttrsSpy = vi.spyOn(apiModule, "setBlockAttrs").mockResolvedValue({} as any)
+    vi.spyOn(domSyncModule, "syncDomBlockAttrs").mockImplementation(() => {})
+    const showMsgSpy = vi.spyOn(siyuanModule, "showMessage").mockImplementation(() => {})
+
+    await notes.onAddOrIdentifyNotesBlocks()
+    await cbPromise
+
+    expect(confirmSpy).toHaveBeenCalledTimes(1)
+    expect(updateSpy).toHaveBeenCalledTimes(1)
+    expect(updateSpy).toHaveBeenCalledWith(
+      "markdown",
+      expect.stringContaining("> [!NOTE] 💡 演讲备注\n> 待识别讲稿"),
+      "cand-2"
+    )
+    expect(insertSpy).toHaveBeenCalledTimes(1)
+    expect(insertSpy).toHaveBeenCalledWith("markdown", expect.stringContaining("在此输入本页讲稿提词..."), undefined, "p-3")
+    expect(setAttrsSpy).toHaveBeenCalledWith("cand-2", { [ATTR_ELEM_NOTE]: "true" })
+    expect(setAttrsSpy).toHaveBeenCalledWith("new-note-3", { [ATTR_ELEM_NOTE]: "true" })
+    expect(ctx.plugin.compileCurrentDocument).toHaveBeenCalled()
+
+    getChildSpy.mockRestore()
+    confirmSpy.mockRestore()
+    updateSpy.mockRestore()
+    insertSpy.mockRestore()
+    setAttrsSpy.mockRestore()
+    showMsgSpy.mockRestore()
+  })
+
+  it("onAddOrIdentifyNotesBlocks 当全部页面已有讲稿时应提示无需重复操作且不弹窗", async () => {
+    ctx.latestDoc.value.slides = [
+      { pageIndex: 1, startBlockId: "h-1", noteBlocks: [{ id: "n-1" }], notes: "已有" },
+    ]
+    const getChildSpy = vi.spyOn(apiModule, "getChildBlocks").mockResolvedValue([
+      { id: "h-1", type: "h", markdown: "# 第一页" },
+      { id: "n-1", type: "callout", markdown: "> [!NOTE] 💡 演讲备注\n> 已有", ial: { [ATTR_ELEM_NOTE]: "true" } },
+    ] as any)
+    const confirmSpy = vi.spyOn(siyuanModule, "confirm")
+    const showMsgSpy = vi.spyOn(siyuanModule, "showMessage").mockImplementation(() => {})
+
+    await notes.onAddOrIdentifyNotesBlocks()
+
+    expect(confirmSpy).not.toHaveBeenCalled()
+    expect(showMsgSpy).toHaveBeenCalledWith("所有幻灯片页面均已存在讲稿备注块，无需重复操作")
+
+    getChildSpy.mockRestore()
+    confirmSpy.mockRestore()
+    showMsgSpy.mockRestore()
+  })
 })
 
 describe("layout-actions (版式与元素指令领域模块)", () => {
@@ -352,6 +430,45 @@ describe("layout-actions (版式与元素指令领域模块)", () => {
     expect(setAttrsSpy).toHaveBeenCalledWith("p2", { "custom-slides-click": "+1" })
     expect(ctx.plugin.compileCurrentDocument).toHaveBeenCalled()
 
+    setAttrsSpy.mockRestore()
+    compileSpy.mockRestore()
+  })
+
+  it("onClearAnimationsDocument 应在确认后清空全部页面块动效并同步激活块状态", async () => {
+    ctx.activeBlockId.value = "p2"
+    ctx.activeBlockAttrs.value = { "custom-slides-click": "+1", "custom-slides-motion": "fade-up" }
+    ctx.latestDoc.value.slides = [
+      {
+        pageIndex: 2,
+        frontmatter: {},
+        blocks: [
+          { id: "h1", type: "h", rawMarkdown: "## 标题" },
+          { id: "p2", type: "p", rawMarkdown: "次块", clicks: "+1", motion: "fade-up" },
+        ],
+      },
+    ]
+
+    let cbPromise: any = null
+    const confirmSpy = vi.spyOn(siyuanModule, "confirm").mockImplementation((title, _text, cb) => {
+      expect(title).toContain("危险操作")
+      cbPromise = cb?.()
+    })
+    const setAttrsSpy = vi.spyOn(apiModule, "setBlockAttrs").mockResolvedValue({} as any)
+    vi.spyOn(domSyncModule, "syncDomBlockAttrs").mockImplementation(() => {})
+    const compileSpy = vi.spyOn(globalDocumentCompiler, "compile").mockResolvedValue(ctx.latestDoc.value)
+
+    await layout.onClearAnimationsDocument()
+    await cbPromise
+
+    expect(setAttrsSpy).toHaveBeenCalledWith("p2", {
+      "custom-slides-click": "",
+      "custom-slides-motion": "",
+    })
+    expect(ctx.activeBlockAttrs.value["custom-slides-click"]).toBeUndefined()
+    expect(ctx.activeBlockAttrs.value["custom-slides-motion"]).toBeUndefined()
+    expect(ctx.plugin.compileCurrentDocument).toHaveBeenCalled()
+
+    confirmSpy.mockRestore()
     setAttrsSpy.mockRestore()
     compileSpy.mockRestore()
   })

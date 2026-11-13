@@ -16,7 +16,11 @@ import { syncDomBlockAttrs } from "@/sync/dom-attr-sync"
 import { mirrorBlockSelection } from "@/sync/selection-mirror"
 import type { ISlidesVirtualPage } from "@/types/slides-protocol"
 import { ATTR_ELEM_NOTE } from "@/types/slides-protocol"
-import { identifyAndNormalizeDocumentNotes } from "@/sync/notes-normalizer"
+import {
+  identifyAndNormalizeDocumentNotes,
+  normalizeNoteBlock,
+  scanDocumentForCandidateNotes,
+} from "@/sync/notes-normalizer"
 import type { IInspectorActionsContext } from "./attr-persistence"
 
 export interface INotesActionsDeps {
@@ -33,6 +37,7 @@ export interface INotesActions {
   onBatchAppendNotes: () => Promise<void>
   onBatchDeleteNotes: () => Promise<void>
   onIdentifyNotesBlocks: () => Promise<void>
+  onAddOrIdentifyNotesBlocks: () => Promise<void>
 }
 
 /**
@@ -201,9 +206,55 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
     }
   }
 
+  const DEFAULT_NOTE_PAYLOAD = (() => {
+    const content = "在此输入本页讲稿提词..."
+    const noteLines = content.split(/\r?\n/).map(l => `> ${l}`).join("\n")
+    return `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slides-note="true"}`
+  })()
+
+  async function resolveDocumentSlides(): Promise<{ docId: string; slides: ISlidesVirtualPage[] }> {
+    const docId = ctx.currentDocId.value || ctx.plugin?.currentDocId || ""
+    const cachedSlides = ctx.latestDoc.value?.slides
+    if (Array.isArray(cachedSlides) && cachedSlides.length > 0) {
+      return { docId, slides: cachedSlides }
+    }
+    if (!docId) {
+      return { docId: "", slides: [] }
+    }
+    const compiled = await globalDocumentCompiler.compile(docId).catch(() => null)
+    return { docId, slides: compiled?.slides || [] }
+  }
+
+  async function insertDefaultNoteBlockAtSlide(
+    slide: ISlidesVirtualPage,
+    idx: number,
+    slides: ISlidesVirtualPage[],
+    docId: string
+  ) {
+    let insertedRes: any = null
+    if (idx < slides.length - 1) {
+      const nextSlide = slides[idx + 1]
+      insertedRes = await insertBlock("markdown", DEFAULT_NOTE_PAYLOAD, nextSlide.startBlockId)
+    } else {
+      const lastBlock = slide?.noteBlocks?.slice(-1)[0] || slide?.blocks?.slice(-1)[0]
+      const previousId = lastBlock?.id || slide?.startBlockId
+      if (previousId) {
+        insertedRes = await insertBlock("markdown", DEFAULT_NOTE_PAYLOAD, undefined, previousId)
+      } else {
+        insertedRes = await appendBlock("markdown", DEFAULT_NOTE_PAYLOAD, docId || ctx.currentDocId.value)
+      }
+    }
+
+    const newId = insertedRes?.[0]?.doOperations?.[0]?.id || insertedRes?.[0]?.id
+    if (newId) {
+      await setBlockAttrs(newId, { [ATTR_ELEM_NOTE]: "true" })
+      globalDocumentCompiler.setBlockAttrOverride(newId, { [ATTR_ELEM_NOTE]: "true" })
+    }
+  }
+
   async function onBatchAppendNotes() {
     if (isBatchProcessing.value) return
-    const slides = ctx.latestDoc.value?.slides || []
+    const { docId, slides } = await resolveDocumentSlides()
     if (slides.length === 0) {
       showMessage("当前文档无幻灯片页面")
       return
@@ -233,31 +284,9 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
         showMessage("正在批量追加讲稿块...")
         let successCount = 0
         try {
-          const content = "在此输入本页讲稿提词..."
-          const noteLines = content.split(/\r?\n/).map(l => `> ${l}`).join("\n")
-          const markdownPayload = `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slides-note="true"}`
-
           for (const { slide, idx } of targetSlidesWithIndex) {
             try {
-              let insertedRes: any = null
-              if (idx < slides.length - 1) {
-                const nextSlide = slides[idx + 1]
-                insertedRes = await insertBlock("markdown", markdownPayload, nextSlide.startBlockId)
-              } else {
-                const lastBlock = slide?.noteBlocks?.slice(-1)[0] || slide?.blocks?.slice(-1)[0]
-                const previousId = lastBlock?.id || slide?.startBlockId
-                if (previousId) {
-                  insertedRes = await insertBlock("markdown", markdownPayload, undefined, previousId)
-                } else {
-                  insertedRes = await appendBlock("markdown", markdownPayload, ctx.currentDocId.value)
-                }
-              }
-
-              const newId = insertedRes?.[0]?.doOperations?.[0]?.id || insertedRes?.[0]?.id
-              if (newId) {
-                await setBlockAttrs(newId, { [ATTR_ELEM_NOTE]: "true" })
-                globalDocumentCompiler.setBlockAttrOverride(newId, { [ATTR_ELEM_NOTE]: "true" })
-              }
+              await insertDefaultNoteBlockAtSlide(slide, idx, slides, docId)
               successCount++
             } catch (err) {
               console.error(`[SiYuanLiveSlides] 为第 ${idx + 1} 页追加讲稿块失败:`, err)
@@ -280,7 +309,7 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
 
   async function onBatchDeleteNotes() {
     if (isBatchProcessing.value) return
-    const slides = ctx.latestDoc.value?.slides || []
+    const { slides } = await resolveDocumentSlides()
     if (slides.length === 0) {
       showMessage("当前文档无幻灯片页面")
       return
@@ -370,6 +399,103 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
     }
   }
 
+  /**
+   * 统一「增加讲稿块」动作：
+   * 1) 扫描全篇已有但未规范化的候选提示块/引用块并原地规范化
+   * 2) 仅针对既无标准讲稿也无候选讲稿的空白页面补充默认讲稿块，确保不重复添加
+   */
+  async function onAddOrIdentifyNotesBlocks() {
+    if (isBatchProcessing.value) {
+      showMessage("正在批量处理中，请稍候...")
+      return
+    }
+
+    const { docId, slides } = await resolveDocumentSlides()
+    if (!docId) {
+      showMessage("请先在主编辑区打开幻灯片文档")
+      return
+    }
+    if (slides.length === 0) {
+      showMessage("当前文档无幻灯片页面")
+      return
+    }
+
+    const candidates = await scanDocumentForCandidateNotes(docId)
+    const candidatePageIndices = new Set(candidates.map(c => c.pageIndex))
+
+    const appendTargets = slides
+      .map((s, idx) => ({ slide: s, idx }))
+      .filter(({ slide, idx }) => {
+        const hasBlocks = Array.isArray(slide.noteBlocks) && slide.noteBlocks.length > 0
+        const hasText = Boolean(slide.notes?.trim())
+        const pageNum = slide.pageIndex ?? (idx + 1)
+        return !hasBlocks && !hasText && !candidatePageIndices.has(pageNum)
+      })
+
+    if (candidates.length === 0 && appendTargets.length === 0) {
+      showMessage("所有幻灯片页面均已存在讲稿备注块，无需重复操作")
+      return
+    }
+
+    let confirmDesc = ""
+    if (candidates.length > 0 && appendTargets.length > 0) {
+      confirmDesc = `扫描检测到 ${candidates.length} 处已有候选讲稿待规范化，另有 ${appendTargets.length} 页暂无讲稿将新增默认讲稿块，是否继续？`
+    } else if (candidates.length > 0) {
+      confirmDesc = `扫描检测到 ${candidates.length} 处已有候选讲稿块（提示块或引用块），是否规范化为标准演讲备注？`
+    } else {
+      confirmDesc = `将在未配置讲稿的 ${appendTargets.length} 页末尾自动增加默认讲稿提示块，是否继续？`
+    }
+
+    confirm(
+      "增加讲稿块",
+      confirmDesc,
+      async () => {
+        if (isBatchProcessing.value) return
+        isBatchProcessing.value = true
+        showMessage("正在处理讲稿块...")
+        let normalizedCount = 0
+        let addedCount = 0
+
+        try {
+          for (const item of candidates) {
+            try {
+              await normalizeNoteBlock(item.id, item.cleanContent)
+              normalizedCount++
+            } catch (err) {
+              console.error(`[SiYuanLiveSlides] 规范化讲稿块 ${item.id} 失败:`, err)
+            }
+          }
+
+          for (const { slide, idx } of appendTargets) {
+            try {
+              await insertDefaultNoteBlockAtSlide(slide, idx, slides, docId)
+              addedCount++
+            } catch (err) {
+              console.error(`[SiYuanLiveSlides] 为第 ${idx + 1} 页增加讲稿块失败:`, err)
+            }
+          }
+
+          if (ctx.plugin) {
+            await ctx.plugin.compileCurrentDocument()
+          }
+          triggerSaveNotice("已更新讲稿")
+          if (normalizedCount > 0 && addedCount > 0) {
+            showMessage(`已规范化 ${normalizedCount} 处现有讲稿，并为 ${addedCount} 页新增讲稿块`)
+          } else if (normalizedCount > 0) {
+            showMessage(`已成功识别并规范化 ${normalizedCount} 个讲稿块`)
+          } else {
+            showMessage(`已成功为 ${addedCount} 页增加讲稿备注块`)
+          }
+        } catch (error) {
+          console.error("[SiYuanLiveSlides] 增加讲稿块失败:", error)
+          showMessage("增加讲稿块时出现异常")
+        } finally {
+          isBatchProcessing.value = false
+        }
+      }
+    )
+  }
+
   return {
     isBatchProcessing,
     createNoteBlockOnCurrentSlide,
@@ -380,5 +506,6 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
     onBatchAppendNotes,
     onBatchDeleteNotes,
     onIdentifyNotesBlocks,
+    onAddOrIdentifyNotesBlocks,
   }
 }

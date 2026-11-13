@@ -397,32 +397,6 @@
           <span>添加讲稿备注块</span>
         </button>
       </div>
-
-      <!-- 讲稿批量操作栏（全部追加 / 全部删除） -->
-      <div class="spm-batch-actions-box" style="margin-top: 8px; border-top: 1px dashed var(--b3-border-color, #e2e8f0); padding-top: 8px;">
-        <div class="spm-action-grid">
-          <button
-            class="spm-btn-action b3-tooltips b3-tooltips__se"
-            :disabled="isBatchProcessing"
-            :style="isBatchProcessing ? 'opacity: 0.5; cursor: not-allowed;' : ''"
-            aria-label="在所有尚未配置讲稿的页面末尾批量追加讲稿提示块"
-            @click="$emit('batchAppendNotes')"
-          >
-            <SlidesIcon name="insert-below" />
-            <span>全部追加</span>
-          </button>
-          <button
-            class="spm-btn-action spm-btn-danger b3-tooltips b3-tooltips__sw"
-            :disabled="isBatchProcessing"
-            :style="isBatchProcessing ? 'opacity: 0.5; cursor: not-allowed;' : ''"
-            aria-label="批量物理删除正文中的全部讲稿备注块（涉及全部页）"
-            @click="$emit('batchDeleteNotes')"
-          >
-            <SlidesIcon name="trash" />
-            <span>全部删除</span>
-          </button>
-        </div>
-      </div>
     </div>
 
     <!-- 分页符快捷操作 (紧凑 2 列网格) -->
@@ -475,7 +449,6 @@ const props = defineProps<{
   pageMaskInitial?: string
   detectedSbRatio?: string
   detectedSbInfo?: any
-  isBatchProcessing?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -493,8 +466,6 @@ const emit = defineEmits<{
   (e: 'addNoteBlock'): void
   (e: 'locateNoteBlock'): void
   (e: 'generateNotes'): void
-  (e: 'batchAppendNotes'): void
-  (e: 'batchDeleteNotes'): void
   (e: 'insertDividerAfter'): void
   (e: 'deleteDivider'): void
 }>()

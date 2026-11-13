@@ -3,7 +3,7 @@ import { setBlockAttrs } from "@/api"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
 import { syncDomBlockAttrs } from "@/sync/dom-attr-sync"
 import type { ISlidesBlockItem, ISlidesDocument, ISlidesVirtualPage } from "@/types/slides-protocol"
-import { ATTR_ELEM_CLICK, ATTR_ELEM_NOTE } from "@/types/slides-protocol"
+import { ATTR_ELEM_CLICK, ATTR_ELEM_MOTION, ATTR_ELEM_NOTE } from "@/types/slides-protocol"
 
 export interface IAnimatableItem {
   id: string
@@ -272,6 +272,160 @@ export async function runAutoAnimationForDocument(
 
         deps?.onSuccessNotice?.("已配置智能动效")
         showMsg(`已成功为 ${successCount} 个后续块配置顺延 (+1) 动效`)
+
+        if (deps?.compileCurrentDocFn) {
+          await deps.compileCurrentDocFn().catch(() => {})
+        }
+
+        resolve({
+          ...scanRes,
+          successCount,
+          errorCount,
+        })
+      },
+      () => {
+        resolve({
+          ...scanRes,
+          successCount: 0,
+          errorCount: 0,
+        })
+      }
+    )
+  })
+}
+
+export interface IAnimationClearTarget {
+  blockId: string
+  pageIndex: number
+  hasClick: boolean
+  hasMotion: boolean
+}
+
+export interface IAnimationClearScanResult {
+  totalPages: number
+  affectedPagesCount: number
+  targets: IAnimationClearTarget[]
+}
+
+/**
+ * 扫描整篇文档，收集所有带有块级动效（v-click / v-motion）的内容块
+ */
+export async function scanDocumentForAnimationClear(
+  docId: string,
+  deps?: Pick<IAutoAnimateDeps, "compileDocFn">
+): Promise<IAnimationClearScanResult> {
+  const compileFn = deps?.compileDocFn || ((id: string) => globalDocumentCompiler.compile(id))
+  const doc = await compileFn(docId).catch(() => null)
+  if (!doc || !Array.isArray(doc.slides) || doc.slides.length === 0) {
+    return { totalPages: 0, affectedPagesCount: 0, targets: [] }
+  }
+
+  const targets: IAnimationClearTarget[] = []
+  const seenIds = new Set<string>()
+  const affectedPages = new Set<number>()
+
+  const walkBlocks = (items: any[], pageIndex: number) => {
+    for (const b of items) {
+      if (!b) continue
+      if (b.id && !seenIds.has(b.id)) {
+        const override = globalDocumentCompiler.getBlockAttrOverride(b.id)
+        const clickVal =
+          override?.[ATTR_ELEM_CLICK] ??
+          b.clicks ??
+          b.attributes?.[ATTR_ELEM_CLICK] ??
+          b.ial?.[ATTR_ELEM_CLICK]
+        const motionVal =
+          override?.[ATTR_ELEM_MOTION] ??
+          b.motion ??
+          b.attributes?.[ATTR_ELEM_MOTION] ??
+          b.ial?.[ATTR_ELEM_MOTION]
+
+        const hasClick = Boolean(clickVal && String(clickVal).trim() !== "")
+        const hasMotion = Boolean(motionVal && String(motionVal).trim() !== "")
+
+        if (hasClick || hasMotion) {
+          seenIds.add(b.id)
+          targets.push({
+            blockId: b.id,
+            pageIndex,
+            hasClick,
+            hasMotion,
+          })
+          affectedPages.add(pageIndex)
+        }
+      }
+
+      const children = b.children && b.children.length > 0 ? b.children : b.rawNode?.children
+      if (Array.isArray(children) && children.length > 0) {
+        walkBlocks(children, pageIndex)
+      }
+    }
+  }
+
+  for (const slide of doc.slides) {
+    walkBlocks(slide.blocks || [], slide.pageIndex)
+  }
+
+  return {
+    totalPages: doc.slides.length,
+    affectedPagesCount: affectedPages.size,
+    targets,
+  }
+}
+
+/**
+ * 清除整篇文档所有页面的块级动效配置（含警告确认弹窗、批量清空、即时覆盖层清理与重新编译）
+ */
+export async function clearAnimationsForDocument(
+  docId: string,
+  deps?: IAutoAnimateDeps
+): Promise<IAnimationClearScanResult & { successCount: number; errorCount: number }> {
+  const showMsg = deps?.showMessageFn || showMessage
+  const confirmModal = deps?.confirmFn || confirm
+  const setAttrsImpl = deps?.setBlockAttrsFn || setBlockAttrs
+  const syncDomImpl = deps?.syncDomFn || syncDomBlockAttrs
+
+  if (!docId) {
+    showMsg("请先在主编辑区打开幻灯片文档")
+    return { totalPages: 0, affectedPagesCount: 0, targets: [], successCount: 0, errorCount: 0 }
+  }
+
+  const scanRes = await scanDocumentForAnimationClear(docId, deps)
+  if (scanRes.targets.length === 0) {
+    showMsg("当前文档未检测到已配置的页面动效，无需清除")
+    return { ...scanRes, successCount: 0, errorCount: 0 }
+  }
+
+  const count = scanRes.targets.length
+  const pageCount = scanRes.affectedPagesCount
+
+  return new Promise((resolve) => {
+    confirmModal(
+      "危险操作：清除所有页面动效",
+      `此操作将清除 ${pageCount} 页中全部 ${count} 个内容块的逐步显现（v-click）与入场微动效（v-motion）配置，清除后无法撤销。是否确认继续？`,
+      async () => {
+        showMsg(`正在清除 ${count} 个内容块的动效配置...`)
+        let successCount = 0
+        let errorCount = 0
+        const clearAttrs = {
+          [ATTR_ELEM_CLICK]: "",
+          [ATTR_ELEM_MOTION]: "",
+        }
+
+        for (const target of scanRes.targets) {
+          try {
+            await setAttrsImpl(target.blockId, clearAttrs)
+            globalDocumentCompiler.setBlockAttrOverride(target.blockId, clearAttrs)
+            syncDomImpl(target.blockId, clearAttrs)
+            successCount++
+          } catch (err) {
+            console.error(`[SiYuanLiveSlides] 清除块 ${target.blockId} 动效失败:`, err)
+            errorCount++
+          }
+        }
+
+        deps?.onSuccessNotice?.("已清除动效")
+        showMsg(`已成功清除 ${successCount} 个内容块的动效配置`)
 
         if (deps?.compileCurrentDocFn) {
           await deps.compileCurrentDocFn().catch(() => {})

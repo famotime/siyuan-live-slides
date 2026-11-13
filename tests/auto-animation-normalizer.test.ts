@@ -6,9 +6,11 @@ import {
   scanSlideForAutoAnimation,
   scanDocumentForAutoAnimation,
   runAutoAnimationForDocument,
+  scanDocumentForAnimationClear,
+  clearAnimationsForDocument,
 } from "../src/sync/auto-animation-normalizer"
 import { globalDocumentCompiler } from "../src/compiler/document-compiler"
-import { ATTR_ELEM_CLICK, ATTR_ELEM_NOTE } from "../src/types/slides-protocol"
+import { ATTR_ELEM_CLICK, ATTR_ELEM_MOTION, ATTR_ELEM_NOTE } from "../src/types/slides-protocol"
 import type { ISlidesBlockItem, ISlidesVirtualPage } from "../src/types/slides-protocol"
 
 describe("auto-animation-normalizer (智能动效配置编排)", () => {
@@ -377,6 +379,140 @@ describe("auto-animation-normalizer (智能动效配置编排)", () => {
       const res = await runAutoAnimationForDocument("doc-cancel", {
         compileDocFn: vi.fn().mockResolvedValue(mockDoc),
         showMessageFn: mockShow,
+        confirmFn: mockConfirm,
+        setBlockAttrsFn: mockSetAttrs,
+      })
+
+      expect(mockConfirm).toHaveBeenCalled()
+      expect(mockSetAttrs).not.toHaveBeenCalled()
+      expect(res.successCount).toBe(0)
+    })
+  })
+
+  describe("scanDocumentForAnimationClear & clearAnimationsForDocument (清除全篇动效)", () => {
+    it("文档无任何块级动效时，直接提示且不弹警告窗", async () => {
+      const mockDoc: any = {
+        docId: "doc-no-anim",
+        slides: [
+          {
+            pageIndex: 1,
+            frontmatter: { transition: "fade" },
+            blocks: [{ id: "p1", type: "p" }],
+          },
+        ],
+      }
+      const mockShow = vi.fn()
+      const mockConfirm = vi.fn()
+
+      const res = await clearAnimationsForDocument("doc-no-anim", {
+        compileDocFn: vi.fn().mockResolvedValue(mockDoc),
+        showMessageFn: mockShow,
+        confirmFn: mockConfirm,
+      })
+
+      expect(res.targets).toHaveLength(0)
+      expect(mockConfirm).not.toHaveBeenCalled()
+      expect(mockShow).toHaveBeenCalledWith("当前文档未检测到已配置的页面动效，无需清除")
+    })
+
+    it("应递归扫描超级块/列表子块上的 click 与 motion，并在用户确认后清空动效", async () => {
+      const mockDoc: any = {
+        docId: "doc-clear-anim",
+        slides: [
+          {
+            pageIndex: 1,
+            frontmatter: { transition: "slide-left" },
+            blocks: [
+              { id: "p1", type: "p", clicks: "+1" },
+              {
+                id: "sb1",
+                type: "s",
+                children: [
+                  { id: "c1", type: "p", attributes: { [ATTR_ELEM_MOTION]: "fade-up" } },
+                  { id: "c2", type: "p" },
+                ],
+              },
+            ],
+          },
+          {
+            pageIndex: 2,
+            frontmatter: {},
+            blocks: [
+              {
+                id: "list1",
+                type: "l",
+                children: [{ id: "li1", type: "i", ial: { [ATTR_ELEM_CLICK]: "2", [ATTR_ELEM_MOTION]: "zoom" } }],
+              },
+            ],
+          },
+        ],
+      }
+
+      globalDocumentCompiler.setBlockAttrOverride("p1", { [ATTR_ELEM_CLICK]: "+1" })
+      const scanRes = await scanDocumentForAnimationClear("doc-clear-anim", {
+        compileDocFn: vi.fn().mockResolvedValue(mockDoc),
+      })
+      expect(scanRes.affectedPagesCount).toBe(2)
+      expect(scanRes.targets.map(t => t.blockId)).toEqual(["p1", "c1", "li1"])
+
+      const mockShow = vi.fn()
+      const mockConfirm = vi.fn((title, text, onConfirm) => {
+        expect(title).toContain("危险操作")
+        expect(text).toContain("2 页中全部 3 个内容块")
+        onConfirm?.()
+      })
+      const mockSetAttrs = vi.fn().mockResolvedValue({})
+      const mockSyncDom = vi.fn()
+      const mockCompile = vi.fn().mockResolvedValue(undefined)
+      const mockNotice = vi.fn()
+
+      const res = await clearAnimationsForDocument("doc-clear-anim", {
+        compileDocFn: vi.fn().mockResolvedValue(mockDoc),
+        showMessageFn: mockShow,
+        confirmFn: mockConfirm,
+        setBlockAttrsFn: mockSetAttrs,
+        syncDomFn: mockSyncDom,
+        compileCurrentDocFn: mockCompile,
+        onSuccessNotice: mockNotice,
+      })
+
+      expect(mockSetAttrs).toHaveBeenCalledTimes(3)
+      expect(mockSetAttrs).toHaveBeenCalledWith("p1", {
+        [ATTR_ELEM_CLICK]: "",
+        [ATTR_ELEM_MOTION]: "",
+      })
+      expect(mockSetAttrs).toHaveBeenCalledWith("c1", {
+        [ATTR_ELEM_CLICK]: "",
+        [ATTR_ELEM_MOTION]: "",
+      })
+      expect(mockSetAttrs).toHaveBeenCalledWith("li1", {
+        [ATTR_ELEM_CLICK]: "",
+        [ATTR_ELEM_MOTION]: "",
+      })
+      expect(globalDocumentCompiler.getBlockAttrOverride("p1")).toBeUndefined()
+      expect(mockSyncDom).toHaveBeenCalledTimes(3)
+      expect(mockCompile).toHaveBeenCalled()
+      expect(mockNotice).toHaveBeenCalledWith("已清除动效")
+      expect(res.successCount).toBe(3)
+    })
+
+    it("用户在清除动效警告弹窗中取消时，不执行任何清理操作", async () => {
+      const mockDoc: any = {
+        docId: "doc-clear-cancel",
+        slides: [
+          {
+            pageIndex: 1,
+            frontmatter: {},
+            blocks: [{ id: "p1", type: "p", clicks: "1" }],
+          },
+        ],
+      }
+
+      const mockConfirm = vi.fn((_t, _x, _onConfirm, onCancel) => onCancel?.())
+      const mockSetAttrs = vi.fn()
+
+      const res = await clearAnimationsForDocument("doc-clear-cancel", {
+        compileDocFn: vi.fn().mockResolvedValue(mockDoc),
         confirmFn: mockConfirm,
         setBlockAttrsFn: mockSetAttrs,
       })

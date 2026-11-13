@@ -91,9 +91,6 @@
         @add-note-block="onAddNoteBlock"
         @locate-note-block="onLocateNoteBlock"
         @generate-notes="onGenerateNotesWithAI"
-        @batch-append-notes="onBatchAppendNotes"
-        @batch-delete-notes="onBatchDeleteNotes"
-        :is-batch-processing="isBatchProcessing"
         @insert-divider-after="onInsertDividerAfter"
         @delete-divider="onDeleteCurrentBlock"
       />
@@ -150,7 +147,6 @@
         :doc-aspect-ratio="docAspectRatio"
         :doc-default-transition="docDefaultTransition"
         :doc-spacing="docSpacing"
-        :is-exporting-images="isExportingImages"
         :is-batch-processing="isBatchProcessing"
         @update:doc-theme="onDocThemeChange"
         @update:doc-background="onDocBackgroundChange"
@@ -159,13 +155,14 @@
         @update:doc-spacing="onDocSpacingChange"
         @open-bottom-preview="onOpenBottomPreview"
         @open-presenter="onOpenPresenter"
-        @identify-notes="onIdentifyNotesBlocks"
+        @add-or-identify-notes="onAddOrIdentifyNotesBlocks"
+        @clear-notes="onBatchDeleteNotes"
         @auto-animate="onAutoAnimateDocument"
+        @clear-animations="onClearAnimationsDocument"
         @ai-auto-split="onAiAutoSplit"
         @clear-dividers="onClearDividers"
         @export-html="onExportHtml"
         @export-pdf="onExportPdf"
-        @export-images="onExportImages"
       />
     </div>
 
@@ -732,10 +729,10 @@ const {
   onLocateNoteBlock,
   onGenerateNotesWithAI,
   isBatchProcessing,
-  onBatchAppendNotes,
   onBatchDeleteNotes,
-  onIdentifyNotesBlocks,
+  onAddOrIdentifyNotesBlocks,
   onAutoAnimateDocument,
+  onClearAnimationsDocument,
   toggleElemClick,
   onElemClickStepChange,
   onElemMotionChange,
@@ -749,8 +746,6 @@ const {
   onDeleteCurrentBlock,
   onExportHtml,
   onExportPdf,
-  onExportImages,
-  isExportingImages,
 } = useInspectorActions({
   activeBlockId,
   activeBlockType,
