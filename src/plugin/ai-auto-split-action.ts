@@ -1,4 +1,4 @@
-import { showMessage } from "siyuan"
+import { confirm, showMessage } from "siyuan"
 import { deleteBlock, getChildBlocks, insertBlock, setBlockAttrs } from "@/api"
 import { analyzeSlideSplits } from "@/ai/auto-splitter"
 import { ATTR_PAGE_LAYOUT, ATTR_PAGE_SLIDE } from "@/types/slides-protocol"
@@ -108,27 +108,41 @@ export async function clearSlideDividers(plugin: IAiAutoSplitHost): Promise<void
     return
   }
 
-  showMessage(`正在清除文档中的 ${blocksToDelete.length} 处分页线...`)
-  let deleted = 0
-  for (const id of blocksToDelete) {
-    try {
-      await deleteBlock(id)
-      deleted++
-    } catch (e) {
-      console.warn("Failed to delete divider block:", e)
-    }
-  }
+  const dividerCount = blocksToDelete.length
 
-  for (const id of blocksToClearAttrs) {
-    try {
-      await setBlockAttrs(id, { [ATTR_PAGE_SLIDE]: "", [ATTR_PAGE_LAYOUT]: "" })
-    } catch (e) {
-      console.warn("Failed to clear slide attrs:", e)
-    }
-  }
+  return new Promise((resolve) => {
+    confirm(
+      "危险操作：清除所有分页线",
+      `此操作将从正文中彻底删除全部 ${dividerCount} 处幻灯片分页线（全篇将合并为单页），删除后无法撤销。是否确认继续？`,
+      async () => {
+        showMessage(`正在清除文档中的 ${dividerCount} 处分页线...`)
+        let deleted = 0
+        for (const id of blocksToDelete) {
+          try {
+            await deleteBlock(id)
+            deleted++
+          } catch (e) {
+            console.warn("Failed to delete divider block:", e)
+          }
+        }
 
-  showMessage(`已成功清除文档中的 ${deleted} 处分页线并重新编译`)
-  plugin.compileCurrentDocument(plugin.currentDocId)
+        for (const id of blocksToClearAttrs) {
+          try {
+            await setBlockAttrs(id, { [ATTR_PAGE_SLIDE]: "", [ATTR_PAGE_LAYOUT]: "" })
+          } catch (e) {
+            console.warn("Failed to clear slide attrs:", e)
+          }
+        }
+
+        showMessage(`已成功清除文档中的 ${deleted} 处分页线并重新编译`)
+        await plugin.compileCurrentDocument(plugin.currentDocId)
+        resolve()
+      },
+      () => {
+        resolve()
+      }
+    )
+  })
 }
 
 /** 智能分页函数别名（语义化去 AI） */

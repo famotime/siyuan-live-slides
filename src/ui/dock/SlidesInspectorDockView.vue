@@ -917,9 +917,15 @@ function onAiAutoSplit() {
   }
 }
 
-function onClearDividers() {
+async function onClearDividers() {
   if (plugin && isFeatureEnabled('aiScript')) {
-    void clearSlideDividers(plugin)
+    if (isBatchProcessing.value) return
+    isBatchProcessing.value = true
+    try {
+      await clearSlideDividers(plugin)
+    } finally {
+      isBatchProcessing.value = false
+    }
   }
 }
 

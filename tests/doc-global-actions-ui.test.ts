@@ -13,24 +13,34 @@ describe('侧栏全局操作与页面检查器按钮布局规范', () => {
   const dockViewCode = fs.readFileSync(dockViewPath, 'utf8')
   const previewTabCode = fs.readFileSync(previewTabPath, 'utf8')
 
-  it('DocInspectorSection「演示全局操作」应包含增加讲稿块、清除讲稿块、智能动效、清除动效且移除识别讲稿块与导出图片', () => {
-    expect(docInspectorCode).toContain('<span>增加讲稿块</span>')
-    expect(docInspectorCode).toContain('<span>清除讲稿块</span>')
+  it('DocInspectorSection「演示全局操作」应按智能分页、智能动效、讲稿块操作顺序排列且移除识别讲稿块与导出图片', () => {
+    expect(docInspectorCode).toContain('<span>智能分页</span>')
+    expect(docInspectorCode).toContain('<span>清除分页</span>')
     expect(docInspectorCode).toContain('<span>智能动效</span>')
     expect(docInspectorCode).toContain('<span>清除动效</span>')
+    expect(docInspectorCode).toContain('<span>增加讲稿块</span>')
+    expect(docInspectorCode).toContain('<span>清除讲稿块</span>')
 
     expect(docInspectorCode).not.toContain('识别讲稿块')
     expect(docInspectorCode).not.toContain('导出图片')
     expect(docInspectorCode).not.toContain('exportImages')
 
-    const addNotesIdx = docInspectorCode.indexOf('<span>增加讲稿块</span>')
-    const clearNotesIdx = docInspectorCode.indexOf('<span>清除讲稿块</span>')
+    const splitIdx = docInspectorCode.indexOf('<span>智能分页</span>')
+    const clearSplitIdx = docInspectorCode.indexOf('<span>清除分页</span>')
     const autoAnimIdx = docInspectorCode.indexOf('<span>智能动效</span>')
     const clearAnimIdx = docInspectorCode.indexOf('<span>清除动效</span>')
+    const addNotesIdx = docInspectorCode.indexOf('<span>增加讲稿块</span>')
+    const clearNotesIdx = docInspectorCode.indexOf('<span>清除讲稿块</span>')
 
-    expect(clearNotesIdx).toBeGreaterThan(addNotesIdx)
-    expect(autoAnimIdx).toBeGreaterThan(clearNotesIdx)
+    expect(clearSplitIdx).toBeGreaterThan(splitIdx)
+    expect(autoAnimIdx).toBeGreaterThan(clearSplitIdx)
     expect(clearAnimIdx).toBeGreaterThan(autoAnimIdx)
+    expect(addNotesIdx).toBeGreaterThan(clearAnimIdx)
+    expect(clearNotesIdx).toBeGreaterThan(addNotesIdx)
+
+    // 清除分页应采用 spm-btn-danger 红色警告样式，且带有二次确认 Tooltip 提示
+    expect(docInspectorCode).toMatch(/class="spm-btn-action\s+spm-btn-danger[^"]*b3-tooltips[^"]*"[\s\S]*?清除分页/)
+    expect(docInspectorCode).toContain('aria-label="一键清除当前文档中的所有幻灯片分页线（需二次确认）"')
   })
 
   it('PageInspectorSection「演讲者提词」应取消跨页全部追加与全部删除按钮，保留单页操作', () => {

@@ -116,6 +116,54 @@
       </div>
     </div>
 
+    <!-- 页面间距风格 (Spacing) -->
+    <div class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="覆盖本页内衬、内容间隙与正文行距"
+          >
+            <SlidesIcon name="ratio" />
+            <span>页面间距</span>
+          </div>
+        </div>
+      </div>
+      <div class="spm-segmented-group">
+        <button
+          class="spm-segmented-item"
+          :class="{ active: !pageSpacing || pageSpacing === 'inherit' }"
+          @click="$emit('update:pageSpacing', 'inherit')"
+        >
+          继承全局
+        </button>
+        <button
+          class="spm-segmented-item b3-tooltips b3-tooltips__s"
+          :class="{ active: pageSpacing === 'compact' }"
+          aria-label="紧凑排版：外衬 16/28px，块距 8px，行高 1.45"
+          @click="$emit('update:pageSpacing', 'compact')"
+        >
+          紧凑
+        </button>
+        <button
+          class="spm-segmented-item b3-tooltips b3-tooltips__s"
+          :class="{ active: pageSpacing === 'normal' }"
+          aria-label="标准排版：外衬 32/48px，块距 14px，行高 1.60"
+          @click="$emit('update:pageSpacing', 'normal')"
+        >
+          标准
+        </button>
+        <button
+          class="spm-segmented-item b3-tooltips b3-tooltips__sw"
+          :class="{ active: pageSpacing === 'loose' }"
+          aria-label="宽松排版：外衬 52/72px，块距 22px，行高 1.75"
+          @click="$emit('update:pageSpacing', 'loose')"
+        >
+          宽松
+        </button>
+      </div>
+    </div>
+
     <!-- 转场动效选择 -->
     <TransitionSelector
       :model-value="pageTransition"
@@ -259,54 +307,6 @@
       </div>
     </div>
 
-    <!-- 页面间距风格 (Spacing) -->
-    <div class="spm-card-control">
-      <div class="spm-control-header">
-        <div class="spm-control-title-group">
-          <div
-            class="spm-control-title b3-tooltips b3-tooltips__se"
-            aria-label="覆盖本页内衬、内容间隙与正文行距"
-          >
-            <SlidesIcon name="ratio" />
-            <span>页面间距</span>
-          </div>
-        </div>
-      </div>
-      <div class="spm-segmented-group">
-        <button
-          class="spm-segmented-item"
-          :class="{ active: !pageSpacing || pageSpacing === 'inherit' }"
-          @click="$emit('update:pageSpacing', 'inherit')"
-        >
-          继承全局
-        </button>
-        <button
-          class="spm-segmented-item b3-tooltips b3-tooltips__s"
-          :class="{ active: pageSpacing === 'compact' }"
-          aria-label="紧凑排版：外衬 16/28px，块距 8px，行高 1.45"
-          @click="$emit('update:pageSpacing', 'compact')"
-        >
-          紧凑
-        </button>
-        <button
-          class="spm-segmented-item b3-tooltips b3-tooltips__s"
-          :class="{ active: pageSpacing === 'normal' }"
-          aria-label="标准排版：外衬 32/48px，块距 14px，行高 1.60"
-          @click="$emit('update:pageSpacing', 'normal')"
-        >
-          标准
-        </button>
-        <button
-          class="spm-segmented-item b3-tooltips b3-tooltips__sw"
-          :class="{ active: pageSpacing === 'loose' }"
-          aria-label="宽松排版：外衬 52/72px，块距 22px，行高 1.75"
-          @click="$emit('update:pageSpacing', 'loose')"
-        >
-          宽松
-        </button>
-      </div>
-    </div>
-
     <!-- 页面图片/分栏配图 (Image) -->
     <div
       v-if="pageLayout === 'image-right' || pageLayout === 'image-left' || pageImage"
@@ -409,11 +409,11 @@
       </div>
     </div>
 
-    <!-- 分页符快捷操作 (紧凑 2 列网格) -->
+    <!-- 快捷操作 (紧凑 2 列网格) -->
     <div class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
-          <span class="spm-control-title">分页快捷操作</span>
+          <span class="spm-control-title">快捷操作</span>
         </div>
       </div>
       <div class="spm-action-grid">
