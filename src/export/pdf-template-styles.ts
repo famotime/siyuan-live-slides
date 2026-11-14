@@ -1136,27 +1136,242 @@ export function generatePdfExportStyles(options?: {
       border-top-color: #334155;
     }
     /* Layouts */
-    .layout-cover .pdf-slide-body {
+    .layout-cover .pdf-slide-body,
+    .layout-center .pdf-slide-body,
+    .layout-fact .pdf-slide-body,
+    .layout-cover-container,
+    .layout-center-container,
+    .layout-fact-container {
       justify-content: center;
       align-items: center;
       text-align: center;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
     }
-    .layout-cover h1 {
+    .layout-cover h1,
+    .layout-cover-container h1 {
       font-size: 3.2rem;
+      font-weight: 800;
+      margin-bottom: 16px;
     }
-    .layout-center .pdf-slide-body {
+    .layout-center-container h1,
+    .layout-center h1 {
+      font-size: 2.6rem;
+      font-weight: 700;
+    }
+    .layout-fact .fact-value,
+    .layout-fact-container .fact-value,
+    .layout-fact .fact-value-wrapper,
+    .layout-fact h1,
+    .layout-fact-container h1 {
+      font-size: 5.5rem;
+      font-weight: 900;
+      color: var(--slide-accent, #ef4444);
+      margin-bottom: 8px;
+      line-height: 1.05;
+    }
+    .layout-fact .fact-divider-line,
+    .layout-fact-container .fact-divider-line {
+      width: 60px;
+      height: 3px;
+      background: var(--slide-accent, #ef4444);
+      margin: 12px auto 16px;
+    }
+    .layout-fact .fact-label,
+    .layout-fact-container .fact-label,
+    .layout-fact .fact-label-wrapper {
+      font-size: 1.55rem;
+      opacity: 0.88;
+      line-height: 1.4;
+    }
+
+    /* Timeline / Steps 时间线 (PDF 导出) */
+    .layout-timeline-container,
+    .layout-steps-container {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      padding: 28px 48px;
+    }
+    .timeline-track-wrapper {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: space-between;
+      width: 100%;
+      gap: 20px;
+      margin: auto 0;
+      position: relative;
+    }
+    .timeline-step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      text-align: center;
+      position: relative;
+    }
+    .timeline-node-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin-bottom: 18px;
+    }
+    .timeline-node-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--slide-accent, #3b82f6);
+      color: #ffffff;
+      font-size: 1.2rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+    .timeline-connector-line {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100%;
+      height: 2px;
+      background: #94a3b8;
+      transform: translateY(-50%);
+      z-index: 1;
+    }
+    .timeline-step-content {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+    .timeline-step-content h1,
+    .timeline-step-content h2,
+    .timeline-step-content h3 {
+      font-size: 1.2rem !important;
+      font-weight: 700 !important;
+      margin-bottom: 6px !important;
+    }
+    .timeline-step-content p,
+    .timeline-step-content li {
+      font-size: 1rem !important;
+      line-height: 1.4 !important;
+    }
+
+    /* Quote 版式 (PDF 导出) */
+    .layout-quote,
+    .layout-quote-container {
+      display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
-      text-align: center;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      padding: 40px 60px;
+      box-sizing: border-box;
     }
-    .layout-fact .pdf-slide-body {
-      justify-content: center;
+    .layout-quote .quote-watermark-icon,
+    .layout-quote-container .quote-watermark-icon {
+      position: absolute;
+      top: 10%;
+      left: 6%;
+      font-size: 14rem;
+      line-height: 1;
+      font-family: Georgia, serif;
+      opacity: 0.08;
+      color: currentColor;
+    }
+    .layout-quote .quote-content-body,
+    .layout-quote-container .quote-content-body {
+      max-width: 800px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+    .quote-text,
+    .layout-quote-container .quote-body {
+      font-size: 2rem !important;
+      font-style: italic !important;
+      line-height: 1.6 !important;
+      margin-bottom: 20px;
+    }
+    .quote-footer,
+    .quote-author {
+      font-size: 1.2rem;
+      opacity: 0.75;
+      text-align: right;
+    }
+
+    /* Intro 版式 (PDF 导出) */
+    .layout-intro,
+    .layout-intro-container {
+      display: flex;
+      flex-direction: row;
       align-items: center;
-      text-align: center;
+      justify-content: center;
+      gap: 48px;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      padding: 36px 54px;
     }
-    .layout-fact h1 {
-      font-size: 4.5rem;
-      color: #ef4444;
+    .intro-avatar-col {
+      flex-shrink: 0;
+    }
+    .intro-avatar-box {
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 3px solid rgba(66, 133, 244, 0.35);
+      background: rgba(125, 125, 125, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .intro-avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .intro-avatar-svg {
+      width: 100px;
+      height: 100px;
+      opacity: 0.35;
+      fill: currentColor;
+    }
+    .intro-info-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .intro-info-col h1 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .intro-info-col h2, .intro-info-col h3 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--slide-accent, #3b82f6);
+      margin-bottom: 14px;
+    }
+    .intro-info-col p {
+      font-size: 1.15rem;
+      line-height: 1.5;
+      opacity: 0.9;
     }
     @media print {
       .slides-motion-fade-in,

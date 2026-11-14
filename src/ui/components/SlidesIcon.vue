@@ -311,21 +311,21 @@
     </g>
 
     <!-- ====== 幻灯片版式线框图标 ====== -->
-    <!-- 1. 版式：封面 (cover) -->
+    <!-- 1. 版式：封面 (cover) - 突出居中大标题与副标题 -->
     <g v-else-if="name === 'layout-cover' || name === 'cover'">
       <rect x="2" y="4" width="20" height="16" rx="2" />
-      <line x1="9" y1="8" x2="15" y2="8" />
-      <line x1="5.5" y1="11.5" x2="18.5" y2="11.5" />
-      <line x1="7.5" y1="15" x2="16.5" y2="15" />
+      <line x1="6" y1="9" x2="18" y2="9" stroke-width="2.2" />
+      <line x1="8" y1="13" x2="16" y2="13" stroke-width="1.2" opacity="0.8" />
+      <line x1="9.5" y1="16.5" x2="14.5" y2="16.5" stroke-width="1" opacity="0.6" />
     </g>
 
-    <!-- 2. 版式：标准单栏 (default) -->
+    <!-- 2. 版式：标准单栏 (default) - 顶部左对齐标题，下方正文行 -->
     <g v-else-if="name === 'layout-default' || name === 'default'">
       <rect x="2" y="4" width="20" height="16" rx="2" />
-      <line x1="5" y1="8" x2="11.5" y2="8" />
-      <line x1="5" y1="11.5" x2="19" y2="11.5" />
-      <line x1="5" y1="14.5" x2="19" y2="14.5" />
-      <line x1="5" y1="17.5" x2="13.5" y2="17.5" />
+      <line x1="5" y1="7.5" x2="12" y2="7.5" stroke-width="1.8" />
+      <line x1="5" y1="11" x2="19" y2="11" stroke-width="1.2" />
+      <line x1="5" y1="14" x2="19" y2="14" stroke-width="1.2" />
+      <line x1="5" y1="17" x2="14" y2="17" stroke-width="1.2" opacity="0.75" />
     </g>
 
     <!-- 3. 版式：双栏 (two-cols) -->
@@ -333,11 +333,11 @@
       <rect x="2" y="4" width="20" height="16" rx="2" />
       <line x1="12" y1="4" x2="12" y2="20" stroke-dasharray="2 1.5" />
       <!-- 左栏 -->
-      <line x1="5" y1="8" x2="9.5" y2="8" />
+      <line x1="5" y1="8" x2="9.5" y2="8" stroke-width="1.5" />
       <line x1="5" y1="11.5" x2="9.5" y2="11.5" />
       <line x1="5" y1="15" x2="8" y2="15" />
       <!-- 右栏 -->
-      <line x1="14.5" y1="8" x2="19" y2="8" />
+      <line x1="14.5" y1="8" x2="19" y2="8" stroke-width="1.5" />
       <line x1="14.5" y1="11.5" x2="19" y2="11.5" />
       <line x1="14.5" y1="15" x2="17.5" y2="15" />
     </g>
@@ -345,7 +345,7 @@
     <!-- 4. 版式：表头双栏 (two-cols-header) -->
     <g v-else-if="name === 'layout-two-cols-header' || name === 'two-cols-header'">
       <rect x="2" y="4" width="20" height="16" rx="2" />
-      <line x1="5" y1="7.5" x2="13" y2="7.5" />
+      <line x1="5" y1="7.5" x2="13" y2="7.5" stroke-width="1.8" />
       <line x1="12" y1="10.5" x2="12" y2="18.5" stroke-dasharray="1.5 1.5" />
       <!-- 左栏 -->
       <line x1="5" y1="12" x2="9.5" y2="12" />
@@ -358,7 +358,7 @@
     <!-- 5. 版式：表头多栏 / 表头三栏 (cols-header / three-cols-header) -->
     <g v-else-if="name === 'layout-cols-header' || name === 'cols-header' || name === 'layout-three-cols-header' || name === 'three-cols-header'">
       <rect x="2" y="4" width="20" height="16" rx="2" />
-      <line x1="5" y1="7.5" x2="13" y2="7.5" />
+      <line x1="5" y1="7.5" x2="14" y2="7.5" stroke-width="1.8" />
       <line x1="9.3" y1="10.5" x2="9.3" y2="18.5" stroke-dasharray="1.5 1.5" />
       <line x1="14.7" y1="10.5" x2="14.7" y2="18.5" stroke-dasharray="1.5 1.5" />
       <!-- 第1栏 -->
@@ -375,7 +375,7 @@
     <!-- 5.5 版式：四叶草 / 田字型 (clover) -->
     <g v-else-if="name === 'layout-clover' || name === 'clover'">
       <rect x="2" y="4" width="20" height="16" rx="2" />
-      <line x1="5" y1="7" x2="13" y2="7" />
+      <line x1="5" y1="7" x2="13" y2="7" stroke-width="1.6" />
       <!-- 田字型水平与垂直虚线分割 -->
       <line x1="4.5" y1="13.5" x2="19.5" y2="13.5" stroke-dasharray="1.5 1.5" />
       <line x1="12" y1="9" x2="12" y2="18.5" stroke-dasharray="1.5 1.5" />
@@ -386,12 +386,29 @@
       <line x1="14.5" y1="16" x2="19" y2="16" />
     </g>
 
+    <!-- 5.6 版式：时间线 / 步骤流程 (timeline / steps) -->
+    <g v-else-if="name === 'layout-timeline' || name === 'timeline' || name === 'layout-steps' || name === 'steps'">
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <line x1="5" y1="7" x2="12" y2="7" stroke-width="1.6" />
+      <!-- 水平连接线 -->
+      <line x1="6" y1="11.5" x2="18" y2="11.5" stroke-width="1.2" opacity="0.65" />
+      <!-- 节点 1 -->
+      <circle cx="6" cy="11.5" r="1.8" fill="currentColor" />
+      <line x1="4.5" y1="15.5" x2="7.5" y2="15.5" stroke-width="1.2" />
+      <!-- 节点 2 -->
+      <circle cx="12" cy="11.5" r="1.8" fill="currentColor" />
+      <line x1="10.5" y1="15.5" x2="13.5" y2="15.5" stroke-width="1.2" />
+      <!-- 节点 3 -->
+      <circle cx="18" cy="11.5" r="1.8" fill="currentColor" />
+      <line x1="16.5" y1="15.5" x2="19.5" y2="15.5" stroke-width="1.2" />
+    </g>
+
     <!-- 6. 版式：图右 (image-right) -->
     <g v-else-if="name === 'layout-image-right' || name === 'image-right'">
       <rect x="2" y="4" width="20" height="16" rx="2" />
       <line x1="12" y1="4" x2="12" y2="20" />
       <!-- 左侧文字区 -->
-      <line x1="4.5" y1="8" x2="9.5" y2="8" />
+      <line x1="4.5" y1="8" x2="9.5" y2="8" stroke-width="1.5" />
       <line x1="4.5" y1="11.5" x2="10" y2="11.5" />
       <line x1="4.5" y1="14.5" x2="8" y2="14.5" />
       <!-- 右侧图片区：太阳与山峰 -->
@@ -407,52 +424,52 @@
       <circle cx="6" cy="8.5" r="1.2" />
       <polyline points="3.5 17 6 13 8.5 16 10 14" />
       <!-- 右侧文字区 -->
-      <line x1="14.5" y1="8" x2="19.5" y2="8" />
+      <line x1="14.5" y1="8" x2="19.5" y2="8" stroke-width="1.5" />
       <line x1="14.5" y1="11.5" x2="20" y2="11.5" />
       <line x1="14.5" y1="14.5" x2="18" y2="14.5" />
     </g>
 
-    <!-- 8. 版式：居中 (center) -->
+    <!-- 8. 版式：居中 (center) - 视口正中纯文字，留白大 -->
     <g v-else-if="name === 'layout-center' || name === 'center'">
       <rect x="2" y="4" width="20" height="16" rx="2" />
-      <line x1="6.5" y1="9" x2="17.5" y2="9" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-      <line x1="8" y1="15" x2="16" y2="15" />
+      <line x1="7" y1="10" x2="17" y2="10" stroke-width="1.8" />
+      <line x1="5.5" y1="13.5" x2="18.5" y2="13.5" stroke-width="1.2" />
+      <line x1="8" y1="16.5" x2="16" y2="16.5" stroke-width="1" opacity="0.8" />
     </g>
 
-    <!-- 9. 版式：大字报 / 核心数据 (fact) -->
+    <!-- 9. 版式：大字报 / 核心数据 (fact) - 粗体数据卡片 -->
     <g v-else-if="name === 'layout-fact' || name === 'fact'">
       <rect x="2" y="4" width="20" height="16" rx="2" />
       <!-- 大号核心数据符号（百分比 %） -->
-      <circle cx="8" cy="9" r="1.5" />
-      <line x1="14" y1="8" x2="9" y2="14" />
-      <circle cx="15" cy="13" r="1.5" />
+      <circle cx="8" cy="9" r="1.6" stroke-width="1.5" />
+      <line x1="15" y1="7.5" x2="9" y2="14.5" stroke-width="1.8" />
+      <circle cx="16" cy="13" r="1.6" stroke-width="1.5" />
       <!-- 底部说明小字 -->
-      <line x1="6.5" y1="17" x2="17.5" y2="17" />
+      <line x1="6" y1="17.5" x2="18" y2="17.5" stroke-width="1.2" opacity="0.85" />
     </g>
 
-    <!-- 10. 版式：介绍 / 演讲者 (intro) -->
+    <!-- 10. 版式：介绍 / 演讲者 (intro) - 头像框与名片行 -->
     <g v-else-if="name === 'layout-intro' || name === 'intro'">
       <rect x="2" y="4" width="20" height="16" rx="2" />
-      <!-- 左侧人物头像 -->
-      <circle cx="7.5" cy="9.5" r="2" />
-      <path d="M4.5 16.5c0-1.8 1.3-3 3-3s3 1.2 3 3" />
+      <!-- 左侧人物头像圆框 -->
+      <circle cx="7.5" cy="10" r="2.5" stroke-width="1.5" />
+      <path d="M4 17c0-2 1.5-3.2 3.5-3.2s3.5 1.2 3.5 3.2" stroke-width="1.2" />
       <!-- 右侧个人名片/介绍信息 -->
-      <line x1="13" y1="9" x2="18.5" y2="9" />
-      <line x1="13" y1="12.5" x2="19.5" y2="12.5" />
-      <line x1="13" y1="15.5" x2="17" y2="15.5" />
+      <line x1="13.5" y1="8.5" x2="19" y2="8.5" stroke-width="1.8" />
+      <line x1="13.5" y1="12" x2="19.5" y2="12" stroke-width="1.2" />
+      <line x1="13.5" y1="15.5" x2="17.5" y2="15.5" stroke-width="1.2" opacity="0.8" />
     </g>
 
-    <!-- 11. 版式：引言 (quote) -->
+    <!-- 11. 版式：引言 (quote) - 巨型双引号装饰 -->
     <g v-else-if="name === 'layout-quote' || name === 'quote'">
       <rect x="2" y="4" width="20" height="16" rx="2" />
       <!-- 双引号标志 -->
-      <path d="M6 7.5h2v2H6.5c0 1.2-.4 2-1.5 2.5" />
-      <path d="M9.5 7.5h2v2H10c0 1.2-.4 2-1.5 2.5" />
+      <path d="M5.5 8h2v2H6c0 1.2-.3 1.8-1.2 2.3" stroke-width="1.4" />
+      <path d="M8.5 8h2v2H9c0 1.2-.3 1.8-1.2 2.3" stroke-width="1.4" />
       <!-- 引言文字 -->
-      <line x1="6" y1="13.5" x2="18" y2="13.5" />
+      <line x1="6" y1="13" x2="18" y2="13" stroke-width="1.5" />
       <!-- 署名短线 -->
-      <line x1="12.5" y1="16.5" x2="17.5" y2="16.5" />
+      <line x1="12.5" y1="16.5" x2="17.5" y2="16.5" stroke-width="1.2" opacity="0.8" />
     </g>
 
     <!-- 桌面端视图 (Desktop / Monitor) -->

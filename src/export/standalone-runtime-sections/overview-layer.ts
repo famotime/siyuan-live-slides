@@ -149,6 +149,56 @@ export function getOverviewLayerSection(): string {
           }
           bodyEl.appendChild(contentCol);
           bodyEl.appendChild(imgCol);
+        } else if (layout === "fact") {
+          bodyEl = document.createElement("div");
+          bodyEl.className = "layout-fact-container";
+          const glow = document.createElement("div");
+          glow.className = "fact-hero-glow";
+          bodyEl.appendChild(glow);
+          const box = document.createElement("div");
+          box.className = "fact-content-box";
+          if (blocks.length > 0) {
+            const vWrap = document.createElement("div");
+            vWrap.className = "fact-value-wrapper";
+            vWrap.appendChild(renderBlock(blocks[0], ""));
+            box.appendChild(vWrap);
+          }
+          if (blocks.length > 1) {
+            const divLine = document.createElement("div");
+            divLine.className = "fact-divider-line";
+            box.appendChild(divLine);
+            const lWrap = document.createElement("div");
+            lWrap.className = "fact-label-wrapper";
+            for (let i = 1; i < blocks.length; i++) lWrap.appendChild(renderBlock(blocks[i], ""));
+            box.appendChild(lWrap);
+          }
+          bodyEl.appendChild(box);
+        } else if (layout === "timeline" || layout === "steps") {
+          bodyEl = document.createElement("div");
+          bodyEl.className = "layout-timeline-container";
+          const track = document.createElement("div");
+          track.className = "timeline-track-wrapper";
+          let stepItems = blocks;
+          if (blocks.length === 1 && blocks[0].children && blocks[0].children.length >= 2) {
+            stepItems = blocks[0].children;
+          }
+          stepItems.forEach((item, idx) => {
+            const stepEl = document.createElement("div");
+            stepEl.className = "timeline-step-item";
+            const node = document.createElement("div");
+            node.className = "timeline-node-container";
+            const badge = document.createElement("div");
+            badge.className = "timeline-node-badge";
+            badge.textContent = String(idx + 1);
+            node.appendChild(badge);
+            stepEl.appendChild(node);
+            const content = document.createElement("div");
+            content.className = "timeline-step-content";
+            content.appendChild(renderBlock(item, ""));
+            stepEl.appendChild(content);
+            track.appendChild(stepEl);
+          });
+          bodyEl.appendChild(track);
         } else {
           bodyEl = document.createElement("div");
           for (const b of blocks) bodyEl.appendChild(renderBlock(b, ""));

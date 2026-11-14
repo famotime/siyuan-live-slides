@@ -2110,10 +2110,233 @@ defineExpose({
     opacity: 0.85 !important;
   }
 
-  .layout-fact h1 {
-    font-size: 4.5rem !important;
+  .layout-fact h1,
+  .layout-fact-container h1,
+  .layout-fact .fact-value,
+  .layout-fact-container .fact-value,
+  .layout-fact .slide-block:first-child,
+  .layout-fact-container .fact-value-wrapper {
+    font-size: clamp(5rem, 10vw, 7.5rem) !important;
     font-weight: 900 !important;
+    line-height: 1.05 !important;
     color: var(--slide-accent) !important;
+    background: linear-gradient(135deg, var(--slide-accent), #60a5fa) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    filter: drop-shadow(0 4px 16px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.35));
+    margin-bottom: 8px !important;
+  }
+  .layout-fact-container .fact-divider-line {
+    width: 60px;
+    height: 3px;
+    background: var(--slide-accent);
+    margin: 14px auto 18px;
+    border-radius: 2px;
+  }
+  .layout-fact p,
+  .layout-fact-container p,
+  .layout-fact .fact-label,
+  .layout-fact-container .fact-label,
+  .layout-fact .slide-block:not(:first-child),
+  .layout-fact-container .fact-label-wrapper {
+    font-size: 1.6rem !important;
+    opacity: 0.88 !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Timeline / Steps 时间线 (演播室) */
+  .layout-timeline-container,
+  .layout-steps-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 24px 40px;
+    flex: 1;
+  }
+  .timeline-track-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    width: 100%;
+    gap: 20px;
+    margin: auto 0;
+    position: relative;
+  }
+  .timeline-step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    text-align: center;
+    position: relative;
+  }
+  .timeline-node-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 18px;
+  }
+  .timeline-node-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--slide-accent, var(--b3-theme-primary));
+    color: #ffffff;
+    font-size: 1.2rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.4);
+    z-index: 2;
+  }
+  .timeline-connector-line {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--slide-accent, #3b82f6), rgba(125, 125, 125, 0.25));
+    transform: translateY(-50%);
+    z-index: 1;
+  }
+  .timeline-step-content {
+    width: 100%;
+    padding: 12px;
+    background: rgba(125, 125, 125, 0.06);
+    border: 1px solid rgba(125, 125, 125, 0.14);
+    border-radius: 10px;
+    box-sizing: border-box;
+  }
+  .timeline-step-content h1,
+  .timeline-step-content h2,
+  .timeline-step-content h3 {
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 6px !important;
+  }
+  .timeline-step-content p,
+  .timeline-step-content li {
+    font-size: 1rem !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Quote 引言版式 (演播室) */
+  .layout-quote,
+  .layout-quote-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    box-sizing: border-box;
+    padding: 36px 64px;
+    flex: 1;
+  }
+  .quote-watermark-icon {
+    position: absolute;
+    top: 10%;
+    left: 8%;
+    font-size: 14rem;
+    line-height: 1;
+    font-family: Georgia, serif;
+    opacity: 0.08;
+    pointer-events: none;
+    user-select: none;
+    color: currentColor;
+  }
+  .quote-content-body {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    width: 100%;
+    text-align: center;
+  }
+  .quote-text,
+  .quote-body {
+    font-size: 2.1rem !important;
+    font-style: italic !important;
+    line-height: 1.6 !important;
+    font-family: var(--slides-font-serif, "Noto Serif SC", Georgia, serif) !important;
+    margin-bottom: 20px !important;
+  }
+  .quote-footer,
+  .quote-author {
+    font-size: 1.2rem !important;
+    opacity: 0.75 !important;
+    text-align: right !important;
+    font-style: normal !important;
+  }
+
+  /* Intro 介绍版式 (演播室) */
+  .layout-intro,
+  .layout-intro-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 48px;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 32px 48px;
+    flex: 1;
+  }
+  .intro-avatar-col {
+    flex-shrink: 0;
+  }
+  .intro-avatar-box {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.35);
+    background: rgba(125, 125, 125, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .intro-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .intro-avatar-svg {
+    width: 100px;
+    height: 100px;
+    opacity: 0.35;
+    fill: currentColor;
+  }
+  .intro-info-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .intro-info-col h1 {
+    font-size: 2.6rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 8px !important;
+  }
+  .intro-info-col h2, .intro-info-col h3 {
+    font-size: 1.35rem !important;
+    font-weight: 600 !important;
+    color: var(--slide-accent) !important;
+    margin-bottom: 14px !important;
+  }
+  .intro-info-col p {
+    font-size: 1.2rem !important;
+    line-height: 1.5 !important;
+    opacity: 0.9 !important;
   }
 
   /* 多栏与四叶草网格布局 */

@@ -419,6 +419,105 @@ export function getSlideRenderingSection(): string {
             bodyWrap.appendChild(maskEls.layer);
           }
           container.appendChild(bodyWrap);
+        } else if (slide.frontmatter?.layout === "fact") {
+          const validBlocks = (slide.blocks || []).filter(b => b.slot !== "slot-divider-right");
+          const first = validBlocks[0];
+          const rest = validBlocks.slice(1);
+
+          const factContainer = document.createElement("div");
+          factContainer.className = "layout-fact-container";
+
+          const glow = document.createElement("div");
+          glow.className = "fact-hero-glow";
+          glow.setAttribute("aria-hidden", "true");
+          factContainer.appendChild(glow);
+
+          const box = document.createElement("div");
+          box.className = "fact-content-box";
+
+          if (first) {
+            const valWrap = document.createElement("div");
+            valWrap.className = "fact-value-wrapper";
+            valWrap.appendChild(renderBlock(first, ""));
+            box.appendChild(valWrap);
+          }
+
+          if (rest.length > 0) {
+            const divLine = document.createElement("div");
+            divLine.className = "fact-divider-line";
+            box.appendChild(divLine);
+
+            const lblWrap = document.createElement("div");
+            lblWrap.className = "fact-label-wrapper";
+            for (const b of rest) {
+              lblWrap.appendChild(renderBlock(b, ""));
+            }
+            box.appendChild(lblWrap);
+          }
+
+          factContainer.appendChild(box);
+          container.appendChild(factContainer);
+        } else if (slide.frontmatter?.layout === "timeline" || slide.frontmatter?.layout === "steps") {
+          const blocks = (slide.blocks || []).filter(b => b.slot !== "slot-divider-right");
+          let headerBlocks = blocks.filter(b => b.slot === "header");
+          if (headerBlocks.length === 0 && blocks.length > 0) {
+            const candidate = blocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"));
+            if (candidate) headerBlocks = [candidate];
+          }
+          const rem = blocks.filter(b => !headerBlocks.includes(b));
+
+          const tlContainer = document.createElement("div");
+          tlContainer.className = "layout-timeline-container layout-steps-container";
+
+          if (headerBlocks.length > 0) {
+            const headerDiv = document.createElement("div");
+            headerDiv.className = "layout-header-section";
+            for (const hb of headerBlocks) {
+              headerDiv.appendChild(renderBlock(hb, "slides-page-first-heading-block"));
+            }
+            tlContainer.appendChild(headerDiv);
+          }
+
+          let stepItems = rem;
+          if (rem.length === 1 && rem[0].children && rem[0].children.length >= 2) {
+            stepItems = rem[0].children;
+          }
+
+          const track = document.createElement("div");
+          track.className = "timeline-track-wrapper";
+          track.style.setProperty("--timeline-steps", String(Math.max(1, Math.min(6, stepItems.length))));
+
+          stepItems.forEach((item, idx) => {
+            const stepNum = idx + 1;
+            const itemEl = document.createElement("div");
+            itemEl.className = "timeline-step-item";
+            itemEl.style.setProperty("--step-index", String(stepNum));
+
+            const nodeContainer = document.createElement("div");
+            nodeContainer.className = "timeline-node-container";
+
+            const badge = document.createElement("div");
+            badge.className = "timeline-node-badge";
+            badge.textContent = String(stepNum);
+            nodeContainer.appendChild(badge);
+
+            if (idx < stepItems.length - 1) {
+              const line = document.createElement("div");
+              line.className = "timeline-connector-line";
+              nodeContainer.appendChild(line);
+            }
+            itemEl.appendChild(nodeContainer);
+
+            const contentEl = document.createElement("div");
+            contentEl.className = "timeline-step-content";
+            contentEl.appendChild(renderBlock(item, ""));
+            itemEl.appendChild(contentEl);
+
+            track.appendChild(itemEl);
+          });
+
+          tlContainer.appendChild(track);
+          container.appendChild(tlContainer);
         } else {
           const isCover = slide.frontmatter?.layout === "cover";
           const validBlocks = (slide.blocks || []).filter(b => b.slot !== "slot-divider-right");

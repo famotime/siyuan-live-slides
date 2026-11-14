@@ -307,19 +307,19 @@
       </div>
     </div>
 
-    <!-- 页面图片/分栏配图 (Image) -->
+    <!-- 页面图片/分栏配图/头像 (Image) -->
     <div
-      v-if="pageLayout === 'image-right' || pageLayout === 'image-left' || pageImage"
+      v-if="pageLayout === 'image-right' || pageLayout === 'image-left' || pageLayout === 'intro' || pageImage"
       class="spm-card-control"
     >
       <div class="spm-control-header">
         <div class="spm-control-title-group">
           <div
             class="spm-control-title b3-tooltips b3-tooltips__se"
-            aria-label="图文分栏或页面专属配图 URL / 资源路径"
+            :aria-label="pageLayout === 'intro' ? '演讲者个人头像或形象照 URL / 资源路径' : '图文分栏或页面专属配图 URL / 资源路径'"
           >
             <SlidesIcon name="image" />
-            <span>页面图片</span>
+            <span>{{ pageLayout === 'intro' ? '头像与配图' : '页面图片' }}</span>
           </div>
         </div>
       </div>
@@ -337,7 +337,7 @@
       <input
         :value="pageImage"
         class="spm-input"
-        placeholder="网络图片 URL 或思源本地资源路径 (如 assets/...)"
+        :placeholder="pageLayout === 'intro' ? '头像图片 URL 或思源本地图片路径 (如 assets/...)' : '网络图片 URL 或思源本地资源路径 (如 assets/...)'"
         @input="$emit('update:pageImage', ($event.target as HTMLInputElement).value)"
         @change="$emit('update:pageImage', ($event.target as HTMLInputElement).value)"
       />

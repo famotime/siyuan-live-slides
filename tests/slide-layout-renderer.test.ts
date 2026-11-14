@@ -68,9 +68,112 @@ describe("SlideLayoutRenderer (幻灯片版式容器渲染器)", () => {
     const factPage: ISlidesVirtualPage = {
       pageIndex: 5,
       frontmatter: { layout: "fact" },
-      blocks: [{ id: "f", rawMarkdown: "# 关键数据 99%" }],
+      blocks: [
+        { id: "f1", rawMarkdown: "# 99.9%" },
+        { id: "f2", rawMarkdown: "系统可用性 SLA" },
+      ],
       rawMarkdown: "",
     }
-    expect(renderSlideBlocksToHtml(factPage)).toContain("layout-fact-container")
+    const factHtml = renderSlideBlocksToHtml(factPage)
+    expect(factHtml).toContain("layout-fact-container")
+    expect(factHtml).toContain("fact-value")
+    expect(factHtml).toContain("fact-label")
+  })
+
+  it("应支持 quote 引言版式并自动识别出处署名", () => {
+    const quotePage: ISlidesVirtualPage = {
+      pageIndex: 6,
+      frontmatter: { layout: "quote" },
+      blocks: [
+        { id: "q1", rawMarkdown: "保持饥渴，保持愚蠢。" },
+        { id: "q2", rawMarkdown: "—— 史蒂夫·乔布斯" },
+      ],
+      rawMarkdown: "",
+    }
+    const html = renderSlideBlocksToHtml(quotePage)
+    expect(html).toContain("layout-quote-container")
+    expect(html).toContain("quote-watermark-icon")
+    expect(html).toContain("quote-content-body")
+    expect(html).toContain("quote-author")
+    expect(html).toContain("史蒂夫·乔布斯")
+  })
+
+  it("应支持 intro 介绍版式并渲染头像与履历名片", () => {
+    const introPage: ISlidesVirtualPage = {
+      pageIndex: 7,
+      frontmatter: { layout: "intro", image: "https://example.com/avatar.jpg" },
+      blocks: [
+        { id: "i1", rawMarkdown: "# 张三" },
+        { id: "i2", rawMarkdown: "资深前端架构师" },
+      ],
+      rawMarkdown: "",
+    }
+    const html = renderSlideBlocksToHtml(introPage)
+    expect(html).toContain("layout-intro-container")
+    expect(html).toContain("intro-avatar-col")
+    expect(html).toContain("intro-avatar-img")
+    expect(html).toContain("https://example.com/avatar.jpg")
+    expect(html).toContain("intro-info-col")
+    expect(html).toContain("张三")
+  })
+
+  it("应支持 center 居中版式生成居中容器", () => {
+    const centerPage: ISlidesVirtualPage = {
+      pageIndex: 8,
+      frontmatter: { layout: "center" },
+      blocks: [{ id: "ct", rawMarkdown: "正中聚焦的一句话" }],
+      rawMarkdown: "",
+    }
+    const html = renderSlideBlocksToHtml(centerPage)
+    expect(html).toContain("layout-center-container")
+    expect(html).toContain("正中聚焦的一句话")
+  })
+
+  it("应支持 timeline / steps 时间线步骤版式并生成节点与连接线", () => {
+    const timelinePage: ISlidesVirtualPage = {
+      pageIndex: 9,
+      frontmatter: { layout: "timeline" },
+      blocks: [
+        { id: "h", type: "h", rawMarkdown: "# 数字化演进路线" },
+        { id: "s1", rawMarkdown: "阶段一：系统上云" },
+        { id: "s2", rawMarkdown: "阶段二：数据智能" },
+        { id: "s3", rawMarkdown: "阶段三：AI 原生" },
+      ],
+      rawMarkdown: "",
+    }
+    const html = renderSlideBlocksToHtml(timelinePage)
+    expect(html).toContain("layout-timeline-container")
+    expect(html).toContain("layout-header-section")
+    expect(html).toContain("数字化演进路线")
+    expect(html).toContain("timeline-track-wrapper")
+    expect(html).toContain("timeline-step-item")
+    expect(html).toContain("timeline-node-badge")
+    expect(html).toContain("timeline-connector-line")
+    expect(html).toContain("阶段一：系统上云")
+    expect(html).toContain("阶段三：AI 原生")
+  })
+
+  it("应支持 timeline / steps 单个复合列表块自动解构为多个步骤节点", () => {
+    const timelinePage: ISlidesVirtualPage = {
+      pageIndex: 10,
+      frontmatter: { layout: "timeline" },
+      blocks: [
+        { id: "h", type: "h", rawMarkdown: "# SWOT 商业战略分析" },
+        {
+          id: "list-container",
+          type: "l",
+          rawMarkdown: "- 第 1 块：左上象限\n- 第 2 块：右上象限\n- 第 3 块：左下象限\n- 第 4 块：右下象限",
+        },
+      ],
+      rawMarkdown: "",
+    }
+    const html = renderSlideBlocksToHtml(timelinePage)
+    expect(html).toContain("SWOT 商业战略分析")
+    expect(html).toContain('class="timeline-node-badge">1</div>')
+    expect(html).toContain('class="timeline-node-badge">2</div>')
+    expect(html).toContain('class="timeline-node-badge">3</div>')
+    expect(html).toContain('class="timeline-node-badge">4</div>')
+    expect(html).toContain("第 1 块：左上象限")
+    expect(html).toContain("第 4 块：右下象限")
   })
 })

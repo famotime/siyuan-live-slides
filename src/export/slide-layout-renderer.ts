@@ -219,19 +219,153 @@ export function renderSlideBlocksToHtml(
     `
   }
 
-  // 4. 大字报版式 (fact)
+  // 4. 大字报版式 (fact) - 极致放大的核心指标与发光微光氛围
   if (layout === "fact") {
-    const innerHtml = blocks.map(b => convertBlockToHtml(b, options)).join("\n")
-    return `<div class="layout-fact-container">${innerHtml}</div>`
+    const validBlocks = blocks.filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
+    const firstBlock = validBlocks[0]
+    const otherBlocks = validBlocks.slice(1)
+
+    const firstHtml = firstBlock ? convertBlockToHtml(firstBlock, { ...options, extraClassName: "fact-value" }) : ""
+    const otherHtml = otherBlocks.map(b => convertBlockToHtml(b, { ...options, extraClassName: "fact-label" })).join("\n")
+
+    return `
+      <div class="layout-fact-container">
+        <div class="fact-hero-glow" aria-hidden="true"></div>
+        <div class="fact-content-box">
+          <div class="fact-value-wrapper">${firstHtml}</div>
+          ${otherHtml ? `<div class="fact-divider-line"></div><div class="fact-label-wrapper">${otherHtml}</div>` : ""}
+        </div>
+      </div>
+    `
   }
 
-  // 4. 封面版式 (cover)
+  // 4.5 时间线 / 步骤流程版式 (timeline / steps)
+  if (layout === "timeline" || layout === "steps") {
+    let headerBlocks: ISlidesBlockItem[] = []
+    const explicitHeader = blocks.filter(b => b.slot === "header")
+    if (explicitHeader.length > 0) {
+      headerBlocks = explicitHeader
+    } else if (blocks.length > 0) {
+      const candidateH = blocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"))
+      if (candidateH) {
+        headerBlocks = [candidateH]
+      }
+    }
+
+    const rem = blocks.filter(b => !headerBlocks.includes(b))
+    const headerHtml = headerBlocks.map(b => convertBlockToHtml(b, { ...options, extraClassName: "slides-page-first-heading-block" })).join("\n")
+
+    let stepItems: ISlidesBlockItem[] = []
+    if (rem.length === 1 && rem[0].children && rem[0].children.length >= 2) {
+      stepItems = rem[0].children
+    } else if (rem.length >= 2) {
+      stepItems = rem
+    } else if (rem.length === 1) {
+      const md = (rem[0].rawMarkdown || rem[0].content || "").trim()
+      const listLines = md.split("\n").filter(l => /^(\s*)([-*+]|\d+\.)\s+/.test(l))
+      if (listLines.length >= 2) {
+        stepItems = listLines.map((line, idx) => ({
+          id: `${rem[0].id}-step-${idx}`,
+          type: "p",
+          rawMarkdown: line.replace(/^(\s*)([-*+]|\d+\.)\s+/, "").trim(),
+          content: line.replace(/^(\s*)([-*+]|\d+\.)\s+/, "").trim(),
+        }))
+      } else {
+        stepItems = rem
+      }
+    }
+
+    const stepsCount = Math.max(1, Math.min(6, stepItems.length))
+    const stepsHtml = stepItems.map((item, idx) => {
+      const stepNum = idx + 1
+      const itemHtml = convertBlockToHtml(item, options)
+      return `
+        <div class="timeline-step-item" style="--step-index: ${stepNum};">
+          <div class="timeline-node-container">
+            <div class="timeline-node-badge">${stepNum}</div>
+            ${stepNum < stepItems.length ? '<div class="timeline-connector-line"></div>' : ""}
+          </div>
+          <div class="timeline-step-content">${itemHtml}</div>
+        </div>
+      `
+    }).join("\n")
+
+    return `
+      <div class="layout-timeline-container layout-steps-container">
+        ${headerHtml ? `<div class="layout-header-section">${headerHtml}</div>` : ""}
+        <div class="timeline-track-wrapper" style="--timeline-steps: ${stepsCount};">
+          ${stepsHtml}
+        </div>
+      </div>
+    `
+  }
+
+  // 5. 引言版式 (quote)
+  if (layout === "quote") {
+    const validBlocks = blocks.filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
+    let quoteBlocks = validBlocks
+    let authorBlock: ISlidesBlockItem | null = null
+
+    // 检查末尾块是否为作者/出处（以 —、--、—— 开头，或显式 author 角色）
+    if (validBlocks.length >= 2) {
+      const last = validBlocks[validBlocks.length - 1]
+      const md = (last.rawMarkdown || last.content || "").trim()
+      if (/^(?:—|--|——|-)\s*/.test(md) || last.ial?.["custom-slides-role"] === "author") {
+        authorBlock = last
+        quoteBlocks = validBlocks.slice(0, -1)
+      }
+    }
+
+    const quoteHtml = quoteBlocks.map(b => convertBlockToHtml(b, { ...options, extraClassName: "quote-body" })).join("\n")
+    const authorHtml = authorBlock ? convertBlockToHtml(authorBlock, { ...options, extraClassName: "quote-author" }) : ""
+
+    return `
+      <div class="layout-quote-container">
+        <div class="quote-watermark-icon" aria-hidden="true">“</div>
+        <div class="quote-content-body">
+          <div class="quote-text">${quoteHtml}</div>
+          ${authorHtml ? `<div class="quote-footer">${authorHtml}</div>` : ""}
+        </div>
+      </div>
+    `
+  }
+
+  // 6. 人物介绍版式 (intro)
+  if (layout === "intro") {
+    const avatarUrl = slide.frontmatter?.image || slide.frontmatter?.background || ""
+    const contentBlocks = blocks.filter(b => {
+      // 若某个块本身是与 avatarUrl 完全匹配的图片块，避免在右侧重复渲染
+      const md = (b.rawMarkdown || b.content || "").trim()
+      if (avatarUrl && md.includes(avatarUrl)) return false
+      return true
+    })
+    const contentHtml = contentBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
+
+    const avatarHtml = avatarUrl
+      ? `<div class="intro-avatar-box"><img class="intro-avatar-img" src="${escapeHtml(avatarUrl)}" alt="Avatar" onerror="this.style.display='none'" /></div>`
+      : `<div class="intro-avatar-box intro-avatar-box--placeholder"><svg class="intro-avatar-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>`
+
+    return `
+      <div class="layout-intro-container">
+        <div class="intro-avatar-col">${avatarHtml}</div>
+        <div class="intro-info-col">${contentHtml}</div>
+      </div>
+    `
+  }
+
+  // 7. 居中版式 (center)
+  if (layout === "center") {
+    const innerHtml = blocks.map(b => convertBlockToHtml(b, options)).join("\n")
+    return `<div class="layout-center-container">${innerHtml}</div>`
+  }
+
+  // 8. 封面版式 (cover)
   if (layout === "cover") {
     const innerHtml = blocks.map(b => convertBlockToHtml(b, options)).join("\n")
     return `<div class="layout-cover-container">${innerHtml}</div>`
   }
 
-  // 5. 默认流式布局
+  // 9. 默认流式布局
   return blocks.map(b => {
     const extraClass = b === pageFirstH ? "slides-page-first-heading-block" : ""
     return convertBlockToHtml(b, { ...options, extraClassName: extraClass })

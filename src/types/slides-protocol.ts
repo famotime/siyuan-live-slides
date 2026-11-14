@@ -76,6 +76,8 @@ export type TSlideLayout =
   | "intro"
   | "quote"
   | "statement"
+  | "timeline"
+  | "steps"
   | string
 
 /**

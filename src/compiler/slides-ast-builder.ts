@@ -445,6 +445,8 @@ export function buildSlidesDocument(
         elemAttrs.slot ||
         inheritedContext?.defaultSlot ||
         currentPage.frontmatter.layout === "clover" ||
+        currentPage.frontmatter.layout === "timeline" ||
+        currentPage.frontmatter.layout === "steps" ||
         isColsHeaderLayout(currentPage.frontmatter.layout) ||
         currentPage.frontmatter.layout === "two-cols"
       )
@@ -547,6 +549,8 @@ export function buildSlidesDocument(
             const isImageLayout = currentPage.frontmatter.layout === "image-right" || currentPage.frontmatter.layout === "image-left"
             const isMultiColsPage = !isImageLayout && Boolean(
               currentPage.frontmatter.layout === "clover" ||
+              currentPage.frontmatter.layout === "timeline" ||
+              currentPage.frontmatter.layout === "steps" ||
               isColsHeaderLayout(currentPage.frontmatter.layout) ||
               currentPage.frontmatter.layout === "two-cols"
             )
@@ -819,7 +823,7 @@ export function buildSlidesDocument(
 
     const layout = page.frontmatter.layout || "default"
 
-    if (layout === "clover" || isColsHeaderLayout(layout)) {
+    if (layout === "clover" || layout === "timeline" || layout === "steps" || isColsHeaderLayout(layout)) {
       let headerList: ISlidesBlockItem[] = []
       const explicitHeader = contentBlocks.filter(b => b.slot === "header")
       if (explicitHeader.length > 0) {
@@ -833,10 +837,18 @@ export function buildSlidesDocument(
 
       const rem = contentBlocks.filter(b => !headerList.includes(b))
 
-      // 确定栏数 targetCols (自适应 2~N 栏，四叶草固定为 4 象限)
+      // 确定栏数 targetCols (自适应 2~N 栏，四叶草固定为 4 象限，时间线/步骤 2~6 节点)
       let targetCols = 2
       if (layout === "clover") {
         targetCols = 4
+      } else if (layout === "timeline" || layout === "steps") {
+        if (rem.length === 1 && rem[0].children && rem[0].children.length >= 2) {
+          targetCols = Math.min(6, Math.max(2, rem[0].children.length))
+        } else if (rem.length >= 2) {
+          targetCols = Math.min(6, rem.length)
+        } else {
+          targetCols = 3
+        }
       } else if (layout === "three-cols-header") {
         targetCols = 3
       } else if (layout === "two-cols-header") {

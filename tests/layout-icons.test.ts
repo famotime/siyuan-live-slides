@@ -14,12 +14,14 @@ describe("LayoutPicker & SlidesIcon 版式线框图标体系测试", () => {
     "default",
     "two-cols",
     "cols-header",
+    "clover",
     "image-right",
     "image-left",
     "center",
     "fact",
     "intro",
     "quote",
+    "timeline",
   ]
 
   const expectedSvgLayouts = [
@@ -29,6 +31,9 @@ describe("LayoutPicker & SlidesIcon 版式线框图标体系测试", () => {
     "cols-header",
     "two-cols-header",
     "three-cols-header",
+    "clover",
+    "timeline",
+    "steps",
     "image-right",
     "image-left",
     "center",
@@ -41,6 +46,13 @@ describe("LayoutPicker & SlidesIcon 版式线框图标体系测试", () => {
     pickerLayouts.forEach(layout => {
       expect(layoutPickerContent).toContain(`name: '${layout}'`)
     })
+  })
+
+  it("LayoutPicker 应包含三大场景分组结构 (内容分栏、图文排版、聚焦与强调)", () => {
+    expect(layoutPickerContent).toContain("内容分栏")
+    expect(layoutPickerContent).toContain("图文排版")
+    expect(layoutPickerContent).toContain("聚焦与强调")
+    expect(layoutPickerContent).toContain("spm-layout-group")
   })
 
   it("LayoutPicker 不应包含旧版 emoji 符号，应统一采用 SlidesIcon 渲染", () => {

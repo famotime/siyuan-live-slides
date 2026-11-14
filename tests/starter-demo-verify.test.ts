@@ -3,9 +3,11 @@ import path from "path"
 import { describe, expect, it } from "vitest"
 import { parseSlidesPresentation } from "../src/compiler/slides-importer"
 
-describe("Verify Starter Demo Import: D:/MyCodingProjects/slidev/demo/starter/slides.md", () => {
-  const starterPath = "D:/MyCodingProjects/slidev/demo/starter/slides.md"
-  const subPath = "D:/MyCodingProjects/slidev/demo/starter/pages/imported-slides.md"
+const starterPath = "D:/MyCodingProjects/slidev/demo/starter/slides.md"
+const subPath = "D:/MyCodingProjects/slidev/demo/starter/pages/imported-slides.md"
+const hasStarter = fs.existsSync(starterPath)
+
+describe.skipIf(!hasStarter)("Verify Starter Demo Import: D:/MyCodingProjects/slidev/demo/starter/slides.md", () => {
 
   it("should accurately parse document attributes, pages, notes, and markdown contents", () => {
     expect(fs.existsSync(starterPath)).toBe(true)

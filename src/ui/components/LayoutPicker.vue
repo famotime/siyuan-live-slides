@@ -1,19 +1,25 @@
 <template>
   <div class="spm-layout-picker">
     <div class="spm-layout-picker__header">选择页面版式</div>
-    <div class="spm-layout-picker__grid">
-      <div
-        v-for="layout in layouts"
-        :key="layout.name"
-        class="spm-layout-item"
-        :class="{ active: isLayoutActive(layout.name) }"
-        :title="layout.desc"
-        @click="selectLayout(layout.name)"
-      >
-        <div class="spm-layout-icon">
-          <SlidesIcon :name="'layout-' + layout.name" />
+
+    <div v-for="group in layoutGroups" :key="group.id" class="spm-layout-group">
+      <div class="spm-layout-group__title">
+        <span>{{ group.title }}</span>
+      </div>
+      <div class="spm-layout-picker__grid">
+        <div
+          v-for="layout in group.items"
+          :key="layout.name"
+          class="spm-layout-item"
+          :class="{ active: isLayoutActive(layout.name) }"
+          :title="`${layout.label}：${layout.desc}`"
+          @click="selectLayout(layout.name)"
+        >
+          <div class="spm-layout-icon">
+            <SlidesIcon :name="'layout-' + layout.name" />
+          </div>
+          <span class="spm-layout-label">{{ layout.label }}</span>
         </div>
-        <span class="spm-layout-label">{{ layout.label }}</span>
       </div>
     </div>
   </div>
@@ -31,23 +37,57 @@ const emit = defineEmits<{
   (e: 'change', value: string): void
 }>()
 
-const layouts = [
-  { name: 'cover', label: '封面', desc: '大标题与副标题封面页' },
-  { name: 'default', label: '标准', desc: '标题在上方，内容在下方' },
-  { name: 'two-cols', label: '双栏', desc: '左右双栏对比展示' },
-  { name: 'cols-header', label: '表头多栏', desc: '顶部通栏标题，下方自适应 2~N 栏' },
-  { name: 'clover', label: '四叶草', desc: '2x2 田字型四象限卡片布局' },
-  { name: 'image-right', label: '图右', desc: '左侧为内容，右侧全屏背景图' },
-  { name: 'image-left', label: '图左', desc: '左侧全屏背景图，右侧为内容' },
-  { name: 'center', label: '居中', desc: '内容全屏垂直水平居中' },
-  { name: 'fact', label: '大字报', desc: '核心数据或指标突出展示' },
-  { name: 'intro', label: '介绍', desc: '演讲者自我介绍或章节导览' },
-  { name: 'quote', label: '引言', desc: '名人名言与强调段落' },
+interface ILayoutItem {
+  name: string
+  label: string
+  desc: string
+}
+
+interface ILayoutGroup {
+  id: string
+  title: string
+  items: ILayoutItem[]
+}
+
+const layoutGroups: ILayoutGroup[] = [
+  {
+    id: 'columns',
+    title: '内容分栏',
+    items: [
+      { name: 'default', label: '标准', desc: '标题在上，内容自适应流式排版' },
+      { name: 'two-cols', label: '双栏', desc: '左右双栏对比展示，支持比例调节' },
+      { name: 'cols-header', label: '表头多栏', desc: '顶部通栏标题，下方自适应 2~N 栏' },
+      { name: 'clover', label: '四叶草', desc: '2x2 田字型四象限卡片布局' },
+      { name: 'timeline', label: '时间线', desc: '步骤流程、里程碑演进或时间轴' },
+    ],
+  },
+  {
+    id: 'visuals',
+    title: '图文排版',
+    items: [
+      { name: 'image-right', label: '图右', desc: '左侧文字内容，右侧全屏背景图' },
+      { name: 'image-left', label: '图左', desc: '左侧全屏背景图，右侧文字内容' },
+    ],
+  },
+  {
+    id: 'focus',
+    title: '聚焦与强调',
+    items: [
+      { name: 'cover', label: '封面', desc: '全屏居中大标题与副标题封面页' },
+      { name: 'fact', label: '大字报', desc: '核心数据或指标突出展示 (KPI看板)' },
+      { name: 'quote', label: '引言', desc: '名人名言、金句与右对齐出处' },
+      { name: 'intro', label: '介绍', desc: '演讲者头像与个人履历名片' },
+      { name: 'center', label: '居中', desc: '内容全屏垂直水平居中' },
+    ],
+  },
 ]
 
 function isLayoutActive(layoutName: string): boolean {
   if (props.modelValue === layoutName) return true
   if (layoutName === 'cols-header' && (props.modelValue === 'two-cols-header' || props.modelValue === 'three-cols-header')) {
+    return true
+  }
+  if (layoutName === 'timeline' && props.modelValue === 'steps') {
     return true
   }
   return false
@@ -69,6 +109,24 @@ function selectLayout(name: string) {
   font-weight: 600;
   margin-bottom: 8px;
   color: var(--b3-theme-on-surface, #475569);
+}
+
+.spm-layout-group {
+  margin-bottom: 10px;
+}
+
+.spm-layout-group:last-child {
+  margin-bottom: 0;
+}
+
+.spm-layout-group__title {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface, #64748b);
+  opacity: 0.75;
+  margin-bottom: 4px;
+  padding-left: 2px;
+  letter-spacing: 0.02em;
 }
 
 .spm-layout-picker__grid {

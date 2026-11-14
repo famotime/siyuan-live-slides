@@ -834,6 +834,132 @@
       text-align: center;
     }
 
+    /* Quote 引言版式 (沙箱) */
+    .slide-content-wrapper.layout-quote {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      box-sizing: border-box;
+      padding: 48px 72px;
+      overflow: hidden;
+    }
+    .slide-content-wrapper.layout-quote::before,
+    .layout-quote-container .quote-watermark-icon {
+      content: "“";
+      position: absolute;
+      top: 8%;
+      left: 8%;
+      font-size: 16rem;
+      line-height: 1;
+      font-family: Georgia, serif;
+      opacity: 0.08;
+      pointer-events: none;
+      user-select: none;
+      color: currentColor;
+    }
+    .slide-content-wrapper.layout-quote .slide-block {
+      max-width: 850px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .slide-content-wrapper.layout-quote .slide-block :is(h1, h2, h3, p) {
+      font-size: 2.2rem !important;
+      font-style: italic !important;
+      line-height: 1.6 !important;
+      font-family: var(--slides-font-serif, "Noto Serif SC", Georgia, serif) !important;
+      letter-spacing: 0.01em;
+    }
+    .slide-content-wrapper.layout-quote .slide-block:last-child:not(:first-child) {
+      margin-top: 16px;
+    }
+    .slide-content-wrapper.layout-quote .slide-block:last-child:not(:first-child) :is(h1, h2, h3, p) {
+      font-size: 1.25rem !important;
+      opacity: 0.75 !important;
+      text-align: right !important;
+      font-style: normal !important;
+      letter-spacing: 0.05em;
+    }
+
+    /* Intro 介绍版式 (沙箱) */
+    .layout-intro-container {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 56px;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      padding: 40px 64px;
+      overflow: hidden;
+      flex: 1;
+    }
+    .intro-avatar-col {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .intro-avatar-box {
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      overflow: hidden;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16);
+      border: 4px solid rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.35);
+      background: rgba(125, 125, 125, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .intro-avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .intro-avatar-svg {
+      width: 120px;
+      height: 120px;
+      opacity: 0.35;
+      fill: currentColor;
+    }
+    .intro-info-col {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .intro-info-col h1 {
+      font-size: 3rem !important;
+      font-weight: 800 !important;
+      line-height: 1.2 !important;
+      margin-bottom: 8px !important;
+    }
+    .intro-info-col h2, .intro-info-col h3 {
+      font-size: 1.5rem !important;
+      font-weight: 600 !important;
+      color: var(--slide-accent) !important;
+      margin-bottom: 16px !important;
+    }
+    .intro-info-col p {
+      font-size: 1.25rem !important;
+      line-height: 1.6 !important;
+      opacity: 0.9 !important;
+    }
+    .intro-info-col ul {
+      margin-top: 12px;
+      padding-left: 20px;
+    }
+    .intro-info-col li {
+      font-size: 1.15rem !important;
+      line-height: 1.6 !important;
+      margin-bottom: 6px;
+      opacity: 0.9 !important;
+    }
+
     .slide-content-wrapper.layout-two-cols,
     .slide-content-wrapper.layout-cols-header,
     .slide-content-wrapper.layout-two-cols-header,
@@ -1439,16 +1565,223 @@
       font-weight: 500;
     }
 
-    .layout-fact {
+    /* Fact 大字报版式：震撼巨型数字看板与径向光晕氛围 */
+    .slide-content-wrapper.layout-fact,
+    .layout-fact,
+    .layout-fact-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       text-align: center;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      padding: 40px;
+      overflow: hidden;
     }
 
+    .slide-content-wrapper.layout-fact::before,
+    .layout-fact-container .fact-hero-glow {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 600px;
+      height: 600px;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.28) 0%, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08) 45%, transparent 70%);
+      pointer-events: none;
+      filter: blur(28px);
+      z-index: 0;
+    }
+
+    .fact-content-box {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      max-width: 960px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .slide-content-wrapper.layout-fact .slide-block {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .fact-value-wrapper,
+    .layout-fact-container .fact-value,
+    .slide-content-wrapper.layout-fact .slide-block:first-child,
     .layout-fact h1 {
-      font-size: 5rem;
-      font-weight: 900;
-      color: var(--slide-accent);
+      font-size: clamp(5.5rem, 12vw, 9rem) !important;
+      font-weight: 900 !important;
+      line-height: 1.05 !important;
+      letter-spacing: -0.03em !important;
+      color: var(--slide-accent, #3b82f6) !important;
+      background: linear-gradient(135deg, var(--slide-accent, #3b82f6), #60a5fa, #93c5fd) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      filter: drop-shadow(0 6px 28px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.45));
+      margin-bottom: 12px !important;
+      text-align: center !important;
+    }
+
+    .fact-value-wrapper :is(h1, h2, h3, h4, p, span, div),
+    .layout-fact-container .fact-value :is(h1, h2, h3, h4, p, span, div),
+    .slide-content-wrapper.layout-fact .slide-block:first-child :is(h1, h2, h3, h4, p, span, div),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .layout-fact-container .fact-value-wrapper :is(h1, h2, h3, h4, p, span) {
+      font-size: inherit !important;
+      font-weight: inherit !important;
+      line-height: inherit !important;
+      letter-spacing: inherit !important;
+      color: inherit !important;
+      background: inherit !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      margin: 0 !important;
+      text-align: center !important;
+    }
+
+    .fact-divider-line {
+      width: 80px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--slide-accent, #3b82f6);
+      margin: 16px auto 20px;
+      opacity: 0.8;
+      box-shadow: 0 2px 10px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.5);
+    }
+
+    .fact-label-wrapper,
+    .slide-content-wrapper.layout-fact .slide-block:not(:first-child) {
+      font-size: 1.85rem !important;
+      font-weight: 500 !important;
+      opacity: 0.9 !important;
+      letter-spacing: 0.05em !important;
+      max-width: 800px;
+      line-height: 1.5 !important;
+      text-align: center !important;
+    }
+
+    .fact-label-wrapper :is(h1, h2, h3, h4, p, span),
+    .slide-content-wrapper.layout-fact .slide-block:not(:first-child) :is(h1, h2, h3, h4, p, span) {
+      font-size: inherit !important;
+      font-weight: inherit !important;
+      line-height: inherit !important;
+      opacity: inherit !important;
+      text-align: center !important;
+    }
+
+    /* Timeline / Steps 时间线与步骤流程版式 (沙箱) */
+    .layout-timeline-container,
+    .layout-steps-container,
+    .slide-content-wrapper.layout-timeline,
+    .slide-content-wrapper.layout-steps {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      padding: 32px 56px;
+      overflow: hidden;
+      flex: 1;
+    }
+    .timeline-track-wrapper {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: space-between;
+      width: 100%;
+      flex: 1;
+      gap: 24px;
+      margin-top: auto;
+      margin-bottom: auto;
+      padding: 24px 0 36px;
+      position: relative;
+    }
+    .timeline-step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+      position: relative;
+      text-align: center;
+    }
+    .timeline-node-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin-bottom: 24px;
+    }
+    .timeline-node-badge {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--slide-accent, var(--b3-theme-primary));
+      color: #ffffff;
+      font-size: 1.35rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.4);
+      z-index: 2;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    .timeline-connector-line {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--slide-accent, #3b82f6), rgba(125, 125, 125, 0.25));
+      transform: translateY(-50%);
+      z-index: 1;
+    }
+    .timeline-step-content {
+      width: 100%;
+      padding: 16px;
+      background: rgba(125, 125, 125, 0.05);
+      border: 1px solid rgba(125, 125, 125, 0.12);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      backdrop-filter: blur(6px);
+    }
+    .timeline-step-content h1,
+    .timeline-step-content h2,
+    .timeline-step-content h3,
+    .timeline-step-content h4 {
+      font-size: 1.35rem !important;
+      font-weight: 700 !important;
+      margin-bottom: 8px !important;
+      color: var(--b3-theme-on-surface);
+    }
+    .timeline-step-content p,
+    .timeline-step-content li {
+      font-size: 1.05rem !important;
+      line-height: 1.55 !important;
+      opacity: 0.85;
+      margin-bottom: 4px;
+    }
+    .timeline-step-content ul {
+      padding-left: 0;
+      list-style: none;
     }
 
     /* Blocks */
@@ -3178,6 +3511,114 @@
               </div>
             </template>
 
+            <!-- 个人/章节介绍布局 intro -->
+            <template v-else-if="currentSlide.frontmatter.layout === 'intro'">
+              <div class="layout-intro-container" :class="currentSlide.frontmatter.class">
+                <div class="intro-avatar-col">
+                  <div class="intro-avatar-box">
+                    <img
+                      v-if="currentSlideImageUrl && !slideImageFailed"
+                      class="intro-avatar-img"
+                      :src="currentSlideImageUrl"
+                      @error="handleSlideImageError"
+                      alt="Avatar"
+                    />
+                    <div v-else class="intro-avatar-placeholder">
+                      <svg class="intro-avatar-svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                <div class="intro-info-col">
+                  <div
+                    v-for="block in normalBlocks"
+                    :key="block.id"
+                    class="slide-block"
+                    :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :style="getBlockMotionStyle(block)"
+                    :data-block-id="block.id"
+                    @click="onBlockClick(block.id, $event)"
+                  >
+                    <slide-block-renderer :block="block" :slidev="slidesContext" :render-html="renderBlockHtml" />
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- 时间线与步骤流程布局 timeline / steps -->
+            <template v-else-if="currentSlide.frontmatter.layout === 'timeline' || currentSlide.frontmatter.layout === 'steps'">
+              <div class="layout-timeline-container layout-steps-container" :class="currentSlide.frontmatter.class">
+                <div class="layout-header-section" v-if="pageFirstHeadingBlock">
+                  <div
+                    class="slides-page-first-heading-block slide-block"
+                    :class="[getBlockClickClass(pageFirstHeadingBlock), getBlockMotionClass(pageFirstHeadingBlock), getHeadingNormalizeClass(pageFirstHeadingBlock), { highlighted: pageFirstHeadingBlock.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(pageFirstHeadingBlock) }]"
+                    :style="getBlockMotionStyle(pageFirstHeadingBlock)"
+                    :data-block-id="pageFirstHeadingBlock.id"
+                    @click="onBlockClick(pageFirstHeadingBlock.id, $event)"
+                  >
+                    <slide-block-renderer :block="pageFirstHeadingBlock" :slidev="slidesContext" :render-html="renderBlockHtml" />
+                  </div>
+                </div>
+                <div class="timeline-track-wrapper">
+                  <div
+                    v-for="(block, bIdx) in timelineStepItems"
+                    :key="block.id || bIdx"
+                    class="timeline-step-item"
+                  >
+                    <div class="timeline-node-container">
+                      <div class="timeline-node-badge">{{ bIdx + 1 }}</div>
+                      <div
+                        v-if="bIdx < timelineStepItems.length - 1"
+                        class="timeline-connector-line"
+                      ></div>
+                    </div>
+                    <div
+                      class="timeline-step-content slide-block"
+                      :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId }]"
+                      :data-block-id="block.id"
+                      @click="onBlockClick(block.id, $event)"
+                    >
+                      <slide-block-renderer :block="block" :slidev="slidesContext" :render-html="renderBlockHtml" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- 大字报版式 fact -->
+            <template v-else-if="currentSlide.frontmatter.layout === 'fact'">
+              <div class="layout-fact-container" :class="currentSlide.frontmatter.class">
+                <div class="fact-hero-glow" aria-hidden="true"></div>
+                <div class="fact-content-box">
+                  <div
+                    v-if="factFirstBlock"
+                    class="fact-value-wrapper slide-block"
+                    :class="[getBlockClickClass(factFirstBlock), getBlockMotionClass(factFirstBlock), { highlighted: factFirstBlock.id === highlightedBlockId }]"
+                    :data-block-id="factFirstBlock.id"
+                    @click="onBlockClick(factFirstBlock.id, $event)"
+                  >
+                    <slide-block-renderer :block="factFirstBlock" :slidev="slidesContext" :render-html="renderBlockHtml" />
+                  </div>
+                  <template v-if="factOtherBlocks.length > 0">
+                    <div class="fact-divider-line"></div>
+                    <div class="fact-label-wrapper">
+                      <div
+                        v-for="block in factOtherBlocks"
+                        :key="block.id"
+                        class="slide-block"
+                        :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId }]"
+                        :data-block-id="block.id"
+                        @click="onBlockClick(block.id, $event)"
+                      >
+                        <slide-block-renderer :block="block" :slidev="slidesContext" :render-html="renderBlockHtml" />
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+
             <!-- 常规布局 -->
             <template v-else>
               <!-- 若启用动态蒙版且存在顶部主标题，主标题常显，正文包裹在蒙版容器内 -->
@@ -4840,7 +5281,7 @@
         const pageFirstHeadingBlockId = computed(() => {
           if (!currentSlide.value) return null;
           const fm = currentSlide.value.frontmatter || {};
-          if (fm.layout === "cover" || fm.layout === "image-left" || fm.layout === "image-right") return null;
+          if (fm.layout === "cover" || fm.layout === "image-left" || fm.layout === "image-right" || fm.layout === "fact") return null;
 
           if (isColsHeader(fm.layout)) {
             if (headerBlocks.value.length > 0) {
@@ -4870,7 +5311,7 @@
           if (!config.value?.normalizeHeadingSizes) return "";
           if (!block || !currentSlide.value) return "";
           const fm = currentSlide.value.frontmatter || {};
-          if (fm.layout === "cover" || fm.layout === "image-left" || fm.layout === "image-right") return "";
+          if (fm.layout === "cover" || fm.layout === "image-left" || fm.layout === "image-right" || fm.layout === "fact") return "";
 
           if (block.id === pageFirstHeadingBlockId.value) {
             return "slides-page-first-heading-block";
@@ -5153,6 +5594,70 @@
           const firstH = pageFirstHeadingBlock.value;
           if (!firstH) return normalBlocks.value;
           return normalBlocks.value.filter(b => b.id !== firstH.id);
+        });
+
+        const factBlocks = computed(() => {
+          if (!currentSlide.value) return [];
+          return (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right");
+        });
+        const factFirstBlock = computed(() => {
+          return factBlocks.value.length > 0 ? factBlocks.value[0] : null;
+        });
+        const factOtherBlocks = computed(() => {
+          return factBlocks.value.length > 1 ? factBlocks.value.slice(1) : [];
+        });
+
+        const timelineStepItems = computed(() => {
+          if (!currentSlide.value) return [];
+          const all = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right");
+          const firstH = pageFirstHeadingBlock.value;
+          const rem = firstH ? all.filter(b => b.id !== firstH.id) : all;
+          if (rem.length === 0) return [];
+
+          // 1. 如果 rem 已经是多个独立的块（例如 AST 阶段已解包或用户写了多段）
+          if (rem.length >= 2) {
+            return rem.map(item => {
+              const md = item.rawMarkdown || item.content || "";
+              const cleaned = cleanCardListItemMarkdown(md);
+              return {
+                ...item,
+                rawMarkdown: cleaned,
+                content: cleaned,
+              };
+            });
+          }
+
+          // 2. 如果 rem 是单个复合列表容器块（有 children）
+          const single = rem[0];
+          if (single.children && single.children.length >= 2) {
+            return single.children.map(child => {
+              const md = child.rawMarkdown || child.content || "";
+              const cleaned = cleanCardListItemMarkdown(md);
+              return {
+                ...child,
+                rawMarkdown: cleaned,
+                content: cleaned,
+              };
+            });
+          }
+
+          // 3. 如果 rem 是包含多行无序/有序列表文本的纯文本块
+          const rawMd = (single.rawMarkdown || single.content || "").trim();
+          const listLines = rawMd.split("\n").filter(l => /^(\s*)([-*+]|\d+\.)\s+/.test(l));
+          if (listLines.length >= 2) {
+            return listLines.map((line, idx) => {
+              const text = line.replace(/^(\s*)([-*+]|\d+\.)\s+/, "").trim();
+              return {
+                id: `${single.id}-step-${idx}`,
+                type: "p",
+                rawMarkdown: text,
+                content: text,
+              };
+            });
+          }
+
+          // 4. 单块回退
+          return [single];
         });
 
         const currentSlideMaskConfig = computed(() => {
@@ -6685,6 +7190,27 @@
             const content = '<div class="' + contentCls + cls + '">' + g.normal.map(buildThumbBlockHtml).join("") + "</div>"
             const imgBox = '<div class="' + imgCls + '">' + imgHtml + "</div>"
             body = '<div class="layout-' + layout + '" style="' + gridStyle + '">' + (layout === "image-right" ? content + imgBox : imgBox + content) + "</div>"
+          } else if (layout === "intro") {
+            const url = getSlideCoverUrl(slide)
+            const avatarHtml = url ? '<div class="intro-avatar-box"><img class="intro-avatar-img" src="' + String(url).replace(/"/g, "&quot;") + '" alt="Avatar" /></div>' : '<div class="intro-avatar-box intro-avatar-placeholder"><svg class="intro-avatar-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>'
+            body = '<div class="layout-intro-container"><div class="intro-avatar-col">' + avatarHtml + '</div><div class="intro-info-col">' + g.normal.map(buildThumbBlockHtml).join("") + '</div></div>'
+          } else if (layout === "quote") {
+            body = '<div class="layout-quote-container"><div class="quote-watermark-icon">“</div><div class="quote-content-body">' + g.normal.map(buildThumbBlockHtml).join("") + '</div></div>'
+          } else if (layout === "fact") {
+            const first = g.normal[0]
+            const rest = g.normal.slice(1)
+            const firstHtml = first ? '<div class="fact-value-wrapper">' + buildThumbBlockHtml(first) + '</div>' : ''
+            const restHtml = rest.length > 0 ? '<div class="fact-divider-line"></div><div class="fact-label-wrapper">' + rest.map(buildThumbBlockHtml).join("") + '</div>' : ''
+            body = '<div class="layout-fact-container"><div class="fact-hero-glow"></div><div class="fact-content-box">' + firstHtml + restHtml + '</div></div>'
+          } else if (layout === "timeline" || layout === "steps") {
+            let items = g.normal
+            if (items.length === 1 && items[0].children && items[0].children.length >= 2) {
+              items = items[0].children
+            }
+            const steps = items.map(function(b, idx) {
+              return '<div class="timeline-step-item"><div class="timeline-node-container"><div class="timeline-node-badge">' + (idx + 1) + '</div></div><div class="timeline-step-content">' + buildThumbBlockHtml(b) + '</div></div>'
+            }).join("")
+            body = '<div class="layout-timeline-container"><div class="timeline-track-wrapper">' + steps + '</div></div>'
           } else {
             body = g.normal.map(buildThumbBlockHtml).join("")
           }
@@ -7691,7 +8217,10 @@
           maskOverlayStyle,
           maskDividerStyle,
           pageFirstHeadingBlock,
-          bodyBlocksWithoutFirstHeading
+          bodyBlocksWithoutFirstHeading,
+          factFirstBlock,
+          factOtherBlocks,
+          timelineStepItems
         }
       }
     })

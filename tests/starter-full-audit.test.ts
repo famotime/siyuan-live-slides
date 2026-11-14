@@ -4,10 +4,12 @@ import { describe, expect, it } from "vitest"
 import { parseSlidesPresentation, splitSlidesMarkdownChunks } from "../src/compiler/slides-importer"
 import { buildSlidesDocument } from "../src/compiler/slides-ast-builder"
 
-describe("Full Audit: Starter Demo Import & Round-trip", () => {
-  const starterPath = "D:/MyCodingProjects/slidev/demo/starter/slides.md"
-  const subPath = "D:/MyCodingProjects/slidev/demo/starter/pages/imported-slides.md"
-  const snippetPath = "D:/MyCodingProjects/slidev/demo/starter/snippets/external.ts"
+const starterPath = "D:/MyCodingProjects/slidev/demo/starter/slides.md"
+const subPath = "D:/MyCodingProjects/slidev/demo/starter/pages/imported-slides.md"
+const snippetPath = "D:/MyCodingProjects/slidev/demo/starter/snippets/external.ts"
+const hasStarter = fs.existsSync(starterPath)
+
+describe.skipIf(!hasStarter)("Full Audit: Starter Demo Import & Round-trip", () => {
 
   it("audits all 16 slides in detail", () => {
     const content = fs.readFileSync(starterPath, "utf-8")

@@ -689,10 +689,363 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       --slides-line-height: 1.75;
     }
 
-    .layout-cover { justify-content: center; align-items: center; text-align: center; }
-    .layout-cover h1, .layout-cover .slide-block h1 { font-size: 3.8rem !important; font-weight: 800 !important; line-height: 1.15 !important; letter-spacing: -0.025em !important; margin-bottom: 16px !important; }
-    .layout-cover h2, .layout-cover .slide-block h2 { font-size: 1.85rem !important; font-weight: 600 !important; opacity: 0.85 !important; margin-bottom: 12px !important; }
-    .layout-cover p, .layout-cover .slide-block p { font-size: 1.45rem !important; line-height: 1.5 !important; opacity: 0.85 !important; }
+    /* Cover, Center, Fact, Quote, Intro 版式样式全链路对齐 */
+    .layout-cover,
+    .layout-center,
+    .layout-fact,
+    .layout-cover-container,
+    .layout-center-container,
+    .layout-fact-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      box-sizing: border-box;
+      flex: 1;
+    }
+
+    .layout-cover h1, .layout-cover .slide-block h1, .layout-cover-container h1 { font-size: 3.8rem !important; font-weight: 800 !important; line-height: 1.15 !important; letter-spacing: -0.025em !important; margin-bottom: 16px !important; }
+    .layout-cover h2, .layout-cover .slide-block h2, .layout-cover-container h2 { font-size: 1.85rem !important; font-weight: 600 !important; opacity: 0.85 !important; margin-bottom: 12px !important; }
+    .layout-cover p, .layout-cover .slide-block p, .layout-cover-container p { font-size: 1.45rem !important; line-height: 1.5 !important; opacity: 0.85 !important; }
+
+    /* Center 版式：保持标准字阶梯但全屏绝对居中对齐 */
+    .layout-center-container { padding: 40px 60px; }
+    .layout-center-container h1, .layout-center h1 { font-size: 2.8rem !important; font-weight: 700 !important; margin-bottom: 16px !important; }
+    .layout-center-container p, .layout-center p { font-size: 1.35rem !important; line-height: 1.6 !important; max-width: 800px; margin-left: auto; margin-right: auto; }
+
+    /* Fact 大字报版式：震撼巨型数字看板与径向光晕氛围 */
+    .layout-fact,
+    .layout-fact-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      padding: 40px;
+      overflow: hidden;
+    }
+    .fact-hero-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 600px;
+      height: 600px;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.22) 0%, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.05) 45%, transparent 70%);
+      pointer-events: none;
+      filter: blur(20px);
+      z-index: 0;
+    }
+    .fact-content-box {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      max-width: 900px;
+    }
+    .fact-value-wrapper,
+    .layout-fact-container .fact-value,
+    .layout-fact .fact-value,
+    .layout-fact .slide-block:first-child,
+    .layout-fact-container h1,
+    .layout-fact h1 {
+      font-size: clamp(5.5rem, 11vw, 8.5rem) !important;
+      font-weight: 900 !important;
+      line-height: 1.05 !important;
+      letter-spacing: -0.03em !important;
+      color: var(--slide-accent) !important;
+      background: linear-gradient(135deg, var(--slide-accent), #60a5fa) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      filter: drop-shadow(0 4px 20px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.35));
+      margin-bottom: 8px !important;
+    }
+    .fact-value-wrapper p,
+    .layout-fact-container .fact-value p,
+    .layout-fact .fact-value p,
+    .layout-fact .slide-block:first-child p {
+      font-size: inherit !important;
+      font-weight: inherit !important;
+      line-height: inherit !important;
+      color: inherit !important;
+      background: inherit !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      margin: 0 !important;
+    }
+    .fact-divider-line {
+      width: 72px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--slide-accent);
+      opacity: 0.8;
+      margin: 18px auto 20px;
+    }
+    .fact-label-wrapper,
+    .layout-fact-container .fact-label,
+    .layout-fact .fact-label,
+    .layout-fact .slide-block:not(:first-child),
+    .layout-fact-container p,
+    .layout-fact p {
+      font-size: 1.75rem !important;
+      font-weight: 500 !important;
+      opacity: 0.88 !important;
+      letter-spacing: 0.04em !important;
+      max-width: 780px;
+      line-height: 1.5 !important;
+    }
+
+    /* Timeline / Steps 时间线与步骤流程版式 */
+    .layout-timeline-container,
+    .layout-steps-container,
+    .slide-content-wrapper.layout-timeline,
+    .slide-content-wrapper.layout-steps {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      padding: 32px 56px;
+      overflow: hidden;
+      flex: 1;
+    }
+    .timeline-track-wrapper {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: space-between;
+      width: 100%;
+      flex: 1;
+      gap: 24px;
+      margin-top: auto;
+      margin-bottom: auto;
+      padding: 24px 0 36px;
+      position: relative;
+    }
+    .timeline-step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+      position: relative;
+      text-align: center;
+    }
+    .timeline-node-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin-bottom: 24px;
+    }
+    .timeline-node-badge {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--slide-accent, var(--b3-theme-primary));
+      color: #ffffff;
+      font-size: 1.35rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.4);
+      z-index: 2;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    .timeline-connector-line {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--slide-accent, #3b82f6), rgba(125, 125, 125, 0.25));
+      transform: translateY(-50%);
+      z-index: 1;
+    }
+    .timeline-step-content {
+      width: 100%;
+      padding: 16px;
+      background: rgba(125, 125, 125, 0.05);
+      border: 1px solid rgba(125, 125, 125, 0.12);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      backdrop-filter: blur(6px);
+    }
+    .timeline-step-content h1,
+    .timeline-step-content h2,
+    .timeline-step-content h3,
+    .timeline-step-content h4 {
+      font-size: 1.35rem !important;
+      font-weight: 700 !important;
+      margin-bottom: 8px !important;
+      color: var(--b3-theme-on-surface);
+    }
+    .timeline-step-content p,
+    .timeline-step-content li {
+      font-size: 1.05rem !important;
+      line-height: 1.55 !important;
+      opacity: 0.85;
+      margin-bottom: 4px;
+    }
+    .timeline-step-content ul {
+      padding-left: 0;
+      list-style: none;
+    }
+
+    /* Quote 引言版式：居中大字、衬线字体、水印双引号与右对齐出处 */
+    .layout-quote,
+    .layout-quote-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      box-sizing: border-box;
+      padding: 48px 72px;
+      overflow: hidden;
+      flex: 1;
+    }
+    .quote-watermark-icon {
+      position: absolute;
+      top: 10%;
+      left: 8%;
+      font-size: 16rem;
+      line-height: 1;
+      font-family: Georgia, serif;
+      opacity: 0.08;
+      pointer-events: none;
+      user-select: none;
+      color: currentColor;
+    }
+    .quote-content-body {
+      position: relative;
+      z-index: 1;
+      max-width: 850px;
+      width: 100%;
+      text-align: center;
+    }
+    .quote-text,
+    .layout-quote-container .quote-body {
+      font-size: 2.2rem !important;
+      font-style: italic !important;
+      line-height: 1.6 !important;
+      font-family: var(--slides-font-serif, "Noto Serif SC", Georgia, serif) !important;
+      letter-spacing: 0.01em;
+      margin-bottom: 24px !important;
+    }
+    .quote-text p,
+    .layout-quote-container .quote-body p {
+      font-size: inherit !important;
+      font-style: inherit !important;
+      line-height: inherit !important;
+    }
+    .quote-footer,
+    .quote-author {
+      font-size: 1.25rem !important;
+      opacity: 0.75 !important;
+      text-align: right !important;
+      font-style: normal !important;
+      letter-spacing: 0.05em;
+    }
+
+    /* Intro 个人/章节介绍版式：头像配图与右侧个人履历卡片 */
+    .layout-intro,
+    .layout-intro-container {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 56px;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      padding: 40px 64px;
+      overflow: hidden;
+      flex: 1;
+    }
+    .intro-avatar-col {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .intro-avatar-box {
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      overflow: hidden;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16);
+      border: 4px solid rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.35);
+      background: rgba(125, 125, 125, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .intro-avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .intro-avatar-svg {
+      width: 120px;
+      height: 120px;
+      opacity: 0.35;
+      fill: currentColor;
+    }
+    .intro-info-col {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .intro-info-col h1 {
+      font-size: 3rem !important;
+      font-weight: 800 !important;
+      line-height: 1.2 !important;
+      margin-bottom: 8px !important;
+    }
+    .intro-info-col h2, .intro-info-col h3 {
+      font-size: 1.5rem !important;
+      font-weight: 600 !important;
+      color: var(--slide-accent) !important;
+      margin-bottom: 16px !important;
+    }
+    .intro-info-col p {
+      font-size: 1.25rem !important;
+      line-height: 1.6 !important;
+      opacity: 0.9 !important;
+    }
+    .intro-info-col ul {
+      margin-top: 12px;
+      padding-left: 20px;
+    }
+    .intro-info-col li {
+      font-size: 1.15rem !important;
+      line-height: 1.6 !important;
+      margin-bottom: 6px;
+      opacity: 0.9 !important;
+    }
     .two-cols-left, .two-cols-right { min-width: 0; width: 100%; display: flex; flex-direction: column; box-sizing: border-box; overflow-wrap: break-word; word-break: break-word; }
     .pdf-two-cols-wrapper,
     .layout-two-cols-grid,
