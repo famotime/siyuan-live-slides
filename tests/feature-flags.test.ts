@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { isFeatureDisabled, isFeatureEnabled, isLayoutEnabled } from "../src/feature-flags/feature-flags"
+import { FEATURE_FLAGS, isFeatureDisabled, isFeatureEnabled, isLayoutEnabled } from "../src/feature-flags/feature-flags"
 import type { FeatureKey, LayoutKey } from "../src/feature-flags/feature-flags"
 
 const ALL_KEYS: FeatureKey[] = [
@@ -46,7 +46,15 @@ describe("FeatureFlags (构建期功能开关)", () => {
     expect(isLayoutEnabled("default")).toBe(true)
     for (const layout of ALL_LAYOUT_KEYS) {
       expect(typeof isLayoutEnabled(layout)).toBe("boolean")
-      expect(isLayoutEnabled(layout)).toBe(true)
+      const expected = FEATURE_FLAGS.layouts?.[layout] !== false
+      expect(isLayoutEnabled(layout)).toBe(expected)
     }
+    // 验证特定版式开关受控行为
+    expect(isLayoutEnabled("clover")).toBe(false)
+    expect(isLayoutEnabled("timeline")).toBe(false)
+    expect(isLayoutEnabled("two-cols")).toBe(true)
+    expect(isLayoutEnabled("cover")).toBe(true)
+    // 验证未知版式默认回退为 true
+    expect(isLayoutEnabled("unknown-custom-layout")).toBe(true)
   })
 })

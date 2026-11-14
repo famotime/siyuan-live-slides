@@ -3,16 +3,12 @@ import type {
 } from "siyuan"
 import {
   getFrontend,
-  openTab,
-  openWindow,
   Plugin as SyPlugin,
 } from "siyuan"
 import { getBlockAttrs } from "@/api"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
-import { isFeatureDisabled } from "@/feature-flags/feature-flags"
 import {
   globalSandboxBridge,
-  isPreviewTabMounted,
   mountInspectorDock,
   mountPresenterTab,
   mountPreviewTab,
@@ -25,6 +21,8 @@ import {
 } from "@/main"
 import { registerPluginCommands } from "@/plugin/command-registry"
 import type { ISlidesPluginHost } from "@/plugin/command-registry"
+import { ApiSwitchBridge } from "@/plugin/api-switch-bridge"
+import { PreviewWindowManager } from "@/plugin/preview-window-manager"
 import {
   buildPreviewTabTitle as buildTabTitle,
   fetchDocumentTitle as fetchDocTitle,
@@ -51,13 +49,11 @@ import {
   DEFAULT_GLOBAL_SETTINGS,
   getRuntimeSettings,
   normalizeGlobalSettings,
-  setManagedAiConfig,
   setRuntimeSettings,
   SETTINGS_STORAGE_NAME,
 } from "./settings"
 import type { ISlidesGlobalSettings } from "./settings"
 import { createSlidesSettings } from "@/ui/settings/slides-settings"
-import type { SharedConfig } from "./types/api-switch"
 
 const DOCK_TYPE = "slides-dock"
 const TAB_TYPE = "slides-preview-tab"
@@ -76,6 +72,8 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
   // P0 优化：编译消费者门闩 + 脏文档 + 单飞/代际调度
   private compileScheduler = new CompileScheduler()
   private dirtyDocId: string | null = null
+  private apiSwitchBridge: ApiSwitchBridge | null = null
+  private previewWindowManager = new PreviewWindowManager(this)
   /** 光标联动节流：同一块的重复触发在时间窗内只同步一次 */
   private inspectorSyncThrottle = new InspectorSyncThrottle()
 
@@ -93,7 +91,12 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
 
     // 0. 加载全局持久化配置
     await this.loadGlobalSettings()
-    this.initApiSwitchSync()
+    this.apiSwitchBridge = new ApiSwitchBridge({
+      pluginName: this.name,
+      displayName: this.displayName,
+      getSetting: () => this.setting,
+    })
+    this.apiSwitchBridge.init()
 
     // 1. 注册图标
     this.addIcons(ICON_SLIDES_SVG)
@@ -264,57 +267,10 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
     }
   }
 
-  private initApiSwitchSync() {
-    const sync = (shared: SharedConfig | null) => {
-      setManagedAiConfig(shared)
-      if (this.setting) {
-        const updater = (this.setting as any).updateManagedConfig
-        if (typeof updater === "function") {
-          updater(shared)
-        }
-      }
-    }
-
-    const getLocalConfig = () => {
-      const local = getRuntimeSettings().aiConfig
-      return {
-        provider: "custom",
-        baseUrl: local.baseUrl,
-        apiKey: local.apiKey,
-        model: local.model,
-        requestTimeoutSeconds: local.requestTimeoutSeconds,
-        temperature: local.temperature,
-        maxTokens: local.maxTokens,
-      }
-    }
-
-    const register = () => {
-      if (window.siyuanApiSwitch) {
-        window.siyuanApiSwitch.register(
-          this.name,
-          this.displayName || "即现 (SiYuan Live Slides)",
-          sync,
-          getLocalConfig()
-        )
-      }
-    }
-
-    if (window.siyuanApiSwitch) {
-      register()
-    } else {
-      window.addEventListener(
-        "siyuan-api-switch:ready",
-        () => {
-          register()
-        },
-        { once: true }
-      )
-    }
-  }
-
   onunload() {
-    if (window.siyuanApiSwitch) {
-      window.siyuanApiSwitch.unregister(this.name)
+    if (this.apiSwitchBridge) {
+      this.apiSwitchBridge.destroy()
+      this.apiSwitchBridge = null
     }
     if (this.debounceTimer) {
       window.clearTimeout(this.debounceTimer)
@@ -348,107 +304,21 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
    * 在当前文档下方开启分屏演示预览
    */
   public async openBottomPreviewTab(): Promise<void> {
-    if (!this.currentDocId) {
-      this.currentDocId = this.getActiveDocumentId()
-    }
-    const initialDocTitle = this.currentDocId ? await this.fetchDocumentTitle(this.currentDocId) : ""
-    const initialTitle = this.buildPreviewTabTitle(initialDocTitle)
-    await openTab({
-      app: this.app,
-      custom: {
-        id: this.name + TAB_TYPE,
-        title: initialTitle,
-        icon: "iconSlides",
-        data: { docId: this.currentDocId },
-      },
-      position: "bottom",
-    })
-    if (this.currentDocId) {
-      this.compileCurrentDocument(this.currentDocId)
-    }
-    void this.updatePreviewTabHeader(initialDocTitle, this.currentDocId)
+    return this.previewWindowManager.openBottomPreviewTab()
   }
 
   /**
    * 打开演讲者控制台页签（双屏演讲的提词端）
-   *
-   * 桌面端宿主会拦截 window.open 并甩给系统浏览器，导致演讲者视图与思源内
-   * 沙箱跨进程隔离、BroadcastChannel 失效，因此必须以思源页签形态承载。
-   * 若预览页签（大屏放映端）尚未开启，则顺带拉起，保证有应答 SYNC 的沙箱。
    */
   public async openPresenterTab(): Promise<void> {
-    // presenterMode 开关关闭时演讲者视图整体下架，不响应任何唤起（含沙箱放映内请求）
-    if (isFeatureDisabled("presenterMode")) {
-      return
-    }
-    if (!isPreviewTabMounted()) {
-      await this.openBottomPreviewTab()
-    }
-    await openTab({
-      app: this.app,
-      custom: {
-        id: this.name + PRESENTER_TAB_TYPE,
-        title: "演讲者控制台",
-        icon: "iconSlides",
-        data: {},
-      },
-      position: "right",
-    })
+    return this.previewWindowManager.openPresenterTab()
   }
 
   /**
-   * 一键将大屏放映页签弹出为 16:9 独立窗口（1280×760），便于单屏线上会议按窗口共享或双屏扩展投屏
+   * 一键将大屏放映页签弹出为 16:9 独立窗口（1280×760）
    */
   public async openStandalonePreviewWindow(): Promise<void> {
-    if (!this.currentDocId) {
-      this.currentDocId = this.getActiveDocumentId()
-    }
-    if (this.currentDocId && !this.latestCompiledDoc) {
-      await this.compileCurrentDocument(this.currentDocId, { reason: "explicit" })
-    }
-
-    const frontEnd = getFrontend()
-    if (frontEnd === "browser-desktop" || frontEnd === "browser-mobile") {
-      if (typeof window !== "undefined" && typeof window.open === "function") {
-        window.open(
-          "/plugins/siyuan-live-slides/slides-client/index.html",
-          "SlidesBigScreenWindow",
-          "width=1280,height=760,menubar=no,toolbar=no,location=no,status=no",
-        )
-      }
-      return
-    }
-
-    let targetTab = this.previewTab
-    if (!targetTab) {
-      const initialDocTitle = this.currentDocId ? await this.fetchDocumentTitle(this.currentDocId) : ""
-      const initialTitle = this.buildPreviewTabTitle(initialDocTitle)
-      const opened = await openTab({
-        app: this.app,
-        custom: {
-          id: this.name + TAB_TYPE,
-          title: initialTitle,
-          icon: "iconSlides",
-          data: { docId: this.currentDocId },
-        },
-        position: "bottom",
-      })
-      targetTab = this.previewTab || (opened as any)
-    }
-
-    if (targetTab) {
-      if (this.currentDocId && (targetTab as any).model) {
-        ;(targetTab as any).model.data = {
-          ...((targetTab as any).model.data || {}),
-          docId: this.currentDocId,
-        }
-      }
-      openWindow({
-        tab: targetTab,
-        width: 1280,
-        height: 760,
-      })
-    }
+    return this.previewWindowManager.openStandalonePreviewWindow()
   }
 
   /**

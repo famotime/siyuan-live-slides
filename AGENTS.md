@@ -11,19 +11,21 @@ Stack: Vue 3, TypeScript, Vite, Vitest, Sass, SiYuan Plugin API.
 
 ## 2. Common Commands
 
-- `npm test` — Run all test suites with Vitest (`tests/*.test.ts`).
-- `npm run build` — Build production bundle to `dist/` and generate `package.zip`.
-- `npm run dev` — Run Vite in watch mode for development.
-- `npm run typecheck` — Run TypeScript type checking.
-- `npm run release[:patch|:minor|:major|:manual]` — Version tagging and release helper.
+- `pnpm test` — Run all test suites with Vitest (`tests/*.test.ts`).
+- `pnpm run build` — Build production bundle to `dist/` and generate `package.zip`.
+- `pnpm run dev` — Run Vite in watch mode for development.
+- `pnpm run typecheck` — Run TypeScript type checking.
+- `pnpm run release[:patch|:minor|:major|:manual]` — Version tagging and release helper.
 
 ---
 
 ## 3. Architecture & Key Modules
 
 - **Plugin Entry & Commands**: `src/index.ts` & `src/plugin/`
-  - `src/index.ts`: Extends `Plugin` from `siyuan`. Manages plugin lifecycle, dock panel, and bottom split-screen preview tab.
+  - `src/index.ts`: Extends `Plugin` from `siyuan`. Manages plugin lifecycle, dock panel, and coordination.
   - `src/plugin/command-registry.ts`: Centralizes registration and callbacks for 12+ commands and palette actions.
+  - `src/plugin/api-switch-bridge.ts`: Bridges `siyuan-api-switch` events and status synchronization.
+  - `src/plugin/preview-window-manager.ts`: Manages preview tab, presenter window, and 16:9 standalone windows.
   - Delegates document compilation to `src/compiler/document-compiler.ts`.
 - **Compiler Pipeline**: `src/compiler/`
   - `document-compiler.ts`: Orchestrates AST retrieval, IAL parsing, dynamic block ref resolution, and sandbox updates.
@@ -43,19 +45,23 @@ Stack: Vue 3, TypeScript, Vite, Vitest, Sass, SiYuan Plugin API.
   - `visual-list-renderer.ts`: Renders visual list formats (cards, timelines, steps).
   - `slide-layout-renderer.ts`: Dispatches multi-column and rich slide layouts (two-cols, image-right, etc.).
   - `single-html-exporter.ts`: Orchestrates Base64 asset inlining and standalone presentation assembly.
-  - `standalone-template-styles.ts`: Generates standalone CSS stylesheets and theme custom properties.
+  - `standalone-template-styles.ts` & `pdf-template-styles.ts`: Generates standalone and PDF CSS stylesheets reusing `src/export/styles/` shared layout styles.
+  - `styles/shared-layout-styles.ts` & `styles/standalone-extra-styles.ts`: Shared layout rules (fact, timeline, intro) and standalone extra features (lightbox, mask).
   - `standalone-client-runtime.ts`: Self-contained presentation player client runtime script template.
-  - `pdf-exporter.ts` & `pdf-template-styles.ts`: Generates 16:9 landscape PDF slides and handles isolated @page print styles.
+  - `pdf-exporter.ts`: Generates 16:9 landscape PDF slides and handles isolated @page print styles.
 - **Presentation Inspector UI**: `src/ui/`
   - `dock/SlidesInspectorDockView.vue`: Master container dock view managing state and layout orchestration.
   - `dock/useInspectorActions.ts`: Encapsulates kernel API mutations, notes conversion, and divider management.
+  - `dock/useSuperBlockInspector.ts`: Computes superblock DOM/AST column widths and handles multi-block selection conversion.
   - `components/SlidesImportDialog.vue` & `components/useSlidesImport.ts`: Slidev project import dialog and composable orchestrating asset uploads, document creation, and slot backfilling.
   - `components/PageInspectorSection.vue`: Slide layout, transition, background, notes.
   - `components/BlockInspectorSection.vue`: Block `v-click` animation, column slot, Shiki code spotlight.
   - `components/DocInspectorSection.vue`: Presentation theme, aspect ratio, AI toolbar, quick actions.
   - `tab/SlidesPreviewTab.vue`: Split-screen live preview tab.
+  - `tab/SlidesPresenterTab.vue`: Dual-screen presenter console view with external SCSS and timer/sync composables.
+  - `tab/usePresenterTimer.ts` & `tab/usePresenterSync.ts`: FSM-8 drift-proof timer and cross-window BroadcastChannel sync composables.
 - **Testing & Mocks**: `tests/`
-  - 67 test suites (608 tests) covering compiler, cleaner, renderer, inspector state, actions (facade + domain modules), coordinator, engine, export runtime sections, import composable, peek, and synergy.
+  - 91 test suites (860 tests) covering compiler, cleaner, renderer, inspector state, actions (facade + domain modules), coordinator, engine, export runtime sections & shared styles, import composable, peek, presenter, and synergy.
   - `tests/mocks/siyuan.ts`: Host plugin mock aliased in `vitest.config.ts` for running tests in pure Node environments.
 
 ---

@@ -393,7 +393,8 @@ describe("Theme Design Systems & Contrast Guard (三大主题鲜明特色与亮�
   describe("7. 封面 + 背景图 + 默认主题标题防浮雕黑芯与实际文字颜色保留", () => {
     it("沙箱播放端、单文件 HTML 导出与演讲者模式在存在背景图或显式文字色时均应取消透明渐变镂空", () => {
       const standaloneCss = generateStandaloneExportStyles()
-      const presenterTabSource = fs.readFileSync(path.resolve(__dirname, "../src/ui/tab/SlidesPresenterTab.vue"), "utf-8")
+      const presenterThumbPath = path.resolve(__dirname, "../src/ui/tab/SlidesPresenterThumbnail.scss")
+      const presenterTabSource = fs.readFileSync(path.resolve(__dirname, "../src/ui/tab/SlidesPresenterTab.vue"), "utf-8") + (fs.existsSync(presenterThumbPath) ? fs.readFileSync(presenterThumbPath, "utf-8") : "")
 
       // 沙箱播放端：背景图与显式文字色保护
       expect(indexHtml).toContain('.slide-viewport[style*="background-image"] .layout-cover h1')
@@ -449,7 +450,8 @@ describe("Theme Design Systems & Contrast Guard (三大主题鲜明特色与亮�
     it("内容页顶部标题在四大渲染端均按三套主题差异化呈现，排除 cover/center/fact 并兼顾背景图与自定义块色", () => {
       const indexHtml = fs.readFileSync(path.resolve(__dirname, "../public/slides-client/index.html"), "utf-8")
       const standaloneCss = generateStandaloneExportStyles()
-      const presenterSource = fs.readFileSync(path.resolve(__dirname, "../src/ui/tab/SlidesPresenterTab.vue"), "utf-8")
+      const presenterThumbPath = path.resolve(__dirname, "../src/ui/tab/SlidesPresenterThumbnail.scss")
+      const presenterSource = fs.readFileSync(path.resolve(__dirname, "../src/ui/tab/SlidesPresenterTab.vue"), "utf-8") + (fs.existsSync(presenterThumbPath) ? fs.readFileSync(presenterThumbPath, "utf-8") : "")
       const pdfCss = generatePdfExportStyles()
 
       // 1. Live Web Sandbox (index.html)

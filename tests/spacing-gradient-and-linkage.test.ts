@@ -142,7 +142,8 @@ describe("页面排版间距体系优化 (Spacing Gradient & Hierarchy Linkage)"
   })
 
   describe("4. 演讲者分屏控制台 (SlidesPresenterTab.vue)", () => {
-    const presenterCode = fs.readFileSync(presenterTabPath, "utf-8")
+    const presenterThumbPath = path.resolve(__dirname, "../src/ui/tab/SlidesPresenterThumbnail.scss")
+    const presenterCode = fs.readFileSync(presenterTabPath, "utf-8") + (fs.existsSync(presenterThumbPath) ? fs.readFileSync(presenterThumbPath, "utf-8") : "")
 
     it("分屏样式应与主播放器保持间距变量绝对一致", () => {
       expect(presenterCode).toContain("--slides-padding-y: 16px;")

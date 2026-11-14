@@ -4,7 +4,10 @@ import path from 'path'
 
 describe('Presenter Tab UX & Accessibility Standards (演讲者视图设计与无障碍规范)', () => {
   const presenterVuePath = path.resolve(__dirname, '../src/ui/tab/SlidesPresenterTab.vue')
-  const content = fs.readFileSync(presenterVuePath, 'utf8')
+  const presenterScssPath = path.resolve(__dirname, '../src/ui/tab/SlidesPresenterTab.scss')
+  const vueContent = fs.readFileSync(presenterVuePath, 'utf8')
+  const scssContent = fs.existsSync(presenterScssPath) ? fs.readFileSync(presenterScssPath, 'utf8') : ''
+  const content = vueContent + '\n' + scssContent
 
   it('严禁使用 HTML 原生 title 属性，彻底根除定制与原生双重 Tooltip 重叠冲突', () => {
     // 检查 template 部分是否包含 title="..." 模式

@@ -90,7 +90,7 @@ export interface FeatureFlagConfig {
 
 // ── 编辑此对象来控制功能可见性 ──
 
-const FEATURE_FLAGS: FeatureFlagConfig = {
+export const FEATURE_FLAGS: FeatureFlagConfig = {
   presenterMode: true,
   exportHtml: false,
   exportPdf: false,

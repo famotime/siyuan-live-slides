@@ -1,0 +1,770 @@
+/* ==========================================================================
+   演讲者视图语义化 Token 体系（自动适配思源亮色与暗色模式）
+   ========================================================================== */
+.spm-presenter-tab {
+  /* 基础表面与背景 */
+  --pres-bg: var(--b3-theme-background, #ffffff);
+  --pres-surface: var(--b3-theme-surface, #f8fafc);
+  --pres-surface-card: var(--b3-theme-surface, #ffffff);
+  --pres-surface-hover: var(--b3-list-hover, rgba(0, 0, 0, 0.04));
+  --pres-border: var(--b3-border-color, rgba(0, 0, 0, 0.09));
+  --pres-border-subtle: rgba(140, 140, 140, 0.16);
+
+  /* 文本层次：严格满足 WCAG AAA 对比度 */
+  --pres-text-primary: var(--b3-theme-on-background, #1e293b);
+  --pres-text-secondary: var(--b3-theme-on-surface, #475569);
+  --pres-text-muted: var(--b3-theme-on-surface-light, #94a3b8);
+
+  /* 品牌色与状态色 */
+  --pres-primary: var(--b3-theme-primary, #3b82f6);
+  --pres-primary-rgb: var(--b3-theme-primary-rgb, 59, 130, 246);
+  --pres-primary-bg: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.1);
+  --pres-primary-border: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.32);
+  --pres-primary-hover: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.18);
+
+  --pres-success: #10b981;
+  --pres-success-bg: rgba(16, 185, 129, 0.12);
+  --pres-success-border: rgba(16, 185, 129, 0.3);
+
+  /* 幻灯片缩略图外托盘底色与阴影 */
+  --pres-preview-tray: rgba(0, 0, 0, 0.035);
+  --pres-preview-border: rgba(0, 0, 0, 0.08);
+  --pres-preview-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+  background: var(--pres-bg);
+  color: var(--pres-text-primary);
+  font-family: var(--b3-font-family, system-ui, -apple-system, sans-serif);
+  outline: none;
+  container-type: inline-size;
+}
+
+/* 暗色主题增强优化 */
+:global(.body--dark) .spm-presenter-tab,
+:global([data-theme-mode="dark"]) .spm-presenter-tab {
+  --pres-preview-tray: #0e1017;
+  --pres-preview-border: rgba(255, 255, 255, 0.1);
+  --pres-preview-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --pres-border-subtle: rgba(255, 255, 255, 0.08);
+}
+
+.spm-presenter-tab * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+/* ==========================================================================
+   Header: 顶栏状态与工具条 (确保 overflow: visible 防止 tooltip 被裁剪)
+   ========================================================================== */
+.presenter-header {
+  height: 48px;
+  flex-shrink: 0;
+  background: var(--pres-surface);
+  border-bottom: 1px solid var(--pres-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 16px;
+  overflow: visible;
+  position: relative;
+  z-index: 10;
+}
+
+.presenter-title-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.presenter-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pres-text-primary);
+  flex-shrink: 0;
+}
+
+.brand-icon {
+  font-size: 16px;
+  color: var(--pres-primary);
+}
+
+.header-pills {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pill-page {
+  background: var(--pres-surface-hover);
+  color: var(--pres-text-secondary);
+  border: 1px solid var(--pres-border-subtle);
+}
+
+.pill-step {
+  background: var(--pres-primary-bg);
+  color: var(--pres-primary);
+  border: 1px solid var(--pres-primary-border);
+}
+
+.pill-icon {
+  font-size: 11px;
+}
+
+.header-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.btn-tool {
+  background: var(--pres-primary-bg);
+  border: 1px solid var(--pres-primary-border);
+  color: var(--pres-primary);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btn-tool:hover {
+  background: var(--pres-primary-hover);
+  border-color: var(--pres-primary);
+}
+
+.timer-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--pres-success-bg);
+  border: 1px solid var(--pres-success-border);
+  color: var(--pres-success);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.timer-icon {
+  font-size: 14px;
+}
+
+.timer-digits {
+  letter-spacing: 0.5px;
+}
+
+.timer-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 2px;
+}
+
+.timer-btn {
+  background: transparent;
+  border: none;
+  color: var(--pres-success);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.timer-btn:hover {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.wall-clock {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 13px;
+  color: var(--pres-text-muted);
+  font-weight: 500;
+  padding: 0 4px;
+}
+
+/* ==========================================================================
+   Main Grid: 左右主网格布局
+   ========================================================================== */
+.presenter-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+  gap: 14px;
+  padding: 14px;
+  overflow: hidden;
+}
+
+.slide-panels {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.panel-box {
+  background: var(--pres-surface-card);
+  border: 1px solid var(--pres-border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.current-slide-panel {
+  flex: 1.35;
+}
+
+.next-slide-panel {
+  flex: 1;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.next-slide-panel.is-clickable {
+  cursor: pointer;
+}
+
+.next-slide-panel.is-clickable:hover {
+  border-color: var(--pres-primary);
+  box-shadow: 0 2px 8px rgba(var(--pres-primary-rgb), 0.15);
+}
+
+.panel-header {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--pres-text-secondary);
+  background: var(--pres-surface);
+  border-bottom: 1px solid var(--pres-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.panel-header-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.panel-title-icon {
+  font-size: 14px;
+  color: var(--pres-primary);
+}
+
+.panel-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--pres-surface-hover);
+  color: var(--pres-text-secondary);
+}
+
+.panel-tag.is-current {
+  background: var(--pres-primary-bg);
+  color: var(--pres-primary);
+}
+
+.panel-page-num {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 11px;
+  color: var(--pres-text-muted);
+}
+
+.panel-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.panel-step-pill {
+  background: var(--pres-primary-bg);
+  color: var(--pres-primary);
+  border: 1px solid var(--pres-primary-border);
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.panel-layout-pill {
+  font-size: 10px;
+  color: var(--pres-text-muted);
+  border: 1px solid var(--pres-border-subtle);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.panel-end-pill {
+  font-size: 11px;
+  color: var(--pres-text-muted);
+}
+
+.panel-preview {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 8px;
+  background: var(--pres-preview-tray);
+  overflow: hidden;
+  position: relative;
+}
+
+.panel-preview--dim {
+  opacity: 0.92;
+}
+
+.presenter-thumb-box {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  box-shadow: var(--pres-preview-shadow);
+  border: 1px solid var(--pres-preview-border);
+  flex-shrink: 0;
+}
+
+.presenter-thumb-viewport {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+  pointer-events: none;
+  user-select: none;
+  overflow: hidden;
+}
+
+.panel-fallback {
+  width: 100%;
+  padding: 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.panel-fallback h2 {
+  font-size: clamp(1rem, 3.6cqi, 1.4rem);
+  margin-bottom: 6px;
+  color: var(--pres-primary);
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel-fallback p {
+  font-size: clamp(0.78rem, 2.4cqi, 0.95rem);
+  color: var(--pres-text-muted);
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Notes Panel: 讲稿备忘区
+   ========================================================================== */
+.notes-panel {
+  min-height: 0;
+  background: var(--pres-surface-card);
+  border: 1px solid var(--pres-border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.notes-size-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.notes-btn {
+  background: transparent;
+  border: 1px solid var(--pres-border);
+  color: var(--pres-text-secondary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.notes-btn:hover:not(:disabled) {
+  background: var(--pres-surface-hover);
+  color: var(--pres-text-primary);
+}
+
+.notes-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.notes-size-value {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 11px;
+  color: var(--pres-text-muted);
+  min-width: 32px;
+  text-align: center;
+}
+
+.notes-content {
+  flex: 1;
+  min-height: 0;
+  padding: 20px;
+  line-height: 1.8;
+  overflow-y: auto;
+  overflow-x: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--pres-text-primary);
+  user-select: text;
+}
+
+.notes-content.is-empty {
+  color: var(--pres-text-muted);
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Empty State: 空数据引导态
+   ========================================================================== */
+.presenter-empty {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 40px;
+  text-align: center;
+  background: var(--pres-surface);
+}
+
+.empty-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--pres-primary-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-icon {
+  font-size: 26px;
+  color: var(--pres-primary);
+}
+
+.presenter-empty h2 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--pres-text-primary);
+}
+
+.presenter-empty p {
+  font-size: 0.95rem;
+  color: var(--pres-text-muted);
+  max-width: 420px;
+  line-height: 1.6;
+}
+
+.empty-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.btn-empty-action {
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid var(--pres-border);
+  background: var(--pres-surface-card);
+  color: var(--pres-text-primary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn-empty-action:hover {
+  background: var(--pres-surface-hover);
+  border-color: var(--pres-primary);
+}
+
+.btn-empty-action--popout {
+  background: var(--pres-primary-bg);
+  border-color: var(--pres-primary-border);
+  color: var(--pres-primary);
+}
+
+.btn-empty-action--popout:hover {
+  background: var(--pres-primary-hover);
+  border-color: var(--pres-primary);
+}
+
+/* ==========================================================================
+   Bottom Action Bar: 底栏控制 (确保 overflow: visible 防止 tooltip 被截断)
+   ========================================================================== */
+.presenter-actions {
+  min-height: 48px;
+  flex-shrink: 0;
+  background: var(--pres-surface);
+  border-top: 1px solid var(--pres-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 16px;
+  overflow: visible;
+  position: relative;
+  z-index: 10;
+}
+
+.nav-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-nav {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border: 1px solid var(--pres-border);
+  background: var(--pres-surface-card);
+  color: var(--pres-text-primary);
+  transition: all 0.15s ease;
+}
+
+.btn-nav:hover:not(:disabled) {
+  background: var(--pres-surface-hover);
+  border-color: var(--pres-primary);
+}
+
+.btn-nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn-nav--primary {
+  background: var(--pres-primary);
+  color: #ffffff;
+  border-color: var(--pres-primary);
+}
+
+.btn-nav--primary:hover:not(:disabled) {
+  opacity: 0.9;
+  background: var(--pres-primary);
+}
+
+.btn-restart {
+  background: transparent;
+  border: 1px solid var(--pres-border);
+  color: var(--pres-text-muted);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btn-restart:hover {
+  background: var(--pres-surface-hover);
+  color: var(--pres-text-primary);
+}
+
+.actions-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.center-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-pill {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 12px;
+  color: var(--pres-text-secondary);
+  font-weight: 600;
+}
+
+.step-dots-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--pres-primary-bg);
+  padding: 3px 8px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--pres-primary-border);
+  flex-shrink: 0;
+}
+
+.step-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(var(--pres-primary-rgb), 0.3);
+  transition: all 0.15s ease;
+}
+
+.step-dot.is-active {
+  background: var(--pres-primary);
+  transform: scale(1.15);
+}
+
+.step-dots-text {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--pres-primary);
+  margin-left: 2px;
+}
+
+/* ==========================================================================
+   Container Queries: 窄栏与侧边栏响应式自适应
+   ========================================================================== */
+@container (max-width: 719px) {
+  .presenter-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, auto) minmax(0, 1fr);
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .slide-panels {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .current-slide-panel,
+  .next-slide-panel {
+    flex: none;
+    min-height: 0;
+  }
+
+  .panel-preview {
+    aspect-ratio: 16 / 9;
+    padding: 6px;
+  }
+
+  .panel-header {
+    padding: 5px 8px;
+  }
+
+  .notes-content {
+    padding: 12px;
+    font-size: 1.05rem;
+  }
+
+  .presenter-header {
+    padding: 0 10px;
+  }
+
+  .presenter-actions {
+    padding: 5px 10px;
+  }
+
+  .btn-tool-label,
+  .wall-clock {
+    display: none;
+  }
+
+  .btn-nav {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+}
+
+@container (max-width: 440px) {
+  .slide-panels {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panel-preview {
+    max-height: 140px;
+  }
+}

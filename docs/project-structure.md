@@ -1,6 +1,6 @@
 # 项目架构与目录结构 (Project Structure)
 
-> 最近刷新：2026-10-26（Phase 3 重构 RF-016 ~ RF-020 完成后，随 docs 文档库整体刷新同步核对）
+> 最近刷新：2026-11-14（Phase 4 重构 RF-021 ~ RF-025 完成后，随代码模块解耦同步核对）
 
 ## 1. 架构概览
 
@@ -28,7 +28,7 @@ d:\MyCodingProjects\siyuan-live-slides
 │   ├── USER-GUIDE.zh-CN.md / USER-GUIDE.md # 中英文用户使用指南
 │   └── ...                                 # 其余设计存档与规划期存档（完整索引见 docs/README.md）
 ├── src/                                    # 插件源码目录
-│   ├── index.ts                            # [RF-007, RF-019] 插件入口主类（聚焦生命周期、编译调度与顶层协调，624 行）
+│   ├── index.ts                            # [RF-007, RF-019, RF-024] 插件入口主类（聚焦生命周期、编译调度与顶层协调，682 行）
 │   ├── main.ts                             # 前端挂载辅助入口（预览页签与 Dock 面板实例管理、编译消费者注册）
 │   ├── api.ts                              # [RF-020] 思源内核 API 精简封装（仅保留 16 个在用接口，215 行）
 │   ├── settings.ts                         # 全局设置读写与运行时配置
@@ -36,7 +36,9 @@ d:\MyCodingProjects\siyuan-live-slides
 │   │
 │   ├── plugin/                             # 插件扩展服务层
 │   │   ├── command-registry.ts             # [RF-007] 插件命令注册表（集中调度 12+ 项指令与快捷操作回调）
-│   │   └── preview-tab-title.ts            # [RF-019] 预览页签标题服务（即现标题构造、文档标题三级解析、Pin 联动更新）
+│   │   ├── preview-tab-title.ts            # [RF-019] 预览页签标题服务（即现标题构造、文档标题三级解析、Pin 联动更新）
+│   │   ├── api-switch-bridge.ts            # [RF-024] 外部 API 切换器桥接服务（siyuan-api-switch 全局事件监听与双向同步）
+│   │   └── preview-window-manager.ts       # [RF-024] 预览页签、演讲者双屏与独立窗口拉起管理服务
 │   │
 │   ├── compiler/                           # 编译与导入管线
 │   │   ├── document-compiler.ts            # [RF-001] 文档编译编排服务（AST 获取、IAL 解析、块引解析、沙箱推送）
@@ -81,8 +83,11 @@ d:\MyCodingProjects\siyuan-live-slides
 │   │   ├── visual-list-renderer.ts         # [RF-012] 卡片网格、时间线、步骤等富列表渲染器
 │   │   ├── slide-layout-renderer.ts        # [RF-012] 幻灯片页面版式容器分发器（两栏/三栏/图文/全屏等）
 │   │   ├── single-html-exporter.ts         # [RF-006] 离线单文件 HTML 打包导出中枢（专注于 Base64 资产内联与骨架装配）
-│   │   ├── standalone-template-styles.ts   # [RF-006] 独立单文件 HTML 样式生成器（内联 CSS 与主题样式封装）
+│   │   ├── standalone-template-styles.ts   # [RF-006, RF-022] 独立单文件 HTML 样式生成器（1292 行，复用 shared-layout 与 extra 样式）
 │   │   ├── standalone-client-runtime.ts    # [RF-006, RF-018] 离线播放器运行时拼装入口（29 行，按分节拼装）
+│   │   ├── styles/                         # [RF-022] 导出样式公共与扩展模块
+│   │   │   ├── shared-layout-styles.ts     # Fact、Timeline/Steps、Quote、Intro 共享版式 CSS 生成器
+│   │   │   └── standalone-extra-styles.ts  # 灯箱、动态蒙版、微动效与控制按钮等单文件专用 CSS 生成器
 │   │   ├── standalone-runtime-sections/    # [RF-018] 播放器运行时功能分节（输出与拆分前字节级一致，快照基线保障）
 │   │   │   ├── core-state.ts               # IIFE 开启、播放数据与核心 DOM 引用、跳页角标样式注入
 │   │   │   ├── overview-dom.ts             # 缩略图总览层 DOM 骨架与常量
@@ -94,13 +99,14 @@ d:\MyCodingProjects\siyuan-live-slides
 │   │   │   ├── overview-layer.ts           # 缩略图总览层构建、焦点导航与键盘交互
 │   │   │   └── keyboard-scroll-init.ts     # 滚轮/键盘事件处理与启动初始化
 │   │   ├── pdf-exporter.ts                 # [RF-004, RF-011] 16:9 横版高分辨率打印与 PDF 导出器
-│   │   └── pdf-template-styles.ts          # [RF-011] 独立 PDF 打印样式表与 @page 纸张规则生成器
+│   │   └── pdf-template-styles.ts          # [RF-011, RF-022] 独立 PDF 打印样式表生成器（1288 行，复用 shared-layout 样式）
 │   │
 │   ├── ui/                                 # 用户界面组件层 (Vue 3)
 │   │   ├── dock/
-│   │   │   ├── SlidesInspectorDockView.vue # [RF-002, RF-008, RF-017] 演示配置主容器 Dock 视图（903 行）
+│   │   │   ├── SlidesInspectorDockView.vue # [RF-002, RF-008, RF-017, RF-023] 演示配置主容器 Dock 视图（808 行）
 │   │   │   ├── useInspectorActions.ts      # [RF-008, RF-016] Actions 统一门面（装配三领域模块，86 行）
 │   │   │   ├── useInspectorPageOverrides.ts # [RF-017] 分页符页面属性三级查找工厂（直接属性 → 覆写层 → frontmatter）
+│   │   │   ├── useSuperBlockInspector.ts   # [RF-023] 超级块 DOM 几何列宽与 AST 兜底推断、当前页超级块扫描与块多选监听
 │   │   │   └── actions/                    # [RF-016] Inspector Actions 领域模块
 │   │   │       ├── attr-persistence.ts     # 属性持久化（saveAttrs/savePageAttr/saveDocAttr + 父容器联动 + frontmatter 即时更新）
 │   │   │       ├── notes-actions.ts        # 备注与 AI（讲稿块创建/转换/定位、AI 提词、批量追加/删除）
@@ -123,6 +129,11 @@ d:\MyCodingProjects\siyuan-live-slides
 │   │   │       └── ImmersionDrawerContainer.vue # 沉浸抽屉容器（遮罩与滚动锁定）
 │   │   ├── tab/
 │   │   │   ├── SlidesPreviewTab.vue        # 下方分屏实时演示放映页签（引擎切换、总览、全屏、导出入口）
+│   │   │   ├── SlidesPresenterTab.vue      # [RF-021] 演讲者双屏控制台主视图（724 行，主控界面与缩略图渲染）
+│   │   │   ├── SlidesPresenterTab.scss     # [RF-021] 演讲者控制台 SCSS 样式（1292 行）
+│   │   │   ├── SlidesPresenterThumbnail.scss # [RF-021] 演讲者幻灯片缩略图 SCSS 样式（825 行）
+│   │   │   ├── usePresenterTimer.ts        # [RF-021] FSM-8 绝对时间戳防漂移计时器与时钟逻辑 Composable
+│   │   │   ├── usePresenterSync.ts         # [RF-021] 跨窗口 BroadcastChannel 广播与 WebSandboxBridge 页面同步 Composable
 │   │   │   └── page-jump-input.ts          # 「数字+回车」跳页输入状态机
 │   │   └── popover-manager.ts              # 悬浮弹层与气泡位置计算管理
 │   │
@@ -146,7 +157,7 @@ d:\MyCodingProjects\siyuan-live-slides
 │       ├── api.d.ts                        # 思源内核响应数据类型
 │       └── index.d.ts                      # 全局环境与插件对象类型
 │
-├── tests/                                  # 自动化测试套件 (Vitest, 67 个测试文件，608 项用例全绿)
+├── tests/                                  # 自动化测试套件 (Vitest, 91 个测试文件，860 项用例全绿)
 │   ├── mocks/
 │   │   └── siyuan.ts                       # 思源插件宿主环境轻量 Mock（支持纯 Node 离线测试）
 │   ├── __fixtures__/
@@ -156,13 +167,19 @@ d:\MyCodingProjects\siyuan-live-slides
 │   ├── inspector-actions.test.ts           # [RF-008] Inspector Actions 门面级回归
 │   ├── inspector-actions-domains.test.ts   # [RF-016] 三大领域模块（属性持久化/备注/版式）直接单测
 │   ├── inspector-page-overrides.test.ts    # [RF-017] 分页符属性三级查找工厂单测
+│   ├── inspector-superblock-detector.test.ts # [RF-023] 超级块 DOM 列宽解析与 AST 回退单测
 │   ├── standalone-runtime-sections.test.ts # [RF-018] 运行时分节快照基线与拼装一致性测试
 │   ├── preview-tab-title.test.ts           # [RF-019] 预览页签标题服务（门面委托 + 模块直测）
+│   ├── presenter-timer.test.ts             # [RF-021] 演讲者计时器状态机与防休眠漂移单测
+│   ├── presenter-sync.test.ts              # [RF-021] 演讲者跨窗口广播同步单测
+│   ├── export-styles-golden.test.ts        # [RF-022] 导出样式规则快照与共享版式金样测试
+│   ├── api-switch-bridge.test.ts           # [RF-024] 外部 API 切换器桥接单测
+│   ├── feature-flags.test.ts               # [RF-025] 构建期细粒度版式与功能开关单测
 │   ├── peek-proxy-session.test.ts / peek-local-html.test.ts / immersion-peek.test.ts # peek 速览子系统
 │   ├── export.test.ts / pdf-template-styles.test.ts # 导出管线
 │   ├── compiler*.test.ts / list-*.test.ts / superblock-*.test.ts # 编译器管线
 │   ├── engine.test.ts / process-manager.test.ts / native-slides-bridge.test.ts # 双模引擎
-│   └── ...                                 # 其余 40+ 个专项领域回归测试用例
+│   └── ...                                 # 其余 50+ 个专项领域回归测试用例
 │
 ├── package.json                            # 项目配置与 npm scripts
 ├── vite.config.ts                          # Vite 打包配置（单入口构建并打包 zip）
@@ -173,7 +190,7 @@ d:\MyCodingProjects\siyuan-live-slides
 
 ---
 
-## 3. 重构演进对照表 (RF-001 ~ RF-020)
+## 3. 重构演进对照表 (RF-001 ~ RF-025)
 
 | 模块 | 重构前状况 | 重构后演进 | 收益 |
 | :--- | :--- | :--- | :--- |
@@ -197,3 +214,8 @@ d:\MyCodingProjects\siyuan-live-slides
 | **离线播放器运行时分节 (RF-018)** | `standalone-client-runtime.ts` (1434 行) 单模板字符串内嵌 35 个 JS 函数，不可测 | 拆分为 9 个功能分节模块 + 29 行拼装入口，快照基线证明输出字节级一致 | 运行时功能（总览/跳页/灯箱/渲染）可独立维护，回归有 golden master 保障 |
 | **预览页签标题服务 (RF-019)** | 标题构造/解析/更新 ~110 行内联在插件入口类中 | 抽离 `src/plugin/preview-tab-title.ts`（宿主接口 + 纯函数），入口精简至 624 行 | 标题三级解析（DOM → 编译模型 → SQL）独立可测，入口回归生命周期编排 |
 | **内核 API 死代码清理 (RF-020)** | `api.ts` (622 行) 含 46 个官方模板残留零引用导出；`kernel.ts` (221 行) echo 示例挂在构建入口 | 精简至 215 行 / 16 个在用接口；删除 `kernel.ts` 并清理 vite 入口 | API 门面检索零噪音，构建产物仅 index.js，消除示例代码误用风险 |
+| **演讲者视图巨石解耦 (RF-021)** | `SlidesPresenterTab.vue` (2892 行) 内嵌 2073 行 SCSS 与混杂计时器、广播同步、缩略图多重逻辑 | 抽离外部样式 `SlidesPresenterTab.scss` 与 `SlidesPresenterThumbnail.scss`；抽离 `usePresenterTimer.ts` 与 `usePresenterSync.ts`，主组件精简至 724 行 | 界面样式独立维护，防休眠漂移计时器与跨窗口广播具备领域单测保障 |
+| **导出模板样式去重与模块化 (RF-022)** | `standalone-template-styles.ts` (2242 行) 与 `pdf-template-styles.ts` (1484 行) 高度重复 | 抽取 `src/export/styles/shared-layout-styles.ts` 与 `standalone-extra-styles.ts`，两端分别精简至 ~1290 行 | 消除 ~1200+ 行重复 CSS 规则，新增版式零分叉，新增 golden master 快照测试 |
+| **侧栏超级块探测与多选解耦 (RF-023)** | `SlidesInspectorDockView.vue` lines 450~609 混杂 DOM 几何列宽与 AST 回退计算 | 抽取 `src/ui/dock/useSuperBlockInspector.ts`，主视图精简至 808 行（净减 181 行） | 几何列宽比例计算逻辑独立纯粹并具备 7 项专项单测，Dock 视图专注交互装配 |
+| **插件入口服务桥接解耦 (RF-024)** | `src/index.ts` 混杂 70 行 `siyuan-api-switch` 事件同步与 100 行页签窗口管理 | 抽离 `src/plugin/api-switch-bridge.ts` 与 `preview-window-manager.ts`，入口精简至 682 行（净减 147 行） | 外部插件桥接与窗口管理解耦，生命周期调度更清晰，新增独立单测 |
+| **特性开关与测试基线修复 (RF-025)** | `src/feature-flags/feature-flags.ts` 未导出常量，单测硬编码断言全 true 与配置冲突 | 规范导出 `FEATURE_FLAGS` 常量，修正 `tests/feature-flags.test.ts` 断言逻辑 | 消除基线唯一红灯，测试套件恢复 100% 全绿基准 |
