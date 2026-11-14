@@ -34,6 +34,7 @@ import { globalInspectorSyncCoordinator } from "@/sync/inspector-sync-coordinato
 import { globalCompileConsumerGate, HIDDEN_CONSUMER_COMPILE_DELAY_MS } from "@/sync/compile-consumer-gate"
 import { CompileScheduler } from "@/sync/compile-scheduler"
 import { InspectorSyncThrottle } from "@/sync/inspector-sync-cache"
+import { isMultiBlockSelected } from "@/sync/selection-mirror"
 import type { ISlidesDocument } from "@/types/slides-protocol"
 import "@/index.scss"
 
@@ -554,11 +555,14 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
     const target = e.target as HTMLElement | null
     if (!target) return
 
+    // 若当前编辑区处于多选状态（包含思源整块多选或跨块文本连续划选），保持当前设置界面与预览不跳转
+    const protyleRoot = target.closest?.(".protyle") || target.closest?.(".protyle-wysiwyg")
+    if (isMultiBlockSelected(protyleRoot)) {
+      return
+    }
+
     const titleEl = (target.closest(".protyle-title") || target.closest(".protyle-background")) as HTMLElement | null
-    const isDocHeader = Boolean(
-      titleEl ||
-      (target.closest(".protyle-content") && !target.closest(".protyle-wysiwyg") && !target.closest(".protyle-breadcrumb") && !target.closest(".protyle-gutters"))
-    )
+    const isDocHeader = Boolean(titleEl)
 
     if (isDocHeader) {
       const docId = this.resolveDocIdFromElement(target)
@@ -610,11 +614,14 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
     const el = (anchor.nodeType === Node.ELEMENT_NODE ? (anchor as Element) : anchor.parentElement) as HTMLElement | null
     if (!el) return
 
-    const titleEl = el.closest(".protyle-title") as HTMLElement | null
-    const isDocHeader = Boolean(
-      titleEl ||
-      (el.closest(".protyle-content") && !el.closest(".protyle-wysiwyg"))
-    )
+    // 若当前编辑区处于多选状态（包含思源整块多选或跨块文本连续划选），保持当前设置界面与预览不跳转
+    const protyleRoot = el.closest?.(".protyle") || el.closest?.(".protyle-wysiwyg")
+    if (isMultiBlockSelected(protyleRoot)) {
+      return
+    }
+
+    const titleEl = (el.closest(".protyle-title") || el.closest(".protyle-background")) as HTMLElement | null
+    const isDocHeader = Boolean(titleEl)
 
     if (isDocHeader) {
       const docId = this.resolveDocIdFromElement(el as HTMLElement)

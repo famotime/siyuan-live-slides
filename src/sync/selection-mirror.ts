@@ -136,3 +136,68 @@ export function mirrorBlockSelection(blockId: string, app?: any): boolean {
 
   return true
 }
+
+/**
+ * 判定当前编辑器中是否处于“多选多个块”的状态：
+ * 1. 思源整块多选：当前可见/主编辑区存在 >= 2 个带有 .protyle-wysiwyg--select 标记的不同块；
+ * 2. 跨块文本连续划选：原生 Range 起止容器（startContainer 与 endContainer）跨越不同的 [data-node-id] 块。
+ */
+export function isMultiBlockSelected(editorRoot?: Element | null): boolean {
+  const doc = typeof document !== "undefined" ? document : null
+  const root = editorRoot || doc
+  if (!root && !doc) {
+    return false
+  }
+
+  // 1. 检查思源整块多选（.protyle-wysiwyg--select 数量 >= 2）
+  try {
+    const selectedBlocks = (typeof root?.querySelectorAll === "function" ? root.querySelectorAll(".protyle-wysiwyg--select") : null) ||
+      (typeof doc?.querySelectorAll === "function" ? doc.querySelectorAll(".protyle-wysiwyg--select") : [])
+    if (selectedBlocks && selectedBlocks.length > 1) {
+      const distinctBlockIds = new Set<string>()
+      for (let i = 0; i < selectedBlocks.length; i++) {
+        const item = selectedBlocks[i]
+        const blockEl = typeof item.closest === "function" ? item.closest("[data-node-id]") : item
+        const id = blockEl?.getAttribute?.("data-node-id")
+        if (id) {
+          distinctBlockIds.add(id)
+        } else {
+          distinctBlockIds.add(`elem-${i}`)
+        }
+      }
+      if (distinctBlockIds.size > 1) {
+        return true
+      }
+    }
+  } catch {
+    // 忽略 DOM 查询异常
+  }
+
+  // 2. 检查跨块连续文本划选 (Range spanning across different blocks)
+  try {
+    const win = typeof window !== "undefined" ? window : (globalThis as any).window
+    const sel = typeof win?.getSelection === "function" ? win.getSelection() : null
+    if (sel && sel.rangeCount > 0 && !sel.isCollapsed && typeof sel.getRangeAt === "function") {
+      const range = sel.getRangeAt(0)
+      if (range) {
+        const startNode = range.startContainer
+        const endNode = range.endContainer
+        if (startNode && endNode && startNode !== endNode) {
+          const startEl = (startNode.nodeType === 1 ? startNode : startNode.parentElement) as Element | null
+          const endEl = (endNode.nodeType === 1 ? endNode : endNode.parentElement) as Element | null
+          const startBlock = typeof startEl?.closest === "function" ? startEl.closest("[data-node-id]") : null
+          const endBlock = typeof endEl?.closest === "function" ? endEl.closest("[data-node-id]") : null
+          const startBlockId = startBlock?.getAttribute?.("data-node-id")
+          const endBlockId = endBlock?.getAttribute?.("data-node-id")
+          if (startBlockId && endBlockId && startBlockId !== endBlockId) {
+            return true
+          }
+        }
+      }
+    }
+  } catch {
+    // 忽略选区异常
+  }
+
+  return false
+}
