@@ -1,6 +1,6 @@
 # Slidev 演示文稿运行与效果查看实战指南 —— 以 slidev-templates 项目为例
 
-本文档以 `D:\MyCodingProjects\slidev-templates` 仓库中的模板项目为实际范例，系统介绍如何运行、调试、交互查看以及导出 Slidev 制作的演示文稿。
+本文档以 `D:\GitHub\slidev-templates` 仓库中的模板项目为实际范例，系统介绍如何运行、调试、交互查看以及导出 Slidev 制作的演示文稿。
 
 ---
 
@@ -8,7 +8,7 @@
 
 [Slidev](https://sli.dev/) 是基于 Web 技术的现代开发者演示文稿工具，核心采用 **Markdown + Vue 组件 + UnoCSS/Tailwind** 构建，拥有代码高亮、交互组件、实时热重载（HMR）、演讲者双屏视图和静态导出等能力。
 
-在 `D:\MyCodingProjects\slidev-templates` 仓库中，主要包含以下两类模板：
+在 `D:\GitHub\slidev-templates` 仓库中，主要包含以下两类模板：
 
 ### 1.1 托管型独立 Starter 模板（`templates/`）
 每个 starter 都是一个完全自包含（Self-contained）的 Slidev 项目，拥有独立的 `package.json`、`slides.md` 和资源文件：
@@ -46,7 +46,7 @@ npm -v
 ### 步骤 1：定位到目标模板目录
 打开终端（Windows PowerShell 或命令行），进入目标 starter 所在的文件夹：
 ```bash
-cd D:\MyCodingProjects\slidev-templates\templates\paper-lab\starter
+cd D:\GitHub\slidev-templates\templates\paper-lab\starter
 ```
 
 ### 步骤 2：安装依赖
@@ -77,7 +77,7 @@ npm run dev
   slidev v52.19.1
 
   theme   @slidev/theme-default
-  entry   D:\MyCodingProjects\slidev-templates\templates\paper-lab\starter\slides.md
+  entry   D:\GitHub\slidev-templates\templates\paper-lab\starter\slides.md
 
   slide show    http://localhost:3030/
   presenter     http://localhost:3030/presenter/
@@ -91,14 +91,14 @@ npm run dev
 
 ### 4.1 运行 Terminal Ink 模板
 ```bash
-cd D:\MyCodingProjects\slidev-templates\templates\terminal-ink\starter
+cd D:\GitHub\slidev-templates\templates\terminal-ink\starter
 npm install
 npm run dev
 ```
 
 ### 4.2 运行 Editorial Grid 模板
 ```bash
-cd D:\MyCodingProjects\slidev-templates\templates\editorial-grid\starter
+cd D:\GitHub\slidev-templates\templates\editorial-grid\starter
 npm install
 npm run dev
 ```
@@ -107,13 +107,13 @@ npm run dev
 Neko Style 已经配置在仓库根目录的 npm workspace 中：
 - **方式 A（在仓库根目录直接运行）**：
   ```bash
-  cd D:\MyCodingProjects\slidev-templates
+  cd D:\GitHub\slidev-templates
   npm install
   npm run dev:neko
   ```
 - **方式 B（进入子目录运行）**：
   ```bash
-  cd D:\MyCodingProjects\slidev-templates\neko-style\starter
+  cd D:\GitHub\slidev-templates\neko-style\starter
   npm install
   npm run dev
   ```
@@ -186,7 +186,7 @@ npm run dev
 ### 6.2 构建为静态网页并离线托管（Static Build）
 用于部署到 GitHub Pages、Vercel、Netlify 或团队内部 Web 服务器：
 ```bash
-cd D:\MyCodingProjects\slidev-templates\templates\paper-lab\starter
+cd D:\GitHub\slidev-templates\templates\paper-lab\starter
 npm run build
 ```
 - 构建产物将生成在 `dist/` 文件夹中。
@@ -220,9 +220,9 @@ npm run build
 导出完成后，将在项目目录下生成 `slides-export.pdf` 或对应的 PPTX 文件，使用本地阅读器或 Microsoft PowerPoint 即可查看。
 
 ### 6.4 启动项目自带的模板画廊系统（Template Gallery）
-在 `D:\MyCodingProjects\slidev-templates` 根目录下，内置了一个元数据画廊展示服务：
+在 `D:\GitHub\slidev-templates` 根目录下，内置了一个元数据画廊展示服务：
 ```bash
-cd D:\MyCodingProjects\slidev-templates
+cd D:\GitHub\slidev-templates
 npm run gallery:serve
 ```
 在浏览器访问 `http://127.0.0.1:4173/gallery/`，即可集中浏览所有模板的分类卡片、设计说明、规范契约和预览图。

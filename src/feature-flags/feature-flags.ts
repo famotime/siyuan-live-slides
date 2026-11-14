@@ -55,9 +55,9 @@ export type FeatureFlagConfig = Record<FeatureKey, boolean>;
 
 const FEATURE_FLAGS: FeatureFlagConfig = {
   presenterMode: true,
-  exportHtml: true,
+  exportHtml: false,
   exportPdf: false,
-  exportImage: true,
+  exportImage: false,
   import: false,
   aiScript: true,
 };

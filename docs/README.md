@@ -64,5 +64,5 @@
 | :--- | :--- | :--- |
 | siyuan-note（思源笔记本体） | `D:\MyCodingProjects\siyuan-note` | `../siyuan` |
 | siyuan-property-manager | `D:\MyCodingProjects\siyuan-property-manager` | — |
-| Slidev | `D:\MyCodingProjects\slidev` | — |
-| Slidev Templates | `D:\MyCodingProjects\slidev-templates` | — |
+| Slidev | `D:\GitHub\slidev` | — |
+| Slidev Templates | `D:\GitHub\slidev-templates` | — |
