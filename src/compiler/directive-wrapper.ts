@@ -355,3 +355,193 @@ export function distributeThreeColumns<
     col3: cols[2] || [],
   }
 }
+
+export type FlowRowItem<T> =
+  | {
+      type: "fullwidth"
+      blocks: T[]
+      isLead?: boolean
+    }
+  | {
+      type: "grid"
+      cols: T[][]
+      targetCols: number
+      isSuperBlockCols?: boolean
+    }
+
+/**
+ * 严格顺序流式切分（Sequential Flow）：
+ * 将多栏版式下的 blocks 按通栏（显式 default / full / header / 导语段落）与分栏（列表卡片 / 显式 col-X）切分为交替连续的行单元。
+ * 当页面中存在显式 default/full 插槽，或者符合「标题 + 导语段落 + 列表项卡片群」模式时启用。
+ */
+export function chunkSequentialFlowRows<
+  T extends {
+    slot?: string
+    type?: string
+    subType?: string
+    content?: string
+    rawMarkdown?: string
+    id?: string
+    children?: any[]
+    isColFirst?: boolean
+    isListItem?: boolean
+  }
+>(
+  blocks: T[],
+  options?: {
+    defaultCols?: number
+    layoutRatio?: string
+  }
+): FlowRowItem<T>[] {
+  if (!blocks || blocks.length === 0) return []
+
+  const isColSlot = (b: T): boolean => {
+    const s = (b.slot || "").trim().toLowerCase()
+    return /^(?:col-\d+|left|center|right)$/i.test(s)
+  }
+
+  const isExplicitFullwidth = (b: T): boolean => {
+    const s = (b.slot || "").trim().toLowerCase()
+    return s === "default" || s === "full" || s === "header"
+  }
+
+  const isListBlock = (b: T): boolean => {
+    if (b.isListItem) return true
+    const t = (b.type || "").toLowerCase()
+    if (t === "i" || t === "listitem" || t === "item" || t === "l" || t === "list") return true
+    const md = (b.rawMarkdown || b.content || "").trim()
+    return /^(?:[-*+]|\d+\.)\s+/.test(md)
+  }
+
+  const isHeading = (b: T): boolean => {
+    if (b.type === "h" || b.type === "NodeHeading") return true
+    if (b.subType && /^h[1-6]$/i.test(b.subType)) return true
+    const md = (b.rawMarkdown || b.content || "").trim()
+    return /^#{1,6}\s+/.test(md)
+  }
+
+  // 检查是否存在除了首部大标题之外的显式通栏块（用户把中间段落设为了 default）
+  const hasMiddleDefaultSlot = blocks.some((b, idx) => {
+    const s = (b.slot || "").trim().toLowerCase()
+    if (s === "default" || s === "full") {
+      if (idx === 0 && isHeading(b)) return false
+      return true
+    }
+    return false
+  })
+
+  // 探测是否具备「首标题 + 导语段落 + 多个列表卡片」的自然多栏混排模式
+  const hasLeadParagraphPattern = (() => {
+    if (blocks.length < 3) return false
+    const firstH = isHeading(blocks[0]) || (blocks[0].slot || "").toLowerCase() === "header"
+    if (!firstH) return false
+    const secondP = !isListBlock(blocks[1]) && !isHeading(blocks[1]) && !isColSlot(blocks[1])
+    if (!secondP) return false
+    const remainingListItems = blocks.slice(2).filter(isListBlock)
+    return remainingListItems.length >= 2
+  })()
+
+  // 若既无显式中间 default/full 通栏段落，也不符合导语+列表卡片模式，严格退化为传统单网格，不干扰普通多栏
+  if (!hasMiddleDefaultSlot && !hasLeadParagraphPattern) {
+    return []
+  }
+
+  const getColIndex = (b: T, maxCols = 6): number => {
+    const s = (b.slot || "").trim().toLowerCase()
+    if (s === "left") return 1
+    if (s === "center") return 2
+    if (s === "right") return maxCols === 2 ? 2 : maxCols
+    const m = s.match(/^col-(\d+)$/i)
+    if (m) {
+      return parseInt(m[1], 10)
+    }
+    return 1
+  }
+
+  const getBlockKind = (b: T, idx: number): "fullwidth" | "grid" => {
+    if (isColSlot(b)) return "grid"
+    if (isExplicitFullwidth(b)) return "fullwidth"
+    if (idx === 0 && isHeading(b)) return "fullwidth"
+    if (hasLeadParagraphPattern && idx === 1 && !isListBlock(b) && !isHeading(b)) {
+      return "fullwidth"
+    }
+    if (isListBlock(b)) return "grid"
+    // 其余未标记 slot 的后续正文、代码块等归属于分栏网格行
+    return "grid"
+  }
+
+  const rows: FlowRowItem<T>[] = []
+  let currentKind: "fullwidth" | "grid" | null = null
+  let currentGroup: T[] = []
+
+  const flushGroup = () => {
+    if (currentGroup.length === 0) return
+    if (currentKind === "fullwidth") {
+      rows.push({
+        type: "fullwidth",
+        blocks: [...currentGroup],
+      })
+    } else if (currentKind === "grid") {
+      let maxCol = options?.defaultCols || 2
+      for (const b of currentGroup) {
+        const s = (b.slot || "").trim().toLowerCase()
+        const m = s.match(/^col-(\d+)$/i)
+        if (m) {
+          maxCol = Math.max(maxCol, parseInt(m[1], 10))
+        } else if (s === "right") {
+          maxCol = Math.max(maxCol, 2)
+        }
+      }
+
+      if (!currentGroup.some(isColSlot)) {
+        if (options?.defaultCols && options.defaultCols >= 2) {
+          maxCol = options.defaultCols
+        } else {
+          maxCol = Math.min(6, Math.max(2, currentGroup.length))
+        }
+      }
+      maxCol = Math.min(6, Math.max(2, maxCol))
+
+      let cols: T[][] = []
+      if (currentGroup.some(isColSlot)) {
+        cols = Array.from({ length: maxCol }, () => [])
+        let curCol = 1
+        for (const b of currentGroup) {
+          if (isColSlot(b)) {
+            curCol = getColIndex(b, maxCol)
+          }
+          const safeIdx = Math.min(maxCol, Math.max(1, curCol)) - 1
+          cols[safeIdx].push(b)
+        }
+      } else {
+        cols = distributeNColumns(currentGroup, maxCol)
+      }
+
+      rows.push({
+        type: "grid",
+        cols,
+        targetCols: maxCol,
+        isSuperBlockCols: true,
+      })
+    }
+    currentGroup = []
+  }
+
+  for (let idx = 0; idx < blocks.length; idx++) {
+    const b = blocks[idx]
+    const kind = getBlockKind(b, idx)
+    if (currentKind === null) {
+      currentKind = kind
+      currentGroup.push(b)
+    } else if (currentKind === kind) {
+      currentGroup.push(b)
+    } else {
+      flushGroup()
+      currentKind = kind
+      currentGroup.push(b)
+    }
+  }
+  flushGroup()
+
+  return rows
+}

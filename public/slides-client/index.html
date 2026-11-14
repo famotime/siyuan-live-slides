@@ -3537,7 +3537,7 @@
                       :key="block.id"
                       class="slide-block"
                       :class="[
-                        (rIdx === 0 && bIdx === 0 && isHeadingBlock(block)) ? 'slides-page-first-heading-block' : '',
+                        (rIdx === 0 && bIdx === 0) ? 'slides-page-first-heading-block' : '',
                         getBlockClickClass(block),
                         getBlockMotionClass(block),
                         getHeadingNormalizeClass(block),
@@ -5526,9 +5526,55 @@
             const s = (b.slot || "").trim().toLowerCase();
             return /^(?:col-\d+|left|center|right)$/i.test(s);
           };
-          const hasExplicitCols = blocks.some(isColSlot);
+          const isExplicitFullwidth = (b) => {
+            const s = (b.slot || "").trim().toLowerCase();
+            return s === "default" || s === "full" || s === "header";
+          };
+          const isListBlock = (b) => {
+            if (b.isListItem) return true;
+            const t = (b.type || "").toLowerCase();
+            if (t === "i" || t === "listitem" || t === "item" || t === "l" || t === "list") return true;
+            const md = (b.rawMarkdown || b.content || "").trim();
+            return /^(?:[-*+]|\d+\.)\s+/.test(md);
+          };
+          const isHeading = (b) => {
+            if (b.type === "h" || b.type === "NodeHeading") return true;
+            if (/^h[1-6]$/i.test(b.subType || "")) return true;
+            const md = (b.rawMarkdown || b.content || "").trim();
+            return /^#{1,6}\s+/.test(md);
+          };
+
+          const hasMiddleDefaultSlot = blocks.some((b, idx) => {
+            const s = (b.slot || "").trim().toLowerCase();
+            if (s === "default" || s === "full") {
+              if (idx === 0 && isHeading(b)) return false;
+              return true;
+            }
+            return false;
+          });
+          const hasLeadParagraphPattern = (() => {
+            if (blocks.length < 3) return false;
+            const firstH = isHeading(blocks[0]) || (blocks[0].slot || "").toLowerCase() === "header";
+            if (!firstH) return false;
+            const secondP = !isListBlock(blocks[1]) && !isHeading(blocks[1]) && !isColSlot(blocks[1]);
+            if (!secondP) return false;
+            const remainingListItems = blocks.slice(2).filter(isListBlock);
+            return remainingListItems.length >= 2;
+          })();
+
           let flowRows = [];
-          if (hasExplicitCols && layout !== "clover" && isColsHeader(layout)) {
+          if ((hasMiddleDefaultSlot || hasLeadParagraphPattern) && layout !== "clover" && isColsHeader(layout)) {
+            const getBlockKind = (b, idx) => {
+              if (isColSlot(b)) return "grid";
+              if (isExplicitFullwidth(b)) return "fullwidth";
+              if (idx === 0 && isHeading(b)) return "fullwidth";
+              if (hasLeadParagraphPattern && idx === 1 && !isListBlock(b) && !isHeading(b)) {
+                return "fullwidth";
+              }
+              if (isListBlock(b)) return "grid";
+              return "grid";
+            };
+
             let currentKind = null;
             let currentGroup = [];
             const flush = () => {
@@ -5543,23 +5589,33 @@
                   if (m) maxCol = Math.max(maxCol, parseInt(m[1], 10));
                   else if (s === "right") maxCol = Math.max(maxCol, 2);
                 }
-                maxCol = Math.min(6, Math.max(2, maxCol));
-                const cols = Array.from({ length: maxCol }, () => []);
-                let curCol = 1;
-                for (const b of currentGroup) {
-                  if (isColSlot(b)) {
-                    const s = (b.slot || "").trim().toLowerCase();
-                    if (s === "left") curCol = 1;
-                    else if (s === "center") curCol = 2;
-                    else if (s === "right") curCol = maxCol === 2 ? 2 : maxCol;
-                    else {
-                      const m = s.match(/^col-(\d+)$/i);
-                      if (m) curCol = parseInt(m[1], 10);
-                    }
-                  }
-                  const safeIdx = Math.min(maxCol, Math.max(1, curCol)) - 1;
-                  cols[safeIdx].push(b);
+                if (!currentGroup.some(isColSlot)) {
+                  maxCol = colsCount || Math.min(6, Math.max(2, currentGroup.length));
                 }
+                maxCol = Math.min(6, Math.max(2, maxCol));
+
+                let cols = [];
+                if (currentGroup.some(isColSlot)) {
+                  cols = Array.from({ length: maxCol }, () => []);
+                  let curCol = 1;
+                  for (const b of currentGroup) {
+                    if (isColSlot(b)) {
+                      const s = (b.slot || "").trim().toLowerCase();
+                      if (s === "left") curCol = 1;
+                      else if (s === "center") curCol = 2;
+                      else if (s === "right") curCol = maxCol === 2 ? 2 : maxCol;
+                      else {
+                        const m = s.match(/^col-(\d+)$/i);
+                        if (m) curCol = parseInt(m[1], 10);
+                      }
+                    }
+                    const safeIdx = Math.min(maxCol, Math.max(1, curCol)) - 1;
+                    cols[safeIdx].push(b);
+                  }
+                } else {
+                  cols = distributeNColumns(currentGroup, maxCol);
+                }
+
                 const cleanedCols = cols.map(colList => {
                   const valid = (colList || []).filter(b => Boolean((b.rawMarkdown || b.content || "").trim()));
                   if (valid.length === 0) return valid;
@@ -5577,8 +5633,10 @@
               }
               currentGroup = [];
             };
-            for (const b of blocks) {
-              const kind = isColSlot(b) ? "grid" : "fullwidth";
+
+            for (let idx = 0; idx < blocks.length; idx++) {
+              const b = blocks[idx];
+              const kind = getBlockKind(b, idx);
               if (currentKind === null) {
                 currentKind = kind;
                 currentGroup.push(b);
@@ -8833,6 +8891,7 @@
           transitionClass,
           headerBlocks,
           flowRows,
+          isHeadingBlock,
           leftBlocks,
           rightBlocks,
           col1Blocks,

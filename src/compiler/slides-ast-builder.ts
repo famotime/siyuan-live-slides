@@ -41,6 +41,7 @@ import {
   getBlockHeadingLevel,
   distributeThreeColumns,
   distributeNColumns,
+  chunkSequentialFlowRows,
 } from "./directive-wrapper"
 
 export {
@@ -48,8 +49,9 @@ export {
   getBlockHeadingLevel,
   distributeThreeColumns,
   distributeNColumns,
+  chunkSequentialFlowRows,
 }
-export type { IThreeColsDistribution } from "./directive-wrapper"
+export type { IThreeColsDistribution, FlowRowItem } from "./directive-wrapper"
 
 interface IHeadingScope {
   level: number
@@ -896,28 +898,67 @@ export function buildSlidesDocument(
           }
         } else if (rem.length === 1 && rem[0].children && rem[0].children.length >= 2) {
           targetCols = Math.min(6, rem[0].children.length)
+        } else {
+          const listItems = rem.filter(b => b.isListItem || b.type === "i" || /^(?:[-*+]|\d+\.)\s+/.test((b.rawMarkdown || b.content || "").trim()))
+          if (listItems.length >= 2) {
+            targetCols = Math.min(6, listItems.length)
+          }
         }
       }
 
-      const cols = distributeNColumns(rem, targetCols)
+      const flowRows = (isColsHeaderLayout(layout) && layout !== "clover")
+        ? chunkSequentialFlowRows(contentBlocks, { defaultCols: targetCols, layoutRatio: page.frontmatter.layoutRatio })
+        : []
 
-      // 为虚拟 AST 模型上的块补全 slot，确保 Web 沙箱接收到 slides 时 slot 与渲染对齐
-      cols.forEach((colList, colIdx) => {
-        const slotName = `col-${colIdx + 1}`
-        for (const b of colList) {
-          if (!b.slot || b.slot === "default") {
-            b.slot = slotName
+      if (flowRows.length > 0) {
+        // 严格顺序流式切分模式 (Sequential Flow):
+        // 显式 default 或未分配插槽的通栏段落保留，不强制打上 col-1
+        let pageFirstHAssigned = false
+
+        for (const row of flowRows) {
+          if (row.type === "fullwidth") {
+            for (const b of row.blocks) {
+              if (isHeadingBlock(b) && !pageFirstHAssigned) {
+                if (!b.slot || b.slot === "default") {
+                  b.slot = "header"
+                }
+                pageFirstHAssigned = true
+              }
+              // 通栏正文段落保持 default 或原样，不回填 col-X
+            }
+          } else if (row.type === "grid") {
+            row.cols.forEach((colList, colIdx) => {
+              const slotName = `col-${colIdx + 1}`
+              for (const b of colList) {
+                if (!b.slot || b.slot === "default") {
+                  b.slot = slotName
+                }
+              }
+              cleanFirstListBlock(colList)
+            })
           }
         }
-        cleanFirstListBlock(colList)
-      })
+      } else {
+        const cols = distributeNColumns(rem, targetCols)
 
-      // 若 rem 原本只有 1 个单块且被成功解构为多块，更新 page.blocks
-      const decompressedBlocks = cols.flat()
-      if (rem.length === 1 && decompressedBlocks.length > 1) {
-        const origIdx = page.blocks.findIndex(b => b.id === rem[0].id)
-        if (origIdx !== -1) {
-          page.blocks.splice(origIdx, 1, ...decompressedBlocks)
+        // 为虚拟 AST 模型上的块补全 slot，确保 Web 沙箱接收到 slides 时 slot 与渲染对齐
+        cols.forEach((colList, colIdx) => {
+          const slotName = `col-${colIdx + 1}`
+          for (const b of colList) {
+            if (!b.slot || b.slot === "default") {
+              b.slot = slotName
+            }
+          }
+          cleanFirstListBlock(colList)
+        })
+
+        // 若 rem 原本只有 1 个单块且被成功解构为多块，更新 page.blocks
+        const decompressedBlocks = cols.flat()
+        if (rem.length === 1 && decompressedBlocks.length > 1) {
+          const origIdx = page.blocks.findIndex(b => b.id === rem[0].id)
+          if (origIdx !== -1) {
+            page.blocks.splice(origIdx, 1, ...decompressedBlocks)
+          }
         }
       }
     }

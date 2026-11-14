@@ -446,6 +446,42 @@ export function getSharedLayoutStyles(): string {
       max-height: 100% !important;
       overflow: hidden !important;
     }
+    .layout-sequential-flow {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      min-height: 0 !important;
+      max-height: 100% !important;
+      gap: 1.25rem;
+      box-sizing: border-box;
+      overflow: hidden !important;
+    }
+    .layout-sequential-flow .layout-flow-row.layout-flow-fullwidth {
+      width: 100%;
+      flex-shrink: 0;
+    }
+    .layout-sequential-flow .layout-flow-row.layout-flow-fullwidth.cols-header-top {
+      margin-bottom: 0 !important;
+    }
+    .layout-sequential-flow .layout-flow-row.layout-flow-grid {
+      width: 100%;
+      flex: 1 1 auto;
+      min-height: 0 !important;
+      max-height: 100% !important;
+    }
+    .layout-sequential-flow .slides-flow-lead-paragraph {
+      margin-top: 0.35rem;
+      opacity: 0.88;
+      font-size: 1.05em;
+      line-height: 1.6;
+    }
+    .layout-sequential-flow .layout-flow-fullwidth-body {
+      padding: 0.25rem 0;
+      opacity: 0.92;
+      line-height: 1.6;
+    }
     .layout-header-section {
       width: 100%;
       margin-bottom: var(--slides-header-gap, 16px) !important;

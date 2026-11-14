@@ -520,4 +520,174 @@ describe("two-cols-header & three-cols-header 多栏表头版式集成测试", (
       expect(html).toContain("pdf-col--4")
     })
   })
+
+  describe("5. 多栏版式中显式 default 通栏正文与中间段落流式混排测试 (Sequential Flow)", () => {
+    it("标题下一段内容显式设为 default 时，按通栏排版且不被强行改写为 col-1，后续列表项保持 4 栏", () => {
+      const docId = "doc-user-lead-paragraph"
+      const docAttrs = {
+        "custom-slides-layout": "cols-header",
+      }
+      const blocks: ISiYuanBlockNode[] = [
+        {
+          id: "b-title",
+          type: "h",
+          markdown: "## 渐进显隐与入场微动效，牢牢牵引注意力",
+          ial: { id: "b-title" },
+        },
+        {
+          id: "b-lead",
+          type: "p",
+          content: "演讲的节奏，就是敲击翻页键的节奏。通过渐进显隐，避免听众提前阅读整页内容。",
+          ial: { id: "b-lead", "custom-slides-slot": "default" },
+        },
+        {
+          id: "b-c1",
+          type: "p",
+          content: "步长灵活掌控",
+          ial: { id: "b-c1", "custom-slides-slot": "col-1" },
+        },
+        {
+          id: "b-c2",
+          type: "p",
+          content: "四种灵动微动效",
+          ial: { id: "b-c2", "custom-slides-slot": "col-2" },
+        },
+        {
+          id: "b-c3",
+          type: "p",
+          content: "组件级独立调度",
+          ial: { id: "b-c3", "custom-slides-slot": "col-3" },
+        },
+        {
+          id: "b-c4",
+          type: "p",
+          content: "告别文字平铺",
+          ial: { id: "b-c4", "custom-slides-slot": "col-4" },
+        },
+      ]
+
+      const doc = buildSlidesDocument(docId, docAttrs, blocks)
+      const page = doc.slides[0]
+
+      // 验证虚拟 AST 模型上保留 slot="default"，未被篡改为 col-1
+      const leadBlock = page.blocks.find(b => b.id === "b-lead")
+      expect(leadBlock).toBeDefined()
+      expect(leadBlock?.slot).toBe("default")
+
+      // 验证后续卡片保持各自独立的 4 栏插槽
+      expect(page.blocks.find(b => b.id === "b-c1")?.slot).toBe("col-1")
+      expect(page.blocks.find(b => b.id === "b-c2")?.slot).toBe("col-2")
+      expect(page.blocks.find(b => b.id === "b-c3")?.slot).toBe("col-3")
+      expect(page.blocks.find(b => b.id === "b-c4")?.slot).toBe("col-4")
+
+      // 验证 HTML 渲染端：生成流式行与通栏导语样式
+      const html = renderSlideBlocksToHtml(page)
+      expect(html).toContain("layout-sequential-flow")
+      expect(html).toContain("layout-flow-row layout-flow-fullwidth")
+      expect(html).toContain("slides-flow-lead-paragraph")
+      expect(html).toContain("演讲的节奏，就是敲击翻页键的节奏")
+      expect(html).toContain("layout-flow-row layout-flow-grid")
+      expect(html).toContain("col-1")
+      expect(html).toContain("col-4")
+    })
+
+    it("支持中间段落设为 default 通栏，实现 多栏 -> 通栏 -> 多栏 的灵活混排", () => {
+      const slide = {
+        pageIndex: 1,
+        startBlockId: "p1",
+        frontmatter: { layout: "cols-header" },
+        notes: "",
+        blocks: [
+          { id: "h1", type: "h", content: "双网格对比", rawMarkdown: "# 双网格对比", slot: "header" },
+          { id: "col1-1", type: "p", content: "前置优势A", rawMarkdown: "前置优势A", slot: "col-1" },
+          { id: "col1-2", type: "p", content: "前置优势B", rawMarkdown: "前置优势B", slot: "col-2" },
+          { id: "mid-p", type: "p", content: "阶段小结：承上启下的通栏过渡论述", rawMarkdown: "阶段小结：承上启下的通栏过渡论述", slot: "default" },
+          { id: "col2-1", type: "p", content: "后续规划A", rawMarkdown: "后续规划A", slot: "col-1" },
+          { id: "col2-2", type: "p", content: "后续规划B", rawMarkdown: "后续规划B", slot: "col-2" },
+        ],
+        rawMarkdown: "",
+      }
+
+      const html = renderSlideBlocksToHtml(slide)
+      expect(html).toContain("layout-sequential-flow")
+      // 包含通栏过渡段落容器
+      expect(html).toContain("layout-flow-fullwidth-body")
+      expect(html).toContain("阶段小结：承上启下的通栏过渡论述")
+      // 包含两个分栏网格行
+      const gridMatches = html.match(/layout-flow-row layout-flow-grid/g)
+      expect(gridMatches?.length).toBe(2)
+    })
+
+    it("用户真实场景：4 栏设置下，中间段落设为 default（或未标插槽的导语），后续 4 个列表项未手动标记 col-N 时自动均分为 4 栏，段落严格通栏显示不挤入第 1 栏", () => {
+      const docId = "doc-user-real-4cols"
+      const docAttrs = {
+        "custom-slides-layout": "cols-header",
+        "custom-slides-layout-ratio": "1:1:1:1",
+      }
+      const blocks: ISiYuanBlockNode[] = [
+        {
+          id: "b-title",
+          type: "h",
+          markdown: "## 九宫格点选，版式即点即得",
+          ial: { id: "b-title" },
+        },
+        {
+          id: "b-lead",
+          type: "p",
+          content: "无需死记硬背任何排版语法，侧栏可视化检查器动动鼠标即可调出专业质感。",
+          ial: { id: "b-lead", "custom-slides-slot": "default" },
+        },
+        {
+          id: "b-item-1",
+          type: "i",
+          markdown: "- 11 种专业版式点选: 封面、标准、双栏、表头多栏、四叶草、图左/图右、大字报、时间线、引言、介绍、居中",
+          ial: { id: "b-item-1" },
+        },
+        {
+          id: "b-item-2",
+          type: "i",
+          markdown: "- 自由定制分栏比例: 1:1、1:2、2:1 预设一键生效，支持一键读取超级块拖拽列宽",
+          ial: { id: "b-item-2" },
+        },
+        {
+          id: "b-item-3",
+          type: "i",
+          markdown: "- 丝滑页面转场: 向左平滑滑入、优雅淡入淡出、向上推移，翻页自然流畅",
+          ial: { id: "b-item-3" },
+        },
+        {
+          id: "b-item-4",
+          type: "i",
+          markdown: "- 笔记排版智能映射: 标题大小、调色板颜色、横向超级块自然转换为大屏演示排版",
+          ial: { id: "b-item-4" },
+        },
+      ]
+
+      const doc = buildSlidesDocument(docId, docAttrs, blocks)
+      const page = doc.slides[0]
+
+      // 验证虚拟 AST 模型上导语段落保留 slot="default"，绝不被改写为 col-1
+      const leadBlock = page.blocks.find(b => b.id === "b-lead")
+      expect(leadBlock).toBeDefined()
+      expect(leadBlock?.slot).toBe("default")
+
+      // 验证 4 个列表项被自动分配到 4 栏
+      expect(page.blocks.find(b => b.id === "b-item-1")?.slot).toBe("col-1")
+      expect(page.blocks.find(b => b.id === "b-item-2")?.slot).toBe("col-2")
+      expect(page.blocks.find(b => b.id === "b-item-3")?.slot).toBe("col-3")
+      expect(page.blocks.find(b => b.id === "b-item-4")?.slot).toBe("col-4")
+
+      // 验证 HTML 渲染端：段落位于通栏行，下方为 4 栏网格
+      const html = renderSlideBlocksToHtml(page)
+      expect(html).toContain("layout-sequential-flow")
+      expect(html).toContain("slides-flow-lead-paragraph")
+      expect(html).toContain("无需死记硬背任何排版语法")
+
+      // 验证第 1 栏内只有列表项 1，绝不包含导语段落
+      const col1Match = html.match(/<div class="[^"]*col-1[^"]*">([\s\S]*?)<\/div>/)
+      expect(col1Match).toBeTruthy()
+      expect(col1Match![1]).toContain("11 种专业版式点选")
+      expect(col1Match![1]).not.toContain("无需死记硬背任何排版语法")
+    })
+  })
 })

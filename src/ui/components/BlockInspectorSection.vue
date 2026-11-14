@@ -779,13 +779,13 @@ const slotControlTitle = computed(() => {
 const slotControlDesc = computed(() => {
   const hasHeader = props.currentSlideHeader !== false && props.currentSlideHeader !== 'false'
   const headerText = hasHeader ? '带通栏标题' : '纯分栏对比'
-  return `在多栏版式（${detectedColumnsCount.value} 栏，${headerText}）中的内容块位置`
+  return `在多栏版式（${detectedColumnsCount.value} 栏，${headerText}）中的内容块位置，未分配栏位的块将按通栏文本排版`
 })
 
 const availableSlots = computed(() => {
   const cols = detectedColumnsCount.value
   const slots = [
-    { value: '', label: '默认' },
+    { value: 'default', label: '默认' },
     { value: 'header', label: '标题' },
   ]
   for (let i = 1; i <= cols; i++) {
@@ -800,7 +800,7 @@ const availableSlots = computed(() => {
 
 function isSlotActive(val: string): boolean {
   const s = props.elemSlot || ''
-  if (!val) {
+  if (val === 'default' || !val) {
     return !s || s === 'default'
   }
   if (s === val) return true
