@@ -449,6 +449,31 @@ svg.slides-icon,
       transform: scale(0.98);
     }
 
+    &.active,
+    &.spm-btn-action--active {
+      background: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.16);
+      border-color: var(--b3-theme-primary, #3b82f6);
+      color: var(--b3-theme-primary, #3b82f6);
+      font-weight: 500;
+
+      .slides-icon {
+        color: var(--b3-theme-primary, #3b82f6);
+      }
+    }
+
+    &:disabled,
+    &.is-disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      pointer-events: none;
+      filter: grayscale(0.6);
+
+      &:hover {
+        background: var(--b3-theme-background, #ffffff);
+        border-color: var(--b3-border-color, #e2e8f0);
+      }
+    }
+
     &.spm-btn-danger {
       color: var(--b3-theme-error, #ef4444);
 

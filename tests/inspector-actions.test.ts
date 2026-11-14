@@ -74,7 +74,7 @@ describe("useInspectorActions (Inspector 操作与 API 编排)", () => {
     expect(ctx.activeBlockAttrs.value["custom-slides-muted"]).toBe("true")
   })
 
-  it("onClearBlockAttrs 应清除所有演示属性并清空本地响应式状态", async () => {
+  it("onClearBlockAttrs 应先弹出警告弹窗，并在确认后清除所有演示属性并清空本地响应式状态", async () => {
     ctx.activeBlockAttrs.value = {
       "custom-slides-click": "+1",
       "custom-slides-slot": "left",
@@ -82,17 +82,45 @@ describe("useInspectorActions (Inspector 操作与 API 编排)", () => {
     ctx.elemShikiLines.value = "1-3"
     ctx.elemMaxHeight.value = "300px"
 
+    const confirmSpy = vi.spyOn(siyuanModule, "confirm").mockImplementation((_title, _text, confirmCb) => {
+      confirmCb?.()
+    })
     const setBlockAttrsSpy = vi.spyOn(apiModule, "setBlockAttrs").mockResolvedValue({} as any)
     vi.spyOn(domSyncModule, "syncDomBlockAttrs").mockImplementation(() => {})
     const clearOverrideSpy = vi.spyOn(globalDocumentCompiler, "clearBlockAttrOverride")
 
     await actions.onClearBlockAttrs()
 
+    expect(confirmSpy).toHaveBeenCalledWith(
+      "清除块演示属性",
+      "确定要清除当前块的所有演示属性（包含动画、插槽、备注等）吗？此操作无法撤销。",
+      expect.any(Function)
+    )
     expect(setBlockAttrsSpy).toHaveBeenCalled()
     expect(clearOverrideSpy).toHaveBeenCalledWith("block-101")
     expect(Object.keys(ctx.activeBlockAttrs.value).length).toBe(0)
     expect(ctx.elemShikiLines.value).toBe("")
     expect(ctx.elemMaxHeight.value).toBe("")
+
+    confirmSpy.mockRestore()
+  })
+
+  it("onClearBlockAttrs - 当用户在弹窗中取消时不应执行清除", async () => {
+    ctx.activeBlockAttrs.value = {
+      "custom-slides-click": "+1",
+    }
+    const confirmSpy = vi.spyOn(siyuanModule, "confirm").mockImplementation((_title, _text, _confirmCb, cancelCb) => {
+      cancelCb?.()
+    })
+    const setBlockAttrsSpy = vi.spyOn(apiModule, "setBlockAttrs")
+
+    await actions.onClearBlockAttrs()
+
+    expect(confirmSpy).toHaveBeenCalled()
+    expect(setBlockAttrsSpy).not.toHaveBeenCalled()
+    expect(ctx.activeBlockAttrs.value["custom-slides-click"]).toBe("+1")
+
+    confirmSpy.mockRestore()
   })
 
   it("onInsertDividerBefore 应调用 insertBlock 插入分割线", async () => {
