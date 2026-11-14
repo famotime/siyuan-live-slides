@@ -1,12 +1,13 @@
 .idea
 # .vscode
 .DS_Store
-pnpm-lock.yaml
 node_modules
 dev
 dist
 build
 tmp
+*.zip
+package.zip
 .env
 developer_docs/
 # Git worktrees
