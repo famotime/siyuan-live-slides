@@ -986,6 +986,12 @@
     .layout-header-section h1, .layout-header-section h2, .layout-header-section h3 {
       margin-bottom: var(--slides-title-margin-bottom, 10px) !important;
     }
+    .layout-header-section p {
+      font-size: var(--slides-title-size, 1.75rem);
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: var(--slides-title-margin-bottom, 10px) !important;
+    }
 
     .layout-two-cols {
       display: grid !important;
@@ -5308,12 +5314,26 @@
           }
           const blocks = (slide.blocks || []).filter(b => b.slot !== "slot-divider-right")
           const layout = slide.frontmatter?.layout
-          const isHeaderEnabled = slide.frontmatter?.header !== false && layout !== "two-cols"
-          const explicit = isHeaderEnabled ? blocks.filter(b => b.slot === "header") : []
+          // 显式 slot === "header" 无条件优先作为通栏大标题
+          const explicit = blocks.filter(b => b.slot === "header")
           let header = explicit
-          if (isHeaderEnabled && explicit.length === 0 && blocks.length > 0) {
-            const candidateH = blocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"))
-            if (candidateH) header = [candidateH]
+          if (explicit.length === 0 && slide.frontmatter?.header !== false && blocks.length > 0) {
+            const candidateH = blocks.find(b => {
+              if (!b) return false
+              if (b.slot && b.slot !== "default") return false
+              if (b.type === "h" || b.type === "NodeHeading") return true
+              if (/^h[1-6]$/i.test(b.subType || "")) return true
+              const md = (b.rawMarkdown || b.content || "").trim()
+              return /^#{1,6}\s+/.test(md)
+            })
+            if (candidateH) {
+              header = [candidateH]
+            } else if (blocks.length >= 2) {
+              const firstBlock = blocks[0]
+              if (!firstBlock.slot || firstBlock.slot === "default") {
+                header = [firstBlock]
+              }
+            }
           }
           let colsCount = 2
           if (layout === 'clover') {

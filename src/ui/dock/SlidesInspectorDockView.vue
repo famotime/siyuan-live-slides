@@ -125,6 +125,7 @@
         :is-note="isNoteBlock"
         :image-role="imageRole"
         :current-slide-layout="currentSlideLayout"
+        :current-slide-layout-ratio="pageLayoutRatio"
         :current-slide-header="currentSlideHeader"
         :parent-elem-click="parentContainerClicks"
         :parent-container-slot="parentContainerSlot"
@@ -383,7 +384,7 @@ const currentSlideLayout = computed(() => {
   }
 
   const blockSlot = activeBlockAttrs.value[ATTR_ELEM_SLOT] || activeBlockAttrs.value['custom-slides-slot']
-  if (blockSlot && (['col-1', 'col-2', 'col-3'].includes(blockSlot) || /^col-\d+$/.test(blockSlot))) {
+  if (blockSlot && (blockSlot === 'header' || ['col-1', 'col-2', 'col-3'].includes(blockSlot) || /^col-\d+$/.test(blockSlot))) {
     return 'cols-header'
   }
 
@@ -410,7 +411,7 @@ const currentSlideLayout = computed(() => {
     return targetSlide.value.frontmatter.layout
   }
 
-  if (targetSlide.value?.blocks?.some(b => b.slot && (['col-1', 'col-2', 'col-3'].includes(b.slot) || /^col-\d+$/.test(b.slot)))) {
+  if (targetSlide.value?.blocks?.some(b => b.slot && (b.slot === 'header' || ['col-1', 'col-2', 'col-3'].includes(b.slot) || /^col-\d+$/.test(b.slot)))) {
     return 'cols-header'
   }
 

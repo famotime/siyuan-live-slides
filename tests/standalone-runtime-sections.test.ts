@@ -25,6 +25,9 @@ function readBaseline(): string {
 
 describe("standalone client runtime 分节拼装 (RF-018)", () => {
   it("完整输出应与拆分前基线字节级一致", () => {
+    if (process.env.UPDATE_BASELINE) {
+      fs.writeFileSync(BASELINE_PATH, getStandaloneClientRuntimeScript(), "utf8")
+    }
     expect(getStandaloneClientRuntimeScript()).toBe(readBaseline())
   })
 

@@ -628,6 +628,7 @@ const props = defineProps<{
   isNote?: boolean
   imageRole?: string
   currentSlideLayout?: string
+  currentSlideLayoutRatio?: string
   currentSlideHeader?: boolean | string
   isSuperBlock?: boolean
   parentElemClick?: string
@@ -645,8 +646,8 @@ const props = defineProps<{
 
 const effectiveLayout = computed(() => {
   const l = props.currentSlideLayout || ''
-  // 智能推断：如果当前块已经分配了 col-1 ~ col-6 插槽，无论上层传入什么，它必然属于 cols-header
-  if (['col-1', 'col-2', 'col-3', 'col-4', 'col-5', 'col-6'].includes(props.elemSlot)) {
+  // 智能推断：如果当前块已经分配了 header 或 col-1 ~ col-6 插槽，无论上层传入什么，它必然属于 cols-header
+  if (['header', 'col-1', 'col-2', 'col-3', 'col-4', 'col-5', 'col-6'].includes(props.elemSlot)) {
     return 'cols-header'
   }
   return l
@@ -658,13 +659,21 @@ const isMultiColsLayout = computed(() => {
 })
 
 const detectedColumnsCount = computed(() => {
+  // 1. 若当前页显式配置了分栏比例，以比例段数为准 (2~6 栏)
+  const ratio = (props.currentSlideLayoutRatio || '').trim()
+  if (ratio.includes(':')) {
+    const parts = ratio.split(':').filter(Boolean)
+    if (parts.length >= 2 && parts.length <= 6) return parts.length
+  }
+  // 2. 超级块信息
   if (props.detectedSbInfo?.colCount && props.detectedSbInfo.colCount >= 2) {
     return Math.min(props.detectedSbInfo.colCount, 6)
   }
+  // 3. 当前块自身插槽
   const match = props.elemSlot?.match(/^col-(\d+)$/)
   if (match) {
     const num = parseInt(match[1], 10)
-    if (num >= 2 && num <= 6) return Math.max(num, 3)
+    if (num >= 2 && num <= 6) return num
   }
   if (props.currentSlideLayout === 'three-cols-header') return 3
   if (props.currentSlideLayout === 'two-cols-header' || props.currentSlideLayout === 'two-cols') return 2
@@ -672,7 +681,7 @@ const detectedColumnsCount = computed(() => {
     const parts = props.detectedSbInfo.ratio.split(':').filter(Boolean)
     if (parts.length >= 2) return Math.min(parts.length, 6)
   }
-  return 3 // 默认按 3 栏
+  return 2 // 默认按 2 栏起步
 })
 
 const slotControlTitle = computed(() => {
@@ -680,53 +689,17 @@ const slotControlTitle = computed(() => {
 })
 
 const slotControlDesc = computed(() => {
-  const hasHeader = props.currentSlideHeader !== false && props.currentSlideHeader !== 'false' && props.currentSlideLayout !== 'two-cols'
+  const hasHeader = props.currentSlideHeader !== false && props.currentSlideHeader !== 'false'
   const headerText = hasHeader ? '带通栏标题' : '纯分栏对比'
   return `在多栏版式（${detectedColumnsCount.value} 栏，${headerText}）中的内容块位置`
 })
 
 const availableSlots = computed(() => {
-  const l = effectiveLayout.value
-  const hasHeader = props.currentSlideHeader !== false && props.currentSlideHeader !== 'false' && l !== 'two-cols'
-
-  if (l === 'two-cols') {
-    return [
-      { value: '', label: '默认' },
-      { value: 'col-1', label: '第 1 栏 (左)' },
-      { value: 'col-2', label: '第 2 栏 (右)' },
-    ]
-  }
-  if (l === 'two-cols-header') {
-    const slots = [
-      { value: '', label: '默认' },
-    ]
-    if (hasHeader) slots.push({ value: 'header', label: '表头' })
-    slots.push(
-      { value: 'col-1', label: '第 1 栏 (左)' },
-      { value: 'col-2', label: '第 2 栏 (右)' },
-    )
-    return slots
-  }
-  if (l === 'three-cols-header') {
-    const slots = [
-      { value: '', label: '默认' },
-    ]
-    if (hasHeader) slots.push({ value: 'header', label: '表头' })
-    slots.push(
-      { value: 'col-1', label: '第 1 栏' },
-      { value: 'col-2', label: '第 2 栏' },
-      { value: 'col-3', label: '第 3 栏' },
-    )
-    return slots
-  }
-  // cols-header
   const cols = detectedColumnsCount.value
   const slots = [
     { value: '', label: '默认' },
+    { value: 'header', label: '标题' },
   ]
-  if (hasHeader) {
-    slots.push({ value: 'header', label: '表头' })
-  }
   for (let i = 1; i <= cols; i++) {
     let label = `第 ${i} 栏`
     if (cols === 2) {

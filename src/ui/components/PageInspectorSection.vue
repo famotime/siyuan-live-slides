@@ -74,13 +74,33 @@
         </div>
       </div>
 
+      <!-- 多栏栏数手工指定控件 (2~6 栏) -->
+      <div
+        v-if="isColsHeaderLayout"
+        style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding: 2px 0;"
+      >
+        <span style="font-size: 11px; opacity: 0.85; font-weight: 500;">栏数控制</span>
+        <div class="spm-segmented-group" style="margin: 0; width: auto;">
+          <button
+            v-for="col in [2, 3, 4, 5, 6]"
+            :key="col"
+            class="spm-segmented-item"
+            :class="{ active: detectedColumnsCount === col }"
+            style="padding: 2px 10px; font-size: 11px;"
+            @click="setColumnCount(col)"
+          >
+            {{ col }} 栏
+          </button>
+        </div>
+      </div>
+
       <!-- 快捷芯片预设 -->
       <div class="spm-quick-chips">
         <button
           v-for="chip in currentRatioPresets"
           :key="chip.value"
           class="spm-chip"
-          :class="{ active: currentActiveRatio === chip.value }"
+          :class="{ active: isRatioActive(chip.value) }"
           @click="$emit('update:pageLayoutRatio', chip.value)"
         >
           {{ chip.label }}
@@ -600,18 +620,13 @@ const effectivePageHeader = computed(() => {
 })
 
 const detectedColumnsCount = computed(() => {
-  if (props.pageLayout === 'two-cols-header' || props.pageLayout === 'two-cols' || props.pageLayout === 'image-left' || props.pageLayout === 'image-right') {
-    return 2
-  }
-  if (props.pageLayout === 'three-cols-header') {
-    return 3
-  }
-  // cols-header: 依据 pageLayoutRatio, detectedSbRatio 或 detectedSbInfo 动态推断
+  // 1. 若显式指定了多段比例，以比例段数为准精确控制 (2~6 栏)
   const ratio = (props.pageLayoutRatio || '').trim()
   if (ratio.includes(':')) {
     const count = ratio.split(':').filter(Boolean).length
     if (count >= 2 && count <= 6) return count
   }
+  // 2. 超级块比例或列数推断
   const sbRatio = (props.detectedSbRatio || '').trim()
   if (sbRatio.includes(':')) {
     const count = sbRatio.split(':').filter(Boolean).length
@@ -624,8 +639,37 @@ const detectedColumnsCount = computed(() => {
     const count = props.detectedSbInfo.slots.length
     if (count >= 2 && count <= 6) return count
   }
+  if (props.pageLayout === 'three-cols-header') {
+    return 3
+  }
   return 2
 })
+
+function setColumnCount(col: number) {
+  if (col < 2 || col > 6) return
+  const defaultRatios: Record<number, string> = {
+    2: '1:1',
+    3: '1:1:1',
+    4: '1:1:1:1',
+    5: '1:1:1:1:1',
+    6: '1:1:1:1:1:1',
+  }
+  const newRatio = defaultRatios[col] || '1:1'
+  if (props.pageLayout === 'two-cols' || props.pageLayout === 'two-cols-header' || props.pageLayout === 'three-cols-header') {
+    emit('update:pageLayout', 'cols-header')
+  }
+  emit('update:pageLayoutRatio', newRatio)
+}
+
+function isRatioActive(chipValue: string): boolean {
+  const r = (props.pageLayoutRatio || '').trim()
+  const cols = detectedColumnsCount.value
+  const equalRatio = Array(cols).fill('1').join(':')
+  if (chipValue === '') {
+    return !r || r === equalRatio
+  }
+  return r === chipValue
+}
 
 const currentRatioPresets = computed(() => {
   const cols = detectedColumnsCount.value

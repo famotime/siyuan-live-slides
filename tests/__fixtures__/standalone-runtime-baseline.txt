@@ -864,15 +864,29 @@
             bodyWrap.appendChild(maskEls.layer);
           }
           container.appendChild(bodyWrap);
-        } else if (slide.frontmatter?.layout === "cols-header" || slide.frontmatter?.layout === "two-cols-header" || slide.frontmatter?.layout === "three-cols-header" || slide.frontmatter?.layout === "clover") {
+        } else if (slide.frontmatter?.layout === "cols-header" || slide.frontmatter?.layout === "two-cols-header" || slide.frontmatter?.layout === "three-cols-header" || slide.frontmatter?.layout === "clover" || slide.frontmatter?.layout === "two-cols") {
           const isCover = slide.frontmatter?.layout === "cover";
           const isClover = slide.frontmatter?.layout === "clover";
           const blocks = (slide.blocks || []).filter(b => b.slot !== "slot-divider-right");
-          const isHeaderEnabled = slide.frontmatter?.header !== false;
-          let headerBlocks = isHeaderEnabled ? blocks.filter(b => b.slot === "header") : [];
-          if (isHeaderEnabled && headerBlocks.length === 0 && blocks.length > 0) {
-            const candidate = blocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"));
-            if (candidate) headerBlocks = [candidate];
+          const explicitHeader = blocks.filter(b => b.slot === "header");
+          let headerBlocks = explicitHeader;
+          if (explicitHeader.length === 0 && slide.frontmatter?.header !== false && blocks.length > 0) {
+            const candidate = blocks.find(b => {
+              if (!b) return false;
+              if (b.slot && b.slot !== "default") return false;
+              if (b.type === "h" || b.type === "NodeHeading") return true;
+              if (/^h[1-6]$/i.test(b.subType || "")) return true;
+              const md = (b.rawMarkdown || b.content || "").trim();
+              return /^#{1,6}s+/.test(md);
+            });
+            if (candidate) {
+              headerBlocks = [candidate];
+            } else if (blocks.length >= 2) {
+              const firstBlock = blocks[0];
+              if (!firstBlock.slot || firstBlock.slot === "default") {
+                headerBlocks = [firstBlock];
+              }
+            }
           }
           const rem = blocks.filter(b => !headerBlocks.includes(b));
 

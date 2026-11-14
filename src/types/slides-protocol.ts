@@ -90,6 +90,19 @@ export function isColsHeaderLayout(layout?: string): boolean {
   return layout === "cols-header" || layout === "two-cols-header" || layout === "three-cols-header" || layout === "two-cols"
 }
 
+/**
+ * 判断块是否为标题块（支持思源简短类型 h、完整 NodeHeading、subType h1~h6、Markdown # 标题前缀）
+ */
+export function isHeadingBlock(b?: ISlidesBlockItem): boolean {
+  if (!b) return false
+  if (b.type === "h" || b.type === "NodeHeading") return true
+  const sub = b.subType || b.rawNode?.subType || ""
+  if (/^h[1-6]$/i.test(sub)) return true
+  const md = (b.rawMarkdown || b.content || "").trim()
+  if (/^#{1,6}\s+/.test(md)) return true
+  return false
+}
+
 /** 页面 Frontmatter 配置元数据 */
 export interface ISlidePageFrontmatter {
   layout?: TSlideLayout
@@ -217,6 +230,7 @@ export interface ISlideAnimConfig {
 export interface ISlidesBlockItem {
   id: string
   type: string
+  subType?: string
   content: string
   rawMarkdown: string
   clicks?: string

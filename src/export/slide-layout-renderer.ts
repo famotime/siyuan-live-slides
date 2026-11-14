@@ -1,5 +1,5 @@
 import type { ISlidesBlockItem, ISlidesVirtualPage } from "../types/slides-protocol"
-import { isColsHeaderLayout } from "../types/slides-protocol"
+import { isColsHeaderLayout, isHeadingBlock } from "../types/slides-protocol"
 import { distributeNColumns } from "../compiler/slides-ast-builder"
 import { cleanCardListItemMarkdown, isListItemNode, parseRatioToGridCols } from "../utils"
 import { convertBlockToHtml, escapeHtml } from "./markdown-renderer"
@@ -9,13 +9,6 @@ export interface IRenderSlideOptions extends IBlockRenderOptions {
   twoColsWrapperClass?: string
   leftColClass?: string
   rightColClass?: string
-}
-
-function isHeadingBlock(b: ISlidesBlockItem): boolean {
-  if (!b) return false
-  if (b.type === "h" || b.type === "NodeHeading") return true
-  const md = (b.rawMarkdown || b.content || "").trim()
-  return /^#{1,6}\s+/.test(md)
 }
 
 /**
@@ -83,15 +76,19 @@ export function renderSlideBlocksToHtml(
   if (layout === "clover" || isColsHeaderLayout(layout)) {
     const isClover = layout === "clover"
     let headerBlocks: ISlidesBlockItem[] = []
-    const isHeaderEnabled = slide.frontmatter?.header !== false && layout !== "two-cols"
-    if (isHeaderEnabled) {
-      const explicitHeader = blocks.filter(b => b.slot === "header")
-      if (explicitHeader.length > 0) {
-        headerBlocks = explicitHeader
-      } else if (blocks.length > 0) {
-        const candidateH = blocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"))
+    const explicitHeader = blocks.filter(b => b.slot === "header")
+    if (explicitHeader.length > 0) {
+      headerBlocks = explicitHeader
+    } else if (slide.frontmatter?.header !== false) {
+      if (blocks.length > 0) {
+        const candidateH = blocks.find(b => isHeadingBlock(b) && (!b.slot || b.slot === "default"))
         if (candidateH) {
           headerBlocks = [candidateH]
+        } else if (blocks.length >= 2) {
+          const firstBlock = blocks[0]
+          if (!firstBlock.slot || firstBlock.slot === "default") {
+            headerBlocks = [firstBlock]
+          }
         }
       }
     }
@@ -349,7 +346,7 @@ export function renderSlideBlocksToHtml(
     if (explicitHeader.length > 0) {
       headerBlocks = explicitHeader
     } else if (blocks.length > 0) {
-      const candidateH = blocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"))
+      const candidateH = blocks.find(b => isHeadingBlock(b) && (!b.slot || b.slot === "default"))
       if (candidateH) {
         headerBlocks = [candidateH]
       }

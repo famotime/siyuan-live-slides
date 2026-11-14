@@ -14,6 +14,7 @@ import {
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_LAYOUT_RATIO,
   isColsHeaderLayout,
+  isHeadingBlock,
 } from "../types/slides-protocol"
 import type { IAssetRewriteOptions } from "./assets-rewriter"
 import { extractBlockMarkdown, parseKramdownIAL } from "./ast-crawler"
@@ -830,16 +831,29 @@ export function buildSlidesDocument(
 
     if (layout === "clover" || layout === "timeline" || layout === "steps" || isColsHeaderLayout(layout)) {
       let headerList: ISlidesBlockItem[] = []
-      const isHeaderEnabled = page.frontmatter.header !== false && layout !== "two-cols"
-      if (isHeaderEnabled) {
-        const explicitHeader = contentBlocks.filter(b => b.slot === "header")
-        if (explicitHeader.length > 0) {
-          headerList = explicitHeader
-        } else if (contentBlocks.length > 0) {
-          const candidateH = contentBlocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"))
+      // 1. 显式指定的 slot === "header" 具有最高优先级，无条件作为跨通栏大标题
+      const explicitHeader = contentBlocks.filter(b => b.slot === "header")
+      if (explicitHeader.length > 0) {
+        headerList = explicitHeader
+      } else if (page.frontmatter.header !== false) {
+        // 2. 通栏标题开启时自动嗅探首个标题或未分配插槽的头部文本块
+        if (contentBlocks.length > 0) {
+          const candidateH = contentBlocks.find(b => isHeadingBlock(b) && (!b.slot || b.slot === "default"))
           if (candidateH) {
             headerList = [candidateH]
+          } else if (contentBlocks.length >= 2) {
+            // 启发式：首块若未分配插槽且后方有多个内容块时，自动提取为表头大标题
+            const firstBlock = contentBlocks[0]
+            if (!firstBlock.slot || firstBlock.slot === "default") {
+              headerList = [firstBlock]
+            }
           }
+        }
+      }
+
+      for (const b of headerList) {
+        if (!b.slot || b.slot === "default") {
+          b.slot = "header"
         }
       }
 
@@ -906,17 +920,6 @@ export function buildSlidesDocument(
           page.blocks.splice(origIdx, 1, ...decompressedBlocks)
         }
       }
-    } else if (layout === "two-cols") {
-      const rightBlocks = contentBlocks.filter(b => b.slot === "right")
-      const defaultBlocks = contentBlocks.filter(b => !b.slot || b.slot === "default")
-      if (rightBlocks.length === 0 && defaultBlocks.length >= 2) {
-        const [, autoRight] = distributeNColumns(defaultBlocks, 2)
-        for (const b of autoRight) {
-          b.slot = "right"
-        }
-      }
-      cleanFirstListBlock(contentBlocks.filter(b => b.slot !== "right"))
-      cleanFirstListBlock(contentBlocks.filter(b => b.slot === "right"))
     }
 
     page.rawMarkdown = page.blocks

@@ -114,4 +114,64 @@ describe("多栏版式合并与通栏标题开关 (columns-header-toggle)", () =
     expect(html).toContain("左侧卡片内容")
     expect(html).toContain("右侧卡片内容")
   })
+
+  it("AST 构建器: 普通段落显式打上 custom-slides-slot='header' 时，无条件提升为通栏表头", () => {
+    const blocks: ISiYuanBlockNode[] = [
+      { id: "p0", type: "p", content: "手工指定标题", markdown: "手工指定标题", ial: { "custom-slides-slot": "header" } },
+      { id: "p1", type: "p", content: "左侧正文描述", markdown: "左侧正文描述" },
+      { id: "p2", type: "p", content: "右侧正文描述", markdown: "右侧正文描述" },
+    ]
+
+    const doc = buildSlidesDocument(
+      "doc-explicit-header",
+      {
+        [ATTR_PAGE_LAYOUT]: "cols-header",
+        [ATTR_PAGE_HEADER]: "false", // 即使页面关闭通栏标题，显式 slot 依然最高优先级
+      },
+      blocks,
+    )
+    const page = doc.slides[0]
+    expect(page.blocks.find(b => b.id === "p0")?.slot).toBe("header")
+    expect(page.blocks.filter(b => b.slot === "col-1").map(b => b.content)).toEqual(["左侧正文描述"])
+    expect(page.blocks.filter(b => b.slot === "col-2").map(b => b.content)).toEqual(["右侧正文描述"])
+  })
+
+  it("AST 构建器: 首块为未指定 slot 的普通段落且后方有正文时，在通栏标题开启时启发式提升为表头", () => {
+    const blocks: ISiYuanBlockNode[] = [
+      { id: "p-title", type: "p", content: "标题", markdown: "标题" },
+      { id: "p-left", type: "p", content: "传统演示准备之痛", markdown: "传统演示准备之痛" },
+      { id: "p-right", type: "p", content: "即现的一体化破局", markdown: "即现的一体化破局" },
+    ]
+
+    const doc = buildSlidesDocument(
+      "doc-heuristic-header",
+      {
+        [ATTR_PAGE_LAYOUT]: "cols-header",
+      },
+      blocks,
+    )
+    const page = doc.slides[0]
+    expect(page.blocks.find(b => b.id === "p-title")?.slot).toBe("header")
+    expect(page.blocks.filter(b => b.slot === "col-1").map(b => b.content)).toEqual(["传统演示准备之痛"])
+    expect(page.blocks.filter(b => b.slot === "col-2").map(b => b.content)).toEqual(["即现的一体化破局"])
+  })
+
+  it("渲染器: 显式 slot='header' 的普通段落能正确渲染在 layout-header-section 容器中", () => {
+    const page: ISlidesVirtualPage = {
+      pageIndex: 1,
+      frontmatter: { layout: "cols-header" },
+      blocks: [
+        { id: "p0", type: "p", content: "贯通标题", rawMarkdown: "贯通标题", slot: "header" },
+        { id: "b1", type: "p", content: "左栏内容", rawMarkdown: "左栏内容", slot: "col-1" },
+        { id: "b2", type: "p", content: "右栏内容", rawMarkdown: "右栏内容", slot: "col-2" },
+      ],
+      rawMarkdown: "",
+    }
+
+    const html = renderSlideBlocksToHtml(page)
+    expect(html).toContain("layout-header-section")
+    expect(html).toContain("贯通标题")
+    expect(html).toContain("左栏内容")
+    expect(html).toContain("右栏内容")
+  })
 })
