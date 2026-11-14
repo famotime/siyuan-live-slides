@@ -145,7 +145,7 @@ Import existing Slidev projects into SiYuan:
 - **`Slidev Pro: Sync slides.md to workspace`** writes via kernel API for isolated rendering;
 - **`Slidev Pro: Probe local DevServer (localhost:3030)`** checks the local engine status.
 
-See the [Pro mode setup guide](./思源笔记即现演示插件%20(siyuan-live-slides)%20Pro%20模式系统配置与用户指南.md) for environment details.
+See the [Pro mode setup guide](./思源笔记即现插件%20(siyuan-live-slides)%20Pro%20模式系统配置与用户指南.md) for environment details.
 
 ---
 

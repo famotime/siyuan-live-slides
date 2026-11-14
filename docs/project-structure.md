@@ -23,7 +23,7 @@ d:\MyCodingProjects\siyuan-live-slides
 ├── docs/                                   # 项目文档库（三类：现行文档 / 设计存档 / 规划期存档，索引见 docs/README.md）
 │   ├── project-structure.md                # 项目最新架构与模块映射（本文件）
 │   ├── 技术规格定义.md                      # custom-slides-* 块属性协议字典（与 types/slides-protocol.ts 对齐）
-│   ├── 思源笔记即现演示插件详细方案、实施进展与下一步研发计划.md   # 交付进展总览与研发排期
+│   ├── 思源笔记即现插件详细方案、实施进展与下一步研发计划.md   # 交付进展总览与研发排期
 │   ├── refactor-plan.md                    # 重构计划与执行日志 (RF-001 ~ RF-020)
 │   ├── USER-GUIDE.zh-CN.md / USER-GUIDE.md # 中英文用户使用指南
 │   └── ...                                 # 其余设计存档与规划期存档（完整索引见 docs/README.md）

@@ -1,4 +1,4 @@
-# 思源笔记即现演示插件 (SiYuan Live Slides)
+# 思源笔记即现插件 (SiYuan Live Slides)
 
 [📖 详细使用指南](./docs/USER-GUIDE.zh-CN.md) | [📖 User Guide (EN)](./docs/USER-GUIDE.md) | [📦 更新日志 (Changelog)](./CHANGELOG.md)
 
