@@ -43,7 +43,7 @@
           aria-label="缩略图总览 (O)"
           @click="onToggleOverview"
         >
-          <SlidesIcon name="columns" />
+          <SlidesIcon name="layout-grid" />
         </button>
 
         <!-- 双屏演讲者视图（presenterMode 开关关闭时隐藏入口） -->
@@ -123,13 +123,14 @@
           <SlidesIcon name="refresh" />
         </button>
 
-        <!-- 全屏放映 -->
+        <!-- 全屏放映（强调突出主操作） -->
         <button
-          class="spm-icon-btn b3-tooltips b3-tooltips__s"
+          class="spm-icon-btn is-primary spm-btn-fullscreen b3-tooltips b3-tooltips__s"
           aria-label="全屏放映"
           @click="onFullscreen"
         >
           <SlidesIcon name="fullscreen" />
+          <span class="spm-btn-fullscreen__label">全屏放映</span>
         </button>
       </div>
     </div>
@@ -760,6 +761,34 @@ defineExpose({
   height: 16px;
   background: var(--b3-border-color, #e2e8f0);
   margin: 0 4px;
+}
+
+.spm-btn-fullscreen {
+  font-weight: 500;
+  padding: 0 8px;
+  gap: 5px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+
+  .spm-btn-fullscreen__label {
+    font-size: 11px;
+    letter-spacing: 0.2px;
+  }
+
+  &:hover:not(:disabled) {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  }
+}
+
+@media (max-width: 520px) {
+  .spm-btn-fullscreen__label {
+    display: none;
+  }
 }
 
 .spm-slides-tab__viewport {

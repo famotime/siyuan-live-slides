@@ -99,11 +99,13 @@ describe("CursorTracker (双向光标联动中枢)", () => {
     vi.advanceTimersByTime(150)
     expect(mockBridge.navigatePage).toHaveBeenCalledTimes(1)
 
-    // 测试光标移入文档根/标题（未直接映射但属于当前文档 ID 时定位至第一页）
+    // 测试光标移入文档根/标题时：不应自动跳转页面（避免打断当前预览页码，仅供侧栏切换全局配置）
     tracker.setDocId("doc-root-1")
     tracker.onCursorFocusBlock("doc-root-1")
     vi.advanceTimersByTime(110)
-    expect(mockBridge.navigatePage).toHaveBeenCalledWith(1)
+    // 依然维持此前移入 b-3 的 1 次切页调用，未触发对第 1 页的误跳转
+    expect(mockBridge.navigatePage).toHaveBeenCalledTimes(1)
+    expect(tracker.getActiveBlockId()).toBe("doc-root-1")
 
     // 测试 setActiveBlockId
     tracker.setActiveBlockId("b-2")

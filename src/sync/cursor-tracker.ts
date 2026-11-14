@@ -22,6 +22,9 @@ export class CursorTracker {
 
   public setDocId(docId: string): void {
     this.currentDocId = docId
+    if (docId) {
+      this.blockToPageMap.delete(docId)
+    }
   }
 
   /**
@@ -31,7 +34,7 @@ export class CursorTracker {
     this.blockToPageMap.clear()
 
     for (const slide of slides) {
-      if (slide.startBlockId) {
+      if (slide.startBlockId && slide.startBlockId !== this.currentDocId) {
         this.blockToPageMap.set(slide.startBlockId, slide.pageIndex)
       }
       for (const block of slide.blocks) {
@@ -57,12 +60,16 @@ export class CursorTracker {
     }
 
     this.activeBlockId = blockId
-    let targetPage = this.getPageByBlockId(blockId)
-    // 若光标在文档根/标题且未被包含在块映射中，默认平滑定位至第一页
-    if (!targetPage && (blockId === this.currentDocId || !this.currentDocId && this.blockToPageMap.size > 0)) {
-      targetPage = 1
+
+    // 当光标移至文档根/标题时，不自动跳转页面（避免打断用户当前预览页码），仅供侧栏切换全局配置界面
+    if (blockId === this.currentDocId) {
+      this.debounceCtrl.cancel("cursor-navigate")
+      return
     }
+
+    const targetPage = this.getPageByBlockId(blockId)
     if (!targetPage) {
+      this.debounceCtrl.cancel("cursor-navigate")
       return
     }
 

@@ -118,6 +118,14 @@
       <rect x="14" y="3" width="7" height="18" rx="1" />
     </g>
 
+    <!-- 缩略图总览 / 4个小方格 (Layout Grid / Grid 2x2 / Overview) -->
+    <g v-else-if="name === 'layout-grid' || name === 'grid-2x2' || name === 'grid' || name === 'overview'">
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+    </g>
+
     <!-- 代码逐行聚光 (Shiki / Code) -->
     <g v-else-if="name === 'code'">
       <polyline points="16 18 22 12 16 6" />

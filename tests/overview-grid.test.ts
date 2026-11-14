@@ -119,10 +119,18 @@ describe("Overview Grid (缩略图总览)", () => {
   })
 
   describe("3. 宿主页签入口", () => {
-    it("工具栏应有总览按钮并经 bridge 转发", () => {
-      expect(previewTabVue).toContain('aria-label="缩略图总览 (O)"')
-      expect(previewTabVue).toContain('@click="onToggleOverview"')
+    it("工具栏应有总览按钮并经 bridge 转发，且采用 4 个小方格的 layout-grid 图标", () => {
+      const currentTabVue = fs.readFileSync(previewTabPath, "utf-8")
+      expect(currentTabVue).toContain('aria-label="缩略图总览 (O)"')
+      expect(currentTabVue).toContain('@click="onToggleOverview"')
+      expect(currentTabVue).toMatch(/aria-label="缩略图总览 \(O\)"[\s\S]*?<SlidesIcon name="layout-grid" \/>/)
       expect(bridgeTs).toMatch(/public toggleOverview\(\): void \{\s*this\.postMessage\("TOGGLE_OVERVIEW", \{\}\)\s*\}/)
+    })
+
+    it("工具栏全屏放映按钮应采用 is-primary 强调高亮样式与全屏放映标签", () => {
+      const currentTabVue = fs.readFileSync(previewTabPath, "utf-8")
+      expect(currentTabVue).toMatch(/class="spm-icon-btn is-primary spm-btn-fullscreen[\s\S]*?aria-label="全屏放映"/)
+      expect(currentTabVue).toContain('class="spm-btn-fullscreen__label">全屏放映</span>')
     })
 
     it("宿主 o 键应转发总览并移交焦点", () => {

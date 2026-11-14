@@ -67,4 +67,9 @@ describe("LayoutPicker & SlidesIcon 版式线框图标体系测试", () => {
     expect(slidevIconContent).toContain("name === 'desktop'")
     expect(slidevIconContent).toContain("name === 'mobile'")
   })
+
+  it("SlidesIcon 应包含缩略图总览所需的 layout-grid (4个小方格) 矢量图标定义", () => {
+    const currentIconContent = fs.readFileSync(slidevIconPath, "utf-8")
+    expect(currentIconContent).toContain("name === 'layout-grid'")
+  })
 })
