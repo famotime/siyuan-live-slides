@@ -107,6 +107,33 @@ describe("FeatureFlags 门控 (命令条件注册)", () => {
     expect(commands.map(c => c.langKey)).not.toContain("slidesPresenterMode")
   })
 
+  it("关闭 smartSplit 开关后 slidesAiSplit 与 slidesClearDividers 不注册", () => {
+    gatingState.disabled.add("smartSplit")
+    const { mockPlugin, commands } = createMockPlugin()
+    registerPluginCommands(mockPlugin)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(11)
+    const keys = commands.map(c => c.langKey)
+    expect(keys).not.toContain("slidesAiSplit")
+    expect(keys).not.toContain("slidesClearDividers")
+    expect(keys).toContain("slidesAiNotes")
+  })
+
+  it("关闭 smartAnimation 开关后 slidesAutoAnimate 不注册", () => {
+    gatingState.disabled.add("smartAnimation")
+    const { mockPlugin, commands } = createMockPlugin()
+    registerPluginCommands(mockPlugin)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(12)
+    expect(commands.map(c => c.langKey)).not.toContain("slidesAutoAnimate")
+  })
+
+  it("关闭 speakerNotesBlocks 开关后 slidesIdentifyNotes 不注册", () => {
+    gatingState.disabled.add("speakerNotesBlocks")
+    const { mockPlugin, commands } = createMockPlugin()
+    registerPluginCommands(mockPlugin)
+    expect(mockPlugin.addCommand).toHaveBeenCalledTimes(12)
+    expect(commands.map(c => c.langKey)).not.toContain("slidesIdentifyNotes")
+  })
+
   it("四组开关全部关闭时仅剩核心与协同命令", () => {
     ;["import", "aiScript", "exportImage", "presenterMode"].forEach(k =>
       gatingState.disabled.add(k),

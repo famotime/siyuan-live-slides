@@ -230,7 +230,7 @@
 
         <!-- 智能分页（分析长文本大纲与篇幅，自动插入分页线） -->
         <button
-          v-if="isFeatureEnabled('aiScript')"
+          v-if="isFeatureEnabled('smartSplit') && isFeatureEnabled('aiScript')"
           class="spm-btn-action b3-tooltips b3-tooltips__se"
           aria-label="智能分析长文本大纲与篇幅，自动插入分页线"
           @click="$emit('aiAutoSplit')"
@@ -241,7 +241,7 @@
 
         <!-- 清除分页 -->
         <button
-          v-if="isFeatureEnabled('aiScript')"
+          v-if="isFeatureEnabled('smartSplit') && isFeatureEnabled('aiScript')"
           class="spm-btn-action spm-btn-danger b3-tooltips b3-tooltips__sw"
           aria-label="一键清除当前文档中的所有幻灯片分页线（需二次确认）"
           :disabled="isBatchProcessing"
@@ -253,6 +253,7 @@
 
         <!-- 智能设置动效 -->
         <button
+          v-if="isFeatureEnabled('smartAnimation')"
           class="spm-btn-action b3-tooltips b3-tooltips__se"
           aria-label="自动为正文各页标题及首块之外的后续内容块配置顺延 (+1) 逐步呈现动效"
           :disabled="isBatchProcessing"
@@ -264,6 +265,7 @@
 
         <!-- 清除动效 -->
         <button
+          v-if="isFeatureEnabled('smartAnimation')"
           class="spm-btn-action spm-btn-danger b3-tooltips b3-tooltips__sw"
           aria-label="清除所有页面内容块的逐步显现与入场微动效配置（需二次确认）"
           :disabled="isBatchProcessing"
@@ -275,6 +277,7 @@
 
         <!-- 增加讲稿块（识别规范化已有候选块 + 为缺少讲稿页新增默认块） -->
         <button
+          v-if="isFeatureEnabled('speakerNotesBlocks')"
           class="spm-btn-action b3-tooltips b3-tooltips__se"
           aria-label="识别已有候选讲稿并为空白页新增默认讲稿块（不会重复添加）"
           :disabled="isBatchProcessing"
@@ -286,6 +289,7 @@
 
         <!-- 清除讲稿块 -->
         <button
+          v-if="isFeatureEnabled('speakerNotesBlocks')"
           class="spm-btn-action spm-btn-danger b3-tooltips b3-tooltips__sw"
           aria-label="物理删除文档中所有页面的全部讲稿备注块（需二次确认）"
           :disabled="isBatchProcessing"

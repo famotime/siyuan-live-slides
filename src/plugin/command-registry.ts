@@ -82,8 +82,8 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
     },
   })
 
-  // 4. 智能大纲断页建议与自动分页（aiScript 开关关闭时不注册）
-  if (!isFeatureDisabled("aiScript")) {
+  // 4. 智能大纲断页建议与自动分页（smartSplit 或 aiScript 开关关闭时不注册）
+  if (!isFeatureDisabled("smartSplit") && !isFeatureDisabled("aiScript")) {
     plugin.addCommand({
       langKey: "slidesAiSplit",
       langText: "即现: 智能大纲断页建议与自动分页",
@@ -164,61 +164,65 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
     })
   }
 
-  // 6. 识别正文讲稿块并规范化
-  plugin.addCommand({
-    langKey: "slidesIdentifyNotes",
-    langText: "即现: 识别正文讲稿块并规范化",
-    hotkey: "",
-    enabled: () => true,
-    execute: async () => {
-      let docId = plugin.currentDocId
-      if (!docId) {
-        const activeEl = document.querySelector(".protyle-content[data-doc-id]")
-        docId = activeEl?.getAttribute("data-doc-id") || ""
-        if (docId) {
-          plugin.currentDocId = docId
+  // 6. 识别正文讲稿块并规范化（speakerNotesBlocks 开关关闭时不注册）
+  if (!isFeatureDisabled("speakerNotesBlocks")) {
+    plugin.addCommand({
+      langKey: "slidesIdentifyNotes",
+      langText: "即现: 识别正文讲稿块并规范化",
+      hotkey: "",
+      enabled: () => true,
+      execute: async () => {
+        let docId = plugin.currentDocId
+        if (!docId) {
+          const activeEl = document.querySelector(".protyle-content[data-doc-id]")
+          docId = activeEl?.getAttribute("data-doc-id") || ""
+          if (docId) {
+            plugin.currentDocId = docId
+          }
         }
-      }
-      if (!docId) {
-        showMessage("请先在主编辑区打开幻灯片文档")
-        return
-      }
-
-      await identifyAndNormalizeDocumentNotes(docId, {
-        compileFn: async () => {
-          await plugin.compileCurrentDocument(docId)
-        },
-      })
-    },
-  })
-
-  // 7. 智能配置演示动效
-  plugin.addCommand({
-    langKey: "slidesAutoAnimate",
-    langText: "即现: 智能配置演示动效",
-    hotkey: "",
-    enabled: () => true,
-    execute: async () => {
-      let docId = plugin.currentDocId
-      if (!docId) {
-        const activeEl = document.querySelector(".protyle-content[data-doc-id]")
-        docId = activeEl?.getAttribute("data-doc-id") || ""
-        if (docId) {
-          plugin.currentDocId = docId
+        if (!docId) {
+          showMessage("请先在主编辑区打开幻灯片文档")
+          return
         }
-      }
-      if (!docId) {
-        showMessage("请先在主编辑区打开幻灯片文档")
-        return
-      }
 
-      await runAutoAnimationForDocument(docId, {
-        compileCurrentDocFn: async () => {
-          await plugin.compileCurrentDocument(docId)
-        },
-      })
-    },
-  })
+        await identifyAndNormalizeDocumentNotes(docId, {
+          compileFn: async () => {
+            await plugin.compileCurrentDocument(docId)
+          },
+        })
+      },
+    })
+  }
+
+  // 7. 智能配置演示动效（smartAnimation 开关关闭时不注册）
+  if (!isFeatureDisabled("smartAnimation")) {
+    plugin.addCommand({
+      langKey: "slidesAutoAnimate",
+      langText: "即现: 智能配置演示动效",
+      hotkey: "",
+      enabled: () => true,
+      execute: async () => {
+        let docId = plugin.currentDocId
+        if (!docId) {
+          const activeEl = document.querySelector(".protyle-content[data-doc-id]")
+          docId = activeEl?.getAttribute("data-doc-id") || ""
+          if (docId) {
+            plugin.currentDocId = docId
+          }
+        }
+        if (!docId) {
+          showMessage("请先在主编辑区打开幻灯片文档")
+          return
+        }
+
+        await runAutoAnimationForDocument(docId, {
+          compileCurrentDocFn: async () => {
+            await plugin.compileCurrentDocument(docId)
+          },
+        })
+      },
+    })
+  }
 
   // 8. 统计全库转场效果分布
   plugin.addCommand({

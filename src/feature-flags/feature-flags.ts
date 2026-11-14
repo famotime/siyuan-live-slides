@@ -29,9 +29,16 @@
  *   'import'      — 导入 Slidev 演示文档：Dock 顶栏「导入」按钮 + 导入对话框
  *                   + 命令 slidesImport
  *   'aiScript'    — AI 讲稿生成类入口：PageInspectorSection「AI 讲稿」按钮
- *                   + DocInspectorSection「AI 智能分页」按钮 + 命令 slidesAiNotes /
- *                   slidesAiSplit。注意：手动讲稿体系（讲稿块定位/追加/批量管理、
+ *                   + 命令 slidesAiNotes。注意：手动讲稿体系（讲稿块定位/追加/批量管理、
  *                   「设为讲稿备注」开关）不受此开关影响
+ *   'smartSplit'  — 智能分页与清除分页：DocInspectorSection「智能分页」与「清除分页」按钮
+ *                   + 命令 slidesAiSplit / slidesClearDividers
+ *   'smartAnimation' — 智能动效与清除动效：DocInspectorSection「智能动效」与「清除动效」按钮
+ *                   + 命令 slidesAutoAnimate
+ *   'speakerNotesBlocks' — 讲稿块识别增加与清除：DocInspectorSection「增加讲稿块」与「清除讲稿块」按钮
+ *                   + 命令 slidesIdentifyNotes
+ *   'layouts'     — 页面版式细粒度开关：控制 LayoutPicker 中具体版式（双栏、四叶草、图文、封面等）
+ *                   是否显示。default（标准版式）始终兜底保留。
  *
  * 永远保留、不受任何开关影响：沙箱预览全链路（顶栏「即现」、预览页签、
  * Dock 分屏预览按钮、独立窗口放映、slidesPresentation 命令）、headless 图片
@@ -47,9 +54,39 @@ export type FeatureKey =
   | 'exportPdf'
   | 'exportImage'
   | 'import'
-  | 'aiScript';
+  | 'aiScript'
+  | 'smartSplit'
+  | 'smartAnimation'
+  | 'speakerNotesBlocks';
 
-export type FeatureFlagConfig = Record<FeatureKey, boolean>;
+/** 可独立开关的页面版式 key（default 始终保留不可关闭） */
+export type LayoutKey =
+  | 'two-cols'
+  | 'cols-header'
+  | 'clover'
+  | 'timeline'
+  | 'image-right'
+  | 'image-left'
+  | 'cover'
+  | 'fact'
+  | 'quote'
+  | 'intro'
+  | 'center';
+
+export type LayoutFlagConfig = Record<LayoutKey, boolean>;
+
+export interface FeatureFlagConfig {
+  presenterMode: boolean;
+  exportHtml: boolean;
+  exportPdf: boolean;
+  exportImage: boolean;
+  import: boolean;
+  aiScript: boolean;
+  smartSplit: boolean;
+  smartAnimation: boolean;
+  speakerNotesBlocks: boolean;
+  layouts: LayoutFlagConfig;
+}
 
 // ── 编辑此对象来控制功能可见性 ──
 
@@ -60,6 +97,22 @@ const FEATURE_FLAGS: FeatureFlagConfig = {
   exportImage: false,
   import: false,
   aiScript: true,
+  smartSplit: true,
+  smartAnimation: true,
+  speakerNotesBlocks: true,
+  layouts: {
+    'two-cols': true,
+    'cols-header': true,
+    'clover': false,
+    'timeline': false,
+    'image-right': true,
+    'image-left': true,
+    'cover': true,
+    'fact': false,
+    'quote': true,
+    'intro': false,
+    'center': true,
+  },
 };
 
 // ── 工具函数 ──
@@ -72,4 +125,13 @@ export function isFeatureDisabled(key: FeatureKey): boolean {
 /** 功能是否启用（UI 入口渲染、命令注册） */
 export function isFeatureEnabled(key: FeatureKey): boolean {
   return !isFeatureDisabled(key);
+}
+
+/** 页面版式是否启用（default 始终开启，其余由 layouts 开关控制） */
+export function isLayoutEnabled(layoutName: string): boolean {
+  if (layoutName === 'default') {
+    return true;
+  }
+  const flag = FEATURE_FLAGS.layouts?.[layoutName as LayoutKey];
+  return flag !== false;
 }

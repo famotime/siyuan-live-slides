@@ -2,7 +2,7 @@
   <div class="spm-layout-picker">
     <div class="spm-layout-picker__header">选择页面版式</div>
 
-    <div v-for="group in layoutGroups" :key="group.id" class="spm-layout-group">
+    <div v-for="group in visibleLayoutGroups" :key="group.id" class="spm-layout-group">
       <div class="spm-layout-group__title">
         <span>{{ group.title }}</span>
       </div>
@@ -26,7 +26,9 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import SlidesIcon from './SlidesIcon.vue'
+import { isLayoutEnabled } from '@/feature-flags/feature-flags'
 
 const props = defineProps<{
   modelValue?: string
@@ -81,6 +83,15 @@ const layoutGroups: ILayoutGroup[] = [
     ],
   },
 ]
+
+const visibleLayoutGroups = computed(() => {
+  return layoutGroups
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => isLayoutEnabled(item.name)),
+    }))
+    .filter(group => group.items.length > 0)
+})
 
 function isLayoutActive(layoutName: string): boolean {
   if (props.modelValue === layoutName) return true
