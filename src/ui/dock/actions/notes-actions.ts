@@ -2,13 +2,13 @@ import { ref } from "vue"
 import { confirm, showMessage } from "siyuan"
 import {
   appendBlock,
-  chatAI,
   deleteBlock,
   getBlockKramdown,
   insertBlock,
   setBlockAttrs,
   updateBlock,
 } from "@/api"
+import { requestAiChat } from "@/ai/ai-service"
 import { generateSpeakerNotesWithAIDetailed } from "@/ai/notes-generator"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
 import { extractCleanNoteText } from "@/compiler/slides-ast-builder"
@@ -181,8 +181,8 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
       rawMarkdown: ctx.rawSnippet.value && ctx.rawSnippet.value !== "---" ? ctx.rawSnippet.value : "",
     }
 
-    showMessage("正在调用思源 AI 提炼本页讲稿提词...")
-    const result = await generateSpeakerNotesWithAIDetailed(slideToUse, chatAI)
+    showMessage("正在调用 AI 提炼本页讲稿提词...")
+    const result = await generateSpeakerNotesWithAIDetailed(slideToUse, requestAiChat)
     if (result.notes) {
       const existingNoteBlockId = ctx.currentSlideNoteBlockId.value
       if (existingNoteBlockId) {
@@ -195,9 +195,9 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
         await createNoteBlockOnCurrentSlide(result.notes)
       }
       if (result.isAiGenerated) {
-        showMessage("思源 AI 演讲提词卡生成成功！")
+        showMessage("AI 演讲提词卡生成成功！")
       } else {
-        showMessage("未获取到思源 AI 响应，已生成预设提词卡模板", 5000)
+        showMessage("未获取到 AI 响应，已生成预设提词卡模板", 5000)
       }
       if (ctx.plugin) {
         await ctx.plugin.compileCurrentDocument()

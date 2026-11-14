@@ -215,6 +215,33 @@ export async function putFile(path: string, isDir: boolean, file: any) {
   return request(url, form)
 }
 
+// **************************************** Network / Forward Proxy ****************************************
+
+export interface IForwardProxyResponse {
+  status: number
+  body: string
+  elapsed?: number
+}
+
+export async function forwardProxy(
+  url: string,
+  method = "GET",
+  payload: any = {},
+  headers: Array<Record<string, string>> = [],
+  timeout = 15000,
+  contentType = "application/json"
+): Promise<IForwardProxyResponse> {
+  const res = await request("/api/network/forwardProxy", {
+    url,
+    method,
+    timeout,
+    contentType,
+    headers,
+    payload,
+  })
+  return res as IForwardProxyResponse
+}
+
 // **************************************** AI (v3.8+) ****************************************
 
 export async function chatAI(prompt: string): Promise<string | null> {

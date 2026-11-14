@@ -447,6 +447,73 @@
             </div>
           </div>
         </div>
+
+        <!-- AI 演讲提词服务配置 (AI Service Config) -->
+        <div class="spm-card-control">
+          <div class="spm-control-header">
+            <div class="spm-control-title-group">
+              <div class="spm-control-title">
+                <SlidesIcon name="sparkles" />
+                <span>AI 演讲提词服务</span>
+              </div>
+              <span class="spm-control-desc">提炼演讲口播提词卡，支持 API 旋钮接管调度</span>
+            </div>
+            <button
+              type="button"
+              class="spm-btn-icon b3-tooltips b3-tooltips__w"
+              aria-label="打开完整设置弹窗"
+              @click="openSettingsDialog"
+            >
+              <SlidesIcon name="settings" />
+            </button>
+          </div>
+
+          <!-- 接管状态横幅 -->
+          <div
+            v-if="managedAiConfig"
+            class="api-switch-managed-tip"
+            style="margin-top: 8px; background-color: var(--b3-theme-primary-light, rgba(63, 81, 181, 0.08)); border: 1px solid var(--b3-theme-primary, rgba(63, 81, 181, 0.2)); border-radius: 6px; padding: 8px 10px; font-size: 11px; line-height: 1.4; color: var(--b3-theme-on-background);"
+          >
+            💡 通用 AI API 已由 <strong>API 旋钮 (siyuan-api-switch)</strong> 接管 (Profile: {{ managedAiConfig.profileName || '未命名' }})。相关输入框已置灰只读。
+          </div>
+
+          <!-- 紧凑表单 -->
+          <div class="spm-control-body" style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+              <span style="font-size: 12px; min-width: 60px; color: var(--b3-theme-on-surface);">模型:</span>
+              <input
+                :value="managedAiConfig ? managedAiConfig.model : globalSettings.aiConfig.model"
+                class="spm-input"
+                :disabled="Boolean(managedAiConfig)"
+                placeholder="例如 deepseek-chat"
+                @change="onAiModelChange(($event.target as HTMLInputElement).value)"
+              />
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+              <span style="font-size: 12px; min-width: 60px; color: var(--b3-theme-on-surface);">Base URL:</span>
+              <input
+                :value="managedAiConfig ? managedAiConfig.baseUrl : globalSettings.aiConfig.baseUrl"
+                class="spm-input"
+                :disabled="Boolean(managedAiConfig)"
+                placeholder="https://api.openai.com/v1"
+                @change="onAiBaseUrlChange(($event.target as HTMLInputElement).value)"
+              />
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+              <span style="font-size: 12px; min-width: 60px; color: var(--b3-theme-on-surface);">API Key:</span>
+              <input
+                :value="managedAiConfig ? managedAiConfig.apiKey : globalSettings.aiConfig.apiKey"
+                type="password"
+                class="spm-input"
+                :disabled="Boolean(managedAiConfig)"
+                placeholder="sk-..."
+                @change="onAiApiKeyChange(($event.target as HTMLInputElement).value)"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -456,12 +523,68 @@
 import { inject, ref } from 'vue'
 import SlidesIcon from '@/ui/components/SlidesIcon.vue'
 import TransitionSelector from '@/ui/components/TransitionSelector.vue'
-import { globalSettingsState, setRuntimeSettings } from '@/settings'
+import {
+  globalSettingsState,
+  managedAiConfigState,
+  normalizeAiConfig,
+  setRuntimeSettings,
+} from '@/settings'
 import { isFeatureEnabled } from '@/feature-flags/feature-flags'
 
 const plugin = inject<any>('plugin')
 const globalSettings = globalSettingsState
+const managedAiConfig = managedAiConfigState
 const isAdvancedExpanded = ref(false)
+
+function openSettingsDialog() {
+  if (plugin && typeof plugin.openSetting === 'function') {
+    plugin.openSetting()
+  }
+}
+
+async function onAiModelChange(val: string) {
+  const current = globalSettings.aiConfig
+  const updated = normalizeAiConfig({ ...current, model: val })
+  setRuntimeSettings({ aiConfig: updated })
+  if (plugin && typeof plugin.saveGlobalSettings === 'function') {
+    await plugin.saveGlobalSettings({ aiConfig: updated })
+  }
+  reportLocalAiConfig(updated)
+}
+
+async function onAiBaseUrlChange(val: string) {
+  const current = globalSettings.aiConfig
+  const updated = normalizeAiConfig({ ...current, baseUrl: val })
+  setRuntimeSettings({ aiConfig: updated })
+  if (plugin && typeof plugin.saveGlobalSettings === 'function') {
+    await plugin.saveGlobalSettings({ aiConfig: updated })
+  }
+  reportLocalAiConfig(updated)
+}
+
+async function onAiApiKeyChange(val: string) {
+  const current = globalSettings.aiConfig
+  const updated = normalizeAiConfig({ ...current, apiKey: val })
+  setRuntimeSettings({ aiConfig: updated })
+  if (plugin && typeof plugin.saveGlobalSettings === 'function') {
+    await plugin.saveGlobalSettings({ aiConfig: updated })
+  }
+  reportLocalAiConfig(updated)
+}
+
+function reportLocalAiConfig(cfg: any) {
+  if (typeof window !== 'undefined' && window.siyuanApiSwitch && plugin?.name) {
+    window.siyuanApiSwitch.updateLocalConfig(plugin.name, {
+      provider: 'custom',
+      baseUrl: cfg.baseUrl,
+      apiKey: cfg.apiKey,
+      model: cfg.model,
+      requestTimeoutSeconds: cfg.requestTimeoutSeconds,
+      temperature: cfg.temperature,
+      maxTokens: cfg.maxTokens,
+    })
+  }
+}
 
 const themeOptions = [
   {

@@ -47,4 +47,15 @@ describe('DocInspectorSection 高级设置简洁折叠菜单', () => {
     expect(scssCode).toContain('.spm-advanced-chevron')
     expect(scssCode).toContain('.spm-advanced-content')
   })
+
+  it('高级设置菜单中应包含 AI 演讲提词服务配置卡片并支持接管横幅与输入框置灰', () => {
+    expect(docInspectorCode).toContain('AI 演讲提词服务')
+    expect(docInspectorCode).toContain('class="api-switch-managed-tip"')
+    expect(docInspectorCode).toContain('managedAiConfig.profileName')
+    expect(docInspectorCode).toContain(':disabled="Boolean(managedAiConfig)"')
+    expect(docInspectorCode).toContain('@click="openSettingsDialog"')
+    expect(docInspectorCode).toContain('onAiModelChange')
+    expect(docInspectorCode).toContain('onAiBaseUrlChange')
+    expect(docInspectorCode).toContain('onAiApiKeyChange')
+  })
 })

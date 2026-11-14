@@ -27,3 +27,18 @@ export class Protyle {
   enable = () => {}
   resize = () => {}
 }
+export class Setting {
+  items: any[] = []
+  width?: string
+  element: HTMLElement
+  constructor(options?: { width?: string }) {
+    this.width = options?.width
+    this.element = typeof document !== "undefined" ? document.createElement("div") : ({} as any)
+  }
+  addItem(item: any) {
+    this.items.push(item)
+    if (item.actionElement && this.element && typeof this.element.appendChild === "function") {
+      this.element.appendChild(item.actionElement)
+    }
+  }
+}

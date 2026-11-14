@@ -1,4 +1,5 @@
 import type { ISlidesVirtualPage } from "../types/slides-protocol"
+import { requestAiChat } from "./ai-service"
 
 export interface INotesGenerationResult {
   notes: string
@@ -52,11 +53,11 @@ export function generateSpeakerNotes(
 }
 
 /**
- * 优先调用思源内核 AI 提炼演讲者口播提词卡，附带生成元信息（区分真实 AI 结果与预设降级模板）
+ * 提炼演讲者口播提词卡，优先调用接管/本地配置的 AI 服务，附带生成元信息（区分真实 AI 结果与预设降级模板）
  */
 export async function generateSpeakerNotesWithAIDetailed(
   slide: ISlidesVirtualPage,
-  aiChatFn?: (prompt: string) => Promise<string | null>,
+  aiChatFn: (prompt: string) => Promise<string | null> = requestAiChat,
 ): Promise<INotesGenerationResult> {
   const slideContent = (slide.blocks && slide.blocks.length > 0)
     ? slide.blocks
@@ -91,11 +92,11 @@ export async function generateSpeakerNotesWithAIDetailed(
 }
 
 /**
- * 优先调用思源内核 AI 提炼演讲者口播提词卡，若 AI 未配置或异常自动回退到规则生成
+ * 提炼演讲者口播提词卡，优先调用接管/本地配置的 AI 服务，若 AI 未配置或异常自动回退到规则生成
  */
 export async function generateSpeakerNotesWithAI(
   slide: ISlidesVirtualPage,
-  aiChatFn?: (prompt: string) => Promise<string | null>,
+  aiChatFn: (prompt: string) => Promise<string | null> = requestAiChat,
 ): Promise<string> {
   const res = await generateSpeakerNotesWithAIDetailed(slide, aiChatFn)
   return res.notes

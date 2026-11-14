@@ -5,8 +5,8 @@ import {
   appendBlock,
   setBlockAttrs,
   sql,
-  chatAI,
 } from "@/api"
+import { requestAiChat } from "@/ai/ai-service"
 import { generateSpeakerNotesWithAI } from "@/ai/notes-generator"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
 import { isFeatureDisabled } from "@/feature-flags/feature-flags"
@@ -133,7 +133,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
           rawMarkdown: "",
         }
 
-        const notes = await generateSpeakerNotesWithAI(dummySlide, chatAI)
+        const notes = await generateSpeakerNotesWithAI(dummySlide, requestAiChat)
         const noteLines = notes.split(/\r?\n/).map((l: string) => `> ${l}`).join("\n")
         const noteMd = `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slides-note="true"}`
         const appendRes: any = await appendBlock("markdown", noteMd, plugin.currentDocId).catch(() => null)

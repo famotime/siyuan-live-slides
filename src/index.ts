@@ -51,10 +51,13 @@ import {
   DEFAULT_GLOBAL_SETTINGS,
   getRuntimeSettings,
   normalizeGlobalSettings,
+  setManagedAiConfig,
   setRuntimeSettings,
   SETTINGS_STORAGE_NAME,
 } from "./settings"
 import type { ISlidesGlobalSettings } from "./settings"
+import { createSlidesSettings } from "@/ui/settings/slides-settings"
+import type { SharedConfig } from "./types/api-switch"
 
 const DOCK_TYPE = "slides-dock"
 const TAB_TYPE = "slides-preview-tab"
@@ -66,6 +69,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
   public currentDocId = ""
   public previewTab: any = null
   public latestCompiledDoc: ISlidesDocument | null = null
+  public setting: any = null
   private debounceTimer: number | null = null
   private activeCursorBlockId = ""
   private cancelledCursorBlockId = ""
@@ -89,6 +93,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
 
     // 0. 加载全局持久化配置
     await this.loadGlobalSettings()
+    this.initApiSwitchSync()
 
     // 1. 注册图标
     this.addIcons(ICON_SLIDES_SVG)
@@ -244,7 +249,62 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
     return updated
   }
 
+  openSetting() {
+    this.setting = createSlidesSettings(this)
+  }
+
+  private initApiSwitchSync() {
+    const sync = (shared: SharedConfig | null) => {
+      setManagedAiConfig(shared)
+      if (this.setting) {
+        const updater = (this.setting as any).updateManagedConfig
+        if (typeof updater === "function") {
+          updater(shared)
+        }
+      }
+    }
+
+    const getLocalConfig = () => {
+      const local = getRuntimeSettings().aiConfig
+      return {
+        provider: "custom",
+        baseUrl: local.baseUrl,
+        apiKey: local.apiKey,
+        model: local.model,
+        requestTimeoutSeconds: local.requestTimeoutSeconds,
+        temperature: local.temperature,
+        maxTokens: local.maxTokens,
+      }
+    }
+
+    const register = () => {
+      if (window.siyuanApiSwitch) {
+        window.siyuanApiSwitch.register(
+          this.name,
+          this.displayName || "即现演示 (SiYuan Live Slides)",
+          sync,
+          getLocalConfig()
+        )
+      }
+    }
+
+    if (window.siyuanApiSwitch) {
+      register()
+    } else {
+      window.addEventListener(
+        "siyuan-api-switch:ready",
+        () => {
+          register()
+        },
+        { once: true }
+      )
+    }
+  }
+
   onunload() {
+    if (window.siyuanApiSwitch) {
+      window.siyuanApiSwitch.unregister(this.name)
+    }
     if (this.debounceTimer) {
       window.clearTimeout(this.debounceTimer)
       this.debounceTimer = null
