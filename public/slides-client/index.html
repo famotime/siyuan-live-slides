@@ -4469,15 +4469,25 @@
           const raw = rawContent.value
           if (!raw) return false
           if (raw.startsWith('```') || raw.startsWith('$$')) return false
-          if (/@\w+=[`'"]|v-\w+|<button|<a\b|<(?:carbon|[a-z0-9_-]+):[a-z0-9_-]+/i.test(raw)) {
+
+          // 1. 列表容器、列表项、标题、引用等标准 Markdown 结构绝不应作为整块 Vue 组件拦截，必须走 renderBlockHtml
+          const blk = props.block
+          if (blk?.type === 'l' || blk?.type === 'i' || blk?.isListItem) return false
+          if (/^(\s*)([-*+]|\d+\.)\s+/m.test(raw)) return false
+          if (blk?.type === 'h' || /^#{1,6}\s+/.test(raw)) return false
+          if (blk?.type === 'b' || /^>\s+/.test(raw)) return false
+
+          // 2. 专属单标签与图标组件
+          if (/<(?:Toc|toc|arrow|Arrow)\b/i.test(raw)) return true
+          if (/<(?:carbon|[a-zA-Z0-9_-]+):[a-zA-Z0-9_-]+/i.test(raw)) return true
+
+          // 3. 带有 Vue 指令属性或事件属性的 HTML 标签 (例如 <div v-click> 或 <button @click="...">)
+          if (/<[a-zA-Z0-9_-]+[^>]*\b(?:@[a-zA-Z0-9_-]+=[`'"]|v-[a-zA-Z0-9_-]+)/i.test(raw)) {
             return true
           }
-          if (/<(?:Toc|toc)\b/i.test(raw)) {
-            return true
-          }
-          if (/<(?:arrow|Arrow)\b/i.test(raw)) {
-            return true
-          }
+
+          // 4. 原生交互按钮与带样式类名的 HTML 容器
+          if (/<button\b/i.test(raw)) return true
           if (/^<[a-z0-9_-]+[\s>]/i.test(raw) && (raw.includes('class=') || raw.includes('hover:') || raw.includes('@'))) {
             return true
           }

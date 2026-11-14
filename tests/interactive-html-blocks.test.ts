@@ -127,4 +127,37 @@ describe("Native Slidev Interactive HTML Blocks & Icons", () => {
     expect(html).toContain("<svg viewBox=\"0 0 32 32\"")
     expect(html).toContain("nav.next")
   })
+
+  it("should not hijack markdown list containing text 'v-click' as dynamic vue component", () => {
+    const listRaw = `- ✨ **步长灵活掌控**：支持对列表项、正文段落及栏内组件设置逐步呈现（\`v-click\`）步长
+- 🚀 **四种灵动微动效**：内置上浮（\`slide-up\`）、淡入（\`fade-in\`）、缩放（\`zoom-in\`）与微弹跳（\`bounce\`）`
+
+    const mockDoc: ISlidesDocument = {
+      docId: "doc-list-vclick",
+      config: { theme: "default", aspectRatio: "16/9" },
+      fullMarkdown: "",
+      slides: [
+        {
+          pageIndex: 1,
+          startBlockId: "block-list",
+          frontmatter: { layout: "default" },
+          rawMarkdown: listRaw,
+          blocks: [
+            {
+              id: "b-list-1",
+              type: "l",
+              isListItem: true,
+              content: listRaw,
+              rawMarkdown: listRaw,
+            },
+          ],
+        },
+      ],
+    }
+
+    const html = buildStandaloneHtml(mockDoc, { title: "测试列表 v-click 规避" })
+    expect(html).toContain("isListBlock")
+    expect(html).toContain("isInteractiveVue")
+    expect(html).toContain("步长灵活掌控")
+  })
 })
