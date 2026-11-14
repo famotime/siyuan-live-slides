@@ -197,7 +197,7 @@
       </div>
     </div>
 
-    <!-- 2. 入场微动效 (v-motion) -->
+    <!-- 2. 入场微动效 (v-motion) - 可视化形式展示 -->
     <div class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
@@ -219,51 +219,15 @@
         </label>
       </div>
 
-      <!-- 预设微动效选择器 Chips -->
-      <div v-if="hasMotion" class="spm-quick-chips">
-        <button
-          v-for="item in motionPresets"
-          :key="item.value"
-          class="spm-chip"
-          :class="{ active: currentPreset === item.value }"
-          @click="selectPreset(item.value)"
-        >
-          {{ item.label }}
-        </button>
-      </div>
-
-      <!-- 折叠高级参数调节 (时长 / 延迟) -->
-      <div v-if="hasMotion" class="spm-motion-details" style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
-        <div style="display: flex; gap: 8px; justify-content: space-between; font-size: 11px; opacity: 0.8;">
-          <span>时长: {{ currentDuration ? currentDuration + 'ms' : '默认 (450ms)' }}</span>
-          <span>延迟: {{ currentDelay ? currentDelay + 'ms' : '0ms' }}</span>
-        </div>
-        <div style="display: flex; gap: 6px;">
-          <select
-            class="spm-select"
-            style="flex: 1;"
-            :value="currentDuration"
-            @change="updateDuration(Number(($event.target as HTMLSelectElement).value))"
-          >
-            <option :value="0">默认耗时</option>
-            <option :value="200">极速 (200ms)</option>
-            <option :value="350">较快 (350ms)</option>
-            <option :value="500">平滑 (500ms)</option>
-            <option :value="800">缓慢 (800ms)</option>
-          </select>
-          <select
-            class="spm-select"
-            style="flex: 1;"
-            :value="currentDelay"
-            @change="updateDelay(Number(($event.target as HTMLSelectElement).value))"
-          >
-            <option :value="0">无延迟</option>
-            <option :value="150">延迟 150ms</option>
-            <option :value="300">延迟 300ms</option>
-            <option :value="500">延迟 500ms</option>
-          </select>
-        </div>
-      </div>
+      <!-- 可视化微动效选择器 (即时试播舞台 + 动效网格 + 时长延迟参数) -->
+      <MotionSelector
+        v-if="hasMotion"
+        :model-value="currentPreset"
+        :duration="currentDuration"
+        :delay="currentDelay"
+        :hide-header="true"
+        @change="handleMotionChange"
+      />
     </div>
 
     <!-- 2. 多栏布局插槽 (Slot) -->
@@ -438,6 +402,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import SlidesIcon from '@/ui/components/SlidesIcon.vue'
+import MotionSelector from '@/ui/components/MotionSelector.vue'
 
 const props = defineProps<{
   elemClick: string
@@ -637,6 +602,10 @@ function toggleMotion() {
   } else {
     emit('update:elemMotion', 'slide-up')
   }
+}
+
+function handleMotionChange(payload: { preset: string; duration: number; delay: number }) {
+  emitMotionChange(payload.preset, payload.duration, payload.delay)
 }
 
 function selectPreset(preset: string) {

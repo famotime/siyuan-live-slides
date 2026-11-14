@@ -118,6 +118,8 @@ d:\MyCodingProjects\siyuan-live-slides
 │   │   │   ├── SlideInspector.vue          # 幻灯片大纲导航微调器
 │   │   │   ├── LayoutPicker.vue            # 布局版式选择器组件
 │   │   │   ├── TransitionSelector.vue      # 转场过渡动效选择器组件
+│   │   │   ├── MotionSelector.vue          # 入场微动效可视化选择器组件（即时试播舞台 + 动效轨迹卡片网格 + 时长延迟参数）
+│   │   │   ├── motion-presets.ts           # 入场微动效（v-motion）预设定义与时长延迟选项
 │   │   │   ├── ElementAnimBar.vue          # 元素级动画快捷操作条
 │   │   │   ├── QuickDividerPopover.vue     # 原生分割线悬浮快捷菜单
 │   │   │   ├── SlidesImportDialog.vue      # [RF-015] Slidev 项目导入对话框（精简聚焦 UI 交互与预检卡片）
