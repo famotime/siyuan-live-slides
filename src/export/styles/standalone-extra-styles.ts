@@ -190,6 +190,70 @@ export function getStandaloneExtraStyles(): string {
     .slides-motion-slide-right { animation: slidesMotionSlideRight var(--motion-duration, 0.45s) cubic-bezier(0.16, 1, 0.3, 1) var(--motion-delay, 0s) both; }
     .slides-motion-zoom-in, .slides-motion-pop { animation: slidesMotionZoomIn var(--motion-duration, 0.4s) cubic-bezier(0.34, 1.56, 0.64, 1) var(--motion-delay, 0s) both; }
     .slides-motion-bounce { animation: slidesMotionBounce var(--motion-duration, 0.6s) cubic-bezier(0.34, 1.56, 0.64, 1) var(--motion-delay, 0s) both; }
+
+    /* Slidev Emphasis & Advanced Micro-Animations */
+    @keyframes slidesPulseGlow {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(var(--slide-accent-rgb, 59, 130, 246), 0.4);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 24px 6px rgba(var(--slide-accent-rgb, 59, 130, 246), 0.7);
+        transform: scale(1.015);
+      }
+    }
+    .slides-anim-pulse {
+      animation: slidesPulseGlow var(--anim-duration, 2.4s) ease-in-out infinite;
+    }
+
+    @keyframes slidesFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .slides-anim-float {
+      animation: slidesFloat var(--anim-duration, 3.6s) ease-in-out infinite;
+    }
+
+    @keyframes slidesShimmerSweep {
+      0% { transform: translateX(-150%) skewX(-20deg); }
+      100% { transform: translateX(150%) skewX(-20deg); }
+    }
+    .slides-anim-shimmer {
+      position: relative;
+      overflow: hidden;
+    }
+    .slides-anim-shimmer::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+      animation: slidesShimmerSweep var(--anim-duration, 2.8s) ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    /* Typewriter Cursor */
+    .slides-typewriter-cursor::after {
+      content: "|";
+      display: inline-block;
+      margin-left: 2px;
+      animation: slidesBlinkCursor 0.8s step-start infinite;
+      color: var(--slide-accent, #3b82f6);
+    }
+    @keyframes slidesBlinkCursor {
+      50% { opacity: 0; }
+    }
+
+    /* Shiki Smooth Code Spotlight Transition */
+    .slide-block .code-line {
+      transition: opacity 0.35s ease, filter 0.35s ease, background 0.35s ease;
+    }
+
+    .v-click-hidden.slides-anim-pulse,
+    .v-click-hidden.slides-anim-float,
+    .v-click-hidden.slides-anim-shimmer {
+      animation: none !important;
+      opacity: 0 !important;
+    }
     .controls {
       position: absolute; bottom: 16px; display: flex; gap: 12px; align-items: center;
       background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(8px);

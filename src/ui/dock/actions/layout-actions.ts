@@ -7,6 +7,8 @@ import {
   ATTR_ELEM_CLICK,
   ATTR_ELEM_MAX_HEIGHT,
   ATTR_ELEM_MOTION,
+  ATTR_ELEM_ANIM,
+  ATTR_ELEM_ANIM_PROPS,
   ATTR_ELEM_NOTE,
   ATTR_ELEM_ROLE,
   ATTR_ELEM_SHIKI_LINES,
@@ -152,7 +154,24 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
   }
 
   function onElemMotionChange(val: string) {
-    saveAttr(ATTR_ELEM_MOTION, val)
+    if (val) {
+      saveAttr(ATTR_ELEM_MOTION, val)
+      saveAttr(ATTR_ELEM_ANIM, "")
+      saveAttr(ATTR_ELEM_ANIM_PROPS, "")
+    } else {
+      saveAttr(ATTR_ELEM_MOTION, "")
+    }
+  }
+
+  function onElemAnimChange(type: string, propsJson?: string) {
+    if (type) {
+      saveAttr(ATTR_ELEM_ANIM, type)
+      saveAttr(ATTR_ELEM_ANIM_PROPS, propsJson || "")
+      saveAttr(ATTR_ELEM_MOTION, "")
+    } else {
+      saveAttr(ATTR_ELEM_ANIM, "")
+      saveAttr(ATTR_ELEM_ANIM_PROPS, "")
+    }
   }
 
   function onElemSlotChange(slot: string) {
@@ -194,6 +213,8 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
         const clearMap = {
           [ATTR_ELEM_CLICK]: "",
           [ATTR_ELEM_MOTION]: "",
+          [ATTR_ELEM_ANIM]: "",
+          [ATTR_ELEM_ANIM_PROPS]: "",
           [ATTR_ELEM_SLOT]: "",
           [ATTR_ELEM_SHIKI_LINES]: "",
           [ATTR_ELEM_MAX_HEIGHT]: "",
@@ -632,6 +653,7 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
     toggleElemClick,
     onElemClickStepChange,
     onElemMotionChange,
+    onElemAnimChange,
     onElemSlotChange,
     onElemShikiLinesChange,
     onElemMaxHeightChange,

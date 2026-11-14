@@ -2,6 +2,7 @@ import type {
   ISiYuanBlockNode,
   ISlidePageFrontmatter,
   ISlidesMotionConfig,
+  ISlideAnimConfig,
   ISlidesPluginConfig,
 } from "../types/slides-protocol"
 import {
@@ -16,6 +17,8 @@ import {
   ATTR_PAGE_SPACING,
   ATTR_ELEM_CLICK,
   ATTR_ELEM_MOTION,
+  ATTR_ELEM_ANIM,
+  ATTR_ELEM_ANIM_PROPS,
   ATTR_ELEM_NOTE,
   ATTR_ELEM_ROLE,
   ATTR_ELEM_MAX_HEIGHT,
@@ -38,6 +41,7 @@ import {
   ATTR_PAGE_SLIDE,
   ATTR_PAGE_TRANSITION,
 } from "../types/slides-protocol"
+import { isAnimationEnabled } from "../feature-flags/feature-flags"
 
 import { getRuntimeSettings } from "../settings"
 
@@ -228,6 +232,7 @@ export function parseElementAttrs(
 ): {
   clicks?: string
   motion?: ISlidesMotionConfig
+  anim?: ISlideAnimConfig
   shikiLines?: string
   maxHeight?: string
   slot?: "left" | "right" | "default" | string
@@ -239,6 +244,7 @@ export function parseElementAttrs(
   const result: {
     clicks?: string
     motion?: ISlidesMotionConfig
+    anim?: ISlideAnimConfig
     shikiLines?: string
     maxHeight?: string
     slot?: string
@@ -292,6 +298,32 @@ export function parseElementAttrs(
     } catch {
       // 容错处理：若非 JSON 则保留字符串预设
       result.motion = { preset: attrs[ATTR_ELEM_MOTION].trim() }
+    }
+  }
+
+  if (attrs[ATTR_ELEM_ANIM]) {
+    const rawAnim = attrs[ATTR_ELEM_ANIM].trim().toLowerCase()
+    if (rawAnim && isAnimationEnabled(rawAnim)) {
+      let animConfig: ISlideAnimConfig = { type: rawAnim }
+      if (attrs[ATTR_ELEM_ANIM_PROPS]) {
+        try {
+          const parsedProps = JSON.parse(attrs[ATTR_ELEM_ANIM_PROPS])
+          if (typeof parsedProps === "object" && parsedProps !== null) {
+            animConfig = { ...animConfig, ...parsedProps }
+          }
+        } catch {
+          // 容错兼容分号分隔键值对 (如 duration:1500;decimals:1)
+          const parts = attrs[ATTR_ELEM_ANIM_PROPS].split(";")
+          for (const part of parts) {
+            const [k, v] = part.split(":").map(s => s?.trim())
+            if (k && v !== undefined) {
+              const num = Number(v)
+              ;(animConfig as any)[k] = isNaN(num) ? v : num
+            }
+          }
+        }
+      }
+      result.anim = animConfig
     }
   }
 

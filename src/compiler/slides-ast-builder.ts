@@ -8,6 +8,7 @@ import type {
 import {
   ATTR_ELEM_CLICK,
   ATTR_ELEM_MOTION,
+  ATTR_ELEM_ANIM,
   ATTR_ELEM_SLOT,
   ATTR_ELEM_ROLE,
   ATTR_PAGE_LAYOUT,
@@ -760,6 +761,9 @@ export function buildSlidesDocument(
       if (effectiveMotion && !effectiveAttrs[ATTR_ELEM_MOTION]) {
         effectiveAttrs[ATTR_ELEM_MOTION] = JSON.stringify(effectiveMotion)
       }
+      if (elemAttrs.anim && !effectiveAttrs[ATTR_ELEM_ANIM]) {
+        effectiveAttrs[ATTR_ELEM_ANIM] = elemAttrs.anim.type
+      }
 
       if (isVideoBlock || combinedIal["custom-slides-autoplay"] || combinedIal["custom-slides-muted"]) {
         if (combinedIal["custom-slides-autoplay"]) {
@@ -787,6 +791,7 @@ export function buildSlidesDocument(
         parentClicks: inheritedContext?.parentClicks,
         parentContainerId: inheritedContext?.parentContainerId,
         motion: effectiveMotion,
+        anim: elemAttrs.anim,
         shikiLines: elemAttrs.shikiLines,
         maxHeight: normMaxHeight,
         slot: effectiveSlot,

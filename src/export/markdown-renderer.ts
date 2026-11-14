@@ -439,6 +439,20 @@ export function convertBlockToHtml(
     }
   }
 
+  if (block.anim?.type && block.anim.type !== "none") {
+    const animType = String(block.anim.type).toLowerCase().trim()
+    motionClass += ` slides-anim-${animType}`
+    if (typeof block.anim.duration === "number" && block.anim.duration > 0) {
+      styleParts.push(`--anim-duration:${block.anim.duration / 1000}s`)
+    }
+    if (typeof block.anim.delay === "number" && block.anim.delay > 0) {
+      styleParts.push(`--anim-delay:${block.anim.delay / 1000}s`)
+    }
+    if (animType === "typewriter") {
+      motionClass += ` slides-typewriter-cursor`
+    }
+  }
+
   const rawBlockStyle = block.attributes?.style || ""
   if (rawBlockStyle) {
     styleParts.push(rawBlockStyle)

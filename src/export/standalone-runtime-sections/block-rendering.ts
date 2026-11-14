@@ -44,6 +44,27 @@ export function getBlockRenderingSection(): string {
             div.style.setProperty("--motion-delay", block.motion.delay + "ms");
           }
         }
+        if (block && block.anim && block.anim.type && block.anim.type !== "none") {
+          const animType = String(block.anim.type).toLowerCase().trim();
+          div.classList.add("slides-anim-" + animType);
+          div.setAttribute("data-slides-anim", animType);
+          if (typeof block.anim.duration === "number" && block.anim.duration > 0) {
+            div.style.setProperty("--anim-duration", (block.anim.duration / 1000) + "s");
+            div.setAttribute("data-anim-duration", String(block.anim.duration));
+          }
+          if (typeof block.anim.delay === "number" && block.anim.delay > 0) {
+            div.style.setProperty("--anim-delay", (block.anim.delay / 1000) + "s");
+          }
+          if (animType === "countup") {
+            div.setAttribute("data-countup-from", String(block.anim.from ?? 0));
+            div.setAttribute("data-countup-to", String(block.anim.to ?? ""));
+            div.setAttribute("data-countup-decimals", String(block.anim.decimals ?? 0));
+            div.setAttribute("data-countup-prefix", block.anim.prefix ?? "");
+            div.setAttribute("data-countup-suffix", block.anim.suffix ?? "");
+          } else if (animType === "typewriter") {
+            div.classList.add("slides-typewriter-cursor");
+          }
+        }
         const md = block.rawMarkdown || block.content || "";
 
         if (md.includes('class="slides-block-ref"') || md.includes('class="slides-ref-tag"')) {

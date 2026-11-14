@@ -32,6 +32,8 @@ export const ATTR_PAGE_MASK_INITIAL = "custom-slides-mask-initial"
 // 3. 元素动效级与内容属性常量 (Element Scope)
 export const ATTR_ELEM_CLICK = "custom-slides-click"
 export const ATTR_ELEM_MOTION = "custom-slides-motion"
+export const ATTR_ELEM_ANIM = "custom-slides-anim"
+export const ATTR_ELEM_ANIM_PROPS = "custom-slides-anim-props"
 export const ATTR_ELEM_SHIKI_LINES = "custom-slides-shiki-lines"
 export const ATTR_ELEM_SLOT = "custom-slides-slot"
 export const ATTR_ELEM_NOTE = "custom-slides-note"
@@ -178,11 +180,36 @@ export function parseMaskRatio(ratioStr?: string, defaultSteps = 2): { steps: nu
   return { steps: bps.length, breakpoints: bps }
 }
 
-/** 元素微动效配置结构 */
+/** 元素微动效配置结构 (v-motion) */
 export interface ISlidesMotionConfig {
   preset: string
   delay?: number
   duration?: number
+  [key: string]: any
+}
+
+/** 元素视觉强调与交互动效类型 */
+export type TSlideAnimType =
+  | "countup"
+  | "typewriter"
+  | "pulse"
+  | "float"
+  | "shimmer"
+
+/** 元素高级微动效与强调配置结构 */
+export interface ISlideAnimConfig {
+  type: TSlideAnimType | string
+  duration?: number // 毫秒
+  delay?: number // 毫秒
+  // 数字滚动 (CountUp) 专有参数
+  from?: number
+  to?: number
+  decimals?: number
+  prefix?: string
+  suffix?: string
+  // 打字机 (Typewriter) 专有参数
+  speed?: number
+  cursor?: boolean
   [key: string]: any
 }
 
@@ -194,6 +221,7 @@ export interface ISlidesBlockItem {
   rawMarkdown: string
   clicks?: string
   motion?: ISlidesMotionConfig
+  anim?: ISlideAnimConfig
   shikiLines?: string
   maxHeight?: string
   slot?: "header" | "left" | "right" | "col-1" | "col-2" | "col-3" | "default" | string

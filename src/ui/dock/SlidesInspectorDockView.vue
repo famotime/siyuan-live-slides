@@ -106,6 +106,9 @@
         v-else-if="activeBlockId && !isDocRoot"
         :elem-click="elemClick"
         :elem-motion="elemMotion"
+        :elem-anim="elemAnim"
+        :elem-anim-props="elemAnimProps"
+        :active-block-content="activeBlockContent"
         :elem-slot="elemSlot"
         :elem-shiki-lines="elemShikiLines"
         :elem-max-height="elemMaxHeight"
@@ -136,6 +139,7 @@
         @update:image-role="onImageRoleChange"
         @update:elem-click="onElemClickStepChange"
         @update:elem-motion="onElemMotionChange"
+        @update:elem-anim="onElemAnimChange"
         @update:elem-slot="onElemSlotChange"
         @update:elem-shiki-lines="onElemShikiLinesChange"
         @update:elem-max-height="onElemMaxHeightChange"
@@ -223,6 +227,8 @@ import {
   ATTR_PAGE_SPACING,
   ATTR_ELEM_CLICK,
   ATTR_ELEM_MOTION,
+  ATTR_ELEM_ANIM,
+  ATTR_ELEM_ANIM_PROPS,
   ATTR_ELEM_SLOT,
   ATTR_ELEM_SHIKI_LINES,
   ATTR_ELEM_MAX_HEIGHT,
@@ -520,6 +526,42 @@ const elemMotion = computed(() => {
   return ''
 })
 
+const elemAnim = computed(() => {
+  if (activeBlockAttrs.value[ATTR_ELEM_ANIM] !== undefined) {
+    return activeBlockAttrs.value[ATTR_ELEM_ANIM] || ''
+  }
+  const aid = activeBlockId.value
+  if (aid && targetSlide.value?.blocks) {
+    const matched = targetSlide.value.blocks.find(b => b.id === aid)
+    if (matched?.anim?.type) return String(matched.anim.type)
+  }
+  return ''
+})
+
+const elemAnimProps = computed(() => {
+  if (activeBlockAttrs.value[ATTR_ELEM_ANIM_PROPS] !== undefined) {
+    return activeBlockAttrs.value[ATTR_ELEM_ANIM_PROPS] || ''
+  }
+  const aid = activeBlockId.value
+  if (aid && targetSlide.value?.blocks) {
+    const matched = targetSlide.value.blocks.find(b => b.id === aid)
+    if (matched?.anim) {
+      const { type, ...props } = matched.anim
+      return JSON.stringify(props)
+    }
+  }
+  return ''
+})
+
+const activeBlockContent = computed(() => {
+  const aid = activeBlockId.value
+  if (aid && targetSlide.value?.blocks) {
+    const matched = targetSlide.value.blocks.find(b => b.id === aid)
+    if (matched) return matched.rawMarkdown || matched.content || ''
+  }
+  return ''
+})
+
 const elemSlot = computed(() => {
   if (activeBlockAttrs.value[ATTR_ELEM_SLOT]) {
     return activeBlockAttrs.value[ATTR_ELEM_SLOT]
@@ -570,6 +612,8 @@ const hasBlockAttrs = computed(() => {
   return Boolean(
     activeBlockAttrs.value[ATTR_ELEM_CLICK] ||
     activeBlockAttrs.value[ATTR_ELEM_MOTION] ||
+    activeBlockAttrs.value[ATTR_ELEM_ANIM] ||
+    activeBlockAttrs.value[ATTR_ELEM_ANIM_PROPS] ||
     activeBlockAttrs.value[ATTR_ELEM_SLOT] ||
     activeBlockAttrs.value[ATTR_ELEM_SHIKI_LINES] ||
     activeBlockAttrs.value[ATTR_ELEM_NOTE] ||
@@ -609,6 +653,7 @@ const {
   toggleElemClick,
   onElemClickStepChange,
   onElemMotionChange,
+  onElemAnimChange,
   onElemSlotChange,
   onElemShikiLinesChange,
   onElemMaxHeightChange,

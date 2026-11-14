@@ -116,6 +116,7 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     toggleElemClick: layout.toggleElemClick,
     onElemClickStepChange: layout.onElemClickStepChange,
     onElemMotionChange: layout.onElemMotionChange,
+    onElemAnimChange: layout.onElemAnimChange,
     onElemSlotChange: layout.onElemSlotChange,
     onElemShikiLinesChange: layout.onElemShikiLinesChange,
     onElemMaxHeightChange: layout.onElemMaxHeightChange,

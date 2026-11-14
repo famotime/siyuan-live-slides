@@ -2746,6 +2746,70 @@
       animation: none !important;
     }
 
+    /* Slidev Emphasis & Advanced Micro-Animations */
+    @keyframes slidesPulseGlow {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(var(--slide-accent-rgb, 59, 130, 246), 0.4);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 24px 6px rgba(var(--slide-accent-rgb, 59, 130, 246), 0.7);
+        transform: scale(1.015);
+      }
+    }
+    .slides-anim-pulse {
+      animation: slidesPulseGlow var(--anim-duration, 2.4s) ease-in-out infinite;
+    }
+
+    @keyframes slidesFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .slides-anim-float {
+      animation: slidesFloat var(--anim-duration, 3.6s) ease-in-out infinite;
+    }
+
+    @keyframes slidesShimmerSweep {
+      0% { transform: translateX(-150%) skewX(-20deg); }
+      100% { transform: translateX(150%) skewX(-20deg); }
+    }
+    .slides-anim-shimmer {
+      position: relative;
+      overflow: hidden;
+    }
+    .slides-anim-shimmer::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+      animation: slidesShimmerSweep var(--anim-duration, 2.8s) ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    /* Typewriter Cursor */
+    .slides-typewriter-cursor::after {
+      content: "|";
+      display: inline-block;
+      margin-left: 2px;
+      animation: slidesBlinkCursor 0.8s step-start infinite;
+      color: var(--slide-accent, #3b82f6);
+    }
+    @keyframes slidesBlinkCursor {
+      50% { opacity: 0; }
+    }
+
+    /* Shiki Smooth Code Spotlight Transition */
+    .slide-block .code-line {
+      transition: opacity 0.35s ease, filter 0.35s ease, background 0.35s ease;
+    }
+
+    .v-click-hidden.slides-anim-pulse,
+    .v-click-hidden.slides-anim-float,
+    .v-click-hidden.slides-anim-shimmer {
+      animation: none !important;
+      opacity: 0 !important;
+    }
+
     /* Transitions */
     .transition-fade-enter-active,
     .transition-fade-leave-active {
@@ -4520,10 +4584,96 @@
           if (compiledComponent.value) {
             return h(compiledComponent.value)
           }
+          const animAttrs = getBlockAnimAttrs(props.block)
           return h('div', {
             innerHTML: props.renderHtml(props.block),
-            style: { display: 'contents' }
+            style: { display: 'contents' },
+            ...animAttrs
           })
+        }
+      }
+    }
+
+    function getBlockAnimAttrs(block) {
+      if (!block || !block.anim || !block.anim.type || block.anim.type === 'none') return {}
+      const animType = String(block.anim.type).toLowerCase().trim()
+      const attrs = {
+        'data-slides-anim': animType
+      }
+      if (typeof block.anim.duration === 'number' && block.anim.duration > 0) {
+        attrs['data-anim-duration'] = String(block.anim.duration)
+      }
+      if (animType === 'countup') {
+        attrs['data-countup-from'] = String(block.anim.from ?? 0)
+        attrs['data-countup-to'] = String(block.anim.to ?? '')
+        attrs['data-countup-decimals'] = String(block.anim.decimals ?? 0)
+        attrs['data-countup-prefix'] = String(block.anim.prefix ?? '')
+        attrs['data-countup-suffix'] = String(block.anim.suffix ?? '')
+      }
+      return attrs
+    }
+
+    function startCountUp(el, options) {
+      const from = typeof options.from === 'number' ? options.from : 0
+      const to = typeof options.to === 'number' ? options.to : 0
+      const duration = options.duration || 1500
+      const decimals = options.decimals ?? 0
+      const prefix = options.prefix || ''
+      const suffix = options.suffix || ''
+      const startTime = performance.now()
+      let rafId = null
+
+      const easeOutExpo = t => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t))
+
+      function update(now) {
+        const elapsed = now - startTime
+        const progress = Math.min(1, Math.max(0, elapsed / duration))
+        const current = from + (to - from) * easeOutExpo(progress)
+        el.textContent = `${prefix}${current.toFixed(decimals)}${suffix}`
+        if (progress < 1) {
+          rafId = requestAnimationFrame(update)
+        } else {
+          rafId = null
+        }
+      }
+
+      el.textContent = `${prefix}${from.toFixed(decimals)}${suffix}`
+      rafId = requestAnimationFrame(update)
+
+      return () => {
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId)
+          rafId = null
+        }
+      }
+    }
+
+    function startTypewriter(el, fullText, options = {}) {
+      const len = fullText.length
+      if (len === 0) return () => {}
+      const duration = options.duration || Math.max(500, Math.min(len * 50, 3000))
+      const stepMs = duration / len
+      let index = 0
+      let timerId = null
+
+      el.textContent = ''
+
+      function step() {
+        index++
+        el.textContent = fullText.slice(0, index)
+        if (index < len) {
+          timerId = setTimeout(step, stepMs)
+        } else {
+          timerId = null
+        }
+      }
+
+      timerId = setTimeout(step, stepMs)
+
+      return () => {
+        if (timerId !== null) {
+          clearTimeout(timerId)
+          timerId = null
         }
       }
     }
@@ -6024,6 +6174,16 @@
             }
           }
 
+          if (block && block.anim && block.anim.type && block.anim.type !== "none") {
+            if (!block.clicks || getBlockClickClass(block) === "v-click-visible") {
+              const animType = String(block.anim.type).toLowerCase().trim()
+              classes.push("slides-anim-" + animType)
+              if (animType === "typewriter") {
+                classes.push("slides-typewriter-cursor")
+              }
+            }
+          }
+
           return classes.join(" ")
         }
 
@@ -6043,6 +6203,15 @@
             }
             if (typeof block.motion.delay === "number" && block.motion.delay > 0) {
               style["--motion-delay"] = block.motion.delay + "ms"
+            }
+          }
+
+          if (block.anim) {
+            if (typeof block.anim.duration === "number" && block.anim.duration > 0) {
+              style["--anim-duration"] = (block.anim.duration / 1000) + "s"
+            }
+            if (typeof block.anim.delay === "number" && block.anim.delay > 0) {
+              style["--anim-delay"] = (block.anim.delay / 1000) + "s"
             }
           }
 
@@ -8258,6 +8427,58 @@
         watch(slides, () => {
           resetOverviewThumbs()
         })
+        watch(slides, () => {
+          triggerSlideAnimations()
+        })
+
+        let activeAnimCleanups = []
+        function triggerSlideAnimations() {
+          activeAnimCleanups.forEach(c => { try { c() } catch(e){} })
+          activeAnimCleanups = []
+          nextTick(() => {
+            const container = document.querySelector(".slide-viewport") || document.body
+            const nodes = container.querySelectorAll("[data-slides-anim]")
+            nodes.forEach(node => {
+              if (node.closest(".v-click-hidden") || node.classList.contains("v-click-hidden")) return
+              const animType = node.getAttribute("data-slides-anim")
+              if (animType === "countup") {
+                const targetEl = node.querySelector(".slides-countup-target") || node.querySelector("p, h1, h2, h3, h4, h5, h6, span, strong") || node
+                if (!targetEl.getAttribute("data-anim-original")) {
+                  targetEl.setAttribute("data-anim-original", targetEl.textContent || "")
+                }
+                const toVal = parseFloat(node.getAttribute("data-countup-to") || "0")
+                const fromVal = parseFloat(node.getAttribute("data-countup-from") || "0")
+                const durationVal = parseInt(node.getAttribute("data-anim-duration") || "1500", 10)
+                const decimalsVal = parseInt(node.getAttribute("data-countup-decimals") || "0", 10)
+                const prefixVal = node.getAttribute("data-countup-prefix") || ""
+                const suffixVal = node.getAttribute("data-countup-suffix") || ""
+
+                const cancel = startCountUp(targetEl, {
+                  from: fromVal,
+                  to: toVal,
+                  duration: durationVal,
+                  decimals: decimalsVal,
+                  prefix: prefixVal,
+                  suffix: suffixVal,
+                })
+                activeAnimCleanups.push(cancel)
+              } else if (animType === "typewriter") {
+                const targetEl = node.querySelector("p, h1, h2, h3, h4, h5, h6, span, code") || node
+                if (!targetEl.getAttribute("data-anim-original")) {
+                  targetEl.setAttribute("data-anim-original", targetEl.textContent || "")
+                }
+                const fullText = targetEl.getAttribute("data-anim-original") || targetEl.textContent || ""
+                const durationVal = parseInt(node.getAttribute("data-anim-duration") || "1500", 10)
+                const cancel = startTypewriter(targetEl, fullText, { duration: durationVal })
+                activeAnimCleanups.push(cancel)
+              }
+            })
+          })
+        }
+
+        watch([currentPageIndex, currentStep], () => {
+          triggerSlideAnimations()
+        })
 
         let resizeObserver = null
         onMounted(() => {
@@ -8278,6 +8499,7 @@
           nextTick(() => {
             updateScale()
             syncAutoplayVideos()
+            triggerSlideAnimations()
           })
 
           // 告知宿主客户端沙箱已准备就绪并上报初始页码

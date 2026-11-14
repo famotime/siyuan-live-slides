@@ -650,6 +650,59 @@ export function getSlideRenderingSection(): string {
           setTimeout(doSync, 200);
         }
         syncAutoplayVideos();
+
+        function runSlideAnimations(container) {
+          if (!container) return;
+          const animNodes = container.querySelectorAll("[data-slides-anim]");
+          animNodes.forEach(node => {
+            if (node.classList.contains("v-click-hidden")) return;
+            const animType = node.getAttribute("data-slides-anim");
+            if (animType === "countup") {
+              const targetEl = node.querySelector(".slides-countup-target") || node.querySelector("p, h1, h2, h3, h4, h5, h6, span, strong") || node;
+              if (!targetEl.getAttribute("data-anim-original")) {
+                targetEl.setAttribute("data-anim-original", targetEl.textContent || "");
+              }
+              const toVal = parseFloat(node.getAttribute("data-countup-to") || "0");
+              const fromVal = parseFloat(node.getAttribute("data-countup-from") || "0");
+              const durationVal = parseInt(node.getAttribute("data-anim-duration") || "1500", 10);
+              const decimalsVal = parseInt(node.getAttribute("data-countup-decimals") || "0", 10);
+              const prefixVal = node.getAttribute("data-countup-prefix") || "";
+              const suffixVal = node.getAttribute("data-countup-suffix") || "";
+              const startTime = performance.now();
+              const easeOutExpo = t => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t));
+              function update(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(1, Math.max(0, elapsed / durationVal));
+                const current = fromVal + (toVal - fromVal) * easeOutExpo(progress);
+                targetEl.textContent = prefixVal + current.toFixed(decimalsVal) + suffixVal;
+                if (progress < 1) {
+                  requestAnimationFrame(update);
+                }
+              }
+              targetEl.textContent = prefixVal + fromVal.toFixed(decimalsVal) + suffixVal;
+              requestAnimationFrame(update);
+            } else if (animType === "typewriter") {
+              const targetEl = node.querySelector("p, h1, h2, h3, h4, h5, h6, span, code") || node;
+              if (!targetEl.getAttribute("data-anim-original")) {
+                targetEl.setAttribute("data-anim-original", targetEl.textContent || "");
+              }
+              const fullText = targetEl.getAttribute("data-anim-original") || targetEl.textContent || "";
+              const durationVal = parseInt(node.getAttribute("data-anim-duration") || "1500", 10);
+              const stepMs = durationVal / Math.max(fullText.length, 1);
+              let idx = 0;
+              targetEl.textContent = "";
+              function step() {
+                idx++;
+                targetEl.textContent = fullText.slice(0, idx);
+                if (idx < fullText.length) {
+                  setTimeout(step, stepMs);
+                }
+              }
+              setTimeout(step, stepMs);
+            }
+          });
+        }
+        runSlideAnimations(stage);
       }
 
       // Lightbox 控制逻辑

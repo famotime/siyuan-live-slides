@@ -75,6 +75,16 @@ export type LayoutKey =
 
 export type LayoutFlagConfig = Record<LayoutKey, boolean>;
 
+/** 可独立开关的高级微动效 key */
+export type AnimationEffectKey =
+  | 'countup'
+  | 'typewriter'
+  | 'pulse'
+  | 'float'
+  | 'shimmer';
+
+export type AnimationEffectFlagConfig = Record<AnimationEffectKey, boolean>;
+
 export interface FeatureFlagConfig {
   presenterMode: boolean;
   exportHtml: boolean;
@@ -86,6 +96,8 @@ export interface FeatureFlagConfig {
   smartAnimation: boolean;
   speakerNotesBlocks: boolean;
   layouts: LayoutFlagConfig;
+  advancedAnimations: boolean;
+  animationEffects: AnimationEffectFlagConfig;
 }
 
 // ── 编辑此对象来控制功能可见性 ──
@@ -113,6 +125,14 @@ export const FEATURE_FLAGS: FeatureFlagConfig = {
     'intro': true,
     'center': true,
   },
+  advancedAnimations: true,
+  animationEffects: {
+    countup: true,
+    typewriter: true,
+    pulse: true,
+    float: true,
+    shimmer: true,
+  },
 };
 
 // ── 工具函数 ──
@@ -133,5 +153,17 @@ export function isLayoutEnabled(layoutName: string): boolean {
     return true;
   }
   const flag = FEATURE_FLAGS.layouts?.[layoutName as LayoutKey];
+  return flag !== false;
+}
+
+/** 高级微动效是否启用（总开关 + 具体动效细粒度开关） */
+export function isAnimationEnabled(effect?: AnimationEffectKey | string): boolean {
+  if (FEATURE_FLAGS.advancedAnimations === false) {
+    return false;
+  }
+  if (!effect) {
+    return true;
+  }
+  const flag = FEATURE_FLAGS.animationEffects?.[effect as AnimationEffectKey];
   return flag !== false;
 }
