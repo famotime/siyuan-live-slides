@@ -869,10 +869,18 @@ const parsedMotion = computed(() => {
   }
 })
 
+const localPreset = ref<string | null>(null)
 const hasMotion = computed(() => Boolean(parsedMotion.value))
-const currentPreset = computed(() => parsedMotion.value?.preset || 'slide-up')
+const currentPreset = computed(() => localPreset.value || parsedMotion.value?.preset || 'slide-up')
 const currentDuration = computed(() => parsedMotion.value?.duration || 0)
 const currentDelay = computed(() => parsedMotion.value?.delay || 0)
+
+watch(
+  () => props.elemMotion,
+  () => {
+    localPreset.value = null
+  },
+)
 
 // Feature Flags 状态检测
 const isAdvAnimEnabled = computed(() => isAnimationEnabled())
@@ -1198,18 +1206,24 @@ onBeforeUnmount(() => {
 })
 
 function handleMotionChange(payload: { preset: string; duration: number; delay: number }) {
+  localPreset.value = payload.preset
+  replayLiveStage()
   emitMotionChange(payload.preset, payload.duration, payload.delay)
 }
 
 function selectPreset(preset: string) {
+  localPreset.value = preset
+  replayLiveStage()
   emitMotionChange(preset, currentDuration.value, currentDelay.value)
 }
 
 function updateDuration(duration: number) {
+  replayLiveStage()
   emitMotionChange(currentPreset.value, duration, currentDelay.value)
 }
 
 function updateDelay(delay: number) {
+  replayLiveStage()
   emitMotionChange(currentPreset.value, currentDuration.value, delay)
 }
 
