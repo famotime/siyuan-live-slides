@@ -377,7 +377,7 @@ export function useSlidesImport(pluginInstance?: any) {
 
       if (detected === 'live') {
         const parsed = parseLiveSlidesMarkdown(markdownText, {
-          stripCalloutNotes: optStripNotes.value,
+          stripCalloutNotes: false,
         })
         if (currentGen !== fileProcessGeneration) return
         parsedPresentation.value = parsed

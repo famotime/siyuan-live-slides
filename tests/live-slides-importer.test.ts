@@ -15,6 +15,7 @@ import {
   ATTR_ELEM_MOTION,
   ATTR_ELEM_SHIKI_LINES,
   ATTR_ELEM_SLOT,
+  ATTR_ELEM_NOTE,
 } from "../src/types/slides-protocol"
 
 function getSampleDocPath(): string {
@@ -72,11 +73,15 @@ describe("LiveSlidesImporter - 即现演示文档解析与属性剥离", () => {
     const shikiBinding = result.blockAttrBindings.find(b => b.attrs[ATTR_ELEM_SHIKI_LINES] === "1-3|5-7|9-11")
     expect(shikiBinding).toBeDefined()
 
-    // 8. 验证正文剥离：生成的 flattenedMarkdown 不再包含任何 {: custom-slides- 标记，且不包含备注 Callout
+    // 8. 验证正文属性剥离：生成的 flattenedMarkdown 绝不包含任何 {: custom-slides- IAL 源码标记，但完整保留演讲备注提示块在正文显示
     expect(result.flattenedMarkdown).not.toContain("{: custom-slides-")
     expect(result.flattenedMarkdown).not.toContain("{:custom-slides-")
-    expect(result.flattenedMarkdown).not.toContain("💡 演讲备注")
-    expect(result.flattenedMarkdown).not.toContain("[!NOTE]")
+    expect(result.flattenedMarkdown).toContain("💡 演讲备注")
+    expect(result.flattenedMarkdown).toContain("[!NOTE]")
+
+    // 8.1 验证演讲备注提示块已生成 custom-slides-note="true" 属性绑定条目
+    const noteBinding = result.blockAttrBindings.find(b => b.attrs[ATTR_ELEM_NOTE] === "true")
+    expect(noteBinding).toBeDefined()
 
     // 8.1 验证开头有且仅有一条前导分隔线 ---，且正文中间绝无连续重复的分隔线
     expect(result.flattenedMarkdown.startsWith("---")).toBe(true)

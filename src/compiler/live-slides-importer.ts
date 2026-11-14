@@ -56,7 +56,7 @@ export interface IParsedLiveSlidesPresentation extends IParsedSlidesPresentation
 }
 
 export interface ILiveImportOptions {
-  /** 是否将演讲备注 Callout 剥离出正文并转换为页面级 notes (默认 true) */
+  /** 是否将演讲备注 Callout 彻底从正文中移除 (默认 false：正文保留提示块显示，IAL 转换为块属性) */
   stripCalloutNotes?: boolean
 }
 
@@ -212,7 +212,7 @@ export function parseLiveSlidesMarkdown(
   rawMarkdown: string,
   options: ILiveImportOptions = {},
 ): IParsedLiveSlidesPresentation {
-  const stripCalloutNotes = options.stripCalloutNotes !== false
+  const stripCalloutNotes = options.stripCalloutNotes === true
   const lines = rawMarkdown.split(/\r?\n/)
 
   const slides: IParsedSlideItem[] = []
@@ -383,12 +383,15 @@ export function parseLiveSlidesMarkdown(
     // 4. 演讲备注 Callout 块检测 (> [!NOTE] 💡 演讲备注 或 > 💡 演讲备注)
     const isCalloutNoteStart = /^>\s*(?:\[!NOTE\]\s*)?💡?\s*演讲备注/i.test(trimmed)
     if (isCalloutNoteStart) {
-      // 提取提词内容
+      const calloutLines: string[] = []
       const noteLines: string[] = []
+
       // 循环读取紧跟的引用行
       while (i < lines.length) {
-        const curTrim = lines[i].trim()
+        const curLine = lines[i]
+        const curTrim = curLine.trim()
         if (curTrim.startsWith(">")) {
+          calloutLines.push(curLine)
           const bodyLine = curTrim
             .replace(/^>\s*(?:\[!NOTE\]\s*)?💡?\s*演讲备注/i, "")
             .replace(/^>\s*/, "")
@@ -398,7 +401,7 @@ export function parseLiveSlidesMarkdown(
           }
           i++
         } else if (/^\{:\s*custom-slides-note="true"\s*\}$/i.test(curTrim)) {
-          // 紧随的备注 IAL 行，跳过
+          // 紧随的备注 IAL 属性标记行，跳过不输出到正文
           i++
           break
         } else {
@@ -413,15 +416,24 @@ export function parseLiveSlidesMarkdown(
       }
 
       lastBlock = {
-        blockType: "b",
+        blockType: "callout",
         contentPreview: "💡 演讲备注",
         isCalloutNote: true,
       }
 
-      // 核心：若设置了剥离备注，绝不将备注块行加入 currentSlideCleanLines！
-      if (stripCalloutNotes) {
-        continue
+      // 默认将纯净的 Callout 提示块保留在文档正文中显示，并将 custom-slides-note="true" 绑定为块属性
+      if (!stripCalloutNotes) {
+        currentSlideCleanLines.push(...calloutLines)
+        const notePreview = noteLines[0] ? noteLines[0].slice(0, 30) : "💡 演讲备注"
+        blockBindings.push({
+          pageIndex: currentPageIndex,
+          blockType: "callout",
+          contentPreview: notePreview,
+          attrs: { [ATTR_ELEM_NOTE]: "true" },
+          isPageLevel: false,
+        })
       }
+      continue
     }
 
     // 5. 普通正文行处理
@@ -644,10 +656,18 @@ export async function backfillLiveSlidesAttributes(
         if (binding.blockType === "i" && (bType === "i" || bType === "p" || bType === "l")) typeMatch = true
         else if (binding.blockType === "c" && (bType === "c" || bType === "code-block")) typeMatch = true
         else if (binding.blockType === "h" && (bType === "h" || bType === "heading")) typeMatch = true
-        else if (binding.blockType === "b" && (bType === "b" || bType === "blockquote")) typeMatch = true
+        else if (
+          (binding.blockType === "b" || binding.blockType === "callout") &&
+          (bType === "b" || bType === "blockquote" || bType === "callout" || bType === "nodecallout")
+        ) typeMatch = true
         else if (binding.blockType === bType || bType === "p") typeMatch = true
 
         if (!typeMatch) return false
+
+        // 针对演讲备注提示块 (NodeCallout) 优先基于备注特征匹配
+        if (binding.attrs[ATTR_ELEM_NOTE] === "true") {
+          if (bContent.includes("演讲备注") || bContent.includes("讲稿备注")) return true
+        }
 
         if (binding.contentPreview) {
           const cleanSnippet = binding.contentPreview.slice(0, 15)
