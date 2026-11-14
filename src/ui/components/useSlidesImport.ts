@@ -11,6 +11,13 @@ import { extractSlidesZip, rewritePresentationAssetPaths } from '@/compiler/asse
 import type { IExtractedAssetItem } from '@/compiler/asset-importer'
 import type { IParsedSlidesPresentation } from '@/compiler/slides-importer'
 import { parseSlidesPresentation } from '@/compiler/slides-importer'
+import {
+  parseLiveSlidesMarkdown,
+  detectPresentationFormat,
+  backfillLiveSlidesAttributes,
+  collectLocalAssetsForMarkdown,
+} from '@/compiler/live-slides-importer'
+import type { IParsedLiveSlidesPresentation } from '@/compiler/live-slides-importer'
 import { ATTR_ELEM_SLOT } from '@/types/slides-protocol'
 
 /**
@@ -122,10 +129,11 @@ export async function uploadAndRewriteAssets(
   }
 
   try {
-    const uploadRes: any = await uploadFn('/data/assets', filesToUpload)
+    const uploadRes: any = await uploadFn('/assets/', filesToUpload)
     if (uploadRes?.succMap) {
       for (const [origName, syPath] of Object.entries(uploadRes.succMap)) {
-        assetMap[origName] = String(syPath)
+        const cleanSyPath = String(syPath).replace(/^data\//, '')
+        assetMap[origName] = cleanSyPath
       }
     }
   } catch (upErr) {
@@ -201,21 +209,34 @@ export async function executeSlidesImport(
   }
 
   // 3 & 4. 设置文档根属性、各页分割线属性与插槽属性（FSM-10: 带有明确上下文的容错封装）
-  try {
-    const firstSlideAttrs = presentation.slides[0]?.pageAttrs || {}
-    await setAttrsFn(newDocId, { ...firstSlideAttrs, ...presentation.docRootAttrs })
+  const isLiveFormat = (presentation as any).formatType === 'live'
 
-    const rawBlocks: any[] = await getChildBlocksFn(newDocId).catch(() => [])
-    if (Array.isArray(rawBlocks) && rawBlocks.length > 0) {
-      await backfillDividerAttributes(rawBlocks, presentation.slides, setAttrsFn)
-      await backfillSlotAttributes(rawBlocks, setAttrsFn)
+  try {
+    if (isLiveFormat) {
+      // 即现文档：回填根属性、各页分割线页面属性与所有元素级属性 (v-click, motion, shiki-lines, slot 等)
+      await backfillLiveSlidesAttributes(
+        newDocId,
+        presentation as IParsedLiveSlidesPresentation,
+        { setAttrsFn, getChildBlocksFn },
+      )
+    } else {
+      // Slidev 文档：回填第一页根属性、分割线属性与插槽属性
+      const firstSlideAttrs = presentation.slides[0]?.pageAttrs || {}
+      await setAttrsFn(newDocId, { ...firstSlideAttrs, ...presentation.docRootAttrs })
+
+      const rawBlocks: any[] = await getChildBlocksFn(newDocId).catch(() => [])
+      if (Array.isArray(rawBlocks) && rawBlocks.length > 0) {
+        await backfillDividerAttributes(rawBlocks, presentation.slides, setAttrsFn)
+        await backfillSlotAttributes(rawBlocks, setAttrsFn)
+      }
     }
   } catch (backfillErr: any) {
     console.warn('[SlidesImport] 版式属性回填阶段遇到警告:', backfillErr)
     showMessageFn(`⚠️ 文档已创建(${safeTitle})，但部分版式属性回填未完全完成: ${backfillErr.message || String(backfillErr)}`, 6000)
   }
 
-  showMessageFn(`🎉 成功导入 Slidev 演示文档《${safeTitle}》！`)
+  const formatName = isLiveFormat ? '即现' : 'Slidev'
+  showMessageFn(`🎉 成功导入 ${formatName} 演示文档《${safeTitle}》！`)
 
   // 5. 沉浸式流转闭环：打开文档并在下方分屏放映
   if (autoPreview && plugin) {
@@ -236,7 +257,8 @@ export async function executeSlidesImport(
  * Slidev 导入对话框组合式函数 (Composable)
  */
 export function useSlidesImport(pluginInstance?: any) {
-  const inputMode = ref<'file' | 'text'>('file')
+  const importType = ref<'live' | 'slidev'>('live')
+  const inputMode = importType // 兼容原有属性名
   const isDragging = ref(false)
   const isImporting = ref(false)
   const errorMessage = ref('')
@@ -245,7 +267,6 @@ export function useSlidesImport(pluginInstance?: any) {
   const selectedFile = ref<File | null>(null)
   const selectedFileName = ref('')
   const selectedFileSize = ref(0)
-  const rawMarkdownText = ref('')
 
   const extractedAssets = ref<IExtractedAssetItem[]>([])
   const parsedPresentation = ref<IParsedSlidesPresentation | null>(null)
@@ -257,6 +278,7 @@ export function useSlidesImport(pluginInstance?: any) {
   // 选项开关
   const optCleanHtml = ref(true)
   const optStripNotes = ref(true)
+  const optStripIalToAttrs = ref(true)
   const optUploadAssets = ref(true)
   const optAutoPreview = ref(true)
 
@@ -323,6 +345,10 @@ export function useSlidesImport(pluginInstance?: any) {
 
     try {
       const isZip = file.name.toLowerCase().endsWith('.zip')
+      let markdownText = ''
+      let virtualFiles: Record<string, string> | undefined
+      let baseDir = ''
+
       if (isZip) {
         const buffer = await file.arrayBuffer()
         if (currentGen !== fileProcessGeneration) return
@@ -333,31 +359,48 @@ export function useSlidesImport(pluginInstance?: any) {
           return
         }
         extractedAssets.value = zipRes.assets
-        const parsed = parseSlidesPresentation(zipRes.entryMarkdown, {
-          stripNotesFromMarkdown: optStripNotes.value,
-          cleanHtmlToMarkdown: optCleanHtml.value,
-          cleanSlots: false,
-          virtualFiles: zipRes.virtualFiles,
-        })
-        if (currentGen !== fileProcessGeneration) return
-        parsedPresentation.value = parsed
-        customDocTitle.value = parsed.docTitle || file.name.replace(/\.zip$/i, '')
+        markdownText = zipRes.entryMarkdown
+        virtualFiles = zipRes.virtualFiles
       } else {
-        // .md 文件
-        const text = await file.text()
+        markdownText = await file.text()
         if (currentGen !== fileProcessGeneration) return
         extractedAssets.value = []
         const filePath = (file as any).path || ''
-        const baseDir = filePath ? filePath.replace(/[\\/][^\\/]+$/, '') : ''
-        const parsed = parseSlidesPresentation(text, {
+        baseDir = filePath ? filePath.replace(/[\\/][^\\/]+$/, '') : ''
+      }
+
+      // 智能自动识别演示格式
+      const detected = detectPresentationFormat(file.name, markdownText)
+      importType.value = detected
+
+      const cleanName = file.name.replace(/\.(?:zip|md)$/i, '')
+
+      if (detected === 'live') {
+        const parsed = parseLiveSlidesMarkdown(markdownText, {
+          stripCalloutNotes: optStripNotes.value,
+        })
+        if (currentGen !== fileProcessGeneration) return
+        parsedPresentation.value = parsed
+        customDocTitle.value = parsed.docTitle || cleanName
+
+        // 单文件 .md 导入时自动收集解析本地相对路径素材
+        if (!isZip) {
+          const localAssets = collectLocalAssetsForMarkdown(markdownText, baseDir)
+          if (localAssets.length > 0) {
+            extractedAssets.value = localAssets
+          }
+        }
+      } else {
+        const parsed = parseSlidesPresentation(markdownText, {
           stripNotesFromMarkdown: optStripNotes.value,
           cleanHtmlToMarkdown: optCleanHtml.value,
           cleanSlots: false,
+          virtualFiles,
           baseDir: baseDir || undefined,
         })
         if (currentGen !== fileProcessGeneration) return
         parsedPresentation.value = parsed
-        customDocTitle.value = parsed.docTitle || file.name.replace(/\.md$/i, '')
+        customDocTitle.value = parsed.docTitle || cleanName
       }
     } catch (err: any) {
       if (currentGen !== fileProcessGeneration) return
@@ -366,30 +409,9 @@ export function useSlidesImport(pluginInstance?: any) {
     }
   }
 
-  function onTextChange() {
-    errorMessage.value = ''
-    if (!rawMarkdownText.value.trim()) {
-      parsedPresentation.value = null
-      return
-    }
-    try {
-      const parsed = parseSlidesPresentation(rawMarkdownText.value, {
-        stripNotesFromMarkdown: optStripNotes.value,
-        cleanHtmlToMarkdown: optCleanHtml.value,
-        cleanSlots: false,
-      })
-      parsedPresentation.value = parsed
-      customDocTitle.value = parsed.docTitle || 'Slidev 演示文稿'
-    } catch (err: any) {
-      errorMessage.value = `解析 Markdown 源码失败: ${err.message || String(err)}`
-    }
-  }
-
   async function reprocessCurrentInput() {
     if (selectedFile.value) {
       await processFile(selectedFile.value)
-    } else if (rawMarkdownText.value) {
-      onTextChange()
     }
   }
 
@@ -432,7 +454,7 @@ export function useSlidesImport(pluginInstance?: any) {
       })
       return newDocId
     } catch (err: any) {
-      console.error('导入 Slidev 演示失败:', err)
+      console.error('导入演示失败:', err)
       errorMessage.value = `导入执行失败: ${err.message || String(err)}`
     } finally {
       isImporting.value = false
@@ -440,6 +462,7 @@ export function useSlidesImport(pluginInstance?: any) {
   }
 
   return {
+    importType,
     inputMode,
     isDragging,
     isImporting,
@@ -448,7 +471,6 @@ export function useSlidesImport(pluginInstance?: any) {
     selectedFile,
     selectedFileName,
     selectedFileSize,
-    rawMarkdownText,
     extractedAssets,
     parsedPresentation,
     customDocTitle,
@@ -456,6 +478,7 @@ export function useSlidesImport(pluginInstance?: any) {
     selectedNotebookId,
     optCleanHtml,
     optStripNotes,
+    optStripIalToAttrs,
     optUploadAssets,
     optAutoPreview,
     formattedFileSize,
@@ -468,7 +491,6 @@ export function useSlidesImport(pluginInstance?: any) {
     processFile,
     onFileSelected,
     onFileDrop,
-    onTextChange,
     reprocessCurrentInput,
     handleConfirmImport,
   }

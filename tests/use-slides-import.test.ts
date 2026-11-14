@@ -200,28 +200,91 @@ describe('useSlidesImport 业务逻辑与 Composable 测试', () => {
       expect(fakePlugin.openBottomPreviewTab).toHaveBeenCalled()
       expect(fakePlugin.currentDocId).toBe('doc-new-456')
     })
+
+    it('应在执行即现演示文档导入时正确调用即现属性回填并弹出成功提示', async () => {
+      const mockLivePresentation: any = {
+        formatType: 'live',
+        docTitle: '即现产品演示',
+        totalSlides: 2,
+        docRootAttrs: {},
+        flattenedMarkdown: '# 即现产品演示\n\n---\n\n## 第二页',
+        slides: [
+          { pageIndex: 1, pageAttrs: { 'custom-slides-layout': 'cover' }, notes: '', rawMarkdown: '# 即现产品演示', assetReferences: [] },
+          { pageIndex: 2, pageAttrs: { 'custom-slides-layout': 'fact' }, notes: '', rawMarkdown: '## 第二页', assetReferences: [] },
+        ],
+        stats: { totalNotes: 0, totalVClicks: 0, totalShikiHighlights: 0, totalSlots: 0, discoveredAssets: [], layoutDistribution: { cover: 1, fact: 1 } },
+        blockAttrBindings: [
+          { pageIndex: 1, blockType: 'h', contentPreview: '即现产品演示', attrs: { 'custom-slides-layout': 'cover' }, isPageLevel: true },
+          { pageIndex: 2, blockType: 'tb', contentPreview: '---', attrs: { 'custom-slides-layout': 'fact' }, isPageLevel: true },
+        ],
+      }
+
+      const setAttrsMap: Record<string, any> = {}
+      const setAttrsMock = vi.fn(async (id: string, attrs: any) => {
+        setAttrsMap[id] = attrs
+      })
+      const createDocMock = vi.fn(async () => 'doc-live-999')
+      const getChildBlocksMock = vi.fn(async () => [
+        { id: 'b-h1', type: 'h', content: '即现产品演示' },
+        { id: 'b-tb1', type: 'tb', markdown: '---' },
+        { id: 'b-h2', type: 'h', content: '第二页' },
+      ])
+      const showMsgMock = vi.fn()
+      const openTabMock = vi.fn()
+
+      const fakePlugin = {
+        app: {},
+        currentDocId: '',
+        openBottomPreviewTab: vi.fn(),
+      }
+
+      const resultDocId = await executeSlidesImport({
+        presentation: mockLivePresentation,
+        notebookId: 'nb-123',
+        docTitle: '即现产品演示',
+        autoPreview: true,
+        plugin: fakePlugin,
+        api: {
+          createDocFn: createDocMock as any,
+          setAttrsFn: setAttrsMock as any,
+          getChildBlocksFn: getChildBlocksMock as any,
+          showMessageFn: showMsgMock as any,
+          openTabFn: openTabMock as any,
+        },
+      })
+
+      expect(resultDocId).toBe('doc-live-999')
+      expect(createDocMock).toHaveBeenCalledWith('nb-123', '/即现产品演示', mockLivePresentation.flattenedMarkdown)
+      expect(setAttrsMap['doc-live-999']).toEqual({
+        'custom-slides-layout': 'cover',
+      })
+      expect(setAttrsMap['b-tb1']).toEqual({
+        'custom-slides-layout': 'fact',
+      })
+      expect(showMsgMock).toHaveBeenCalledWith('🎉 成功导入 即现 演示文档《即现产品演示》！')
+      expect(openTabMock).toHaveBeenCalled()
+      expect(fakePlugin.openBottomPreviewTab).toHaveBeenCalled()
+    })
   })
 
   describe('useSlidesImport Composable 响应式状态管理', () => {
-    it('应当正确初始化与更新输入状态', () => {
+    it('应当正确初始化与更新输入状态，支持即现与 Slidev 格式区分', async () => {
       const composable = useSlidesImport()
-      expect(composable.inputMode.value).toBe('file')
+      expect(composable.importType.value).toBe('live')
       expect(composable.isImporting.value).toBe(false)
       expect(composable.parsedPresentation.value).toBeNull()
 
-      // 输入源码并触发解析
-      composable.rawMarkdownText.value = `---
-theme: academic
----
-# 演示学术报告
----
-# 第二页
-`
-      composable.onTextChange()
+      // 模拟加载即现 Markdown 文件
+      const fakeLiveFile = new File([
+        `# 即现演示\n{: custom-slides-layout="cover" }\n\n---\n{: custom-slides-layout="fact" }\n* 100%：纯净度\n`
+      ], 'my-live-slides.md', { type: 'text/markdown' })
+
+      await composable.processFile(fakeLiveFile)
+
+      expect(composable.importType.value).toBe('live')
       expect(composable.parsedPresentation.value).not.toBeNull()
       expect(composable.parsedPresentation.value?.totalSlides).toBe(2)
-      expect(composable.currentTheme.value).toBe('academic')
-      expect(composable.customDocTitle.value).toBe('演示学术报告')
+      expect(composable.customDocTitle.value).toBe('即现演示')
 
       // 测试清理
       composable.clearFile()

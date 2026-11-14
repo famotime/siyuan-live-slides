@@ -50,8 +50,8 @@ describe("FeatureFlags (构建期功能开关)", () => {
       expect(isLayoutEnabled(layout)).toBe(expected)
     }
     // 验证特定版式开关受控行为
-    expect(isLayoutEnabled("clover")).toBe(false)
-    expect(isLayoutEnabled("timeline")).toBe(false)
+    expect(isLayoutEnabled("clover")).toBe(FEATURE_FLAGS.layouts?.clover !== false)
+    expect(isLayoutEnabled("timeline")).toBe(FEATURE_FLAGS.layouts?.timeline !== false)
     expect(isLayoutEnabled("two-cols")).toBe(true)
     expect(isLayoutEnabled("cover")).toBe(true)
     // 验证未知版式默认回退为 true

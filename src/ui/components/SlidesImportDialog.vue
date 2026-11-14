@@ -7,34 +7,34 @@
           <svg class="spm-dialog-icon" aria-hidden="true">
             <use xlink:href="#iconSlides"></use>
           </svg>
-          <span>导入 Slidev 演示文档</span>
+          <span>导入演示文档</span>
         </div>
         <button class="spm-close-btn" title="关闭" @click="onClose">✕</button>
       </div>
 
-      <!-- 模式切换 Tabs -->
+      <!-- 模式切换 Tabs: 区分即现与 Slidev -->
       <div class="spm-tabs-header">
         <button
           class="spm-tab-btn"
-          :class="{ active: inputMode === 'file' }"
-          @click="inputMode = 'file'"
+          :class="{ active: importType === 'live' }"
+          @click="switchImportType('live')"
         >
-          <SlidesIcon name="package" />
-          <span>文件 / 压缩包导入 (.zip / .md)</span>
+          <SlidesIcon name="sparkles" />
+          <span>即现演示文档 (.md / .zip)</span>
         </button>
         <button
           class="spm-tab-btn"
-          :class="{ active: inputMode === 'text' }"
-          @click="inputMode = 'text'"
+          :class="{ active: importType === 'slidev' }"
+          @click="switchImportType('slidev')"
         >
-          <SlidesIcon name="notes" />
-          <span>粘贴 Markdown 源码</span>
+          <SlidesIcon name="package" />
+          <span>Slidev 演示文档 (.zip / .md)</span>
         </button>
       </div>
 
       <div class="spm-dialog-body">
-        <!-- 模式 1: 文件拖拽与选择 -->
-        <div v-if="inputMode === 'file'" class="spm-file-section">
+        <!-- 文件拖拽与选择 -->
+        <div class="spm-file-section">
           <div
             class="spm-dropzone"
             :class="{ dragover: isDragging, 'has-file': !!selectedFileName }"
@@ -53,7 +53,10 @@
             <div v-if="!selectedFileName" class="spm-dropzone-prompt">
               <span class="spm-dropzone-icon"><SlidesIcon name="folder" style="font-size: 32px;" /></span>
               <p class="spm-dropzone-text">点击选择文件，或直接拖拽文件至此处</p>
-              <p class="spm-dropzone-hint">
+              <p v-if="importType === 'live'" class="spm-dropzone-hint">
+                支持即现原生演示 <strong>.md</strong> 或打包 <strong>.zip</strong>（自动将 custom-slides-* 转换为思源真实块属性）
+              </p>
+              <p v-else class="spm-dropzone-hint">
                 支持 Slidev 完整工程 <strong>.zip</strong>（自动解包 public/ 静态素材）或单文件 <strong>.md</strong>
               </p>
             </div>
@@ -63,17 +66,6 @@
               <button class="spm-btn-text" @click.stop="clearFile">更换文件</button>
             </div>
           </div>
-        </div>
-
-        <!-- 模式 2: 源码粘贴输入 -->
-        <div v-else class="spm-text-section">
-          <textarea
-            v-model="rawMarkdownText"
-            class="spm-textarea spm-source-editor"
-            rows="8"
-            placeholder="在此直接粘贴包含 Frontmatter 的 Slidev slides.md 源码..."
-            @input="onTextChange"
-          ></textarea>
         </div>
 
         <!-- 错误提示 -->
@@ -137,24 +129,43 @@
             </span>
           </div>
 
-          <!-- 导入配置选项 -->
+          <!-- 导入配置选项: 根据演示文档格式动态适配 -->
           <div class="spm-options-group">
-            <label class="spm-checkbox-label">
-              <input v-model="optCleanHtml" type="checkbox" @change="reprocessCurrentInput" />
-              <span>智能剥离展示型 HTML 容器为干净原生的 Markdown 笔记块</span>
-            </label>
-            <label class="spm-checkbox-label">
-              <input v-model="optStripNotes" type="checkbox" @change="reprocessCurrentInput" />
-              <span>提取演讲者提词到块属性并保持正文笔记清爽</span>
-            </label>
-            <label class="spm-checkbox-label">
-              <input v-model="optUploadAssets" type="checkbox" />
-              <span>自动上传关联素材至思源资产库并重写路径 (assets/...)</span>
-            </label>
-            <label class="spm-checkbox-label">
-              <input v-model="optAutoPreview" type="checkbox" />
-              <span>导入后自动打开新文档并开启下方分屏放映预览</span>
-            </label>
+            <!-- 即现专属选项 -->
+            <template v-if="importType === 'live'">
+              <label class="spm-checkbox-label">
+                <input v-model="optStripIalToAttrs" type="checkbox" />
+                <span>正文剥离 IAL 标记并注入为思源真实块属性（推荐）</span>
+              </label>
+              <label class="spm-checkbox-label">
+                <input v-model="optUploadAssets" type="checkbox" />
+                <span>自动上传关联素材至思源资产库并重写路径 (assets/...)</span>
+              </label>
+              <label class="spm-checkbox-label">
+                <input v-model="optAutoPreview" type="checkbox" />
+                <span>导入后自动打开新文档并开启下方分屏放映预览</span>
+              </label>
+            </template>
+
+            <!-- Slidev 专属选项 -->
+            <template v-else>
+              <label class="spm-checkbox-label">
+                <input v-model="optCleanHtml" type="checkbox" @change="reprocessCurrentInput" />
+                <span>智能剥离展示型 HTML 容器为干净原生的 Markdown 笔记块</span>
+              </label>
+              <label class="spm-checkbox-label">
+                <input v-model="optStripNotes" type="checkbox" @change="reprocessCurrentInput" />
+                <span>提取演讲者提词到块属性并保持正文笔记清爽</span>
+              </label>
+              <label class="spm-checkbox-label">
+                <input v-model="optUploadAssets" type="checkbox" />
+                <span>自动上传关联素材至思源资产库并重写路径 (assets/...)</span>
+              </label>
+              <label class="spm-checkbox-label">
+                <input v-model="optAutoPreview" type="checkbox" />
+                <span>导入后自动打开新文档并开启下方分屏放映预览</span>
+              </label>
+            </template>
           </div>
         </div>
       </div>
@@ -190,13 +201,12 @@ const emit = defineEmits<{
 const plugin = inject<any>('plugin')
 
 const {
-  inputMode,
+  importType,
   isDragging,
   isImporting,
   errorMessage,
   fileInputRef,
   selectedFileName,
-  rawMarkdownText,
   extractedAssetsCount,
   parsedPresentation,
   customDocTitle,
@@ -204,6 +214,7 @@ const {
   selectedNotebookId,
   optCleanHtml,
   optStripNotes,
+  optStripIalToAttrs,
   optUploadAssets,
   optAutoPreview,
   formattedFileSize,
@@ -214,7 +225,6 @@ const {
   clearFile,
   onFileSelected,
   onFileDrop,
-  onTextChange,
   reprocessCurrentInput,
   handleConfirmImport,
 } = useSlidesImport(plugin)
@@ -222,6 +232,11 @@ const {
 onMounted(async () => {
   await fetchNotebooks()
 })
+
+function switchImportType(type: 'live' | 'slidev') {
+  importType.value = type
+  reprocessCurrentInput()
+}
 
 async function onConfirmImport() {
   const docId = await handleConfirmImport()

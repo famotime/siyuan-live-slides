@@ -102,7 +102,7 @@ export function rewritePresentationAssetPaths(
   // 归一化路径查找器
   function resolveSiyuanPath(rawUrl: string): string | null {
     const clean = rawUrl.trim().replace(/^['"]|['"]$/g, "")
-    const fileName = clean.split("/").pop() || clean
+    const fileName = clean.split(/[\\/]/).pop() || clean
 
     // 1. 完整匹配
     if (assetPathMap[clean]) return assetPathMap[clean]
@@ -133,15 +133,16 @@ export function rewritePresentationAssetPaths(
     return replaced
   }
 
-  // 逐页重写正文与背景属性
+  // 逐页重写正文与页面属性 (background, image, mask 等)
   for (const slide of presentation.slides) {
     slide.rawMarkdown = rewriteContentString(slide.rawMarkdown)
 
-    if (slide.pageAttrs["custom-slides-background"]) {
-      const bg = slide.pageAttrs["custom-slides-background"]
-      const target = resolveSiyuanPath(bg)
-      if (target) {
-        slide.pageAttrs["custom-slides-background"] = target
+    for (const key of ["custom-slides-background", "custom-slides-image", "custom-slides-mask"]) {
+      if (slide.pageAttrs[key]) {
+        const target = resolveSiyuanPath(slide.pageAttrs[key])
+        if (target) {
+          slide.pageAttrs[key] = target
+        }
       }
     }
   }
@@ -149,12 +150,30 @@ export function rewritePresentationAssetPaths(
   // 重写整篇平铺 Markdown
   presentation.flattenedMarkdown = rewriteContentString(presentation.flattenedMarkdown)
 
-  // 重写文档根属性中的背景
-  if (presentation.docRootAttrs["custom-slides-background"]) {
-    const bg = presentation.docRootAttrs["custom-slides-background"]
-    const target = resolveSiyuanPath(bg)
-    if (target) {
-      presentation.docRootAttrs["custom-slides-background"] = target
+  // 重写文档根属性中的背景与图片
+  for (const key of ["custom-slides-background", "custom-slides-image"]) {
+    if (presentation.docRootAttrs[key]) {
+      const target = resolveSiyuanPath(presentation.docRootAttrs[key])
+      if (target) {
+        presentation.docRootAttrs[key] = target
+      }
+    }
+  }
+
+  // 重写块属性绑定中的静态资源引用 (即现演示文档)
+  const blockBindings = (presentation as any).blockAttrBindings
+  if (Array.isArray(blockBindings)) {
+    for (const binding of blockBindings) {
+      if (binding.attrs) {
+        for (const [k, v] of Object.entries(binding.attrs)) {
+          if (typeof v === "string") {
+            const target = resolveSiyuanPath(v)
+            if (target) {
+              binding.attrs[k] = target
+            }
+          }
+        }
+      }
     }
   }
 
