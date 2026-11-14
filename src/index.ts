@@ -249,9 +249,19 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
     return updated
   }
 
+  private isOpeningSetting = false
+
   openSetting() {
-    this.setting = createSlidesSettings(this)
-    this.setting.open(this.name)
+    if (this.isOpeningSetting) return
+    this.isOpeningSetting = true
+    try {
+      this.setting = createSlidesSettings(this)
+      this.setting.open(this.name)
+    } finally {
+      setTimeout(() => {
+        this.isOpeningSetting = false
+      }, 500)
+    }
   }
 
   private initApiSwitchSync() {

@@ -227,6 +227,7 @@ describe("siyuan-api-switch 集成与 AI 服务全链路测试", () => {
         },
       })
       expect(headers).toEqual([
+        { "content-type": "application/json" },
         { Authorization: "Bearer sk-test-token" },
         { Accept: "application/json" },
         { "X-Proxy-Gateway": "vip-route" },
@@ -287,7 +288,7 @@ describe("siyuan-api-switch 集成与 AI 服务全链路测试", () => {
       expect(forwardSpy).toHaveBeenCalledWith(
         "https://api.openai.com/v1/chat/completions",
         "POST",
-        expect.stringContaining('"model":"gpt-4o"'),
+        expect.objectContaining({ model: "gpt-4o" }),
         expect.arrayContaining([{ Authorization: "Bearer sk-key" }]),
         30000,
         "application/json"
@@ -308,7 +309,26 @@ describe("siyuan-api-switch 集成与 AI 服务全链路测试", () => {
       expect(r1.success).toBe(false)
       expect(r1.message).toContain("配置不完整")
 
-      // 场景 2：成功连通
+      // 场景 2：思源内核原生 /api/ai/testModel 直接测试成功 (梯队 1)
+      const siyuanModule = await import("siyuan")
+      const kernelTestSpy = vi.spyOn(siyuanModule, "fetchSyncPost").mockResolvedValueOnce({
+        code: 0,
+        msg: "",
+        data: { matched: true, available: ["gpt-4o"] },
+      })
+      const rKernel = await testAiConnection({
+        baseUrl: "https://api.openai.com/v1",
+        apiKey: "sk-kernel-key",
+        model: "gpt-4o",
+      })
+      expect(rKernel.success).toBe(true)
+      expect(rKernel.message).toContain("已通过思源内核验证模型")
+      expect(kernelTestSpy).toHaveBeenCalledWith(
+        "/api/ai/testModel",
+        expect.objectContaining({ model: "gpt-4o" })
+      )
+
+      // 场景 3：降级探针 - 成功连通 (梯队 2)
       const apiModule = await import("../src/api")
       vi.spyOn(apiModule, "forwardProxy").mockResolvedValueOnce({
         status: 200,
@@ -324,7 +344,7 @@ describe("siyuan-api-switch 集成与 AI 服务全链路测试", () => {
       expect(r2.success).toBe(true)
       expect(r2.message).toContain("连接成功")
 
-      // 场景 3：HTTP 状态码错误
+      // 场景 4：降级探针 - HTTP 401 鉴权失败
       vi.spyOn(apiModule, "forwardProxy").mockResolvedValueOnce({
         status: 401,
         body: '{"error":"Unauthorized"}',
@@ -336,6 +356,60 @@ describe("siyuan-api-switch 集成与 AI 服务全链路测试", () => {
       })
       expect(r3.success).toBe(false)
       expect(r3.message).toContain("401")
+      expect(r3.message).toContain("API Key")
+
+      // 场景 5：降级探针 - HTTP 404 端点未找到
+      vi.spyOn(apiModule, "forwardProxy").mockResolvedValueOnce({
+        status: 404,
+        body: "404 page not found",
+      })
+      const r4 = await testAiConnection({
+        baseUrl: "https://api.test.com/v2/wrong",
+        apiKey: "sk-key",
+        model: "test-model",
+      })
+      expect(r4.success).toBe(false)
+      expect(r4.message).toContain("404")
+      expect(r4.message).toContain("Base URL")
+
+      // 场景 6：降级探针 - HTTP 429 限流或欠费
+      vi.spyOn(apiModule, "forwardProxy").mockResolvedValueOnce({
+        status: 429,
+        body: "Rate limit exceeded",
+      })
+      const r5 = await testAiConnection({
+        baseUrl: "https://api.test.com/v1",
+        apiKey: "sk-key",
+        model: "test-model",
+      })
+      expect(r5.success).toBe(false)
+      expect(r5.message).toContain("429")
+      expect(r5.message).toContain("限流")
+
+      // 场景 7：降级探针 - HTTP 400 模型或参数错误
+      vi.spyOn(apiModule, "forwardProxy").mockResolvedValueOnce({
+        status: 400,
+        body: '{"error":{"message":"Model not found"}}',
+      })
+      const r6 = await testAiConnection({
+        baseUrl: "https://api.test.com/v1",
+        apiKey: "sk-key",
+        model: "not-exist-model",
+      })
+      expect(r6.success).toBe(false)
+      expect(r6.message).toContain("400")
+      expect(r6.message).toContain("not-exist-model")
+
+      // 场景 8：网络异常或思源内核代理失败
+      vi.spyOn(apiModule, "forwardProxy").mockRejectedValueOnce(new Error("dial tcp: lookup fail"))
+      const r7 = await testAiConnection({
+        baseUrl: "https://api.unknown-dns.com/v1",
+        apiKey: "sk-key",
+        model: "test-model",
+      })
+      expect(r7.success).toBe(false)
+      expect(r7.message).toContain("代理请求失败")
+      expect(r7.message).toContain("dial tcp")
     })
   })
 
@@ -558,6 +632,18 @@ describe("siyuan-api-switch 集成与 AI 服务全链路测试", () => {
       expect(pluginInstance.setting).toBeDefined()
       expect((pluginInstance.setting as any).isOpen).toBe(true)
       expect((pluginInstance.setting as any).openedName).toBe("siyuan-live-slides")
+    })
+
+    it("连续快速调用 openSetting 应触发防重节流，只创建并打开一次设置弹窗", async () => {
+      const SiYuanLiveSlidesPlugin = (await import("../src/index")).default
+      const pluginInstance = new SiYuanLiveSlidesPlugin({} as any)
+      pluginInstance.name = "siyuan-live-slides"
+
+      pluginInstance.openSetting()
+      const firstSetting = pluginInstance.setting
+      // 模拟快速二次点击，应被节流拦截，不重复创建新 Setting 实例
+      pluginInstance.openSetting()
+      expect(pluginInstance.setting).toBe(firstSetting)
     })
   })
 })

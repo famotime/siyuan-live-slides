@@ -540,11 +540,6 @@ const isAdvancedExpanded = ref(false)
 
 function openSettingsDialog() {
   emit('openSetting')
-  if (plugin && typeof plugin.openSetting === 'function') {
-    plugin.openSetting()
-  } else if (plugin && plugin.setting && typeof plugin.setting.open === 'function') {
-    plugin.setting.open(plugin.name || 'siyuan-live-slides')
-  }
 }
 
 async function onAiModelChange(val: string) {

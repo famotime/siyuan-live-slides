@@ -911,9 +911,20 @@ function onOpenPresenter() {
   }
 }
 
+let isOpeningSetting = false
 function onOpenSetting() {
-  if (plugin && typeof plugin.openSetting === 'function') {
-    plugin.openSetting()
+  if (isOpeningSetting) return
+  isOpeningSetting = true
+  try {
+    if (plugin && typeof plugin.openSetting === 'function') {
+      plugin.openSetting()
+    } else if (plugin && plugin.setting && typeof plugin.setting.open === 'function') {
+      plugin.setting.open(plugin.name || 'siyuan-live-slides')
+    }
+  } finally {
+    setTimeout(() => {
+      isOpeningSetting = false
+    }, 500)
   }
 }
 

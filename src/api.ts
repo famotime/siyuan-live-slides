@@ -221,6 +221,7 @@ export interface IForwardProxyResponse {
   status: number
   body: string
   elapsed?: number
+  headers?: Record<string, string>
 }
 
 export async function forwardProxy(
@@ -231,7 +232,7 @@ export async function forwardProxy(
   timeout = 15000,
   contentType = "application/json"
 ): Promise<IForwardProxyResponse> {
-  const res = await request("/api/network/forwardProxy", {
+  const response: IWebSocketData = await fetchSyncPost("/api/network/forwardProxy", {
     url,
     method,
     timeout,
@@ -239,7 +240,11 @@ export async function forwardProxy(
     headers,
     payload,
   })
-  return res as IForwardProxyResponse
+  if (!response || response.code !== 0) {
+    const errorMsg = response?.msg || "思源内核代理转发请求失败"
+    throw new Error(errorMsg)
+  }
+  return response.data as IForwardProxyResponse
 }
 
 // **************************************** AI (v3.8+) ****************************************
