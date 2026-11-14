@@ -3,6 +3,7 @@ import { ref, computed } from "vue"
 import { useInspectorActions } from "../src/ui/dock/useInspectorActions"
 import * as apiModule from "../src/api"
 import * as domSyncModule from "../src/sync/dom-attr-sync"
+import * as superblockTransformModule from "../src/sync/superblock-transform"
 import * as siyuanModule from "siyuan"
 import { globalDocumentCompiler } from "../src/compiler/document-compiler"
 
@@ -272,6 +273,27 @@ describe("useInspectorActions (Inspector 操作与 API 编排)", () => {
 
       confirmSpy.mockRestore()
       deleteBlockSpy.mockRestore()
+    })
+
+    it("onConvertToSuperBlock - 成功调用 executeConvertToSuperBlock 并触发编译和保存提示", async () => {
+      const transformSpy = vi.spyOn(superblockTransformModule, "executeConvertToSuperBlock").mockResolvedValue({
+        success: true,
+        colCount: 3,
+        superBlockId: "sb-123",
+      })
+      const showMessageSpy = vi.spyOn(siyuanModule, "showMessage")
+
+      await actions.onConvertToSuperBlock()
+
+      expect(transformSpy).toHaveBeenCalledWith({
+        currentDocId: "doc-001",
+        activeBlockId: "block-101",
+      })
+      expect(ctx.plugin.compileCurrentDocument).toHaveBeenCalledWith("doc-001")
+      expect(showMessageSpy).toHaveBeenCalledWith(expect.stringContaining("已成功合并为横向超级块"))
+
+      transformSpy.mockRestore()
+      showMessageSpy.mockRestore()
     })
   })
 })

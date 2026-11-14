@@ -402,6 +402,18 @@
           <SlidesIcon name="broom" />
           <span>清除属性</span>
         </button>
+
+        <button
+          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          style="grid-column: 1 / -1;"
+          :class="{ 'is-disabled': !canConvertToSuperBlock }"
+          :disabled="!canConvertToSuperBlock"
+          :aria-label="canConvertToSuperBlock ? '将当前选中的多个块或列表项合并为横向超级块' : '请在编辑区选中多个块，或选中一个列表/列表项'"
+          @click="$emit('convertToSuperBlock')"
+        >
+          <SlidesIcon name="columns" />
+          <span>转为超级块</span>
+        </button>
       </div>
     </div>
   </div>
@@ -439,6 +451,7 @@ const props = defineProps<{
     isCustomWidth: boolean
     recommendedLayout: string
   } | null
+  canConvertToSuperBlock?: boolean
 }>()
 
 const effectiveLayout = computed(() => {
@@ -556,6 +569,7 @@ const emit = defineEmits<{
   (e: 'insertDividerAfter'): void
   (e: 'setTwoColsContrast'): void
   (e: 'clearBlockAttrs'): void
+  (e: 'convertToSuperBlock'): void
   (e: 'update:imageRole', val: string): void
   (e: 'toggleVideoAutoplay'): void
   (e: 'toggleVideoLoop'): void

@@ -423,6 +423,17 @@
           <SlidesIcon name="trash" />
           <span>删除此页</span>
         </button>
+        <button
+          class="spm-btn-action b3-tooltips b3-tooltips__s"
+          style="grid-column: 1 / -1;"
+          :class="{ 'is-disabled': !canConvertToSuperBlock }"
+          :disabled="!canConvertToSuperBlock"
+          :aria-label="canConvertToSuperBlock ? '将当前选中的多个块或列表项合并为横向超级块' : '请在编辑区选中多个块，或选中一个列表/列表项'"
+          @click="$emit('convertToSuperBlock')"
+        >
+          <SlidesIcon name="columns" />
+          <span>转为超级块</span>
+        </button>
       </div>
     </div>
   </div>
@@ -449,6 +460,7 @@ const props = defineProps<{
   pageMaskInitial?: string
   detectedSbRatio?: string
   detectedSbInfo?: any
+  canConvertToSuperBlock?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -468,6 +480,7 @@ const emit = defineEmits<{
   (e: 'generateNotes'): void
   (e: 'insertDividerAfter'): void
   (e: 'deleteDivider'): void
+  (e: 'convertToSuperBlock'): void
 }>()
 
 const maskRatioPresets = [

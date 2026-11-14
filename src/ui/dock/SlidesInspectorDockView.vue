@@ -77,6 +77,7 @@
         :page-image="pageImage"
         :page-notes="currentSlideNotes"
         :page-index="targetPageIndex"
+        :can-convert-to-super-block="canConvertToSuperBlock"
         @update:page-layout="onLayoutChange"
         @update:page-layout-ratio="onLayoutRatioChange"
         @update:page-mask="onMaskChange"
@@ -93,6 +94,7 @@
         @generate-notes="onGenerateNotesWithAI"
         @insert-divider-after="onInsertDividerAfter"
         @delete-divider="onDeleteCurrentBlock"
+        @convert-to-super-block="onConvertToSuperBlock"
       />
 
       <!-- 场景 B：普通内容块 (段落、标题、列表、表格、代码块等) -->
@@ -119,6 +121,7 @@
         :parent-elem-click="parentContainerClicks"
         :parent-container-slot="parentContainerSlot"
         :parent-container-id="parentContainerId"
+        :can-convert-to-super-block="canConvertToSuperBlock"
         @toggle-note="onToggleNoteBlock"
         @toggle-elem-click="toggleElemClick"
         @toggle-video-autoplay="onToggleVideoAutoplay"
@@ -137,6 +140,7 @@
         @insert-divider-after="onInsertDividerAfter"
         @set-two-cols-contrast="onSetTwoColsContrast"
         @clear-block-attrs="onClearBlockAttrs"
+        @convert-to-super-block="onConvertToSuperBlock"
       />
 
       <!-- 场景 C：全局文档演示配置 (未聚焦具体块或选中文档头) -->
@@ -176,7 +180,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject } from 'vue'
+import { ref, computed, inject, onMounted, onUnmounted, watch } from 'vue'
 import PageInspectorSection from '@/ui/components/PageInspectorSection.vue'
 import BlockInspectorSection from '@/ui/components/BlockInspectorSection.vue'
 import DocInspectorSection from '@/ui/components/DocInspectorSection.vue'
@@ -191,6 +195,7 @@ import {
   isSuperBlock as isSuperBlockNode,
 } from '@/compiler/superblock-scanner'
 import { resolveTargetSlide, isDividerBlockType } from '@/sync/inspector-slide-resolver'
+import { checkCanConvertToSuperBlock } from '@/sync/superblock-transform'
 import { useInspectorActions } from '@/ui/dock/useInspectorActions'
 import { createPageAttrResolver } from '@/ui/dock/useInspectorPageOverrides'
 import { isFeatureEnabled } from '@/feature-flags/feature-flags'
@@ -744,6 +749,7 @@ const {
   onInsertDividerBefore,
   onInsertDividerAfter,
   onDeleteCurrentBlock,
+  onConvertToSuperBlock,
   onExportHtml,
   onExportPdf,
 } = useInspectorActions({
@@ -772,6 +778,34 @@ const {
   elemMaxHeight,
   saveStatus,
   plugin,
+})
+
+// 块多选与列表项合并横向超级块可用状态监听
+const canConvertToSuperBlock = ref(false)
+
+function updateCanConvert() {
+  canConvertToSuperBlock.value = checkCanConvertToSuperBlock(activeBlockId.value, activeBlockType.value)
+}
+
+onMounted(() => {
+  if (typeof document !== 'undefined') {
+    document.addEventListener('selectionchange', updateCanConvert)
+    document.addEventListener('mouseup', updateCanConvert)
+    document.addEventListener('keyup', updateCanConvert)
+  }
+  updateCanConvert()
+})
+
+onUnmounted(() => {
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('selectionchange', updateCanConvert)
+    document.removeEventListener('mouseup', updateCanConvert)
+    document.removeEventListener('keyup', updateCanConvert)
+  }
+})
+
+watch([activeBlockId, activeBlockType], () => {
+  updateCanConvert()
 })
 
 // 场景 A 事件

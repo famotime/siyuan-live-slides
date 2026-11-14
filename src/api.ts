@@ -112,6 +112,30 @@ export async function deleteBlock(id: BlockId): Promise<IResdoOperations[]> {
   return request(url, data)
 }
 
+// **************************************** Transactions (Atomic Multi-Block Operations) ****************************************
+
+export interface IOperation {
+  action: "insert" | "move" | "delete" | "update"
+  id: string
+  data?: string
+  previousID?: string
+  parentID?: string
+  nextID?: string
+}
+
+export interface ITransaction {
+  doOperations: IOperation[]
+  undoOperations?: IOperation[]
+}
+
+export async function performTransactions(transactions: ITransaction[]): Promise<any> {
+  const url = "/api/transactions"
+  return request(url, {
+    reqId: Date.now(),
+    transactions,
+  })
+}
+
 export async function getBlockKramdown(
   id: BlockId,
 ): Promise<IResGetBlockKramdown> {

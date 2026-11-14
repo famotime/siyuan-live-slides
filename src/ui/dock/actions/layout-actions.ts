@@ -27,6 +27,7 @@ import {
   clearAnimationsForDocument,
   runAutoAnimationForDocument,
 } from "@/sync/auto-animation-normalizer"
+import { executeConvertToSuperBlock } from "@/sync/superblock-transform"
 import type { IInspectorActionsContext } from "./attr-persistence"
 
 export interface ILayoutActionsDeps {
@@ -600,6 +601,28 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
     }
   }
 
+  async function onConvertToSuperBlock() {
+    const res = await executeConvertToSuperBlock({
+      currentDocId: ctx.currentDocId?.value || "",
+      activeBlockId: ctx.activeBlockId?.value || "",
+    })
+
+    if (!res.success) {
+      showMessage(res.error || "合并为横向超级块失败")
+      return
+    }
+
+    const notice = `🎉 已成功合并为横向超级块 (${res.colCount || 2} 列)`
+    showMessage(notice)
+    if (deps.triggerSaveNotice) {
+      deps.triggerSaveNotice(notice)
+    }
+
+    if (ctx.plugin?.compileCurrentDocument) {
+      await ctx.plugin.compileCurrentDocument(ctx.currentDocId?.value)
+    }
+  }
+
   return {
     onToggleVideoAutoplay,
     onToggleVideoLoop,
@@ -617,6 +640,7 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
     onInsertDividerBefore,
     onInsertDividerAfter,
     onDeleteCurrentBlock,
+    onConvertToSuperBlock,
     resetSuperBlockWidth,
     applyCloverLayout,
     onAutoAnimateDocument,

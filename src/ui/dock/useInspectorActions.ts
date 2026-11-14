@@ -123,6 +123,7 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     onInsertDividerBefore: layout.onInsertDividerBefore,
     onInsertDividerAfter: layout.onInsertDividerAfter,
     onDeleteCurrentBlock: layout.onDeleteCurrentBlock,
+    onConvertToSuperBlock: layout.onConvertToSuperBlock,
     resetSuperBlockWidth: layout.resetSuperBlockWidth,
     applyCloverLayout: layout.applyCloverLayout,
     onAutoAnimateDocument: layout.onAutoAnimateDocument,
