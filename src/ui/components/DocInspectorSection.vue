@@ -325,15 +325,20 @@
     <div class="spm-advanced-menu" :class="{ 'is-expanded': isAdvancedExpanded }">
       <button
         type="button"
-        class="spm-advanced-toggle"
+        class="spm-advanced-toggle b3-tooltips b3-tooltips__nw"
         :aria-expanded="isAdvancedExpanded"
+        :aria-label="isAdvancedExpanded ? '点击收起高级设置' : '点击展开本地伺服、标题规整、AI提词等高级设置'"
         @click="isAdvancedExpanded = !isAdvancedExpanded"
       >
         <span class="spm-advanced-toggle-label">
-          <SlidesIcon name="settings" />
-          <span>高级设置</span>
+          <SlidesIcon name="settings" class="spm-advanced-settings-icon" />
+          <span class="spm-advanced-title">高级设置</span>
+          <span class="spm-advanced-pill">伺服 / 规整 / AI</span>
         </span>
-        <SlidesIcon name="chevron-right" class="spm-advanced-chevron" />
+        <span class="spm-advanced-toggle-action">
+          <span class="spm-advanced-state-text">{{ isAdvancedExpanded ? '收起' : '展开' }}</span>
+          <SlidesIcon name="chevron-right" class="spm-advanced-chevron" />
+        </span>
       </button>
 
       <div v-if="isAdvancedExpanded" class="spm-advanced-content">
