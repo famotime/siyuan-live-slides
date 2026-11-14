@@ -28,6 +28,22 @@ describe("standalone client runtime 分节拼装 (RF-018)", () => {
     expect(getStandaloneClientRuntimeScript()).toBe(readBaseline())
   })
 
+  it("导出的完整运行时脚本必须语法完全合法且可通过 new Function 解析", () => {
+    const script = getStandaloneClientRuntimeScript()
+    const ts = require("typescript")
+    const sf = ts.createSourceFile("test.js", script, ts.ScriptTarget.ES2020, true)
+    if (sf.parseDiagnostics.length > 0) {
+      const lines = script.split("\n")
+      for (const d of sf.parseDiagnostics) {
+        const { line, character } = sf.getLineAndCharacterOfPosition(d.start)
+        console.log(`Line ${line + 1}:${character + 1} - ${d.messageText}`)
+        console.log("  Content:", lines[line])
+      }
+    }
+    expect(sf.parseDiagnostics.length).toBe(0)
+    expect(() => new Function(script)).not.toThrow()
+  })
+
   it("九个功能分节均应为非空字符串", () => {
     const sections = [
       getCoreStateSection(),

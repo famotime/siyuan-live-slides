@@ -177,7 +177,7 @@ export function getOverviewLayerSection(): string {
           canvas.style.transform = "scale(" + scale + ")";
           const bg = fm.background || (data.config && data.config.background);
           if (bg) {
-            if (/^(http|\/|data:|assets\/)/.test(bg)) {
+            if (/^(http|\\/|data:|assets\\/)/.test(bg)) {
               canvas.style.backgroundImage = 'url("' + bg + '")';
               canvas.style.backgroundSize = "cover";
               canvas.style.backgroundPosition = "center";

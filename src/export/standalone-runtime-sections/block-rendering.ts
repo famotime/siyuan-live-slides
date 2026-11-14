@@ -4,8 +4,8 @@
 export function getBlockRenderingSection(): string {
   return `      function cleanCardListItemMarkdown(rawMarkdown) {
         if (!rawMarkdown) return "";
-        let cleaned = rawMarkdown.replace(/^[ \t]*[-*+]\s+|^[ \t]*\d+\.\s+/, "");
-        cleaned = cleaned.replace(/\n[ \t]{2,4}/g, "\n");
+        let cleaned = rawMarkdown.replace(/^[ \\t]*[-*+]\\s+|^[ \\t]*\\d+\\.\\s+/, "");
+        cleaned = cleaned.replace(/\\n[ \\t]{2,4}/g, "\\n");
         return cleaned.trim();
       }
 
@@ -14,8 +14,8 @@ export function getBlockRenderingSection(): string {
         if (b.type === "h" || b.type === "NodeHeading") return true;
         if (b.subType && /^h[1-6]$/i.test(b.subType)) return true;
         const md = (b.rawMarkdown || b.content || "").trim();
-        if (/^#{1,6}\s+/.test(md)) return true;
-        if (/^(?:[-*+]|\d+\.)\s+#{1,6}\s+/.test(md)) return true;
+        if (/^#{1,6}\\s+/.test(md)) return true;
+        if (/^(?:[-*+]|\\d+\\.)\\s+#{1,6}\\s+/.test(md)) return true;
         return false;
       }
 
@@ -24,7 +24,7 @@ export function getBlockRenderingSection(): string {
         if (valid.length === 0) return valid;
         const first = valid[0];
         const md = (first.rawMarkdown || first.content || "").trim();
-        const isList = /^(?:[-*+]|\d+\.)\s+/.test(md) || first.type === "i" || first.type === "l";
+        const isList = /^(?:[-*+]|\\d+\\.)\\s+/.test(md) || first.type === "i" || first.type === "l";
         if (isList) {
           first.rawMarkdown = cleanCardListItemMarkdown(first.rawMarkdown || first.content || "");
           first.content = first.rawMarkdown;
@@ -72,36 +72,45 @@ export function getBlockRenderingSection(): string {
           div.innerHTML = renderedHtml;
 
           // 挂载交互事件监听
-          const nextBtns = div.querySelectorAll('[\\\\@click*="nav.next"], [\\\\@click*="next"]');
-          nextBtns.forEach(btn => {
-            btn.style.cursor = "pointer";
-            btn.addEventListener("click", (e) => {
-              e.stopPropagation();
-              renderSlide(currentIndex + 1);
-            });
-          });
-
-          const prevBtns = div.querySelectorAll('[\\\\@click*="nav.prev"], [\\\\@click*="prev"]');
-          prevBtns.forEach(btn => {
-            btn.style.cursor = "pointer";
-            btn.addEventListener("click", (e) => {
-              e.stopPropagation();
-              renderSlide(currentIndex - 1);
-            });
+          const allInteractive = div.querySelectorAll("*");
+          allInteractive.forEach(btn => {
+            let hasNext = false;
+            let hasPrev = false;
+            for (let i = 0; i < btn.attributes.length; i++) {
+              const a = btn.attributes[i];
+              const attrName = a.name.toLowerCase();
+              if (attrName.indexOf("@click") !== -1 || attrName.indexOf("v-on:click") !== -1) {
+                if (a.value.indexOf("next") !== -1) hasNext = true;
+                if (a.value.indexOf("prev") !== -1) hasPrev = true;
+              }
+            }
+            if (hasNext) {
+              btn.style.cursor = "pointer";
+              btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                renderSlide(currentIndex + 1);
+              });
+            } else if (hasPrev) {
+              btn.style.cursor = "pointer";
+              btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                renderSlide(currentIndex - 1);
+              });
+            }
           });
 
           return div;
         }
 
-        const hasHeadingTag = /(?:^|\n)\s*#{1,6}\s+/.test(md);
+        const hasHeadingTag = /(?:^|\\n)\\s*#{1,6}\\s+/.test(md);
         const hMatch = md.match(/^(#{1,6})\\s+(.*)$/);
 
         if (hMatch) {
           const level = hMatch[1].length;
-          let th = hMatch[2].trim().replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+          let th = hMatch[2].trim().replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
           div.innerHTML = "<h" + level + ">" + th + "</h" + level + ">";
         }
-        else if (md.startsWith("\`\`\`")) {
+        else if (md.startsWith("\\x60\\x60\\x60")) {
           var rawMaxH = block?.attributes?.["custom-slides-max-height"] || block?.attrs?.["custom-slides-max-height"] || block?.maxHeight || "";
           var customMaxHeight = "";
           if (rawMaxH) {
@@ -115,14 +124,14 @@ export function getBlockRenderingSection(): string {
           div.innerHTML = "<pre" + heightStyle + "><code>" + md.slice(3, -3) + "</code></pre>";
         }
         else if (md.startsWith("> ")) div.innerHTML = "<blockquote><p>" + md.slice(2) + "</p></blockquote>";
-        else if ((/<video\b/i.test(md) || (block && (block.type === "video" || block.type === "NodeVideo"))) && !/^(\s*)([-*+]|\d+\.)\s+/m.test(md) && !hasHeadingTag && !md.includes("\n")) {
+        else if ((/<video\\b/i.test(md) || (block && (block.type === "video" || block.type === "NodeVideo"))) && !/^(\\s*)([-*+]|\\d+\\.)\\s+/m.test(md) && !hasHeadingTag && !md.includes("\\n")) {
           div.classList.add("slide-video-container", "slide-media-container", "slide-media-block");
           const isAutoplay = block && block.attributes && block.attributes["custom-slides-autoplay"] === "true";
           const isLoop = block && block.attributes && block.attributes["custom-slides-loop"] === "true";
           const isMuted = block && block.attributes && (block.attributes["custom-slides-muted"] === "true" || isAutoplay);
           const hideControls = block && block.attributes && block.attributes["custom-slides-controls"] === "false";
           let videoHtml = md;
-          if (hideControls) videoHtml = videoHtml.replace(/\bcontrols(?:="[^"]*")?/gi, "").trim();
+          if (hideControls) videoHtml = videoHtml.replace(/\\bcontrols(?:="[^"]*")?/gi, "").trim();
           else if (!videoHtml.includes("controls")) videoHtml = videoHtml.replace("<video", "<video controls");
           if (isAutoplay && !videoHtml.includes("autoplay")) videoHtml = videoHtml.replace("<video", "<video autoplay playsinline");
           if (isLoop && !videoHtml.includes("loop")) videoHtml = videoHtml.replace("<video", "<video loop");
@@ -132,21 +141,21 @@ export function getBlockRenderingSection(): string {
           div.innerHTML = videoHtml;
         }
         else if (
-          /^(\s*)([-*+]|\d+\.)\s+/m.test(md) ||
-          (md.includes("\n") && /^(\s*)([-*+]|\d+\.)\s+/m.test(md.split("\n").slice(1).join("\n"))) ||
+          /^(\\s*)([-*+]|\\d+\\.)\\s+/m.test(md) ||
+          (md.includes("\\n") && /^(\\s*)([-*+]|\\d+\\.)\\s+/m.test(md.split("\\n").slice(1).join("\\n"))) ||
           ((block && (block.isListItem || block.type === "i")) && !block.isColFirst)
         ) {
           div.classList.add("pdf-list-item");
-          const lines = md.split("\n");
+          const lines = md.split("\\n");
           let isOrdered = false;
           const items = [];
           const leadLines = [];
           for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             const tr = line.trim();
-            if (!tr || /^\{:.*?\}$/.test(tr)) continue;
-            const um = line.match(/^(\s*)[-*+]\s+(.*)$/);
-            const om = line.match(/^(\s*)\d+\.\s+(.*)$/);
+            if (!tr || /^\\{:.*?\\}$/.test(tr)) continue;
+            const um = line.match(/^(\\s*)[-*+]\\s+(.*)$/);
+            const om = line.match(/^(\\s*)\\d+\\.\\s+(.*)$/);
             if (um) {
               const indent = um[1].length;
               items.push({ type: "unordered", level: Math.floor(indent / 2), text: um[2], media: [] });
@@ -159,22 +168,22 @@ export function getBlockRenderingSection(): string {
               continue;
             }
             if (items.length > 0) {
-              const im = tr.match(/^!\[(.*?)\]\((.*?)\)(?:\{:?[^}]*\})?$/);
+              const im = tr.match(/^!\\[(.*?)\\]\\((.*?)\\)(?:\\{:?[^}]*\\})?$/);
               if (im) {
-                const isGif = /\.gif(?:\?|$)/i.test(im[2]);
+                const isGif = /\\.gif(?:\\?|$)/i.test(im[2]);
                 items[items.length - 1].media.push('<div class="slide-list-media"><img alt="' + im[1] + '" src="' + im[2] + '" class="' + (isGif ? 'list-item-gif' : 'list-item-img') + '" /></div>');
                 continue;
               }
-              const hm = tr.match(/^<img\b[\s\S]*?\/?>$/i);
+              const hm = tr.match(/^<img\\b[\\s\\S]*?\\/?>$/i);
               if (hm) {
-                const cleanTr = tr.replace(/\s+style="[^"]*"/gi, "");
+                const cleanTr = tr.replace(/\\s+style="[^"]*"/gi, "");
                 items[items.length - 1].media.push('<div class="slide-list-media">' + cleanTr + '</div>');
                 continue;
               }
-              if (/<video\b/i.test(tr)) {
+              if (/<video\\b/i.test(tr)) {
                 let vHtml = tr;
-                if (!/<\/video>/i.test(vHtml)) {
-                  while (i + 1 < lines.length && !/<\/video>/i.test(vHtml)) {
+                if (!/<\\/video>/i.test(vHtml)) {
+                  while (i + 1 < lines.length && !/<\\/video>/i.test(vHtml)) {
                     i++;
                     vHtml += " " + lines[i].trim();
                   }
@@ -183,7 +192,7 @@ export function getBlockRenderingSection(): string {
                 const isLoop = block && block.attributes && block.attributes["custom-slides-loop"] === "true";
                 const isMuted = block && block.attributes && (block.attributes["custom-slides-muted"] === "true" || isAutoplay);
                 const hideControls = block && block.attributes && block.attributes["custom-slides-controls"] === "false";
-                if (hideControls) vHtml = vHtml.replace(/\bcontrols(?:="[^"]*")?/gi, "").trim();
+                if (hideControls) vHtml = vHtml.replace(/\\bcontrols(?:="[^"]*")?/gi, "").trim();
                 else if (!vHtml.includes("controls")) vHtml = vHtml.replace("<video", "<video controls");
                 if (isAutoplay && !vHtml.includes("autoplay")) vHtml = vHtml.replace("<video", "<video autoplay playsinline");
                 if (isLoop && !vHtml.includes("loop")) vHtml = vHtml.replace("<video", "<video loop");
@@ -192,7 +201,7 @@ export function getBlockRenderingSection(): string {
                 items[items.length - 1].media.push('<div class="slide-list-media slide-video-container slide-media-container" data-autoplay="' + (isAutoplay ? 'true' : 'false') + '">' + vHtml + '</div>');
                 continue;
               }
-              items[items.length - 1].text += "\n" + tr;
+              items[items.length - 1].text += "\\n" + tr;
             } else {
               leadLines.push(tr);
             }
@@ -207,13 +216,13 @@ export function getBlockRenderingSection(): string {
           if (leadLines.length > 0) {
             const lParts = [];
             const firstL = leadLines[0];
-            const fhm = firstL.match(/^(#{1,6})\s+(.*)$/);
+            const fhm = firstL.match(/^(#{1,6})\\s+(.*)$/);
             if (fhm) {
               const lvl = fhm[1].length;
-              let th = fhm[2].trim().replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+              let th = fhm[2].trim().replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
               lParts.push('<h' + lvl + ' class="slide-list-item-title">' + th + '</h' + lvl + '>');
             } else {
-              let th = firstL.trim().replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+              let th = firstL.trim().replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
               lParts.push('<p class="slide-list-item-title">' + th + '</p>');
             }
             if (leadLines.length > 1) {
@@ -221,17 +230,17 @@ export function getBlockRenderingSection(): string {
               let pL = [];
               const flushLeadP = () => {
                 if (pL.length > 0) {
-                  let txt = pL.map(l => l.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>")).join("<br/>");
+                  let txt = pL.map(l => l.replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>")).join("<br/>");
                   lParts.push('<p class="slide-list-item-desc">' + txt + '</p>');
                   pL = [];
                 }
               };
               for (const l of dLines) {
-                const hm = l.match(/^(#{1,6})\s+(.*)$/);
+                const hm = l.match(/^(#{1,6})\\s+(.*)$/);
                 if (hm) {
                   flushLeadP();
                   const lvl = hm[1].length;
-                  let th = hm[2].trim().replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+                  let th = hm[2].trim().replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
                   lParts.push('<h' + lvl + ' class="slide-list-item-title">' + th + '</h' + lvl + '>');
                 } else {
                   pL.push(l);
@@ -239,77 +248,77 @@ export function getBlockRenderingSection(): string {
               }
               flushLeadP();
             }
-            leadHtml = lParts.join("\n") + "\n";
+            leadHtml = lParts.join("\\n") + "\\n";
           }
 
           const tag = isOrdered ? "ol" : "ul";
           const listCls = isOrdered ? "pdf-list pdf-list--ordered" : "pdf-list pdf-list--unordered";
           const liHtml = items.map(it => {
-            const med = it.media && it.media.length ? "\n" + it.media.join("\n") : "";
-            const lines = (it.text || "").split("\n").map(l => l.trim()).filter(Boolean);
-            const hasHeading = lines.some(l => /^#{1,6}\s+/.test(l));
+            const med = it.media && it.media.length ? "\\n" + it.media.join("\\n") : "";
+            const lines = (it.text || "").split("\\n").map(l => l.trim()).filter(Boolean);
+            const hasHeading = lines.some(l => /^#{1,6}\\s+/.test(l));
             const lvl = it.level || 0;
             const nStyle = lvl > 0 ? ' style="margin-left:' + (lvl * 1.25).toFixed(2) + 'em;' + (it.type === 'unordered' ? 'list-style-type:' + (lvl % 2 === 1 ? 'circle' : 'square') + ' !important;' : '') + '"' : "";
             const nClass = lvl > 0 ? " slide-list-item--nested" : "";
             const clsAttr = nClass ? ' class="' + nClass.trim() + '"' : "";
             if (!hasHeading) {
-              let h = lines.map(l => l.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>")).join("<br/>");
+              let h = lines.map(l => l.replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>")).join("<br/>");
               return '<li' + clsAttr + nStyle + '>' + h + med + '</li>';
             }
             const parts = [];
             let pLines = [];
             const flushP = () => {
               if (pLines.length > 0) {
-                let ph = pLines.map(l => l.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>")).join("<br/>");
+                let ph = pLines.map(l => l.replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>")).join("<br/>");
                 parts.push('<p class="slide-list-item-desc">' + ph + '</p>');
                 pLines = [];
               }
             };
             for (const l of lines) {
-              const hm = l.match(/^(#{1,6})\s+(.*)$/);
+              const hm = l.match(/^(#{1,6})\\s+(.*)$/);
               if (hm) {
                 flushP();
                 const hl = hm[1].length;
-                let th = hm[2].trim().replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+                let th = hm[2].trim().replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
                 parts.push('<h' + hl + ' class="slide-list-item-title">' + th + '</h' + hl + '>');
               } else {
                 pLines.push(l);
               }
             }
             flushP();
-            return '<li' + clsAttr + nStyle + '>' + parts.join("\n") + med + '</li>';
-          }).join("\n");
-          div.innerHTML = leadHtml + "<" + tag + " class=\"" + listCls + "\">\n" + liHtml + "\n</" + tag + ">";
+            return '<li' + clsAttr + nStyle + '>' + parts.join("\\n") + med + '</li>';
+          }).join("\\n");
+          div.innerHTML = leadHtml + '<' + tag + ' class="' + listCls + '">\\n' + liHtml + '\\n</' + tag + '>';
         }
         else {
           // 复合块（包含换行、标题或媒体）高保真解析
-          const lines = md.split(/\r?\n/);
+          const lines = md.split(/\\r?\\n/);
           const subBlocks = [];
           let current = [];
           for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             const trimmed = line.trim();
-            if (/^#{1,6}\s+/.test(trimmed)) {
-              if (current.length > 0) { subBlocks.push(current.join("\n")); current = []; }
+            if (/^#{1,6}\\s+/.test(trimmed)) {
+              if (current.length > 0) { subBlocks.push(current.join("\\n")); current = []; }
               subBlocks.push(trimmed);
               continue;
             }
             if (!trimmed) {
-              if (current.length > 0) { subBlocks.push(current.join("\n")); current = []; }
+              if (current.length > 0) { subBlocks.push(current.join("\\n")); current = []; }
               continue;
             }
-            if (/^!\[.*?\]\(.*?\)$/.test(trimmed)) {
-              if (current.length > 0) { subBlocks.push(current.join("\n")); current = []; }
+            if (/^!\\[.*?\\]\\(.*?\\)$/.test(trimmed)) {
+              if (current.length > 0) { subBlocks.push(current.join("\\n")); current = []; }
               subBlocks.push(trimmed);
               continue;
             }
-            if (/<video\b/i.test(trimmed)) {
-              if (current.length > 0) { subBlocks.push(current.join("\n")); current = []; }
+            if (/<video\\b/i.test(trimmed)) {
+              if (current.length > 0) { subBlocks.push(current.join("\\n")); current = []; }
               let vRaw = trimmed;
-              if (!/<\/video>/i.test(vRaw)) {
-                while (i + 1 < lines.length && !/<\/video>/i.test(vRaw)) {
+              if (!/<\\/video>/i.test(vRaw)) {
+                while (i + 1 < lines.length && !/<\\/video>/i.test(vRaw)) {
                   i++;
-                  vRaw += "\n" + lines[i];
+                  vRaw += "\\n" + lines[i];
                 }
               }
               subBlocks.push(vRaw);
@@ -317,49 +326,49 @@ export function getBlockRenderingSection(): string {
             }
             current.push(line);
           }
-          if (current.length > 0) subBlocks.push(current.join("\n"));
+          if (current.length > 0) subBlocks.push(current.join("\\n"));
 
-          if (subBlocks.length > 1 || (subBlocks.length === 1 && /^#{1,6}\s+/.test(subBlocks[0].trim()))) {
+          if (subBlocks.length > 1 || (subBlocks.length === 1 && /^#{1,6}\\s+/.test(subBlocks[0].trim()))) {
             let isFirstParagraph = true;
             const htmlParts = subBlocks.map(sub => {
               const t = sub.trim();
               if (!t) return "";
-              const hm = t.match(/^(#{1,6})\s+(.*)$/);
+              const hm = t.match(/^(#{1,6})\\s+(.*)$/);
               if (hm) {
                 isFirstParagraph = false;
                 const hl = hm[1].length;
-                let th = hm[2].trim().replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+                let th = hm[2].trim().replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
                 return '<h' + hl + ' class="slide-list-item-title">' + th + '</h' + hl + '>';
               }
-              const im = t.match(/^!\[(.*?)\]\((.*?)\)$/);
+              const im = t.match(/^!\\[(.*?)\\]\\((.*?)\\)$/);
               if (im) {
                 return '<div class="slide-media-block slide-media-container slide-list-media"><img alt="' + im[1] + '" src="' + im[2] + '" class="slide-media-img" /></div>';
               }
-              if (/<video\b/i.test(t)) {
+              if (/<video\\b/i.test(t)) {
                 return '<div class="slide-media-block slide-video-container slide-media-container">' + t + '</div>';
               }
               if (isFirstParagraph) {
                 isFirstParagraph = false;
-                const subLines = t.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                const subLines = t.split(/\\r?\\n/).map(l => l.trim()).filter(Boolean);
                 if (subLines.length === 1) {
-                  let ph = subLines[0].replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+                  let ph = subLines[0].replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
                   return '<p class="slide-list-item-title">' + ph + '</p>';
                 }
-                let titleHtml = subLines[0].replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
-                let descHtml = subLines.slice(1).map(l => l.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>")).join("<br/>");
-                return '<p class="slide-list-item-title">' + titleHtml + '</p>\n<p class="slide-list-item-desc">' + descHtml + '</p>';
+                let titleHtml = subLines[0].replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
+                let descHtml = subLines.slice(1).map(l => l.replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>")).join("<br/>");
+                return '<p class="slide-list-item-title">' + titleHtml + '</p>\\n<p class="slide-list-item-desc">' + descHtml + '</p>';
               }
-              let ph = t.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+              let ph = t.replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
               return '<p class="slide-list-item-desc">' + ph + '</p>';
             }).filter(Boolean);
-            div.innerHTML = htmlParts.join("\n");
+            div.innerHTML = htmlParts.join("\\n");
           } else {
-            const imgMatch = md.match(/!\\[(.*?)\\]\\((.*?)\\)/);
+            const imgMatch = md.match(/^!\\[(.*?)\\]\\((.*?)\\)$/);
             if (imgMatch) {
               div.classList.add("slide-media-container", "slide-media-block", "slide-block--image");
               div.innerHTML = '<img alt="' + imgMatch[1] + '" src="' + imgMatch[2] + '" class="slide-media-img" />';
             } else {
-              let html = md.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+              let html = md.replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
               const pCls = (block && block.isColFirst) ? ' class="slide-list-item-title"' : '';
               div.innerHTML = "<p" + pCls + ">" + html + "</p>";
             }
@@ -367,6 +376,5 @@ export function getBlockRenderingSection(): string {
         }
         return div;
       }
-
 `;
 }

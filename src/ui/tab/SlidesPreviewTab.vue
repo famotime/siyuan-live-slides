@@ -202,7 +202,7 @@ import { CursorTracker } from '@/sync/cursor-tracker'
 import { mirrorBlockSelection, clearBlockSelectionHighlight } from '@/sync/selection-mirror'
 import { getRuntimeModule } from '@/engine/runtime-node'
 import { resolvePeekUrl, fileUrlToPath } from '@/utils/peek-url'
-import { buildStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'
+import { exportStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'
 import { triggerPdfExport } from '@/export/pdf-exporter'
 import {
   exportAllSlidesZip,
@@ -543,7 +543,8 @@ async function onExportHtml() {
     return
   }
   const title = await resolveDocumentTitle(latestDoc, (plugin as any)?.currentDocId, plugin)
-  const html = buildStandaloneHtml(latestDoc, { title })
+  showMessage('正在导出单文件离线 HTML（内联媒体资源中...）', 2000)
+  const html = await exportStandaloneHtml(latestDoc, { title })
   const ok = downloadHtmlFile(`${title}.html`, html)
   if (ok) {
     showMessage(`已开始下载单文件离线 HTML 演示包 (${title}.html)`)

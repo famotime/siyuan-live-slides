@@ -1,7 +1,7 @@
 import { ref } from "vue"
 import { showMessage } from "siyuan"
 import { triggerPdfExport } from "@/export/pdf-exporter"
-import { buildStandaloneHtml, downloadHtmlFile } from "@/export/single-html-exporter"
+import { exportStandaloneHtml, downloadHtmlFile } from "@/export/single-html-exporter"
 import { runHeadlessImageExport, resolveDocumentTitle } from "@/export/image-exporter"
 import { createAttrPersistence, type IInspectorActionsContext } from "./actions/attr-persistence"
 import { createNotesActions } from "./actions/notes-actions"
@@ -39,7 +39,8 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     }
     const doc = ctx.latestDoc.value
     const title = await resolveDocumentTitle(doc, ctx.currentDocId?.value, ctx.plugin)
-    const html = buildStandaloneHtml(doc, { title })
+    showMessage("正在导出单文件离线 HTML（内联媒体资源中...）", 2000)
+    const html = await exportStandaloneHtml(doc, { title })
     const ok = downloadHtmlFile(`${title}.html`, html)
     if (ok) {
       showMessage(`已开始下载单文件离线 HTML 演示包 (${title}.html)`)

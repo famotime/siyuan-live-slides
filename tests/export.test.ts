@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest"
 import { buildPrintableHtml, triggerPdfExport } from "../src/export/pdf-exporter"
-import { buildStandaloneHtml, downloadHtmlFile } from "../src/export/single-html-exporter"
+import {
+  buildStandaloneHtml,
+  downloadHtmlFile,
+  extractDocAssetUrls,
+  collectDocAssetsAsBase64Map,
+  exportStandaloneHtml,
+} from "../src/export/single-html-exporter"
 import { generateStandaloneExportStyles } from "../src/export/standalone-template-styles"
 import { getStandaloneClientRuntimeScript } from "../src/export/standalone-client-runtime"
 import type { ISlidesDocument } from "../src/types/slides-protocol"
@@ -82,6 +88,127 @@ describe("Single-File HTML Exporter (单文件离线 HTML 导出)", () => {
 
     expect(html).toContain("data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==")
     expect(html).not.toContain("assets/arch.png")
+  })
+
+  it("应支持按键名长度降序替换带 host 前缀的完整资产 URL，彻底避免前缀残留", () => {
+    const docWithFullUrl: ISlidesDocument = {
+      ...dummyDoc,
+      slides: [
+        {
+          pageIndex: 1,
+          startBlockId: "s1",
+          frontmatter: {
+            background: "https://127.0.0.1:9031/assets/stage-cover.jpg",
+            image: "https://127.0.0.1:9031/assets/end-card.jpg",
+          },
+          notes: "",
+          blocks: [
+            { id: "img-1", type: "p", content: "", rawMarkdown: "![架构](https://127.0.0.1:9031/assets/stage-cover.jpg)" },
+          ],
+          rawMarkdown: "![架构](https://127.0.0.1:9031/assets/stage-cover.jpg)",
+        },
+      ],
+    }
+
+    const html = buildStandaloneHtml(docWithFullUrl, {
+      inlineAssetBase64Map: {
+        "assets/stage-cover.jpg": "data:image/jpeg;base64,SHORT_COVER",
+        "https://127.0.0.1:9031/assets/stage-cover.jpg": "data:image/jpeg;base64,LONG_COVER",
+        "https://127.0.0.1:9031/assets/end-card.jpg": "data:image/jpeg;base64,END_CARD",
+      },
+    })
+
+    expect(html).toContain("data:image/jpeg;base64,LONG_COVER")
+    expect(html).toContain("data:image/jpeg;base64,END_CARD")
+    expect(html).not.toContain("https://127.0.0.1:9031data:image/jpeg;base64")
+    expect(html).not.toContain("stage-cover.jpg")
+  })
+
+  it("extractDocAssetUrls 应能正确提取正文、版式与 frontmatter 中的各种本地资产路径", () => {
+    const docWithMixedAssets: ISlidesDocument = {
+      ...dummyDoc,
+      config: {
+        ...dummyDoc.config,
+        background: "assets/global-bg.png",
+      },
+      slides: [
+        {
+          pageIndex: 1,
+          startBlockId: "s1",
+          frontmatter: {
+            background: "https://127.0.0.1:9031/assets/cover.jpg",
+            image: "./assets/sidebar.png",
+          },
+          notes: "备注里的图片 ![note](assets/note.png)",
+          blocks: [
+            {
+              id: "b1",
+              type: "p",
+              content: "<img src=\"/assets/html-pic.png\">",
+              rawMarkdown: "![md](assets/md-pic.png)",
+              children: [
+                {
+                  id: "b2",
+                  type: "p",
+                  content: "纯文本",
+                  rawMarkdown: "![nested](assets/nested.jpg)",
+                },
+              ],
+            },
+          ],
+          rawMarkdown: "![md](assets/md-pic.png)",
+        },
+      ],
+    }
+
+    const urls = extractDocAssetUrls(docWithMixedAssets)
+    expect(urls).toContain("assets/global-bg.png")
+    expect(urls).toContain("https://127.0.0.1:9031/assets/cover.jpg")
+    expect(urls).toContain("./assets/sidebar.png")
+    expect(urls).toContain("assets/note.png")
+    expect(urls).toContain("/assets/html-pic.png")
+    expect(urls).toContain("assets/md-pic.png")
+    expect(urls).toContain("assets/nested.jpg")
+  })
+
+  it("exportStandaloneHtml 应支持自动拉取并内联资产字典", async () => {
+    const docWithAssets: ISlidesDocument = {
+      ...dummyDoc,
+      slides: [
+        {
+          pageIndex: 1,
+          startBlockId: "s1",
+          frontmatter: {
+            background: "https://127.0.0.1:9031/assets/auto-bg.jpg",
+          },
+          notes: "",
+          blocks: [
+            { id: "b1", type: "p", content: "", rawMarkdown: "![img](assets/auto-body.png)" },
+          ],
+          rawMarkdown: "![img](assets/auto-body.png)",
+        },
+      ],
+    }
+
+    const mockFetcher = async (url: string) => {
+      if (url.includes("auto-bg.jpg")) {
+        return "data:image/jpeg;base64,MOCK_BG_DATA"
+      }
+      if (url.includes("auto-body.png")) {
+        return "data:image/png;base64,MOCK_BODY_DATA"
+      }
+      return null
+    }
+
+    const html = await exportStandaloneHtml(docWithAssets, {
+      title: "自动内联测试",
+      fetcher: mockFetcher,
+    })
+
+    expect(html).toContain("data:image/jpeg;base64,MOCK_BG_DATA")
+    expect(html).toContain("data:image/png;base64,MOCK_BODY_DATA")
+    expect(html).not.toContain("auto-bg.jpg")
+    expect(html).not.toContain("auto-body.png")
   })
 
   it("在非浏览器环境调用 downloadHtmlFile 应安全返回 false", () => {
