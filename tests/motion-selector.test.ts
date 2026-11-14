@@ -4,11 +4,17 @@ import {
   MOTION_PRESETS,
   MOTION_DURATION_OPTIONS,
   MOTION_DELAY_OPTIONS,
+  EMPHASIS_PRESETS,
+  TEXT_PRESETS,
+  EMPHASIS_DURATION_OPTIONS,
+  TYPEWRITER_SPEED_OPTIONS,
   IMotionPreset,
+  IEmphasisPreset,
+  ITextAnimPreset,
 } from '../src/ui/components/motion-presets'
 import BlockInspectorSection from '../src/ui/components/BlockInspectorSection.vue'
 
-describe('MotionSelector - 入场微动效可视化选择器', () => {
+describe('MotionSelector - 入场微动效与多模式可视化选择器', () => {
   it('MotionSelector 组件应成功加载并定义为有效的 Vue SFC', () => {
     expect(MotionSelector).toBeDefined()
     expect(typeof MotionSelector).toBe('object')
@@ -59,6 +65,38 @@ describe('MotionSelector - 入场微动效可视化选择器', () => {
     const delValues = MOTION_DELAY_OPTIONS.map(d => d.value)
     expect(delValues).toContain(0)
     expect(delValues).toContain(150)
+  })
+
+  it('应内置完整的 3 种持续强调微动效预设 (Pulse, Float, Shimmer)', () => {
+    expect(EMPHASIS_PRESETS).toBeDefined()
+    expect(EMPHASIS_PRESETS.length).toBe(3)
+
+    const names = EMPHASIS_PRESETS.map((p: IEmphasisPreset) => p.name)
+    expect(names).toContain('pulse')
+    expect(names).toContain('float')
+    expect(names).toContain('shimmer')
+
+    const labels = EMPHASIS_PRESETS.map((p: IEmphasisPreset) => p.label)
+    expect(labels).toContain('呼吸微光')
+    expect(labels).toContain('3D 悬浮')
+    expect(labels).toContain('流光掠过')
+
+    expect(EMPHASIS_DURATION_OPTIONS.length).toBe(3)
+  })
+
+  it('应内置完整的 2 种文本微动效预设 (CountUp, Typewriter)', () => {
+    expect(TEXT_PRESETS).toBeDefined()
+    expect(TEXT_PRESETS.length).toBe(2)
+
+    const names = TEXT_PRESETS.map((p: ITextAnimPreset) => p.name)
+    expect(names).toContain('countup')
+    expect(names).toContain('typewriter')
+
+    const labels = TEXT_PRESETS.map((p: ITextAnimPreset) => p.label)
+    expect(labels).toContain('数字滚动')
+    expect(labels).toContain('终端打字机')
+
+    expect(TYPEWRITER_SPEED_OPTIONS.length).toBe(3)
   })
 
   it('BlockInspectorSection 引入 MotionSelector 后应正常挂载并导出', () => {

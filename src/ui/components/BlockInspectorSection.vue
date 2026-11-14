@@ -291,7 +291,80 @@
       </div>
 
       <template v-if="hasAnyMotion">
-        <!-- Tab 切换 (入场 / 强调 / 文本) - 受 feature flag 控制 -->
+        <!-- 1. 动效即时试播舞台 (跨 Tab 统一置顶常驻，固定高度 52px 舞台视口，杜绝跳动) -->
+        <div class="spm-motion-stage-card">
+          <div class="spm-motion-stage-header">
+            <div class="spm-stage-title-wrap">
+              <span class="spm-stage-title">即时试播</span>
+              <span class="spm-stage-badge">{{ activeMotionSummaryBadge }}</span>
+            </div>
+            <button
+              type="button"
+              class="spm-btn-stage-replay b3-tooltips b3-tooltips__s"
+              :aria-label="'重新播放' + activeTabTitle"
+              @click="replayLiveStage"
+            >
+              <SlidesIcon name="play" />
+              <span>重播</span>
+            </button>
+          </div>
+
+          <div class="spm-motion-stage-viewport">
+            <!-- A. 入场过渡舞台 -->
+            <div
+              v-if="activeAnimTab === 'entrance'"
+              :key="'ent-' + stagePlayKey"
+              class="spm-motion-stage-sample"
+              :class="['stage-motion-' + currentPreset]"
+              :style="entranceStageStyle"
+            >
+              <div class="spm-sample-header-bar">
+                <span class="spm-sample-dot"></span>
+                <span class="spm-sample-title-line"></span>
+              </div>
+              <div class="spm-sample-text-line"></div>
+              <div class="spm-sample-text-line short"></div>
+            </div>
+
+            <!-- B. 持续强调舞台 (Pulse, Float, Shimmer) -->
+            <div
+              v-else-if="activeAnimTab === 'emphasis'"
+              :key="'emp-' + stagePlayKey"
+              class="spm-motion-stage-sample"
+              :class="['stage-emphasis-' + (currentAnimType || 'pulse')]"
+              :style="emphasisStageStyle"
+            >
+              <div class="spm-sample-header-bar">
+                <span class="spm-sample-dot"></span>
+                <span class="spm-sample-title-line"></span>
+              </div>
+              <div class="spm-sample-text-line"></div>
+              <div class="spm-sample-text-line short"></div>
+            </div>
+
+            <!-- C. 文本动效舞台 (CountUp, Typewriter) -->
+            <div
+              v-else-if="activeAnimTab === 'text'"
+              :key="'txt-' + stagePlayKey"
+              class="spm-stage-text-viewport"
+            >
+              <!-- 数字滚动 -->
+              <div v-if="currentAnimType === 'countup'" class="spm-stage-countup-display">
+                <span v-if="countUpProps.prefix" class="spm-countup-prefix">{{ countUpProps.prefix }}</span>
+                <span class="spm-countup-num">{{ currentStageCountUpValue }}</span>
+                <span v-if="countUpProps.suffix" class="spm-countup-suffix">{{ countUpProps.suffix }}</span>
+              </div>
+              <!-- 终端打字机 -->
+              <div v-else-if="currentAnimType === 'typewriter'" class="spm-stage-typewriter-display">
+                <span class="spm-typewriter-code-tag">&gt;&nbsp;</span>
+                <span class="spm-typewriter-text">{{ currentStageTypewriterText }}</span>
+                <span class="spm-typewriter-cursor">|</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Tab 切换 (入场 / 强调 / 文本) - 受 feature flag 控制 -->
         <div v-if="isAdvAnimEnabled" class="spm-segmented-group" style="margin-bottom: 8px;">
           <button
             class="spm-segmented-item"
@@ -319,85 +392,78 @@
         </div>
 
         <!-- 1. 入场过渡 (Entrance) -->
-        <div v-if="activeAnimTab === 'entrance'">
+        <div v-if="activeAnimTab === 'entrance'" class="spm-tab-panel-fade">
           <MotionSelector
             :model-value="currentPreset"
             :duration="currentDuration"
             :delay="currentDelay"
             :hide-header="true"
+            :hide-stage="true"
             @change="handleMotionChange"
           />
         </div>
 
         <!-- 2. 持续强调 (Emphasis: Pulse, Float, Shimmer) -->
-        <div v-else-if="activeAnimTab === 'emphasis'" class="spm-emphasis-panel">
-          <div class="spm-quick-chips">
-            <button
-              v-if="isEffectEnabled('pulse')"
-              class="spm-chip"
-              :class="{ active: currentAnimType === 'pulse' }"
-              @click="setEmphasisType('pulse')"
+        <div v-else-if="activeAnimTab === 'emphasis'" class="spm-emphasis-panel spm-tab-panel-fade">
+          <!-- 可视化微动效网格 (Visual Motion Grid 3列等宽) -->
+          <div class="spm-motion-grid spm-motion-grid--cols-3">
+            <div
+              v-for="item in EMPHASIS_PRESETS"
+              v-show="isEffectEnabled(item.name)"
+              :key="item.name"
+              class="spm-motion-item b3-tooltips b3-tooltips__s"
+              :class="{ active: currentAnimType === item.name }"
+              :aria-label="item.label + '：' + item.desc"
+              @click="setEmphasisType(item.name)"
             >
-              <SlidesIcon name="sparkles" />
-              <span>呼吸微光</span>
-            </button>
-            <button
-              v-if="isEffectEnabled('float')"
-              class="spm-chip"
-              :class="{ active: currentAnimType === 'float' }"
-              @click="setEmphasisType('float')"
-            >
-              <SlidesIcon name="motion" />
-              <span>3D 悬浮</span>
-            </button>
-            <button
-              v-if="isEffectEnabled('shimmer')"
-              class="spm-chip"
-              :class="{ active: currentAnimType === 'shimmer' }"
-              @click="setEmphasisType('shimmer')"
-            >
-              <SlidesIcon name="sparkles" />
-              <span>流光掠过</span>
-            </button>
+              <div class="spm-motion-mini-stage">
+                <div class="spm-motion-mini-elem" :class="'mini-anim-emphasis-' + item.name"></div>
+              </div>
+              <span class="spm-motion-item-label">{{ item.label }}</span>
+            </div>
           </div>
-          <!-- 持续时长微调 -->
+
+          <!-- 持续时长微调 (紧凑 3 选项) -->
           <div style="margin-top: 8px; display: flex; align-items: center; justify-content: space-between;">
             <span style="font-size: 11px; opacity: 0.8;">循环时长</span>
             <div class="spm-quick-chips" style="margin: 0;">
               <button
-                v-for="d in [1500, 2400, 3600]"
-                :key="d"
+                v-for="opt in EMPHASIS_DURATION_OPTIONS"
+                :key="opt.value"
                 class="spm-chip"
-                :class="{ active: currentAnimDuration === d }"
-                @click="setAnimDuration(d)"
+                :class="{ active: currentAnimDuration === opt.value }"
+                @click="setAnimDuration(opt.value)"
               >
-                {{ (d / 1000).toFixed(1) }}s
+                {{ opt.label }}
               </button>
             </div>
           </div>
         </div>
 
         <!-- 3. 文本动效 (Text: CountUp, Typewriter) -->
-        <div v-else-if="activeAnimTab === 'text'" class="spm-text-anim-panel">
-          <div class="spm-quick-chips" style="margin-bottom: 8px;">
-            <button
-              v-if="isEffectEnabled('countup')"
-              class="spm-chip"
-              :class="{ active: currentAnimType === 'countup' }"
-              @click="setTextAnimType('countup')"
+        <div v-else-if="activeAnimTab === 'text'" class="spm-text-anim-panel spm-tab-panel-fade">
+          <!-- 可视化微动效网格 (Visual Motion Grid 2列等宽) -->
+          <div class="spm-motion-grid spm-motion-grid--cols-2" style="margin-bottom: 8px;">
+            <div
+              v-for="item in TEXT_PRESETS"
+              v-show="isEffectEnabled(item.name)"
+              :key="item.name"
+              class="spm-motion-item b3-tooltips b3-tooltips__s"
+              :class="{ active: currentAnimType === item.name }"
+              :aria-label="item.label + '：' + item.desc"
+              @click="setTextAnimType(item.name)"
             >
-              <SlidesIcon name="step" />
-              <span>数字滚动</span>
-            </button>
-            <button
-              v-if="isEffectEnabled('typewriter')"
-              class="spm-chip"
-              :class="{ active: currentAnimType === 'typewriter' }"
-              @click="setTextAnimType('typewriter')"
-            >
-              <SlidesIcon name="code" />
-              <span>终端打字机</span>
-            </button>
+              <div class="spm-motion-mini-stage">
+                <div v-if="item.name === 'countup'" class="mini-text-countup-wrap">
+                  <span class="mini-countup-num">99</span>
+                </div>
+                <div v-else-if="item.name === 'typewriter'" class="mini-text-typewriter-wrap">
+                  <span class="mini-typewriter-dots">abc</span>
+                  <span class="mini-typewriter-cursor">|</span>
+                </div>
+              </div>
+              <span class="spm-motion-item-label">{{ item.label }}</span>
+            </div>
           </div>
 
           <!-- CountUp 参数配置 -->
@@ -608,10 +674,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import SlidesIcon from '@/ui/components/SlidesIcon.vue'
 import MotionSelector from '@/ui/components/MotionSelector.vue'
 import { isAnimationEnabled } from '@/feature-flags/feature-flags'
+import {
+  MOTION_PRESETS,
+  EMPHASIS_PRESETS,
+  TEXT_PRESETS,
+  EMPHASIS_DURATION_OPTIONS,
+} from '@/ui/components/motion-presets'
 
 const props = defineProps<{
   elemClick: string
@@ -963,6 +1035,167 @@ function autoExtractFromContent() {
     emit('update:elemAnim', 'countup', JSON.stringify(nextProps))
   }
 }
+
+// 动效即时试播舞台 (Live Preview Stage) 与 WYSIWYG 联动
+const stagePlayKey = ref(0)
+const currentStageCountUpValue = ref('0')
+const currentStageTypewriterText = ref('')
+let countUpRafId: number | null = null
+let typewriterTimerId: any = null
+
+const activeTabTitle = computed(() => {
+  if (activeAnimTab.value === 'emphasis') return '持续强调动效'
+  if (activeAnimTab.value === 'text') return '文本微动效'
+  return '入场微动效'
+})
+
+const activeMotionSummaryBadge = computed(() => {
+  if (activeAnimTab.value === 'entrance') {
+    const p = MOTION_PRESETS.find(m => m.name === currentPreset.value)
+    const label = p ? p.label : currentPreset.value
+    const dur = currentDuration.value > 0 ? `${currentDuration.value}ms` : '450ms'
+    const del = currentDelay.value > 0 ? ` · 延时${currentDelay.value}ms` : ''
+    return `${label} · ${dur}${del}`
+  }
+  if (activeAnimTab.value === 'emphasis') {
+    const p = EMPHASIS_PRESETS.find(m => m.name === currentAnimType.value)
+    const label = p ? p.label : '呼吸微光'
+    const dur = (currentAnimDuration.value / 1000).toFixed(1) + 's'
+    return `${label} · 周期${dur}`
+  }
+  if (activeAnimTab.value === 'text') {
+    if (currentAnimType.value === 'countup') {
+      const p = countUpProps.value
+      const targetStr = `${p.prefix}${p.to}${p.suffix}`
+      return `数字滚动 · 目标 ${targetStr}`
+    }
+    if (currentAnimType.value === 'typewriter') {
+      const dur = (currentAnimDuration.value / 1000).toFixed(1) + 's'
+      return `打字机 · 耗时${dur}`
+    }
+    return '文本动效'
+  }
+  return '未激活'
+})
+
+const entranceStageStyle = computed(() => {
+  const dur = currentDuration.value > 0 ? currentDuration.value : 450
+  const del = currentDelay.value > 0 ? currentDelay.value : 0
+  return {
+    '--motion-duration': `${dur}ms`,
+    '--motion-delay': `${del}ms`,
+  }
+})
+
+const emphasisStageStyle = computed(() => {
+  const dur = currentAnimDuration.value > 0 ? currentAnimDuration.value : 2400
+  return {
+    '--emphasis-duration': `${dur}ms`,
+  }
+})
+
+function triggerTextWYSIWYG() {
+  if (countUpRafId !== null) {
+    cancelAnimationFrame(countUpRafId)
+    countUpRafId = null
+  }
+  if (typewriterTimerId !== null) {
+    clearTimeout(typewriterTimerId)
+    typewriterTimerId = null
+  }
+
+  if (activeAnimTab.value === 'text') {
+    if (currentAnimType.value === 'countup') {
+      const from = typeof countUpProps.value.from === 'number' ? countUpProps.value.from : 0
+      const to = typeof countUpProps.value.to === 'number' ? countUpProps.value.to : 0
+      const duration = countUpProps.value.duration || 1500
+      const decimals = countUpProps.value.decimals || 0
+      const startTime = performance.now()
+      currentStageCountUpValue.value = from.toFixed(decimals)
+
+      const easeOutExpo = (t: number) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t))
+      function update(now: number) {
+        const elapsed = now - startTime
+        const progress = Math.min(1, Math.max(0, elapsed / duration))
+        const val = from + (to - from) * easeOutExpo(progress)
+        currentStageCountUpValue.value = val.toFixed(decimals)
+        if (progress < 1) {
+          countUpRafId = requestAnimationFrame(update)
+        } else {
+          countUpRafId = null
+        }
+      }
+      countUpRafId = requestAnimationFrame(update)
+    } else if (currentAnimType.value === 'typewriter') {
+      let rawText = (props.activeBlockContent || '').trim()
+      if (rawText) {
+        rawText = rawText.replace(/^[#*`>-\s]+/, '').split('\n')[0].trim()
+      }
+      if (!rawText) {
+        rawText = 'Slidev 演示微动效系统'
+      }
+      const fullText = rawText.length > 24 ? rawText.slice(0, 24) + '...' : rawText
+      const len = fullText.length
+      const duration = currentAnimDuration.value || 1500
+      const stepMs = Math.max(25, duration / len)
+      let idx = 0
+      currentStageTypewriterText.value = ''
+
+      function step() {
+        idx++
+        currentStageTypewriterText.value = fullText.slice(0, idx)
+        if (idx < len) {
+          typewriterTimerId = setTimeout(step, stepMs)
+        } else {
+          typewriterTimerId = null
+        }
+      }
+      typewriterTimerId = setTimeout(step, stepMs)
+    }
+  }
+}
+
+function replayLiveStage() {
+  stagePlayKey.value++
+  triggerTextWYSIWYG()
+}
+
+watch(
+  [
+    () => activeAnimTab.value,
+    () => currentPreset.value,
+    () => currentDuration.value,
+    () => currentDelay.value,
+    () => currentAnimType.value,
+    () => currentAnimDuration.value,
+    () => countUpProps.value.to,
+    () => countUpProps.value.from,
+    () => countUpProps.value.prefix,
+    () => countUpProps.value.suffix,
+    () => countUpProps.value.decimals,
+    () => countUpProps.value.duration,
+  ],
+  () => {
+    replayLiveStage()
+  },
+)
+
+onMounted(() => {
+  if (hasAnyMotion.value) {
+    replayLiveStage()
+  }
+})
+
+onBeforeUnmount(() => {
+  if (countUpRafId !== null) {
+    cancelAnimationFrame(countUpRafId)
+    countUpRafId = null
+  }
+  if (typewriterTimerId !== null) {
+    clearTimeout(typewriterTimerId)
+    typewriterTimerId = null
+  }
+})
 
 function handleMotionChange(payload: { preset: string; duration: number; delay: number }) {
   emitMotionChange(payload.preset, payload.duration, payload.delay)

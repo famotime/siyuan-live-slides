@@ -1,5 +1,5 @@
 /**
- * 入场微动效 (v-motion) 预设与配置定义
+ * 入场、持续强调与文本微动效预设与配置定义
  */
 
 export interface IMotionPreset {
@@ -36,3 +36,79 @@ export const MOTION_DELAY_OPTIONS = [
   { label: '延迟 300ms', value: 300 },
   { label: '延迟 500ms', value: 500 },
 ]
+
+/** 持续强调微动效预设接口 */
+export interface IEmphasisPreset {
+  name: 'pulse' | 'float' | 'shimmer'
+  label: string
+  desc: string
+  icon: string
+  type: 'emphasis'
+}
+
+/** 3 种标准的持续强调微动效预设 */
+export const EMPHASIS_PRESETS: IEmphasisPreset[] = [
+  {
+    name: 'pulse',
+    label: '呼吸微光',
+    desc: '周期性柔和光晕扩散与微呼吸放大，适合重点词句与关键卡片',
+    icon: 'sparkles',
+    type: 'emphasis',
+  },
+  {
+    name: 'float',
+    label: '3D 悬浮',
+    desc: '轻盈上下浮动与微倾斜阴影，赋予卡片悬空漂浮的层次感',
+    icon: 'motion',
+    type: 'emphasis',
+  },
+  {
+    name: 'shimmer',
+    label: '流光掠过',
+    desc: '高光扫过表面呈现如金属反光般的高级质感，极具吸睛力',
+    icon: 'sparkles',
+    type: 'emphasis',
+  },
+]
+
+/** 文本微动效预设接口 */
+export interface ITextAnimPreset {
+  name: 'countup' | 'typewriter'
+  label: string
+  desc: string
+  icon: string
+  type: 'text'
+}
+
+/** 2 种标准的文本微动效预设 */
+export const TEXT_PRESETS: ITextAnimPreset[] = [
+  {
+    name: 'countup',
+    label: '数字滚动',
+    desc: '数值从起始值平滑缓动翻滚递增至目标值，适合数据指标与战报统计',
+    icon: 'step',
+    type: 'text',
+  },
+  {
+    name: 'typewriter',
+    label: '终端打字机',
+    desc: '逐字敲击输出并伴随光标跳动，营造终端命令行或手敲代码现场感',
+    icon: 'code',
+    type: 'text',
+  },
+]
+
+/** 持续强调常用循环周期选项 (ms) */
+export const EMPHASIS_DURATION_OPTIONS = [
+  { label: '极速 (1.5s)', value: 1500 },
+  { label: '平滑 (2.4s)', value: 2400 },
+  { label: '舒缓 (3.6s)', value: 3600 },
+]
+
+/** 打字机打字速度选项 (ms/字) */
+export const TYPEWRITER_SPEED_OPTIONS = [
+  { label: '极速 (35ms)', value: 35 },
+  { label: '自然 (60ms)', value: 60 },
+  { label: '从容 (100ms)', value: 100 },
+]
+

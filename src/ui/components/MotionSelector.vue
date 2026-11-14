@@ -3,7 +3,7 @@
     <div v-if="!hideHeader" class="spm-motion-selector__header">{{ title || '入场微动效' }}</div>
 
     <!-- 1. 动效即时试播舞台 (Live Preview Stage) -->
-    <div class="spm-motion-stage-card">
+    <div v-if="!hideStage" class="spm-motion-stage-card">
       <div class="spm-motion-stage-header">
         <div class="spm-stage-title-wrap">
           <span class="spm-stage-title">即时试播</span>
@@ -109,6 +109,7 @@ const props = defineProps<{
   duration?: number
   delay?: number
   hideHeader?: boolean
+  hideStage?: boolean
   title?: string
 }>()
 
