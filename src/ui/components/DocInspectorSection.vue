@@ -8,11 +8,13 @@
     <div class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
-          <div class="spm-control-title">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="全局幻灯片视觉设计范式"
+          >
             <SlidesIcon name="palette" />
             <span>幻灯片主题</span>
           </div>
-          <span class="spm-control-desc">全局幻灯片视觉设计范式</span>
         </div>
       </div>
       <div class="spm-theme-card-grid">
@@ -48,11 +50,13 @@
     <div class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
-          <div class="spm-control-title">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="全篇幻灯片统一底色、微渐变或壁纸"
+          >
             <SlidesIcon name="palette" />
             <span>演示背景</span>
           </div>
-          <span class="spm-control-desc">全篇幻灯片统一底色、微渐变或壁纸</span>
         </div>
       </div>
       <div class="spm-bg-swatch-grid">
@@ -101,11 +105,13 @@
     <div class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
-          <div class="spm-control-title">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="演讲屏幕投影宽高比"
+          >
             <SlidesIcon name="ratio" />
             <span>画幅比例</span>
           </div>
-          <span class="spm-control-desc">演讲屏幕投影宽高比</span>
         </div>
       </div>
       <div class="spm-segmented-group">
@@ -137,11 +143,13 @@
     <div class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
-          <div class="spm-control-title">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="内衬、内容间隙与正文行距预设"
+          >
             <SlidesIcon name="ratio" />
             <span>间距风格</span>
           </div>
-          <span class="spm-control-desc">内衬、内容间隙与正文行距预设</span>
         </div>
       </div>
       <div class="spm-segmented-group">
@@ -176,11 +184,13 @@
     <div class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
-          <div class="spm-control-title">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="页面切换过渡动效（未单设转场的页面将继承此动效）"
+          >
             <SlidesIcon name="transition" />
             <span>全局默认转场</span>
           </div>
-          <span class="spm-control-desc">页面切换过渡动效（未单设转场的页面将继承此动效）</span>
         </div>
       </div>
       <TransitionSelector
@@ -324,11 +334,13 @@
         <div class="spm-card-control">
           <div class="spm-control-header">
             <div class="spm-control-title-group">
-              <div class="spm-control-title">
+              <div
+                class="spm-control-title b3-tooltips b3-tooltips__se"
+                aria-label="点击文档/块链接以 Webview 抽屉呈现，支持外跳"
+              >
                 <SlidesIcon name="external-link" />
                 <span>本地网络伺服预览</span>
               </div>
-              <span class="spm-control-desc">点击文档/块链接以 Webview 抽屉呈现，支持外跳</span>
             </div>
             <label
               class="spm-switch b3-tooltips b3-tooltips__w"
@@ -353,9 +365,6 @@
               @input="onWebServeUrlInput(($event.target as HTMLInputElement).value)"
               @change="onWebServeUrlChange(($event.target as HTMLInputElement).value)"
             />
-            <span class="spm-control-desc" style="display: block; margin-top: 4px; font-size: 11px; opacity: 0.8;">
-              默认伺服地址为 http://127.0.0.1:6806。开启后点击块链接将在 Webview 抽屉中打开，点击抽屉顶部『外跳』可在外部浏览器打开
-            </span>
           </div>
         </div>
 
@@ -363,11 +372,13 @@
         <div class="spm-card-control">
           <div class="spm-control-header">
             <div class="spm-control-title-group">
-              <div class="spm-control-title">
+              <div
+                class="spm-control-title b3-tooltips b3-tooltips__se"
+                aria-label="除封面外页首标题按 H2、多栏内首标题按 H3 大小展示"
+              >
                 <SlidesIcon name="type" />
                 <span>固定特定标题大小</span>
               </div>
-              <span class="spm-control-desc">除封面外页首标题按 H2、多栏内首标题按 H3 大小展示</span>
             </div>
             <label
               class="spm-switch b3-tooltips b3-tooltips__w"
@@ -387,11 +398,13 @@
         <div class="spm-card-control">
           <div class="spm-control-header">
             <div class="spm-control-title-group">
-              <div class="spm-control-title">
+              <div
+                class="spm-control-title b3-tooltips b3-tooltips__se"
+                aria-label="分别控制正文中无序列表圆点与有序列表数字序号的呈现"
+              >
                 <SlidesIcon name="list" />
                 <span>列表前缀标记</span>
               </div>
-              <span class="spm-control-desc">分别控制正文中无序列表圆点与有序列表数字序号的呈现</span>
             </div>
           </div>
           <div class="spm-list-markers-toggles" style="display: flex; gap: 8px; margin-top: 8px;">

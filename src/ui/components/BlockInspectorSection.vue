@@ -9,11 +9,13 @@
     <div v-if="isSuperBlock || detectedSbInfo?.hasSuperBlock" class="spm-card-control" style="border-left: 3px solid var(--b3-theme-primary);">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
-          <div class="spm-control-title">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="读取思源超级块列宽并一键同步到幻灯片分栏"
+          >
             <SlidesIcon name="ratio" />
             <span>超级块列宽与布局</span>
           </div>
-          <span class="spm-control-desc">读取思源超级块列宽并一键同步到幻灯片分栏</span>
         </div>
       </div>
 
@@ -59,11 +61,13 @@
     <div v-if="isImage || Boolean(imageRole)" class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
-          <div class="spm-control-title">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="设为幻灯片背景图或图文分栏配图"
+          >
             <SlidesIcon name="image" />
             <span>图片角色与分栏</span>
           </div>
-          <span class="spm-control-desc">设为幻灯片背景图或图文分栏配图</span>
         </div>
       </div>
       <div class="spm-quick-chips">
@@ -105,11 +109,13 @@
     <div v-if="isVideo" class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
-          <div class="spm-control-title">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="配置播放器控制条、自动播放与循环"
+          >
             <SlidesIcon name="video" />
             <span>视频播放设置</span>
           </div>
-          <span class="spm-control-desc">配置播放器控制条、自动播放与循环</span>
         </div>
       </div>
       <div class="spm-video-settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
@@ -148,11 +154,13 @@
     <div class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
-          <div class="spm-control-title">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="放映时按步长逐个呈现"
+          >
             <SlidesIcon name="step" />
             <span>逐步呈现</span>
           </div>
-          <span class="spm-control-desc">放映时按步长逐个呈现</span>
         </div>
         <!-- 现代化微型开关 -->
         <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="elemClick ? '关闭逐步呈现' : '开启逐步呈现 (+1)'">
@@ -193,11 +201,13 @@
     <div class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
-          <div class="spm-control-title">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="为当前块添加平滑位移与渐入动画"
+          >
             <SlidesIcon name="motion" />
             <span>入场微动效</span>
           </div>
-          <span class="spm-control-desc">为当前块添加平滑位移与渐入动画</span>
         </div>
         <label class="spm-switch b3-tooltips b3-tooltips__w" :aria-label="hasMotion ? '关闭微动效' : '开启微动效'">
           <input
@@ -260,11 +270,13 @@
     <div v-if="isMultiColsLayout || elemSlot" class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
-          <div class="spm-control-title">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            :aria-label="slotControlDesc"
+          >
             <SlidesIcon name="columns" />
             <span>{{ slotControlTitle }}</span>
           </div>
-          <span class="spm-control-desc">{{ slotControlDesc }}</span>
         </div>
       </div>
       <div class="spm-segmented-group">
@@ -284,11 +296,13 @@
     <div v-if="isCodeBlock" class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
-          <div class="spm-control-title">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="翻页时动态聚光高亮特定行"
+          >
             <SlidesIcon name="code" />
             <span>代码逐行聚光</span>
           </div>
-          <span class="spm-control-desc">翻页时动态聚光高亮特定行</span>
         </div>
       </div>
       <div class="spm-quick-chips">
@@ -322,11 +336,13 @@
     <div v-if="isCodeBlock" class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
-          <div class="spm-control-title">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="超出限高自动竖向滚动，弱提示滚动条"
+          >
             <SlidesIcon name="code" />
             <span>代码块限高</span>
           </div>
-          <span class="spm-control-desc">超出限高自动竖向滚动，弱提示滚动条</span>
         </div>
       </div>
       <div class="spm-quick-chips">

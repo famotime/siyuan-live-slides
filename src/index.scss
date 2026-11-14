@@ -304,12 +304,17 @@ svg.slides-icon,
   }
 
   .spm-control-title {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
     font-size: 12px;
     font-weight: 600;
     color: var(--b3-theme-on-surface, #1e293b);
+    width: fit-content;
+
+    &.b3-tooltips {
+      cursor: help;
+    }
 
     .slides-icon {
       width: 14px;
@@ -678,8 +683,16 @@ body[data-theme-mode="dark"] .spm-segmented-item.active,
 
   /* 朝上或朝下弹出时居中气泡防穿墙保护：宽度严格约束在侧栏视口内 */
   .b3-tooltips__s::after,
+  .b3-tooltips__se::after,
+  .b3-tooltips__sw::after,
   .b3-tooltips__n::after {
     max-width: min(220px, 85vw) !important;
+  }
+
+  /* 侧栏卡片标题说明 Tooltip 靠左对齐防溢出 */
+  .spm-control-title.b3-tooltips__se::after {
+    left: 0 !important;
+    right: auto !important;
   }
 
   /* 向左弹出 (b3-tooltips__w) 防穿墙保护：最大宽度限制，避免向左撞破侧栏左壁 */

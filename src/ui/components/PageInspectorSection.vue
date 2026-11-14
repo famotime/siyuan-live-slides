@@ -37,11 +37,13 @@
     <div v-if="isMultiColLayout" class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
-          <div class="spm-control-title">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="设置各列横向空间占比，默认平均分配"
+          >
             <SlidesIcon name="ratio" />
             <span>分栏比例</span>
           </div>
-          <span class="spm-control-desc">设置各列横向空间占比，默认平均分配</span>
         </div>
       </div>
 
@@ -124,11 +126,13 @@
     <div class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
-          <div class="spm-control-title">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="随着点击操作分段展露正文内容"
+          >
             <SlidesIcon name="sparkles" />
             <span>页面动态蒙版</span>
           </div>
-          <span class="spm-control-desc">随着点击操作分段展露正文内容</span>
         </div>
       </div>
 
@@ -259,11 +263,13 @@
     <div class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
-          <div class="spm-control-title">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="覆盖本页内衬、内容间隙与正文行距"
+          >
             <SlidesIcon name="ratio" />
             <span>页面间距</span>
           </div>
-          <span class="spm-control-desc">覆盖本页内衬、内容间隙与正文行距</span>
         </div>
       </div>
       <div class="spm-segmented-group">
@@ -308,11 +314,13 @@
     >
       <div class="spm-control-header">
         <div class="spm-control-title-group">
-          <div class="spm-control-title">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="图文分栏或页面专属配图 URL / 资源路径"
+          >
             <SlidesIcon name="image" />
             <span>页面图片</span>
           </div>
-          <span class="spm-control-desc">图文分栏或页面专属配图 URL / 资源路径</span>
         </div>
       </div>
       <div class="spm-quick-chips">
@@ -339,11 +347,13 @@
     <div class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
-          <div class="spm-control-title">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="正文备注块驱动 · 仅演讲者视图可见"
+          >
             <SlidesIcon name="presenter" />
             <span>演讲者提词</span>
           </div>
-          <span class="spm-control-desc">正文备注块驱动 · 仅演讲者视图可见</span>
         </div>
         <button
           v-if="isFeatureEnabled('aiScript')"

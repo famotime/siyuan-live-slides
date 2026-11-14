@@ -70,4 +70,29 @@ describe('Inspector & Dock Tooltips UX Defensive System (侧栏检查器 Tooltip
     expect(dockViewContent).toMatch(/class="spm-icon-btn\s+b3-tooltips\s+b3-tooltips__sw"[\s\S]*?showImportDialog/)
     expect(dockViewContent).toMatch(/class="spm-icon-btn\s+is-primary\s+b3-tooltips\s+b3-tooltips__sw"[\s\S]*?onOpenBottomPreview/)
   })
+
+  it('8. 侧栏三大检查器卡片取消所有副标题显示，改为标题悬浮 tooltips 说明', () => {
+    // 检查三大面板模板中不再包含任何常驻副标题 spm-control-desc
+    expect(pageInspectorContent).not.toContain('class="spm-control-desc"')
+    expect(blockInspectorContent).not.toContain('class="spm-control-desc"')
+    expect(docInspectorContent).not.toContain('class="spm-control-desc"')
+
+    // 检查卡片标题具备 b3-tooltips 及对应 aria-label
+    expect(pageInspectorContent).toMatch(/class="spm-control-title\s+b3-tooltips\s+b3-tooltips__se"[\s\S]*?aria-label="设置各列横向空间占比，默认平均分配"/)
+    expect(pageInspectorContent).toMatch(/class="spm-control-title\s+b3-tooltips\s+b3-tooltips__se"[\s\S]*?aria-label="随着点击操作分段展露正文内容"/)
+    expect(blockInspectorContent).toMatch(/class="spm-control-title\s+b3-tooltips\s+b3-tooltips__se"[\s\S]*?aria-label="放映时按步长逐个呈现"/)
+    expect(blockInspectorContent).toMatch(/class="spm-control-title\s+b3-tooltips\s+b3-tooltips__se"[\s\S]*?aria-label="为当前块添加平滑位移与渐入动画"/)
+    expect(docInspectorContent).toMatch(/class="spm-control-title\s+b3-tooltips\s+b3-tooltips__se"[\s\S]*?aria-label="全局幻灯片视觉设计范式"/)
+    expect(docInspectorContent).toMatch(/class="spm-control-title\s+b3-tooltips\s+b3-tooltips__se"[\s\S]*?aria-label="全篇幻灯片统一底色、微渐变或壁纸"/)
+  })
+
+  it('9. 卡片容器严禁外裹 b3-tooltips，杜绝与内部子控件产生双重重复 Tooltip 冲突', () => {
+    // 卡片外部容器与头部不能直接具有 b3-tooltips，避免鼠标悬浮内部按钮时父级和子级同时触发
+    expect(pageInspectorContent).not.toMatch(/class="spm-card-control[^"]*b3-tooltips/)
+    expect(blockInspectorContent).not.toMatch(/class="spm-card-control[^"]*b3-tooltips/)
+    expect(docInspectorContent).not.toMatch(/class="spm-card-control[^"]*b3-tooltips/)
+    expect(pageInspectorContent).not.toMatch(/class="spm-control-header[^"]*b3-tooltips/)
+    expect(blockInspectorContent).not.toMatch(/class="spm-control-header[^"]*b3-tooltips/)
+    expect(docInspectorContent).not.toMatch(/class="spm-control-header[^"]*b3-tooltips/)
+  })
 })
