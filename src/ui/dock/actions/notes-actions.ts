@@ -9,7 +9,8 @@ import {
   updateBlock,
 } from "@/api"
 import { requestAiChat } from "@/ai/ai-service"
-import { generateSpeakerNotesWithAIDetailed } from "@/ai/notes-generator"
+import { generateSpeakerNotesWithAIDetailed, extractSlideContentForAi } from "@/ai/notes-generator"
+import { resolveTargetSlide } from "@/sync/inspector-slide-resolver"
 import { getEffectiveAiConfig } from "@/settings"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
 import { extractCleanNoteText } from "@/compiler/slides-ast-builder"
@@ -30,6 +31,7 @@ export interface INotesActionsDeps {
 
 export interface INotesActions {
   isBatchProcessing: ReturnType<typeof ref<boolean>>
+  isGeneratingNotes: ReturnType<typeof ref<boolean>>
   createNoteBlockOnCurrentSlide: (noteContent?: string) => Promise<string | undefined>
   onToggleNoteBlock: () => Promise<void>
   onAddNoteBlock: () => Promise<void>
@@ -47,6 +49,7 @@ export interface INotesActions {
  */
 export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesActionsDeps): INotesActions {
   const isBatchProcessing = ref(false)
+  const isGeneratingNotes = ref(false)
   const { triggerSaveNotice } = deps
 
   async function createNoteBlockOnCurrentSlide(noteContent?: string) {
@@ -169,7 +172,11 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
   }
 
   async function onGenerateNotesWithAI() {
-    if (!ctx.currentDocId.value) return
+    const docId = ctx.currentDocId.value || ctx.plugin?.currentDocId || ""
+    if (!docId) {
+      showMessage("未检测到当前文档，请先在编辑器中打开幻灯片文档", 5000, "error")
+      return
+    }
 
     const effective = getEffectiveAiConfig()
     if (!effective) {
@@ -177,39 +184,83 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
       return
     }
 
-    const slideToUse: ISlidesVirtualPage = ctx.targetSlide.value || {
-      pageIndex: 1,
-      startBlockId: ctx.activeBlockId.value || ctx.currentDocId.value,
-      frontmatter: {},
-      notes: "",
-      blocks: ctx.rawSnippet.value && ctx.rawSnippet.value !== "---"
-        ? [{ id: ctx.activeBlockId.value, type: ctx.activeBlockType.value, content: ctx.rawSnippet.value, rawMarkdown: "" }]
-        : [],
-      rawMarkdown: ctx.rawSnippet.value && ctx.rawSnippet.value !== "---" ? ctx.rawSnippet.value : "",
+    if (isGeneratingNotes.value) return
+
+    // 1. 确保获取最新最全的幻灯片 AST（若未编译则自动即时编译）
+    const { slides } = await resolveDocumentSlides()
+
+    // 2. 推导当前目标幻灯片（严格定位当前页）
+    let slideToUse: ISlidesVirtualPage | null = ctx.targetSlide.value
+    if (!slideToUse && slides.length > 0) {
+      slideToUse = resolveTargetSlide(slides, {
+        activeBlockId: ctx.activeBlockId.value,
+        activeBlockType: ctx.activeBlockType.value,
+        currentPageDividerId: ctx.currentPageDividerId.value,
+        activeBlockAttrs: ctx.activeBlockAttrs.value,
+      })
     }
 
-    showMessage("正在调用 AI 提炼本页讲稿提词...")
-    const result = await generateSpeakerNotesWithAIDetailed(slideToUse, requestAiChat)
-    if (result.error) {
-      showMessage(`AI 提炼提词卡失败：${result.error}`, 6000, "error")
+    // 3. 空页校验：若当前页面无有效正文内容，正常返回提示，不进行跨页回溯
+    const content = extractSlideContentForAi(slideToUse)
+    if (!slideToUse || !content) {
+      showMessage("当前幻灯片无有效正文内容，请先输入标题或段落后再提炼讲稿", 5000, "info")
       return
     }
 
-    if (result.notes) {
-      const existingNoteBlockId = ctx.currentSlideNoteBlockId.value
-      if (existingNoteBlockId) {
-        const formattedNoteMd = `> [!NOTE] 💡 演讲备注\n${result.notes.split(/\r?\n/).map(l => `> ${l}`).join("\n")}\n{: custom-slides-note="true"}`
-        await updateBlock("markdown", formattedNoteMd, existingNoteBlockId)
-        await setBlockAttrs(existingNoteBlockId, { [ATTR_ELEM_NOTE]: "true" })
-        globalDocumentCompiler.setBlockAttrOverride(existingNoteBlockId, { [ATTR_ELEM_NOTE]: "true" })
-        mirrorBlockSelection(existingNoteBlockId, ctx.plugin?.app)
-      } else {
-        await createNoteBlockOnCurrentSlide(result.notes)
+    isGeneratingNotes.value = true
+    try {
+      showMessage("正在调用 AI 提炼本页讲稿提词...")
+      const result = await generateSpeakerNotesWithAIDetailed(slideToUse, requestAiChat)
+      if (result.error) {
+        showMessage(`AI 提炼提词卡失败：${result.error}`, 6000, "error")
+        return
       }
-      showMessage("AI 演讲提词卡生成成功！")
-      if (ctx.plugin) {
-        await ctx.plugin.compileCurrentDocument()
+
+      if (result.notes) {
+        const existingNoteBlockId = slideToUse.noteBlocks?.[0]?.id || ctx.currentSlideNoteBlockId.value
+        if (existingNoteBlockId) {
+          const formattedNoteMd = `> [!NOTE] 💡 演讲备注\n${result.notes.split(/\r?\n/).map(l => `> ${l}`).join("\n")}\n{: custom-slides-note="true"}`
+          await updateBlock("markdown", formattedNoteMd, existingNoteBlockId)
+          await setBlockAttrs(existingNoteBlockId, { [ATTR_ELEM_NOTE]: "true" })
+          globalDocumentCompiler.setBlockAttrOverride(existingNoteBlockId, { [ATTR_ELEM_NOTE]: "true" })
+          mirrorBlockSelection(existingNoteBlockId, ctx.plugin?.app)
+        } else {
+          const curIdx = slides.findIndex(s => s === slideToUse)
+          if (curIdx !== -1) {
+            const noteLines = result.notes.split(/\r?\n/).map(l => `> ${l}`).join("\n")
+            const markdownPayload = `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slides-note="true"}`
+            let insertedRes: any = null
+            if (curIdx < slides.length - 1) {
+              const nextSlide = slides[curIdx + 1]
+              insertedRes = await insertBlock("markdown", markdownPayload, nextSlide.startBlockId)
+            } else {
+              const lastBlock = slideToUse.noteBlocks?.slice(-1)[0] || slideToUse.blocks?.slice(-1)[0]
+              const previousId = lastBlock?.id || slideToUse.startBlockId
+              if (previousId) {
+                insertedRes = await insertBlock("markdown", markdownPayload, undefined, previousId)
+              } else {
+                insertedRes = await appendBlock("markdown", markdownPayload, docId)
+              }
+            }
+            const newId = insertedRes?.[0]?.doOperations?.[0]?.id || insertedRes?.[0]?.id
+            if (newId) {
+              await setBlockAttrs(newId, { [ATTR_ELEM_NOTE]: "true" })
+              globalDocumentCompiler.setBlockAttrOverride(newId, { [ATTR_ELEM_NOTE]: "true" })
+              mirrorBlockSelection(newId, ctx.plugin?.app)
+            }
+          } else {
+            await createNoteBlockOnCurrentSlide(result.notes)
+          }
+        }
+        showMessage("AI 演讲提词卡生成成功！")
+        if (ctx.plugin) {
+          await ctx.plugin.compileCurrentDocument()
+        }
       }
+    } catch (err: any) {
+      showMessage(`AI 提炼提词卡异常：${err?.message || err}`, 6000, "error")
+    } finally {
+      isGeneratingNotes.value = false
     }
   }
 
@@ -504,6 +555,7 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
 
   return {
     isBatchProcessing,
+    isGeneratingNotes,
     createNoteBlockOnCurrentSlide,
     onToggleNoteBlock,
     onAddNoteBlock,

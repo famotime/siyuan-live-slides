@@ -107,6 +107,7 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     onAddNoteBlock: notes.onAddNoteBlock,
     onLocateNoteBlock: notes.onLocateNoteBlock,
     onGenerateNotesWithAI: notes.onGenerateNotesWithAI,
+    isGeneratingNotes: notes.isGeneratingNotes,
     isBatchProcessing: notes.isBatchProcessing,
     onBatchAppendNotes: notes.onBatchAppendNotes,
     onBatchDeleteNotes: notes.onBatchDeleteNotes,

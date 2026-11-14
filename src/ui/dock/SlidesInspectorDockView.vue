@@ -77,6 +77,7 @@
         :page-image="pageImage"
         :page-notes="currentSlideNotes"
         :page-index="targetPageIndex"
+        :is-generating-notes="isGeneratingNotes"
         :can-convert-to-super-block="canConvertToSuperBlock"
         @update:page-layout="onLayoutChange"
         @update:page-layout-ratio="onLayoutRatioChange"
@@ -92,6 +93,7 @@
         @add-note-block="onAddNoteBlock"
         @locate-note-block="onLocateNoteBlock"
         @generate-notes="onGenerateNotesWithAI"
+        @open-setting="onOpenSetting"
         @insert-divider-after="onInsertDividerAfter"
         @delete-divider="onDeleteCurrentBlock"
         @convert-to-super-block="onConvertToSuperBlock"
@@ -734,6 +736,7 @@ const {
   onAddNoteBlock,
   onLocateNoteBlock,
   onGenerateNotesWithAI,
+  isGeneratingNotes,
   isBatchProcessing,
   onBatchDeleteNotes,
   onAddOrIdentifyNotesBlocks,

@@ -355,19 +355,40 @@
             <span>演讲者提词</span>
           </div>
         </div>
-        <button
-          v-if="isFeatureEnabled('aiScript')"
-          class="spm-btn-text b3-tooltips b3-tooltips__sw"
-          aria-label="AI 自动生成本页讲稿提示块"
-          @click="$emit('generateNotes')"
-        >
-          <SlidesIcon name="sparkles" />
-          <span>AI 讲稿</span>
-        </button>
+        <div v-if="isFeatureEnabled('aiScript')" class="spm-notes-header-actions">
+          <button
+            type="button"
+            class="spm-btn-primary b3-tooltips b3-tooltips__s"
+            :class="{ 'is-loading': isGeneratingNotes }"
+            :disabled="isGeneratingNotes"
+            aria-label="AI 自动生成本页讲稿提示块"
+            @click="$emit('generateNotes')"
+          >
+            <span v-if="isGeneratingNotes" class="spm-btn-spinner"></span>
+            <SlidesIcon v-else name="sparkles" />
+            <span>{{ isGeneratingNotes ? '提炼中...' : 'AI 讲稿' }}</span>
+          </button>
+          <button
+            type="button"
+            class="spm-btn-icon b3-tooltips b3-tooltips__w"
+            aria-label="打开 AI 讲稿服务配置"
+            @click="$emit('openSetting')"
+          >
+            <SlidesIcon name="settings" />
+          </button>
+        </div>
       </div>
 
       <!-- 提词状态与预览卡片 -->
-      <div v-if="pageNotes" class="spm-note-status-box">
+      <div v-if="isGeneratingNotes" class="spm-note-loading-box">
+        <div class="spm-loading-spinner"></div>
+        <div class="spm-loading-text">
+          <span class="spm-loading-title">AI 正在提炼本页演讲提词...</span>
+          <span class="spm-loading-desc">根据幻灯片上下文智能编写口播要点，请稍候</span>
+        </div>
+      </div>
+
+      <div v-else-if="pageNotes" class="spm-note-status-box">
         <div class="spm-note-status-badge">
           <span class="spm-badge-dot"></span>
           <span>已配置正文讲稿</span>
@@ -471,6 +492,7 @@ const props = defineProps<{
   detectedSbRatio?: string
   detectedSbInfo?: any
   canConvertToSuperBlock?: boolean
+  isGeneratingNotes?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -488,6 +510,7 @@ const emit = defineEmits<{
   (e: 'addNoteBlock'): void
   (e: 'locateNoteBlock'): void
   (e: 'generateNotes'): void
+  (e: 'openSetting'): void
   (e: 'insertDividerAfter'): void
   (e: 'deleteDivider'): void
   (e: 'convertToSuperBlock'): void
@@ -629,6 +652,140 @@ const presetImages = [
 </script>
 
 <style scoped lang="scss">
+.spm-notes-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.spm-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 4px;
+  border: 1px solid var(--b3-theme-primary);
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary, #ffffff);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.4;
+
+  .slides-icon,
+  svg {
+    width: 12px;
+    height: 12px;
+    color: currentColor;
+  }
+
+  &:hover:not(:disabled) {
+    opacity: 0.92;
+    box-shadow: 0 1px 4px rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.35);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  &:disabled,
+  &.is-loading {
+    opacity: 0.75;
+    cursor: not-allowed;
+  }
+}
+
+.spm-btn-spinner {
+  width: 11px;
+  height: 11px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spm-spin 0.8s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.spm-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.06));
+    border-color: var(--b3-border-color);
+    color: var(--b3-theme-primary);
+  }
+
+  .slides-icon,
+  svg {
+    width: 14px;
+    height: 14px;
+    color: currentColor;
+  }
+}
+
+.spm-note-loading-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--b3-theme-surface-light, rgba(0, 0, 0, 0.03));
+  border-radius: 6px;
+  border: 1px dashed var(--b3-theme-primary);
+  font-size: 12px;
+}
+
+.spm-loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.2);
+  border-top-color: var(--b3-theme-primary);
+  border-radius: 50%;
+  animation: spm-spin 0.8s cubic-bezier(0.5, 0.1, 0.4, 0.9) infinite;
+  flex-shrink: 0;
+}
+
+.spm-loading-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.spm-loading-title {
+  font-weight: 500;
+  color: var(--b3-theme-primary);
+  font-size: 12px;
+}
+
+.spm-loading-desc {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+  line-height: 1.3;
+}
+
+@keyframes spm-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 .spm-note-status-box,
 .spm-note-empty-box {
   display: flex;

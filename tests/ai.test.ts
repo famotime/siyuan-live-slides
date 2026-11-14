@@ -240,6 +240,48 @@ describe("AI Modules (智能断页、动效注入与提词卡)", () => {
     expect(r2.isAiGenerated).toBe(false)
     expect(r2.notes).toBe("")
     expect(r2.error).toContain("AI 服务未配置")
+
+    // 3. 深度抽取：超级块与嵌套列表子块文字应能完整递归捕获
+    const { extractSlideContentForAi } = await import("../src/ai/notes-generator")
+    const nestedSlide: ISlidesVirtualPage = {
+      pageIndex: 2,
+      startBlockId: "start-2",
+      frontmatter: { layout: "two-cols" },
+      notes: "",
+      blocks: [
+        {
+          id: "sb-1",
+          type: "s",
+          content: "",
+          rawMarkdown: "",
+          children: [
+            { id: "col-1", type: "p", content: "第一栏：架构核心解耦", rawMarkdown: "第一栏：架构核心解耦" },
+            { id: "col-2", type: "p", content: "第二栏：并发性能飙升", rawMarkdown: "第二栏：并发性能飙升" },
+          ],
+        },
+      ],
+      rawMarkdown: "",
+    }
+    const extractedText = extractSlideContentForAi(nestedSlide)
+    expect(extractedText).toContain("第一栏：架构核心解耦")
+    expect(extractedText).toContain("第二栏：并发性能飙升")
+
+    // 4. 空正文但有配图与标题 frontmatter 的幻灯片应成功组装上下文
+    const coverSlide: ISlidesVirtualPage = {
+      pageIndex: 3,
+      startBlockId: "start-3",
+      frontmatter: {
+        layout: "cover",
+        title: "大模型演讲全指南",
+        image: "assets/cover.png",
+      },
+      notes: "",
+      blocks: [],
+      rawMarkdown: "",
+    }
+    const coverText = extractSlideContentForAi(coverSlide)
+    expect(coverText).toContain("大模型演讲全指南")
+    expect(coverText).toContain("cover.png")
   })
 
   it("chatAI 应向思源内核 /api/ai/chatGPT 传递 msg 参数并正确返回结果", async () => {
