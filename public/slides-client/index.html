@@ -1565,7 +1565,7 @@
       font-weight: 500;
     }
 
-    /* Fact 大字报版式：震撼巨型数字看板与径向光晕氛围 */
+    /* Fact 大字报版式：震撼巨型数字看板与径向光晕氛围 (支持单大数字与多指标列表冒号分割) */
     .slide-content-wrapper.layout-fact,
     .layout-fact,
     .layout-fact-container {
@@ -1578,7 +1578,7 @@
       width: 100%;
       height: 100%;
       box-sizing: border-box;
-      padding: 40px;
+      padding: 36px 48px;
       overflow: hidden;
     }
 
@@ -1588,55 +1588,111 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 600px;
-      height: 600px;
+      width: 650px;
+      height: 650px;
       transform: translate(-50%, -50%);
       background: radial-gradient(circle, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.28) 0%, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08) 45%, transparent 70%);
       pointer-events: none;
-      filter: blur(28px);
+      filter: blur(32px);
       z-index: 0;
     }
 
-    .fact-content-box {
+    .layout-fact-container .layout-header-section {
       position: relative;
       z-index: 1;
+      width: 100%;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .fact-content-box,
+    .fact-stats-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      width: 100%;
+      max-width: 1080px;
+      margin: 0 auto;
+      gap: 36px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .fact-stats-grid--cols-1 {
+      grid-template-columns: 1fr;
+      max-width: 860px;
+    }
+    .fact-stats-grid--cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 48px;
+    }
+    .fact-stats-grid--cols-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 32px;
+    }
+    .fact-stats-grid--cols-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    .fact-stat-card {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      max-width: 960px;
+      text-align: center;
       width: 100%;
-      margin: 0 auto;
-    }
-
-    .slide-content-wrapper.layout-fact .slide-block {
+      box-sizing: border-box;
+      padding: 12px 16px;
       position: relative;
-      z-index: 1;
-      max-width: 960px;
-      margin-left: auto;
-      margin-right: auto;
     }
 
     .fact-value-wrapper,
-    .layout-fact-container .fact-value,
-    .slide-content-wrapper.layout-fact .slide-block:first-child,
-    .layout-fact h1 {
-      font-size: clamp(5.5rem, 12vw, 9rem) !important;
+    .fact-value-box,
+    .fact-value-text {
       font-weight: 900 !important;
       line-height: 1.05 !important;
-      letter-spacing: -0.03em !important;
+      letter-spacing: -0.02em !important;
       color: var(--slide-accent, #3b82f6) !important;
       background: linear-gradient(135deg, var(--slide-accent, #3b82f6), #60a5fa, #93c5fd) !important;
       -webkit-background-clip: text !important;
       -webkit-text-fill-color: transparent !important;
-      filter: drop-shadow(0 6px 28px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.45));
-      margin-bottom: 12px !important;
+      filter: drop-shadow(0 4px 24px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.42));
+      margin-bottom: 8px !important;
       text-align: center !important;
+      word-break: break-word;
+    }
+
+    .fact-stats-grid--cols-1 .fact-value-wrapper,
+    .fact-stats-grid--cols-1 .fact-value-box,
+    .fact-stats-grid--cols-1 .fact-value-text,
+    .layout-fact-cols-1 .fact-value-wrapper {
+      font-size: clamp(5.5rem, 12vw, 8.5rem) !important;
+    }
+
+    .fact-stats-grid--cols-2 .fact-value-wrapper,
+    .fact-stats-grid--cols-2 .fact-value-box,
+    .fact-stats-grid--cols-2 .fact-value-text,
+    .layout-fact-cols-2 .fact-value-wrapper {
+      font-size: clamp(4.2rem, 7.5vw, 6.2rem) !important;
+    }
+
+    .fact-stats-grid--cols-3 .fact-value-wrapper,
+    .fact-stats-grid--cols-3 .fact-value-box,
+    .fact-stats-grid--cols-3 .fact-value-text,
+    .layout-fact-cols-3 .fact-value-wrapper {
+      font-size: clamp(3.4rem, 5.5vw, 4.8rem) !important;
+    }
+
+    .fact-stats-grid--cols-4 .fact-value-wrapper,
+    .fact-stats-grid--cols-4 .fact-value-box,
+    .fact-stats-grid--cols-4 .fact-value-text,
+    .layout-fact-cols-4 .fact-value-wrapper {
+      font-size: clamp(2.8rem, 4.5vw, 3.8rem) !important;
     }
 
     .fact-value-wrapper :is(h1, h2, h3, h4, p, span, div),
-    .layout-fact-container .fact-value :is(h1, h2, h3, h4, p, span, div),
-    .slide-content-wrapper.layout-fact .slide-block:first-child :is(h1, h2, h3, h4, p, span, div),
+    .fact-value-box :is(h1, h2, h3, h4, p, span, div),
     :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .layout-fact-container .fact-value-wrapper :is(h1, h2, h3, h4, p, span) {
       font-size: inherit !important;
       font-weight: inherit !important;
@@ -1651,32 +1707,53 @@
     }
 
     .fact-divider-line {
-      width: 80px;
-      height: 4px;
+      width: 60px;
+      height: 3px;
       border-radius: 2px;
       background: var(--slide-accent, #3b82f6);
-      margin: 16px auto 20px;
+      margin: 12px auto 14px;
       opacity: 0.8;
-      box-shadow: 0 2px 10px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.5);
+      box-shadow: 0 2px 8px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.5);
     }
 
     .fact-label-wrapper,
-    .slide-content-wrapper.layout-fact .slide-block:not(:first-child) {
-      font-size: 1.85rem !important;
+    .fact-label-box,
+    .fact-label-text {
+      font-size: 1.25rem !important;
       font-weight: 500 !important;
-      opacity: 0.9 !important;
-      letter-spacing: 0.05em !important;
-      max-width: 800px;
       line-height: 1.5 !important;
+      letter-spacing: normal !important;
+      color: var(--b3-theme-on-surface, #e2e8f0) !important;
+      background: none !important;
+      -webkit-background-clip: border-box !important;
+      -webkit-text-fill-color: initial !important;
+      filter: none !important;
+      opacity: 0.88 !important;
+      max-width: 480px;
+      margin: 0 auto;
       text-align: center !important;
     }
 
-    .fact-label-wrapper :is(h1, h2, h3, h4, p, span),
-    .slide-content-wrapper.layout-fact .slide-block:not(:first-child) :is(h1, h2, h3, h4, p, span) {
+    .fact-stats-grid--cols-1 .fact-label-wrapper,
+    .fact-stats-grid--cols-1 .fact-label-box,
+    .fact-stats-grid--cols-1 .fact-label-text {
+      font-size: 1.6rem !important;
+      max-width: 720px;
+    }
+
+    .fact-label-box :is(h1, h2, h3, h4, p, span, div, li),
+    .fact-label-wrapper :is(h1, h2, h3, h4, p, span, div, li) {
       font-size: inherit !important;
       font-weight: inherit !important;
       line-height: inherit !important;
+      letter-spacing: normal !important;
+      color: inherit !important;
+      background: none !important;
+      -webkit-background-clip: border-box !important;
+      -webkit-text-fill-color: initial !important;
+      filter: none !important;
       opacity: inherit !important;
+      margin: 0 !important;
       text-align: center !important;
     }
 
@@ -3586,35 +3663,41 @@
               </div>
             </template>
 
-            <!-- 大字报版式 fact -->
+            <!-- 大字报版式 fact (支持单大数字与多指标列表冒号分割) -->
             <template v-else-if="currentSlide.frontmatter.layout === 'fact'">
-              <div class="layout-fact-container" :class="currentSlide.frontmatter.class">
+              <div
+                class="layout-fact-container"
+                :class="[currentSlide.frontmatter.class, 'layout-fact-cols-' + Math.min(4, Math.max(1, factStatCards.length))]"
+                :style="{ '--fact-cols': Math.min(4, Math.max(1, factStatCards.length)) }"
+              >
                 <div class="fact-hero-glow" aria-hidden="true"></div>
-                <div class="fact-content-box">
+                <div class="layout-header-section" v-if="factHeaderBlock">
                   <div
-                    v-if="factFirstBlock"
-                    class="fact-value-wrapper slide-block"
-                    :class="[getBlockClickClass(factFirstBlock), getBlockMotionClass(factFirstBlock), { highlighted: factFirstBlock.id === highlightedBlockId }]"
-                    :data-block-id="factFirstBlock.id"
-                    @click="onBlockClick(factFirstBlock.id, $event)"
+                    class="slides-page-first-heading-block slide-block"
+                    :class="[getBlockClickClass(factHeaderBlock), getBlockMotionClass(factHeaderBlock), { highlighted: factHeaderBlock.id === highlightedBlockId }]"
+                    :style="getBlockMotionStyle(factHeaderBlock)"
+                    :data-block-id="factHeaderBlock.id"
+                    @click="onBlockClick(factHeaderBlock.id, $event)"
                   >
-                    <slide-block-renderer :block="factFirstBlock" :slidev="slidesContext" :render-html="renderBlockHtml" />
+                    <slide-block-renderer :block="factHeaderBlock" :slidev="slidesContext" :render-html="renderBlockHtml" />
                   </div>
-                  <template v-if="factOtherBlocks.length > 0">
-                    <div class="fact-divider-line"></div>
-                    <div class="fact-label-wrapper">
-                      <div
-                        v-for="block in factOtherBlocks"
-                        :key="block.id"
-                        class="slide-block"
-                        :class="[getBlockClickClass(block), getBlockMotionClass(block), { highlighted: block.id === highlightedBlockId }]"
-                        :data-block-id="block.id"
-                        @click="onBlockClick(block.id, $event)"
-                      >
-                        <slide-block-renderer :block="block" :slidev="slidesContext" :render-html="renderBlockHtml" />
-                      </div>
+                </div>
+                <div class="fact-content-box fact-stats-grid" :class="'fact-stats-grid--cols-' + Math.min(4, Math.max(1, factStatCards.length))">
+                  <div
+                    v-for="(stat, sIdx) in factStatCards"
+                    :key="stat.id || sIdx"
+                    class="fact-stat-card"
+                  >
+                    <div class="fact-value-wrapper fact-value-box">
+                      <div class="fact-value-text">{{ stat.value }}</div>
                     </div>
-                  </template>
+                    <template v-if="stat.label">
+                      <div class="fact-divider-line"></div>
+                      <div class="fact-label-wrapper fact-label-box">
+                        <div class="fact-label-text">{{ stat.label }}</div>
+                      </div>
+                    </template>
+                  </div>
                 </div>
               </div>
             </template>
@@ -5596,16 +5679,101 @@
           return normalBlocks.value.filter(b => b.id !== firstH.id);
         });
 
-        const factBlocks = computed(() => {
-          if (!currentSlide.value) return [];
-          return (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right");
+        const factData = computed(() => {
+          if (!currentSlide.value) return { headerBlock: null, statCards: [] };
+          const all = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right" && (b.rawMarkdown || b.content || "").trim());
+          if (all.length === 0) return { headerBlock: null, statCards: [] };
+
+          let headerBlock = null;
+          const explicitH = all.find(b => b.slot === "header");
+          const isFirstH = all.length >= 2 && isHeadingBlock(all[0]);
+          const hasSubsequentList = all.length >= 2 && (all[1].type === "l" || (all[1].children && all[1].children.length > 0) || /^(\s*)(?:[-*+]|\d+\.)\s+/m.test(all[1].rawMarkdown || ""));
+
+          if (explicitH) {
+            headerBlock = explicitH;
+          } else if (isFirstH && (hasSubsequentList || all.length >= 3)) {
+            headerBlock = all[0];
+          }
+
+          const rem = headerBlock ? all.filter(b => b !== headerBlock) : all;
+          const cards = [];
+
+          // 1. 优先提取列表容器
+          const rawLines = [];
+          if (rem.length === 1 && rem[0].children && rem[0].children.length >= 1) {
+            for (const c of rem[0].children) {
+              rawLines.push((c.rawMarkdown || c.content || "").trim());
+            }
+          } else if (rem.length === 1) {
+            const lines = (rem[0].rawMarkdown || rem[0].content || "").trim().split(/\r?\n/);
+            const hasListMarkers = lines.some(l => /^(\s*)(?:[-*+]|\d+\.)\s+/.test(l));
+            if (hasListMarkers) {
+              for (const line of lines) {
+                if (/^(\s*)(?:[-*+]|\d+\.)\s+/.test(line)) {
+                  rawLines.push(line.trim());
+                }
+              }
+            }
+          }
+
+          if (rawLines.length > 0) {
+            rawLines.forEach((line, idx) => {
+              const cleaned = cleanCardListItemMarkdown(line).trim();
+              const colonMatch = cleaned.match(/^([^\n:：]+?)(?:\s*[:：]\s*)([\s\S]+)$/);
+              if (colonMatch) {
+                cards.push({
+                  id: `fact-stat-${idx}`,
+                  value: colonMatch[1].trim(),
+                  label: colonMatch[2].trim(),
+                });
+              } else {
+                const parts = cleaned.split(/\r?\n/);
+                cards.push({
+                  id: `fact-stat-${idx}`,
+                  value: parts[0].trim(),
+                  label: parts.slice(1).join("\n").trim(),
+                });
+              }
+            });
+          } else if (rem.length >= 2) {
+            const allColon = rem.every(b => /[:：]/.test(cleanCardListItemMarkdown(b.rawMarkdown || b.content || "")));
+            if (allColon) {
+              rem.forEach((b, idx) => {
+                const cleaned = cleanCardListItemMarkdown(b.rawMarkdown || b.content || "").trim();
+                const m = cleaned.match(/^([^\n:：]+?)(?:\s*[:：]\s*)([\s\S]+)$/);
+                if (m) {
+                  cards.push({ id: b.id || `fact-stat-${idx}`, value: m[1].trim(), label: m[2].trim() });
+                } else {
+                  cards.push({ id: b.id || `fact-stat-${idx}`, value: cleaned, label: "" });
+                }
+              });
+            } else if (rem.length % 2 === 0) {
+              for (let i = 0; i < rem.length; i += 2) {
+                cards.push({
+                  id: rem[i].id || `fact-stat-${i}`,
+                  value: cleanCardListItemMarkdown(rem[i].rawMarkdown || rem[i].content || "").trim(),
+                  label: cleanCardListItemMarkdown(rem[i + 1].rawMarkdown || rem[i + 1].content || "").trim(),
+                });
+              }
+            }
+          }
+
+          if (cards.length === 0 && rem.length > 0) {
+            const firstClean = cleanCardListItemMarkdown(rem[0].rawMarkdown || rem[0].content || "").trim();
+            const m = firstClean.match(/^([^\n:：]+?)(?:\s*[:：]\s*)([\s\S]+)$/);
+            if (m) {
+              cards.push({ id: rem[0].id || "fact-stat-0", value: m[1].trim(), label: m[2].trim() });
+            } else {
+              const other = rem.slice(1).map(b => cleanCardListItemMarkdown(b.rawMarkdown || b.content || "").trim()).join("\n");
+              cards.push({ id: rem[0].id || "fact-stat-0", value: firstClean, label: other });
+            }
+          }
+
+          return { headerBlock, statCards: cards };
         });
-        const factFirstBlock = computed(() => {
-          return factBlocks.value.length > 0 ? factBlocks.value[0] : null;
-        });
-        const factOtherBlocks = computed(() => {
-          return factBlocks.value.length > 1 ? factBlocks.value.slice(1) : [];
-        });
+
+        const factHeaderBlock = computed(() => factData.value.headerBlock);
+        const factStatCards = computed(() => factData.value.statCards);
 
         const timelineStepItems = computed(() => {
           if (!currentSlide.value) return [];
@@ -7197,11 +7365,37 @@
           } else if (layout === "quote") {
             body = '<div class="layout-quote-container"><div class="quote-watermark-icon">“</div><div class="quote-content-body">' + g.normal.map(buildThumbBlockHtml).join("") + '</div></div>'
           } else if (layout === "fact") {
-            const first = g.normal[0]
-            const rest = g.normal.slice(1)
-            const firstHtml = first ? '<div class="fact-value-wrapper">' + buildThumbBlockHtml(first) + '</div>' : ''
-            const restHtml = rest.length > 0 ? '<div class="fact-divider-line"></div><div class="fact-label-wrapper">' + rest.map(buildThumbBlockHtml).join("") + '</div>' : ''
-            body = '<div class="layout-fact-container"><div class="fact-hero-glow"></div><div class="fact-content-box">' + firstHtml + restHtml + '</div></div>'
+            const rawLines = []
+            if (g.normal.length === 1 && g.normal[0].children && g.normal[0].children.length >= 1) {
+              for (const c of g.normal[0].children) rawLines.push((c.rawMarkdown || c.content || "").trim())
+            } else if (g.normal.length === 1) {
+              const lines = (g.normal[0].rawMarkdown || g.normal[0].content || "").trim().split(/\r?\n/)
+              for (const line of lines) {
+                if (/^(\s*)(?:[-*+]|\d+\.)\s+/.test(line)) rawLines.push(line.trim())
+              }
+            }
+            let cards = []
+            if (rawLines.length > 0) {
+              cards = rawLines.map(function(line) {
+                const cl = cleanCardListItemMarkdown(line).trim()
+                const m = cl.match(/^([^\n:：]+?)(?:\s*[:：]\s*)([\s\S]+)$/)
+                return m ? { val: m[1].trim(), lbl: m[2].trim() } : { val: cl, lbl: "" }
+              })
+            } else if (g.normal.length >= 2 && g.normal.length % 2 === 0) {
+              for (let i = 0; i < g.normal.length; i += 2) {
+                cards.push({ val: cleanCardListItemMarkdown(g.normal[i].rawMarkdown || g.normal[i].content || "").trim(), lbl: cleanCardListItemMarkdown(g.normal[i+1].rawMarkdown || g.normal[i+1].content || "").trim() })
+              }
+            } else if (g.normal.length > 0) {
+              const firstCl = cleanCardListItemMarkdown(g.normal[0].rawMarkdown || g.normal[0].content || "").trim()
+              const m = firstCl.match(/^([^\n:：]+?)(?:\s*[:：]\s*)([\s\S]+)$/)
+              if (m) cards.push({ val: m[1].trim(), lbl: m[2].trim() })
+              else cards.push({ val: firstCl, lbl: g.normal.slice(1).map(function(b) { return cleanCardListItemMarkdown(b.rawMarkdown || b.content || "").trim() }).join("\n") })
+            }
+            const cCount = Math.max(1, Math.min(4, cards.length))
+            const cardsHtml = cards.map(function(c) {
+              return '<div class="fact-stat-card"><div class="fact-value-wrapper fact-value-box">' + String(c.val).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") + '</div>' + (c.lbl ? '<div class="fact-divider-line"></div><div class="fact-label-wrapper fact-label-box">' + String(c.lbl).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") + '</div>' : '') + '</div>'
+            }).join("")
+            body = '<div class="layout-fact-container layout-fact-cols-' + cCount + '"><div class="fact-hero-glow"></div><div class="fact-content-box fact-stats-grid fact-stats-grid--cols-' + cCount + '">' + cardsHtml + '</div></div>'
           } else if (layout === "timeline" || layout === "steps") {
             let items = g.normal
             if (items.length === 1 && items[0].children && items[0].children.length >= 2) {
@@ -8218,8 +8412,8 @@
           maskDividerStyle,
           pageFirstHeadingBlock,
           bodyBlocksWithoutFirstHeading,
-          factFirstBlock,
-          factOtherBlocks,
+          factHeaderBlock,
+          factStatCards,
           timelineStepItems
         }
       }

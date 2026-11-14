@@ -219,21 +219,117 @@ export function renderSlideBlocksToHtml(
     `
   }
 
-  // 4. 大字报版式 (fact) - 极致放大的核心指标与发光微光氛围
+  // 4. 大字报版式 (fact) - 极致放大的核心指标与发光微光氛围 (支持单大数字与多指标列表冒号分割)
   if (layout === "fact") {
     const validBlocks = blocks.filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
-    const firstBlock = validBlocks[0]
-    const otherBlocks = validBlocks.slice(1)
+    let headerBlocks: ISlidesBlockItem[] = []
+    const explicitHeader = validBlocks.filter(b => b.slot === "header")
+    const isFirstHeading = validBlocks.length >= 2 && isHeadingBlock(validBlocks[0])
+    const hasSubsequentList = validBlocks.length >= 2 && (validBlocks[1].type === "l" || validBlocks[1].children?.length || /^(\s*)(?:[-*+]|\d+\.)\s+/m.test(validBlocks[1].rawMarkdown || ""))
+    if (explicitHeader.length > 0) {
+      headerBlocks = explicitHeader
+    } else if (isFirstHeading && (hasSubsequentList || validBlocks.length >= 3)) {
+      headerBlocks = [validBlocks[0]]
+    }
 
-    const firstHtml = firstBlock ? convertBlockToHtml(firstBlock, { ...options, extraClassName: "fact-value" }) : ""
-    const otherHtml = otherBlocks.map(b => convertBlockToHtml(b, { ...options, extraClassName: "fact-label" })).join("\n")
+    const rem = validBlocks.filter(b => !headerBlocks.includes(b))
+    const headerHtml = headerBlocks.map(b => convertBlockToHtml(b, { ...options, extraClassName: "slides-page-first-heading-block" })).join("\n")
+
+    interface IFactCard {
+      value: string
+      label: string
+    }
+    const statCards: IFactCard[] = []
+
+    // 1. 优先提取列表块 (NodeList 或多行列表)
+    const rawLines: string[] = []
+    if (rem.length === 1 && rem[0].children && rem[0].children.length >= 1) {
+      for (const c of rem[0].children) {
+        rawLines.push((c.rawMarkdown || c.content || "").trim())
+      }
+    } else if (rem.length === 1) {
+      const lines = (rem[0].rawMarkdown || rem[0].content || "").trim().split(/\r?\n/)
+      const hasListMarkers = lines.some(l => /^(\s*)(?:[-*+]|\d+\.)\s+/.test(l))
+      if (hasListMarkers) {
+        for (const line of lines) {
+          if (/^(\s*)(?:[-*+]|\d+\.)\s+/.test(line)) {
+            rawLines.push(line.trim())
+          }
+        }
+      }
+    }
+
+    if (rawLines.length > 0) {
+      for (const line of rawLines) {
+        const cleaned = cleanCardListItemMarkdown(line).trim()
+        const colonMatch = cleaned.match(/^([^\n:：]+?)(?:\s*[:：]\s*)([\s\S]+)$/)
+        if (colonMatch) {
+          statCards.push({
+            value: colonMatch[1].trim(),
+            label: colonMatch[2].trim(),
+          })
+        } else {
+          const parts = cleaned.split(/\r?\n/)
+          statCards.push({
+            value: parts[0].trim(),
+            label: parts.slice(1).join("\n").trim(),
+          })
+        }
+      }
+    } else if (rem.length >= 2) {
+      // 2. 检查多块是否包含冒号分割
+      const allColon = rem.every(b => /[:：]/.test(cleanCardListItemMarkdown(b.rawMarkdown || b.content || "")))
+      if (allColon) {
+        for (const b of rem) {
+          const cleaned = cleanCardListItemMarkdown(b.rawMarkdown || b.content || "").trim()
+          const m = cleaned.match(/^([^\n:：]+?)(?:\s*[:：]\s*)([\s\S]+)$/)
+          if (m) {
+            statCards.push({ value: m[1].trim(), label: m[2].trim() })
+          } else {
+            statCards.push({ value: cleaned, label: "" })
+          }
+        }
+      } else if (rem.length % 2 === 0) {
+        // 交替块配对
+        for (let i = 0; i < rem.length; i += 2) {
+          statCards.push({
+            value: cleanCardListItemMarkdown(rem[i].rawMarkdown || rem[i].content || "").trim(),
+            label: cleanCardListItemMarkdown(rem[i + 1].rawMarkdown || rem[i + 1].content || "").trim(),
+          })
+        }
+      }
+    }
+
+    // 3. 经典单指标回退
+    if (statCards.length === 0 && rem.length > 0) {
+      const firstClean = cleanCardListItemMarkdown(rem[0].rawMarkdown || rem[0].content || "").trim()
+      const m = firstClean.match(/^([^\n:：]+?)(?:\s*[:：]\s*)([\s\S]+)$/)
+      if (m) {
+        statCards.push({ value: m[1].trim(), label: m[2].trim() })
+      } else {
+        const otherHtml = rem.slice(1).map(b => cleanCardListItemMarkdown(b.rawMarkdown || b.content || "").trim()).join("\n")
+        statCards.push({ value: firstClean, label: otherHtml })
+      }
+    }
+
+    const colsCount = Math.max(1, Math.min(4, statCards.length))
+    const cardsHtml = statCards.map(c => {
+      const valHtml = convertBlockToHtml({ id: "val", type: "p", rawMarkdown: c.value, content: c.value }, options)
+      const lblHtml = c.label ? convertBlockToHtml({ id: "lbl", type: "p", rawMarkdown: c.label, content: c.label }, options) : ""
+      return `
+        <div class="fact-stat-card">
+          <div class="fact-value-wrapper fact-value-box">${valHtml}</div>
+          ${lblHtml ? `<div class="fact-divider-line"></div><div class="fact-label-wrapper fact-label-box">${lblHtml}</div>` : ""}
+        </div>
+      `
+    }).join("\n")
 
     return `
-      <div class="layout-fact-container">
+      <div class="layout-fact-container layout-fact-cols-${colsCount}">
         <div class="fact-hero-glow" aria-hidden="true"></div>
-        <div class="fact-content-box">
-          <div class="fact-value-wrapper">${firstHtml}</div>
-          ${otherHtml ? `<div class="fact-divider-line"></div><div class="fact-label-wrapper">${otherHtml}</div>` : ""}
+        ${headerHtml ? `<div class="layout-header-section">${headerHtml}</div>` : ""}
+        <div class="fact-content-box fact-stats-grid fact-stats-grid--cols-${colsCount}">
+          ${cardsHtml}
         </div>
       </div>
     `

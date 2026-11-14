@@ -420,40 +420,101 @@ export function getSlideRenderingSection(): string {
           }
           container.appendChild(bodyWrap);
         } else if (slide.frontmatter?.layout === "fact") {
-          const validBlocks = (slide.blocks || []).filter(b => b.slot !== "slot-divider-right");
-          const first = validBlocks[0];
-          const rest = validBlocks.slice(1);
+          const validBlocks = (slide.blocks || []).filter(b => b.slot !== "slot-divider-right" && (b.rawMarkdown || b.content || "").trim());
+          let headerBlocks = [];
+          const explicitHeader = validBlocks.filter(b => b.slot === "header");
+          const isFirstH = validBlocks.length >= 2 && isHeadingBlock(validBlocks[0]);
+          const hasSubsequentList = validBlocks.length >= 2 && (validBlocks[1].type === "l" || (validBlocks[1].children && validBlocks[1].children.length > 0) || /^(\s*)(?:[-*+]|\d+\.)\s+/m.test(validBlocks[1].rawMarkdown || ""));
 
+          if (explicitHeader.length > 0) {
+            headerBlocks = explicitHeader;
+          } else if (isFirstH && (hasSubsequentList || validBlocks.length >= 3)) {
+            headerBlocks = [validBlocks[0]];
+          }
+
+          const rem = validBlocks.filter(b => !headerBlocks.includes(b));
+          let cards = [];
+
+          const rawLines = [];
+          if (rem.length === 1 && rem[0].children && rem[0].children.length >= 1) {
+            for (const c of rem[0].children) rawLines.push((c.rawMarkdown || c.content || "").trim());
+          } else if (rem.length === 1) {
+            const lines = (rem[0].rawMarkdown || rem[0].content || "").trim().split(/[\\r\\n]+/);
+            for (const line of lines) {
+              if (/^[\\s]*(?:[-*+]|\\d+\\.)[\\s]+/.test(line)) rawLines.push(line.trim());
+            }
+          }
+
+          if (rawLines.length > 0) {
+            cards = rawLines.map((line) => {
+              const cl = cleanCardListItemMarkdown(line).trim();
+              const m = cl.match(/^([^\\n:：]+?)(?:[\\s]*[:：][\\s]*)([\\s\\S]+)$/);
+              return m ? { val: m[1].trim(), lbl: m[2].trim() } : { val: cl, lbl: "" };
+            });
+          } else if (rem.length >= 2 && rem.length % 2 === 0) {
+            for (let i = 0; i < rem.length; i += 2) {
+              cards.push({
+                val: cleanCardListItemMarkdown(rem[i].rawMarkdown || rem[i].content || "").trim(),
+                lbl: cleanCardListItemMarkdown(rem[i + 1].rawMarkdown || rem[i + 1].content || "").trim(),
+              });
+            }
+          } else if (rem.length > 0) {
+            const firstCl = cleanCardListItemMarkdown(rem[0].rawMarkdown || rem[0].content || "").trim();
+            const m = firstCl.match(/^([^\\n:：]+?)(?:[\\s]*[:：][\\s]*)([\\s\\S]+)$/);
+            if (m) cards.push({ val: m[1].trim(), lbl: m[2].trim() });
+            else cards.push({ val: firstCl, lbl: rem.slice(1).map(b => cleanCardListItemMarkdown(b.rawMarkdown || b.content || "").trim()).join("\\n") });
+          }
+
+          const colsCount = Math.max(1, Math.min(4, cards.length));
           const factContainer = document.createElement("div");
-          factContainer.className = "layout-fact-container";
+          factContainer.className = "layout-fact-container layout-fact-cols-" + colsCount;
+          factContainer.style.setProperty("--fact-cols", String(colsCount));
 
           const glow = document.createElement("div");
           glow.className = "fact-hero-glow";
           glow.setAttribute("aria-hidden", "true");
           factContainer.appendChild(glow);
 
-          const box = document.createElement("div");
-          box.className = "fact-content-box";
-
-          if (first) {
-            const valWrap = document.createElement("div");
-            valWrap.className = "fact-value-wrapper";
-            valWrap.appendChild(renderBlock(first, ""));
-            box.appendChild(valWrap);
-          }
-
-          if (rest.length > 0) {
-            const divLine = document.createElement("div");
-            divLine.className = "fact-divider-line";
-            box.appendChild(divLine);
-
-            const lblWrap = document.createElement("div");
-            lblWrap.className = "fact-label-wrapper";
-            for (const b of rest) {
-              lblWrap.appendChild(renderBlock(b, ""));
+          if (headerBlocks.length > 0) {
+            const headerDiv = document.createElement("div");
+            headerDiv.className = "layout-header-section";
+            for (const hb of headerBlocks) {
+              headerDiv.appendChild(renderBlock(hb, "slides-page-first-heading-block"));
             }
-            box.appendChild(lblWrap);
+            factContainer.appendChild(headerDiv);
           }
+
+          const box = document.createElement("div");
+          box.className = "fact-content-box fact-stats-grid fact-stats-grid--cols-" + colsCount;
+
+          cards.forEach((c) => {
+            const cardEl = document.createElement("div");
+            cardEl.className = "fact-stat-card";
+
+            const valWrap = document.createElement("div");
+            valWrap.className = "fact-value-wrapper fact-value-box";
+            const valText = document.createElement("div");
+            valText.className = "fact-value-text";
+            valText.textContent = c.val;
+            valWrap.appendChild(valText);
+            cardEl.appendChild(valWrap);
+
+            if (c.lbl) {
+              const divLine = document.createElement("div");
+              divLine.className = "fact-divider-line";
+              cardEl.appendChild(divLine);
+
+              const lblWrap = document.createElement("div");
+              lblWrap.className = "fact-label-wrapper fact-label-box";
+              const lblText = document.createElement("div");
+              lblText.className = "fact-label-text";
+              lblText.textContent = c.lbl;
+              lblWrap.appendChild(lblText);
+              cardEl.appendChild(lblWrap);
+            }
+
+            box.appendChild(cardEl);
+          });
 
           factContainer.appendChild(box);
           container.appendChild(factContainer);

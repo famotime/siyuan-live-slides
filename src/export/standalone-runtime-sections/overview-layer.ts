@@ -156,22 +156,61 @@ export function getOverviewLayerSection(): string {
           glow.className = "fact-hero-glow";
           bodyEl.appendChild(glow);
           const box = document.createElement("div");
-          box.className = "fact-content-box";
-          if (blocks.length > 0) {
+          box.className = "fact-content-box fact-stats-grid";
+
+          const rawLines = [];
+          if (blocks.length === 1 && blocks[0].children && blocks[0].children.length >= 1) {
+            for (const c of blocks[0].children) rawLines.push((c.rawMarkdown || c.content || "").trim());
+          } else if (blocks.length === 1) {
+            const lines = (blocks[0].rawMarkdown || blocks[0].content || "").trim().split(/[\\r\\n]+/);
+            for (const line of lines) {
+              if (/^[\\s]*(?:[-*+]|\\d+\\.)[\\s]+/.test(line)) rawLines.push(line.trim());
+            }
+          }
+
+          let cards = [];
+          if (rawLines.length > 0) {
+            cards = rawLines.map((line) => {
+              const cl = cleanCardListItemMarkdown(line).trim();
+              const m = cl.match(/^([^\\n:：]+?)(?:[\\s]*[:：][\\s]*)([\\s\\S]+)$/);
+              return m ? { val: m[1].trim(), lbl: m[2].trim() } : { val: cl, lbl: "" };
+            });
+          } else if (blocks.length >= 2 && blocks.length % 2 === 0) {
+            for (let i = 0; i < blocks.length; i += 2) {
+              cards.push({
+                val: cleanCardListItemMarkdown(blocks[i].rawMarkdown || blocks[i].content || "").trim(),
+                lbl: cleanCardListItemMarkdown(blocks[i + 1].rawMarkdown || blocks[i + 1].content || "").trim(),
+              });
+            }
+          } else if (blocks.length > 0) {
+            const firstCl = cleanCardListItemMarkdown(blocks[0].rawMarkdown || blocks[0].content || "").trim();
+            const m = firstCl.match(/^([^\\n:：]+?)(?:[\\s]*[:：][\\s]*)([\\s\\S]+)$/);
+            if (m) cards.push({ val: m[1].trim(), lbl: m[2].trim() });
+            else cards.push({ val: firstCl, lbl: blocks.slice(1).map((b) => cleanCardListItemMarkdown(b.rawMarkdown || b.content || "").trim()).join("\\n") });
+          }
+
+          const cCount = Math.max(1, Math.min(4, cards.length));
+          bodyEl.className += " layout-fact-cols-" + cCount;
+          box.className += " fact-stats-grid--cols-" + cCount;
+
+          cards.forEach((c) => {
+            const cardEl = document.createElement("div");
+            cardEl.className = "fact-stat-card";
             const vWrap = document.createElement("div");
-            vWrap.className = "fact-value-wrapper";
-            vWrap.appendChild(renderBlock(blocks[0], ""));
-            box.appendChild(vWrap);
-          }
-          if (blocks.length > 1) {
-            const divLine = document.createElement("div");
-            divLine.className = "fact-divider-line";
-            box.appendChild(divLine);
-            const lWrap = document.createElement("div");
-            lWrap.className = "fact-label-wrapper";
-            for (let i = 1; i < blocks.length; i++) lWrap.appendChild(renderBlock(blocks[i], ""));
-            box.appendChild(lWrap);
-          }
+            vWrap.className = "fact-value-wrapper fact-value-box";
+            vWrap.textContent = c.val;
+            cardEl.appendChild(vWrap);
+            if (c.lbl) {
+              const divLine = document.createElement("div");
+              divLine.className = "fact-divider-line";
+              cardEl.appendChild(divLine);
+              const lWrap = document.createElement("div");
+              lWrap.className = "fact-label-wrapper fact-label-box";
+              lWrap.textContent = c.lbl;
+              cardEl.appendChild(lWrap);
+            }
+            box.appendChild(cardEl);
+          });
           bodyEl.appendChild(box);
         } else if (layout === "timeline" || layout === "steps") {
           bodyEl = document.createElement("div");

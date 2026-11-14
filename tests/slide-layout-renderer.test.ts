@@ -76,8 +76,34 @@ describe("SlideLayoutRenderer (幻灯片版式容器渲染器)", () => {
     }
     const factHtml = renderSlideBlocksToHtml(factPage)
     expect(factHtml).toContain("layout-fact-container")
-    expect(factHtml).toContain("fact-value")
-    expect(factHtml).toContain("fact-label")
+    expect(factHtml).toContain("fact-value-wrapper")
+    expect(factHtml).toContain("fact-label-wrapper")
+  })
+
+  it("应支持 fact 大字报列表模式（中英文冒号分割）并渲染多指标网格卡片", () => {
+    const factPage: ISlidesVirtualPage = {
+      pageIndex: 5,
+      frontmatter: { layout: "fact" },
+      blocks: [
+        { id: "h", type: "h", rawMarkdown: "# 核心系统指标" },
+        {
+          id: "list",
+          type: "l",
+          rawMarkdown: "- 99.99%：核心服务高可用性保障 SLA\n- 45%: 测试性能优化提升",
+        },
+      ],
+      rawMarkdown: "",
+    }
+    const html = renderSlideBlocksToHtml(factPage)
+    expect(html).toContain("layout-fact-container")
+    expect(html).toContain("fact-stats-grid--cols-2")
+    expect(html).toContain("99.99%")
+    expect(html).toContain("核心服务高可用性保障 SLA")
+    expect(html).toContain("45%")
+    expect(html).toContain("测试性能优化提升")
+    expect(html).toContain("fact-stat-card")
+    expect(html).toContain("fact-value-box")
+    expect(html).toContain("fact-label-box")
   })
 
   it("应支持 quote 引言版式并自动识别出处署名", () => {

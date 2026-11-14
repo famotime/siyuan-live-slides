@@ -717,7 +717,7 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
     .layout-center-container h1, .layout-center h1 { font-size: 2.8rem !important; font-weight: 700 !important; margin-bottom: 16px !important; }
     .layout-center-container p, .layout-center p { font-size: 1.35rem !important; line-height: 1.6 !important; max-width: 800px; margin-left: auto; margin-right: auto; }
 
-    /* Fact 大字报版式：震撼巨型数字看板与径向光晕氛围 */
+    /* Fact 大字报版式：震撼巨型数字看板与径向光晕氛围 (支持单大数字与多指标列表冒号分割) */
     .layout-fact,
     .layout-fact-container {
       position: relative;
@@ -729,80 +729,165 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       width: 100%;
       height: 100%;
       box-sizing: border-box;
-      padding: 40px;
+      padding: 36px 48px;
       overflow: hidden;
     }
     .fact-hero-glow {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 600px;
-      height: 600px;
+      width: 650px;
+      height: 650px;
       transform: translate(-50%, -50%);
-      background: radial-gradient(circle, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.22) 0%, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.05) 45%, transparent 70%);
+      background: radial-gradient(circle, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.28) 0%, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08) 45%, transparent 70%);
       pointer-events: none;
-      filter: blur(20px);
+      filter: blur(32px);
       z-index: 0;
     }
-    .fact-content-box {
+    .layout-fact-container .layout-header-section {
       position: relative;
       z-index: 1;
+      width: 100%;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .fact-content-box,
+    .fact-stats-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      width: 100%;
+      max-width: 1080px;
+      margin: 0 auto;
+      gap: 36px;
+      justify-content: center;
+      align-items: center;
+    }
+    .fact-stats-grid--cols-1 {
+      grid-template-columns: 1fr;
+      max-width: 860px;
+    }
+    .fact-stats-grid--cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 48px;
+    }
+    .fact-stats-grid--cols-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 32px;
+    }
+    .fact-stats-grid--cols-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 24px;
+    }
+    .fact-stat-card {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      max-width: 900px;
+      text-align: center;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px 16px;
+      position: relative;
     }
     .fact-value-wrapper,
-    .layout-fact-container .fact-value,
-    .layout-fact .fact-value,
-    .layout-fact .slide-block:first-child,
-    .layout-fact-container h1,
-    .layout-fact h1 {
-      font-size: clamp(5.5rem, 11vw, 8.5rem) !important;
+    .fact-value-box,
+    .fact-value-text {
       font-weight: 900 !important;
       line-height: 1.05 !important;
-      letter-spacing: -0.03em !important;
-      color: var(--slide-accent) !important;
-      background: linear-gradient(135deg, var(--slide-accent), #60a5fa) !important;
+      letter-spacing: -0.02em !important;
+      color: var(--slide-accent, #3b82f6) !important;
+      background: linear-gradient(135deg, var(--slide-accent, #3b82f6), #60a5fa, #93c5fd) !important;
       -webkit-background-clip: text !important;
       -webkit-text-fill-color: transparent !important;
-      filter: drop-shadow(0 4px 20px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.35));
+      filter: drop-shadow(0 4px 24px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.42));
       margin-bottom: 8px !important;
+      text-align: center !important;
+      word-break: break-word;
     }
-    .fact-value-wrapper p,
-    .layout-fact-container .fact-value p,
-    .layout-fact .fact-value p,
-    .layout-fact .slide-block:first-child p {
+    .fact-stats-grid--cols-1 .fact-value-wrapper,
+    .fact-stats-grid--cols-1 .fact-value-box,
+    .fact-stats-grid--cols-1 .fact-value-text,
+    .layout-fact-cols-1 .fact-value-wrapper {
+      font-size: clamp(5.5rem, 12vw, 8.5rem) !important;
+    }
+    .fact-stats-grid--cols-2 .fact-value-wrapper,
+    .fact-stats-grid--cols-2 .fact-value-box,
+    .fact-stats-grid--cols-2 .fact-value-text,
+    .layout-fact-cols-2 .fact-value-wrapper {
+      font-size: clamp(4.2rem, 7.5vw, 6.2rem) !important;
+    }
+    .fact-stats-grid--cols-3 .fact-value-wrapper,
+    .fact-stats-grid--cols-3 .fact-value-box,
+    .fact-stats-grid--cols-3 .fact-value-text,
+    .layout-fact-cols-3 .fact-value-wrapper {
+      font-size: clamp(3.4rem, 5.5vw, 4.8rem) !important;
+    }
+    .fact-stats-grid--cols-4 .fact-value-wrapper,
+    .fact-stats-grid--cols-4 .fact-value-box,
+    .fact-stats-grid--cols-4 .fact-value-text,
+    .layout-fact-cols-4 .fact-value-wrapper {
+      font-size: clamp(2.8rem, 4.5vw, 3.8rem) !important;
+    }
+    .fact-value-box :is(h1, h2, h3, h4, p, span, div),
+    .fact-value-wrapper :is(h1, h2, h3, h4, p, span, div) {
       font-size: inherit !important;
       font-weight: inherit !important;
       line-height: inherit !important;
+      letter-spacing: inherit !important;
       color: inherit !important;
       background: inherit !important;
       -webkit-background-clip: text !important;
       -webkit-text-fill-color: transparent !important;
       margin: 0 !important;
+      text-align: center !important;
     }
     .fact-divider-line {
-      width: 72px;
-      height: 4px;
+      width: 60px;
+      height: 3px;
       border-radius: 2px;
-      background: var(--slide-accent);
+      background: var(--slide-accent, #3b82f6);
+      margin: 12px auto 14px;
       opacity: 0.8;
-      margin: 18px auto 20px;
+      box-shadow: 0 2px 8px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.5);
     }
     .fact-label-wrapper,
-    .layout-fact-container .fact-label,
-    .layout-fact .fact-label,
-    .layout-fact .slide-block:not(:first-child),
-    .layout-fact-container p,
-    .layout-fact p {
-      font-size: 1.75rem !important;
+    .fact-label-box,
+    .fact-label-text {
+      font-size: 1.25rem !important;
       font-weight: 500 !important;
-      opacity: 0.88 !important;
-      letter-spacing: 0.04em !important;
-      max-width: 780px;
       line-height: 1.5 !important;
+      letter-spacing: normal !important;
+      color: var(--b3-theme-on-surface, #e2e8f0) !important;
+      background: none !important;
+      -webkit-background-clip: border-box !important;
+      -webkit-text-fill-color: initial !important;
+      filter: none !important;
+      opacity: 0.88 !important;
+      max-width: 480px;
+      margin: 0 auto;
+      text-align: center !important;
+    }
+    .fact-stats-grid--cols-1 .fact-label-wrapper,
+    .fact-stats-grid--cols-1 .fact-label-box,
+    .fact-stats-grid--cols-1 .fact-label-text {
+      font-size: 1.6rem !important;
+      max-width: 720px;
+    }
+    .fact-label-box :is(h1, h2, h3, h4, p, span, div, li),
+    .fact-label-wrapper :is(h1, h2, h3, h4, p, span, div, li) {
+      font-size: inherit !important;
+      font-weight: inherit !important;
+      line-height: inherit !important;
+      letter-spacing: normal !important;
+      color: inherit !important;
+      background: none !important;
+      -webkit-background-clip: border-box !important;
+      -webkit-text-fill-color: initial !important;
+      filter: none !important;
+      opacity: inherit !important;
+      margin: 0 !important;
+      text-align: center !important;
     }
 
     /* Timeline / Steps 时间线与步骤流程版式 */

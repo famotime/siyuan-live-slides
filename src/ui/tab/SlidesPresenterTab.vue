@@ -2110,13 +2110,50 @@ defineExpose({
     opacity: 0.85 !important;
   }
 
-  .layout-fact h1,
-  .layout-fact-container h1,
+  .layout-fact .fact-hero-glow,
+  .layout-fact-container .fact-hero-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 600px;
+    height: 600px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.22) 0%, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.05) 45%, transparent 70%);
+    pointer-events: none;
+    filter: blur(28px);
+    z-index: 0;
+  }
+  .layout-fact .fact-stats-grid,
+  .layout-fact-container .fact-stats-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    width: 100%;
+    gap: 32px;
+    justify-content: center;
+    align-items: center;
+  }
+  .layout-fact-container .fact-stats-grid--cols-1 { grid-template-columns: 1fr; max-width: 800px; }
+  .layout-fact-container .fact-stats-grid--cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px; }
+  .layout-fact-container .fact-stats-grid--cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
+  .layout-fact-container .fact-stats-grid--cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+  .layout-fact .fact-stat-card,
+  .layout-fact-container .fact-stat-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 14px;
+  }
   .layout-fact .fact-value,
   .layout-fact-container .fact-value,
-  .layout-fact .slide-block:first-child,
-  .layout-fact-container .fact-value-wrapper {
-    font-size: clamp(5rem, 10vw, 7.5rem) !important;
+  .layout-fact .fact-value-wrapper,
+  .layout-fact-container .fact-value-wrapper,
+  .layout-fact .fact-value-box,
+  .layout-fact-container .fact-value-box {
     font-weight: 900 !important;
     line-height: 1.05 !important;
     color: var(--slide-accent) !important;
@@ -2125,23 +2162,66 @@ defineExpose({
     -webkit-text-fill-color: transparent !important;
     filter: drop-shadow(0 4px 16px rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.35));
     margin-bottom: 8px !important;
+    text-align: center !important;
+  }
+  .layout-fact-cols-1 .fact-value-wrapper,
+  .fact-stats-grid--cols-1 .fact-value-wrapper { font-size: clamp(5rem, 10vw, 7.5rem) !important; }
+  .layout-fact-cols-2 .fact-value-wrapper,
+  .fact-stats-grid--cols-2 .fact-value-wrapper { font-size: clamp(3.8rem, 7vw, 5.5rem) !important; }
+  .layout-fact-cols-3 .fact-value-wrapper,
+  .fact-stats-grid--cols-3 .fact-value-wrapper { font-size: clamp(3rem, 5vw, 4.2rem) !important; }
+  .layout-fact-cols-4 .fact-value-wrapper,
+  .fact-stats-grid--cols-4 .fact-value-wrapper { font-size: clamp(2.5rem, 4vw, 3.5rem) !important; }
+  .layout-fact .fact-value-box :is(h1, h2, h3, h4, p, span),
+  .layout-fact-container .fact-value-box :is(h1, h2, h3, h4, p, span),
+  .layout-fact .fact-value-wrapper :is(h1, h2, h3, h4, p, span),
+  .layout-fact-container .fact-value-wrapper :is(h1, h2, h3, h4, p, span) {
+    font-size: inherit !important;
+    font-weight: inherit !important;
+    line-height: inherit !important;
+    color: inherit !important;
+    background: inherit !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    margin: 0 !important;
   }
   .layout-fact-container .fact-divider-line {
     width: 60px;
     height: 3px;
     background: var(--slide-accent);
-    margin: 14px auto 18px;
+    margin: 10px auto 14px;
     border-radius: 2px;
   }
-  .layout-fact p,
-  .layout-fact-container p,
   .layout-fact .fact-label,
   .layout-fact-container .fact-label,
-  .layout-fact .slide-block:not(:first-child),
-  .layout-fact-container .fact-label-wrapper {
-    font-size: 1.6rem !important;
+  .layout-fact .fact-label-wrapper,
+  .layout-fact-container .fact-label-wrapper,
+  .layout-fact .fact-label-box,
+  .layout-fact-container .fact-label-box {
+    font-size: 1.25rem !important;
+    font-weight: 500 !important;
     opacity: 0.88 !important;
     line-height: 1.5 !important;
+    max-width: 440px;
+    margin: 0 auto;
+    text-align: center !important;
+  }
+  .fact-stats-grid--cols-1 .fact-label-wrapper,
+  .layout-fact-cols-1 .fact-label-wrapper { font-size: 1.6rem !important; max-width: 680px; }
+  .layout-fact .fact-label-box :is(h1, h2, h3, h4, p, span, li),
+  .layout-fact-container .fact-label-box :is(h1, h2, h3, h4, p, span, li),
+  .layout-fact .fact-label-wrapper :is(h1, h2, h3, h4, p, span, li),
+  .layout-fact-container .fact-label-wrapper :is(h1, h2, h3, h4, p, span, li) {
+    font-size: inherit !important;
+    font-weight: inherit !important;
+    line-height: inherit !important;
+    color: inherit !important;
+    opacity: inherit !important;
+    background: none !important;
+    -webkit-text-fill-color: initial !important;
+    filter: none !important;
+    margin: 0 !important;
+    text-align: center !important;
   }
 
   /* Timeline / Steps 时间线 (演播室) */

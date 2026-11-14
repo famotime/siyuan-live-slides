@@ -1161,30 +1161,108 @@ export function generatePdfExportStyles(options?: {
       font-size: 2.6rem;
       font-weight: 700;
     }
+    .layout-fact .fact-hero-glow,
+    .layout-fact-container .fact-hero-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 600px;
+      height: 600px;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.22) 0%, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.05) 45%, transparent 70%);
+      pointer-events: none;
+      filter: blur(28px);
+      z-index: 0;
+    }
+    .layout-fact .fact-stats-grid,
+    .layout-fact-container .fact-stats-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      width: 100%;
+      gap: 32px;
+      justify-content: center;
+      align-items: center;
+    }
+    .layout-fact-container .fact-stats-grid--cols-1 { grid-template-columns: 1fr; max-width: 800px; }
+    .layout-fact-container .fact-stats-grid--cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px; }
+    .layout-fact-container .fact-stats-grid--cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
+    .layout-fact-container .fact-stats-grid--cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+    .layout-fact .fact-stat-card,
+    .layout-fact-container .fact-stat-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 14px;
+    }
     .layout-fact .fact-value,
     .layout-fact-container .fact-value,
     .layout-fact .fact-value-wrapper,
-    .layout-fact h1,
-    .layout-fact-container h1 {
-      font-size: 5.5rem;
-      font-weight: 900;
-      color: var(--slide-accent, #ef4444);
+    .layout-fact-container .fact-value-wrapper,
+    .layout-fact .fact-value-box,
+    .layout-fact-container .fact-value-box {
+      font-weight: 900 !important;
+      color: var(--slide-accent, #3b82f6) !important;
+      line-height: 1.05 !important;
       margin-bottom: 8px;
-      line-height: 1.05;
+    }
+    .layout-fact-cols-1 .fact-value-wrapper,
+    .fact-stats-grid--cols-1 .fact-value-wrapper { font-size: 5.5rem !important; }
+    .layout-fact-cols-2 .fact-value-wrapper,
+    .fact-stats-grid--cols-2 .fact-value-wrapper { font-size: 4.2rem !important; }
+    .layout-fact-cols-3 .fact-value-wrapper,
+    .fact-stats-grid--cols-3 .fact-value-wrapper { font-size: 3.4rem !important; }
+    .layout-fact-cols-4 .fact-value-wrapper,
+    .fact-stats-grid--cols-4 .fact-value-wrapper { font-size: 2.8rem !important; }
+    .layout-fact .fact-value-box :is(h1, h2, h3, h4, p, span),
+    .layout-fact-container .fact-value-box :is(h1, h2, h3, h4, p, span),
+    .layout-fact .fact-value-wrapper :is(h1, h2, h3, h4, p, span),
+    .layout-fact-container .fact-value-wrapper :is(h1, h2, h3, h4, p, span) {
+      font-size: inherit !important;
+      font-weight: inherit !important;
+      line-height: inherit !important;
+      color: inherit !important;
+      margin: 0 !important;
     }
     .layout-fact .fact-divider-line,
     .layout-fact-container .fact-divider-line {
-      width: 60px;
+      width: 50px;
       height: 3px;
-      background: var(--slide-accent, #ef4444);
-      margin: 12px auto 16px;
+      background: var(--slide-accent, #3b82f6);
+      margin: 10px auto 12px;
+      opacity: 0.8;
     }
     .layout-fact .fact-label,
     .layout-fact-container .fact-label,
-    .layout-fact .fact-label-wrapper {
-      font-size: 1.55rem;
+    .layout-fact .fact-label-wrapper,
+    .layout-fact-container .fact-label-wrapper,
+    .layout-fact .fact-label-box,
+    .layout-fact-container .fact-label-box {
+      font-size: 1.25rem !important;
+      font-weight: 500 !important;
       opacity: 0.88;
-      line-height: 1.4;
+      line-height: 1.4 !important;
+      max-width: 440px;
+      margin: 0 auto;
+      text-align: center !important;
+    }
+    .fact-stats-grid--cols-1 .fact-label-wrapper,
+    .layout-fact-cols-1 .fact-label-wrapper { font-size: 1.55rem !important; max-width: 680px; }
+    .layout-fact .fact-label-box :is(h1, h2, h3, h4, p, span, li),
+    .layout-fact-container .fact-label-box :is(h1, h2, h3, h4, p, span, li),
+    .layout-fact .fact-label-wrapper :is(h1, h2, h3, h4, p, span, li),
+    .layout-fact-container .fact-label-wrapper :is(h1, h2, h3, h4, p, span, li) {
+      font-size: inherit !important;
+      font-weight: inherit !important;
+      line-height: inherit !important;
+      color: inherit !important;
+      opacity: inherit !important;
+      margin: 0 !important;
+      text-align: center !important;
     }
 
     /* Timeline / Steps 时间线 (PDF 导出) */
