@@ -5,6 +5,7 @@ import { generateStandaloneExportStyles } from "../src/export/standalone-templat
 import { generatePdfExportStyles } from "../src/export/pdf-template-styles"
 import { buildPrintableHtml } from "../src/export/pdf-exporter"
 import { buildStandaloneHtml } from "../src/export/single-html-exporter"
+import { renderSlideBlocksToHtml } from "../src/export/slide-layout-renderer"
 import { getSlideRenderingSection } from "../src/export/standalone-runtime-sections/slide-rendering"
 import { parseDocumentConfig } from "../src/compiler/scope-mapper"
 import { detectSiYuanThemeMode, isLightColor, resolveEffectiveColorSchema } from "../src/utils/color-utils"
@@ -447,7 +448,7 @@ describe("Theme Design Systems & Contrast Guard (三大主题鲜明特色与亮�
       expect(scssSource).toContain("rgba(16, 185, 129, 0.22)")
     })
 
-    it("内容页顶部标题在四大渲染端均按三套主题差异化呈现，排除 cover/center/fact 并兼顾背景图与自定义块色", () => {
+    it("内容页顶部标题在四大渲染端均按三套主题差异化呈现，仅每页首个主标题独享主题强调色与标记样式，后续与分栏标题仅应用字体", () => {
       const indexHtml = fs.readFileSync(path.resolve(__dirname, "../public/slides-client/index.html"), "utf-8")
       const standaloneCss = generateStandaloneExportStyles()
       const presenterThumbPath = path.resolve(__dirname, "../src/ui/tab/SlidesPresenterThumbnail.scss")
@@ -455,44 +456,119 @@ describe("Theme Design Systems & Contrast Guard (三大主题鲜明特色与亮�
       const pdfCss = generatePdfExportStyles()
 
       // 1. Live Web Sandbox (index.html)
-      expect(indexHtml).toContain(".slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(indexHtml).toContain(".slide-content-wrapper:not(.layout-cover)")
+      expect(indexHtml).toContain("slides-page-first-heading-block")
       expect(indexHtml).toContain("two-cols-left")
       expect(indexHtml).toContain("image-left-content")
       expect(indexHtml).toContain("image-right-content")
+      expect(indexHtml).toContain("intro-info-col")
+      expect(indexHtml).toContain(".image-left-content > .slide-block:first-child")
+      expect(indexHtml).toContain(".image-right-content > .slide-block:first-child")
+      expect(indexHtml).toContain(".intro-info-col > .slide-block:first-child")
       expect(indexHtml).toContain("slides-mask-body-container")
-      expect(indexHtml).toContain("slides-page-first-heading-block")
       expect(indexHtml).toContain("font-weight: 800 !important;")
       expect(indexHtml).not.toContain("width: 44px;")
       expect(indexHtml).toContain("color: inherit !important;")
+      // 验证分栏子标题与后续标题不再享有首标题标记与强调色
+      expect(indexHtml).not.toContain(".two-cols-left > .slide-block:first-child :is(h1, h2, h3)")
 
       // 2. Standalone Single-HTML Export
-      expect(standaloneCss).toContain(".slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact)")
-      expect(standaloneCss).toContain(".slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact)")
-      expect(standaloneCss).toContain(".slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(standaloneCss).toContain(".slides-theme-tech .slide-content:not(.layout-cover)")
+      expect(standaloneCss).toContain(".slides-theme-seriph .slide-content:not(.layout-cover)")
+      expect(standaloneCss).toContain(".slides-theme-apple-basic .slide-content:not(.layout-cover)")
+      expect(standaloneCss).toContain("slides-page-first-heading-block")
       expect(standaloneCss).not.toContain("width: 44px;")
-      expect(standaloneCss).toContain(".pdf-col--left > .slide-block:first-child h3")
-      expect(standaloneCss).toContain(".image-left-content > .slide-block:first-child h1")
-      expect(standaloneCss).toContain(".slide-viewport[style*=\"background-image\"] .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(standaloneCss).not.toContain(".pdf-col--left > .slide-block:first-child h3")
+      expect(standaloneCss).toContain(".image-left-content > .slide-block:first-child")
+      expect(standaloneCss).toContain(".image-right-content > .slide-block:first-child")
+      expect(standaloneCss).toContain(".slide-viewport[style*=\"background-image\"] .slide-content:not(.layout-cover)")
       expect(standaloneCss).toContain(".slide-viewport .slide-block[style^=\"color:\"] h1")
       expect(standaloneCss).toContain("color: inherit !important;")
 
       // 3. Presenter Tab Thumbnail Preview
-      expect(presenterSource).toContain("&.slides-theme-tech .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact)")
-      expect(presenterSource).toContain("&.slides-theme-seriph .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact)")
-      expect(presenterSource).toContain("&.slides-theme-apple-basic .slide-content:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(presenterSource).toContain("&.slides-theme-tech .slide-content:not(.layout-cover)")
+      expect(presenterSource).toContain("&.slides-theme-seriph .slide-content:not(.layout-cover)")
+      expect(presenterSource).toContain("&.slides-theme-apple-basic .slide-content:not(.layout-cover)")
+      expect(presenterSource).toContain("slides-page-first-heading-block")
       expect(presenterSource).not.toContain("width: 44px;")
-      expect(presenterSource).toContain(".slide-content[style*=\"background-image\"]:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(presenterSource).not.toContain(".two-cols-left > .slide-block:first-child h1")
+      expect(presenterSource).toContain(".image-left-content > .slide-block:first-child")
+      expect(presenterSource).toContain(".slide-content[style*=\"background-image\"]:not(.layout-cover)")
       expect(presenterSource).toContain(".slide-block[style^=\"color:\"] h1")
 
       // 4. PDF Print Export
-      expect(pdfCss).toContain(".slides-theme-tech:not(.layout-cover):not(.layout-center):not(.layout-fact)")
-      expect(pdfCss).toContain(".slides-theme-seriph:not(.layout-cover):not(.layout-center):not(.layout-fact)")
-      expect(pdfCss).toContain(".slides-theme-apple-basic:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(pdfCss).toContain(".slides-theme-tech:not(.layout-cover)")
+      expect(pdfCss).toContain(".slides-theme-seriph:not(.layout-cover)")
+      expect(pdfCss).toContain(".slides-theme-apple-basic:not(.layout-cover)")
+      expect(pdfCss).toContain("slides-page-first-heading-block")
       expect(pdfCss).not.toContain("width: 44px;")
+      expect(pdfCss).not.toContain(".two-cols-left > .pdf-block:first-child h1")
+      expect(pdfCss).toContain(".image-left-content > .pdf-block:first-child")
       expect(pdfCss).toContain("color: #059669;")
       expect(pdfCss).toContain("color: #b45309;")
-      expect(pdfCss).toContain(".pdf-slide-page[style*=\"background-image\"]:not(.layout-cover):not(.layout-center):not(.layout-fact)")
+      expect(pdfCss).toContain(".pdf-slide-page[style*=\"background-image\"]:not(.layout-cover)")
       expect(pdfCss).toContain(".pdf-slide-page .pdf-block[style^=\"color:\"] h1")
+    })
+
+    it("图左、图右、介绍、居中、大字报等全版式首标题均享有主题样式，仅排除封面 cover", () => {
+      const indexHtml = fs.readFileSync(path.resolve(__dirname, "../public/slides-client/index.html"), "utf-8")
+      const standaloneCss = generateStandaloneExportStyles()
+      const presenterThumbPath = path.resolve(__dirname, "../src/ui/tab/SlidesPresenterThumbnail.scss")
+      const presenterSource = fs.readFileSync(path.resolve(__dirname, "../src/ui/tab/SlidesPresenterTab.vue"), "utf-8") + (fs.existsSync(presenterThumbPath) ? fs.readFileSync(presenterThumbPath, "utf-8") : "")
+      const pdfCss = generatePdfExportStyles()
+
+      // 1. 确认四大渲染端首标题规则已全面移除 :not(.layout-center):not(.layout-fact)，对居中与大字报生效
+      expect(indexHtml).not.toContain(":not(.layout-center)")
+      expect(indexHtml).not.toContain(":not(.layout-fact)")
+      expect(standaloneCss).not.toContain(":not(.layout-center)")
+      expect(standaloneCss).not.toContain(":not(.layout-fact)")
+      expect(presenterSource).not.toContain(":not(.layout-center)")
+      expect(presenterSource).not.toContain(":not(.layout-fact)")
+      expect(pdfCss).not.toContain(":not(.layout-center)")
+      expect(pdfCss).not.toContain(":not(.layout-fact)")
+
+      // 2. 确认图左、图右、介绍首标题选择器在四大端均明确注册
+      expect(indexHtml).toContain(".image-left-content > .slide-block:first-child")
+      expect(indexHtml).toContain(".image-right-content > .slide-block:first-child")
+      expect(indexHtml).toContain(".intro-info-col > .slide-block:first-child")
+
+      expect(standaloneCss).toContain(".image-left-content > .slide-block:first-child")
+      expect(standaloneCss).toContain(".image-right-content > .slide-block:first-child")
+      expect(standaloneCss).toContain(".intro-info-col > .slide-block:first-child")
+
+      expect(presenterSource).toContain(".image-left-content > .slide-block:first-child")
+      expect(presenterSource).toContain(".image-right-content > .slide-block:first-child")
+      expect(presenterSource).toContain(".intro-info-col > .slide-block:first-child")
+
+      expect(pdfCss).toContain(".image-left-content > .pdf-block:first-child")
+      expect(pdfCss).toContain(".image-right-content > .pdf-block:first-child")
+      expect(pdfCss).toContain(".intro-info-col > .pdf-block:first-child")
+
+      // 3. 验证独立导出渲染器对各版式首块打标 slides-page-first-heading-block
+      const dummySlide = (layout: string): any => ({
+        pageIndex: 1,
+        frontmatter: { layout },
+        blocks: [
+          { id: "b1", type: "h", content: "版式主标题", rawMarkdown: "# 版式主标题" },
+          { id: "b2", type: "p", content: "99%", rawMarkdown: "99%" },
+          { id: "b3", type: "p", content: "指标说明", rawMarkdown: "指标说明" },
+        ],
+      })
+
+      const htmlImgLeft = renderSlideBlocksToHtml(dummySlide("image-left"))
+      expect(htmlImgLeft).toContain("slides-page-first-heading-block")
+
+      const htmlImgRight = renderSlideBlocksToHtml(dummySlide("image-right"))
+      expect(htmlImgRight).toContain("slides-page-first-heading-block")
+
+      const htmlIntro = renderSlideBlocksToHtml(dummySlide("intro"))
+      expect(htmlIntro).toContain("slides-page-first-heading-block")
+
+      const htmlCenter = renderSlideBlocksToHtml(dummySlide("center"))
+      expect(htmlCenter).toContain("slides-page-first-heading-block")
+
+      const htmlFact = renderSlideBlocksToHtml(dummySlide("fact"))
+      expect(htmlFact).toContain("slides-page-first-heading-block")
     })
   })
 })

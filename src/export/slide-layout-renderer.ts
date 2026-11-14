@@ -1,6 +1,6 @@
 import type { ISlidesBlockItem, ISlidesVirtualPage } from "../types/slides-protocol"
 import { isColsHeaderLayout, isHeadingBlock } from "../types/slides-protocol"
-import { distributeNColumns } from "../compiler/slides-ast-builder"
+import { distributeNColumns, chunkSequentialFlowRows } from "../compiler/slides-ast-builder"
 import { cleanCardListItemMarkdown, isListItemNode, parseRatioToGridCols } from "../utils"
 import { convertBlockToHtml, escapeHtml } from "./markdown-renderer"
 import type { IBlockRenderOptions } from "./markdown-renderer"
@@ -153,6 +153,96 @@ export function renderSlideBlocksToHtml(
       }).join("\n")
     }
 
+    // 检查是否具备顺序流式行（Sequential Flow）条件：
+    // 多栏版式下若存在显式 col-X 插槽，支持将通栏段落与多栏网格流式混排
+    const flowRows = !isClover && isColsHeaderLayout(layout)
+      ? chunkSequentialFlowRows(blocks, { defaultCols: targetCols, layoutRatio: slide.frontmatter?.layoutRatio })
+      : []
+
+    if (flowRows.length > 0) {
+      let pageFirstHFound = false
+      const renderedRowsHtml = flowRows.map((row, rIdx) => {
+        if (row.type === "fullwidth") {
+          const rowBlocks = row.blocks
+          let rowFirstH: ISlidesBlockItem | null = null
+          if (!pageFirstHFound) {
+            rowFirstH = rowBlocks.find(isHeadingBlock) || null
+            if (rowFirstH) pageFirstHFound = true
+          }
+          const isTopHeaderRow = rIdx === 0 && rowFirstH !== null
+          const rowHtml = rowBlocks.map(b => {
+            const isFirstH = b === rowFirstH
+            const extraClass = [
+              isFirstH ? "slides-page-first-heading-block" : "",
+              !isFirstH && isTopHeaderRow ? "slides-flow-lead-paragraph" : "",
+            ].filter(Boolean).join(" ")
+            return convertBlockToHtml(b, { ...options, extraClassName: extraClass })
+          }).join("\n")
+
+          const topHeaderClass = isTopHeaderRow
+            ? "cols-header-top two-cols-header-top three-cols-header-top layout-header-section"
+            : "layout-flow-fullwidth-body"
+
+          return `
+            <div class="layout-flow-row layout-flow-fullwidth ${topHeaderClass}">
+              ${rowHtml}
+            </div>
+          `
+        } else {
+          const gridColsCount = row.targetCols
+          const gridCols = parseRatioToGridCols(slide.frontmatter?.layoutRatio, gridColsCount)
+          const gridStyle = `style="grid-template-columns: ${gridCols};"`
+          const colsHtml = row.cols.map((colBlocks, idx) => {
+            const colNum = idx + 1
+            const colContentHtml = renderColBlockToHtml(colBlocks)
+            const colClass = [
+              "pdf-col",
+              gridColsCount === 2 && colNum === 1 ? "pdf-col--left" : "",
+              gridColsCount === 2 && colNum === 2 ? "pdf-col--right" : "",
+              `pdf-col--${colNum}`,
+              `col-${colNum}`,
+              gridColsCount === 2 && colNum === 1 ? "two-cols-left" : "",
+              gridColsCount === 2 && colNum === 2 ? "two-cols-right" : "",
+              gridColsCount === 3 ? `three-cols-col three-cols-col--${colNum}` : "",
+              slide.frontmatter?.class,
+            ].filter(Boolean).join(" ")
+            return `<div class="${colClass}">${colContentHtml}</div>`
+          }).join("\n")
+
+          const wrapperClasses = [
+            "layout-flow-row",
+            "layout-flow-grid",
+            "layout-cols-wrapper",
+            "layout-cols-grid",
+            gridColsCount === 2 ? "pdf-two-cols-wrapper layout-two-cols-grid" : "",
+            gridColsCount === 3 ? "pdf-three-cols-wrapper layout-three-cols-grid" : "",
+            "has-superblock-cols",
+          ].filter(Boolean).join(" ")
+
+          return `
+            <div class="${wrapperClasses}" ${gridStyle}>
+              ${colsHtml}
+            </div>
+          `
+        }
+      }).join("\n")
+
+      const containerClasses = [
+        "layout-cols-header-container",
+        "layout-sequential-flow",
+        targetCols === 2 ? "layout-two-cols-header-container" : "",
+        targetCols === 3 ? "layout-three-cols-header-container" : "",
+        `layout-${layout}-container`,
+        "has-superblock-cols",
+      ].filter(Boolean).join(" ")
+
+      return `
+        <div class="${containerClasses}">
+          ${renderedRowsHtml}
+        </div>
+      `
+    }
+
     const headerFirstH = headerBlocks.find(isHeadingBlock)
     const headerHtml = headerBlocks.map(b => {
       const extraClass = b === headerFirstH ? "slides-page-first-heading-block" : ""
@@ -209,7 +299,7 @@ export function renderSlideBlocksToHtml(
   // 3. 右侧图片版式 (image-right) 与 左侧图片版式 (image-left)
   if (layout === "image-right" || layout === "image-left") {
     const isImageRight = layout === "image-right"
-    const contentHtml = blocks.map(b => convertBlockToHtml(b, options)).join("\n")
+    const contentHtml = blocks.map((b, idx) => convertBlockToHtml(b, idx === 0 ? { ...options, extraClassName: "slides-page-first-heading-block" } : options)).join("\n")
     const imgUrl = slide.frontmatter?.image || slide.frontmatter?.background || ""
     const imgHtml = `<div class="pdf-image-col" style="background-image:url('${escapeHtml(imgUrl)}');background-size:cover;background-position:center;background-repeat:no-repeat;width:100%;height:100%;position:relative;overflow:hidden;"><img src="${escapeHtml(imgUrl)}" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;" onerror="this.style.display='none'" alt="Slide cover" /></div>`
     const contentCol = `<div class="pdf-content-col" style="padding:48px 56px;display:flex;flex-direction:column;justify-content:flex-start;height:100%;box-sizing:border-box;overflow-y:auto;">${contentHtml}</div>`
@@ -439,7 +529,7 @@ export function renderSlideBlocksToHtml(
       if (avatarUrl && md.includes(avatarUrl)) return false
       return true
     })
-    const contentHtml = contentBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
+    const contentHtml = contentBlocks.map((b, idx) => convertBlockToHtml(b, idx === 0 ? { ...options, extraClassName: "slides-page-first-heading-block" } : options)).join("\n")
 
     const avatarHtml = avatarUrl
       ? `<div class="intro-avatar-box"><img class="intro-avatar-img" src="${escapeHtml(avatarUrl)}" alt="Avatar" onerror="this.style.display='none'" /></div>`
@@ -455,7 +545,7 @@ export function renderSlideBlocksToHtml(
 
   // 7. 居中版式 (center)
   if (layout === "center") {
-    const innerHtml = blocks.map(b => convertBlockToHtml(b, options)).join("\n")
+    const innerHtml = blocks.map((b, idx) => convertBlockToHtml(b, idx === 0 ? { ...options, extraClassName: "slides-page-first-heading-block" } : options)).join("\n")
     return `<div class="layout-center-container">${innerHtml}</div>`
   }
 

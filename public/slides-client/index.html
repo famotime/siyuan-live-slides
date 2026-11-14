@@ -308,17 +308,17 @@
       line-height: 1.5 !important;
       color: var(--slide-text-secondary) !important;
     }
-    /* 默认科技风：正文各版式页首标题带 Accent 垂直指示条、微渐变科技底纹与 Accent 标题色 */
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slides-page-first-heading-block :is(h1, h2, h3),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section :is(h1, h2, h3),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top :is(h1, h2, h3),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top :is(h1, h2, h3),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top :is(h1, h2, h3),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child :is(h1, h2, h3) {
+    /* 默认科技风：仅正文各版式每页首个主标题带 Accent 垂直指示条、微渐变科技底纹与 Accent 标题色 */
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:first-child :is(h1, h2, h3),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:first-child :is(h1, h2, h3),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:first-child :is(h1, h2, h3) {
       color: var(--slide-accent);
       border-left: 4px solid var(--slide-accent);
       padding: 4px 14px;
@@ -326,6 +326,22 @@
       background: linear-gradient(90deg, color-mix(in srgb, var(--slide-accent) 13%, transparent), transparent 76%);
       border-radius: 0 6px 6px 0;
       letter-spacing: -0.015em;
+    }
+    /* 科技风后续标题与分栏子标题：仅应用主题字体，不应用主题强调色与垂直指示条标记 */
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .layout-header-section > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .slides-mask-body-container > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .col :is(h1, h2, h3, h4),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:not(:first-child) :is(h1, h2, h3, h4) {
+      color: inherit;
+      border-left: none !important;
+      background: none !important;
+      padding: 0 !important;
     }
     .slides-theme-tech blockquote {
       border-left: 3px solid var(--slide-accent) !important;
@@ -402,17 +418,17 @@
       font-style: italic;
       color: var(--slide-text-secondary);
     }
-    /* 优雅学术风：正文各版式页首标题采用琥珀金棕衬线字与通栏双层渐淡学术底线 */
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slides-page-first-heading-block :is(h1, h2, h3),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section :is(h1, h2, h3),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top :is(h1, h2, h3),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top :is(h1, h2, h3),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top :is(h1, h2, h3),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child :is(h1, h2, h3) {
+    /* 优雅学术风：仅正文各版式每页首个主标题采用琥珀金棕衬线字与通栏双层渐淡学术底线 */
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:first-child :is(h1, h2, h3),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:first-child :is(h1, h2, h3),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:first-child :is(h1, h2, h3) {
       position: relative;
       display: block;
       color: var(--slide-accent);
@@ -420,16 +436,16 @@
       padding-bottom: 10px;
       margin-bottom: 14px;
     }
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child :is(h1, h2, h3)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slides-page-first-heading-block :is(h1, h2, h3)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section :is(h1, h2, h3)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top :is(h1, h2, h3)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top :is(h1, h2, h3)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top :is(h1, h2, h3)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child :is(h1, h2, h3)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child :is(h1, h2, h3)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child :is(h1, h2, h3)::after {
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:first-child :is(h1, h2, h3)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:first-child :is(h1, h2, h3)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:first-child :is(h1, h2, h3)::after {
       content: "";
       position: absolute;
       left: 0;
@@ -438,6 +454,33 @@
       height: 1.5px;
       background: linear-gradient(90deg, var(--slide-accent) 0%, color-mix(in srgb, var(--slide-accent) 35%, transparent) 50%, transparent 92%);
       pointer-events: none;
+    }
+    /* 衬线风后续标题与分栏子标题：仅应用主题字体，不应用主题强调色与学术底线标记 */
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .layout-header-section > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .slides-mask-body-container > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .col :is(h1, h2, h3, h4),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:not(:first-child) :is(h1, h2, h3, h4) {
+      color: inherit;
+      border-bottom: none !important;
+      padding-bottom: 0 !important;
+    }
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) > .slide-block:not(:first-child) :is(h1, h2, h3, h4)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .layout-header-section > .slide-block:not(:first-child) :is(h1, h2, h3, h4)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .slides-mask-body-container > .slide-block:not(:first-child) :is(h1, h2, h3, h4)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .col :is(h1, h2, h3, h4)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:not(:first-child) :is(h1, h2, h3, h4)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:not(:first-child) :is(h1, h2, h3, h4)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:not(:first-child) :is(h1, h2, h3, h4)::after {
+      display: none !important;
     }
     .slides-theme-seriph blockquote {
       position: relative;
@@ -525,23 +568,38 @@
       font-weight: 500 !important;
       opacity: 1 !important;
     }
-    /* 极简发布会风：正文各版式页首标题保持彻底去装饰化，依靠超大字重、紧凑字距与充沛留白建立层次 */
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slides-page-first-heading-block :is(h1, h2, h3),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section :is(h1, h2, h3),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top :is(h1, h2, h3),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top :is(h1, h2, h3),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top :is(h1, h2, h3),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child :is(h1, h2, h3) {
+    /* 极简发布会风：仅正文各版式每页首个主标题保持彻底去装饰化，依靠超大字重、紧凑字距与充沛留白建立层次 */
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:first-child :is(h1, h2, h3),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:first-child :is(h1, h2, h3),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:first-child :is(h1, h2, h3) {
       border: none !important;
       background: none !important;
       padding: 0 !important;
       margin-bottom: calc(var(--slides-title-margin-bottom, 12px) + 4px) !important;
       letter-spacing: -0.04em !important;
       font-weight: 800 !important;
+    }
+    /* 苹果风后续标题与分栏子标题：仅应用主题字体，不强加超大字重 */
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .layout-header-section > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .slides-mask-body-container > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .col :is(h1, h2, h3, h4),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:not(:first-child) :is(h1, h2, h3, h4) {
+      color: inherit;
+      border: none !important;
+      padding: 0 !important;
     }
     .slides-theme-apple-basic pre,
     .slides-theme-apple-basic pre.shiki-container,
@@ -609,50 +667,38 @@
     }
 
     /* 正文页首标题在存在背景图时退回高对比文字色，在用户自定义块级字色时优先保留实际文字色（装饰保留） */
-    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slides-page-first-heading-block :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child :is(h1, h2, h3),
-    .slides-overview-canvas[style*="background-image"] .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child :is(h1, h2, h3),
-    .slides-overview-canvas[style*="background-image"] .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section :is(h1, h2, h3),
-    .slides-overview-canvas[style*="background-image"] .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child :is(h1, h2, h3),
-    .slides-overview-canvas[style*="background-image"] .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child :is(h1, h2, h3),
-    .slides-overview-canvas[style*="background-image"] .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child :is(h1, h2, h3) {
+    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3),
+    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3),
+    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3),
+    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3),
+    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3),
+    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3),
+    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3),
+    .slides-overview-canvas[style*="background-image"] .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3),
+    .slides-overview-canvas[style*="background-image"] .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3) {
       color: var(--slide-text);
     }
-    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slides-page-first-heading-block :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child :is(h1, h2, h3) {
+    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3),
+    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3),
+    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3),
+    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3),
+    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3),
+    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3),
+    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3) {
       background: linear-gradient(90deg, color-mix(in srgb, var(--slide-accent) 22%, rgba(15, 23, 42, 0.36)), transparent 80%);
     }
-    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slide-block:first-child :is(h1, h2, h3),
-    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slides-page-first-heading-block :is(h1, h2, h3),
-    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3),
-    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .layout-header-section :is(h1, h2, h3),
-    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .cols-header-top :is(h1, h2, h3),
-    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-header-top :is(h1, h2, h3),
-    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .three-cols-header-top :is(h1, h2, h3),
-    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .two-cols-left > .slide-block:first-child :is(h1, h2, h3),
-    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-left-content > .slide-block:first-child :is(h1, h2, h3),
-    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .image-right-content > .slide-block:first-child :is(h1, h2, h3) {
+    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3),
+    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3),
+    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3),
+    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3),
+    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3),
+    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3),
+    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3) {
       background: linear-gradient(90deg, color-mix(in srgb, var(--slide-accent) 18%, rgba(255, 255, 255, 0.55)), transparent 80%);
     }
-    .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .slide-block[style^="color:"] :is(h1, h2, h3),
-    .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .slide-block[style*=" color:"] :is(h1, h2, h3),
-    .slide-content-wrapper:not(.layout-cover):not(.layout-center):not(.layout-fact) .slide-block[style*=";color:"] :is(h1, h2, h3) {
+    .slide-content-wrapper:not(.layout-cover) .slide-block[style^="color:"] :is(h1, h2, h3),
+    .slide-content-wrapper:not(.layout-cover) .slide-block[style*=" color:"] :is(h1, h2, h3),
+    .slide-content-wrapper:not(.layout-cover) .slide-block[style*=";color:"] :is(h1, h2, h3) {
       color: inherit !important;
     }
 
@@ -1039,6 +1085,43 @@
       align-items: stretch !important;
       box-sizing: border-box !important;
       overflow: visible !important;
+    }
+
+    .layout-sequential-flow {
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 0 !important;
+      max-height: 100% !important;
+      gap: 1.25rem !important;
+      box-sizing: border-box !important;
+      overflow: visible !important;
+    }
+    .layout-sequential-flow .layout-flow-row.layout-flow-fullwidth {
+      width: 100% !important;
+      flex-shrink: 0 !important;
+    }
+    .layout-sequential-flow .layout-flow-row.layout-flow-fullwidth.cols-header-top {
+      margin-bottom: 0 !important;
+    }
+    .layout-sequential-flow .layout-flow-row.layout-flow-grid {
+      width: 100% !important;
+      flex: 1 1 auto !important;
+      min-height: 0 !important;
+      max-height: 100% !important;
+    }
+    .layout-sequential-flow .slides-flow-lead-paragraph {
+      margin-top: 0.35rem !important;
+      opacity: 0.88 !important;
+      font-size: 1.05em !important;
+      line-height: 1.6 !important;
+    }
+    .layout-sequential-flow .layout-flow-fullwidth-body {
+      padding: 0.25rem 0 !important;
+      opacity: 0.92 !important;
+      line-height: 1.6 !important;
     }
 
     .pdf-clover-wrapper,
@@ -3442,50 +3525,72 @@
           >
             <!-- 带表头的多栏布局 (通用 cols-header 与历史兼容 two-cols-header, three-cols-header) -->
             <template v-if="isColsHeader(currentSlide.frontmatter.layout)">
-              <div class="two-cols-header-top three-cols-header-top cols-header-top layout-header-section" v-if="headerBlocks.length > 0">
-                <div
-                  v-for="block in headerBlocks"
-                  :key="block.id"
-                  class="slide-block"
-                  :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
-                  :style="getBlockMotionStyle(block)"
-                  :data-block-id="block.id"
-                  @click="onBlockClick(block.id, $event)"
-                >
-                  <slide-block-renderer :block="block" :slidev="slidesContext" :render-html="renderBlockHtml" />
-                </div>
-              </div>
-              <div
-                class="layout-cols-grid"
-                :class="[
-                  dynamicColsCount === 2 ? 'layout-two-cols' : '',
-                  dynamicColsCount === 3 ? 'layout-three-cols' : '',
-                  currentSlide.frontmatter.layout === 'clover' ? 'layout-clover-grid' : '',
-                  isSuperBlockColsHeader ? 'has-superblock-cols' : '',
-                  currentSlideMaskConfig ? 'slides-mask-body-container slides-mask-body-container--has-mask' : '',
-                ]"
-                :style="currentSlide.frontmatter.layout === 'clover' ? {} : getLayoutGridStyle(currentSlide, dynamicColsCount)"
-                style="flex: 1;"
-              >
-                <div
-                  v-for="(colBlocks, colIdx) in multiColBlocks"
-                  :key="colIdx"
-                  :class="[
-                    'col',
-                    'col-' + (colIdx + 1),
-                    'pdf-col--' + (colIdx + 1),
-                    dynamicColsCount === 2 && colIdx === 0 ? 'two-cols-left' : '',
-                    dynamicColsCount === 2 && colIdx === 1 ? 'two-cols-right' : '',
-                    dynamicColsCount === 3 ? 'three-cols-col three-cols-col--' + (colIdx + 1) : '',
-                    currentSlide.frontmatter.layout === 'clover' ? 'clover-col clover-col--' + (colIdx + 1) : '',
-                    currentSlide.frontmatter.class,
-                  ]"
-                >
+              <div v-if="flowRows.length > 0" class="layout-sequential-flow" style="display: flex; flex-direction: column; width: 100%; height: 100%; justify-content: center; gap: 1.25rem;">
+                <template v-for="(row, rIdx) in flowRows" :key="rIdx">
                   <div
-                    v-for="block in colBlocks"
+                    v-if="row.type === 'fullwidth'"
+                    class="layout-flow-row layout-flow-fullwidth"
+                    :class="[rIdx === 0 ? 'two-cols-header-top three-cols-header-top cols-header-top layout-header-section' : 'layout-flow-fullwidth-body']"
+                  >
+                    <div
+                      v-for="(block, bIdx) in row.blocks"
+                      :key="block.id"
+                      class="slide-block"
+                      :class="[
+                        (rIdx === 0 && bIdx === 0 && isHeadingBlock(block)) ? 'slides-page-first-heading-block' : '',
+                        getBlockClickClass(block),
+                        getBlockMotionClass(block),
+                        getHeadingNormalizeClass(block),
+                        { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }
+                      ]"
+                      :style="getBlockMotionStyle(block)"
+                      :data-block-id="block.id"
+                      @click="onBlockClick(block.id, $event)"
+                    >
+                      <slide-block-renderer :block="block" :slidev="slidesContext" :render-html="renderBlockHtml" />
+                    </div>
+                  </div>
+                  <div
+                    v-else
+                    class="layout-flow-row layout-flow-grid layout-cols-grid has-superblock-cols"
+                    :style="getLayoutGridStyle(currentSlide, row.targetCols)"
+                    style="flex: 1 1 auto; min-height: 0;"
+                  >
+                    <div
+                      v-for="(colBlocks, colIdx) in row.cols"
+                      :key="colIdx"
+                      :class="[
+                        'col',
+                        'col-' + (colIdx + 1),
+                        'pdf-col--' + (colIdx + 1),
+                        row.targetCols === 2 && colIdx === 0 ? 'two-cols-left' : '',
+                        row.targetCols === 2 && colIdx === 1 ? 'two-cols-right' : '',
+                        row.targetCols === 3 ? 'three-cols-col three-cols-col--' + (colIdx + 1) : '',
+                        currentSlide.frontmatter.class,
+                      ]"
+                    >
+                      <div
+                        v-for="block in colBlocks"
+                        :key="block.id"
+                        class="slide-block"
+                        :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                        :style="getBlockMotionStyle(block)"
+                        :data-block-id="block.id"
+                        @click="onBlockClick(block.id, $event)"
+                      >
+                        <slide-block-renderer :block="block" :slidev="slidesContext" :render-html="renderBlockHtml" />
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+              <template v-else>
+                <div class="two-cols-header-top three-cols-header-top cols-header-top layout-header-section" v-if="headerBlocks.length > 0">
+                  <div
+                    v-for="(block, bIdx) in headerBlocks"
                     :key="block.id"
                     class="slide-block"
-                    :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :class="[bIdx === 0 ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                     :style="getBlockMotionStyle(block)"
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
@@ -3493,20 +3598,59 @@
                     <slide-block-renderer :block="block" :slidev="slidesContext" :render-html="renderBlockHtml" />
                   </div>
                 </div>
-
                 <div
-                  v-if="currentSlideMaskConfig"
-                  class="slides-mask-layer"
+                  class="layout-cols-grid"
                   :class="[
-                    'slides-mask-layer--' + currentSlideMaskConfig.style,
-                    'slides-mask-layer--' + currentSlideMaskConfig.direction
+                    dynamicColsCount === 2 ? 'layout-two-cols' : '',
+                    dynamicColsCount === 3 ? 'layout-three-cols' : '',
+                    currentSlide.frontmatter.layout === 'clover' ? 'layout-clover-grid' : '',
+                    isSuperBlockColsHeader ? 'has-superblock-cols' : '',
+                    currentSlideMaskConfig ? 'slides-mask-body-container slides-mask-body-container--has-mask' : '',
                   ]"
-                  :style="maskLayerStyle"
+                  :style="currentSlide.frontmatter.layout === 'clover' ? {} : getLayoutGridStyle(currentSlide, dynamicColsCount)"
+                  style="flex: 1;"
                 >
-                  <div class="slides-mask-overlay" :style="maskOverlayStyle"></div>
-                  <div class="slides-mask-divider-line" :style="maskDividerLineStyle"></div>
+                  <div
+                    v-for="(colBlocks, colIdx) in multiColBlocks"
+                    :key="colIdx"
+                    :class="[
+                      'col',
+                      'col-' + (colIdx + 1),
+                      'pdf-col--' + (colIdx + 1),
+                      dynamicColsCount === 2 && colIdx === 0 ? 'two-cols-left' : '',
+                      dynamicColsCount === 2 && colIdx === 1 ? 'two-cols-right' : '',
+                      dynamicColsCount === 3 ? 'three-cols-col three-cols-col--' + (colIdx + 1) : '',
+                      currentSlide.frontmatter.layout === 'clover' ? 'clover-col clover-col--' + (colIdx + 1) : '',
+                      currentSlide.frontmatter.class,
+                    ]"
+                  >
+                    <div
+                      v-for="block in colBlocks"
+                      :key="block.id"
+                      class="slide-block"
+                      :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                      :style="getBlockMotionStyle(block)"
+                      :data-block-id="block.id"
+                      @click="onBlockClick(block.id, $event)"
+                    >
+                      <slide-block-renderer :block="block" :slidev="slidesContext" :render-html="renderBlockHtml" />
+                    </div>
+                  </div>
+
+                  <div
+                    v-if="currentSlideMaskConfig"
+                    class="slides-mask-layer"
+                    :class="[
+                      'slides-mask-layer--' + currentSlideMaskConfig.style,
+                      'slides-mask-layer--' + currentSlideMaskConfig.direction
+                    ]"
+                    :style="maskLayerStyle"
+                  >
+                    <div class="slides-mask-overlay" :style="maskOverlayStyle"></div>
+                    <div class="slides-mask-divider-line" :style="maskDividerLineStyle"></div>
+                  </div>
                 </div>
-              </div>
+              </template>
             </template>
 
             <!-- 双栏布局 -->
@@ -3567,10 +3711,10 @@
               >
                 <div class="image-right-content" :class="currentSlide.frontmatter.class">
                   <div
-                    v-for="block in normalBlocks"
+                    v-for="(block, bIdx) in normalBlocks"
                     :key="block.id"
                     class="slide-block"
-                    :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :class="[bIdx === 0 ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                     :style="getBlockMotionStyle(block)"
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
@@ -3631,10 +3775,10 @@
                 </div>
                 <div class="image-left-content" :class="currentSlide.frontmatter.class">
                   <div
-                    v-for="block in normalBlocks"
+                    v-for="(block, bIdx) in normalBlocks"
                     :key="block.id"
                     class="slide-block"
-                    :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :class="[bIdx === 0 ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                     :style="getBlockMotionStyle(block)"
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
@@ -3679,10 +3823,10 @@
                 </div>
                 <div class="intro-info-col">
                   <div
-                    v-for="block in normalBlocks"
+                    v-for="(block, bIdx) in normalBlocks"
                     :key="block.id"
                     class="slide-block"
-                    :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :class="[bIdx === 0 ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                     :style="getBlockMotionStyle(block)"
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
@@ -3817,10 +3961,10 @@
               <!-- 启用动态蒙版但无主标题：整体作为正文包裹蒙版 -->
               <div v-else-if="currentSlideMaskConfig" class="slides-mask-body-container slides-mask-body-container--has-mask">
                 <div
-                  v-for="block in normalBlocks"
+                  v-for="(block, bIdx) in normalBlocks"
                   :key="block.id"
                   class="slide-block"
-                  :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                  :class="[bIdx === 0 ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                   :style="getBlockMotionStyle(block)"
                   :data-block-id="block.id"
                   @click="onBlockClick(block.id, $event)"
@@ -3845,10 +3989,10 @@
               <!-- 未启用动态蒙版的标准渲染 -->
               <template v-else>
                 <div
-                  v-for="block in normalBlocks"
+                  v-for="(block, bIdx) in normalBlocks"
                   :key="block.id"
                   class="slide-block"
-                  :class="[getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                  :class="[bIdx === 0 ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                   :style="getBlockMotionStyle(block)"
                   :data-block-id="block.id"
                   @click="onBlockClick(block.id, $event)"
@@ -5378,13 +5522,85 @@
               return valid
             })
           }
-          return { normal: blocks, header, colsCount, isSuperCols, multiCol }
+          const isColSlot = (b) => {
+            const s = (b.slot || "").trim().toLowerCase();
+            return /^(?:col-\d+|left|center|right)$/i.test(s);
+          };
+          const hasExplicitCols = blocks.some(isColSlot);
+          let flowRows = [];
+          if (hasExplicitCols && layout !== "clover" && isColsHeader(layout)) {
+            let currentKind = null;
+            let currentGroup = [];
+            const flush = () => {
+              if (currentGroup.length === 0) return;
+              if (currentKind === "fullwidth") {
+                flowRows.push({ type: "fullwidth", blocks: [...currentGroup] });
+              } else if (currentKind === "grid") {
+                let maxCol = colsCount;
+                for (const b of currentGroup) {
+                  const s = (b.slot || "").trim().toLowerCase();
+                  const m = s.match(/^col-(\d+)$/i);
+                  if (m) maxCol = Math.max(maxCol, parseInt(m[1], 10));
+                  else if (s === "right") maxCol = Math.max(maxCol, 2);
+                }
+                maxCol = Math.min(6, Math.max(2, maxCol));
+                const cols = Array.from({ length: maxCol }, () => []);
+                let curCol = 1;
+                for (const b of currentGroup) {
+                  if (isColSlot(b)) {
+                    const s = (b.slot || "").trim().toLowerCase();
+                    if (s === "left") curCol = 1;
+                    else if (s === "center") curCol = 2;
+                    else if (s === "right") curCol = maxCol === 2 ? 2 : maxCol;
+                    else {
+                      const m = s.match(/^col-(\d+)$/i);
+                      if (m) curCol = parseInt(m[1], 10);
+                    }
+                  }
+                  const safeIdx = Math.min(maxCol, Math.max(1, curCol)) - 1;
+                  cols[safeIdx].push(b);
+                }
+                const cleanedCols = cols.map(colList => {
+                  const valid = (colList || []).filter(b => Boolean((b.rawMarkdown || b.content || "").trim()));
+                  if (valid.length === 0) return valid;
+                  const first = valid[0];
+                  const md = (first.rawMarkdown || first.content || "").trim();
+                  const isList = /^(?:[-*+]|\d+\.)\s+/.test(md) || first.type === "i" || first.type === "l";
+                  if (isList) {
+                    first.rawMarkdown = cleanCardListItemMarkdown(first.rawMarkdown || first.content || "");
+                    first.content = first.rawMarkdown;
+                  }
+                  first.isColFirst = true;
+                  return valid;
+                });
+                flowRows.push({ type: "grid", cols: cleanedCols, targetCols: maxCol });
+              }
+              currentGroup = [];
+            };
+            for (const b of blocks) {
+              const kind = isColSlot(b) ? "grid" : "fullwidth";
+              if (currentKind === null) {
+                currentKind = kind;
+                currentGroup.push(b);
+              } else if (currentKind === kind) {
+                currentGroup.push(b);
+              } else {
+                flush();
+                currentKind = kind;
+                currentGroup.push(b);
+              }
+            }
+            flush();
+          }
+
+          return { normal: blocks, header, colsCount, isSuperCols, multiCol, flowRows }
         }
 
         const layoutGroups = computed(() => buildLayoutGroups(currentSlide.value))
         const normalBlocks = computed(() => layoutGroups.value.normal)
 
         const headerBlocks = computed(() => layoutGroups.value.header)
+        const flowRows = computed(() => layoutGroups.value.flowRows || [])
 
         function isColsHeader(layout) {
           return layout === 'cols-header' || layout === 'two-cols-header' || layout === 'three-cols-header' || layout === 'clover' || layout === 'two-cols';
@@ -8616,6 +8832,7 @@
           handleSlideImageError,
           transitionClass,
           headerBlocks,
+          flowRows,
           leftBlocks,
           rightBlocks,
           col1Blocks,
