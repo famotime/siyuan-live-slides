@@ -24,6 +24,119 @@ export interface ISlidesSettingsHost {
   saveGlobalSettings(nextSettings?: Partial<ISlidesGlobalSettings>): Promise<ISlidesGlobalSettings>
 }
 
+/**
+ * 宿主面板 Normalizer：确保复合面板 100% 全宽展开，消除思源内置的 fn__size200 与居中右偏副作用
+ */
+function normalizeSettingPanelHost(panel: HTMLElement | null): void {
+  if (!panel || typeof panel.closest !== "function") return
+
+  panel.classList.remove("fn__flex-center", "fn__size200")
+  panel.style.width = "100%"
+  panel.style.height = "auto"
+  panel.style.minHeight = "0"
+  panel.style.flex = "none"
+  panel.style.alignSelf = "stretch"
+
+  const parent = panel.parentElement
+  const itemWrap = panel.closest(".config-item, .config__item, .b3-label") || parent
+  const titleWrap =
+    itemWrap?.querySelector(":scope > .fn__flex-1, :scope > .fn__block, :scope .config-name, :scope .fn__flex-1") ||
+    itemWrap?.querySelector(".config-name, .fn__flex-1")
+  const spacer = itemWrap?.querySelector(".fn__space")
+
+  if (itemWrap instanceof HTMLElement) {
+    itemWrap.classList.add("slides-settings__host-item")
+    itemWrap.style.height = "auto"
+    itemWrap.style.minHeight = "0"
+    itemWrap.style.alignItems = "stretch"
+    itemWrap.style.flexDirection = "column"
+  }
+
+  if (parent instanceof HTMLElement && parent !== itemWrap) {
+    parent.classList.add("slides-settings__host-block")
+    parent.style.width = "100%"
+    parent.style.height = "auto"
+    parent.style.minHeight = "0"
+  }
+
+  if (titleWrap instanceof HTMLElement) {
+    titleWrap.classList.add("slides-settings__host-title")
+    titleWrap.style.overflow = "visible"
+    titleWrap.style.minHeight = "0"
+    titleWrap.style.textAlign = "left"
+  }
+
+  if (spacer instanceof HTMLElement) {
+    spacer.style.display = "none"
+  }
+}
+
+/**
+ * 宿主单项行 Normalizer：清除开关控件上的 fn__size200 限制，标题靠左对齐，开关靠右齐平
+ */
+function normalizeSettingRowHost(control: HTMLElement | null): void {
+  if (!control || typeof control.closest !== "function") return
+
+  control.classList.remove("fn__flex-center", "fn__size200", "fn__block")
+  const sw = control.matches(".b3-switch") ? control : control.querySelector(".b3-switch")
+  if (sw) {
+    sw.classList.remove("fn__flex-center", "fn__size200", "fn__block")
+  }
+
+  const itemWrap = control.closest(".config-item, .config__item, .b3-label") || control.parentElement
+  const titleWrap = itemWrap?.querySelector(":scope > .fn__flex-1, .config-name")
+
+  if (itemWrap instanceof HTMLElement) {
+    itemWrap.classList.add("slides-settings__host-row")
+    itemWrap.style.height = "auto"
+    itemWrap.style.minHeight = "0"
+    itemWrap.style.alignItems = "center"
+  }
+
+  if (titleWrap instanceof HTMLElement) {
+    titleWrap.classList.add("slides-settings__host-title")
+    titleWrap.style.overflow = "visible"
+    titleWrap.style.minHeight = "0"
+    titleWrap.style.textAlign = "left"
+  }
+}
+
+function installSettingHostNormalizer(
+  setting: any,
+  panels: Array<HTMLElement | null>,
+  rows: Array<HTMLElement | null>
+): void {
+  if (!setting || typeof setting.open !== "function") return
+  const originalOpen = setting.open.bind(setting)
+
+  const normalizeAll = () => {
+    panels.forEach((p) => normalizeSettingPanelHost(p))
+    rows.forEach((r) => normalizeSettingRowHost(r))
+  }
+
+  setting.open = ((name: string) => {
+    originalOpen(name)
+    normalizeAll()
+    if (typeof setTimeout === "function") {
+      setTimeout(() => {
+        normalizeAll()
+      }, 0)
+    }
+  })
+}
+
+function createSwitchWrap(switchEl: HTMLInputElement): HTMLElement {
+  const wrap = document.createElement("div")
+  wrap.className = "slides-settings__switch-wrap"
+  wrap.style.cssText = "display: inline-flex; align-items: center; justify-content: flex-end;"
+  wrap.appendChild(switchEl)
+  return wrap
+}
+
+// 眼睛图标 SVG 定义 (开启/关闭切换)
+const eyeOpenSvg = `<svg class="slides-settings__api-key-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12 18 18.75 12 18.75 2.25 12Z"/><circle cx="12" cy="12" r="3.25"/></svg>`
+const eyeOffSvg = `<svg class="slides-settings__api-key-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.7 5.52A10.56 10.56 0 0 1 12 5.25c6 0 9.75 6.75 9.75 6.75a18.78 18.78 0 0 1-4.02 4.85M6.68 6.69C4.04 8.42 2.25 12 2.25 12s3.75 6.75 9.75 6.75c1.85 0 3.47-.64 4.85-1.55M9.88 9.88A3 3 0 0 0 9 12a3 3 0 0 0 3 3c.8 0 1.53-.31 2.07-.82"/></svg>`
+
 export function createSlidesSettings(plugin: ISlidesSettingsHost) {
   const setting = new Setting({ width: "680px" })
   const globalSettings = getRuntimeSettings()
@@ -32,11 +145,12 @@ export function createSlidesSettings(plugin: ISlidesSettingsHost) {
   // 1. AI 服务配置区域
   const aiPanel = document.createElement("div")
   aiPanel.className = "slides-settings__ai-panel"
-  aiPanel.style.cssText = "display: flex; flex-direction: column; gap: 10px; width: 100%;"
+  aiPanel.style.cssText = "display: flex; flex-direction: column; gap: 12px; width: 100%; text-align: left; box-sizing: border-box;"
 
   // 提示横幅容器
   const tipContainer = document.createElement("div")
   tipContainer.className = "slides-settings__tip-container"
+  tipContainer.style.cssText = "width: 100%; text-align: left;"
   aiPanel.appendChild(tipContainer)
 
   function updateTipBanner(managed: SharedConfig | null) {
@@ -52,6 +166,7 @@ export function createSlidesSettings(plugin: ISlidesSettingsHost) {
         font-size: 12px;
         line-height: 1.5;
         color: var(--b3-theme-on-background);
+        text-align: left;
       `
       const isEn = (window as any).siyuan?.config?.lang === "en_US"
       const profileName = managed.profileName || (isEn ? "Unnamed" : "未命名")
@@ -64,16 +179,19 @@ export function createSlidesSettings(plugin: ISlidesSettingsHost) {
 
   updateTipBanner(managedConfig)
 
-  // 辅助函数：创建字段行
+  // 辅助函数：创建字段行 (全宽两列网格/弹性靠左对齐)
   function createFieldRow(label: string, inputEl: HTMLElement, desc?: string): HTMLElement {
     const row = document.createElement("div")
-    row.style.cssText = "display: flex; flex-direction: column; gap: 4px;"
+    row.className = "slides-settings__field-row"
+    row.style.cssText = "display: flex; flex-direction: column; gap: 4px; width: 100%; text-align: left;"
 
     const top = document.createElement("div")
-    top.style.cssText = "display: flex; align-items: center; justify-content: space-between; gap: 12px;"
+    top.className = "slides-settings__field-main"
+    top.style.cssText = "display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%;"
 
     const labelSpan = document.createElement("span")
-    labelSpan.style.cssText = "font-size: 13px; font-weight: 500; min-width: 120px; color: var(--b3-theme-on-background);"
+    labelSpan.className = "slides-settings__field-label"
+    labelSpan.style.cssText = "font-size: 13px; font-weight: 500; min-width: 160px; color: var(--b3-theme-on-background); text-align: left; flex-shrink: 0;"
     labelSpan.textContent = label
 
     top.appendChild(labelSpan)
@@ -82,7 +200,8 @@ export function createSlidesSettings(plugin: ISlidesSettingsHost) {
 
     if (desc) {
       const descSpan = document.createElement("span")
-      descSpan.style.cssText = "font-size: 11px; color: var(--b3-theme-on-surface); line-height: 1.4;"
+      descSpan.className = "slides-settings__field-desc"
+      descSpan.style.cssText = "font-size: 11px; color: var(--b3-theme-on-surface); line-height: 1.4; text-align: left;"
       descSpan.textContent = desc
       row.appendChild(descSpan)
     }
@@ -102,15 +221,17 @@ export function createSlidesSettings(plugin: ISlidesSettingsHost) {
     await saveAiField({ baseUrl: val })
   })
 
-  // API Key (带显示/隐藏眼睛按钮)
+  // API Key (内嵌显示/隐藏眼睛图标)
   const apiKeyInputWrap = document.createElement("div")
-  apiKeyInputWrap.style.cssText = "display: flex; align-items: center; gap: 6px; flex: 1;"
+  apiKeyInputWrap.className = "slides-settings__api-key-wrap"
+  apiKeyInputWrap.style.cssText = "position: relative; display: flex; align-items: center; width: 100%; flex: 1;"
 
   const apiKeyInput = document.createElement("input")
-  apiKeyInput.className = "b3-text-field fn__flex-1"
+  apiKeyInput.className = "b3-text-field slides-settings__api-key-input fn__flex-1"
   apiKeyInput.type = "password"
   apiKeyInput.placeholder = "sk-..."
   apiKeyInput.dataset.settingKey = "ai-api-key"
+  apiKeyInput.style.cssText = "width: 100%; padding-right: 36px; box-sizing: border-box;"
   apiKeyInput.value = managedConfig ? managedConfig.apiKey : globalSettings.aiConfig.apiKey
   apiKeyInput.disabled = Boolean(managedConfig)
   apiKeyInput.addEventListener("change", async () => {
@@ -120,14 +241,22 @@ export function createSlidesSettings(plugin: ISlidesSettingsHost) {
 
   let isKeyVisible = false
   const keyToggleBtn = document.createElement("button")
-  keyToggleBtn.className = "b3-button b3-button--text"
+  keyToggleBtn.className = "slides-settings__api-key-toggle"
   keyToggleBtn.type = "button"
-  keyToggleBtn.style.cssText = "padding: 4px 8px; font-size: 12px; cursor: pointer;"
-  keyToggleBtn.textContent = "显示"
+  keyToggleBtn.innerHTML = eyeOpenSvg
+  keyToggleBtn.title = "显示 API Key"
+  if (typeof keyToggleBtn.setAttribute === "function") {
+    keyToggleBtn.setAttribute("aria-label", "显示 API Key")
+  }
+  keyToggleBtn.disabled = Boolean(managedConfig)
   keyToggleBtn.addEventListener("click", () => {
     isKeyVisible = !isKeyVisible
     apiKeyInput.type = isKeyVisible ? "text" : "password"
-    keyToggleBtn.textContent = isKeyVisible ? "隐藏" : "显示"
+    keyToggleBtn.innerHTML = isKeyVisible ? eyeOffSvg : eyeOpenSvg
+    keyToggleBtn.title = isKeyVisible ? "隐藏 API Key" : "显示 API Key"
+    if (typeof keyToggleBtn.setAttribute === "function") {
+      keyToggleBtn.setAttribute("aria-label", isKeyVisible ? "隐藏 API Key" : "显示 API Key")
+    }
   })
 
   apiKeyInputWrap.appendChild(apiKeyInput)
@@ -154,7 +283,8 @@ export function createSlidesSettings(plugin: ISlidesSettingsHost) {
   advancedParamsWrap.appendChild(summary)
 
   const advancedBody = document.createElement("div")
-  advancedBody.style.cssText = "display: flex; flex-direction: column; gap: 8px; padding-top: 8px;"
+  advancedBody.className = "slides-settings__advanced-body"
+  advancedBody.style.cssText = "display: flex; flex-direction: column; gap: 8px; padding-top: 8px; text-align: left; width: 100%;"
 
   // Timeout
   const timeoutInput = document.createElement("input")
@@ -204,9 +334,10 @@ export function createSlidesSettings(plugin: ISlidesSettingsHost) {
   advancedBody.appendChild(createFieldRow("单次最大输出 Token", maxTokensInput))
   advancedParamsWrap.appendChild(advancedBody)
 
-  // 测试连接行
+  // 测试连接行 (靠左对齐)
   const testRow = document.createElement("div")
-  testRow.style.cssText = "display: flex; align-items: center; gap: 10px; margin-top: 6px;"
+  testRow.className = "slides-settings__test-row"
+  testRow.style.cssText = "display: flex; align-items: center; gap: 12px; margin-top: 8px; text-align: left; width: 100%;"
 
   const btnTest = document.createElement("button")
   btnTest.className = "b3-button b3-button--outline"
@@ -214,7 +345,8 @@ export function createSlidesSettings(plugin: ISlidesSettingsHost) {
   btnTest.textContent = "测试连接"
 
   const testStatus = document.createElement("span")
-  testStatus.style.cssText = "font-size: 12px; color: var(--b3-theme-on-surface); flex: 1; word-break: break-all;"
+  testStatus.className = "slides-settings__test-status"
+  testStatus.style.cssText = "font-size: 12px; color: var(--b3-theme-on-surface); flex: 1; word-break: break-all; text-align: left;"
 
   btnTest.addEventListener("click", async () => {
     const active = managedConfig || {
@@ -251,23 +383,21 @@ export function createSlidesSettings(plugin: ISlidesSettingsHost) {
   testRow.appendChild(testStatus)
 
   // 组装 AI 服务表单
-  aiPanel.appendChild(createFieldRow("API 基础地址 (Base URL)", baseUrlInput, "兼容 OpenAI 规范的 API 根路径，如 https://api.deepseek.com/v1"))
+  aiPanel.appendChild(createFieldRow("API 基础地址 (Base URL)", baseUrlInput))
   aiPanel.appendChild(createFieldRow("API 鉴权密钥 (API Key)", apiKeyInputWrap))
-  aiPanel.appendChild(createFieldRow("模型名称 (Model)", modelInput, "例如 deepseek-chat, gpt-4o-mini 等"))
+  aiPanel.appendChild(createFieldRow("模型名称 (Model)", modelInput))
   aiPanel.appendChild(advancedParamsWrap)
   aiPanel.appendChild(testRow)
 
+  // 1. AI 演讲提词服务卡片 (上下纵向布局，全宽居左展开)
   setting.addItem({
     title: "AI 演讲提词服务",
-    direction: "column",
+    direction: "row",
     description: "配置兼容 OpenAI API 的大模型服务，用于提炼演讲口播提词卡 (Notes)。支持被「API 旋钮」集中调度接管。",
     actionElement: aiPanel,
   })
 
-  // 2. 本地网络伺服预览设置
-  const webServePanel = document.createElement("div")
-  webServePanel.style.cssText = "display: flex; flex-direction: column; gap: 8px; width: 100%;"
-
+  // 2. 本地网络伺服预览设置 (思源标准独立项)
   const webServeToggle = document.createElement("input")
   webServeToggle.className = "b3-switch fn__flex-center"
   webServeToggle.type = "checkbox"
@@ -280,7 +410,7 @@ export function createSlidesSettings(plugin: ISlidesSettingsHost) {
   })
 
   const webServeUrlInput = document.createElement("input")
-  webServeUrlInput.className = "b3-text-field fn__flex-1"
+  webServeUrlInput.className = "b3-text-field fn__size200"
   webServeUrlInput.value = globalSettings.webServeUrl
   webServeUrlInput.placeholder = "http://127.0.0.1:6806"
   webServeUrlInput.disabled = !globalSettings.enableWebServeJump
@@ -290,20 +420,21 @@ export function createSlidesSettings(plugin: ISlidesSettingsHost) {
     await plugin.saveGlobalSettings({ webServeUrl: val })
   })
 
-  webServePanel.appendChild(createFieldRow("启用网络伺服链接外跳", webServeToggle, "开启后，幻灯片中的思源块引用链接可以点击以外部网络伺服抽屉呈现"))
-  webServePanel.appendChild(createFieldRow("伺服主机地址", webServeUrlInput))
+  const webServeToggleWrap = createSwitchWrap(webServeToggle)
 
   setting.addItem({
-    title: "网络伺服与文档外跳",
-    direction: "column",
-    description: "配置思源笔记桌面端 WebServe 伺服地址及幻灯片交互行为",
-    actionElement: webServePanel,
+    title: "启用网络伺服链接外跳",
+    description: "开启后，幻灯片中的思源块引用链接可以点击以外部网络伺服抽屉呈现",
+    actionElement: webServeToggleWrap,
   })
 
-  // 3. 视觉排版与列表标记
-  const typographyPanel = document.createElement("div")
-  typographyPanel.style.cssText = "display: flex; flex-direction: column; gap: 8px; width: 100%;"
+  setting.addItem({
+    title: "伺服主机地址",
+    description: "思源笔记桌面端 WebServe 伺服地址 (如 http://127.0.0.1:6806)",
+    actionElement: webServeUrlInput,
+  })
 
+  // 3. 视觉排版与列表标记 (思源标准独立项)
   const headingSizeToggle = document.createElement("input")
   headingSizeToggle.className = "b3-switch fn__flex-center"
   headingSizeToggle.type = "checkbox"
@@ -334,16 +465,40 @@ export function createSlidesSettings(plugin: ISlidesSettingsHost) {
     await plugin.saveGlobalSettings({ showOrderedListMarkers: val })
   })
 
-  typographyPanel.appendChild(createFieldRow("固定特定标题大小", headingSizeToggle, "开启后限制正文大标题在幻灯片中不超出安全展示画幅"))
-  typographyPanel.appendChild(createFieldRow("无序列表圆点前缀标记", ulMarkerToggle))
-  typographyPanel.appendChild(createFieldRow("有序列表数字序号标记", olMarkerToggle))
+  const headingSizeToggleWrap = createSwitchWrap(headingSizeToggle)
+  const ulMarkerToggleWrap = createSwitchWrap(ulMarkerToggle)
+  const olMarkerToggleWrap = createSwitchWrap(olMarkerToggle)
 
   setting.addItem({
-    title: "排版与标记",
-    direction: "column",
-    description: "全局幻灯片文字大小保护与列表视觉前缀配置",
-    actionElement: typographyPanel,
+    title: "固定特定标题大小",
+    description: "开启后限制正文大标题在幻灯片中不超出安全展示画幅",
+    actionElement: headingSizeToggleWrap,
   })
+
+  setting.addItem({
+    title: "无序列表圆点前缀标记",
+    description: "开启后在无序列表项前展示圆点前缀标记",
+    actionElement: ulMarkerToggleWrap,
+  })
+
+  setting.addItem({
+    title: "有序列表数字序号标记",
+    description: "开启后在有序列表项前展示数字序号标记",
+    actionElement: olMarkerToggleWrap,
+  })
+
+  // 安装 Host Normalizer，确保 setting.open 时彻底清除思源副作用并稳定对齐
+  installSettingHostNormalizer(
+    setting,
+    [aiPanel],
+    [
+      webServeToggleWrap,
+      webServeUrlInput,
+      headingSizeToggleWrap,
+      ulMarkerToggleWrap,
+      olMarkerToggleWrap,
+    ]
+  )
 
   // 保存本地 AI 配置变更
   async function saveAiField(partial: Partial<IAiServiceConfig>) {
@@ -379,6 +534,7 @@ export function createSlidesSettings(plugin: ISlidesSettingsHost) {
 
     baseUrlInput.disabled = isManaged
     apiKeyInput.disabled = isManaged
+    keyToggleBtn.disabled = isManaged
     modelInput.disabled = isManaged
     timeoutInput.disabled = isManaged
     tempInput.disabled = isManaged

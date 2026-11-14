@@ -8,6 +8,7 @@ import {
 } from "@/api"
 import { requestAiChat } from "@/ai/ai-service"
 import { generateSpeakerNotesWithAI } from "@/ai/notes-generator"
+import { getEffectiveAiConfig } from "@/settings"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
 import { isFeatureDisabled } from "@/feature-flags/feature-flags"
 import { openDockImportDialog } from "@/main"
@@ -28,7 +29,7 @@ export interface ISlidesPluginHost extends Plugin {
 }
 
 /**
- * 集中注册即现演示插件的所有快捷指令与动作回调
+ * 集中注册即现插件的所有快捷指令与动作回调
  */
 export function registerPluginCommands(plugin: ISlidesPluginHost): void {
   // 1. 下方分屏演示预览
@@ -52,7 +53,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
       execute: () => {
         const opened = openDockImportDialog()
         if (!opened) {
-          showMessage("请先在右侧栏打开「即现演示配置」Dock 面板以呼起导入窗口")
+          showMessage("请先在右侧栏打开「即现配置」Dock 面板以呼起导入窗口")
         }
       },
     })
@@ -75,7 +76,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
           "custom-slides-aspect-ratio": "16/9",
           "custom-slides-default-transition": "slide-left",
         })
-        showMessage("已为当前文档初始化即现演示属性")
+        showMessage("已为当前文档初始化即现属性")
         plugin.compileCurrentDocument(plugin.currentDocId)
       }
     },
@@ -117,7 +118,13 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
           return
         }
 
-        showMessage("正在调用思源 AI 提炼演讲者口播提词...")
+        const effective = getEffectiveAiConfig()
+        if (!effective) {
+          showMessage("未配置 AI 提词服务，请前往设置填写 API 配置或通过「API 旋钮 (siyuan-api-switch)」接管", 6000, "error")
+          return
+        }
+
+        showMessage("正在调用 AI 提炼演讲者口播提词...")
         const rawBlocks: any[] = await getChildBlocks(plugin.currentDocId).catch(() => [])
         const dummySlide = {
           pageIndex: 1,
@@ -133,18 +140,26 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
           rawMarkdown: "",
         }
 
-        const notes = await generateSpeakerNotesWithAI(dummySlide, requestAiChat)
-        const noteLines = notes.split(/\r?\n/).map((l: string) => `> ${l}`).join("\n")
-        const noteMd = `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slides-note="true"}`
-        const appendRes: any = await appendBlock("markdown", noteMd, plugin.currentDocId).catch(() => null)
-        const newBlockId = appendRes?.[0]?.doOperations?.[0]?.id || appendRes?.[0]?.id
-        if (newBlockId) {
-          await setBlockAttrs(newBlockId, { "custom-slides-note": "true" })
-          globalDocumentCompiler.setBlockAttrOverride(newBlockId, { "custom-slides-note": "true" })
-          mirrorBlockSelection(newBlockId, plugin.app)
+        try {
+          const notes = await generateSpeakerNotesWithAI(dummySlide, requestAiChat)
+          if (!notes) {
+            showMessage("AI 未返回可用的提词内容", 5000, "error")
+            return
+          }
+          const noteLines = notes.split(/\r?\n/).map((l: string) => `> ${l}`).join("\n")
+          const noteMd = `> [!NOTE] 💡 演讲备注\n${noteLines}\n{: custom-slides-note="true"}`
+          const appendRes: any = await appendBlock("markdown", noteMd, plugin.currentDocId).catch(() => null)
+          const newBlockId = appendRes?.[0]?.doOperations?.[0]?.id || appendRes?.[0]?.id
+          if (newBlockId) {
+            await setBlockAttrs(newBlockId, { "custom-slides-note": "true" })
+            globalDocumentCompiler.setBlockAttrOverride(newBlockId, { "custom-slides-note": "true" })
+            mirrorBlockSelection(newBlockId, plugin.app)
+          }
+          showMessage("已成功生成口播提词卡并插入为正文讲稿备注块")
+          plugin.compileCurrentDocument(plugin.currentDocId)
+        } catch (err: any) {
+          showMessage(`AI 提词生成失败: ${err?.message || err}`, 6000, "error")
         }
-        showMessage("已成功生成口播提词卡并插入为正文讲稿备注块")
-        plugin.compileCurrentDocument(plugin.currentDocId)
       },
     })
   }
@@ -152,7 +167,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
   // 6. 识别正文讲稿块并规范化
   plugin.addCommand({
     langKey: "slidesIdentifyNotes",
-    langText: "即现演示: 识别正文讲稿块并规范化",
+    langText: "即现: 识别正文讲稿块并规范化",
     hotkey: "",
     enabled: () => true,
     execute: async () => {
@@ -180,7 +195,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
   // 7. 智能配置演示动效
   plugin.addCommand({
     langKey: "slidesAutoAnimate",
-    langText: "即现演示: 智能配置演示动效",
+    langText: "即现: 智能配置演示动效",
     hotkey: "",
     enabled: () => true,
     execute: async () => {

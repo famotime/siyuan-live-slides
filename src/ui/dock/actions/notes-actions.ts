@@ -10,6 +10,7 @@ import {
 } from "@/api"
 import { requestAiChat } from "@/ai/ai-service"
 import { generateSpeakerNotesWithAIDetailed } from "@/ai/notes-generator"
+import { getEffectiveAiConfig } from "@/settings"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
 import { extractCleanNoteText } from "@/compiler/slides-ast-builder"
 import { syncDomBlockAttrs } from "@/sync/dom-attr-sync"
@@ -170,6 +171,12 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
   async function onGenerateNotesWithAI() {
     if (!ctx.currentDocId.value) return
 
+    const effective = getEffectiveAiConfig()
+    if (!effective) {
+      showMessage("未配置 AI 提词服务，请前往高级设置填写 API 配置或通过「API 旋钮 (siyuan-api-switch)」接管", 6000, "error")
+      return
+    }
+
     const slideToUse: ISlidesVirtualPage = ctx.targetSlide.value || {
       pageIndex: 1,
       startBlockId: ctx.activeBlockId.value || ctx.currentDocId.value,
@@ -183,6 +190,11 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
 
     showMessage("正在调用 AI 提炼本页讲稿提词...")
     const result = await generateSpeakerNotesWithAIDetailed(slideToUse, requestAiChat)
+    if (result.error) {
+      showMessage(`AI 提炼提词卡失败：${result.error}`, 6000, "error")
+      return
+    }
+
     if (result.notes) {
       const existingNoteBlockId = ctx.currentSlideNoteBlockId.value
       if (existingNoteBlockId) {
@@ -194,11 +206,7 @@ export function createNotesActions(ctx: IInspectorActionsContext, deps: INotesAc
       } else {
         await createNoteBlockOnCurrentSlide(result.notes)
       }
-      if (result.isAiGenerated) {
-        showMessage("AI 演讲提词卡生成成功！")
-      } else {
-        showMessage("未获取到 AI 响应，已生成预设提词卡模板", 5000)
-      }
+      showMessage("AI 演讲提词卡生成成功！")
       if (ctx.plugin) {
         await ctx.plugin.compileCurrentDocument()
       }

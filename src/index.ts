@@ -102,7 +102,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
     this.addTopBar({
       id: "slides-topbar-play",
       icon: "iconSlides",
-      title: "即现演示",
+      title: "即现",
       position: "right",
       callback: () => {
         this.openBottomPreviewTab()
@@ -155,7 +155,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
         position: "RightTop",
         size: { width: 320, height: 0 },
         icon: "iconSlides",
-        title: "即现演示配置",
+        title: "即现配置",
       },
       data: {},
       type: DOCK_TYPE,
@@ -251,6 +251,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
 
   openSetting() {
     this.setting = createSlidesSettings(this)
+    this.setting.open(this.name)
   }
 
   private initApiSwitchSync() {
@@ -281,7 +282,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
       if (window.siyuanApiSwitch) {
         window.siyuanApiSwitch.register(
           this.name,
-          this.displayName || "即现演示 (SiYuan Live Slides)",
+          this.displayName || "即现 (SiYuan Live Slides)",
           sync,
           getLocalConfig()
         )
@@ -740,10 +741,10 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
   }
 
   /**
-   * 提取并编译当前文档为即现演示模型，推送给 Dock
+   * 提取并编译当前文档为即现模型，推送给 Dock
    */
   /**
-   * 编译指定文档为即现演示模型，推送给 Dock 与预览页签
+   * 编译指定文档为即现模型，推送给 Dock 与预览页签
    *
    * @param targetDocId 目标文档 id，缺省取当前文档
    * @param options.reason "auto" 表示由编辑器事件驱动，需要经过消费者门闩与单飞合并；

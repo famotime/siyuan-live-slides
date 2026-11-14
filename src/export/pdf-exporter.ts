@@ -27,7 +27,7 @@ export interface IPdfExportOptions {
  * 构建高保真可打印 / 导出 PDF 的独立 HTML 结构
  */
 export function buildPrintableHtml(doc: ISlidesDocument, options?: IPdfExportOptions): string {
-  const title = options?.title || "即现演示讲义"
+  const title = options?.title || "即现讲义"
   const pageRatio = options?.pageRatio || "16:9"
   const showNotes = options?.showNotes ?? true
   const showPageNumber = options?.showPageNumber ?? true

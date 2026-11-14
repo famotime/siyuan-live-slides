@@ -31,7 +31,9 @@ export class Setting {
   items: any[] = []
   width?: string
   element: HTMLElement
-  constructor(options?: { width?: string }) {
+  isOpen = false
+  openedName = ""
+  constructor(options?: { width?: string; destroyCallback?: () => void; confirmCallback?: () => void }) {
     this.width = options?.width
     this.element = typeof document !== "undefined" ? document.createElement("div") : ({} as any)
   }
@@ -40,5 +42,9 @@ export class Setting {
     if (item.actionElement && this.element && typeof this.element.appendChild === "function") {
       this.element.appendChild(item.actionElement)
     }
+  }
+  open(name: string) {
+    this.isOpen = true
+    this.openedName = name
   }
 }

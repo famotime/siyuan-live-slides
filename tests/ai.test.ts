@@ -188,7 +188,7 @@ describe("AI Modules (智能断页、动效注入与提词卡)", () => {
     expect(notes).toContain("【过渡提示】：")
   })
 
-  it("generateSpeakerNotesWithAI 应优先使用 AI 返回结果并在异常时降级", async () => {
+  it("generateSpeakerNotesWithAI 应优先使用 AI 返回结果并在异常时抛出错误", async () => {
     const { generateSpeakerNotesWithAI } = await import("../src/ai/notes-generator")
     const slide: ISlidesVirtualPage = {
       pageIndex: 1,
@@ -207,13 +207,12 @@ describe("AI Modules (智能断页、动效注入与提词卡)", () => {
     expect(res1).toBe("AI 生成的高水准口播提词卡")
     expect(mockAiSuccess).toHaveBeenCalled()
 
-    // 2. AI 异常降级
+    // 2. AI 异常时抛出错误，不再静默降级为规则模板
     const mockAiFail = vi.fn().mockRejectedValue(new Error("AI 服务超时"))
-    const res2 = await generateSpeakerNotesWithAI(slide, mockAiFail)
-    expect(res2).toContain("【核心重点】：微服务架构演进")
+    await expect(generateSpeakerNotesWithAI(slide, mockAiFail)).rejects.toThrow("AI 服务超时")
   })
 
-  it("generateSpeakerNotesWithAIDetailed 应明确区分 AI 生成与模板降级", async () => {
+  it("generateSpeakerNotesWithAIDetailed 应明确区分 AI 成功与失败错误信息", async () => {
     const { generateSpeakerNotesWithAIDetailed } = await import("../src/ai/notes-generator")
     const slide: ISlidesVirtualPage = {
       pageIndex: 1,
@@ -235,11 +234,12 @@ describe("AI Modules (智能断页、动效注入与提词卡)", () => {
     // prompt 中应包含标题，且不应包含单纯的分页符 ---
     expect(mockAi.mock.calls[0][0]).toContain("AI 时代的前端演进")
 
-    // 2. AI 返回空或失败降级
+    // 2. AI 返回空或失败时给出明确错误，取消规则模板回退
     const mockEmpty = vi.fn().mockResolvedValue(null)
     const r2 = await generateSpeakerNotesWithAIDetailed(slide, mockEmpty)
     expect(r2.isAiGenerated).toBe(false)
-    expect(r2.notes).toContain("【核心重点】：AI 时代的前端演进")
+    expect(r2.notes).toBe("")
+    expect(r2.error).toContain("AI 服务未配置")
   })
 
   it("chatAI 应向思源内核 /api/ai/chatGPT 传递 msg 参数并正确返回结果", async () => {

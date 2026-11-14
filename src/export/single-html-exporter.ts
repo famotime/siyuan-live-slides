@@ -280,7 +280,7 @@ export function buildStandaloneHtml(
   doc: ISlidesDocument,
   options?: IStandaloneHtmlOptions,
 ): string {
-  const title = options?.title || "即现演示文稿"
+  const title = options?.title || "即现文稿"
   let processedSlides = doc.slides
   let processedConfig = { ...doc.config }
   let processedCustomThemeCss = doc.customThemeCss

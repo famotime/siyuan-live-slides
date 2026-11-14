@@ -295,6 +295,33 @@ svg.slides-icon,
     display: flex;
     align-items: center;
     justify-content: space-between;
+
+    .spm-btn-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--b3-theme-on-surface);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+
+      &:hover {
+        background: var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.06));
+        border-color: var(--b3-border-color);
+        color: var(--b3-theme-primary);
+      }
+
+      .slides-icon,
+      svg {
+        width: 14px;
+        height: 14px;
+      }
+    }
   }
 
   .spm-control-title-group {
@@ -1182,3 +1209,274 @@ body[data-theme-mode="dark"] .spm-bg-swatch.active .spm-bg-swatch-label,
 }
 
 
+
+
+/* ==========================================================================
+   插件全局设置对话框布局加固 (Slides Settings Normalizer)
+   彻底解决思源 Setting 弹窗右偏、居中错位，确保全部靠左对齐与 100% 全宽展开
+   ========================================================================== */
+
+.slides-settings__host-item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 16px 20px !important;
+  box-sizing: border-box !important;
+
+  > .fn__block,
+  > .slides-settings__host-block {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .config-name {
+    display: block !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: var(--b3-theme-on-surface, #1e293b) !important;
+    line-height: 1.4 !important;
+    text-align: left !important;
+  }
+
+  .b3-label__text {
+    display: block !important;
+    font-size: 12px !important;
+    line-height: 1.45 !important;
+    color: var(--b3-theme-on-surface-light, #64748b) !important;
+    margin-top: 4px !important;
+    overflow: visible !important;
+    visibility: visible !important;
+    text-align: left !important;
+  }
+
+  .fn__hr {
+    display: block !important;
+    height: 1px !important;
+    background: var(--b3-border-color, #e2e8f0) !important;
+    margin: 12px 0 !important;
+  }
+}
+
+.slides-settings__host-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  column-gap: 16px !important;
+  row-gap: 4px !important;
+  width: 100% !important;
+  min-height: 48px !important;
+  padding: 12px 20px !important;
+  box-sizing: border-box !important;
+  border-bottom: 1px solid var(--b3-border-color, rgba(255, 255, 255, 0.08)) !important;
+
+  .slides-settings__host-title,
+  .fn__flex-1 {
+    min-width: 0;
+    text-align: left !important;
+  }
+
+  .config-name {
+    text-align: left !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: var(--b3-theme-on-surface, #1e293b) !important;
+    line-height: 1.4 !important;
+  }
+
+  .b3-label__text {
+    text-align: left !important;
+    font-size: 11px !important;
+    color: var(--b3-theme-on-surface-light, #64748b) !important;
+    margin-top: 2px !important;
+    line-height: 1.4 !important;
+  }
+
+  .b3-text-field {
+    grid-column: 2 !important;
+    width: 200px !important;
+    margin-left: auto !important;
+  }
+}
+
+.slides-settings__ai-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  text-align: left !important;
+
+  .slides-settings__field-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    text-align: left;
+
+    .slides-settings__field-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      width: 100%;
+
+      .slides-settings__field-label {
+        font-size: 13px;
+        font-weight: 500;
+        min-width: 160px;
+        color: var(--b3-theme-on-background, #2c3e50);
+        text-align: left;
+        flex-shrink: 0;
+      }
+
+      .b3-text-field {
+        flex: 1;
+        width: 100%;
+      }
+    }
+
+    .slides-settings__field-desc {
+      font-size: 11px;
+      color: var(--b3-theme-on-surface-light, #64748b);
+      line-height: 1.4;
+      text-align: left;
+    }
+  }
+
+  .slides-settings__advanced-details {
+    margin-top: 6px;
+    font-size: 12px;
+    text-align: left;
+
+    summary {
+      cursor: pointer;
+      color: var(--b3-theme-primary, #3b82f6);
+      font-weight: 500;
+      padding: 4px 0;
+      user-select: none;
+      text-align: left;
+    }
+
+    .slides-settings__advanced-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-top: 8px;
+      text-align: left;
+    }
+  }
+
+  .slides-settings__test-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+    text-align: left;
+
+    .slides-settings__test-status {
+      font-size: 12px;
+      color: var(--b3-theme-on-surface, #475569);
+      flex: 1;
+      word-break: break-all;
+      text-align: left;
+    }
+  }
+}
+
+.slides-settings__switch-wrap {
+  grid-column: 2 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  flex: none !important;
+  flex-shrink: 0 !important;
+  margin-left: auto !important;
+
+  .b3-switch {
+    width: 26px !important;
+    min-width: 26px !important;
+    max-width: 26px !important;
+    height: 16px !important;
+    min-height: 16px !important;
+    max-height: 16px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    flex: none !important;
+    cursor: pointer !important;
+  }
+}
+
+// 保证即使在思源原生 dialog 深度嵌套中，switch 开关也绝不被拉长变形
+.b3-dialog__content,
+.config-item {
+  .slides-settings__switch-wrap .b3-switch,
+  .slides-settings__host-row .b3-switch {
+    width: 26px !important;
+    height: 16px !important;
+    max-width: 26px !important;
+    min-width: 26px !important;
+    min-height: 16px !important;
+    max-height: 16px !important;
+    box-sizing: border-box !important;
+  }
+}
+
+.slides-settings__api-key-wrap {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  flex: 1 !important;
+}
+
+.slides-settings__api-key-input {
+  width: 100% !important;
+  padding-right: 36px !important;
+  box-sizing: border-box !important;
+}
+
+.slides-settings__api-key-toggle {
+  position: absolute !important;
+  top: 50% !important;
+  right: 6px !important;
+  transform: translateY(-50%) !important;
+  width: 26px !important;
+  height: 26px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  border-radius: 4px !important;
+  background: transparent !important;
+  color: var(--b3-theme-on-surface-light, #64748b) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+
+  &:hover:not(:disabled) {
+    color: var(--b3-theme-primary, #3b82f6) !important;
+    background: var(--b3-list-hover, rgba(0, 0, 0, 0.06)) !important;
+  }
+
+  &:disabled {
+    opacity: 0.35 !important;
+    cursor: not-allowed !important;
+  }
+
+  .slides-settings__api-key-icon {
+    width: 15px !important;
+    height: 15px !important;
+    display: block !important;
+    fill: none !important;
+    stroke: currentColor !important;
+    stroke-width: 1.8 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+  }
+}

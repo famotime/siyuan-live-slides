@@ -53,7 +53,7 @@ export function generateSpeakerNotes(
 }
 
 /**
- * 提炼演讲者口播提词卡，优先调用接管/本地配置的 AI 服务，附带生成元信息（区分真实 AI 结果与预设降级模板）
+ * 提炼演讲者口播提词卡，优先调用接管/本地配置的 AI 服务。未配置或异常时返回错误信息，不再静默回退规则模板
  */
 export async function generateSpeakerNotesWithAIDetailed(
   slide: ISlidesVirtualPage,
@@ -66,7 +66,15 @@ export async function generateSpeakerNotesWithAIDetailed(
         .join("\n")
     : (slide.rawMarkdown || "").replace(/^---\s*$/gm, "").trim()
 
-  if (aiChatFn && slideContent) {
+  if (!slideContent) {
+    return {
+      notes: "",
+      isAiGenerated: false,
+      error: "当前幻灯片无有效正文内容，无法生成提词卡",
+    }
+  }
+
+  if (aiChatFn) {
     const prompt = `你是一位专业的演讲教练。请根据以下幻灯片内容，提炼出简短精炼的演讲口播提词卡（Notes），包含核心观点与口播要点，总字数在 150 字以内：\n${slideContent}`
     try {
       const aiResult = await aiChatFn(prompt)
@@ -76,9 +84,14 @@ export async function generateSpeakerNotesWithAIDetailed(
           isAiGenerated: true,
         }
       }
+      return {
+        notes: "",
+        isAiGenerated: false,
+        error: "AI 服务未配置或未返回可用提词内容",
+      }
     } catch (err: any) {
       return {
-        notes: generateSpeakerNotes(slide),
+        notes: "",
         isAiGenerated: false,
         error: err?.message || "AI 调用异常",
       }
@@ -86,19 +99,23 @@ export async function generateSpeakerNotesWithAIDetailed(
   }
 
   return {
-    notes: generateSpeakerNotes(slide),
+    notes: "",
     isAiGenerated: false,
+    error: "未配置 AI 提词服务",
   }
 }
 
 /**
- * 提炼演讲者口播提词卡，优先调用接管/本地配置的 AI 服务，若 AI 未配置或异常自动回退到规则生成
+ * 提炼演讲者口播提词卡，优先调用接管/本地配置的 AI 服务，若异常或未配置则抛出错误
  */
 export async function generateSpeakerNotesWithAI(
   slide: ISlidesVirtualPage,
   aiChatFn: (prompt: string) => Promise<string | null> = requestAiChat,
 ): Promise<string> {
   const res = await generateSpeakerNotesWithAIDetailed(slide, aiChatFn)
+  if (res.error) {
+    throw new Error(res.error)
+  }
   return res.notes
 }
 

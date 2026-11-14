@@ -452,11 +452,13 @@
         <div class="spm-card-control">
           <div class="spm-control-header">
             <div class="spm-control-title-group">
-              <div class="spm-control-title">
+              <div
+                class="spm-control-title b3-tooltips b3-tooltips__se"
+                aria-label="提炼演讲口播提词卡，支持 API 旋钮接管调度"
+              >
                 <SlidesIcon name="sparkles" />
                 <span>AI 演讲提词服务</span>
               </div>
-              <span class="spm-control-desc">提炼演讲口播提词卡，支持 API 旋钮接管调度</span>
             </div>
             <button
               type="button"
@@ -537,8 +539,11 @@ const managedAiConfig = managedAiConfigState
 const isAdvancedExpanded = ref(false)
 
 function openSettingsDialog() {
+  emit('openSetting')
   if (plugin && typeof plugin.openSetting === 'function') {
     plugin.openSetting()
+  } else if (plugin && plugin.setting && typeof plugin.setting.open === 'function') {
+    plugin.setting.open(plugin.name || 'siyuan-live-slides')
   }
 }
 
@@ -740,7 +745,7 @@ defineProps<{
   isBatchProcessing?: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'update:docTheme', val: string): void
   (e: 'update:docBackground', val: string): void
   (e: 'update:docAspectRatio', val: string): void
@@ -756,5 +761,6 @@ defineEmits<{
   (e: 'clearDividers'): void
   (e: 'exportHtml'): void
   (e: 'exportPdf'): void
+  (e: 'openSetting'): void
 }>()
 </script>

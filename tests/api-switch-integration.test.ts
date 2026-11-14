@@ -41,9 +41,18 @@ class MockDOMElement {
   }
   children: MockDOMElement[] = []
   listeners: Record<string, Function[]> = {}
+  attributes: Record<string, string> = {}
 
   constructor(tagName: string) {
     this.tagName = tagName.toUpperCase()
+  }
+
+  setAttribute(name: string, value: string) {
+    this.attributes[name] = value
+  }
+
+  getAttribute(name: string) {
+    return this.attributes[name] ?? null
   }
 
   appendChild(child: MockDOMElement) {
@@ -345,7 +354,7 @@ describe("siyuan-api-switch 集成与 AI 服务全链路测试", () => {
 
       const mockHost = {
         name: "siyuan-live-slides",
-        displayName: "即现演示",
+        displayName: "即现",
         saveGlobalSettings: vi.fn().mockResolvedValue({}),
       }
 
@@ -379,7 +388,7 @@ describe("siyuan-api-switch 集成与 AI 服务全链路测试", () => {
 
       const mockHost = {
         name: "siyuan-live-slides",
-        displayName: "即现演示",
+        displayName: "即现",
         saveGlobalSettings: vi.fn().mockResolvedValue({}),
       }
 
@@ -407,7 +416,7 @@ describe("siyuan-api-switch 集成与 AI 服务全链路测试", () => {
     it("updateManagedConfig 应支持在弹窗打开时零刷新动态置灰与解绑恢复", () => {
       const mockHost = {
         name: "siyuan-live-slides",
-        displayName: "即现演示",
+        displayName: "即现",
         saveGlobalSettings: vi.fn().mockResolvedValue({}),
       }
 
@@ -441,6 +450,54 @@ describe("siyuan-api-switch 集成与 AI 服务全链路测试", () => {
       baseUrlInput = el.querySelector('[data-setting-key="ai-base-url"]') as MockDOMElement
       expect(baseUrlInput.disabled).toBe(false)
       expect(baseUrlInput.value).toBe("") // 回退为本地值
+    })
+
+    it("设置面板应采用全宽靠左对齐与思源标准独立项布局", () => {
+      const mockHost = {
+        name: "siyuan-live-slides",
+        displayName: "即现",
+        saveGlobalSettings: vi.fn().mockResolvedValue({}),
+      }
+
+      const setting = createSlidesSettings(mockHost as any)
+      const el = setting.element as MockDOMElement
+      const items = (setting as any).items
+
+      // 1. AI 演讲提词服务卡片应采用 direction: 'row' (上下纵向全宽布局)
+      const aiItem = items.find((i: any) => i.title === "AI 演讲提词服务")
+      expect(aiItem).toBeDefined()
+      expect(aiItem.direction).toBe("row")
+      expect(aiItem.actionElement.className).toContain("slides-settings__ai-panel")
+
+      // 2. 网络伺服与排版标记应拆解为思源原生的独立项
+      const webServeItem = items.find((i: any) => i.title === "启用网络伺服链接外跳")
+      const webServeUrlItem = items.find((i: any) => i.title === "伺服主机地址")
+      const headingItem = items.find((i: any) => i.title === "固定特定标题大小")
+      const ulItem = items.find((i: any) => i.title === "无序列表圆点前缀标记")
+      const olItem = items.find((i: any) => i.title === "有序列表数字序号标记")
+
+      expect(webServeItem).toBeDefined()
+      expect(webServeUrlItem).toBeDefined()
+      expect(headingItem).toBeDefined()
+      expect(ulItem).toBeDefined()
+      expect(olItem).toBeDefined()
+
+      // 开关应包裹在专用 switch-wrap 中以隔离内核副作用
+      expect(webServeItem.actionElement.className).toContain("slides-settings__switch-wrap")
+      expect(headingItem.actionElement.className).toContain("slides-settings__switch-wrap")
+      expect(ulItem.actionElement.className).toContain("slides-settings__switch-wrap")
+      expect(olItem.actionElement.className).toContain("slides-settings__switch-wrap")
+
+      // 3. API Key 应使用眼睛图标按钮进行显隐切换
+      const apiKeyWrap = el.querySelector(".slides-settings__api-key-wrap")
+      expect(apiKeyWrap).not.toBeNull()
+      const eyeToggle = el.querySelector(".slides-settings__api-key-toggle") as MockDOMElement
+      expect(eyeToggle).not.toBeNull()
+      expect(eyeToggle.innerHTML).toContain("<svg")
+      expect(eyeToggle.getAttribute("aria-label")).toBe("显示 API Key")
+
+      // 4. openSetting 调用后 Normalizer 应正常执行无报错
+      expect(() => setting.open("siyuan-live-slides")).not.toThrow()
     })
   })
 
@@ -490,6 +547,17 @@ describe("siyuan-api-switch 集成与 AI 服务全链路测试", () => {
       window.dispatchEvent(new Event("siyuan-api-switch:ready"))
 
       expect(registerMock).toHaveBeenCalled()
+    })
+
+    it("openSetting 应创建 setting 实例并调用 setting.open 显示设置弹窗", async () => {
+      const SiYuanLiveSlidesPlugin = (await import("../src/index")).default
+      const pluginInstance = new SiYuanLiveSlidesPlugin({} as any)
+      pluginInstance.name = "siyuan-live-slides"
+
+      pluginInstance.openSetting()
+      expect(pluginInstance.setting).toBeDefined()
+      expect((pluginInstance.setting as any).isOpen).toBe(true)
+      expect((pluginInstance.setting as any).openedName).toBe("siyuan-live-slides")
     })
   })
 })
