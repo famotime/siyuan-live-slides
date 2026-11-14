@@ -4,11 +4,25 @@
       <span>幻灯片页面设置{{ pageIndex ? ` (第 ${pageIndex} 页)` : '' }}</span>
     </div>
 
-    <!-- 版式选择 -->
-    <LayoutPicker
-      :model-value="pageLayout"
-      @change="$emit('update:pageLayout', $event)"
-    />
+    <!-- 页面版式选择卡片 -->
+    <div class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="选择当前幻灯片页面的排版版式"
+          >
+            <SlidesIcon name="layout" />
+            <span>页面版式</span>
+          </div>
+        </div>
+      </div>
+      <LayoutPicker
+        :model-value="pageLayout"
+        hide-header
+        @change="$emit('update:pageLayout', $event)"
+      />
+    </div>
 
     <!-- 智能分栏提示 (当默认版式下检测到横向超级块) -->
     <div
@@ -211,11 +225,66 @@
       </div>
     </div>
 
-    <!-- 转场动效选择 -->
-    <TransitionSelector
-      :model-value="pageTransition"
-      @change="$emit('update:pageTransition', $event)"
-    />
+    <!-- 页面图片/分栏配图/头像 (Image) -->
+    <div
+      v-if="pageLayout === 'image-right' || pageLayout === 'image-left' || pageLayout === 'intro' || pageImage"
+      class="spm-card-control"
+    >
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            :aria-label="pageLayout === 'intro' ? '演讲者个人头像或形象照 URL / 资源路径' : '图文分栏或页面专属配图 URL / 资源路径'"
+          >
+            <SlidesIcon name="image" />
+            <span>{{ pageLayout === 'intro' ? '头像与配图' : '页面图片' }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="spm-quick-chips">
+        <button
+          v-for="img in presetImages"
+          :key="img.value"
+          class="spm-chip"
+          :class="{ active: pageImage === img.value }"
+          @click="$emit('update:pageImage', img.value)"
+        >
+          {{ img.label }}
+        </button>
+      </div>
+      <input
+        :value="pageImage"
+        class="spm-input"
+        :placeholder="pageLayout === 'intro' ? '头像图片 URL 或思源本地图片路径 (如 assets/...)' : '网络图片 URL 或思源本地资源路径 (如 assets/...)'"
+        @input="$emit('update:pageImage', ($event.target as HTMLInputElement).value)"
+        @change="$emit('update:pageImage', ($event.target as HTMLInputElement).value)"
+      />
+    </div>
+
+    <!-- 分区：页面动效 -->
+    <div class="spm-section-header" style="margin-top: 6px;">
+      <span>页面动效</span>
+    </div>
+
+    <!-- 转场动效选择卡片 -->
+    <div class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="页面切换时的过渡转场动画效果"
+          >
+            <SlidesIcon name="transition" />
+            <span>转场动效</span>
+          </div>
+        </div>
+      </div>
+      <TransitionSelector
+        :model-value="pageTransition"
+        hide-header
+        @change="$emit('update:pageTransition', $event)"
+      />
+    </div>
 
     <!-- 页面动态蒙版 (Dynamic Mask) -->
     <div class="spm-card-control">
@@ -354,40 +423,9 @@
       </div>
     </div>
 
-    <!-- 页面图片/分栏配图/头像 (Image) -->
-    <div
-      v-if="pageLayout === 'image-right' || pageLayout === 'image-left' || pageLayout === 'intro' || pageImage"
-      class="spm-card-control"
-    >
-      <div class="spm-control-header">
-        <div class="spm-control-title-group">
-          <div
-            class="spm-control-title b3-tooltips b3-tooltips__se"
-            :aria-label="pageLayout === 'intro' ? '演讲者个人头像或形象照 URL / 资源路径' : '图文分栏或页面专属配图 URL / 资源路径'"
-          >
-            <SlidesIcon name="image" />
-            <span>{{ pageLayout === 'intro' ? '头像与配图' : '页面图片' }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="spm-quick-chips">
-        <button
-          v-for="img in presetImages"
-          :key="img.value"
-          class="spm-chip"
-          :class="{ active: pageImage === img.value }"
-          @click="$emit('update:pageImage', img.value)"
-        >
-          {{ img.label }}
-        </button>
-      </div>
-      <input
-        :value="pageImage"
-        class="spm-input"
-        :placeholder="pageLayout === 'intro' ? '头像图片 URL 或思源本地图片路径 (如 assets/...)' : '网络图片 URL 或思源本地资源路径 (如 assets/...)'"
-        @input="$emit('update:pageImage', ($event.target as HTMLInputElement).value)"
-        @change="$emit('update:pageImage', ($event.target as HTMLInputElement).value)"
-      />
+    <!-- 分区：其他配置 -->
+    <div class="spm-section-header" style="margin-top: 6px;">
+      <span>其他配置</span>
     </div>
 
     <!-- 演讲备忘提词 (Notes，正文备注块驱动) -->

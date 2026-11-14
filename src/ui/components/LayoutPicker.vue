@@ -1,6 +1,6 @@
 <template>
-  <div class="spm-layout-picker">
-    <div class="spm-layout-picker__header">选择页面版式</div>
+  <div class="spm-layout-picker" :class="{ 'spm-layout-picker--no-header': hideHeader }">
+    <div v-if="!hideHeader" class="spm-layout-picker__header">选择页面版式</div>
 
     <div v-for="group in visibleLayoutGroups" :key="group.id" class="spm-layout-group">
       <div class="spm-layout-group__title">
@@ -32,6 +32,7 @@ import { isLayoutEnabled } from '@/feature-flags/feature-flags'
 
 const props = defineProps<{
   modelValue?: string
+  hideHeader?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -112,6 +113,10 @@ function selectLayout(name: string) {
 <style scoped>
 .spm-layout-picker {
   padding: 8px;
+}
+
+.spm-layout-picker.spm-layout-picker--no-header {
+  padding: 0;
 }
 
 .spm-layout-picker__header {
