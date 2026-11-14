@@ -1,11 +1,37 @@
 <template>
   <div class="spm-section spm-section--block">
-    <!-- 分区大标题 -->
-    <div class="spm-section-header">
-      <span>元素动效与排版</span>
+    <!-- 分区 A：元素排版 -->
+    <div v-if="hasLayoutControls" class="spm-section-header">
+      <span>元素排版</span>
     </div>
 
-    <!-- 超级块专属：列宽比例与布局一键同步 -->
+    <!-- A1. 多栏布局插槽 (Slot) - 排版核心项置顶 -->
+    <div v-if="isMultiColsLayout || elemSlot" class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            :aria-label="slotControlDesc"
+          >
+            <SlidesIcon name="columns" />
+            <span>{{ slotControlTitle }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="spm-segmented-group">
+        <button
+          v-for="item in availableSlots"
+          :key="item.value"
+          class="spm-segmented-item"
+          :class="{ active: isSlotActive(item.value) }"
+          @click="$emit('update:elemSlot', item.value)"
+        >
+          {{ item.label }}
+        </button>
+      </div>
+    </div>
+
+    <!-- A2. 超级块专属：列宽比例与布局一键同步 -->
     <div v-if="isSuperBlock || detectedSbInfo?.hasSuperBlock" class="spm-card-control" style="border-left: 3px solid var(--b3-theme-primary);">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
@@ -57,7 +83,7 @@
     </div>
 
 
-    <!-- 0.5 演示图片角色与排版 (Role & Layout) - 仅对图片元素或已打标块显示 -->
+    <!-- A3. 演示图片角色与排版 (Role & Layout) - 仅对图片元素或已打标块显示 -->
     <div v-if="isImage || Boolean(imageRole)" class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
@@ -105,7 +131,7 @@
       </div>
     </div>
 
-    <!-- 0.6 视频播放设置 (Video Playback) - 仅对视频元素显示 -->
+    <!-- A4. 视频播放设置 (Video Playback) - 仅对视频元素显示 -->
     <div v-if="isVideo" class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
@@ -150,7 +176,52 @@
       </div>
     </div>
 
-    <!-- 1. 逐步出现 (v-click) -->
+    <!-- A5. 代码块最大高度限制 (Max Height) -->
+    <div v-if="isCodeBlock" class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="超出限高自动竖向滚动，弱提示滚动条"
+          >
+            <SlidesIcon name="code" />
+            <span>代码块限高</span>
+          </div>
+        </div>
+      </div>
+      <div class="spm-quick-chips">
+        <button
+          v-for="h in ['240px', '320px', '400px', '50%']"
+          :key="h"
+          class="spm-chip"
+          :class="{ active: elemMaxHeight === h || (h === '50%' && (elemMaxHeight === '50vh' || elemMaxHeight === '50%')) }"
+          @click="$emit('update:elemMaxHeight', h)"
+        >
+          {{ h }}
+        </button>
+        <button
+          v-if="elemMaxHeight"
+          class="spm-chip spm-chip-clear"
+          @click="$emit('update:elemMaxHeight', '')"
+        >
+          自适应
+        </button>
+      </div>
+      <input
+        :value="elemMaxHeight"
+        class="spm-input"
+        placeholder="自适应高度，或输入 350px、50%"
+        @input="$emit('update:elemMaxHeight', ($event.target as HTMLInputElement).value)"
+        @change="$emit('update:elemMaxHeight', ($event.target as HTMLInputElement).value)"
+      />
+    </div>
+
+    <!-- 分区 B：元素动效 -->
+    <div class="spm-section-header" :style="hasLayoutControls ? 'margin-top: 6px;' : ''">
+      <span>元素动效</span>
+    </div>
+
+    <!-- B1. 逐步出现 (v-click) -->
     <div class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
@@ -433,32 +504,6 @@
       </template>
     </div>
 
-    <!-- 2. 多栏布局插槽 (Slot) -->
-    <div v-if="isMultiColsLayout || elemSlot" class="spm-card-control">
-      <div class="spm-control-header">
-        <div class="spm-control-title-group">
-          <div
-            class="spm-control-title b3-tooltips b3-tooltips__se"
-            :aria-label="slotControlDesc"
-          >
-            <SlidesIcon name="columns" />
-            <span>{{ slotControlTitle }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="spm-segmented-group">
-        <button
-          v-for="item in availableSlots"
-          :key="item.value"
-          class="spm-segmented-item"
-          :class="{ active: isSlotActive(item.value) }"
-          @click="$emit('update:elemSlot', item.value)"
-        >
-          {{ item.label }}
-        </button>
-      </div>
-    </div>
-
     <!-- 3. 代码逐行聚光高亮 (仅代码块激活时可见) -->
     <div v-if="isCodeBlock" class="spm-card-control">
       <div class="spm-control-header">
@@ -496,46 +541,6 @@
         placeholder="自定义高亮区间，如 1-3|5|all"
         @input="$emit('update:elemShikiLines', ($event.target as HTMLInputElement).value)"
         @change="$emit('update:elemShikiLines', ($event.target as HTMLInputElement).value)"
-      />
-    </div>
-
-    <!-- 3.5 代码块最大高度限制 (Max Height) -->
-    <div v-if="isCodeBlock" class="spm-card-control">
-      <div class="spm-control-header">
-        <div class="spm-control-title-group">
-          <div
-            class="spm-control-title b3-tooltips b3-tooltips__se"
-            aria-label="超出限高自动竖向滚动，弱提示滚动条"
-          >
-            <SlidesIcon name="code" />
-            <span>代码块限高</span>
-          </div>
-        </div>
-      </div>
-      <div class="spm-quick-chips">
-        <button
-          v-for="h in ['240px', '320px', '400px', '50%']"
-          :key="h"
-          class="spm-chip"
-          :class="{ active: elemMaxHeight === h || (h === '50%' && (elemMaxHeight === '50vh' || elemMaxHeight === '50%')) }"
-          @click="$emit('update:elemMaxHeight', h)"
-        >
-          {{ h }}
-        </button>
-        <button
-          v-if="elemMaxHeight"
-          class="spm-chip spm-chip-clear"
-          @click="$emit('update:elemMaxHeight', '')"
-        >
-          自适应
-        </button>
-      </div>
-      <input
-        :value="elemMaxHeight"
-        class="spm-input"
-        placeholder="自适应高度，或输入 350px、50%"
-        @input="$emit('update:elemMaxHeight', ($event.target as HTMLInputElement).value)"
-        @change="$emit('update:elemMaxHeight', ($event.target as HTMLInputElement).value)"
       />
     </div>
 
@@ -656,6 +661,17 @@ const effectiveLayout = computed(() => {
 const isMultiColsLayout = computed(() => {
   const l = effectiveLayout.value
   return ['two-cols', 'cols-header', 'two-cols-header', 'three-cols-header'].includes(l)
+})
+
+const hasLayoutControls = computed(() => {
+  return isMultiColsLayout.value ||
+    Boolean(props.elemSlot) ||
+    Boolean(props.isSuperBlock) ||
+    Boolean(props.detectedSbInfo?.hasSuperBlock) ||
+    Boolean(props.isImage) ||
+    Boolean(props.imageRole) ||
+    Boolean(props.isVideo) ||
+    Boolean(props.isCodeBlock)
 })
 
 const detectedColumnsCount = computed(() => {
