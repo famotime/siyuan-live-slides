@@ -83,13 +83,16 @@ export function renderSlideBlocksToHtml(
   if (layout === "clover" || isColsHeaderLayout(layout)) {
     const isClover = layout === "clover"
     let headerBlocks: ISlidesBlockItem[] = []
-    const explicitHeader = blocks.filter(b => b.slot === "header")
-    if (explicitHeader.length > 0) {
-      headerBlocks = explicitHeader
-    } else if (blocks.length > 0) {
-      const candidateH = blocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"))
-      if (candidateH) {
-        headerBlocks = [candidateH]
+    const isHeaderEnabled = slide.frontmatter?.header !== false && layout !== "two-cols"
+    if (isHeaderEnabled) {
+      const explicitHeader = blocks.filter(b => b.slot === "header")
+      if (explicitHeader.length > 0) {
+        headerBlocks = explicitHeader
+      } else if (blocks.length > 0) {
+        const candidateH = blocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"))
+        if (candidateH) {
+          headerBlocks = [candidateH]
+        }
       }
     }
 
@@ -192,9 +195,13 @@ export function renderSlideBlocksToHtml(
       return `<div class="${colClass}">${renderColBlockToHtml(colBlocks)}</div>`
     }).join("\n")
 
+    const headerSectionHtml = headerBlocks.length > 0
+      ? `<div class="layout-header-section">${headerHtml}</div>`
+      : ""
+
     return `
       <div class="${containerClasses}">
-        <div class="layout-header-section">${headerHtml}</div>
+        ${headerSectionHtml}
         <div class="${wrapperClasses}" ${gridStyle}>
           ${colsHtml}
         </div>

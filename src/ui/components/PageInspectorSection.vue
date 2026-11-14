@@ -35,7 +35,7 @@
 
     <!-- 分栏比例设置 (仅支持分栏与图文布局) -->
     <div v-if="isMultiColLayout" class="spm-card-control">
-      <div class="spm-control-header">
+      <div class="spm-control-header" style="margin-bottom: 8px;">
         <div class="spm-control-title-group">
           <div
             class="spm-control-title b3-tooltips b3-tooltips__se"
@@ -44,6 +44,33 @@
             <SlidesIcon name="ratio" />
             <span>分栏比例</span>
           </div>
+        </div>
+
+        <!-- 通栏标题开关 (仅在多栏布局下显示) -->
+        <div
+          v-if="isColsHeaderLayout"
+          class="spm-header-toggle-row"
+          style="display: flex; align-items: center; gap: 6px;"
+        >
+          <span
+            class="b3-tooltips b3-tooltips__sw"
+            aria-label="开启时自动提取页面首个标题作为跨栏顶部大标题；关闭时首个标题随同正文进入栏内排版（原双栏/多栏对齐效果）"
+            style="font-size: 11px; opacity: 0.85; cursor: help; display: inline-flex; align-items: center; gap: 3px;"
+          >
+            <span>通栏标题</span>
+            <SlidesIcon name="help" style="font-size: 10px; opacity: 0.6;" />
+          </span>
+          <label
+            class="spm-switch b3-tooltips b3-tooltips__w"
+            :aria-label="effectivePageHeader ? '关闭通栏标题' : '开启通栏标题'"
+          >
+            <input
+              type="checkbox"
+              :checked="effectivePageHeader"
+              @change="$emit('update:pageHeader', ($event.target as HTMLInputElement).checked)"
+            />
+            <span class="spm-switch-slider"></span>
+          </label>
         </div>
       </div>
 
@@ -479,6 +506,7 @@ import { isFeatureEnabled } from '@/feature-flags/feature-flags'
 
 const props = defineProps<{
   pageLayout: string
+  pageHeader?: boolean | string
   pageTransition: string
   pageSpacing?: string
   pageImage?: string
@@ -497,6 +525,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:pageLayout', val: string): void
+  (e: 'update:pageHeader', val: boolean): void
   (e: 'update:pageTransition', val: string): void
   (e: 'update:pageSpacing', val: string): void
   (e: 'update:pageImage', val: string): void
@@ -559,6 +588,15 @@ const maskHelpTooltip = computed(() => {
 
 const isMultiColLayout = computed(() => {
   return ['two-cols', 'cols-header', 'two-cols-header', 'three-cols-header', 'image-left', 'image-right'].includes(props.pageLayout)
+})
+
+const isColsHeaderLayout = computed(() => {
+  return ['cols-header', 'two-cols-header', 'three-cols-header', 'two-cols'].includes(props.pageLayout)
+})
+
+const effectivePageHeader = computed(() => {
+  if (props.pageHeader === false || props.pageHeader === 'false') return false
+  return true
 })
 
 const detectedColumnsCount = computed(() => {

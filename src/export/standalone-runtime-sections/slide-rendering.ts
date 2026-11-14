@@ -272,8 +272,9 @@ export function getSlideRenderingSection(): string {
           const isCover = slide.frontmatter?.layout === "cover";
           const isClover = slide.frontmatter?.layout === "clover";
           const blocks = (slide.blocks || []).filter(b => b.slot !== "slot-divider-right");
-          let headerBlocks = blocks.filter(b => b.slot === "header");
-          if (headerBlocks.length === 0 && blocks.length > 0) {
+          const isHeaderEnabled = slide.frontmatter?.header !== false;
+          let headerBlocks = isHeaderEnabled ? blocks.filter(b => b.slot === "header") : [];
+          if (isHeaderEnabled && headerBlocks.length === 0 && blocks.length > 0) {
             const candidate = blocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"));
             if (candidate) headerBlocks = [candidate];
           }
@@ -520,8 +521,9 @@ export function getSlideRenderingSection(): string {
           container.appendChild(factContainer);
         } else if (slide.frontmatter?.layout === "timeline" || slide.frontmatter?.layout === "steps") {
           const blocks = (slide.blocks || []).filter(b => b.slot !== "slot-divider-right");
-          let headerBlocks = blocks.filter(b => b.slot === "header");
-          if (headerBlocks.length === 0 && blocks.length > 0) {
+          const isHeaderEnabled = slide.frontmatter?.header !== false;
+          let headerBlocks = isHeaderEnabled ? blocks.filter(b => b.slot === "header") : [];
+          if (isHeaderEnabled && headerBlocks.length === 0 && blocks.length > 0) {
             const candidate = blocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"));
             if (candidate) headerBlocks = [candidate];
           }

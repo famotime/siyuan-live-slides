@@ -20,8 +20,9 @@ export function getOverviewLayerSection(): string {
         const fm = slide.frontmatter || {};
         const layout = fm.layout || "default";
         const blocks = (slide.blocks || []).filter((b) => b.slot !== "slot-divider-right");
-        let headerBlocks = blocks.filter((b) => b.slot === "header");
-        if (headerBlocks.length === 0 && blocks.length > 0) {
+        const isHeaderEnabled = fm.header !== false;
+        let headerBlocks = isHeaderEnabled ? blocks.filter((b) => b.slot === "header") : [];
+        if (isHeaderEnabled && headerBlocks.length === 0 && blocks.length > 0) {
           const candidate = blocks.find((b) => b.type === "h" && (!b.slot || b.slot === "default"));
           if (candidate) headerBlocks = [candidate];
         }

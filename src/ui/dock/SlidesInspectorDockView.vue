@@ -66,6 +66,7 @@
         v-if="isDivider"
         :page-layout="pageLayout"
         :page-layout-ratio="pageLayoutRatio"
+        :page-header="pageHeader"
         :page-mask="pageMask"
         :page-mask-ratio="pageMaskRatio"
         :page-mask-style="pageMaskStyle"
@@ -81,6 +82,7 @@
         :can-convert-to-super-block="canConvertToSuperBlock"
         @update:page-layout="onLayoutChange"
         @update:page-layout-ratio="onLayoutRatioChange"
+        @update:page-header="onPageHeaderChange"
         @update:page-mask="onMaskChange"
         @update:page-mask-ratio="onMaskRatioChange"
         @update:page-mask-style="onMaskStyleChange"
@@ -120,6 +122,7 @@
         :is-note="isNoteBlock"
         :image-role="imageRole"
         :current-slide-layout="currentSlideLayout"
+        :current-slide-header="currentSlideHeader"
         :parent-elem-click="parentContainerClicks"
         :parent-container-slot="parentContainerSlot"
         :parent-container-id="parentContainerId"
@@ -209,6 +212,7 @@ import {
   ATTR_DOC_BACKGROUND,
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_LAYOUT_RATIO,
+  ATTR_PAGE_HEADER,
   ATTR_PAGE_MASK,
   ATTR_PAGE_MASK_RATIO,
   ATTR_PAGE_MASK_STYLE,
@@ -423,6 +427,18 @@ const pageLayoutRatio = pageAttrResolver.resolvePageAttr({
   attrKey: ATTR_PAGE_LAYOUT_RATIO,
   mode: 'truthy',
   fallback: () => targetSlide.value?.frontmatter?.layoutRatio || '',
+})
+const pageHeader = pageAttrResolver.resolvePageAttr({
+  attrKey: ATTR_PAGE_HEADER,
+  fallback: () => {
+    if (targetSlide.value?.frontmatter?.header !== undefined) {
+      return targetSlide.value.frontmatter.header
+    }
+    return true
+  },
+})
+const currentSlideHeader = computed(() => {
+  return pageHeader.value !== false && pageHeader.value !== 'false'
 })
 const pageMask = pageAttrResolver.resolvePageAttr({
   attrKey: ATTR_PAGE_MASK,
@@ -648,6 +664,10 @@ async function onLayoutChange(val: string) {
 
 function onLayoutRatioChange(val: string) {
   savePageAttr(ATTR_PAGE_LAYOUT_RATIO, val)
+}
+
+function onPageHeaderChange(val: boolean) {
+  savePageAttr(ATTR_PAGE_HEADER, val ? 'true' : 'false')
 }
 
 async function onMaskChange(val: string) {

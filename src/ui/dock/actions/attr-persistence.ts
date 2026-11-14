@@ -11,6 +11,7 @@ import {
   ATTR_ELEM_CLICK,
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_LAYOUT_RATIO,
+  ATTR_PAGE_HEADER,
 } from "@/types/slides-protocol"
 
 export interface IInspectorActionsContext {
@@ -132,6 +133,16 @@ export function createAttrPersistence(ctx: IInspectorActionsContext): IAttrPersi
       }
     }
 
+    if (ATTR_PAGE_HEADER in attrs) {
+      const value = attrs[ATTR_PAGE_HEADER]
+      if (ctx.targetSlide.value) {
+        if (!ctx.targetSlide.value.frontmatter) {
+          ctx.targetSlide.value.frontmatter = {}
+        }
+        ctx.targetSlide.value.frontmatter.header = value === 'true'
+      }
+    }
+
     triggerSaveNotice("保存中...")
     try {
       await setBlockAttrs(targetId, attrs)
@@ -192,6 +203,15 @@ export function createAttrPersistence(ctx: IInspectorActionsContext): IAttrPersi
           ctx.targetSlide.value.frontmatter = {}
         }
         ctx.targetSlide.value.frontmatter.layoutRatio = value
+      }
+    }
+
+    if (key === ATTR_PAGE_HEADER) {
+      if (ctx.targetSlide.value) {
+        if (!ctx.targetSlide.value.frontmatter) {
+          ctx.targetSlide.value.frontmatter = {}
+        }
+        ctx.targetSlide.value.frontmatter.header = value === 'true'
       }
     }
 

@@ -57,8 +57,7 @@ const layoutGroups: ILayoutGroup[] = [
     title: '内容分栏',
     items: [
       { name: 'default', label: '标准', desc: '标题在上，内容自适应流式排版' },
-      { name: 'two-cols', label: '双栏', desc: '左右双栏对比展示，支持比例调节' },
-      { name: 'cols-header', label: '表头多栏', desc: '顶部通栏标题，下方自适应 2~N 栏' },
+      { name: 'cols-header', label: '多栏', desc: '自适应 2~N 栏排版，支持通栏标题与比例调节' },
       { name: 'clover', label: '四叶草', desc: '2x2 田字型四象限卡片布局' },
       { name: 'timeline', label: '时间线', desc: '步骤流程、里程碑演进或时间轴' },
     ],
@@ -95,7 +94,7 @@ const visibleLayoutGroups = computed(() => {
 
 function isLayoutActive(layoutName: string): boolean {
   if (props.modelValue === layoutName) return true
-  if (layoutName === 'cols-header' && (props.modelValue === 'two-cols-header' || props.modelValue === 'three-cols-header')) {
+  if (layoutName === 'cols-header' && (props.modelValue === 'two-cols' || props.modelValue === 'two-cols-header' || props.modelValue === 'three-cols-header')) {
     return true
   }
   if (layoutName === 'timeline' && props.modelValue === 'steps') {

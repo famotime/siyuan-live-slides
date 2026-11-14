@@ -5157,13 +5157,14 @@
             return { normal: [], header: [], colsCount: 2, isSuperCols: false, multiCol: [] }
           }
           const blocks = (slide.blocks || []).filter(b => b.slot !== "slot-divider-right")
-          const explicit = blocks.filter(b => b.slot === "header")
+          const layout = slide.frontmatter?.layout
+          const isHeaderEnabled = slide.frontmatter?.header !== false && layout !== "two-cols"
+          const explicit = isHeaderEnabled ? blocks.filter(b => b.slot === "header") : []
           let header = explicit
-          if (explicit.length === 0 && blocks.length > 0) {
+          if (isHeaderEnabled && explicit.length === 0 && blocks.length > 0) {
             const candidateH = blocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"))
             if (candidateH) header = [candidateH]
           }
-          const layout = slide.frontmatter?.layout
           let colsCount = 2
           if (layout === 'clover') {
             colsCount = 4
@@ -5216,7 +5217,7 @@
         const headerBlocks = computed(() => layoutGroups.value.header)
 
         function isColsHeader(layout) {
-          return layout === 'cols-header' || layout === 'two-cols-header' || layout === 'three-cols-header' || layout === 'clover';
+          return layout === 'cols-header' || layout === 'two-cols-header' || layout === 'three-cols-header' || layout === 'clover' || layout === 'two-cols';
         }
 
         const dynamicColsCount = computed(() => layoutGroups.value.colsCount);

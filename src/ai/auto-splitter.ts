@@ -122,7 +122,7 @@ export function inferSlideLayout(
   }
 
   if (hasSuperBlock || listItemCount >= 3) {
-    return "two-cols"
+    return "cols-header"
   }
 
   if (hasBlockquote && followingBlocks.length <= 2) {
@@ -273,8 +273,8 @@ export function analyzeSlideSplits(
 
         if (layout === "image-right" || layout === "image-left") {
           reason += " (推荐图文版式)"
-        } else if (layout === "two-cols") {
-          reason += " (推荐双栏版式)"
+        } else if (layout === "cols-header" || layout === "two-cols") {
+          reason += " (推荐多栏版式)"
         } else if (layout === "quote") {
           reason += " (推荐引言版式)"
         }

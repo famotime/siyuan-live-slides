@@ -825,13 +825,16 @@ export function buildSlidesDocument(
 
     if (layout === "clover" || layout === "timeline" || layout === "steps" || isColsHeaderLayout(layout)) {
       let headerList: ISlidesBlockItem[] = []
-      const explicitHeader = contentBlocks.filter(b => b.slot === "header")
-      if (explicitHeader.length > 0) {
-        headerList = explicitHeader
-      } else if (contentBlocks.length > 0) {
-        const candidateH = contentBlocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"))
-        if (candidateH) {
-          headerList = [candidateH]
+      const isHeaderEnabled = page.frontmatter.header !== false && layout !== "two-cols"
+      if (isHeaderEnabled) {
+        const explicitHeader = contentBlocks.filter(b => b.slot === "header")
+        if (explicitHeader.length > 0) {
+          headerList = explicitHeader
+        } else if (contentBlocks.length > 0) {
+          const candidateH = contentBlocks.find(b => b.type === "h" && (!b.slot || b.slot === "default"))
+          if (candidateH) {
+            headerList = [candidateH]
+          }
         }
       }
 

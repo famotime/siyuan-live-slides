@@ -421,6 +421,7 @@ const props = defineProps<{
   isNote?: boolean
   imageRole?: string
   currentSlideLayout?: string
+  currentSlideHeader?: boolean | string
   isSuperBlock?: boolean
   parentElemClick?: string
   parentContainerSlot?: string
@@ -468,55 +469,63 @@ const detectedColumnsCount = computed(() => {
 })
 
 const slotControlTitle = computed(() => {
-  const l = effectiveLayout.value
-  if (l === 'cols-header') return '多栏插槽归属'
-  if (l === 'three-cols-header') return '三栏插槽归属'
-  if (l === 'two-cols-header') return '带表头双栏插槽'
   return '多栏插槽归属'
 })
 
 const slotControlDesc = computed(() => {
-  const l = effectiveLayout.value
-  if (l === 'cols-header') return `在 cols-header 表头多栏（${detectedColumnsCount.value} 栏）中的内容块位置`
-  if (l === 'three-cols-header') return '在 three-cols-header 版式中的内容块位置'
-  if (l === 'two-cols-header') return '在 two-cols-header 版式中的内容块位置'
-  if (l === 'two-cols') return '在 two-cols 双栏版式中的归属'
-  return '在当前分栏版式中的内容块位置'
+  const hasHeader = props.currentSlideHeader !== false && props.currentSlideHeader !== 'false' && props.currentSlideLayout !== 'two-cols'
+  const headerText = hasHeader ? '带通栏标题' : '纯分栏对比'
+  return `在多栏版式（${detectedColumnsCount.value} 栏，${headerText}）中的内容块位置`
 })
 
 const availableSlots = computed(() => {
   const l = effectiveLayout.value
+  const hasHeader = props.currentSlideHeader !== false && props.currentSlideHeader !== 'false' && l !== 'two-cols'
+
   if (l === 'two-cols') {
     return [
-      { value: '', label: '默认 (左)' },
-      { value: 'right', label: '右栏' },
+      { value: '', label: '默认' },
+      { value: 'col-1', label: '第 1 栏 (左)' },
+      { value: 'col-2', label: '第 2 栏 (右)' },
     ]
   }
   if (l === 'two-cols-header') {
-    return [
+    const slots = [
       { value: '', label: '默认' },
-      { value: 'header', label: '表头' },
-      { value: 'left', label: '左栏' },
-      { value: 'right', label: '右栏' },
     ]
+    if (hasHeader) slots.push({ value: 'header', label: '表头' })
+    slots.push(
+      { value: 'col-1', label: '第 1 栏 (左)' },
+      { value: 'col-2', label: '第 2 栏 (右)' },
+    )
+    return slots
   }
   if (l === 'three-cols-header') {
-    return [
+    const slots = [
       { value: '', label: '默认' },
-      { value: 'header', label: '表头' },
+    ]
+    if (hasHeader) slots.push({ value: 'header', label: '表头' })
+    slots.push(
       { value: 'col-1', label: '第 1 栏' },
       { value: 'col-2', label: '第 2 栏' },
       { value: 'col-3', label: '第 3 栏' },
-    ]
+    )
+    return slots
   }
   // cols-header
   const cols = detectedColumnsCount.value
   const slots = [
     { value: '', label: '默认' },
-    { value: 'header', label: '表头' },
   ]
+  if (hasHeader) {
+    slots.push({ value: 'header', label: '表头' })
+  }
   for (let i = 1; i <= cols; i++) {
-    slots.push({ value: `col-${i}`, label: `第 ${i} 栏` })
+    let label = `第 ${i} 栏`
+    if (cols === 2) {
+      label = i === 1 ? '第 1 栏 (左)' : '第 2 栏 (右)'
+    }
+    slots.push({ value: `col-${i}`, label })
   }
   return slots
 })

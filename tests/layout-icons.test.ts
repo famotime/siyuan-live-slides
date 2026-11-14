@@ -12,7 +12,6 @@ describe("LayoutPicker & SlidesIcon 版式线框图标体系测试", () => {
   const pickerLayouts = [
     "cover",
     "default",
-    "two-cols",
     "cols-header",
     "clover",
     "image-right",

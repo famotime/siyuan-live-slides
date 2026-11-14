@@ -23,6 +23,7 @@ export const ATTR_PAGE_NOTES = "custom-slides-notes"
 export const ATTR_PAGE_CLASS = "custom-slides-class"
 export const ATTR_PAGE_SPACING = "custom-slides-spacing"
 export const ATTR_PAGE_LAYOUT_RATIO = "custom-slides-layout-ratio"
+export const ATTR_PAGE_HEADER = "custom-slides-header"
 export const ATTR_PAGE_MASK = "custom-slides-mask"
 export const ATTR_PAGE_MASK_RATIO = "custom-slides-mask-ratio"
 export const ATTR_PAGE_MASK_STYLE = "custom-slides-mask-style"
@@ -81,15 +82,16 @@ export type TSlideLayout =
   | string
 
 /**
- * 判断指定版式是否属于表头多栏版式体系（统一 cols-header 或历史兼容 two-cols-header / three-cols-header）
+ * 判断指定版式是否属于多栏版式体系（统一 cols-header 或历史兼容 two-cols / two-cols-header / three-cols-header）
  */
 export function isColsHeaderLayout(layout?: string): boolean {
-  return layout === "cols-header" || layout === "two-cols-header" || layout === "three-cols-header"
+  return layout === "cols-header" || layout === "two-cols-header" || layout === "three-cols-header" || layout === "two-cols"
 }
 
 /** 页面 Frontmatter 配置元数据 */
 export interface ISlidePageFrontmatter {
   layout?: TSlideLayout
+  header?: boolean
   transition?: string
   background?: string
   image?: string

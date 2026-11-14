@@ -136,8 +136,8 @@ describe("AI Modules (智能断页、动效注入与提词卡)", () => {
     expect(imgSug?.reason).toContain("推荐图文版式")
 
     expect(listSug).toBeDefined()
-    expect(listSug?.recommendedLayout).toBe("two-cols")
-    expect(listSug?.reason).toContain("推荐双栏版式")
+    expect(listSug?.recommendedLayout).toBe("cols-header")
+    expect(listSug?.reason).toContain("推荐多栏版式")
   })
 
   it("AutoSplitter 应基于代码块与表格等大块空间权重提前换页（不可分割保护）", () => {

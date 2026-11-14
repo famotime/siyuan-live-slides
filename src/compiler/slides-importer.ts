@@ -8,6 +8,7 @@ import {
   ATTR_PAGE_IMAGE,
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_LAYOUT_RATIO,
+  ATTR_PAGE_HEADER,
   ATTR_PAGE_MASK,
   ATTR_PAGE_MASK_RATIO,
   ATTR_PAGE_MASK_STYLE,
@@ -226,7 +227,10 @@ export function parseSlidesPresentation(
 
   function normalizeImportedLayout(rawLayout: unknown, targetAttrs: Record<string, string>, frontmatterObj: Record<string, any>) {
     const layoutStr = String(rawLayout)
-    if (layoutStr === "two-cols-header") {
+    if (layoutStr === "two-cols") {
+      targetAttrs[ATTR_PAGE_LAYOUT] = "two-cols"
+      targetAttrs[ATTR_PAGE_HEADER] = "false"
+    } else if (layoutStr === "two-cols-header") {
       targetAttrs[ATTR_PAGE_LAYOUT] = "cols-header"
     } else if (layoutStr === "three-cols-header") {
       targetAttrs[ATTR_PAGE_LAYOUT] = "cols-header"

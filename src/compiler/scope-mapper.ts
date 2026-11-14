@@ -29,6 +29,7 @@ import {
   ATTR_PAGE_IMAGE,
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_LAYOUT_RATIO,
+  ATTR_PAGE_HEADER,
   ATTR_PAGE_MASK,
   ATTR_PAGE_MASK_RATIO,
   ATTR_PAGE_MASK_STYLE,
@@ -132,6 +133,14 @@ export function parsePageAttrs(
 
   if (attrs[ATTR_PAGE_LAYOUT]) {
     frontmatter.layout = attrs[ATTR_PAGE_LAYOUT].trim()
+    if (frontmatter.layout === "two-cols" && attrs[ATTR_PAGE_HEADER] === undefined) {
+      frontmatter.header = false
+    }
+  }
+
+  if (attrs[ATTR_PAGE_HEADER] !== undefined) {
+    const rawHeader = attrs[ATTR_PAGE_HEADER].trim().toLowerCase()
+    frontmatter.header = rawHeader !== "false"
   }
 
   if (attrs[ATTR_PAGE_TRANSITION]) {
@@ -185,6 +194,7 @@ export function parsePageAttrs(
       ![
         ATTR_PAGE_LAYOUT,
         ATTR_PAGE_LAYOUT_RATIO,
+        ATTR_PAGE_HEADER,
         ATTR_PAGE_MASK,
         ATTR_PAGE_MASK_RATIO,
         ATTR_PAGE_MASK_STYLE,
