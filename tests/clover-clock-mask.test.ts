@@ -256,10 +256,13 @@ maskInitial: revealed
     it("PageInspectorSection 选中顺时针或逆时针选项时默认自动选择 1:1:1:1 4步比例并允许手工调整", async () => {
       const fs = await import("fs")
       const content = fs.readFileSync("src/ui/components/PageInspectorSection.vue", "utf8")
-      expect(content).toContain("defaultMaskRatio")
+      // 视图消费生效比例与形态判定（RF-029 后默认比例派生与联动实现在领域模块）
       expect(content).toContain("effectiveMaskRatio")
-      expect(content).toContain("isClockMask")
-      expect(content).toContain("emit('update:pageMaskRatio', '1:1:1:1')")
+      expect(content).toContain("selectClockMask")
+      const maskControls = fs.readFileSync("src/ui/components/usePageMaskControls.ts", "utf8")
+      expect(maskControls).toContain("defaultMaskRatio")
+      expect(maskControls).toContain("isClockMask")
+      expect(maskControls).toContain("emit('update:pageMaskRatio', '1:1:1:1')")
     })
   })
 })

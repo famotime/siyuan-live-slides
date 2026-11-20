@@ -400,11 +400,12 @@ describe("Immersion Peek Drawer & IPC Coordination (原位速览抽屉与通信�
     expect(content).toContain("viewMode")
     expect(content).toContain(":name=\"viewMode === 'mobile' ? 'mobile' : 'desktop'\"")
 
-    // 2. 验证具备主流移动端 User-Agent 常量与注入机制
+    // 2. 验证具备主流移动端 User-Agent 常量与注入机制（常量内容在 peek-webview-utils 领域模块，组件保留注入机制）
     expect(content).toContain("MOBILE_USER_AGENT")
-    expect(content).toContain("iPhone OS")
     expect(content).toContain("setUserAgent")
     expect(content).toContain(":useragent=\"currentUserAgent\"")
+    const uaUtilsContent = fs.readFileSync(path.resolve(__dirname, "../src/ui/components/peek/peek-webview-utils.ts"), "utf-8")
+    expect(uaUtilsContent).toContain("iPhone OS")
 
     // 3. 验证具备 390px 居中手机视口及样式规则
     expect(content).toContain("spm-webview-viewport")

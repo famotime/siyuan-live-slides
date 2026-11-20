@@ -201,6 +201,7 @@ import { extractImageUrl } from '@/utils'
 import { globalDocumentCompiler } from '@/compiler/document-compiler'
 import { resolveTargetSlide, isDividerBlockType } from '@/sync/inspector-slide-resolver'
 import { useInspectorActions } from '@/ui/dock/useInspectorActions'
+import { useActiveBlockState } from '@/ui/dock/useActiveBlockState'
 import { createPageAttrResolver } from '@/ui/dock/useInspectorPageOverrides'
 import { useSuperBlockInspector, type IDetectedSuperBlockInfo } from '@/ui/dock/useSuperBlockInspector'
 import { isFeatureEnabled } from '@/feature-flags/feature-flags'
@@ -494,85 +495,21 @@ function isCurrentBlockMainText(): boolean {
   return firstChild?.getAttribute('data-node-id') === activeBlockId.value
 }
 
-const elemClick = computed(() => {
-  if (activeBlockAttrs.value[ATTR_ELEM_CLICK] !== undefined) {
-    return activeBlockAttrs.value[ATTR_ELEM_CLICK] || ''
-  }
-  // 若当前聚焦的块是列表项容器的首行主文本，且自身未定义，展示容器的 clicks (主容器视觉权威)
-  if (parentContainerId.value && isCurrentBlockMainText()) {
-    return parentContainerClicks.value || ''
-  }
-  // 若当前聚焦的块归属于列表项容器内部其他子组件 (如图片)，且自身未显式定义 clicks，
-  // 则严格遵循未单独开启逐步呈现，绝对不回退到匹配模型或父级 clicks，保持为 '' (跟随整栏)
-  if (parentContainerId.value) {
-    return ''
-  }
-  const aid = activeBlockId.value
-  if (aid && targetSlide.value?.blocks) {
-    const matched = targetSlide.value.blocks.find(b => b.id === aid)
-    if (matched?.clicks) return matched.clicks
-  }
-  return ''
-})
-
-const elemMotion = computed(() => {
-  if (activeBlockAttrs.value[ATTR_ELEM_MOTION]) {
-    return activeBlockAttrs.value[ATTR_ELEM_MOTION]
-  }
-  const aid = activeBlockId.value
-  if (aid && targetSlide.value?.blocks) {
-    const matched = targetSlide.value.blocks.find(b => b.id === aid)
-    if (matched?.motion) return typeof matched.motion === 'string' ? matched.motion : JSON.stringify(matched.motion)
-  }
-  return ''
-})
-
-const elemAnim = computed(() => {
-  if (activeBlockAttrs.value[ATTR_ELEM_ANIM] !== undefined) {
-    return activeBlockAttrs.value[ATTR_ELEM_ANIM] || ''
-  }
-  const aid = activeBlockId.value
-  if (aid && targetSlide.value?.blocks) {
-    const matched = targetSlide.value.blocks.find(b => b.id === aid)
-    if (matched?.anim?.type) return String(matched.anim.type)
-  }
-  return ''
-})
-
-const elemAnimProps = computed(() => {
-  if (activeBlockAttrs.value[ATTR_ELEM_ANIM_PROPS] !== undefined) {
-    return activeBlockAttrs.value[ATTR_ELEM_ANIM_PROPS] || ''
-  }
-  const aid = activeBlockId.value
-  if (aid && targetSlide.value?.blocks) {
-    const matched = targetSlide.value.blocks.find(b => b.id === aid)
-    if (matched?.anim) {
-      const { type, ...props } = matched.anim
-      return JSON.stringify(props)
-    }
-  }
-  return ''
-})
-
-const activeBlockContent = computed(() => {
-  const aid = activeBlockId.value
-  if (aid && targetSlide.value?.blocks) {
-    const matched = targetSlide.value.blocks.find(b => b.id === aid)
-    if (matched) return matched.rawMarkdown || matched.content || ''
-  }
-  return ''
-})
-
-const elemSlot = computed(() => {
-  if (activeBlockAttrs.value[ATTR_ELEM_SLOT]) {
-    return activeBlockAttrs.value[ATTR_ELEM_SLOT]
-  }
-  const aid = activeBlockId.value
-  if (aid && targetSlide.value?.blocks) {
-    const matched = targetSlide.value.blocks.find(b => b.id === aid)
-    if (matched?.slot) return matched.slot
-  }
-  return ''
+// 活动块状态派生抽离：单点查找 + 六类属性读取统一由 useActiveBlockState 提供
+const {
+  elemClick,
+  elemMotion,
+  elemAnim,
+  elemAnimProps,
+  activeBlockContent,
+  elemSlot,
+} = useActiveBlockState({
+  activeBlockId,
+  targetSlide,
+  activeBlockAttrs,
+  parentContainerId,
+  parentContainerClicks,
+  isCurrentBlockMainText,
 })
 const elemShikiLines = ref('')
 const elemMaxHeight = ref('')

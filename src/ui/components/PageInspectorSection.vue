@@ -561,6 +561,8 @@ import LayoutPicker from '@/ui/components/LayoutPicker.vue'
 import TransitionSelector from '@/ui/components/TransitionSelector.vue'
 import SlidesIcon from '@/ui/components/SlidesIcon.vue'
 import { isFeatureEnabled } from '@/feature-flags/feature-flags'
+import { usePageMaskControls } from '@/ui/components/usePageMaskControls'
+import { usePageColumnRatio } from '@/ui/components/usePageColumnRatio'
 
 const props = defineProps<{
   pageLayout: string
@@ -603,161 +605,41 @@ const emit = defineEmits<{
   (e: 'convertToSuperBlock'): void
 }>()
 
-const maskRatioPresets = [
-  { label: '1:1 (2步)', value: '1:1' },
-  { label: '1:1:1 (3步)', value: '1:1:1' },
-  { label: '1:2:1 (非等宽)', value: '1:2:1' },
-  { label: '1:1:1:1 (4步)', value: '1:1:1:1' },
-]
+// 蒙版领域逻辑抽离：时钟/线性形态判定与比例升降级联动由 usePageMaskControls 提供
+const {
+  maskRatioPresets,
+  effectiveMaskRatio,
+  selectClockMask,
+  selectLinearMask,
+  maskHelpTooltip,
+} = usePageMaskControls(
+  {
+    pageMask: () => props.pageMask,
+    pageMaskRatio: () => props.pageMaskRatio,
+  },
+  emit,
+)
 
-const isClockMask = computed(() => {
-  const m = props.pageMask
-  return m === 'clockwise' || m === 'counter-clockwise' || m === 'cw' || m === 'ccw'
-})
-
-const defaultMaskRatio = computed(() => {
-  return isClockMask.value ? '1:1:1:1' : '1:1'
-})
-
-const effectiveMaskRatio = computed(() => {
-  return props.pageMaskRatio || defaultMaskRatio.value
-})
-
-function selectClockMask(dir: 'clockwise' | 'counter-clockwise') {
-  emit('update:pageMask', dir)
-  if (!props.pageMaskRatio || props.pageMaskRatio === '1:1') {
-    emit('update:pageMaskRatio', '1:1:1:1')
-  }
-}
-
-function selectLinearMask(dir: 'down' | 'right') {
-  emit('update:pageMask', dir)
-  if (!props.pageMaskRatio || props.pageMaskRatio === '1:1:1:1') {
-    emit('update:pageMaskRatio', '1:1')
-  }
-}
-
-const maskHelpTooltip = computed(() => {
-  if (props.pageMask === 'clockwise' || props.pageMask === 'counter-clockwise' || props.pageMask === 'cw' || props.pageMask === 'ccw') {
-    return '时钟走时规则：\n• 顺时针：左上 → 右上 → 右下 → 左下\n• 逆时针：左上 → 左下 → 右下 → 右上\n• 每次点击时针旋转 90° 并扇形扫开 1/4 象限，全部揭开后翻页'
-  }
-  return '输入规则：\n• 权重比例（项数决定步数）：如 1:1 (2步等分)、1:1:1 (3步等分)、1:2:1 (按权重累计分段)\n• 绝对百分比：如 25:75:100 或 30:80 (指定每步展开的累计百分比)\n• 每次点击或按空格/向右键展露下一段，全部揭开后翻页'
-})
-
-const isMultiColLayout = computed(() => {
-  return ['two-cols', 'cols-header', 'two-cols-header', 'three-cols-header', 'image-left', 'image-right'].includes(props.pageLayout)
-})
-
-const isColsHeaderLayout = computed(() => {
-  return ['cols-header', 'two-cols-header', 'three-cols-header', 'two-cols'].includes(props.pageLayout)
-})
-
-const effectivePageHeader = computed(() => {
-  if (props.pageHeader === false || props.pageHeader === 'false') return false
-  return true
-})
-
-const detectedColumnsCount = computed(() => {
-  // 1. 若显式指定了多段比例，以比例段数为准精确控制 (2~6 栏)
-  const ratio = (props.pageLayoutRatio || '').trim()
-  if (ratio.includes(':')) {
-    const count = ratio.split(':').filter(Boolean).length
-    if (count >= 2 && count <= 6) return count
-  }
-  // 2. 超级块比例或列数推断
-  const sbRatio = (props.detectedSbRatio || '').trim()
-  if (sbRatio.includes(':')) {
-    const count = sbRatio.split(':').filter(Boolean).length
-    if (count >= 2 && count <= 6) return count
-  }
-  if (props.detectedSbInfo?.colCount && props.detectedSbInfo.colCount >= 2) {
-    return Math.min(props.detectedSbInfo.colCount, 6)
-  }
-  if (props.detectedSbInfo?.slots && Array.isArray(props.detectedSbInfo.slots)) {
-    const count = props.detectedSbInfo.slots.length
-    if (count >= 2 && count <= 6) return count
-  }
-  if (props.pageLayout === 'three-cols-header') {
-    return 3
-  }
-  return 2
-})
-
-function setColumnCount(col: number) {
-  if (col < 2 || col > 6) return
-  const defaultRatios: Record<number, string> = {
-    2: '1:1',
-    3: '1:1:1',
-    4: '1:1:1:1',
-    5: '1:1:1:1:1',
-    6: '1:1:1:1:1:1',
-  }
-  const newRatio = defaultRatios[col] || '1:1'
-  if (props.pageLayout === 'two-cols' || props.pageLayout === 'two-cols-header' || props.pageLayout === 'three-cols-header') {
-    emit('update:pageLayout', 'cols-header')
-  }
-  emit('update:pageLayoutRatio', newRatio)
-}
-
-function isRatioActive(chipValue: string): boolean {
-  const r = (props.pageLayoutRatio || '').trim()
-  const cols = detectedColumnsCount.value
-  const equalRatio = Array(cols).fill('1').join(':')
-  if (chipValue === '') {
-    return !r || r === equalRatio
-  }
-  return r === chipValue
-}
-
-const currentRatioPresets = computed(() => {
-  const cols = detectedColumnsCount.value
-  if (cols === 3) {
-    return [
-      { label: '默认 1:1:1', value: '' },
-      { label: '1:2:1 (主中)', value: '1:2:1' },
-      { label: '2:1:1 (主左)', value: '2:1:1' },
-      { label: '1:1:2 (主右)', value: '1:1:2' },
-      { label: '1:3:1', value: '1:3:1' },
-    ]
-  }
-  if (cols === 4) {
-    return [
-      { label: '默认 1:1:1:1', value: '' },
-      { label: '1:2:2:1', value: '1:2:2:1' },
-      { label: '2:1:1:2', value: '2:1:1:2' },
-    ]
-  }
-  if (cols === 5) {
-    return [
-      { label: '默认 1:1:1:1:1', value: '' },
-    ]
-  }
-  if (cols === 6) {
-    return [
-      { label: '默认 1:1:1:1:1:1', value: '' },
-    ]
-  }
-  return [
-    { label: '默认 1:1', value: '' },
-    { label: '1:2', value: '1:2' },
-    { label: '2:1', value: '2:1' },
-    { label: '3:7', value: '3:7' },
-    { label: '7:3', value: '7:3' },
-    { label: '4:6', value: '4:6' },
-    { label: '6:4', value: '6:4' },
-  ]
-})
-
-const currentActiveRatio = computed(() => {
-  return props.pageLayoutRatio || ''
-})
-
-function onResetRatioToEqual() {
-  const cols = detectedColumnsCount.value || 2
-  const equalRatio = Array(cols).fill('1').join(':')
-  emit('update:pageLayoutRatio', equalRatio)
-  emit('resetSuperblockRatio')
-}
+// 分栏比例领域逻辑抽离：栏数探测、手工指定与预设矩阵由 usePageColumnRatio 提供
+const {
+  isMultiColLayout,
+  isColsHeaderLayout,
+  effectivePageHeader,
+  detectedColumnsCount,
+  setColumnCount,
+  isRatioActive,
+  currentRatioPresets,
+  onResetRatioToEqual,
+} = usePageColumnRatio(
+  {
+    pageLayout: () => props.pageLayout,
+    pageHeader: () => props.pageHeader,
+    pageLayoutRatio: () => props.pageLayoutRatio,
+    detectedSbRatio: () => props.detectedSbRatio,
+    detectedSbInfo: () => props.detectedSbInfo,
+  },
+  emit,
+)
 
 const notePreviewSnippet = computed(() => {
   if (!props.pageNotes) return ''

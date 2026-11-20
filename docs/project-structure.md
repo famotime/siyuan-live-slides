@@ -1,6 +1,6 @@
 # 项目架构与目录结构 (Project Structure)
 
-> 最近刷新：2026-11-14（Phase 4 重构 RF-021 ~ RF-025 完成后，随代码模块解耦同步核对）
+> 最近刷新：2026-11-20（Phase 5 重构 RF-026 ~ RF-030 完成后，随代码模块解耦同步核对）
 
 ## 1. 架构概览
 
@@ -24,7 +24,7 @@ d:\MyCodingProjects\siyuan-live-slides
 │   ├── project-structure.md                # 项目最新架构与模块映射（本文件）
 │   ├── 技术规格定义.md                      # custom-slides-* 块属性协议字典（与 types/slides-protocol.ts 对齐）
 │   ├── 思源笔记即现插件详细方案、实施进展与下一步研发计划.md   # 交付进展总览与研发排期
-│   ├── refactor-plan.md                    # 重构计划与执行日志 (RF-001 ~ RF-020)
+│   ├── refactor-plan.md                    # 重构计划与执行日志 (RF-001 ~ RF-030)
 │   ├── USER-GUIDE.zh-CN.md / USER-GUIDE.md # 中英文用户使用指南
 │   └── ...                                 # 其余设计存档与规划期存档（完整索引见 docs/README.md）
 ├── src/                                    # 插件源码目录
@@ -103,18 +103,24 @@ d:\MyCodingProjects\siyuan-live-slides
 │   │
 │   ├── ui/                                 # 用户界面组件层 (Vue 3)
 │   │   ├── dock/
-│   │   │   ├── SlidesInspectorDockView.vue # [RF-002, RF-008, RF-017, RF-023] 演示配置主容器 Dock 视图（808 行）
+│   │   │   ├── SlidesInspectorDockView.vue # [RF-002, RF-008, RF-017, RF-023, RF-027] 演示配置主容器 Dock 视图（812 行，活动块查找收敛至 Composable）
 │   │   │   ├── useInspectorActions.ts      # [RF-008, RF-016] Actions 统一门面（装配三领域模块，86 行）
 │   │   │   ├── useInspectorPageOverrides.ts # [RF-017] 分页符页面属性三级查找工厂（直接属性 → 覆写层 → frontmatter）
 │   │   │   ├── useSuperBlockInspector.ts   # [RF-023] 超级块 DOM 几何列宽与 AST 兜底推断、当前页超级块扫描与块多选监听
+│   │   │   ├── useActiveBlockState.ts      # [RF-027] 活动块单点查找与六类属性派生（click/motion/anim/animProps/content/slot，IAL > 容器回退 > 编译模型）
 │   │   │   └── actions/                    # [RF-016] Inspector Actions 领域模块
 │   │   │       ├── attr-persistence.ts     # 属性持久化（saveAttrs/savePageAttr/saveDocAttr + 父容器联动 + frontmatter 即时更新）
 │   │   │       ├── notes-actions.ts        # 备注与 AI（讲稿块创建/转换/定位、AI 提词、批量追加/删除）
 │   │   │       └── layout-actions.ts       # 版式与元素指令（视频开关、图片角色、slot/Shiki、分割线、四叶草）
 │   │   ├── components/
-│   │   │   ├── PageInspectorSection.vue    # [RF-002] 页面级配置子面板（版式九宫格、转场效果、演讲备注、背景图）
-│   │   │   ├── BlockInspectorSection.vue   # [RF-002] 块级配置子面板（v-click 渐进动效、双栏 slot、代码逐行聚光）
+│   │   │   ├── PageInspectorSection.vue    # [RF-002, RF-029] 页面级配置子面板（831 行，蒙版与分栏比例领域抽离至 Composable）
+│   │   │   ├── BlockInspectorSection.vue   # [RF-002, RF-026] 块级配置子面板（810 行，动效与插槽领域抽离至 Composable）
 │   │   │   ├── DocInspectorSection.vue     # [RF-002] 全局文档级配置子面板（主题、画幅比例、AI 工具箱、快速操作）
+│   │   │   ├── useBlockMotionSection.ts    # [RF-026] 块级动效领域 Composable（入场/强调/文本动效解析变更、CountUp 推导、试播舞台）
+│   │   │   ├── useBlockSlotSection.ts      # [RF-026] 块级多栏插槽领域 Composable（版式判定、分栏数三来源探测、插槽清单与激活互认）
+│   │   │   ├── usePageMaskControls.ts      # [RF-029] 页面蒙版领域 Composable（时钟/线性形态判定、比例升降级联动）
+│   │   │   ├── usePageColumnRatio.ts       # [RF-029] 页面分栏比例领域 Composable（栏数五来源探测、手工指定、预设矩阵、等分重置）
+│   │   │   ├── column-ratio.ts             # [RF-029] 分栏比例共享解析工具（段数解析 2~6、等分比例生成，块级与页面级复用）
 │   │   │   ├── SlideInspector.vue          # 幻灯片大纲导航微调器
 │   │   │   ├── LayoutPicker.vue            # 布局版式选择器组件
 │   │   │   ├── TransitionSelector.vue      # 转场过渡动效选择器组件
@@ -126,11 +132,15 @@ d:\MyCodingProjects\siyuan-live-slides
 │   │   │   ├── useSlidesImport.ts          # [RF-015] 导入编排 Composable（资产上传、新建文档、属性注入与分屏联动）
 │   │   │   ├── SlidesIcon.vue              # 幻灯片 SVG 图标组件
 │   │   │   └── peek/                       # 沉浸速览子系统（外链/文档原位速览）
-│   │   │       ├── WebviewPeekDrawer.vue   # 网页 Webview 速览抽屉（导航、缩放、视图模式、错误重试）
+│   │   │       ├── WebviewPeekDrawer.vue   # [RF-030] 网页 Webview 速览抽屉（852 行，缩放/导航/持久化抽离至领域模块）
+│   │   │       ├── peek-webview-utils.ts   # [RF-030] 微型浏览器纯函数工具（视图模式持久化、Chromium 网络错误中文文案映射）
+│   │   │       ├── useWebviewPeekControls.ts # [RF-030] 微型浏览器控制 Composable（缩放状态机 0.5~2.5、导航委托）
 │   │   │       ├── ProtylePeekDrawer.vue   # 思源文档 Protyle 原位速览抽屉
 │   │   │       └── ImmersionDrawerContainer.vue # 沉浸抽屉容器（遮罩与滚动锁定）
 │   │   ├── tab/
-│   │   │   ├── SlidesPreviewTab.vue        # 下方分屏实时演示放映页签（引擎切换、总览、全屏、导出入口）
+│   │   │   ├── SlidesPreviewTab.vue        # [RF-028] 下方分屏实时演示放映页签（759 行，导出编排与速览抽屉状态抽离至 Composable）
+│   │   │   ├── usePreviewExport.ts         # [RF-028] 导出编排 Composable（HTML/PDF/图片 ZIP/当前页/剪贴板五类动作，服务注入可测）
+│   │   │   ├── usePeekDrawerState.ts       # [RF-028] 速览抽屉状态机 Composable（双通道状态迁移、文档块 SQL 探测注入化）
 │   │   │   ├── SlidesPresenterTab.vue      # [RF-021] 演讲者双屏控制台主视图（724 行，主控界面与缩略图渲染）
 │   │   │   ├── SlidesPresenterTab.scss     # [RF-021] 演讲者控制台 SCSS 样式（1292 行）
 │   │   │   ├── SlidesPresenterThumbnail.scss # [RF-021] 演讲者幻灯片缩略图 SCSS 样式（825 行）
@@ -159,7 +169,7 @@ d:\MyCodingProjects\siyuan-live-slides
 │       ├── api.d.ts                        # 思源内核响应数据类型
 │       └── index.d.ts                      # 全局环境与插件对象类型
 │
-├── tests/                                  # 自动化测试套件 (Vitest, 91 个测试文件，860 项用例全绿)
+├── tests/                                  # 自动化测试套件 (Vitest, 106 个测试文件，1047 项用例全绿)
 │   ├── mocks/
 │   │   └── siyuan.ts                       # 思源插件宿主环境轻量 Mock（支持纯 Node 离线测试）
 │   ├── __fixtures__/
@@ -177,6 +187,14 @@ d:\MyCodingProjects\siyuan-live-slides
 │   ├── export-styles-golden.test.ts        # [RF-022] 导出样式规则快照与共享版式金样测试
 │   ├── api-switch-bridge.test.ts           # [RF-024] 外部 API 切换器桥接单测
 │   ├── feature-flags.test.ts               # [RF-025] 构建期细粒度版式与功能开关单测
+│   ├── use-block-motion-section.test.ts    # [RF-026] 块级动效领域单测（解析/乐观更新/试播舞台）
+│   ├── use-block-slot-section.test.ts      # [RF-026] 块级多栏插槽领域单测（栏数探测/插槽互认）
+│   ├── use-active-block-state.test.ts      # [RF-027] 活动块单点查找与六类属性派生单测
+│   ├── use-preview-export.test.ts          # [RF-028] 预览页签导出编排单测（防重入/文件名派生/剪贴板回退）
+│   ├── use-peek-drawer-state.test.ts       # [RF-028] 速览抽屉状态机单测（双通道迁移/SQL 探测回退）
+│   ├── use-page-mask-controls.test.ts      # [RF-029] 页面蒙版领域单测（时钟/线性联动）
+│   ├── use-page-column-ratio.test.ts       # [RF-029] 页面分栏比例领域单测（五来源探测/预设矩阵）
+│   ├── webview-peek-controls.test.ts       # [RF-030] 微型浏览器缩放导航与持久化单测
 │   ├── peek-proxy-session.test.ts / peek-local-html.test.ts / immersion-peek.test.ts # peek 速览子系统
 │   ├── export.test.ts / pdf-template-styles.test.ts # 导出管线
 │   ├── compiler*.test.ts / list-*.test.ts / superblock-*.test.ts # 编译器管线
@@ -192,7 +210,7 @@ d:\MyCodingProjects\siyuan-live-slides
 
 ---
 
-## 3. 重构演进对照表 (RF-001 ~ RF-025)
+## 3. 重构演进对照表 (RF-001 ~ RF-030)
 
 | 模块 | 重构前状况 | 重构后演进 | 收益 |
 | :--- | :--- | :--- | :--- |
@@ -221,3 +239,8 @@ d:\MyCodingProjects\siyuan-live-slides
 | **侧栏超级块探测与多选解耦 (RF-023)** | `SlidesInspectorDockView.vue` lines 450~609 混杂 DOM 几何列宽与 AST 回退计算 | 抽取 `src/ui/dock/useSuperBlockInspector.ts`，主视图精简至 808 行（净减 181 行） | 几何列宽比例计算逻辑独立纯粹并具备 7 项专项单测，Dock 视图专注交互装配 |
 | **插件入口服务桥接解耦 (RF-024)** | `src/index.ts` 混杂 70 行 `siyuan-api-switch` 事件同步与 100 行页签窗口管理 | 抽离 `src/plugin/api-switch-bridge.ts` 与 `preview-window-manager.ts`，入口精简至 682 行（净减 147 行） | 外部插件桥接与窗口管理解耦，生命周期调度更清晰，新增独立单测 |
 | **特性开关与测试基线修复 (RF-025)** | `src/feature-flags/feature-flags.ts` 未导出常量，单测硬编码断言全 true 与配置冲突 | 规范导出 `FEATURE_FLAGS` 常量，修正 `tests/feature-flags.test.ts` 断言逻辑 | 消除基线唯一红灯，测试套件恢复 100% 全绿基准 |
+| **块级动效 Inspector 领域解耦 (RF-026)** | `BlockInspectorSection.vue` (1245 行) 脚本混杂分栏 slot、入场/强调/文本动效、试播舞台四类职责，且内置与 `motion-presets.ts` 完全重复的本地预设死代码数组 | 抽离 `useBlockMotionSection.ts`（动效解析/变更/试播舞台）与 `useBlockSlotSection.ts`（插槽领域），删除重复预设数组，主组件精简至 810 行（净减 435 行） | 动效解析与乐观试播具备 46 项领域单测；新增预设只需维护 motion-presets 单一来源 |
+| **Dock 主视图重复块查找收敛 (RF-027)** | `SlidesInspectorDockView.vue` 中 6 处 computed 各自重复 `blocks.find(b => b.id === ...)` 查找与 IAL/编译模型回退语义 | 抽取 `useActiveBlockState.ts` 单点查找（matchedBlock）与六类属性派生，视图精简至 812 行 | 属性读取优先级（IAL > 容器回退 > 编译模型）单点维护，具备 15 项专项单测 |
+| **预览页签导出与抽屉解耦 (RF-028)** | `SlidesPreviewTab.vue` (883 行) 脚本混杂五类导出编排与速览抽屉双通道状态机 | 抽离 `usePreviewExport.ts`（服务注入可测）与 `usePeekDrawerState.ts`（SQL 文档块探测注入化），页签精简至 759 行 | 导出防重入/文件名派生/剪贴板回退与抽屉状态迁移均具备领域单测 |
+| **页面 Inspector 蒙版与比例抽离 (RF-029)** | `PageInspectorSection.vue` (949 行) 蒙版方向联动与分栏比例五来源探测内嵌视图，与块级插槽存在相似 ratio 解析 | 抽离 `usePageMaskControls.ts` 与 `usePageColumnRatio.ts`，新建 `column-ratio.ts` 共享解析工具并复用至 `useBlockSlotSection`，视图精简至 831 行 | 比例段数解析单一实现跨块级/页面级复用，蒙版与比例领域各具备专项单测 |
+| **Peek 微型浏览器控制解耦 (RF-030)** | `WebviewPeekDrawer.vue` (961 行) 视图模式持久化、网络错误文案、缩放状态机与导航委托内嵌组件 | 抽离 `peek-webview-utils.ts` 纯函数模块与 `useWebviewPeekControls.ts`（缩放 0.5~2.5 + 导航委托），组件 re-export 保持 import 兼容，精简至 852 行 | 纯函数可在纯 Node 环境直测，缩放边界与导航委托具备 12 项专项单测 |

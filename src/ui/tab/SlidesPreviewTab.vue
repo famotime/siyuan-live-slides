@@ -202,16 +202,9 @@ import { CursorTracker } from '@/sync/cursor-tracker'
 import { mirrorBlockSelection, clearBlockSelectionHighlight } from '@/sync/selection-mirror'
 import { getRuntimeModule } from '@/engine/runtime-node'
 import { resolvePeekUrl, fileUrlToPath } from '@/utils/peek-url'
-import { exportStandaloneHtml, downloadHtmlFile } from '@/export/single-html-exporter'
-import { triggerPdfExport } from '@/export/pdf-exporter'
-import {
-  exportAllSlidesZip,
-  exportCurrentSlideImage,
-  downloadDataUrl,
-  copyDataUrlToClipboard,
-  resolveDocumentTitle,
-} from '@/export/image-exporter'
 import { getRuntimeSettings, buildSiYuanWebUrl } from '@/settings'
+import { usePreviewExport } from './usePreviewExport'
+import { usePeekDrawerState } from './usePeekDrawerState'
 import { isFeatureEnabled } from '@/feature-flags/feature-flags'
 import { createPageJumpInput, isEditableTarget } from './page-jump-input'
 import type { ISlidesDocument } from '@/types/slides-protocol'
@@ -227,15 +220,32 @@ const sandboxIframeRef = ref<HTMLIFrameElement | null>(null)
 const currentPage = ref(1)
 const totalPages = ref(1)
 const showImageExportMenu = ref(false)
+// 当前编译文档快照：由宿主 defineExpose.updateDocument 写入，导出编排与速览抽屉共享读取
+let latestDoc: ISlidesDocument | null = null
 
-// 沉浸式速览抽屉状态
-const isDrawerOpen = ref(false)
-const isDrawerMaximized = ref(false)
-const peekType = ref<'siyuan' | 'web'>('siyuan')
-const peekBlockId = ref('')
-const peekUrl = ref('')
-const drawerTitle = ref('')
-const hasOpenedWeb = ref(false)
+// 沉浸式速览抽屉状态机抽离：双通道状态迁移与键盘冻结由 usePeekDrawerState 提供
+const {
+  isDrawerOpen,
+  isDrawerMaximized,
+  peekType,
+  peekBlockId,
+  peekUrl,
+  drawerTitle,
+  hasOpenedWeb,
+  handleOpenPeekDrawer,
+  closeDrawer: onDrawerClose,
+} = usePeekDrawerState({
+  sandboxBridge,
+  getLatestDoc: () => latestDoc,
+  getSettings: () => getRuntimeSettings() as any,
+  buildWebUrl: buildSiYuanWebUrl as any,
+  resolveUrl: resolvePeekUrl as any,
+  detectDocBlock: async (targetId: string) => {
+    const rows = await sql(`SELECT id, root_id, type FROM blocks WHERE id = '${targetId}' LIMIT 1`)
+    return Boolean(rows && rows.length > 0 && (rows[0].type === 'd' || rows[0].id === rows[0].root_id))
+  },
+  openExternalUrl: openLocalFileExternally,
+})
 
 // Pin 图钉锁定状态
 const isPinned = ref(false)
@@ -291,7 +301,6 @@ let unbindOpenPeekDrawer: (() => void) | null = null
 let unbindToggleFullscreen: (() => void) | null = null
 let unbindOpenPresenter: (() => void) | null = null
 let unobserveTheme: (() => void) | null = null
-let latestDoc: ISlidesDocument | null = null
 
 onMounted(() => {
   if (sandboxIframeRef.value) {
@@ -325,52 +334,7 @@ onMounted(() => {
   })
 
   unbindOpenPeekDrawer = sandboxBridge.onOpenPeekDrawer(async (detail: IOpenPeekDrawerDetail) => {
-    const settings = getRuntimeSettings()
-    if (detail.peekType === 'siyuan' && settings.enableWebServeJump) {
-      // 检测目标是否为文档块（非文档块需要追加 &focus=1 参数）
-      let isDoc = false
-      if (latestDoc && latestDoc.docId === detail.target) {
-        isDoc = true
-      } else if (latestDoc && latestDoc.slides && latestDoc.slides.some(s => s.blocks?.some(b => b.id === detail.target))) {
-        isDoc = false
-      } else {
-        try {
-          const rows = await sql(`SELECT id, root_id, type FROM blocks WHERE id = '${detail.target}' LIMIT 1`)
-          if (rows && rows.length > 0) {
-            isDoc = rows[0].type === 'd' || rows[0].id === rows[0].root_id
-          }
-        } catch (err) {
-          console.warn('[SlidesPreviewTab] detect block type failed:', err)
-        }
-      }
-
-      peekType.value = 'web'
-      hasOpenedWeb.value = true
-      peekUrl.value = buildSiYuanWebUrl(settings.webServeUrl, detail.target, {
-        focus: !isDoc,
-      })
-      drawerTitle.value = detail.title || `${isDoc ? '思源文档' : '思源块'}: ${detail.target.slice(0, 8)}`
-      isDrawerOpen.value = true
-      sandboxBridge.freezeKeyboardNav(true)
-    } else {
-      peekType.value = detail.peekType
-      if (detail.peekType === 'siyuan') {
-        peekBlockId.value = detail.target
-        drawerTitle.value = detail.title || `块速览: ${detail.target.slice(0, 8)}`
-      } else {
-        // 本地 HTML 链接归一化：工作区内的文件交由内核 HTTP 伺服，工作区外的文件则外跳系统浏览器
-        const resolution = resolvePeekUrl(detail.target)
-        if (resolution.external) {
-          openLocalFileExternally(detail.target)
-          return
-        }
-        hasOpenedWeb.value = true
-        peekUrl.value = resolution.url
-        drawerTitle.value = detail.title || resolution.url
-      }
-      isDrawerOpen.value = true
-      sandboxBridge.freezeKeyboardNav(true)
-    }
+    await handleOpenPeekDrawer(detail)
   })
 
   unbindToggleFullscreen = sandboxBridge.onRequestToggleFullscreen(() => {
@@ -471,11 +435,6 @@ function onRefresh() {
   }
 }
 
-function onDrawerClose() {
-  isDrawerOpen.value = false
-  sandboxBridge.freezeKeyboardNav(false)
-}
-
 function onExternalJump() {
   // 外跳至系统默认浏览器后，自动收起当前速览抽屉，同时保持全屏放映
   onDrawerClose()
@@ -537,104 +496,21 @@ function onOpenPresenter() {
   }
 }
 
-async function onExportHtml() {
-  if (!latestDoc) {
-    showMessage('请先在主编辑区打开幻灯片文档')
-    return
-  }
-  const title = await resolveDocumentTitle(latestDoc, (plugin as any)?.currentDocId, plugin)
-  showMessage('正在导出单文件离线 HTML（内联媒体资源中...）', 2000)
-  const html = await exportStandaloneHtml(latestDoc, { title })
-  const ok = downloadHtmlFile(`${title}.html`, html)
-  if (ok) {
-    showMessage(`已开始下载单文件离线 HTML 演示包 (${title}.html)`)
-  }
-}
-
-function onExportPdf() {
-  if (!latestDoc) {
-    showMessage('请先在主编辑区打开幻灯片文档')
-    return
-  }
-  const ok = triggerPdfExport(latestDoc)
-  if (ok) {
-    showMessage('已唤起打印视窗，请在打印选项中选择「另存为 PDF」')
-  }
-}
-
-const isExportingAllImages = ref(false)
-
-async function onExportAllImages() {
-  if (isExportingAllImages.value) {
-    showMessage('正在逐页导出幻灯片图片中，请稍候...', 2000)
-    return
-  }
-  if (!latestDoc) {
-    showMessage('请先在主编辑区打开幻灯片文档')
-    return
-  }
-  isExportingAllImages.value = true
-  try {
-    showMessage('正在逐页导出幻灯片图片...', 2000)
-    const title = await resolveDocumentTitle(latestDoc, (plugin as any)?.currentDocId, plugin)
-    const res = await exportAllSlidesZip(sandboxBridge, {
-      title,
-      onProgress: (current, total) => {
-        showMessage(`正在导出幻灯片图片 (${current} / ${total})...`, 1500)
-      },
-    })
-    if (res.success) {
-      showMessage(`🎉 成功导出 ${res.total || 0} 张高清图片并保存为 ${title}.zip！`, 4000)
-    } else {
-      showMessage(`导出图片失败：${res.error || '未知异常'}`)
-    }
-  } finally {
-    isExportingAllImages.value = false
-  }
-}
-
-async function onExportCurrentSlide() {
-  if (!latestDoc) {
-    showMessage('请先在主编辑区打开幻灯片文档')
-    return
-  }
-  showMessage('正在导出当前幻灯片图片...', 1500)
-  const res = await exportCurrentSlideImage(sandboxBridge)
-  if (res.success && res.dataUrl) {
-    const title = await resolveDocumentTitle(latestDoc, (plugin as any)?.currentDocId, plugin)
-    const page = currentPage.value || 1
-    const total = totalPages.value || 1
-    const filename = total > 1 ? `${title}-${page}.png` : `${title}.png`
-    downloadDataUrl(filename, res.dataUrl)
-    showMessage(`已下载当前页高清图片 (${filename})`)
-  } else {
-    showMessage(`导出当前页图片失败：${res.error || '未知异常'}`)
-  }
-}
-
-async function onCopyCurrentSlide() {
-  if (!latestDoc) {
-    showMessage('请先在主编辑区打开幻灯片文档')
-    return
-  }
-  showMessage('正在复制当前幻灯片截图到剪贴板...', 1500)
-  const res = await exportCurrentSlideImage(sandboxBridge)
-  if (res.success && res.dataUrl) {
-    const ok = await copyDataUrlToClipboard(res.dataUrl)
-    if (ok) {
-      showMessage(`已成功将第 ${currentPage.value || 1} 页幻灯片复制到剪贴板！`)
-    } else {
-      const title = await resolveDocumentTitle(latestDoc, (plugin as any)?.currentDocId, plugin)
-      const page = currentPage.value || 1
-      const total = totalPages.value || 1
-      const filename = total > 1 ? `${title}-${page}.png` : `${title}.png`
-      downloadDataUrl(filename, res.dataUrl)
-      showMessage(`剪贴板权限不可用，已自动下载为 ${filename}`)
-    }
-  } else {
-    showMessage(`复制失败：${res.error || '未知异常'}`)
-  }
-}
+// 导出编排抽离：五类导出动作的前置校验、防重入与消息提示由 usePreviewExport 提供
+const {
+  isExportingAllImages,
+  onExportHtml,
+  onExportPdf,
+  onExportAllImages,
+  onExportCurrentSlide,
+  onCopyCurrentSlide,
+} = usePreviewExport({
+  getLatestDoc: () => latestDoc,
+  plugin,
+  sandboxBridge,
+  currentPage,
+  totalPages,
+})
 
 defineExpose({
   updateDocument(doc: ISlidesDocument, targetDocId?: string) {

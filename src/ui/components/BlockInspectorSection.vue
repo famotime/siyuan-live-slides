@@ -674,16 +674,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import SlidesIcon from '@/ui/components/SlidesIcon.vue'
 import MotionSelector from '@/ui/components/MotionSelector.vue'
-import { isAnimationEnabled } from '@/feature-flags/feature-flags'
 import {
-  MOTION_PRESETS,
   EMPHASIS_PRESETS,
   TEXT_PRESETS,
   EMPHASIS_DURATION_OPTIONS,
 } from '@/ui/components/motion-presets'
+import { useBlockMotionSection } from '@/ui/components/useBlockMotionSection'
+import { useBlockSlotSection } from '@/ui/components/useBlockSlotSection'
 
 const props = defineProps<{
   elemClick: string
@@ -721,97 +720,28 @@ const props = defineProps<{
   canConvertToSuperBlock?: boolean
 }>()
 
-const effectiveLayout = computed(() => {
-  const l = props.currentSlideLayout || ''
-  // 智能推断：如果当前块已经分配了 header 或 col-1 ~ col-6 插槽，无论上层传入什么，它必然属于 cols-header
-  if (['header', 'col-1', 'col-2', 'col-3', 'col-4', 'col-5', 'col-6'].includes(props.elemSlot)) {
-    return 'cols-header'
-  }
-  return l
+// 多栏插槽领域逻辑抽离：版式判定、分栏数探测与插槽清单由 useBlockSlotSection 提供
+const {
+  effectiveLayout,
+  isMultiColsLayout,
+  hasLayoutControls,
+  detectedColumnsCount,
+  slotControlTitle,
+  slotControlDesc,
+  availableSlots,
+  isSlotActive,
+} = useBlockSlotSection({
+  elemSlot: () => props.elemSlot,
+  currentSlideLayout: () => props.currentSlideLayout,
+  currentSlideLayoutRatio: () => props.currentSlideLayoutRatio,
+  currentSlideHeader: () => props.currentSlideHeader,
+  isSuperBlock: () => props.isSuperBlock,
+  isImage: () => props.isImage,
+  imageRole: () => props.imageRole,
+  isVideo: () => props.isVideo,
+  isCodeBlock: () => props.isCodeBlock,
+  detectedSbInfo: () => props.detectedSbInfo,
 })
-
-const isMultiColsLayout = computed(() => {
-  const l = effectiveLayout.value
-  return ['two-cols', 'cols-header', 'two-cols-header', 'three-cols-header'].includes(l)
-})
-
-const hasLayoutControls = computed(() => {
-  return isMultiColsLayout.value ||
-    Boolean(props.elemSlot) ||
-    Boolean(props.isSuperBlock) ||
-    Boolean(props.detectedSbInfo?.hasSuperBlock) ||
-    Boolean(props.isImage) ||
-    Boolean(props.imageRole) ||
-    Boolean(props.isVideo) ||
-    Boolean(props.isCodeBlock)
-})
-
-const detectedColumnsCount = computed(() => {
-  // 1. 若当前页显式配置了分栏比例，以比例段数为准 (2~6 栏)
-  const ratio = (props.currentSlideLayoutRatio || '').trim()
-  if (ratio.includes(':')) {
-    const parts = ratio.split(':').filter(Boolean)
-    if (parts.length >= 2 && parts.length <= 6) return parts.length
-  }
-  // 2. 超级块信息
-  if (props.detectedSbInfo?.colCount && props.detectedSbInfo.colCount >= 2) {
-    return Math.min(props.detectedSbInfo.colCount, 6)
-  }
-  // 3. 当前块自身插槽
-  const match = props.elemSlot?.match(/^col-(\d+)$/)
-  if (match) {
-    const num = parseInt(match[1], 10)
-    if (num >= 2 && num <= 6) return num
-  }
-  if (props.currentSlideLayout === 'three-cols-header') return 3
-  if (props.currentSlideLayout === 'two-cols-header' || props.currentSlideLayout === 'two-cols') return 2
-  if (props.detectedSbInfo?.ratio?.includes(':')) {
-    const parts = props.detectedSbInfo.ratio.split(':').filter(Boolean)
-    if (parts.length >= 2) return Math.min(parts.length, 6)
-  }
-  return 2 // 默认按 2 栏起步
-})
-
-const slotControlTitle = computed(() => {
-  return '多栏插槽归属'
-})
-
-const slotControlDesc = computed(() => {
-  const hasHeader = props.currentSlideHeader !== false && props.currentSlideHeader !== 'false'
-  const headerText = hasHeader ? '带通栏标题' : '纯分栏对比'
-  return `在多栏版式（${detectedColumnsCount.value} 栏，${headerText}）中的内容块位置，未分配栏位的块将按通栏文本排版`
-})
-
-const availableSlots = computed(() => {
-  const cols = detectedColumnsCount.value
-  const slots = [
-    { value: 'default', label: '默认' },
-    { value: 'header', label: '标题' },
-  ]
-  for (let i = 1; i <= cols; i++) {
-    let label = `第 ${i} 栏`
-    if (cols === 2) {
-      label = i === 1 ? '第 1 栏 (左)' : '第 2 栏 (右)'
-    }
-    slots.push({ value: `col-${i}`, label })
-  }
-  return slots
-})
-
-function isSlotActive(val: string): boolean {
-  const s = props.elemSlot || ''
-  if (val === 'default' || !val) {
-    return !s || s === 'default'
-  }
-  if (s === val) return true
-  if (val === 'col-1' && s === 'left') return true
-  if (val === 'col-2' && s === 'center') return true
-  if (val === 'col-3' && s === 'right' && detectedColumnsCount.value === 3) return true
-  if (val === 'col-2' && s === 'right' && detectedColumnsCount.value === 2) return true
-  if (val === 'left' && s === 'col-1') return true
-  if (val === 'right' && (s === 'col-2' || s === 'col-3')) return true
-  return false
-}
 
 const emit = defineEmits<{
   (e: 'toggleNote'): void
@@ -836,410 +766,45 @@ const emit = defineEmits<{
   (e: 'toggleVideoControls'): void
 }>()
 
-const motionPresets = [
-  { label: '上浮', value: 'slide-up' },
-  { label: '淡入', value: 'fade-in' },
-  { label: '下沉', value: 'slide-down' },
-  { label: '左滑', value: 'slide-left' },
-  { label: '右滑', value: 'slide-right' },
-  { label: '缩放', value: 'zoom-in' },
-  { label: '弹性', value: 'bounce' },
-]
-
-const parsedMotion = computed(() => {
-  if (!props.elemMotion || props.elemMotion.trim() === '' || props.elemMotion.trim() === 'none') {
-    return null
-  }
-  try {
-    const obj = JSON.parse(props.elemMotion)
-    if (typeof obj === 'object' && obj !== null) {
-      return {
-        preset: obj.preset || obj.type || 'slide-up',
-        duration: typeof obj.duration === 'number' ? obj.duration : 0,
-        delay: typeof obj.delay === 'number' ? obj.delay : 0,
-      }
-    }
-  } catch {
-    // 字符串预设
-  }
-  return {
-    preset: props.elemMotion.trim(),
-    duration: 0,
-    delay: 0,
-  }
-})
-
-const localPreset = ref<string | null>(null)
-const hasMotion = computed(() => Boolean(parsedMotion.value))
-const currentPreset = computed(() => localPreset.value || parsedMotion.value?.preset || 'slide-up')
-const currentDuration = computed(() => parsedMotion.value?.duration || 0)
-const currentDelay = computed(() => parsedMotion.value?.delay || 0)
-
-watch(
-  () => props.elemMotion,
-  () => {
-    localPreset.value = null
+// 动效领域逻辑抽离：入场/强调/文本动效解析、变更与试播舞台统一由 useBlockMotionSection 提供
+const {
+  localPreset,
+  currentPreset,
+  currentDuration,
+  currentDelay,
+  isAdvAnimEnabled,
+  hasEmphasisEffects,
+  hasTextEffects,
+  isEffectEnabled,
+  currentAnimType,
+  currentAnimDuration,
+  activeAnimTab,
+  hasAnyMotion,
+  toggleAllMotion,
+  switchAnimTab,
+  setEmphasisType,
+  setTextAnimType,
+  setAnimDuration,
+  countUpProps,
+  updateCountUpField,
+  autoExtractFromContent,
+  stagePlayKey,
+  currentStageCountUpValue,
+  currentStageTypewriterText,
+  activeTabTitle,
+  activeMotionSummaryBadge,
+  entranceStageStyle,
+  emphasisStageStyle,
+  replayLiveStage,
+  handleMotionChange,
+} = useBlockMotionSection(
+  {
+    elemMotion: () => props.elemMotion,
+    elemAnim: () => props.elemAnim,
+    elemAnimProps: () => props.elemAnimProps,
+    activeBlockContent: () => props.activeBlockContent,
   },
+  emit,
 )
-
-// Feature Flags 状态检测
-const isAdvAnimEnabled = computed(() => isAnimationEnabled())
-const hasEmphasisEffects = computed(() => isAnimationEnabled('pulse') || isAnimationEnabled('float') || isAnimationEnabled('shimmer'))
-const hasTextEffects = computed(() => isAnimationEnabled('countup') || isAnimationEnabled('typewriter'))
-function isEffectEnabled(effect: string) {
-  return isAnimationEnabled(effect)
-}
-
-// 强调与文本高级动效解析
-const currentAnimType = computed(() => (props.elemAnim || '').trim().toLowerCase())
-const parsedAnimProps = computed<Record<string, any>>(() => {
-  if (!props.elemAnimProps) return {}
-  try {
-    const obj = JSON.parse(props.elemAnimProps)
-    return typeof obj === 'object' && obj !== null ? obj : {}
-  } catch {
-    return {}
-  }
-})
-
-const currentAnimDuration = computed(() => {
-  if (typeof parsedAnimProps.value.duration === 'number' && parsedAnimProps.value.duration > 0) {
-    return parsedAnimProps.value.duration
-  }
-  return currentAnimType.value === 'countup' || currentAnimType.value === 'typewriter' ? 1500 : 2400
-})
-
-// Tab 状态：根据当前生效的属性初始化/自适应 Tab
-const activeAnimTab = ref<'entrance' | 'emphasis' | 'text'>('entrance')
-
-watch(
-  [() => props.elemMotion, () => props.elemAnim],
-  ([motion, anim]) => {
-    if (anim) {
-      if (['pulse', 'float', 'shimmer'].includes(anim)) {
-        activeAnimTab.value = 'emphasis'
-      } else if (['countup', 'typewriter'].includes(anim)) {
-        activeAnimTab.value = 'text'
-      }
-    } else if (motion) {
-      activeAnimTab.value = 'entrance'
-    }
-  },
-  { immediate: true },
-)
-
-const hasAnyMotion = computed(() => hasMotion.value || Boolean(currentAnimType.value))
-
-function toggleAllMotion() {
-  if (hasAnyMotion.value) {
-    emit('update:elemMotion', '')
-    emit('update:elemAnim', '')
-  } else {
-    // 默认开启当前选中的 Tab
-    if (activeAnimTab.value === 'emphasis') {
-      const effect = isEffectEnabled('pulse') ? 'pulse' : isEffectEnabled('float') ? 'float' : 'shimmer'
-      setEmphasisType(effect)
-    } else if (activeAnimTab.value === 'text') {
-      const effect = isEffectEnabled('countup') ? 'countup' : 'typewriter'
-      setTextAnimType(effect)
-    } else {
-      emit('update:elemMotion', 'slide-up')
-      emit('update:elemAnim', '')
-    }
-  }
-}
-
-function switchAnimTab(tab: 'entrance' | 'emphasis' | 'text') {
-  activeAnimTab.value = tab
-  if (tab === 'entrance') {
-    emit('update:elemAnim', '')
-    emit('update:elemMotion', currentPreset.value || 'slide-up')
-  } else if (tab === 'emphasis') {
-    const effect = isEffectEnabled('pulse') ? 'pulse' : isEffectEnabled('float') ? 'float' : 'shimmer'
-    setEmphasisType(effect)
-  } else if (tab === 'text') {
-    const effect = isEffectEnabled('countup') ? 'countup' : 'typewriter'
-    setTextAnimType(effect)
-  }
-}
-
-function setEmphasisType(type: string) {
-  emit('update:elemMotion', '')
-  const nextProps = { ...parsedAnimProps.value, duration: currentAnimDuration.value }
-  emit('update:elemAnim', type, JSON.stringify(nextProps))
-}
-
-function setTextAnimType(type: string) {
-  emit('update:elemMotion', '')
-  if (type === 'countup') {
-    if (countUpProps.value.to === 0 && countUpProps.value.from === 0 && !countUpProps.value.prefix && !countUpProps.value.suffix) {
-      autoExtractFromContent()
-    } else {
-      emit('update:elemAnim', 'countup', JSON.stringify(countUpProps.value))
-    }
-  } else {
-    const nextProps = { ...parsedAnimProps.value, duration: currentAnimDuration.value }
-    emit('update:elemAnim', type, JSON.stringify(nextProps))
-  }
-}
-
-function setAnimDuration(duration: number) {
-  const nextProps = { ...parsedAnimProps.value, duration }
-  if (currentAnimType.value) {
-    emit('update:elemAnim', currentAnimType.value, JSON.stringify(nextProps))
-  }
-}
-
-// CountUp 专属参数计算属性与操作
-const countUpProps = computed(() => {
-  return {
-    from: typeof parsedAnimProps.value.from === 'number' ? parsedAnimProps.value.from : 0,
-    to: typeof parsedAnimProps.value.to === 'number' ? parsedAnimProps.value.to : 0,
-    prefix: parsedAnimProps.value.prefix || '',
-    suffix: parsedAnimProps.value.suffix || '',
-    decimals: typeof parsedAnimProps.value.decimals === 'number' ? parsedAnimProps.value.decimals : 0,
-    duration: typeof parsedAnimProps.value.duration === 'number' ? parsedAnimProps.value.duration : 1500,
-  }
-})
-
-function updateCountUpField(field: string, val: any) {
-  const nextProps = {
-    ...countUpProps.value,
-    [field]: val,
-  }
-  emit('update:elemAnim', 'countup', JSON.stringify(nextProps))
-}
-
-function autoExtractFromContent() {
-  const text = props.activeBlockContent || ''
-  const match = text.match(/([^\d\s]*)([\d,]+(?:\.\d+)?)([^\d\s]*)/)
-  if (match) {
-    const prefix = match[1] || ''
-    const numRaw = match[2].replace(/,/g, '')
-    const suffix = match[3] || ''
-    const to = parseFloat(numRaw) || 0
-    let decimals = 0
-    if (numRaw.includes('.')) {
-      decimals = numRaw.split('.')[1].length
-    }
-    const nextProps = {
-      from: 0,
-      to,
-      prefix,
-      suffix,
-      decimals,
-      duration: parsedAnimProps.value.duration || 1500,
-    }
-    emit('update:elemAnim', 'countup', JSON.stringify(nextProps))
-  } else {
-    const nextProps = {
-      from: 0,
-      to: 100,
-      prefix: '',
-      suffix: '%',
-      decimals: 0,
-      duration: 1500,
-    }
-    emit('update:elemAnim', 'countup', JSON.stringify(nextProps))
-  }
-}
-
-// 动效即时试播舞台 (Live Preview Stage) 与 WYSIWYG 联动
-const stagePlayKey = ref(0)
-const currentStageCountUpValue = ref('0')
-const currentStageTypewriterText = ref('')
-let countUpRafId: number | null = null
-let typewriterTimerId: any = null
-
-const activeTabTitle = computed(() => {
-  if (activeAnimTab.value === 'emphasis') return '持续强调动效'
-  if (activeAnimTab.value === 'text') return '文本微动效'
-  return '入场微动效'
-})
-
-const activeMotionSummaryBadge = computed(() => {
-  if (activeAnimTab.value === 'entrance') {
-    const p = MOTION_PRESETS.find(m => m.name === currentPreset.value)
-    const label = p ? p.label : currentPreset.value
-    const dur = currentDuration.value > 0 ? `${currentDuration.value}ms` : '450ms'
-    const del = currentDelay.value > 0 ? ` · 延时${currentDelay.value}ms` : ''
-    return `${label} · ${dur}${del}`
-  }
-  if (activeAnimTab.value === 'emphasis') {
-    const p = EMPHASIS_PRESETS.find(m => m.name === currentAnimType.value)
-    const label = p ? p.label : '呼吸微光'
-    const dur = (currentAnimDuration.value / 1000).toFixed(1) + 's'
-    return `${label} · 周期${dur}`
-  }
-  if (activeAnimTab.value === 'text') {
-    if (currentAnimType.value === 'countup') {
-      const p = countUpProps.value
-      const targetStr = `${p.prefix}${p.to}${p.suffix}`
-      return `数字滚动 · 目标 ${targetStr}`
-    }
-    if (currentAnimType.value === 'typewriter') {
-      const dur = (currentAnimDuration.value / 1000).toFixed(1) + 's'
-      return `打字机 · 耗时${dur}`
-    }
-    return '文本动效'
-  }
-  return '未激活'
-})
-
-const entranceStageStyle = computed(() => {
-  const dur = currentDuration.value > 0 ? currentDuration.value : 450
-  const del = currentDelay.value > 0 ? currentDelay.value : 0
-  return {
-    '--motion-duration': `${dur}ms`,
-    '--motion-delay': `${del}ms`,
-  }
-})
-
-const emphasisStageStyle = computed(() => {
-  const dur = currentAnimDuration.value > 0 ? currentAnimDuration.value : 2400
-  return {
-    '--emphasis-duration': `${dur}ms`,
-  }
-})
-
-function triggerTextWYSIWYG() {
-  if (countUpRafId !== null) {
-    cancelAnimationFrame(countUpRafId)
-    countUpRafId = null
-  }
-  if (typewriterTimerId !== null) {
-    clearTimeout(typewriterTimerId)
-    typewriterTimerId = null
-  }
-
-  if (activeAnimTab.value === 'text') {
-    if (currentAnimType.value === 'countup') {
-      const from = typeof countUpProps.value.from === 'number' ? countUpProps.value.from : 0
-      const to = typeof countUpProps.value.to === 'number' ? countUpProps.value.to : 0
-      const duration = countUpProps.value.duration || 1500
-      const decimals = countUpProps.value.decimals || 0
-      const startTime = performance.now()
-      currentStageCountUpValue.value = from.toFixed(decimals)
-
-      const easeOutExpo = (t: number) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t))
-      function update(now: number) {
-        const elapsed = now - startTime
-        const progress = Math.min(1, Math.max(0, elapsed / duration))
-        const val = from + (to - from) * easeOutExpo(progress)
-        currentStageCountUpValue.value = val.toFixed(decimals)
-        if (progress < 1) {
-          countUpRafId = requestAnimationFrame(update)
-        } else {
-          countUpRafId = null
-        }
-      }
-      countUpRafId = requestAnimationFrame(update)
-    } else if (currentAnimType.value === 'typewriter') {
-      let rawText = (props.activeBlockContent || '').trim()
-      if (rawText) {
-        rawText = rawText.replace(/^[#*`>-\s]+/, '').split('\n')[0].trim()
-      }
-      if (!rawText) {
-        rawText = 'Slidev 演示微动效系统'
-      }
-      const fullText = rawText.length > 24 ? rawText.slice(0, 24) + '...' : rawText
-      const len = fullText.length
-      const duration = currentAnimDuration.value || 1500
-      const stepMs = Math.max(25, duration / len)
-      let idx = 0
-      currentStageTypewriterText.value = ''
-
-      function step() {
-        idx++
-        currentStageTypewriterText.value = fullText.slice(0, idx)
-        if (idx < len) {
-          typewriterTimerId = setTimeout(step, stepMs)
-        } else {
-          typewriterTimerId = null
-        }
-      }
-      typewriterTimerId = setTimeout(step, stepMs)
-    }
-  }
-}
-
-function replayLiveStage() {
-  stagePlayKey.value++
-  triggerTextWYSIWYG()
-}
-
-watch(
-  [
-    () => activeAnimTab.value,
-    () => currentPreset.value,
-    () => currentDuration.value,
-    () => currentDelay.value,
-    () => currentAnimType.value,
-    () => currentAnimDuration.value,
-    () => countUpProps.value.to,
-    () => countUpProps.value.from,
-    () => countUpProps.value.prefix,
-    () => countUpProps.value.suffix,
-    () => countUpProps.value.decimals,
-    () => countUpProps.value.duration,
-  ],
-  () => {
-    replayLiveStage()
-  },
-)
-
-onMounted(() => {
-  if (hasAnyMotion.value) {
-    replayLiveStage()
-  }
-})
-
-onBeforeUnmount(() => {
-  if (countUpRafId !== null) {
-    cancelAnimationFrame(countUpRafId)
-    countUpRafId = null
-  }
-  if (typewriterTimerId !== null) {
-    clearTimeout(typewriterTimerId)
-    typewriterTimerId = null
-  }
-})
-
-function handleMotionChange(payload: { preset: string; duration: number; delay: number }) {
-  localPreset.value = payload.preset
-  replayLiveStage()
-  emitMotionChange(payload.preset, payload.duration, payload.delay)
-}
-
-function selectPreset(preset: string) {
-  localPreset.value = preset
-  replayLiveStage()
-  emitMotionChange(preset, currentDuration.value, currentDelay.value)
-}
-
-function updateDuration(duration: number) {
-  replayLiveStage()
-  emitMotionChange(currentPreset.value, duration, currentDelay.value)
-}
-
-function updateDelay(delay: number) {
-  replayLiveStage()
-  emitMotionChange(currentPreset.value, currentDuration.value, delay)
-}
-
-function emitMotionChange(preset: string, duration: number, delay: number) {
-  if (!preset || preset === 'none') {
-    emit('update:elemMotion', '')
-    return
-  }
-  emit('update:elemAnim', '')
-  if (!duration && !delay) {
-    emit('update:elemMotion', preset)
-    return
-  }
-  const payload: Record<string, any> = { preset }
-  if (duration > 0) payload.duration = duration
-  if (delay > 0) payload.delay = delay
-  emit('update:elemMotion', JSON.stringify(payload))
-}
 </script>
+

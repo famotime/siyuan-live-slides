@@ -98,8 +98,13 @@ describe('Visual Motion Grid & Shared Live Preview Stage (持续强调与文本�
   })
 
   it('8. BlockInspectorSection 针对入场动效选择必须实现乐观预览联动与重播', () => {
+    // 组件保留乐观契约（localPreset 解构与重播入口）
     expect(blockInspectorContent).toContain('localPreset')
-    expect(blockInspectorContent).toContain('replayLiveStage()')
+    expect(blockInspectorContent).toContain('replayLiveStage')
+    // 乐观重播核心实现位于 useBlockMotionSection 领域模块
+    const motionSectionContent = fs.readFileSync(path.resolve(__dirname, '../src/ui/components/useBlockMotionSection.ts'), 'utf8')
+    expect(motionSectionContent).toContain('replayLiveStage()')
+    expect(motionSectionContent).toContain('localPreset.value = payload.preset')
   })
 
   it('9. BlockInspectorSection 组件成功导出且类型完整', () => {

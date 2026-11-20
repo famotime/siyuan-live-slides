@@ -197,76 +197,15 @@
 </template>
 
 <script lang="ts">
-export type TViewMode = 'desktop' | 'mobile'
-
-// 现代主流移动端 UA (iOS 17 Safari 兼容度高，能完美唤起移动端页面)
-export const MOBILE_USER_AGENT =
-  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1'
-
-export const STORAGE_KEY_VIEW_MODE = 'siyuan-slides-peek-view-mode'
-
-let cachedViewMode: TViewMode = 'desktop'
-
-export function getInitialViewMode(): TViewMode {
-  if (typeof window !== 'undefined' && window.localStorage) {
-    try {
-      const saved = window.localStorage.getItem(STORAGE_KEY_VIEW_MODE)
-      if (saved === 'mobile' || saved === 'desktop') {
-        return saved
-      }
-    } catch {}
-  }
-  return cachedViewMode
-}
-
-export function saveViewMode(mode: TViewMode) {
-  cachedViewMode = mode
-  if (typeof window !== 'undefined' && window.localStorage) {
-    try {
-      window.localStorage.setItem(STORAGE_KEY_VIEW_MODE, mode)
-    } catch {}
-  }
-}
-
-export interface IPeekLoadError {
-  errorCode: number
-  description: string
-  validatedURL: string
-  hint: string
-}
-
-/**
- * 将 Chromium 网络错误描述翻译为可操作的中文排查提示
- *
- * 错误描述由 Electron did-fail-load / did-fail-provisional-load 事件给出（如 ERR_PROXY_CONNECTION_FAILED），
- * 未覆盖的错误码回退到内网环境最常见的「网络代理未配置」提示，不做臆测。
- */
-export function describePeekNetError(errorDescription: string): string {
-  switch ((errorDescription || '').toUpperCase()) {
-    case 'ERR_PROXY_CONNECTION_FAILED':
-      return '无法连接到代理服务器：请在思源「设置 → 网络代理」中填写公司代理地址，或切换为「使用系统代理」。'
-    case 'ERR_TUNNEL_CONNECTION_FAILED':
-      return 'HTTPS 代理隧道建立失败：请将思源「网络代理」的类型设为 HTTPS 并确认地址正确。'
-    case 'ERR_MANDATORY_PROXY_CONFIGURATION_FAILED':
-      return '强制代理配置获取失败：公司 PAC 脚本不可用，请在思源「网络代理」中改为手动填写代理地址。'
-    case 'ERR_NAME_NOT_RESOLVED':
-    case 'ERR_NAME_RESOLUTION_FAILED':
-      return '域名解析失败：内网环境访问外网通常需要配置代理或 DNS。'
-    case 'ERR_INTERNET_DISCONNECTED':
-      return '当前网络不可用：请检查网络连接。'
-    case 'ERR_CONNECTION_TIMED_OUT':
-    case 'ERR_TIMED_OUT':
-      return '连接超时：该地址可能需要通过代理才能访问。'
-    case 'ERR_CONNECTION_REFUSED':
-      return '连接被拒绝：目标服务未在监听，或思源本地内核尚未启动。'
-    case 'ERR_CERT_AUTHORITY_INVALID':
-    case 'ERR_CERT_COMMON_NAME_INVALID':
-    case 'ERR_CERT_DATE_INVALID':
-      return '证书校验失败：若公司网络使用 TLS 拦截，需将根证书导入思源所用系统的证书库。'
-    default:
-      return '若处于公司内网，请优先检查思源「设置 → 网络代理」是否已配置为可用代理（支持「使用系统代理」）。'
-  }
-}
+// 纯函数工具抽离至 peek-webview-utils（RF-030），此处 re-export 保持既有 import 路径兼容
+export type { TViewMode, IPeekLoadError } from './peek-webview-utils'
+export {
+  MOBILE_USER_AGENT,
+  STORAGE_KEY_VIEW_MODE,
+  getInitialViewMode,
+  saveViewMode,
+  describePeekNetError,
+} from './peek-webview-utils'
 </script>
 
 <script setup lang="ts">
@@ -274,6 +213,9 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import SlidesIcon from '@/ui/components/SlidesIcon.vue'
 import { isDesktopEnvironment, isRemoteKernelHost, getRuntimeModule } from '@/engine/runtime-node'
 import { resolvePeekUrl } from '@/utils/peek-url'
+import { useWebviewPeekControls } from '@/ui/components/peek/useWebviewPeekControls'
+import { MOBILE_USER_AGENT, getInitialViewMode, saveViewMode, describePeekNetError } from '@/ui/components/peek/peek-webview-utils'
+import type { TViewMode, IPeekLoadError } from '@/ui/components/peek/peek-webview-utils'
 
 const emit = defineEmits<{
   (e: 'external-jump', url: string): void
@@ -303,9 +245,6 @@ const urlInputValue = ref(props.url)
 const initialUrl = props.url
 const isLoading = ref(false)
 const loadError = ref<IPeekLoadError | null>(null)
-const canGoBack = ref(false)
-const canGoForward = ref(false)
-const zoomFactor = ref(1.0)
 const isCopied = ref(false)
 const viewMode = ref<TViewMode>(getInitialViewMode())
 
@@ -323,6 +262,22 @@ const containerEl = ref<HTMLElement | null>(null)
 let resizeObserver: ResizeObserver | null = null
 let globalErrorHandler: ((e: ErrorEvent) => void) | null = null
 let unhandledRejectionHandler: ((e: PromiseRejectionEvent) => void) | null = null
+
+// 缩放状态机与导航控制抽离（RF-030）：状态与委托由 useWebviewPeekControls 提供
+const {
+  zoomFactor,
+  applyZoomFactor,
+  zoomIn,
+  zoomOut,
+  resetZoom,
+  onCtrlWheel,
+  canGoBack,
+  canGoForward,
+  updateNavState,
+  goBack,
+  goForward,
+  reload,
+} = useWebviewPeekControls({ getWebview: () => webviewRef.value })
 
 watch(
   () => props.url,
@@ -573,35 +528,6 @@ function onNewWindow(e: any) {
   }
 }
 
-function updateNavState() {
-  const wv = webviewRef.value
-  if (!wv) return
-  if (typeof wv.canGoBack === 'function') {
-    canGoBack.value = wv.canGoBack()
-  }
-  if (typeof wv.canGoForward === 'function') {
-    canGoForward.value = wv.canGoForward()
-  }
-}
-
-function goBack() {
-  if (webviewRef.value && typeof webviewRef.value.goBack === 'function') {
-    webviewRef.value.goBack()
-  }
-}
-
-function goForward() {
-  if (webviewRef.value && typeof webviewRef.value.goForward === 'function') {
-    webviewRef.value.goForward()
-  }
-}
-
-function reload() {
-  if (webviewRef.value && typeof webviewRef.value.reload === 'function') {
-    webviewRef.value.reload()
-  }
-}
-
 function navigateToUrl() {
   const resolution = resolvePeekUrl(urlInputValue.value)
   if (!resolution.url) return
@@ -617,41 +543,6 @@ function navigateToUrl() {
   urlInputValue.value = resolution.url
   if (webviewRef.value && typeof webviewRef.value.loadURL === 'function') {
     webviewRef.value.loadURL(resolution.url)
-  }
-}
-
-function applyZoomFactor() {
-  const wv = webviewRef.value
-  if (wv && typeof wv.setZoomFactor === 'function') {
-    try {
-      wv.setZoomFactor(zoomFactor.value)
-    } catch (e) {
-      console.warn('[WebviewPeekDrawer] setZoomFactor error:', e)
-    }
-  }
-}
-
-function zoomIn() {
-  zoomFactor.value = Math.min(2.5, Math.round((zoomFactor.value + 0.1) * 10) / 10)
-  applyZoomFactor()
-}
-
-function zoomOut() {
-  zoomFactor.value = Math.max(0.5, Math.round((zoomFactor.value - 0.1) * 10) / 10)
-  applyZoomFactor()
-}
-
-function resetZoom() {
-  zoomFactor.value = 1.0
-  applyZoomFactor()
-}
-
-function onCtrlWheel(e: WheelEvent) {
-  e.preventDefault()
-  if (e.deltaY < 0) {
-    zoomIn()
-  } else if (e.deltaY > 0) {
-    zoomOut()
   }
 }
 

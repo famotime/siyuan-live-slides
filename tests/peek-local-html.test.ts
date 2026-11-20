@@ -231,9 +231,15 @@ describe("本地 HTML 链接速览：客户端拦截器与宿主归一化逻辑�
 
   it("抽屉宿主与微型浏览器都应接入 resolvePeekUrl，工作区外文件外跳系统浏览器", () => {
     const tabSource = fs.readFileSync(path.join(PROJECT_ROOT, "src/ui/tab/SlidesPreviewTab.vue"), "utf-8")
-    expect(tabSource).toContain("resolvePeekUrl(detail.target)")
+    // RF-028：宿主以 resolvePeekUrl 注入 usePeekDrawerState，外跳实现 openLocalFileExternally 保留在宿主
+    expect(tabSource).toContain("resolveUrl: resolvePeekUrl")
+    expect(tabSource).toContain("openExternalUrl: openLocalFileExternally")
     expect(tabSource).toContain("openLocalFileExternally")
     expect(tabSource).toContain("fileUrlToPath")
+
+    // 归一化消费位于 usePeekDrawerState 领域模块
+    const drawerStateSource = fs.readFileSync(path.join(PROJECT_ROOT, "src/ui/tab/usePeekDrawerState.ts"), "utf-8")
+    expect(drawerStateSource).toContain("resolveUrl(detail.target)")
 
     const drawerSource = fs.readFileSync(
       path.join(PROJECT_ROOT, "src/ui/components/peek/WebviewPeekDrawer.vue"),
