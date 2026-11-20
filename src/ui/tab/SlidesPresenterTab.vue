@@ -539,6 +539,7 @@ const {
   initSync,
   broadcastPageChange,
   closeSync,
+  adoptSlides,
 } = usePresenterSync({
   currentPage,
   currentStep,
@@ -680,6 +681,8 @@ onMounted(() => {
     if (latestDoc.config) {
       docConfig.value = latestDoc.config
     }
+    // 登记数据身份：跨文档直灌时重置页码，且 REQUEST_SYNC 应答可携带 docId
+    adoptSlides(latestDoc.docId || '')
   }
 
   if (typeof window !== 'undefined') {
@@ -715,6 +718,8 @@ defineExpose({
     if (doc?.config) {
       docConfig.value = doc.config
     }
+    // P1-D1：文档切换时直灌数据同步重置页码与步进，避免角标停留在超出新文档页数的陈旧页码
+    adoptSlides(doc?.docId || '')
   },
 })
 </script>

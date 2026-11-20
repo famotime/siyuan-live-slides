@@ -112,6 +112,9 @@ function broadcastDocToRemoteSandbox(doc: ISlidesDocument): void {
         ...(doc.config || {}),
         hostThemeMode: doc.config?.hostThemeMode || detectSiYuanThemeMode(),
       },
+      // P1-D2：附带数据身份与写入时刻，接收端据此拒绝残留旧文档窗口的迟到应答
+      docId: doc.docId || '',
+      slidesUpdatedAt: Date.now(),
     })
     channel.close()
   } catch (err) {

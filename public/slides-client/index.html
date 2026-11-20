@@ -7672,7 +7672,9 @@
             broadcastChannel.postMessage({
               type: "SYNC_SLIDES",
               slides: plainSlides,
-              config: plainConfig
+              config: plainConfig,
+              // 状态机审计 P1-D2：附带写入时刻，接收端据此拒绝残留窗口的迟到旧应答
+              slidesUpdatedAt: Date.now()
             })
           } catch (err) {
             console.warn("[Slidev] BroadcastChannel postMessage warning:", err)

@@ -250,6 +250,8 @@ const {
 // Pin 图钉锁定状态
 const isPinned = ref(false)
 const pinnedDocId = ref('')
+// 当前已渲染文档 id：文档切换时重置页码（P1-D1）
+let renderedDocId = ''
 
 // 「数字+回车」跳页输入状态（角标展示）
 const jumpDisplay = ref('')
@@ -527,6 +529,14 @@ defineExpose({
     // 若已锁定且目标文档不匹配，则忽略
     if (isPinned.value && pinnedDocId.value && targetDocId && targetDocId !== pinnedDocId.value) {
       return
+    }
+
+    // P1-D1：文档切换时重置页码，避免角标停留在超出新文档页数的陈旧页码且宿主与沙箱页码分叉
+    if (renderedDocId && doc?.docId && renderedDocId !== doc.docId) {
+      currentPage.value = 1
+    }
+    if (doc?.docId) {
+      renderedDocId = doc.docId
     }
 
     latestDoc = doc

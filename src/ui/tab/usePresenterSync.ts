@@ -15,6 +15,10 @@ export interface IPresenterSyncOptions {
 
 /**
  * 演讲者控制台广播信道与沙箱双向同步
+ *
+ * P1-D2（状态机审计）：SYNC_SLIDES 协议携带 docId + slidesUpdatedAt，
+ * 接收端据此过滤残留旧文档窗口的迟到应答——同文档陈旧快照与跨文档旧数据
+ * 均不再覆写本地数据；跨文档切换被接受时同步重置页码与步进（P1-D1）。
  */
 export function usePresenterSync(options: IPresenterSyncOptions) {
   const {
@@ -30,6 +34,10 @@ export function usePresenterSync(options: IPresenterSyncOptions) {
 
   let broadcastChannel: BroadcastChannel | null = null
   let unbindSlideChanged: (() => void) | null = null
+
+  /** 当前已同步数据所属文档 id 与其写入时刻（用于陈旧应答过滤） */
+  let syncedDocId = ''
+  let syncedSlidesAt = 0
 
   function initChannel() {
     if (typeof BroadcastChannel === 'undefined') {
@@ -53,6 +61,9 @@ export function usePresenterSync(options: IPresenterSyncOptions) {
         }
 
         if (data.type === 'SYNC_SLIDES' && Array.isArray(data.slides)) {
+          if (!acceptSlidesSnapshot(data)) {
+            return
+          }
           slides.value = data.slides
           if (data.config && typeof data.config === 'object') {
             docConfig.value = data.config
@@ -65,6 +76,9 @@ export function usePresenterSync(options: IPresenterSyncOptions) {
               type: 'SYNC_SLIDES',
               slides: JSON.parse(JSON.stringify(slides.value)),
               config: JSON.parse(JSON.stringify(docConfig.value || {})),
+              // 应答附带数据身份：接收端据此拒绝残留窗口的迟到旧数据
+              docId: syncedDocId,
+              slidesUpdatedAt: syncedSlidesAt,
             })
             broadcastChannel?.postMessage({
               type: 'SYNC_PAGE',
@@ -76,6 +90,58 @@ export function usePresenterSync(options: IPresenterSyncOptions) {
         }
       }
     } catch (e) {}
+  }
+
+  /**
+   * SYNC_SLIDES 快照准入判定
+   * 返回 false 表示该快照为残留窗口的陈旧数据，应整体忽略
+   */
+  function acceptSlidesSnapshot(data: any): boolean {
+    const incomingDocId = typeof data.docId === 'string' ? data.docId : ''
+    const incomingAt = typeof data.slidesUpdatedAt === 'number' ? data.slidesUpdatedAt : 0
+
+    // 未知身份（legacy 发送方 / 首次接收）：直接接受
+    if (!syncedDocId || !syncedSlidesAt) {
+      if (incomingDocId) {
+        syncedDocId = incomingDocId
+      }
+      syncedSlidesAt = incomingAt || Date.now()
+      return true
+    }
+
+    const isSameDoc = !incomingDocId || incomingDocId === syncedDocId
+    if (isSameDoc) {
+      // 同文档：仅接受更新时间不早于本地快照的刷新
+      if (incomingAt && incomingAt < syncedSlidesAt) {
+        return false
+      }
+      syncedSlidesAt = incomingAt || Date.now()
+      return true
+    }
+
+    // 跨文档切换：迟到旧文档数据拒绝；新数据接受并重置页码步进（P1-D1）
+    if (incomingAt && incomingAt < syncedSlidesAt) {
+      return false
+    }
+    syncedDocId = incomingDocId
+    syncedSlidesAt = incomingAt || Date.now()
+    currentPage.value = 1
+    currentStep.value = 0
+    return true
+  }
+
+  /**
+   * 宿主直灌幻灯片快照（onMounted 水合 / defineExpose.updateDocument）时登记数据身份
+   */
+  function adoptSlides(docId: string) {
+    if (!docId) return
+    if (syncedDocId && syncedDocId !== docId) {
+      // 直灌数据构成文档切换：同步重置页码步进
+      currentPage.value = 1
+      currentStep.value = 0
+    }
+    syncedDocId = docId
+    syncedSlidesAt = Date.now()
   }
 
   function initSync() {
@@ -102,6 +168,7 @@ export function usePresenterSync(options: IPresenterSyncOptions) {
         page,
         step,
         maxStep,
+        docId: syncedDocId,
       })
     } catch (e) {}
   }
@@ -121,5 +188,6 @@ export function usePresenterSync(options: IPresenterSyncOptions) {
     initSync,
     broadcastPageChange,
     closeSync,
+    adoptSlides,
   }
 }
