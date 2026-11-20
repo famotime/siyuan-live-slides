@@ -70,7 +70,14 @@ export interface IImportOptions {
   wrapSuperBlocks?: boolean
   virtualFiles?: Record<string, string>
   baseDir?: string
+  /** @internal src: 子演示递归防环——已展开的子页面路径集合（状态机审计 P0-6） */
+  visitedSrcPaths?: Set<string>
+  /** @internal src: 子演示递归深度计数 */
+  srcDepth?: number
 }
+
+/** src: 子演示递归深度上限：正常工程层级不超过 3~4 层，超过即视为异常嵌套 */
+const MAX_SRC_DEPTH = 8
 
 /**
  * 依循 Slidev 官方词法状态机切分幻灯片
@@ -81,6 +88,7 @@ export function splitSlidesMarkdownChunks(markdown: string): string[] {
 
   let start = 0
   let inHtmlComment = false
+  let htmlCommentStart = -1
 
   function slice(end: number) {
     if (start >= end) return
@@ -91,78 +99,99 @@ export function splitSlidesMarkdownChunks(markdown: string): string[] {
     start = end + 1
   }
 
-  for (let i = 0; i < lines.length; i++) {
-    const rawLine = lines[i]
-    const line = rawLine.trimEnd()
+  // 可重入扫描：未闭合注释的降级重扫需要从注释起始行重新进入同一套分片规则
+  const scan = (from: number) => {
+    for (let i = from; i < lines.length; i++) {
+      const rawLine = lines[i]
+      const line = rawLine.trimEnd()
 
-    if (inHtmlComment) {
-      if (line.includes("-->")) {
-        inHtmlComment = false
+      if (inHtmlComment) {
+        if (line.includes("-->")) {
+          inHtmlComment = false
+        }
+        continue
       }
-      continue
-    }
 
-    if (line.startsWith("<!--")) {
-      if (!line.includes("-->")) {
-        inHtmlComment = true
+      if (line.startsWith("<!--")) {
+        if (!line.includes("-->")) {
+          inHtmlComment = true
+          htmlCommentStart = i
+        }
+        continue
       }
-      continue
-    }
 
-    if (line.startsWith("---")) {
-      slice(i)
+      if (line.startsWith("---")) {
+        slice(i)
 
-      const next = lines[i + 1]
-      // 严格判定是否为 Frontmatter 起始符：
-      // 1. 当前行必须是纯破折号分割线（---...）且下一行非空
-      // 2. 后面必须存在匹配的闭合 ---（且两者之间绝不能跨越正文代码块 fence）
-      // 3. 两者之间必须包含顶级 YAML 键值对（支持行首带有 # 注释的合法 YAML 块），杜绝误吞纯 Markdown 标题或正文
-      let isFrontmatterStart = false
-      let closingIndex = -1
+        const next = lines[i + 1]
+        // 严格判定是否为 Frontmatter 起始符：
+        // 1. 当前行必须是纯破折号分割线（---...）且下一行非空
+        // 2. 后面必须存在匹配的闭合 ---（且两者之间绝不能跨越正文代码块 fence）
+        // 3. 两者之间必须包含顶级 YAML 键值对（支持行首带有 # 注释的合法 YAML 块），杜绝误吞纯 Markdown 标题或正文
+        let isFrontmatterStart = false
+        let closingIndex = -1
 
-      const trimmedNext = next ? next.trim() : ""
-      if (line.replace(/^-+/, "").trim() === "" && trimmedNext.length > 0) {
-        for (let j = i + 1; j < lines.length; j++) {
-          const curTrim = lines[j].trimEnd()
-          if (curTrim.startsWith("```")) {
-            // 遇到代码块，说明已处于幻灯片正文区域，绝非 Frontmatter
+        const trimmedNext = next ? next.trim() : ""
+        if (line.replace(/^-+/, "").trim() === "" && trimmedNext.length > 0) {
+          for (let j = i + 1; j < lines.length; j++) {
+            const curTrim = lines[j].trimEnd()
+            if (curTrim.startsWith("```")) {
+              // 遇到代码块，说明已处于幻灯片正文区域，绝非 Frontmatter
+              break
+            }
+            if (curTrim === "---") {
+              closingIndex = j
+              break
+            }
+          }
+          if (closingIndex !== -1 && closingIndex - i <= 60) {
+            const innerLines = lines.slice(i + 1, closingIndex)
+            const hasYamlKey = innerLines.some(l => {
+              const trimmed = l.trim()
+              return trimmed.length > 0 && !trimmed.startsWith("#") && /^[a-zA-Z0-9_$-]+\s*:\s*.*/.test(trimmed)
+            })
+            if (hasYamlKey) {
+              isFrontmatterStart = true
+            }
+          }
+        }
+
+        if (isFrontmatterStart && closingIndex !== -1) {
+          start = i
+          i = closingIndex
+        }
+      } else if (line.trimStart().startsWith("```")) {
+        // 跳过代码块内部的 ---
+        const match = line.match(/^\s*`+/)
+        const fence = match ? match[0].trim() : "```"
+        let j = i + 1
+        for (; j < lines.length; j++) {
+          if (lines[j].trimStart().startsWith(fence)) {
             break
           }
-          if (curTrim === "---") {
-            closingIndex = j
-            break
-          }
         }
-        if (closingIndex !== -1 && closingIndex - i <= 60) {
-          const innerLines = lines.slice(i + 1, closingIndex)
-          const hasYamlKey = innerLines.some(l => {
-            const trimmed = l.trim()
-            return trimmed.length > 0 && !trimmed.startsWith("#") && /^[a-zA-Z0-9_$-]+\s*:\s*.*/.test(trimmed)
-          })
-          if (hasYamlKey) {
-            isFrontmatterStart = true
-          }
+        if (j < lines.length) {
+          i = j
+        } else {
+          // P0-7 修复：未闭合围栏按 Markdown 语义延伸至 EOF，游标推进到末尾，
+          // 杜绝扫描停在代码块内部把后续 --- 误判为分页符
+          console.warn("[slides-importer] 检测到未闭合的代码围栏，其后内容将作为该页正文代码块处理")
+          i = lines.length
         }
-      }
-
-      if (isFrontmatterStart && closingIndex !== -1) {
-        start = i
-        i = closingIndex
-      }
-    } else if (line.trimStart().startsWith("```")) {
-      // 跳过代码块内部的 ---
-      const match = line.match(/^\s*`+/)
-      const fence = match ? match[0].trim() : "```"
-      let j = i + 1
-      for (; j < lines.length; j++) {
-        if (lines[j].trimStart().startsWith(fence)) {
-          break
-        }
-      }
-      if (j < lines.length) {
-        i = j
       }
     }
+  }
+
+  scan(0)
+
+  // P0-7 修复：未闭合 HTML 注释不允许静默吞掉文档尾部——告警并从未闭合行之后
+  // 按普通文本重新扫描，使其后的 --- 分页符恢复分片能力（降级处理畸形输入）
+  if (inHtmlComment && htmlCommentStart >= 0) {
+    console.warn(
+      `[slides-importer] 检测到未闭合的 HTML 注释（起始行 ${htmlCommentStart + 1}），注释区域将按普通文本参与分片`,
+    )
+    inHtmlComment = false
+    scan(htmlCommentStart + 1)
   }
 
   if (start < lines.length) {
@@ -296,6 +325,37 @@ export function parseSlidesPresentation(
 
     if (srcVal) {
       const subPath = String(srcVal).trim().replace(/^['"]|['"]$/g, "")
+
+      // P0-6 防环守卫：src: 自引用/互引用或异常深层嵌套时不再递归展开，
+      // 落入与"未提供子页面实体"相同的提示占位分支，杜绝栈溢出
+      const normalizedSrc = subPath.replace(/\\/g, "/").replace(/^\.\//, "")
+      const visitedSrc = options.visitedSrcPaths || new Set<string>()
+      const srcDepth = options.srcDepth || 0
+      const isCycle = visitedSrc.has(normalizedSrc)
+      const isTooDeep = srcDepth >= MAX_SRC_DEPTH
+      if (isCycle || isTooDeep) {
+        const cycleAttrs: Record<string, string> = { "custom-slides-src": subPath }
+        if (frontmatter.layout) {
+          normalizeImportedLayout(frontmatter.layout, cycleAttrs, frontmatter)
+        }
+        slides.push({
+          pageIndex: pageIndex++,
+          pageAttrs: cycleAttrs,
+          notes: "",
+          rawMarkdown: isCycle
+            ? `> ⚠️ **检测到 src 循环引用**: \`${subPath}\`\n>\n> *该子页面已在上级展开，此处停止递归以防止无限嵌套。*`
+            : `> ⚠️ **src 嵌套层级超过上限 (${MAX_SRC_DEPTH})**: \`${subPath}\`\n>\n> *已停止递归展开。*`,
+          hasVueComponent: false,
+          hasStyleTag: false,
+          assetReferences: [],
+        })
+        const l = cycleAttrs[ATTR_PAGE_LAYOUT] || "default"
+        layoutDistribution[l] = (layoutDistribution[l] || 0) + 1
+        continue
+      }
+      const childVisited = new Set(visitedSrc)
+      childVisited.add(normalizedSrc)
+
       let subContent = virtualFiles[subPath]
         || virtualFiles[subPath.replace(/^\.\//, "")]
         || virtualFiles[`pages/${subPath.replace(/^.*pages\//, "")}`]
@@ -339,7 +399,12 @@ export function parseSlidesPresentation(
       }
 
       if (subContent) {
-        const subParsed = parseSlidesPresentation(subContent, { ...options, virtualFiles })
+        const subParsed = parseSlidesPresentation(subContent, {
+          ...options,
+          virtualFiles,
+          visitedSrcPaths: childVisited,
+          srcDepth: srcDepth + 1,
+        })
         for (const subSlide of subParsed.slides) {
           subSlide.pageIndex = pageIndex++
           subSlide.pageAttrs = { ...inheritedAttrs, ...subSlide.pageAttrs }

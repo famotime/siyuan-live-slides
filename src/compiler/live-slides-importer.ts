@@ -468,6 +468,16 @@ export function parseLiveSlidesMarkdown(
     }
   }
 
+  // P0-7 修复：未闭合代码围栏的 EOF 出口——按 Markdown 语义围栏延伸至文档末尾，
+  // 内容保留在最后一页，但必须显式告警，杜绝静默吞掉后续分页符与页属性
+  if (inCodeFence) {
+    console.warn(
+      `[live-slides-importer] 检测到未闭合的代码围栏（\`${codeFenceMarker}\`），围栏内容已作为末页正文处理`,
+    )
+    inCodeFence = false
+    codeFenceMarker = ""
+  }
+
   // 收尾最后一页
   if (currentSlideCleanLines.length > 0 || Object.keys(currentSlidePageAttrs).length > 0 || currentSlideNotes.length > 0) {
     flushCurrentSlide()

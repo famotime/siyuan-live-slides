@@ -128,3 +128,75 @@ describe("ListColumnScanner (多栏列表超级块扫描与槽位分配)", () =>
     expect(result.newTracked[0].itemIds).toEqual(["col-left", "col-right"])
   })
 })
+
+describe("ListColumnScanner 根版式收敛 (状态机审计 P0-8)", () => {
+  function makeDocRootBlocks(): ISiYuanBlockNode[] {
+    return [
+      { id: "doc-head", type: "h", content: "页面标题" },
+      {
+        id: "sb",
+        type: "s",
+        subType: "col",
+        children: [
+          { id: "col-left", type: "i", content: "左栏" },
+          { id: "col-right", type: "i", content: "右栏" },
+        ],
+      },
+    ]
+  }
+
+  const rootLayoutChanges = (changes: { blockId: string; attrs: Record<string, string> }[]) =>
+    changes.filter(c => c.blockId === "doc-1" && "custom-slides-layout" in c.attrs)
+
+  it("文档根版式已与目标一致时（docAttrs 提供真实值），不再重复下发根属性写入", () => {
+    const blocks = makeDocRootBlocks()
+    const mergedDocAttrs = { "custom-slides-layout": "cols-header" }
+
+    const first = scanAndTagListSuperBlocks("doc-1", blocks, { docAttrs: mergedDocAttrs })
+    expect(rootLayoutChanges(first.changes)).toEqual([])
+
+    // 第二次编译（跟踪交接后）依旧零根版式写入
+    const second = scanAndTagListSuperBlocks("doc-1", blocks, {
+      tracked: first.newTracked,
+      docAttrs: mergedDocAttrs,
+    })
+    expect(rootLayoutChanges(second.changes)).toEqual([])
+  })
+
+  it("文档根版式为 clover 时保持 clover 不被检测版式覆写", () => {
+    const blocks = makeDocRootBlocks()
+    const result = scanAndTagListSuperBlocks("doc-1", blocks, {
+      docAttrs: { "custom-slides-layout": "clover" },
+    })
+    expect(rootLayoutChanges(result.changes)).toEqual([])
+    expect(result.newTracked[0].layout).toBe("clover")
+  })
+
+  it("无 docAttrs 时保持旧行为：首次编译对文档根写入检测版式（向下兼容）", () => {
+    const blocks = makeDocRootBlocks()
+    const result = scanAndTagListSuperBlocks("doc-1", blocks)
+    expect(rootLayoutChanges(result.changes).length).toBe(1)
+    expect(rootLayoutChanges(result.changes)[0].attrs["custom-slides-layout"]).toBe("cols-header")
+  })
+
+  it("文档根已无列表超级块且版式已清空时，不再重复下发清空写入", () => {
+    // 仅剩普通段落，无任何超级块
+    const blocks: ISiYuanBlockNode[] = [{ id: "p1", type: "p", content: "普通段落" }]
+    const prevTracked = [
+      {
+        pageTargetId: "doc-1",
+        headerId: "old-head",
+        itemIds: ["old-i1", "old-i2"],
+        layout: "cols-header",
+      },
+    ]
+    const result = scanAndTagListSuperBlocks("doc-1", blocks, {
+      tracked: prevTracked,
+      docAttrs: { "custom-slides-layout": "" },
+    })
+    expect(rootLayoutChanges(result.changes)).toEqual([])
+    // 但 slot 自愈清理仍然执行
+    const slotChanges = result.changes.filter(c => "custom-slides-slot" in c.attrs)
+    expect(slotChanges.length).toBeGreaterThan(0)
+  })
+})

@@ -381,6 +381,8 @@ export function scanAndTagListSuperBlocks(
   options?: {
     tracked?: ITrackedListSuperBlock[]
     onTagChange?: (change: IListSuperBlockTagChange) => void
+    /** 文档根合并属性（内核 attrs + 即时覆盖层）：pageTargetId 为文档根时用于读取真实当前版式（P0-8） */
+    docAttrs?: Record<string, string>
   },
 ): IScanListSuperBlocksResult {
   const changes: IListSuperBlockTagChange[] = []
@@ -506,7 +508,11 @@ export function scanAndTagListSuperBlocks(
       const headerId = headerNode?.id
 
       // 2.1 检查并配置页面版式 custom-slides-layout
-      const currentLayout = pageTargetNode?.ial?.[ATTR_PAGE_LAYOUT] || ""
+      // P0-8 修复：pageTargetId 为文档根时 blocks 中永远找不到根节点（blocks 只含顶层子块），
+      // 此前 currentLayout 恒为空串导致每次编译都对内核 setBlockAttrs 重复写根属性；
+      // 改为回退读取文档根合并属性（内核 + 覆盖层）
+      const currentLayout = pageTargetNode?.ial?.[ATTR_PAGE_LAYOUT]
+        || (pageTargetId === docId ? options?.docAttrs?.[ATTR_PAGE_LAYOUT] || "" : "")
       const isCurrentClover = currentLayout === "clover"
       const targetLayout = isCurrentClover ? "clover" : layout
       if (currentLayout !== targetLayout) {
@@ -606,14 +612,24 @@ export function scanAndTagListSuperBlocks(
         }
       }
 
-      const currentLayout = pageTargetNode?.ial?.[ATTR_PAGE_LAYOUT] || ""
+      // P0-8 修复：文档根页面同样回退读取合并属性判定当前版式；
+      // 根版式已清空时不再重复下发清空写入
+      const currentLayout = pageTargetNode?.ial?.[ATTR_PAGE_LAYOUT]
+        || (pageTargetId === docId ? options?.docAttrs?.[ATTR_PAGE_LAYOUT] || "" : "")
       const isMultiColLayout = isColsHeaderLayout(currentLayout)
 
       if (prevTracked || (hasInvalidListSb && isMultiColLayout)) {
-        recordChange(pageTargetId, { [ATTR_PAGE_LAYOUT]: "" }, { [ATTR_PAGE_LAYOUT]: currentLayout })
-        if (pageTargetNode) {
-          if (!pageTargetNode.ial) pageTargetNode.ial = {}
-          pageTargetNode.ial[ATTR_PAGE_LAYOUT] = ""
+        // P0-8 修复：仅当调用方提供 docAttrs 且确认根版式已清空时才跳过重复下发；
+        // 未提供 docAttrs 的旧调用方保持原有清空语义（向下兼容）
+        const needClearRootLayout = pageTargetId !== docId
+          || currentLayout !== ""
+          || !options?.docAttrs
+        if (needClearRootLayout) {
+          recordChange(pageTargetId, { [ATTR_PAGE_LAYOUT]: "" }, { [ATTR_PAGE_LAYOUT]: currentLayout })
+          if (pageTargetNode) {
+            if (!pageTargetNode.ial) pageTargetNode.ial = {}
+            pageTargetNode.ial[ATTR_PAGE_LAYOUT] = ""
+          }
         }
 
         const hId = prevTracked?.headerId

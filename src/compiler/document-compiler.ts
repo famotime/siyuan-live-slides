@@ -602,6 +602,8 @@ export class DocumentCompilerService {
       const prevTracked = this.trackedListSuperBlocks.get(docId) || []
       const listScanRes = scanAndTagListSuperBlocks(docId, blockNodes, {
         tracked: prevTracked,
+        // 传入文档根合并属性：根节点不在顶层子块中，扫描器需据此判定真实当前版式（P0-8）
+        docAttrs,
         onTagChange: (change) => {
           this.setBlockAttrOverride(change.blockId, change.attrs)
           if (change.blockId === docId) {
