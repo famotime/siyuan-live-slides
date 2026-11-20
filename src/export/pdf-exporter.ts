@@ -107,15 +107,29 @@ export function triggerPdfExport(doc: ISlidesDocument, options?: IPdfExportOptio
       docObj.write(html)
       docObj.close()
 
-      setTimeout(() => {
+      // P1-B3 修复：优先等待 iframe load 事件（文档与子资源就绪），
+      // 固定 350ms 延迟仅在 load 不可用时兜底，避免大文档/慢字体渲染出白页；
+      // 打印调用返回后保留 iframe 至下一轮宏任务，杜绝打印对话框仍打开时 DOM 被移除
+      const invokePrint = () => {
         try {
           iframe.contentWindow?.focus()
           iframe.contentWindow?.print()
         } finally {
           setTimeout(() => {
             iframe.remove()
-          }, 2000)
+          }, 500)
         }
+      }
+      let printed = false
+      iframe.addEventListener("load", () => {
+        if (printed) return
+        printed = true
+        invokePrint()
+      })
+      setTimeout(() => {
+        if (printed) return
+        printed = true
+        invokePrint()
       }, 350)
       return true
     }

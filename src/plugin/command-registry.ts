@@ -299,19 +299,21 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
       hotkey: "",
       enabled: () => true,
       execute: async () => {
+        // P1-B1 修复：置位必须先于任何 await，杜绝"检查→await→置位"窗口内的重入双跑；
+        // 编译已就绪时直接同步置位，未就绪路径在编译后于同一持锁区校验文档
         if (isCommandExportingImages) {
           showMessage("正在导出图片中，请稍候...", 2000)
           return
         }
-        if (!plugin.latestCompiledDoc) {
-          await plugin.compileCurrentDocument()
-        }
-        if (!plugin.latestCompiledDoc) {
-          showMessage("请先打开并放映一篇思源笔记文档")
-          return
-        }
         isCommandExportingImages = true
         try {
+          if (!plugin.latestCompiledDoc) {
+            await plugin.compileCurrentDocument()
+          }
+          if (!plugin.latestCompiledDoc) {
+            showMessage("请先打开并放映一篇思源笔记文档")
+            return
+          }
           showMessage("正在启动后台沙箱并逐页导出幻灯片图片...")
           const doc = plugin.latestCompiledDoc
           const title = await resolveDocumentTitle(doc, plugin.currentDocId, plugin)

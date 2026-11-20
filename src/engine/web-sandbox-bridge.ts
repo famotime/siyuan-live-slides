@@ -65,6 +65,10 @@ export class WebSandboxBridge {
 
   /**
    * 解绑与清理
+   *
+   * 注意：pendingMessages 保留不清空——预览页签关闭期间经 main.ts 入队的
+   * UPDATE_SLIDES 正是"沙箱桥接器自动缓存当前文档数据"的载体，
+   * 页签重新挂载 attach() + CLIENT_READY 后继续冲刷（P1-A：detach 保留队列语义）
    */
   public detach(): void {
     if (typeof window !== "undefined") {
@@ -72,7 +76,6 @@ export class WebSandboxBridge {
     }
     this.iframe = null
     this.isReady = false
-    this.pendingMessages = []
   }
 
   /**
@@ -293,11 +296,22 @@ export class WebSandboxBridge {
     switch (data.action) {
       case "CLIENT_READY":
         this.isReady = true
-        // 冲刷积压的消息队列
+        // 冲刷积压的消息队列；冲刷途中 contentWindow 消失（页签卸载竞态）时
+        // 保留剩余消息待下次握手，不得静默丢弃
         while (this.pendingMessages.length > 0) {
+          if (!this.iframe?.contentWindow) {
+            break
+          }
           const msg = this.pendingMessages.shift()
-          if (msg && this.iframe?.contentWindow) {
-            this.iframe.contentWindow.postMessage(msg, "*")
+          if (msg) {
+            try {
+              this.iframe.contentWindow.postMessage(msg, "*")
+            } catch (e) {
+              console.warn("[WebSandboxBridge] flush postMessage error:", e)
+              // 投递失败回队首，等待下一次 CLIENT_READY 重试
+              this.pendingMessages.unshift(msg)
+              break
+            }
           }
         }
         for (const handler of this.clientReadyHandlers) {

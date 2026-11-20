@@ -63,19 +63,43 @@ export function usePreviewExport(
   /** 全篇逐页导出图片进行中标志（防重入） */
   const isExportingAllImages = ref(false)
 
-  async function onExportHtml() {
-    const doc = getLatestDoc()
-    if (!doc) {
-      services.showMessage('请先在主编辑区打开幻灯片文档')
+  /**
+   * 导出动作统一防重入与错误收口（状态机审计 P1-B2）
+   * - 置位先于任何 await，杜绝"检查→await→置位"窗口内的重入双跑
+   * - 未捕获异常收敛为用户可见失败提示，避免"正在导出"提示后永远无下文
+   */
+  const activeExportKeys = new Set<string>()
+  async function runExclusiveExport(key: string, action: () => Promise<void>): Promise<void> {
+    if (activeExportKeys.has(key)) {
+      services.showMessage('正在执行相同导出操作中，请稍候...', 2000)
       return
     }
-    const title = await services.resolveDocumentTitle(doc, (plugin as any)?.currentDocId, plugin)
-    services.showMessage('正在导出单文件离线 HTML（内联媒体资源中...）', 2000)
-    const html = await services.exportStandaloneHtml(doc, { title })
-    const ok = services.downloadHtmlFile(`${title}.html`, html)
-    if (ok) {
-      services.showMessage(`已开始下载单文件离线 HTML 演示包 (${title}.html)`)
+    activeExportKeys.add(key)
+    try {
+      await action()
+    } catch (err: any) {
+      console.error('[usePreviewExport] 导出执行失败:', err)
+      services.showMessage(`导出执行失败：${err?.message || String(err)}`, 4000)
+    } finally {
+      activeExportKeys.delete(key)
     }
+  }
+
+  async function onExportHtml() {
+    await runExclusiveExport('html', async () => {
+      const doc = getLatestDoc()
+      if (!doc) {
+        services.showMessage('请先在主编辑区打开幻灯片文档')
+        return
+      }
+      const title = await services.resolveDocumentTitle(doc, (plugin as any)?.currentDocId, plugin)
+      services.showMessage('正在导出单文件离线 HTML（内联媒体资源中...）', 2000)
+      const html = await services.exportStandaloneHtml(doc, { title })
+      const ok = services.downloadHtmlFile(`${title}.html`, html)
+      if (ok) {
+        services.showMessage(`已开始下载单文件离线 HTML 演示包 (${title}.html)`)
+      }
+    })
   }
 
   function onExportPdf() {
@@ -95,74 +119,80 @@ export function usePreviewExport(
       services.showMessage('正在逐页导出幻灯片图片中，请稍候...', 2000)
       return
     }
-    const doc = getLatestDoc()
-    if (!doc) {
-      services.showMessage('请先在主编辑区打开幻灯片文档')
-      return
-    }
     isExportingAllImages.value = true
     try {
-      services.showMessage('正在逐页导出幻灯片图片...', 2000)
-      const title = await services.resolveDocumentTitle(doc, (plugin as any)?.currentDocId, plugin)
-      const res = await services.exportAllSlidesZip(sandboxBridge, {
-        title,
-        onProgress: (current: number, total: number) => {
-          services.showMessage(`正在导出幻灯片图片 (${current} / ${total})...`, 1500)
-        },
+      await runExclusiveExport('all-images', async () => {
+        const doc = getLatestDoc()
+        if (!doc) {
+          services.showMessage('请先在主编辑区打开幻灯片文档')
+          return
+        }
+        services.showMessage('正在逐页导出幻灯片图片...', 2000)
+        const title = await services.resolveDocumentTitle(doc, (plugin as any)?.currentDocId, plugin)
+        const res = await services.exportAllSlidesZip(sandboxBridge, {
+          title,
+          onProgress: (current: number, total: number) => {
+            services.showMessage(`正在导出幻灯片图片 (${current} / ${total})...`, 1500)
+          },
+        })
+        if (res.success) {
+          services.showMessage(`🎉 成功导出 ${res.total || 0} 张高清图片并保存为 ${title}.zip！`, 4000)
+        } else {
+          services.showMessage(`导出图片失败：${(res as any).error || '未知异常'}`)
+        }
       })
-      if (res.success) {
-        services.showMessage(`🎉 成功导出 ${res.total || 0} 张高清图片并保存为 ${title}.zip！`, 4000)
-      } else {
-        services.showMessage(`导出图片失败：${(res as any).error || '未知异常'}`)
-      }
     } finally {
       isExportingAllImages.value = false
     }
   }
 
   async function onExportCurrentSlide() {
-    const doc = getLatestDoc()
-    if (!doc) {
-      services.showMessage('请先在主编辑区打开幻灯片文档')
-      return
-    }
-    services.showMessage('正在导出当前幻灯片图片...', 1500)
-    const res = await services.exportCurrentSlideImage(sandboxBridge)
-    if (res.success && res.dataUrl) {
-      const title = await services.resolveDocumentTitle(doc, (plugin as any)?.currentDocId, plugin)
-      const page = currentPage.value || 1
-      const total = totalPages.value || 1
-      const filename = total > 1 ? `${title}-${page}.png` : `${title}.png`
-      services.downloadDataUrl(filename, res.dataUrl)
-      services.showMessage(`已下载当前页高清图片 (${filename})`)
-    } else {
-      services.showMessage(`导出当前页图片失败：${(res as any).error || '未知异常'}`)
-    }
-  }
-
-  async function onCopyCurrentSlide() {
-    const doc = getLatestDoc()
-    if (!doc) {
-      services.showMessage('请先在主编辑区打开幻灯片文档')
-      return
-    }
-    services.showMessage('正在复制当前幻灯片截图到剪贴板...', 1500)
-    const res = await services.exportCurrentSlideImage(sandboxBridge)
-    if (res.success && res.dataUrl) {
-      const ok = await services.copyDataUrlToClipboard(res.dataUrl)
-      if (ok) {
-        services.showMessage(`已成功将第 ${currentPage.value || 1} 页幻灯片复制到剪贴板！`)
-      } else {
+    await runExclusiveExport('current-slide', async () => {
+      const doc = getLatestDoc()
+      if (!doc) {
+        services.showMessage('请先在主编辑区打开幻灯片文档')
+        return
+      }
+      services.showMessage('正在导出当前幻灯片图片...', 1500)
+      const res = await services.exportCurrentSlideImage(sandboxBridge)
+      if (res.success && res.dataUrl) {
         const title = await services.resolveDocumentTitle(doc, (plugin as any)?.currentDocId, plugin)
         const page = currentPage.value || 1
         const total = totalPages.value || 1
         const filename = total > 1 ? `${title}-${page}.png` : `${title}.png`
         services.downloadDataUrl(filename, res.dataUrl)
-        services.showMessage(`剪贴板权限不可用，已自动下载为 ${filename}`)
+        services.showMessage(`已下载当前页高清图片 (${filename})`)
+      } else {
+        services.showMessage(`导出当前页图片失败：${(res as any).error || '未知异常'}`)
       }
-    } else {
-      services.showMessage(`复制失败：${(res as any).error || '未知异常'}`)
-    }
+    })
+  }
+
+  async function onCopyCurrentSlide() {
+    await runExclusiveExport('copy-slide', async () => {
+      const doc = getLatestDoc()
+      if (!doc) {
+        services.showMessage('请先在主编辑区打开幻灯片文档')
+        return
+      }
+      services.showMessage('正在复制当前幻灯片截图到剪贴板...', 1500)
+      const res = await services.exportCurrentSlideImage(sandboxBridge)
+      if (res.success && res.dataUrl) {
+        const ok = await services.copyDataUrlToClipboard(res.dataUrl)
+        if (ok) {
+          services.showMessage(`已成功将第 ${currentPage.value || 1} 页幻灯片复制到剪贴板！`)
+        } else {
+          const title = await services.resolveDocumentTitle(doc, (plugin as any)?.currentDocId, plugin)
+          const page = currentPage.value || 1
+          const total = totalPages.value || 1
+          const filename = total > 1 ? `${title}-${page}.png` : `${title}.png`
+          services.downloadDataUrl(filename, res.dataUrl)
+          services.showMessage(`剪贴板权限不可用，已自动下载为 ${filename}`)
+        }
+      } else {
+        services.showMessage(`复制失败：${(res as any).error || '未知异常'}`)
+      }
+    })
   }
 
   return {

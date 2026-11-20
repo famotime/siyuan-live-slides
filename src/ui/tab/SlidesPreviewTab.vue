@@ -294,6 +294,10 @@ function jumpToPage(page: number) {
 
 const iframeSrc = ref('/plugins/siyuan-live-slides/slides-client/index.html')
 
+function onSandboxIframeLoad() {
+  sandboxBridge.resetReady()
+}
+
 let unbindSlideChanged: (() => void) | null = null
 let unbindBlockClicked: (() => void) | null = null
 let unbindOpenInEditor: (() => void) | null = null
@@ -305,6 +309,9 @@ let unobserveTheme: (() => void) | null = null
 onMounted(() => {
   if (sandboxIframeRef.value) {
     sandboxBridge.attach(sandboxIframeRef.value)
+    // P1-A 修复：iframe 自行导航/重载时重置就绪态，握手窗口内的消息转入待发队列，
+    // 避免 isReady 残留 true 导致 postMessage 打进死窗口静默丢失（resetReady 此前是死代码）
+    sandboxIframeRef.value.addEventListener('load', onSandboxIframeLoad)
   }
 
   unbindSlideChanged = sandboxBridge.onSlideChanged((page, total) => {
@@ -368,6 +375,9 @@ onUnmounted(() => {
   }
   if (typeof document !== 'undefined') {
     document.removeEventListener('fullscreenchange', onFullscreenChange)
+  }
+  if (sandboxIframeRef.value) {
+    sandboxIframeRef.value.removeEventListener('load', onSandboxIframeLoad)
   }
   if (unbindOpenPeekDrawer) unbindOpenPeekDrawer()
   if (unbindToggleFullscreen) unbindToggleFullscreen()
