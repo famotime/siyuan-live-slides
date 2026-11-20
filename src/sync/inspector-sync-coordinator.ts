@@ -500,6 +500,10 @@ export class InspectorSyncCoordinator {
 
   /**
    * 针对思源前端忽略 NodeThematicBreak updateAttrs 的底层缺陷进行防御性补丁同步
+   *
+   * P1-F1（状态机审计）：
+   * - 仅同步 custom-* 键（插件域属性），杜绝书签/命名等宿主属性编辑灌满影子覆盖层；
+   * - 块删除事务同步清除对应覆盖层条目，杜绝已删除块在会话内的无界增长与陈旧遮蔽
    */
   public patchThematicBreakTransactions(data: any): void {
     // 仅内容事务需要同步属性覆盖层；savedoc/progress/readystate 等高频非内容消息直接跳过，
@@ -511,17 +515,26 @@ export class InspectorSyncCoordinator {
       for (const tx of data.data) {
         if (Array.isArray(tx?.doOperations)) {
           for (const op of tx.doOperations) {
+            if (op?.action === "delete" && op.id) {
+              globalDocumentCompiler.clearBlockAttrOverride(op.id)
+              continue
+            }
             if (op?.action === "updateAttrs" && op.id && op.data) {
               const oldAttrs = op.data.old || {}
               const newAttrs = op.data.new || {}
               const diff: Record<string, string> = {}
               for (const k of Object.keys(oldAttrs)) {
-                if (!(k in newAttrs)) {
+                if (!(k in newAttrs) && k.startsWith("custom-")) {
                   diff[k] = ""
                 }
               }
               for (const [k, v] of Object.entries(newAttrs)) {
-                diff[k] = String(v ?? "")
+                if (k.startsWith("custom-")) {
+                  diff[k] = String(v ?? "")
+                }
+              }
+              if (Object.keys(diff).length === 0) {
+                continue
               }
               syncDomBlockAttrs(op.id, diff)
               globalDocumentCompiler.setBlockAttrOverride(op.id, diff)

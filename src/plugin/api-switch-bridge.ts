@@ -80,5 +80,9 @@ export class ApiSwitchBridge {
     if (window.siyuanApiSwitch) {
       window.siyuanApiSwitch.unregister(this.pluginName)
     }
+
+    // P1-F2（状态机审计）：同步清空受管 AI 配置模块全局，
+    // 杜绝插件禁用/重启用后残留上一会话的受管配置状态
+    setManagedAiConfig(null)
   }
 }
