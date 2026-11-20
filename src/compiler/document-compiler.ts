@@ -673,11 +673,11 @@ export class DocumentCompilerService {
 
       return slidesDoc
     } catch (err) {
+      // 编译失败必须上抛而非返回空文档兜底：空文档会被调用方当作成功结果回写，
+      // 导致预览/Dock 被一次性清空且错误态不可达（状态机审计 P0-3）。
+      // 调用方（compileCurrentDocument）负责捕获并保留 lastGoodDoc。
       console.error("[DocumentCompilerService] Failed to compile document:", err)
-      // 容错兜底：返回基础空文档
-      const fallbackDoc = buildSlidesDocument(docId, {}, [], {})
-      fallbackDoc.customThemeCss = generateCompleteSiYuanThemeCss(null)
-      return fallbackDoc
+      throw err instanceof Error ? err : new Error(String(err))
     }
   }
 }

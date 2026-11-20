@@ -4,6 +4,7 @@ import type {
 import {
   getFrontend,
   Plugin as SyPlugin,
+  showMessage,
 } from "siyuan"
 import { getBlockAttrs } from "@/api"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
@@ -39,6 +40,42 @@ import "@/index.scss"
 /** 自动编译防抖时长：编辑器事务停歇该时长后才向内核发起编译 */
 const AUTO_COMPILE_DEBOUNCE_MS = 150
 
+/** 编译失败用户提示限频间隔：内核持续异常时避免每个防抖周期都弹出消息 */
+const COMPILE_ERROR_NOTIFY_INTERVAL_MS = 10_000
+
+/**
+ * 从编译模型提取全部块 ID 索引（含页分割线、正文块、备注块与 allBlockIds）
+ * 用于 ws 事务块归属反查：内核广播的 transactions 不携带可靠 rootID（前端未填充），
+ * 只能以最近一次编译的块索引判定事务真正触及的文档。
+ */
+function buildCompiledBlockIndex(doc: ISlidesDocument): Set<string> {
+  const ids = new Set<string>()
+  if (doc.docId) {
+    ids.add(doc.docId)
+  }
+  for (const slide of doc.slides || []) {
+    if (slide.startBlockId) {
+      ids.add(slide.startBlockId)
+    }
+    for (const block of slide.blocks || []) {
+      if (block.id) {
+        ids.add(block.id)
+      }
+    }
+    for (const block of slide.noteBlocks || []) {
+      if (block.id) {
+        ids.add(block.id)
+      }
+    }
+    for (const id of slide.allBlockIds || []) {
+      if (id) {
+        ids.add(id)
+      }
+    }
+  }
+  return ids
+}
+
 // 专属 SVG 幻灯片放映图标
 const ICON_SLIDES_SVG = `<symbol id="iconSlides" viewBox="0 0 1024 1024">
   <path fill="currentColor" d="M128 160h768c35.3 0 64 28.7 64 64v480c0 35.3-28.7 64-64 64H128c-35.3 0-64-28.7-64-64V224c0-35.3 28.7-64 64-64z m64 64v480h640V224H192z m128 640h384v64H320z"/>
@@ -69,9 +106,13 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
   private debounceTimer: number | null = null
   private activeCursorBlockId = ""
   private cancelledCursorBlockId = ""
-  // P0 优化：编译消费者门闩 + 脏文档 + 单飞/代际调度
+  // P0 优化：编译消费者门闩 + 脏文档集合（多文档不互相覆盖）+ 单飞/代际调度
   private compileScheduler = new CompileScheduler()
-  private dirtyDocId: string | null = null
+  private dirtyDocs = new Set<string>()
+  /** 最近一次编译成功的块索引：ws 事务归属反查用 */
+  private compiledBlockIndex = new Set<string>()
+  private lastCompileErrorNotifyAt = 0
+  private startupTimers: Array<ReturnType<typeof setTimeout>> = []
   private apiSwitchBridge: ApiSwitchBridge | null = null
   private previewWindowManager = new PreviewWindowManager(this)
   /** 光标联动节流：同一块的重复触发在时间窗内只同步一次 */
@@ -84,6 +125,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
   private onSelectionChangeBound = this.onSelectionChange.bind(this)
   private onClickEditorContentBound = this.onClickEditorContent.bind(this)
   private onVisibilityChangeBound = this.onVisibilityChange.bind(this)
+  private onRequestCompileBound = () => this.compileCurrentDocument()
 
   async onload() {
     const frontEnd = getFrontend()
@@ -182,7 +224,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
     }
     this.eventBus.on("switch-protyle", this.onSwitchProtyleBound)
     this.eventBus.on("ws-main", this.onWsMainBound)
-    this.eventBus.on("slides:request-compile" as any, () => this.compileCurrentDocument())
+    this.eventBus.on("slides:request-compile" as any, this.onRequestCompileBound)
     this.eventBus.on("slides:block-clicked" as any, this.onBlockClickedBound)
     this.eventBus.on("click-editorcontent" as any, this.onClickEditorContentBound)
 
@@ -208,8 +250,8 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
           }
         }
       }
-      setTimeout(detectAndCompile, 300)
-      setTimeout(detectAndCompile, 1000)
+      this.startupTimers.push(setTimeout(detectAndCompile, 300))
+      this.startupTimers.push(setTimeout(detectAndCompile, 1000))
     }
   }
 
@@ -276,12 +318,20 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
       window.clearTimeout(this.debounceTimer)
       this.debounceTimer = null
     }
+    // 启动探测定时器必须随插件卸载回收，防止穿越卸载重排脏编译
+    for (const timer of this.startupTimers) {
+      clearTimeout(timer)
+    }
+    this.startupTimers = []
     this.compileScheduler.reset()
     this.inspectorSyncThrottle.reset()
-    this.dirtyDocId = null
+    this.dirtyDocs.clear()
     globalCompileConsumerGate.clear()
+    // 与 onload 逐一对称注销，杜绝匿名闭包泄漏使旧实例穿越卸载驱动编译
     this.eventBus.off("switch-protyle", this.onSwitchProtyleBound)
     this.eventBus.off("ws-main", this.onWsMainBound)
+    this.eventBus.off("slides:request-compile" as any, this.onRequestCompileBound)
+    this.eventBus.off("slides:block-clicked" as any, this.onBlockClickedBound)
     this.eventBus.off("click-editorcontent" as any, this.onClickEditorContentBound)
     if (typeof document !== "undefined") {
       document.removeEventListener("click", this.onEditorClickBound, true)
@@ -408,11 +458,39 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
     if (data.cmd !== "transactions") return
 
     globalInspectorSyncCoordinator.patchThematicBreakTransactions(data)
-    this.markCompileDirty()
+    this.markCompileDirty(this.resolveAffectedDocId(data))
+  }
+
+  /**
+   * 反查 ws 事务真正触及的文档 id
+   *
+   * 内核广播的 transactions 携带的 Operation.rootID 前端未可靠填充（app/src 未赋值，
+   * kernel/model/transaction.go 亦注明"思源内部暂时没有用到"），无法直接读取；
+   * 改用最近一次编译成功的块索引判定事务块归属，未命中（尚未编译过的文档）时回退当前文档。
+   */
+  private resolveAffectedDocId(data: any): string {
+    const ops: Array<{ id?: string }> = []
+    if (Array.isArray(data?.data)) {
+      for (const tx of data.data) {
+        if (Array.isArray(tx?.doOperations)) {
+          ops.push(...tx.doOperations)
+        }
+      }
+    }
+    if (ops.length === 0) {
+      return ""
+    }
+    if (this.compiledBlockIndex.size > 0 && ops.some(op => op?.id && this.compiledBlockIndex.has(op.id))) {
+      return this.latestCompiledDoc?.docId || ""
+    }
+    return ""
   }
 
   /**
    * 登记脏文档并排程一次自动编译（消费者不可见时仅登记，不发请求）
+   *
+   * 脏文档采用集合而非单槽：多文档交替编辑（分屏/固定预览）时不会互相覆盖，
+   * 修复单键 dirtyDocId 在高频切文档时的丢更新缺陷（FSM-1 在插件层的回归）。
    */
   private markCompileDirty(docId?: string) {
     const target = docId || this.currentDocId || this.getActiveDocumentId()
@@ -421,7 +499,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
     if (!this.currentDocId) {
       this.currentDocId = target
     }
-    this.dirtyDocId = target
+    this.dirtyDocs.add(target)
     this.scheduleDirtyCompile()
   }
 
@@ -436,7 +514,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
       window.clearTimeout(this.debounceTimer)
       this.debounceTimer = null
     }
-    if (!this.dirtyDocId) return
+    if (this.dirtyDocs.size === 0) return
 
     const visibility = globalCompileConsumerGate.getVisibility()
     if (visibility === "none") {
@@ -447,9 +525,10 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
 
     this.debounceTimer = window.setTimeout(() => {
       this.debounceTimer = null
-      const docId = this.dirtyDocId
-      this.dirtyDocId = null
-      if (docId) {
+      // 快照后清空集合再逐个编译：批量文档经调度器单飞合并，杜绝单槽覆盖丢更新
+      const docs = Array.from(this.dirtyDocs)
+      this.dirtyDocs.clear()
+      for (const docId of docs) {
         void this.compileCurrentDocument(docId, { reason: "auto" })
       }
     }, effectiveDelay)
@@ -459,7 +538,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
    * 消费者重新可见（预览页签/Dock 挂载、窗口恢复可见）时立即补跑积压编译
    */
   public flushDirtyCompile() {
-    if (!this.dirtyDocId) return
+    if (this.dirtyDocs.size === 0) return
     this.scheduleDirtyCompile(0)
   }
 
@@ -648,7 +727,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
 
     // P0-1：自动编译在消费者全部关闭时只登记脏文档，不向内核发起请求
     if (reason === "auto" && globalCompileConsumerGate.getVisibility() === "none") {
-      this.dirtyDocId = docId
+      this.dirtyDocs.add(docId)
       return
     }
 
@@ -657,9 +736,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
     if (generation === null) {
       return
     }
-    if (this.dirtyDocId === docId) {
-      this.dirtyDocId = null
-    }
+    this.dirtyDocs.delete(docId)
 
     try {
       const slidesDoc = await globalDocumentCompiler.compile(docId)
@@ -671,6 +748,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
           this.currentDocId = docId
         }
         this.latestCompiledDoc = slidesDoc
+        this.compiledBlockIndex = buildCompiledBlockIndex(slidesDoc)
         updateDockDocument(slidesDoc, docId)
         void this.updatePreviewTabHeader("", docId)
 
@@ -678,7 +756,14 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
         this.purgeStaleDomSlidesAttrs(slidesDoc)
       }
     } catch (err) {
+      // 编译失败必须保留 lastGoodDoc（编译器已改为上抛而非返回空文档兜底），
+      // 并以限频方式提示用户，避免内核持续异常时每个防抖周期都弹消息
       console.error("[SiYuanLiveSlides] Failed to compile document:", err)
+      const now = Date.now()
+      if (now - this.lastCompileErrorNotifyAt > COMPILE_ERROR_NOTIFY_INTERVAL_MS) {
+        this.lastCompileErrorNotifyAt = now
+        showMessage("演示文档编译失败，已保留上次成功的预览结果", 4000)
+      }
     } finally {
       const pendingBatch = this.compileScheduler.finishBatch()
       const pendingDocId = pendingBatch.length > 0 ? pendingBatch[0] : this.compileScheduler.finish()
