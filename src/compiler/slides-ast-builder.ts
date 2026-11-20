@@ -83,6 +83,9 @@ export function buildSlidesDocument(
   const globalBackground = config.background
     ? rewriteSingleAssetUrl(config.background, options)
     : undefined
+  // P1-C1：当前页背景是否已由背景图块写入——区分"继承预设背景（全局/分页符属性）"
+  // 与"页内背景图块"，预设背景可被首个背景图块覆盖，多个背景图块之间首个胜出
+  let currentPageBackgroundFromImageBlock = false
   let currentPage: ISlidesVirtualPage = {
     pageIndex: 1,
     startBlockId: docId,
@@ -190,6 +193,7 @@ export function buildSlidesDocument(
     if (isPageBreak(node)) {
       // 开启新页时重置标题层级栈
       headingStack = []
+      currentPageBackgroundFromImageBlock = false
       const pageMeta = parsePageAttrs(node.ial)
 
       // 如果当前是第一页且尚未添加任何正文内容块，说明用户在文档开头放置了分割线来显式定义第一页配置
@@ -393,28 +397,43 @@ export function buildSlidesDocument(
         })
       }
 
+      // P1-C1：页面是否已确定图文版式（预扫描 detectPageTopLevelLayout 或更早块写入）——
+      // 首个图文来源胜出，后续图文块不再覆写页面 frontmatter
+      const isImageLayoutPage = currentPage.frontmatter.layout === "image-left"
+        || currentPage.frontmatter.layout === "image-right"
+
       // 页面背景图块处理 (custom-slides-role="background" 或 custom-slides-background="true")
       if (elemAttrs.isBackground) {
         const imgUrl = extractImageUrl(rawMd, itemNode.content)
         if (imgUrl) {
-          currentPage.frontmatter.background = rewriteSingleAssetUrl(imgUrl, options)
-          // 背景图不在正文内容流中渲染
-          return
+          if (!currentPageBackgroundFromImageBlock) {
+            currentPage.frontmatter.background = rewriteSingleAssetUrl(imgUrl, options)
+            currentPageBackgroundFromImageBlock = true
+            // 背景图不在正文内容流中渲染
+            return
+          }
+          // P1-C1：同页已有背景图块时，后续背景图块退回正文内容流渲染，不再覆写页面背景
         }
       }
 
       // 检查超级块图文分栏 (layout: image-left / image-right)
       const sbLayout = detectSuperBlockImageLayout(itemNode)
       if (sbLayout) {
-        currentPage.frontmatter.layout = sbLayout.layout
-        currentPage.frontmatter.image = rewriteSingleAssetUrl(sbLayout.imageUrl, options)
-        if (!currentPage.frontmatter.layoutRatio && sbLayout.ratio) {
-          currentPage.frontmatter.layoutRatio = sbLayout.ratio
+        if (!isImageLayoutPage) {
+          currentPage.frontmatter.layout = sbLayout.layout
+          currentPage.frontmatter.image = rewriteSingleAssetUrl(sbLayout.imageUrl, options)
+          if (!currentPage.frontmatter.layoutRatio && sbLayout.ratio) {
+            currentPage.frontmatter.layoutRatio = sbLayout.ratio
+          }
         }
 
-        // 将超级块内的非图片内容子块平铺为幻灯片普通内容块
+        // 将超级块内的非图片内容子块平铺为幻灯片普通内容块；
+        // P1-C2：传入容器上下文，超级块内部子标题不污染全局大纲栈
         for (const childNode of sbLayout.contentNodes) {
-          processBlockNode(childNode)
+          processBlockNode(childNode, {
+            ...inheritedContext,
+            parentContainerId: itemNode.id || inheritedContext?.parentContainerId,
+          })
         }
         return
       }
@@ -423,13 +442,16 @@ export function buildSlidesDocument(
       if (elemAttrs.imageLayout === "image-left" || elemAttrs.imageLayout === "image-right") {
         const imgUrl = extractImageUrl(rawMd, itemNode.content)
         if (imgUrl) {
-          currentPage.frontmatter.layout = elemAttrs.imageLayout
-          currentPage.frontmatter.image = rewriteSingleAssetUrl(imgUrl, options)
-          if (!currentPage.frontmatter.layoutRatio && itemNode.ial?.[ATTR_PAGE_LAYOUT_RATIO]) {
-            currentPage.frontmatter.layoutRatio = itemNode.ial[ATTR_PAGE_LAYOUT_RATIO]
+          if (!isImageLayoutPage) {
+            currentPage.frontmatter.layout = elemAttrs.imageLayout
+            currentPage.frontmatter.image = rewriteSingleAssetUrl(imgUrl, options)
+            if (!currentPage.frontmatter.layoutRatio && itemNode.ial?.[ATTR_PAGE_LAYOUT_RATIO]) {
+              currentPage.frontmatter.layoutRatio = itemNode.ial[ATTR_PAGE_LAYOUT_RATIO]
+            }
+            // 幻灯片内容流中排除该配图
+            return
           }
-          // 幻灯片内容流中排除该配图
-          return
+          // 页面版式已被更早的图文块确定：当前配图退回正文内容流渲染
         }
       }
 
@@ -439,8 +461,13 @@ export function buildSlidesDocument(
         itemNode.children &&
         itemNode.children.length > 0
       ) {
+        // P1-C2 修复：超级块展开与列表容器展开语义对齐——内部子标题属于容器局部标题，
+        // 传入 parentContainerId 阻止其压入全局大纲栈，杜绝后续无关块继承容器内标题的 slot/clicks/motion
         for (const childNode of itemNode.children) {
-          processBlockNode(childNode)
+          processBlockNode(childNode, {
+            ...inheritedContext,
+            parentContainerId: itemNode.id || inheritedContext?.parentContainerId,
+          })
         }
         return
       }
