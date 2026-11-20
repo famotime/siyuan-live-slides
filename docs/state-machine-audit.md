@@ -91,36 +91,36 @@
 
 ## 二、隐藏问题与修复跟踪
 
-### P0 — 正常路径可复现
+### P0 — 正常路径可复现（✅ 全部修复并提交）
 
 | ID | 问题 | 位置 | 状态 |
 |---|---|---|---|
-| P0-1 | **多文档丢更新回归**：pendingBatch 逐个喂回单槽 dirtyDocId，批次 [A,B,C] 塌缩为 C | `src/index.ts:683-691` | 待修复 |
-| P0-2 | **脏标记打错文档**：onWsMain 忽略事务真实 docId，后台文档永不重编译 | `src/index.ts:405-412` | 待修复 |
-| P0-3 | **编译异常静默清空预览**：catch 兜底返回 0 页空文档并被当作成功回写 | `src/compiler/document-compiler.ts:676-681` + `src/index.ts:664-679` | 待修复 |
-| P0-4 | **eventBus 卸载不对称**：匿名监听器泄漏、旧实例穿越卸载驱动编译 | `src/index.ts:185-186` vs `:283-285` | 待修复 |
-| P0-5 | **启动定时器穿越卸载**：detectAndCompile 两个 setTimeout 无句柄 | `src/index.ts:211-212` | 待修复 |
-| P0-6 | **src: 导入无限递归**：无 visited 集无深度上限，损坏 zip 即栈溢出 | `src/compiler/slides-importer.ts:341-342` | 待修复 |
-| P0-7 | **解析器 EOF 卡死态**：未闭合 `<!--` / 代码围栏使其后所有分页失效或分页误判 | `src/compiler/slides-importer.ts:98-110,152-165`；`src/compiler/live-slides-importer.ts:266-281` | 待修复 |
-| P0-8 | **列表超级块每编译重写根属性**：pageTargetNode 查找域错误致 currentLayout 恒空 | `src/compiler/list-column-scanner.ts:449,509-518` | 待修复 |
+| P0-1 | **多文档丢更新回归**：pendingBatch 逐个喂回单槽 dirtyDocId，批次 [A,B,C] 塌缩为 C | `src/index.ts:683-691` | ✅ 已提交 `e173f2c`（dirtyDocs 集合化） |
+| P0-2 | **脏标记打错文档**：onWsMain 忽略事务真实 docId，后台文档永不重编译 | `src/index.ts:405-412` | ✅ 已提交 `e173f2c`（编译块索引反查） |
+| P0-3 | **编译异常静默清空预览**：catch 兜底返回 0 页空文档并被当作成功回写 | `src/compiler/document-compiler.ts:676-681` + `src/index.ts:664-679` | ✅ 已提交 `e173f2c`（上抛 + lastGoodDoc + 限频提示） |
+| P0-4 | **eventBus 卸载不对称**：匿名监听器泄漏、旧实例穿越卸载驱动编译 | `src/index.ts:185-186` vs `:283-285` | ✅ 已提交 `e173f2c`（具名化对称注销） |
+| P0-5 | **启动定时器穿越卸载**：detectAndCompile 两个 setTimeout 无句柄 | `src/index.ts:211-212` | ✅ 已提交 `e173f2c`（句柄化 + unload 回收） |
+| P0-6 | **src: 导入无限递归**：无 visited 集无深度上限，损坏 zip 即栈溢出 | `src/compiler/slides-importer.ts:341-342` | ✅ 已提交 `f0ace9a`（环检测 + 深度上限 8） |
+| P0-7 | **解析器 EOF 卡死态**：未闭合 `<!--` / 代码围栏使其后所有分页失效或分页误判 | `src/compiler/slides-importer.ts:98-110,152-165`；`src/compiler/live-slides-importer.ts:266-281` | ✅ 已提交 `f0ace9a`（注释重启扫描 / 围栏推进 EOF / 显式告警） |
+| P0-8 | **列表超级块每编译重写根属性**：pageTargetNode 查找域错误致 currentLayout 恒空 | `src/compiler/list-column-scanner.ts:449,509-518` | ✅ 已提交 `f0ace9a`（docAttrs 合并属性回退判定） |
 
-### P1 — 边界条件 / 资源退化
+### P1 — 边界条件 / 资源退化（✅ 计划内 13 项全部修复并提交）
 
 | ID | 问题 | 位置 | 状态 |
 |---|---|---|---|
-| P1-A | resetReady() 零调用者（死转移）；attach 先清 pendingMessages 违背 main.ts 缓存注释 | `src/engine/web-sandbox-bridge.ts:57-83` | 待修复 |
-| P1-B1 | 命令导出 TOCTOU：检查在 await 前、置位在后 | `src/plugin/command-registry.ts:295-331` | 待修复 |
-| P1-B2 | 五类导出仅一类防重入且无错误 toast | `src/ui/tab/usePreviewExport.ts:66-166` | 待修复 |
-| P1-B3 | PDF 打印 350ms 固定渲染等待、对话框期间移除 iframe | `src/export/pdf-exporter.ts:110-119` | 待修复 |
-| P1-C1 | 双图页后图覆写 frontmatter（击穿先到先得预扫描） | `src/compiler/slides-ast-builder.ts:407-433` | 待修复 |
-| P1-C2 | superblock 内标题污染全局大纲栈（未传 parentContainerId） | `src/compiler/slides-ast-builder.ts:442-445` | 待修复 |
-| P1-D1 | 切文档不重置页码（preview + presenter 双处） | `SlidesPreviewTab.vue:515-539`；`SlidesPresenterTab.vue:710-719` | 待修复 |
-| P1-D2 | BC 协议无身份：SYNC_SLIDES 不带 docId，残留窗口可覆写新窗口数据 | `src/ui/tab/usePresenterSync.ts` | 待修复 |
-| P1-E1 | 导出图片命令防重入（与 P1-B1 同修） | `src/plugin/command-registry.ts` | 待修复 |
-| P1-E2 | handleOpenPeekDrawer await 乱序完成覆写后点的链接 | `src/ui/tab/usePeekDrawerState.ts:49-92` | 待修复 |
-| P1-E3 | syncInspectorBlock / updatePreviewTabHeader 异步乱序完成 | `src/index.ts:608-621`；`src/plugin/preview-tab-title.ts:71-120` | 待修复 |
-| P1-F1 | attrOverrides：块删除事务不清除条目（会话级增长 + 遮蔽内核真值） | `src/sync/inspector-sync-coordinator.ts:493-522` | 待修复 |
-| P1-F2 | ApiSwitchBridge.destroy 不清 managedAiConfigState | `src/plugin/api-switch-bridge.ts:72-83` | 待修复 |
+| P1-A | resetReady() 零调用者（死转移）；attach 先清 pendingMessages 违背 main.ts 缓存注释 | `src/engine/web-sandbox-bridge.ts:57-83` | ✅ 已提交 `defe6a4`（iframe load 接线 + detach 保留队列 + 冲刷失败重试） |
+| P1-B1 | 命令导出 TOCTOU：检查在 await 前、置位在后 | `src/plugin/command-registry.ts:295-331` | ✅ 已提交 `defe6a4`（置位先于 await） |
+| P1-B2 | 五类导出仅一类防重入且无错误 toast | `src/ui/tab/usePreviewExport.ts:66-166` | ✅ 已提交 `defe6a4`（runExclusiveExport 统一收口） |
+| P1-B3 | PDF 打印 350ms 固定渲染等待、对话框期间移除 iframe | `src/export/pdf-exporter.ts:110-119` | ✅ 已提交 `defe6a4`（load 事件优先 + 延迟移除） |
+| P1-C1 | 双图页后图覆写 frontmatter（击穿先到先得预扫描） | `src/compiler/slides-ast-builder.ts:407-433` | ✅ 已提交 `2e65ecf`（首个图文来源胜出 + 背景来源区分） |
+| P1-C2 | superblock 内标题污染全局大纲栈（未传 parentContainerId） | `src/compiler/slides-ast-builder.ts:442-445` | ✅ 已提交 `2e65ecf`（容器上下文传入） |
+| P1-D1 | 切文档不重置页码（preview + presenter 双处） | `SlidesPreviewTab.vue:515-539`；`SlidesPresenterTab.vue:710-719` | ✅ 已提交 `bbdbbf2`（renderedDocId 跟踪 + adoptSlides 重置） |
+| P1-D2 | BC 协议无身份：SYNC_SLIDES 不带 docId，残留窗口可覆写新窗口数据 | `src/ui/tab/usePresenterSync.ts` | ✅ 已提交 `bbdbbf2`（docId + slidesUpdatedAt 准入过滤） |
+| P1-E1 | 导出图片命令防重入（与 P1-B1 同修） | `src/plugin/command-registry.ts` | ✅ 已提交 `defe6a4` |
+| P1-E2 | handleOpenPeekDrawer await 乱序完成覆写后点的链接 | `src/ui/tab/usePeekDrawerState.ts:49-92` | ✅ 已提交 `633c249`（代际卫） |
+| P1-E3 | syncInspectorBlock / updatePreviewTabHeader 异步乱序完成 | `src/index.ts:608-621`；`src/plugin/preview-tab-title.ts:71-120` | ✅ 已提交 `633c249`（coordinator 代际 + 最后发起者胜出） |
+| P1-F1 | attrOverrides：块删除事务不清除条目（会话级增长 + 遮蔽内核真值） | `src/sync/inspector-sync-coordinator.ts:493-522` | ✅ 已提交 `01c47f7`（custom-* 域过滤 + delete 事务清除） |
+| P1-F2 | ApiSwitchBridge.destroy 不清 managedAiConfigState | `src/plugin/api-switch-bridge.ts:72-83` | ✅ 已提交 `01c47f7`（destroy 置空） |
 
 ### P2 — 低危 / 打磨项（本轮暂缓，留档）
 
@@ -140,23 +140,50 @@
 
 ## 三、修复方案（按批次）
 
-| 批次 | 内容 | 涉及文件 |
-|---|---|---|
-| FIX-1 | P0-1/2/3：脏文档集合化（复用 scheduler.pendingDocs 语义）、事务 docId 提取、编译失败上抛 + lastGoodDoc | index.ts、document-compiler.ts、compile-scheduler.ts |
-| FIX-2 | P0-4/5：监听器具名化对称卸载、启动定时器句柄化 + unload 清理 + `_disposed` 短路 | index.ts |
-| FIX-3 | P0-6：src: 递归 visited 集 + 深度上限 | slides-importer.ts |
-| FIX-4 | P0-7：EOF 强制出栈 + 未闭合围栏游标推进 | slides-importer.ts、live-slides-importer.ts |
-| FIX-5 | P0-8：根属性差异判定改读 docAttrs/override 层 | list-column-scanner.ts |
-| FIX-6 | P1-A：resetReady 接线（iframe load）+ detach 保留队列 | web-sandbox-bridge.ts、SlidesPreviewTab.vue |
-| FIX-7 | P1-B：导出防重入前置 + 错误 toast + PDF load 优先 | command-registry.ts、usePreviewExport.ts、pdf-exporter.ts |
-| FIX-8 | P1-C：双图页取首个 + superblock 标题隔离 | slides-ast-builder.ts |
-| FIX-9 | P1-D：切文档重置页码 + BC 协议 docId | SlidesPreviewTab.vue、SlidesPresenterTab.vue、usePresenterSync.ts |
-| FIX-10 | P1-E：代际卫统一模式 | usePeekDrawerState.ts、index.ts、preview-tab-title.ts |
-| FIX-11 | P1-F：删除事务清理 override + ApiSwitchBridge 状态重置 | inspector-sync-coordinator.ts、api-switch-bridge.ts、settings.ts |
+| 批次 | 内容 | 涉及文件 | 提交 |
+|---|---|---|---|
+| FIX-1/2 | P0-1/2/3/4/5：脏文档集合化、事务归属反查、编译失败上抛 + lastGoodDoc、监听器对称卸载、启动定时器回收 | index.ts、document-compiler.ts、compile-scheduler.ts | ✅ `e173f2c` |
+| FIX-3 | P0-6：src: 递归 visited 集 + 深度上限 | slides-importer.ts | ✅ `f0ace9a` |
+| FIX-4 | P0-7：EOF 强制出栈 + 未闭合围栏游标推进 | slides-importer.ts、live-slides-importer.ts | ✅ `f0ace9a` |
+| FIX-5 | P0-8：根属性差异判定改读 docAttrs/override 层 | list-column-scanner.ts、document-compiler.ts | ✅ `f0ace9a` |
+| FIX-6 | P1-A：resetReady 接线（iframe load）+ detach 保留队列 + 冲刷失败重试 | web-sandbox-bridge.ts、SlidesPreviewTab.vue | ✅ `defe6a4` |
+| FIX-7 | P1-B：导出防重入前置 + 错误 toast + PDF load 优先 | command-registry.ts、usePreviewExport.ts、pdf-exporter.ts | ✅ `defe6a4` |
+| FIX-8 | P1-C：双图页取首个 + 背景来源区分 + superblock 标题隔离 | slides-ast-builder.ts | ✅ `2e65ecf` |
+| FIX-9 | P1-D：切文档重置页码 + BC 协议 docId/slidesUpdatedAt 准入 | SlidesPreviewTab.vue、SlidesPresenterTab.vue、usePresenterSync.ts、main.ts、slides-client/index.html | ✅ `bbdbbf2` |
+| FIX-10 | P1-E：代际卫统一模式 | usePeekDrawerState.ts、inspector-sync-coordinator.ts、preview-tab-title.ts | ✅ `633c249` |
+| FIX-11 | P1-F：custom-* 域过滤 + 删除事务清理 override + ApiSwitchBridge 状态重置 | inspector-sync-coordinator.ts、api-switch-bridge.ts | ✅ `01c47f7` |
 
 ## 四、验证与提交记录
 
-- 基线：`pnpm test`（109 套件 / 860+ 用例）、`pnpm run typecheck`、`pnpm run build`
-- 提交：见各批次完成后的 git log（本文档随最后批次更新）
+**修复执行记录（2026-11-21）**
 
-（此节由最后一步刷新填写）
+| 验证项 | 基线 | 修复后 |
+|---|---|---|
+| `pnpm test` | 107 文件 / 1043 用例全绿 | 110 文件 / **1086 用例全绿（+43 新增用例）** |
+| `pnpm run typecheck` | 0 错误 | 0 错误 |
+| `pnpm run build` | — | ✅ Vite 产物 + package.zip（22 条目）集市规范校验通过 |
+
+**新增测试文件（7 个，共 43 用例）**
+
+| 测试文件 | 用例数 | 覆盖 |
+|---|---|---|
+| tests/compile-dirty-batch.test.ts | 7 | 多文档批次补跑、事务归属反查、失败保留 lastGoodDoc、卸载清理、监听器对称源码守护 |
+| tests/importer-eof-cycles.test.ts | 9 | src 环/深度上限、未闭合注释/围栏 EOF 出口、闭合回归守护 |
+| tests/list-column-scanner.test.ts（追加） | +4 | 根版式收敛（docAttrs 提供时不重复写 / clover 保持 / 旧行为兼容 / 清空不重复下发） |
+| tests/bridge-handshake-export-guard.test.ts | 7 | detach 保留队列、resetReady 接线、冲刷失败重试、导出 TOCTOU 源码守护、防重入/错误收口 |
+| tests/ast-builder-first-wins.test.ts | 3 | 双图页首个胜出、背景来源区分、容器标题隔离 |
+| tests/presenter-sync-docid.test.ts | 5 | 快照准入过滤、跨文档页码重置、legacy 兼容、REQUEST_SYNC 应答身份 |
+| tests/async-epoch-guard.test.ts | 3 | peekDrawer/previewTabHeader/syncInspectorBlock 乱序代际卫 |
+| tests/override-lifecycle.test.ts | 5 | custom-* 域过滤、键移除收缩、删除事务清除、受管配置重置 |
+
+**提交序列（自旧至新）**
+
+1. `e173f2c` fix(compile): 脏文档集合化防丢更新 + 事务归属反查 + 编译失败保留 lastGoodDoc
+2. `f0ace9a` fix(compiler): 导入解析 EOF 卡死态治理 + src 递归防环 + 根版式写放大收敛
+3. `defe6a4` fix(engine/export): 沙箱桥握手语义修复 + 导出防重入与错误收口 + PDF 打印就绪优先
+4. `2e65ecf` fix(ast): 页面图文/背景版式首个胜出 + 超级块容器标题大纲隔离
+5. `bbdbbf2` fix(sync-ui): 双屏广播协议数据身份过滤 + 切文档页码重置
+6. `633c249` fix(sync): 异步乱序完成代际卫统一收口
+7. `01c47f7` fix(sync-lifecycle): 覆盖层生命周期治理 + ApiSwitchBridge 状态重置
+
+**结论**：P0 全部 8 项、P1 计划内全部 13 项已修复、验证并分步提交；P2 低危打磨项与暂缓项（AI AbortController、image-exporter 固定等待、BC seq 仲裁、currentDocId 多写者收敛等）保留在第二节清单中供后续迭代。
