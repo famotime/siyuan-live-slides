@@ -26,6 +26,8 @@ export class InspectorSyncCoordinator {
   private lockedTargetBlockId = ""
   private lastKnownPageDividerId = ""
   private lastKnownDocId = ""
+  /** 光标联动代际号：多 await 解析期间有更新请求发起时，陈旧完成的回写被丢弃（P1-E3） */
+  private inspectorSyncSeq = 0
 
   /**
    * 判定当前是否处于沙箱反向定位的平滑滚动锁定窗口中（FSM-2 缺陷修复：杜绝沿途 selectionchange 震荡回弹）
@@ -297,6 +299,10 @@ export class InspectorSyncCoordinator {
       return
     }
 
+    // P1-E3：登记本次联动代际，多处 await（内核属性解析）期间若发起新的联动，
+    // 本轮陈旧完成不得覆写右侧配置面板
+    const mySeq = ++this.inspectorSyncSeq
+
     let effectiveEl = blockEl
     let effectiveId = blockId
     let effectiveType = blockType
@@ -468,6 +474,11 @@ export class InspectorSyncCoordinator {
     const hasImgTag = Boolean(effectiveEl.querySelector("img, span[data-type='img']"))
     const textWithoutImg = (effectiveEl.innerText || "").replace(/[\r\n\t\s]+/g, " ").trim()
     const isImage = hasImgTag && textWithoutImg.length <= 50
+
+    // 代际校验：解析期间有更新的联动请求发起，丢弃本轮陈旧结果
+    if (mySeq !== this.inspectorSyncSeq) {
+      return
+    }
 
     updateInspectorCurrentBlock({
       id: effectiveId,

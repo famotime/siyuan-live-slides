@@ -67,12 +67,19 @@ export async function fetchDocumentTitle(host: IPreviewTabTitleHost, docId: stri
 /**
  * 动态更新预览窗口思源 Tab 页签标题
  * Pin 锁定状态下非锁定文档的切换不会修改标题
+ *
+ * P1-E3（状态机审计）：标题解析含异步内核查询，并发调用按"最后发起者胜出"
+ * 收敛——先发起但后完成的陈旧解析不得覆写新标题。
  */
+let headerUpdateSeq = 0
+
 export async function updatePreviewTabHeader(
   host: IPreviewTabTitleHost,
   docTitle?: string,
   targetDocId?: string,
 ): Promise<void> {
+  const mySeq = ++headerUpdateSeq
+
   // 若预览窗口处于 Pin 锁定状态，非锁定文档的切换不应修改 Tab 标题
   const previewInstance = getPreviewTabInstance()
   const isPinned = Boolean(previewInstance?.isPinned?.value)
@@ -87,6 +94,10 @@ export async function updatePreviewTabHeader(
     titleText = typeof host.fetchDocumentTitle === "function"
       ? await host.fetchDocumentTitle(docId)
       : await fetchDocumentTitle(host, docId)
+    // 解析期间有更新的标题请求发起：丢弃本次陈旧结果（最后发起者胜出）
+    if (mySeq !== headerUpdateSeq) {
+      return
+    }
   }
   const tabTitle = buildPreviewTabTitle(titleText)
 

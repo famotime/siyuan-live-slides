@@ -36,6 +36,9 @@ export function usePeekDrawerState(options: IPeekDrawerOptions) {
   const drawerTitle = ref('')
   const hasOpenedWeb = ref(false)
 
+  /** 打开请求代际号：SQL 探测期间有更新请求发起时，先发起请求的陈旧完成不得覆写状态（P1-E2） */
+  let openDrawerSeq = 0
+
   function openDrawer() {
     isDrawerOpen.value = true
     sandboxBridge.freezeKeyboardNav(true)
@@ -47,6 +50,7 @@ export function usePeekDrawerState(options: IPeekDrawerOptions) {
   }
 
   async function handleOpenPeekDrawer(detail: IOpenPeekDrawerDetail) {
+    const mySeq = ++openDrawerSeq
     const settings = getSettings()
     if (detail.peekType === 'siyuan' && settings.enableWebServeJump) {
       // 检测目标是否为文档块（非文档块需要追加 &focus=1 参数）
@@ -61,6 +65,10 @@ export function usePeekDrawerState(options: IPeekDrawerOptions) {
           isDoc = await detectDocBlock(detail.target)
         } catch (err) {
           console.warn('[usePeekDrawerState] detect block type failed:', err)
+        }
+        // 探测期间有更新的打开请求发起：丢弃本次陈旧完成，杜绝先点链接的 SQL 晚返回覆写后点链接
+        if (mySeq !== openDrawerSeq) {
+          return
         }
       }
 
