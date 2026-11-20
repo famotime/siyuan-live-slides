@@ -23,7 +23,7 @@ import {
 import { registerPluginCommands } from "@/plugin/command-registry"
 import type { ISlidesPluginHost } from "@/plugin/command-registry"
 import { ApiSwitchBridge } from "@/plugin/api-switch-bridge"
-import { PreviewWindowManager } from "@/plugin/preview-window-manager"
+import { PreviewWindowManager, TAB_TYPE, PRESENTER_TAB_TYPE } from "@/plugin/preview-window-manager"
 import {
   buildPreviewTabTitle as buildTabTitle,
   fetchDocumentTitle as fetchDocTitle,
@@ -93,8 +93,6 @@ import type { ISlidesGlobalSettings } from "./settings"
 import { createSlidesSettings } from "@/ui/settings/slides-settings"
 
 const DOCK_TYPE = "slides-dock"
-const TAB_TYPE = "slides-preview-tab"
-const PRESENTER_TAB_TYPE = "slides-presenter-tab"
 const STORAGE_NAME = SETTINGS_STORAGE_NAME
 
 export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesPluginHost {
@@ -182,7 +180,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
       },
     })
 
-    // 4.5 注册演讲者控制台页签（内嵌同源 presenter.html，经 BroadcastChannel 与预览沙箱双屏同步）
+    // 4.5 注册演讲者控制台页签（纯 Vue 控制台，经 usePresenterSync BroadcastChannel 与预览沙箱双屏同步）
     this.addTab({
       type: PRESENTER_TAB_TYPE,
       init(custom) {

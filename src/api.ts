@@ -201,20 +201,6 @@ export async function sql(sql: string): Promise<any[]> {
   return request(url, sqldata)
 }
 
-// **************************************** File ****************************************
-
-export async function putFile(path: string, isDir: boolean, file: any) {
-  const form = new FormData()
-  form.append("path", path)
-  form.append("isDir", isDir.toString())
-  // Copyright (c) 2023, terwer.
-  // https://github.com/terwer/siyuan-plugin-importer/blob/v1.4.1/src/api/kernel-api.ts
-  form.append("modTime", Math.floor(Date.now() / 1000).toString())
-  form.append("file", file)
-  const url = "/api/file/putFile"
-  return request(url, form)
-}
-
 // **************************************** Network / Forward Proxy ****************************************
 
 export interface IForwardProxyResponse {
@@ -245,22 +231,6 @@ export async function forwardProxy(
     throw new Error(errorMsg)
   }
   return response.data as IForwardProxyResponse
-}
-
-// **************************************** AI (v3.8+) ****************************************
-
-export async function chatAI(prompt: string): Promise<string | null> {
-  const url = "/api/ai/chatGPT"
-  try {
-    const res = await request(url, { msg: prompt })
-    if (typeof res === "string" && res.trim().length > 0) return res.trim()
-    if (res && typeof (res as any).content === "string" && (res as any).content.trim().length > 0) {
-      return (res as any).content.trim()
-    }
-    return null
-  } catch {
-    return null
-  }
 }
 
 // **************************************** Storage / Inline Styles ****************************************

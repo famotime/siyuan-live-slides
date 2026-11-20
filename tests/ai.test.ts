@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from "vitest"
-import { generateAutoAnimations } from "../src/ai/auto-animator"
 import { analyzeSlideSplits } from "../src/ai/auto-splitter"
 import { generateSpeakerNotes } from "../src/ai/notes-generator"
 import { extractBlockRefs, resolveBlockRefsSync } from "../src/compiler/block-ref-resolver"
@@ -157,18 +156,6 @@ describe("AI Modules (智能断页、动效注入与提词卡)", () => {
     expect(suggestions.find(s => s.blockId === "code1")?.reason).toContain("当前页已达容量上限")
   })
 
-  it("AutoAnimator 应对列表项注入递增步进", () => {
-    const blocks: ISiYuanBlockNode[] = [
-      { id: "i1", type: "i", content: "第一条核心优势" },
-      { id: "i2", type: "i", content: "第二条核心优势" },
-      { id: "i3", type: "i", content: "第三条核心优势" },
-    ]
-
-    const animations = generateAutoAnimations(blocks)
-    expect(animations.length).toBe(3)
-    expect(animations.map(a => a.step)).toEqual(["1", "2", "3"])
-  })
-
   it("NotesGenerator 应从幻灯片块提取大纲并生成口播提词", () => {
     const slide: ISlidesVirtualPage = {
       pageIndex: 1,
@@ -282,30 +269,5 @@ describe("AI Modules (智能断页、动效注入与提词卡)", () => {
     const coverText = extractSlideContentForAi(coverSlide)
     expect(coverText).toContain("大模型演讲全指南")
     expect(coverText).toContain("cover.png")
-  })
-
-  it("chatAI 应向思源内核 /api/ai/chatGPT 传递 msg 参数并正确返回结果", async () => {
-    const siyuanMock = await import("siyuan")
-    const spy = vi.spyOn(siyuanMock, "fetchSyncPost").mockResolvedValueOnce({
-      code: 0,
-      msg: "",
-      data: "思源内核 AI 模型的回答",
-    })
-
-    const { chatAI } = await import("../src/api")
-    const answer = await chatAI("帮我生成演讲提词")
-    expect(spy).toHaveBeenCalledWith("/api/ai/chatGPT", { msg: "帮我生成演讲提词" })
-    expect(answer).toBe("思源内核 AI 模型的回答")
-
-    // 内核未配置 AI 返回空字符串时应处理为 null
-    spy.mockResolvedValueOnce({
-      code: 0,
-      msg: "",
-      data: "",
-    })
-    const emptyAnswer = await chatAI("测试未配置")
-    expect(emptyAnswer).toBeNull()
-
-    spy.mockRestore()
   })
 })

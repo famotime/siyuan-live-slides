@@ -154,7 +154,7 @@ export function unmountInspectorDock(_element?: HTMLElement): void {
   }
 }
 
-// 兼容别名
+// 兼容别名（历史遗留，暂无调用方）
 export const mountDock = mountInspectorDock
 export const unmountDock = unmountInspectorDock
 

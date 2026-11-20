@@ -1,6 +1,6 @@
 # 项目架构与目录结构 (Project Structure)
 
-> 最近刷新：2026-11-20（Phase 5 重构 RF-026 ~ RF-030 完成后，随代码模块解耦同步核对）
+> 最近刷新：2026-11-21（Pro 双模引擎移除后的目录收敛、死代码清理与测试基线刷新）
 
 ## 1. 架构概览
 
@@ -9,7 +9,7 @@
 - **插件入口与命令调度层 (`src/index.ts`, `src/plugin/`)**：轻量生命周期管理，解耦 12+ 项命令注册、Protyle 事件分发与预览页签标题服务。
 - **编译器管线 (`src/compiler/`)**：负责思源块 AST、IAL 自定义属性字典、双向块引用与 Slidev Markdown 规范之间的双向转换与编排。
 - **双向联动与状态同步中枢 (`src/sync/`)**：高内聚协调 Protyle DOM 选区跟踪、前置分页符反查、列表属性自愈、双向毫秒级光标定位与编译消费者门闩（预览页签与 Dock 面板全部不可见时自动暂停编译请求）。
-- **双模渲染引擎 (`src/engine/`)**：封装内置纯前端 Web 沙箱（零依赖开箱即用）与本地 Slidev Pro CLI 桥接引擎。
+- **运行时与沙箱引擎 (`src/engine/`)**：封装跨端 Node/Electron 运行时适配、内置纯前端 Web 沙箱通信桥（零依赖开箱即用）与 v-click 步数调度单一事实源。
 - **导出管线 (`src/export/`)**：模板样式生成器、按功能分节的离线播放器客户端运行时与轻量 Markdown 块级渲染器高度模块化解耦，支持单文件离线 HTML 与 16:9 PDF 演示讲义导出。
 - **视图展示层 (`src/ui/`)**：采用组合式架构，演示配置面板拆解为页面、块、全局三大高内聚子组件；Actions 业务按领域（属性持久化 / 备注与 AI / 版式与元素指令）分层装配；并包含沉浸速览 (peek) 子系统的 Webview / Protyle 双抽屉组件。
 - **通用工具层 (`src/utils/`)**：规范统一导出 Markdown 提取、列表项清洗、类型判定与 peek URL 解析纯函数，杜绝跨子系统深层侵入式依赖。
@@ -67,16 +67,10 @@ d:\MyCodingProjects\siyuan-live-slides
 │   │   ├── dom-attr-sync.ts                # Protyle 编辑器 DOM 自定义属性轻量同步
 │   │   └── debounce-controller.ts          # 输入防抖与频繁触发节流控制器
 │   │
-│   ├── engine/                             # 双模渲染引擎
-│   │   ├── engine-manager.ts               # 双模引擎统一调度中枢（高保真沙箱 vs. 原生 Pro CLI）
-│   │   ├── env-detector.ts                 # 跨平台环境探测器（检测 Node.js 与全局 Slidev CLI）
-│   │   ├── process-manager.ts              # 桌面端 Node 子进程生命周期守护、端口分配与健康探活
-│   │   ├── runtime-node.ts                 # 宿主 Node 运行时探测与桥接
-│   │   ├── workspace-scaffolder.ts         # 官方 Slidev 临时工程脚手架自动编排器
-│   │   ├── native-slides-bridge.ts         # 官方 Slidev 原生通信适配桥接器（基于 ?embedded=true 规范）
+│   ├── engine/                             # 运行时与沙箱引擎
+│   │   ├── runtime-node.ts                 # 跨端 Node.js / Electron 运行时自适应适配器（运行时 require、平台与物理路径解析）
 │   │   ├── web-sandbox-bridge.ts           # 内置 Web 沙箱通信桥接器（postMessage 双向通信）
-│   │   ├── cli-devserver-bridge.ts         # 本地 Slidev CLI 基础开发服务器桥接（默认端口 3030）
-│   │   └── v-click-resolver.ts             # 页面级与块级 v-click 步数聚合计算器
+│   │   └── v-click-resolver.ts             # 页面级与块级 v-click 步数聚合计算器（单一事实源）
 │   │
 │   ├── export/                             # 导出与打印管线
 │   │   ├── markdown-renderer.ts            # [RF-004, RF-012] 通用轻量级 Markdown 块级转 HTML 渲染器门面
@@ -121,13 +115,10 @@ d:\MyCodingProjects\siyuan-live-slides
 │   │   │   ├── usePageMaskControls.ts      # [RF-029] 页面蒙版领域 Composable（时钟/线性形态判定、比例升降级联动）
 │   │   │   ├── usePageColumnRatio.ts       # [RF-029] 页面分栏比例领域 Composable（栏数五来源探测、手工指定、预设矩阵、等分重置）
 │   │   │   ├── column-ratio.ts             # [RF-029] 分栏比例共享解析工具（段数解析 2~6、等分比例生成，块级与页面级复用）
-│   │   │   ├── SlideInspector.vue          # 幻灯片大纲导航微调器
 │   │   │   ├── LayoutPicker.vue            # 布局版式选择器组件
 │   │   │   ├── TransitionSelector.vue      # 转场过渡动效选择器组件
 │   │   │   ├── MotionSelector.vue          # 入场微动效可视化选择器组件（即时试播舞台 + 动效轨迹卡片网格 + 时长延迟参数）
 │   │   │   ├── motion-presets.ts           # 入场微动效（v-motion）预设定义与时长延迟选项
-│   │   │   ├── ElementAnimBar.vue          # 元素级动画快捷操作条
-│   │   │   ├── QuickDividerPopover.vue     # 原生分割线悬浮快捷菜单
 │   │   │   ├── SlidesImportDialog.vue      # [RF-015] Slidev 项目导入对话框（精简聚焦 UI 交互与预检卡片）
 │   │   │   ├── useSlidesImport.ts          # [RF-015] 导入编排 Composable（资产上传、新建文档、属性注入与分屏联动）
 │   │   │   ├── SlidesIcon.vue              # 幻灯片 SVG 图标组件
@@ -147,7 +138,6 @@ d:\MyCodingProjects\siyuan-live-slides
 │   │   │   ├── usePresenterTimer.ts        # [RF-021] FSM-8 绝对时间戳防漂移计时器与时钟逻辑 Composable
 │   │   │   ├── usePresenterSync.ts         # [RF-021] 跨窗口 BroadcastChannel 广播与 WebSandboxBridge 页面同步 Composable
 │   │   │   └── page-jump-input.ts          # 「数字+回车」跳页输入状态机
-│   │   └── popover-manager.ts              # 悬浮弹层与气泡位置计算管理
 │   │
 │   ├── utils/                              # [RF-010] 通用跨域工具函数层
 │   │   ├── index.ts                        # 工具层统一出口门面
@@ -155,8 +145,8 @@ d:\MyCodingProjects\siyuan-live-slides
 │   │   └── peek-url.ts                     # peek 速览 URL 解析、本地 HTML 与代理会话判定
 │   │
 │   ├── ai/                                 # AI 智能演示增强
+│   │   ├── ai-service.ts                   # 思源内核 AI 代理转发与 OpenAI 协议适配
 │   │   ├── auto-splitter.ts                # AI 智能长文档分页切片建议
-│   │   ├── auto-animator.ts                # AI 列表递进与动效智能推断
 │   │   └── notes-generator.ts              # AI 演讲者口播提词卡生成
 │   │
 │   ├── synergy/                            # 外部插件协同
@@ -169,7 +159,7 @@ d:\MyCodingProjects\siyuan-live-slides
 │       ├── api.d.ts                        # 思源内核响应数据类型
 │       └── index.d.ts                      # 全局环境与插件对象类型
 │
-├── tests/                                  # 自动化测试套件 (Vitest, 106 个测试文件，1047 项用例全绿)
+├── tests/                                  # 自动化测试套件 (Vitest, 116 个测试文件，1088 项用例全绿)
 │   ├── mocks/
 │   │   └── siyuan.ts                       # 思源插件宿主环境轻量 Mock（支持纯 Node 离线测试）
 │   ├── __fixtures__/
@@ -198,7 +188,7 @@ d:\MyCodingProjects\siyuan-live-slides
 │   ├── peek-proxy-session.test.ts / peek-local-html.test.ts / immersion-peek.test.ts # peek 速览子系统
 │   ├── export.test.ts / pdf-template-styles.test.ts # 导出管线
 │   ├── compiler*.test.ts / list-*.test.ts / superblock-*.test.ts # 编译器管线
-│   ├── engine.test.ts / process-manager.test.ts / native-slides-bridge.test.ts # 双模引擎
+│   ├── engine.test.ts / runtime-node.test.ts / v-click-resolver.test.ts # 运行时与沙箱引擎
 │   └── ...                                 # 其余 50+ 个专项领域回归测试用例
 │
 ├── package.json                            # 项目配置与 npm scripts

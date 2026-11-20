@@ -120,7 +120,6 @@ export default antfu(
       }],
       'vue/object-property-newline': ['error', {
         allowAllPropertiesOnSameLine: false,
-        allowMultiplePropertiesPerLine: true,
       }],
     },
   },

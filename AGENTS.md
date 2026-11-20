@@ -23,7 +23,7 @@ Stack: Vue 3, TypeScript, Vite, Vitest, Sass, SiYuan Plugin API.
 
 - **Plugin Entry & Commands**: `src/index.ts` & `src/plugin/`
   - `src/index.ts`: Extends `Plugin` from `siyuan`. Manages plugin lifecycle, dock panel, and coordination.
-  - `src/plugin/command-registry.ts`: Centralizes registration and callbacks for 12+ commands and palette actions.
+  - `src/plugin/command-registry.ts`: Centralizes registration and callbacks for 13 commands and palette actions.
   - `src/plugin/api-switch-bridge.ts`: Bridges `siyuan-api-switch` events and status synchronization.
   - `src/plugin/preview-window-manager.ts`: Manages preview tab, presenter window, and 16:9 standalone windows.
   - Delegates document compilation to `src/compiler/document-compiler.ts`.
@@ -37,9 +37,12 @@ Stack: Vue 3, TypeScript, Vite, Vitest, Sass, SiYuan Plugin API.
 - **Sync & Coordination**: `src/sync/`
   - `inspector-sync-coordinator.ts`: Manages Protyle DOM selection probing, preceding divider back-tracing, and list item attribute self-healing.
   - `cursor-tracker.ts`: Synchronizes cursor position with active slide pages.
-- **Dual-mode Engine**: `src/engine/`
-  - `engine-manager.ts`: Toggles between the built-in zero-dependency Web Sandbox and local Slidev CLI DevServer (port 3030).
+- **Runtime & Sandbox Engine**: `src/engine/`
+  - `runtime-node.ts`: Cross-runtime Node.js/Electron adapter (runtime `require`, platform & physical path resolution).
+  - `v-click-resolver.ts`: Single Source of Truth for `v-click` step scheduling plans (Slidev-spec compliant incremental steps).
   - `web-sandbox-bridge.ts`: Handles iframe postMessage IPC with the embedded preview player.
+- **Feature Flags**: `src/feature-flags/feature-flags.ts`
+  - Build-time constants (`FEATURE_FLAGS`) gating command/UI entry points (`presenterMode`, `exportHtml`, `import`, `aiScript`, layouts, animation effects...). Disabled features keep code in bundle but strip entry points.
 - **Export Pipeline**: `src/export/`
   - `markdown-renderer.ts`: Shared lightweight Markdown-to-HTML block renderer facade.
   - `visual-list-renderer.ts`: Renders visual list formats (cards, timelines, steps).
@@ -61,7 +64,7 @@ Stack: Vue 3, TypeScript, Vite, Vitest, Sass, SiYuan Plugin API.
   - `tab/SlidesPresenterTab.vue`: Dual-screen presenter console view with external SCSS and timer/sync composables.
   - `tab/usePresenterTimer.ts` & `tab/usePresenterSync.ts`: FSM-8 drift-proof timer and cross-window BroadcastChannel sync composables.
 - **Testing & Mocks**: `tests/`
-  - 91 test suites (860 tests) covering compiler, cleaner, renderer, inspector state, actions (facade + domain modules), coordinator, engine, export runtime sections & shared styles, import composable, peek, presenter, and synergy.
+  - 116 test suites (~1090 tests) covering compiler, cleaner, renderer, inspector state, actions (facade + domain modules), coordinator, engine, export runtime sections & shared styles, import composable, peek, presenter, and synergy.
   - `tests/mocks/siyuan.ts`: Host plugin mock aliased in `vitest.config.ts` for running tests in pure Node environments.
 
 ---
@@ -69,8 +72,8 @@ Stack: Vue 3, TypeScript, Vite, Vitest, Sass, SiYuan Plugin API.
 ## 4. Coding & Contribution Rules
 
 1. **Commit & Push Constraint**: NEVER run `git commit` or `git push` unless explicitly instructed by the user.
-2. **Testing First**: Before and after modifying compiler, renderer, or state logic, run `npm test` to ensure 0 regressions.
-3. **Build Validation**: Always run `npm run build` after changes to verify that Vite bundle and `package.zip` build cleanly.
+2. **Testing First**: Before and after modifying compiler, renderer, or state logic, run `pnpm test` to ensure 0 regressions.
+3. **Build Validation**: Always run `pnpm run build` after changes to verify that Vite bundle and `package.zip` build cleanly.
 4. **Style**: Use 2-space indentation, semicolons as configured, and Chinese comments for internal business logic.
 
 ## Reference Projects
@@ -83,10 +86,10 @@ Stack: Vue 3, TypeScript, Vite, Vitest, Sass, SiYuan Plugin API.
 | --- | --- | --- |
 | siyuan-note（思源笔记本体项目源码） | `D:\MyCodingProjects\siyuan-note` | `../siyuan` |
 | siyuan-property-manager | `D:\MyCodingProjects\siyuan-property-manager` | — |
-| Slidev | `D:\MyCodingProjects\slidev` | — |
-| Slidev Templates | `D:\MyCodingProjects\slidev-templates` | — |
+| Slidev | `D:\GitHub\slidev` | — |
+| Slidev Templates | `D:\GitHub\slidev-templates` | — |
 
-- `developer_docs/`：思源笔记插件开发者文档。本机已从 `../siyuan-table-master/developer_docs` 复制到仓库根目录，并已列入 `.gitignore`（仅本机参考，不入库、不推送）。
+- `developer_docs/`：思源笔记插件开发者文档。本机为指向 `../siyuan-plugin-template/developer_docs` 的符号链接（仅本机参考，已列入 `.gitignore`，不入库、不推送）。
 - 核对内核行为时以 `../siyuan` 的 Go 源码为准（`kernel/server/serve.go`、`kernel/model/assets.go`），`app/src` 为前端实现参考；developer_docs 未覆盖的细节不要凭猜测推断。
 
 

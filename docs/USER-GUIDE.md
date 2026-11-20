@@ -1,6 +1,6 @@
 # SiYuan Live Slides User Guide
 
-> Last refreshed: 2026-10-26 (aligned with all user-facing capabilities shipped after v0.9.0)
+> Last refreshed: 2026-11-21 (removed the retired Pro Mode section; aligned with v1.5.0 capabilities)
 
 Welcome to **SiYuan Live Slides**, the presentation plugin built specifically for SiYuan Note. It integrates the modern **Slidev** presentation framework into your note-taking workflow with **zero document pollution, modern frontend animations, millisecond bidirectional syncing, and tiered synergy**.
 
@@ -57,13 +57,13 @@ During playback (split preview / fullscreen / exported HTML):
 ### 3.1 Bottom Split Preview Tab (`SlidesPreviewTab`)
 - **Wide viewport** with resizable height;
 - **📌 Pin toggle**: unlocked, the preview follows document switching; pinned, it stays on the target document while you browse other notes;
-- **Full control toolbar**: prev/next, page badge, 📑 outline drawer, 🎤 presenter mode, 📥 single-file HTML export, 🖨️ PDF export, 🔄 refresh, ⛶ fullscreen, plus the Sandbox/Pro engine switch;
+- **Full control toolbar**: prev/next, page badge, 📑 outline drawer, 🎤 presenter mode, 📥 single-file HTML export, 🖨️ PDF export, 🔄 refresh, ⛶ fullscreen;
 - **Immersive Peek**: clicking links inside the playing slide no longer leaves the show (see section 6).
 
 ### 3.2 Right Inspector Dock (`SlidesInspectorDockView`)
 Context switches with your cursor:
 - **Content block selected**: ✨ `v-click` steps, 🎬 entrance motion presets (`slide-up` / `fade-in` / `zoom-in` / `bounce`), ▥ column slots (incl. header columns for `cols-header`), 🔍 Shiki code spotlight (`1-3|5|7-10`), and quick actions (insert dividers, two-cols compare, clear attributes);
-- **Divider (`---`) selected**: layout picker (cover / default / two-cols / **cols-header** / **clover 2×2 quadrant** / image-left / image-right / center / fact / intro / quote), custom column ratios (e.g. `1:2`, with one-click auto-detection from superblock widths), **dynamic page mask** (direction, segmented ratio, solid/blur style, initial state), transition, background, and speaker notes with 🤖 AI generation;
+- **Divider (`---`) selected**: layout picker (cover / default / **cols-header multi-column** / **clover 2×2 quadrant** / **timeline** / image-left / image-right / center / fact / intro / quote), custom column ratios (e.g. `1:2`, with one-click auto-detection from superblock widths), **dynamic page mask** (direction, segmented ratio, solid/blur style, initial state), transition, background, and speaker notes with 🤖 AI generation;
 - **Document root selected**: theme presets, aspect ratio, default transition, **spacing style** (compact/normal/loose), **global heading size normalization**, and global AI quick actions;
 - **Immediate persistence**: changes save to block attributes and re-render the preview instantly.
 
@@ -79,8 +79,8 @@ Context switches with your cursor:
 ## 5. Block References & SiYuan AI
 
 - **Block references** (`((block-id))`) are resolved at compile time via SQL and rendered as inline cards with reference badges;
-- **`Slidev AI: Smart Outline Split`** analyzes long documents and inserts page dividers with suggested layouts;
-- **`Slidev AI: Generate Speaker Notes`** drafts per-page talking points via the SiYuan kernel AI, gracefully falling back to heuristics on failure.
+- **`即现: Smart Outline Split`** analyzes long documents and inserts page dividers with suggested layouts;
+- **`即现 AI: Generate Speaker Notes`** drafts per-page talking points via the SiYuan kernel AI; failures surface a clear error instead of silently falling back.
 
 ---
 
@@ -138,18 +138,7 @@ Import existing Slidev projects into SiYuan:
 
 ---
 
-## 11. Pro Mode: Local Slidev CLI Bridge
+## 11. Synergy with Property Manager
 
-- **Workspace isolation** in the system temp directory avoids kernel lock conflicts; the plugin auto-detects local Node.js and Slidev CLI;
-- **`Slidev Pro: Export standard slides.md`** converts the current document into official Slidev Markdown with all frontmatter, slot directives, and HTML-comment notes;
-- **`Slidev Pro: Sync slides.md to workspace`** writes via kernel API for isolated rendering;
-- **`Slidev Pro: Probe local DevServer (localhost:3030)`** checks the local engine status.
-
-See the [Pro mode setup guide](./思源笔记即现插件%20(siyuan-live-slides)%20Pro%20模式系统配置与用户指南.md) for environment details.
-
----
-
-## 12. Synergy with Property Manager
-
-- **Slidev Synergy: Copy Preset Templates to Clipboard** exports ready-made templates into `siyuan-property-manager`;
-- **Slidev Synergy: Transition Statistics** and **Batch Replace Transitions** audit and batch-migrate presentation attributes across your entire library.
+- **即现协同: Copy Preset Templates to Clipboard** exports ready-made templates into `siyuan-property-manager`;
+- **即现协同: Transition Statistics** and **Batch Replace Transitions** audit and batch-migrate presentation attributes across your entire library.

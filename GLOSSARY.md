@@ -4,14 +4,10 @@
 
 ## 功能开关 (Feature Flag)
 
-构建期确定的、可独立启停的功能粒度。一个功能开关关闭时，该功能的**全部用户入口**（UI 按钮、工具栏图标、菜单项、命令面板命令）在构建产物中一并消失；开启时全部保留。当前共有七个开关：`proMode`、`presenterMode`、`exportHtml`、`exportPdf`、`exportImage`、`import`、`aiScript`。
+构建期确定的、可独立启停的功能粒度。一个功能开关关闭时，该功能的**全部用户入口**（UI 按钮、工具栏图标、菜单项、命令面板命令）在构建产物中一并消失；开启时全部保留。当前共有九个开关：`presenterMode`、`exportHtml`、`exportPdf`、`exportImage`、`import`、`aiScript`、`smartSplit`、`smartAnimation`、`speakerNotesBlocks`（另有 `layouts` 与 `animationEffects` 两组细分开关，见 `src/feature-flags/feature-flags.ts`）。
 
 - **入口 (Entry Point)**：用户可用来触达某功能的任何可见途径——Dock 面板按钮、预览页签工具栏图标、下拉菜单项、顶栏按钮、命令面板命令。判断某 UI 是否属于某功能的入口，以「关闭该开关后用户是否还能从它触达该功能」为准。
-- 开关是**构建期**属性：修改配置需重新构建才生效，不是运行时用户设置。见 ADR-0001。
-
-## Pro 模式 (Pro Mode)
-
-依托本地运行的 Slidev CLI DevServer（localhost:3030）提供官方原生渲染与工程化能力的模式。与沙箱预览相对。`proMode` 开关只影响 Pro 模式自身的入口（预览页签内的引擎切换徽章、三条「即现 Pro」命令），**不影响沙箱预览**。
+- 开关是**构建期**属性：修改配置需重新构建才生效，不是运行时用户设置。
 
 ## 沙箱预览 (Web Sandbox Preview)
 
@@ -31,4 +27,4 @@
 
 ## Headless 导出
 
-后台隐式完成的图片导出路径：不经由可见的预览页签，由导出功能自建隐藏渲染容器逐页截图。它属于「导出图片」功能的实现层，用户感知是导出而非预览，故不受 `proMode` 或预览类入口变化影响。
+后台隐式完成的图片导出路径：不经由可见的预览页签，由导出功能自建隐藏渲染容器逐页截图。它属于「导出图片」功能的实现层，用户感知是导出而非预览，故不受预览类入口变化影响。
