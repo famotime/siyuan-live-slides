@@ -176,46 +176,6 @@
       </div>
     </div>
 
-    <!-- A5. 代码块最大高度限制 (Max Height) -->
-    <div v-if="isCodeBlock" class="spm-card-control">
-      <div class="spm-control-header">
-        <div class="spm-control-title-group">
-          <div
-            class="spm-control-title b3-tooltips b3-tooltips__se"
-            aria-label="超出限高自动竖向滚动，弱提示滚动条"
-          >
-            <SlidesIcon name="code" />
-            <span>代码块限高</span>
-          </div>
-        </div>
-      </div>
-      <div class="spm-quick-chips">
-        <button
-          v-for="h in ['240px', '320px', '400px', '50%']"
-          :key="h"
-          class="spm-chip"
-          :class="{ active: elemMaxHeight === h || (h === '50%' && (elemMaxHeight === '50vh' || elemMaxHeight === '50%')) }"
-          @click="$emit('update:elemMaxHeight', h)"
-        >
-          {{ h }}
-        </button>
-        <button
-          v-if="elemMaxHeight"
-          class="spm-chip spm-chip-clear"
-          @click="$emit('update:elemMaxHeight', '')"
-        >
-          自适应
-        </button>
-      </div>
-      <input
-        :value="elemMaxHeight"
-        class="spm-input"
-        placeholder="自适应高度，或输入 350px、50%"
-        @input="$emit('update:elemMaxHeight', ($event.target as HTMLInputElement).value)"
-        @change="$emit('update:elemMaxHeight', ($event.target as HTMLInputElement).value)"
-      />
-    </div>
-
     <!-- 分区 B：元素动效 -->
     <div class="spm-section-header" :style="hasLayoutControls ? 'margin-top: 6px;' : ''">
       <span>元素动效</span>
@@ -571,7 +531,47 @@
       </template>
     </div>
 
-    <!-- 3. 代码逐行聚光高亮 (仅代码块激活时可见) -->
+    <!-- 3. 代码块最大高度限制 (Max Height，仅代码块激活时可见) -->
+    <div v-if="isCodeBlock" class="spm-card-control">
+      <div class="spm-control-header">
+        <div class="spm-control-title-group">
+          <div
+            class="spm-control-title b3-tooltips b3-tooltips__se"
+            aria-label="超出限高自动竖向滚动，弱提示滚动条"
+          >
+            <SlidesIcon name="code" />
+            <span>代码块限高</span>
+          </div>
+        </div>
+      </div>
+      <div class="spm-quick-chips">
+        <button
+          v-for="h in ['240px', '320px', '400px', '50%']"
+          :key="h"
+          class="spm-chip"
+          :class="{ active: elemMaxHeight === h || (h === '50%' && (elemMaxHeight === '50vh' || elemMaxHeight === '50%')) }"
+          @click="$emit('update:elemMaxHeight', h)"
+        >
+          {{ h }}
+        </button>
+        <button
+          v-if="elemMaxHeight"
+          class="spm-chip spm-chip-clear"
+          @click="$emit('update:elemMaxHeight', '')"
+        >
+          自适应
+        </button>
+      </div>
+      <input
+        :value="elemMaxHeight"
+        class="spm-input"
+        placeholder="自适应高度，或输入 350px、50%"
+        @input="$emit('update:elemMaxHeight', ($event.target as HTMLInputElement).value)"
+        @change="$emit('update:elemMaxHeight', ($event.target as HTMLInputElement).value)"
+      />
+    </div>
+
+    <!-- 4. 代码逐行聚光高亮 (仅代码块激活时可见) -->
     <div v-if="isCodeBlock" class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">

@@ -61,18 +61,18 @@ describe("useBlockSlotSection (块级多栏插槽领域解耦)", () => {
   })
 
   describe("hasLayoutControls (排版控制显隐)", () => {
-    it("多栏版式 / 已有插槽 / 超级块 / 图片 / 视频 / 代码块任一命中即显示", () => {
+    it("多栏版式 / 已有插槽 / 超级块 / 图片 / 视频任一命中即显示", () => {
       expect(createSlotHarness({ currentSlideLayout: "two-cols" }).hasLayoutControls.value).toBe(true)
       expect(createSlotHarness({ elemSlot: "col-1" }).hasLayoutControls.value).toBe(true)
       expect(createSlotHarness({ isSuperBlock: true }).hasLayoutControls.value).toBe(true)
       expect(createSlotHarness({ detectedSbInfo: { hasSuperBlock: true, colCount: 2, ratio: "1:1", isCustomWidth: false, recommendedLayout: "cols-header" } }).hasLayoutControls.value).toBe(true)
       expect(createSlotHarness({ isImage: true }).hasLayoutControls.value).toBe(true)
       expect(createSlotHarness({ isVideo: true }).hasLayoutControls.value).toBe(true)
-      expect(createSlotHarness({ isCodeBlock: true }).hasLayoutControls.value).toBe(true)
     })
 
-    it("纯文本块且无任何排版上下文应隐藏", () => {
+    it("纯文本块或无排版上下文的代码块应隐藏", () => {
       expect(createSlotHarness({}).hasLayoutControls.value).toBe(false)
+      expect(createSlotHarness({ isCodeBlock: true }).hasLayoutControls.value).toBe(false)
     })
   })
 

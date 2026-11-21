@@ -54,8 +54,7 @@ export function useBlockSlotSection(source: IBlockSlotSource) {
       Boolean(source.detectedSbInfo()?.hasSuperBlock) ||
       Boolean(source.isImage()) ||
       Boolean(source.imageRole()) ||
-      Boolean(source.isVideo()) ||
-      Boolean(source.isCodeBlock())
+      Boolean(source.isVideo())
   })
 
   const detectedColumnsCount = computed(() => {
