@@ -2,6 +2,7 @@ import { describe, expect, it, beforeEach, afterEach, vi } from "vitest"
 import { reactive } from "vue"
 import { useBlockMotionSection } from "../src/ui/components/useBlockMotionSection"
 import { MOTION_PRESETS } from "../src/ui/components/motion-presets"
+import { FEATURE_FLAGS } from "../src/feature-flags/feature-flags"
 
 /**
  * useBlockMotionSection 领域测试
@@ -291,6 +292,93 @@ describe("useBlockMotionSection (块级动效领域解耦)", () => {
       expect(entrance.section.activeTabTitle.value).toBe("入场微动效")
       entrance.section.switchAnimTab("emphasis")
       expect(entrance.section.activeTabTitle.value).toBe("持续强调动效")
+    })
+  })
+
+  describe("Feature Flags 细粒度控制 (全部关闭与部分关闭 tab 显示逻辑)", () => {
+    const origConfig = JSON.parse(JSON.stringify(FEATURE_FLAGS.elementAnimations))
+
+    afterEach(() => {
+      FEATURE_FLAGS.elementAnimations = JSON.parse(JSON.stringify(origConfig))
+    })
+
+    it("1. 默认全部开启时：availableAnimTabs 包含 3 项且 showTabSwitch 为 true (显示 tab 切换栏)", () => {
+      const { section } = createHarness()
+      expect(section.availableAnimTabs.value).toEqual(["entrance", "emphasis", "text"])
+      expect(section.showTabSwitch.value).toBe(true)
+      expect(section.hasAnyMotionFeatureEnabled.value).toBe(true)
+      expect(section.isEntranceEnabled.value).toBe(true)
+      expect(section.hasEmphasisEffects.value).toBe(true)
+      expect(section.hasTextEffects.value).toBe(true)
+    })
+
+    it("2. 部分关闭 (开启 2 项)：showTabSwitch 仍为 true，tab 仅包含开启项", () => {
+      FEATURE_FLAGS.elementAnimations.emphasis.enabled = false
+      const { section } = createHarness()
+      expect(section.availableAnimTabs.value).toEqual(["entrance", "text"])
+      expect(section.showTabSwitch.value).toBe(true)
+      expect(section.isEntranceEnabled.value).toBe(true)
+      expect(section.hasEmphasisEffects.value).toBe(false)
+      expect(section.hasTextEffects.value).toBe(true)
+
+      // 切换已被关闭的 tab 应被拦截
+      section.switchAnimTab("emphasis")
+      expect(section.activeAnimTab.value).not.toBe("emphasis")
+    })
+
+    it("3. 部分关闭 (仅开启 1 项)：showTabSwitch 为 false (不显示 tab 切换栏)，直接生效该分类", () => {
+      // 场景 A：仅保留入场过渡
+      FEATURE_FLAGS.elementAnimations.entrance.enabled = true
+      FEATURE_FLAGS.elementAnimations.emphasis.enabled = false
+      FEATURE_FLAGS.elementAnimations.text.enabled = false
+
+      const harnessEntrance = createHarness()
+      expect(harnessEntrance.section.availableAnimTabs.value).toEqual(["entrance"])
+      expect(harnessEntrance.section.showTabSwitch.value).toBe(false) // 不显示 tab
+      expect(harnessEntrance.section.activeAnimTab.value).toBe("entrance")
+
+      // 场景 B：仅保留持续强调
+      FEATURE_FLAGS.elementAnimations.entrance.enabled = false
+      FEATURE_FLAGS.elementAnimations.emphasis.enabled = true
+      FEATURE_FLAGS.elementAnimations.text.enabled = false
+
+      const harnessEmphasis = createHarness()
+      expect(harnessEmphasis.section.availableAnimTabs.value).toEqual(["emphasis"])
+      expect(harnessEmphasis.section.showTabSwitch.value).toBe(false) // 不显示 tab
+      expect(harnessEmphasis.section.activeAnimTab.value).toBe("emphasis")
+
+      // 场景 C：仅保留文本动效
+      FEATURE_FLAGS.elementAnimations.entrance.enabled = false
+      FEATURE_FLAGS.elementAnimations.emphasis.enabled = false
+      FEATURE_FLAGS.elementAnimations.text.enabled = true
+
+      const harnessText = createHarness()
+      expect(harnessText.section.availableAnimTabs.value).toEqual(["text"])
+      expect(harnessText.section.showTabSwitch.value).toBe(false) // 不显示 tab
+      expect(harnessText.section.activeAnimTab.value).toBe("text")
+    })
+
+    it("4. 全部关闭 (3 项均关闭)：showTabSwitch 为 false (不显示 tab)，hasAnyMotionFeatureEnabled 为 false", () => {
+      FEATURE_FLAGS.elementAnimations.entrance.enabled = false
+      FEATURE_FLAGS.elementAnimations.emphasis.enabled = false
+      FEATURE_FLAGS.elementAnimations.text.enabled = false
+
+      const { section } = createHarness()
+      expect(section.availableAnimTabs.value).toEqual([])
+      expect(section.showTabSwitch.value).toBe(false) // 不显示 tab
+      expect(section.hasAnyMotionFeatureEnabled.value).toBe(false)
+    })
+
+    it("5. toggleAllMotion 在入场过渡关闭但持续强调开启时，应默认激活持续强调", () => {
+      FEATURE_FLAGS.elementAnimations.entrance.enabled = false
+      FEATURE_FLAGS.elementAnimations.emphasis.enabled = true
+      FEATURE_FLAGS.elementAnimations.text.enabled = false
+
+      const { section, emitted } = createHarness()
+      section.toggleAllMotion()
+      const animCall = emitted.find(e => e.event === "update:elemAnim")
+      expect(animCall).toBeDefined()
+      expect(animCall!.args[0]).toBe("pulse")
     })
   })
 })

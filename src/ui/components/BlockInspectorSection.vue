@@ -269,7 +269,7 @@
     </div>
 
     <!-- 2. 动效与视觉强调 (Motion & Visual Emphasis) -->
-    <div class="spm-card-control">
+    <div v-if="hasAnyMotionFeatureEnabled" class="spm-card-control">
       <div class="spm-control-header">
         <div class="spm-control-title-group">
           <div
@@ -312,7 +312,7 @@
           <div class="spm-motion-stage-viewport">
             <!-- A. 入场过渡舞台 -->
             <div
-              v-if="activeAnimTab === 'entrance'"
+              v-if="activeAnimTab === 'entrance' && isEntranceEnabled"
               :key="'ent-' + stagePlayKey"
               class="spm-motion-stage-sample"
               :class="['stage-motion-' + currentPreset]"
@@ -328,7 +328,7 @@
 
             <!-- B. 持续强调舞台 (Pulse, Float, Shimmer) -->
             <div
-              v-else-if="activeAnimTab === 'emphasis'"
+              v-else-if="activeAnimTab === 'emphasis' && hasEmphasisEffects"
               :key="'emp-' + stagePlayKey"
               class="spm-motion-stage-sample"
               :class="['stage-emphasis-' + (currentAnimType || 'pulse')]"
@@ -344,7 +344,7 @@
 
             <!-- C. 文本动效舞台 (CountUp, Typewriter) -->
             <div
-              v-else-if="activeAnimTab === 'text'"
+              v-else-if="activeAnimTab === 'text' && hasTextEffects"
               :key="'txt-' + stagePlayKey"
               class="spm-stage-text-viewport"
             >
@@ -364,9 +364,10 @@
           </div>
         </div>
 
-        <!-- 2. Tab 切换 (入场 / 强调 / 文本) - 受 feature flag 控制 -->
-        <div v-if="isAdvAnimEnabled" class="spm-segmented-group" style="margin-bottom: 8px;">
+        <!-- 2. Tab 切换 (入场 / 强调 / 文本) - 仅在有多个可用动效分类时显示 -->
+        <div v-if="showTabSwitch" class="spm-segmented-group" style="margin-bottom: 8px;">
           <button
+            v-if="isEntranceEnabled"
             class="spm-segmented-item"
             :class="{ active: activeAnimTab === 'entrance' }"
             @click="switchAnimTab('entrance')"
@@ -392,7 +393,7 @@
         </div>
 
         <!-- 1. 入场过渡 (Entrance) -->
-        <div v-if="activeAnimTab === 'entrance'" class="spm-tab-panel-fade">
+        <div v-if="activeAnimTab === 'entrance' && isEntranceEnabled" class="spm-tab-panel-fade">
           <MotionSelector
             :model-value="currentPreset"
             :duration="currentDuration"
@@ -404,7 +405,7 @@
         </div>
 
         <!-- 2. 持续强调 (Emphasis: Pulse, Float, Shimmer) -->
-        <div v-else-if="activeAnimTab === 'emphasis'" class="spm-emphasis-panel spm-tab-panel-fade">
+        <div v-else-if="activeAnimTab === 'emphasis' && hasEmphasisEffects" class="spm-emphasis-panel spm-tab-panel-fade">
           <!-- 可视化微动效网格 (Visual Motion Grid 3列等宽) -->
           <div class="spm-motion-grid spm-motion-grid--cols-3">
             <div
@@ -441,7 +442,7 @@
         </div>
 
         <!-- 3. 文本动效 (Text: CountUp, Typewriter) -->
-        <div v-else-if="activeAnimTab === 'text'" class="spm-text-anim-panel spm-tab-panel-fade">
+        <div v-else-if="activeAnimTab === 'text' && hasTextEffects" class="spm-text-anim-panel spm-tab-panel-fade">
           <!-- 可视化微动效网格 (Visual Motion Grid 2列等宽) -->
           <div class="spm-motion-grid spm-motion-grid--cols-2" style="margin-bottom: 8px;">
             <div
@@ -772,9 +773,12 @@ const {
   currentPreset,
   currentDuration,
   currentDelay,
+  isEntranceEnabled,
   isAdvAnimEnabled,
   hasEmphasisEffects,
   hasTextEffects,
+  hasAnyMotionFeatureEnabled,
+  showTabSwitch,
   isEffectEnabled,
   currentAnimType,
   currentAnimDuration,

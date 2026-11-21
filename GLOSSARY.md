@@ -4,7 +4,7 @@
 
 ## 功能开关 (Feature Flag)
 
-构建期确定的、可独立启停的功能粒度。一个功能开关关闭时，该功能的**全部用户入口**（UI 按钮、工具栏图标、菜单项、命令面板命令）在构建产物中一并消失；开启时全部保留。当前共有九个开关：`presenterMode`、`exportHtml`、`exportPdf`、`exportImage`、`import`、`aiScript`、`smartSplit`、`smartAnimation`、`speakerNotesBlocks`（另有 `layouts` 与 `animationEffects` 两组细分开关，见 `src/feature-flags/feature-flags.ts`）。
+构建期确定的、可独立启停的功能粒度。一个功能开关关闭时，该功能的**全部用户入口**（UI 按钮、工具栏图标、菜单项、命令面板命令）在构建产物中一并消失；开启时全部保留。当前共有九个开关：`presenterMode`、`exportHtml`、`exportPdf`、`exportImage`、`import`、`aiScript`、`smartSplit`、`smartAnimation`、`speakerNotesBlocks`（另有 `layouts` 与 `elementAnimations`（含 `entrance`、`emphasis`、`text` 三大分类及其具体动效预设）两组细分开关，见 `src/feature-flags/feature-flags.ts`）。
 
 - **入口 (Entry Point)**：用户可用来触达某功能的任何可见途径——Dock 面板按钮、预览页签工具栏图标、下拉菜单项、顶栏按钮、命令面板命令。判断某 UI 是否属于某功能的入口，以「关闭该开关后用户是否还能从它触达该功能」为准。
 - 开关是**构建期**属性：修改配置需重新构建才生效，不是运行时用户设置。

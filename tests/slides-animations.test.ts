@@ -157,10 +157,10 @@ describe("Slides Animations (微动效与强调体系)", () => {
   })
 
   describe("5. Feature Flag 拦截行为", () => {
-    it("当 isAnimationEnabled 关闭时，scope-mapper 不解析 anim 属性", () => {
-      const originalFlag = FEATURE_FLAGS.advancedAnimations
+    it("当文本动效分类关闭时，scope-mapper 不解析 anim 文本动效属性", () => {
+      const originalFlag = FEATURE_FLAGS.elementAnimations.text.enabled
       try {
-        FEATURE_FLAGS.advancedAnimations = false
+        FEATURE_FLAGS.elementAnimations.text.enabled = false
         const attrs = {
           [ATTR_ELEM_ANIM]: "countup",
           [ATTR_ELEM_ANIM_PROPS]: JSON.stringify({ to: 88 }),
@@ -168,14 +168,14 @@ describe("Slides Animations (微动效与强调体系)", () => {
         const res = parseElementAttrs(attrs)
         expect(res.anim).toBeUndefined()
       } finally {
-        FEATURE_FLAGS.advancedAnimations = originalFlag
+        FEATURE_FLAGS.elementAnimations.text.enabled = originalFlag
       }
     })
 
-    it("当特定动效被关闭时，仅该动效被忽略，其余正常解析", () => {
-      const origPulse = FEATURE_FLAGS.animationEffects.pulse
+    it("当特定微动效预设被关闭时，仅该动效被忽略，其余正常解析", () => {
+      const origPulse = FEATURE_FLAGS.elementAnimations.emphasis.effects.pulse
       try {
-        FEATURE_FLAGS.animationEffects.pulse = false
+        FEATURE_FLAGS.elementAnimations.emphasis.effects.pulse = false
         const resPulse = parseElementAttrs({ [ATTR_ELEM_ANIM]: "pulse" })
         expect(resPulse.anim).toBeUndefined()
 
@@ -183,7 +183,7 @@ describe("Slides Animations (微动效与强调体系)", () => {
         expect(resFloat.anim).toBeDefined()
         expect(resFloat.anim?.type).toBe("float")
       } finally {
-        FEATURE_FLAGS.animationEffects.pulse = origPulse
+        FEATURE_FLAGS.elementAnimations.emphasis.effects.pulse = origPulse
       }
     })
   })

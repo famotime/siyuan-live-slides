@@ -39,6 +39,10 @@
  *                   + 命令 slidesIdentifyNotes
  *   'layouts'     — 页面版式细粒度开关：控制 LayoutPicker 中具体版式（双栏、四叶草、图文、封面等）
  *                   是否显示。default（标准版式）始终兜底保留。
+ *   'elementAnimations' — 元素动效细粒度分类开关：包含入场过渡 (entrance)、持续强调 (emphasis)
+ *                   与文本动效 (text) 三大体系。每个分类支持独立启停（enabled: boolean），
+ *                   且其下具体微动效预设支持细粒度独立开关（effects: { ... }）。
+ *                   支持全部关闭（不渲染动效入口、不显示 tab）、部分关闭（仅剩 1 个分类启用时自动隐藏 tab 切换栏）。
  *
  * 永远保留、不受任何开关影响：沙箱预览全链路（顶栏「即现」、预览页签、
  * Dock 分屏预览按钮、独立窗口放映、slidesPresentation 命令）、headless 图片
@@ -75,15 +79,44 @@ export type LayoutKey =
 
 export type LayoutFlagConfig = Record<LayoutKey, boolean>;
 
-/** 可独立开关的高级微动效 key */
-export type AnimationEffectKey =
-  | 'countup'
-  | 'typewriter'
+/** 元素动效三大分类 key */
+export type ElementAnimationCategoryKey = 'entrance' | 'emphasis' | 'text';
+
+/** 入场过渡具体动效 key */
+export type EntranceEffectKey =
+  | 'slide-up'
+  | 'fade-in'
+  | 'slide-down'
+  | 'slide-left'
+  | 'slide-right'
+  | 'zoom-in'
+  | 'bounce';
+
+/** 持续强调具体微动效 key */
+export type EmphasisEffectKey =
   | 'pulse'
   | 'float'
   | 'shimmer';
 
-export type AnimationEffectFlagConfig = Record<AnimationEffectKey, boolean>;
+/** 文本微动效具体动效 key */
+export type TextEffectKey =
+  | 'countup'
+  | 'typewriter';
+
+export type EntranceEffectFlagConfig = Record<EntranceEffectKey, boolean>;
+export type EmphasisEffectFlagConfig = Record<EmphasisEffectKey, boolean>;
+export type TextEffectFlagConfig = Record<TextEffectKey, boolean>;
+
+export interface ElementAnimationCategoryConfig<T extends Record<string, boolean>> {
+  enabled: boolean;
+  effects: T;
+}
+
+export interface ElementAnimationFlagConfig {
+  entrance: ElementAnimationCategoryConfig<EntranceEffectFlagConfig>;
+  emphasis: ElementAnimationCategoryConfig<EmphasisEffectFlagConfig>;
+  text: ElementAnimationCategoryConfig<TextEffectFlagConfig>;
+}
 
 export interface FeatureFlagConfig {
   presenterMode: boolean;
@@ -96,8 +129,7 @@ export interface FeatureFlagConfig {
   smartAnimation: boolean;
   speakerNotesBlocks: boolean;
   layouts: LayoutFlagConfig;
-  advancedAnimations: boolean;
-  animationEffects: AnimationEffectFlagConfig;
+  elementAnimations: ElementAnimationFlagConfig;
 }
 
 // ── 编辑此对象来控制功能可见性 ──
@@ -106,7 +138,7 @@ export const FEATURE_FLAGS: FeatureFlagConfig = {
   presenterMode: true,
   exportHtml: false,
   exportPdf: false,
-  exportImage: false,
+  exportImage: true,
   import: true,
   aiScript: true,
   smartSplit: true,
@@ -125,17 +157,62 @@ export const FEATURE_FLAGS: FeatureFlagConfig = {
     'intro': true,
     'center': true,
   },
-  advancedAnimations: true,
-  animationEffects: {
-    countup: true,
-    typewriter: true,
-    pulse: true,
-    float: true,
-    shimmer: true,
+  elementAnimations: {
+    entrance: {
+      enabled: true,
+      effects: {
+        'slide-up': true,
+        'fade-in': true,
+        'slide-down': true,
+        'slide-left': true,
+        'slide-right': true,
+        'zoom-in': true,
+        'bounce': true,
+      },
+    },
+    emphasis: {
+      enabled: false,
+      effects: {
+        pulse: true,
+        float: true,
+        shimmer: true,
+      },
+    },
+    text: {
+      enabled: false,
+      effects: {
+        countup: true,
+        typewriter: true,
+      },
+    },
   },
 };
 
 // ── 工具函数 ──
+
+/** 入场过渡分类包含的具体微动效列表 */
+export const ENTRANCE_EFFECT_KEYS: EntranceEffectKey[] = [
+  'slide-up',
+  'fade-in',
+  'slide-down',
+  'slide-left',
+  'slide-right',
+  'zoom-in',
+  'bounce',
+];
+
+/** 持续强调分类包含的具体微动效列表 */
+export const EMPHASIS_EFFECT_KEYS: EmphasisEffectKey[] = [
+  'pulse',
+  'float',
+  'shimmer',
+];
+
+/** 文本动效分类包含的具体微动效列表 */
+export const TEXT_EFFECT_KEYS: TextEffectKey[] = [
+  'countup',
+  'typewriter',
+];
 
 /** 功能是否已被构建期配置关闭（入口不渲染、命令不注册） */
 export function isFeatureDisabled(key: FeatureKey): boolean {
@@ -156,14 +233,73 @@ export function isLayoutEnabled(layoutName: string): boolean {
   return flag !== false;
 }
 
-/** 高级微动效是否启用（总开关 + 具体动效细粒度开关） */
-export function isAnimationEnabled(effect?: AnimationEffectKey | string): boolean {
-  if (FEATURE_FLAGS.advancedAnimations === false) {
+/**
+ * 元素动效分类是否启用（入场过渡 entrance、持续强调 emphasis、文本动效 text）
+ * 分类总开关 enabled 为 false 或分类下的具体动效全部为 false 时，判定为未启用
+ */
+export function isElementAnimationEnabled(category: ElementAnimationCategoryKey | string): boolean {
+  const cat = FEATURE_FLAGS.elementAnimations?.[category as ElementAnimationCategoryKey];
+  if (!cat || cat.enabled === false) {
     return false;
   }
-  if (!effect) {
-    return true;
+
+  // 若分类下的子动效在 effects 中全部被显式关闭，则该分类视为关闭
+  const effects = cat.effects;
+  if (effects && typeof effects === 'object') {
+    const hasAnyActiveEffect = Object.values(effects).some(v => v !== false);
+    return hasAnyActiveEffect;
   }
-  const flag = FEATURE_FLAGS.animationEffects?.[effect as AnimationEffectKey];
-  return flag !== false;
+
+  return true;
+}
+
+/** 是否有任意元素动效分类开启 */
+export function isAnyElementAnimationEnabled(): boolean {
+  return (
+    isElementAnimationEnabled('entrance') ||
+    isElementAnimationEnabled('emphasis') ||
+    isElementAnimationEnabled('text')
+  );
+}
+
+/**
+ * 检查具体动效预设是否启用，支持三大分类下的所有效果：
+ * 1. entrance (slide-up, fade-in, ...)
+ * 2. emphasis (pulse, float, shimmer)
+ * 3. text (countup, typewriter)
+ * 未传参数时，判定是否有任意非入场动效（持续强调或文本动效）启用
+ */
+export function isAnimationEnabled(effect?: string): boolean {
+  if (!effect) {
+    return isElementAnimationEnabled('emphasis') || isElementAnimationEnabled('text');
+  }
+
+  const name = effect.trim().toLowerCase();
+
+  // 1. 检查持续强调类具体动效
+  if (EMPHASIS_EFFECT_KEYS.includes(name as EmphasisEffectKey)) {
+    if (!isElementAnimationEnabled('emphasis')) {
+      return false;
+    }
+    return FEATURE_FLAGS.elementAnimations.emphasis.effects[name as EmphasisEffectKey] !== false;
+  }
+
+  // 2. 检查文本类具体动效
+  if (TEXT_EFFECT_KEYS.includes(name as TextEffectKey)) {
+    if (!isElementAnimationEnabled('text')) {
+      return false;
+    }
+    return FEATURE_FLAGS.elementAnimations.text.effects[name as TextEffectKey] !== false;
+  }
+
+  // 3. 检查入场类具体动效
+  if (ENTRANCE_EFFECT_KEYS.includes(name as EntranceEffectKey)) {
+    if (!isElementAnimationEnabled('entrance')) {
+      return false;
+    }
+    return FEATURE_FLAGS.elementAnimations.entrance.effects[name as EntranceEffectKey] !== false;
+  }
+
+  // 未知动效容错保留
+  return true;
 }

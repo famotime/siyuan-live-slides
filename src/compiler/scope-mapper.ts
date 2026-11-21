@@ -41,7 +41,7 @@ import {
   ATTR_PAGE_SLIDE,
   ATTR_PAGE_TRANSITION,
 } from "../types/slides-protocol"
-import { isAnimationEnabled } from "../feature-flags/feature-flags"
+import { isAnimationEnabled, isElementAnimationEnabled } from "../feature-flags/feature-flags"
 
 import { getRuntimeSettings } from "../settings"
 
@@ -284,7 +284,7 @@ export function parseElementAttrs(
     result.clicks = clickAttr.trim()
   }
 
-  if (attrs[ATTR_ELEM_MOTION]) {
+  if (attrs[ATTR_ELEM_MOTION] && isElementAnimationEnabled("entrance")) {
     try {
       const parsed = JSON.parse(attrs[ATTR_ELEM_MOTION])
       if (typeof parsed === "object" && parsed !== null) {

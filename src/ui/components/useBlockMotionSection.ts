@@ -10,7 +10,7 @@
  */
 
 import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import { isAnimationEnabled } from '@/feature-flags/feature-flags'
+import { isAnimationEnabled, isElementAnimationEnabled, isAnyElementAnimationEnabled } from '@/feature-flags/feature-flags'
 import { MOTION_PRESETS, EMPHASIS_PRESETS } from '@/ui/components/motion-presets'
 
 export type TAnimTab = 'entrance' | 'emphasis' | 'text'
@@ -37,9 +37,9 @@ export interface IParsedMotion {
 }
 
 export function useBlockMotionSection(source: IBlockMotionSource, emit: IBlockMotionEmitter) {
-  // ── 入场预设选项：派生自 motion-presets 单一来源 ──
+  // ── 入场预设选项：派生自 motion-presets 单一来源并受 Feature Flags 细粒度过滤 ──
   const motionPresetOptions = computed(() =>
-    MOTION_PRESETS.map(p => ({ label: p.label, value: p.name })),
+    MOTION_PRESETS.filter(p => isAnimationEnabled(p.name)).map(p => ({ label: p.label, value: p.name })),
   )
 
   // ── 入场动效解析 ──
@@ -81,9 +81,24 @@ export function useBlockMotionSection(source: IBlockMotionSource, emit: IBlockMo
   )
 
   // ── Feature Flags 状态检测 ──
-  const isAdvAnimEnabled = computed(() => isAnimationEnabled())
-  const hasEmphasisEffects = computed(() => isAnimationEnabled('pulse') || isAnimationEnabled('float') || isAnimationEnabled('shimmer'))
-  const hasTextEffects = computed(() => isAnimationEnabled('countup') || isAnimationEnabled('typewriter'))
+  const isEntranceEnabled = computed(() => isElementAnimationEnabled('entrance'))
+  const hasEmphasisEffects = computed(() => isElementAnimationEnabled('emphasis'))
+  const hasTextEffects = computed(() => isElementAnimationEnabled('text'))
+  const hasAnyMotionFeatureEnabled = computed(() => isAnyElementAnimationEnabled())
+
+  // 可用 Tab 清单
+  const availableAnimTabs = computed<TAnimTab[]>(() => {
+    const tabs: TAnimTab[] = []
+    if (isEntranceEnabled.value) tabs.push('entrance')
+    if (hasEmphasisEffects.value) tabs.push('emphasis')
+    if (hasTextEffects.value) tabs.push('text')
+    return tabs
+  })
+
+  // 是否展示 Tab 切换栏（仅在可用 Tab > 1 时展示，<=1 时自动隐藏 tab 切换栏）
+  const showTabSwitch = computed(() => availableAnimTabs.value.length > 1)
+  const isAdvAnimEnabled = computed(() => showTabSwitch.value)
+
   function isEffectEnabled(effect: string) {
     return isAnimationEnabled(effect)
   }
@@ -109,19 +124,26 @@ export function useBlockMotionSection(source: IBlockMotionSource, emit: IBlockMo
   })
 
   // ── Tab 状态：根据当前生效的属性初始化/自适应 Tab ──
-  const activeAnimTab = ref<TAnimTab>('entrance')
+  const activeAnimTab = ref<TAnimTab>(availableAnimTabs.value[0] || 'entrance')
 
   watch(
-    [() => source.elemMotion(), () => source.elemAnim()],
-    ([motion, anim]) => {
+    [() => source.elemMotion(), () => source.elemAnim(), () => availableAnimTabs.value],
+    ([motion, anim, tabs]) => {
+      let targetTab: TAnimTab | null = null
       if (anim) {
-        if (['pulse', 'float', 'shimmer'].includes(anim)) {
-          activeAnimTab.value = 'emphasis'
-        } else if (['countup', 'typewriter'].includes(anim)) {
-          activeAnimTab.value = 'text'
+        if (['pulse', 'float', 'shimmer'].includes(anim) && hasEmphasisEffects.value) {
+          targetTab = 'emphasis'
+        } else if (['countup', 'typewriter'].includes(anim) && hasTextEffects.value) {
+          targetTab = 'text'
         }
-      } else if (motion) {
-        activeAnimTab.value = 'entrance'
+      } else if (motion && isEntranceEnabled.value) {
+        targetTab = 'entrance'
+      }
+
+      if (targetTab && tabs.includes(targetTab)) {
+        activeAnimTab.value = targetTab
+      } else if (tabs.length > 0 && !tabs.includes(activeAnimTab.value)) {
+        activeAnimTab.value = tabs[0]
       }
     },
     { immediate: true },
@@ -134,14 +156,18 @@ export function useBlockMotionSection(source: IBlockMotionSource, emit: IBlockMo
       emit('update:elemMotion', '')
       emit('update:elemAnim', '')
     } else {
-      // 默认开启当前选中的 Tab
-      if (activeAnimTab.value === 'emphasis') {
+      // 默认开启当前选中的 Tab（若不可用则回退到首个可用 Tab）
+      const tabToActivate = availableAnimTabs.value.includes(activeAnimTab.value)
+        ? activeAnimTab.value
+        : (availableAnimTabs.value[0] || 'entrance')
+
+      if (tabToActivate === 'emphasis' && hasEmphasisEffects.value) {
         const effect = isEffectEnabled('pulse') ? 'pulse' : isEffectEnabled('float') ? 'float' : 'shimmer'
         setEmphasisType(effect)
-      } else if (activeAnimTab.value === 'text') {
+      } else if (tabToActivate === 'text' && hasTextEffects.value) {
         const effect = isEffectEnabled('countup') ? 'countup' : 'typewriter'
         setTextAnimType(effect)
-      } else {
+      } else if (tabToActivate === 'entrance' && isEntranceEnabled.value) {
         emit('update:elemMotion', 'slide-up')
         emit('update:elemAnim', '')
       }
@@ -149,6 +175,7 @@ export function useBlockMotionSection(source: IBlockMotionSource, emit: IBlockMo
   }
 
   function switchAnimTab(tab: TAnimTab) {
+    if (!availableAnimTabs.value.includes(tab)) return
     activeAnimTab.value = tab
     if (tab === 'entrance') {
       emit('update:elemAnim', '')
@@ -450,9 +477,13 @@ export function useBlockMotionSection(source: IBlockMotionSource, emit: IBlockMo
     currentDuration,
     currentDelay,
     // Feature Flags
+    isEntranceEnabled,
     isAdvAnimEnabled,
     hasEmphasisEffects,
     hasTextEffects,
+    hasAnyMotionFeatureEnabled,
+    availableAnimTabs,
+    showTabSwitch,
     isEffectEnabled,
     // 强调与文本动效
     currentAnimType,

@@ -42,6 +42,7 @@
     <div class="spm-motion-grid">
       <div
         v-for="item in MOTION_PRESETS"
+        v-show="isEffectEnabled(item.name)"
         :key="item.name"
         class="spm-motion-item b3-tooltips b3-tooltips__s"
         :class="{ active: currentPresetName === item.name }"
@@ -98,11 +99,16 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import SlidesIcon from '@/ui/components/SlidesIcon.vue'
+import { isAnimationEnabled } from '@/feature-flags/feature-flags'
 import {
   MOTION_PRESETS,
   MOTION_DURATION_OPTIONS,
   MOTION_DELAY_OPTIONS,
 } from '@/ui/components/motion-presets'
+
+function isEffectEnabled(effect: string): boolean {
+  return isAnimationEnabled(effect)
+}
 
 const props = defineProps<{
   modelValue?: string
