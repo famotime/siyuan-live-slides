@@ -86,6 +86,23 @@ export class WebSandboxBridge {
   }
 
   /**
+   * 主动向沙箱发送探活心跳，唤醒处于就绪状态的 iframe 并触发即时握手回执
+   */
+  public ping(): void {
+    if (this.iframe?.contentWindow) {
+      try {
+        this.iframe.contentWindow.postMessage({
+          source: "siyuan-slides-host",
+          action: "HOST_PING",
+          timestamp: Date.now(),
+        }, "*")
+      } catch (e) {
+        console.warn("[WebSandboxBridge] ping error:", e)
+      }
+    }
+  }
+
+  /**
    * 宿主向沙箱发送消息
    * FSM-6 优化：未就绪阶段采用 Last-Write-Wins (LWW) 对状态类消息就地覆盖合并，杜绝握手瞬间消息风暴与连续重绘
    */
@@ -97,7 +114,7 @@ export class WebSandboxBridge {
     }
 
     if (!this.iframe?.contentWindow || !this.isReady) {
-      if (action === "UPDATE_SLIDES" || action === "NAVIGATE_PAGE") {
+      if (action === "UPDATE_SLIDES" || action === "NAVIGATE_PAGE" || action === "CONFIG_UPDATE") {
         const existingIdx = this.pendingMessages.findIndex(m => m.action === action)
         if (existingIdx !== -1) {
           this.pendingMessages[existingIdx] = message
@@ -138,6 +155,15 @@ export class WebSandboxBridge {
       slides,
       config: resolvedConfig,
       customThemeCss,
+    })
+  }
+
+  /**
+   * 增量推送全局演示配置（固定标题大小、列表标记显示等）
+   */
+  public updateConfig(config: Partial<ISlidesPluginConfig>): void {
+    this.postMessage("CONFIG_UPDATE", {
+      config: config as any,
     })
   }
 

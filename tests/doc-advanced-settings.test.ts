@@ -36,7 +36,7 @@ describe('DocInspectorSection 高级设置简洁折叠菜单', () => {
     expect(advancedContentIndex).toBeGreaterThan(advancedIndex)
 
     const webServeIndex = docInspectorCode.indexOf('本地网络伺服预览')
-    const headingSizeIndex = docInspectorCode.indexOf('固定特定标题大小')
+    const headingSizeIndex = docInspectorCode.indexOf('固定页面标题大小')
     const listMarkersIndex = docInspectorCode.indexOf('列表前缀标记')
 
     expect(webServeIndex).toBeGreaterThan(advancedContentIndex)

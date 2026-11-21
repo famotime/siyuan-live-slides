@@ -389,12 +389,12 @@
                 aria-label="除封面外页首标题按 H2、多栏内首标题按 H3 大小展示"
               >
                 <SlidesIcon name="type" />
-                <span>固定特定标题大小</span>
+                <span>固定页面标题大小</span>
               </div>
             </div>
             <label
               class="spm-switch b3-tooltips b3-tooltips__w"
-              :aria-label="globalSettings.normalizeHeadingSizes ? '关闭固定特定标题大小' : '开启固定特定标题大小'"
+              :aria-label="globalSettings.normalizeHeadingSizes ? '关闭固定页面标题大小' : '开启固定页面标题大小'"
             >
               <input
                 type="checkbox"
@@ -541,6 +541,7 @@ import {
   setRuntimeSettings,
 } from '@/settings'
 import { isFeatureEnabled } from '@/feature-flags/feature-flags'
+import { applyGlobalDisplaySettingImmediate } from '@/main'
 
 const plugin = inject<any>('plugin')
 const globalSettings = globalSettingsState
@@ -622,31 +623,37 @@ function onToggleWebServe(enabled: boolean) {
 
 async function onToggleNormalizeHeadings(enabled: boolean) {
   setRuntimeSettings({ normalizeHeadingSizes: enabled })
+  applyGlobalDisplaySettingImmediate({ normalizeHeadingSizes: enabled })
   if (plugin && typeof plugin.saveGlobalSettings === 'function') {
     await plugin.saveGlobalSettings({ normalizeHeadingSizes: enabled })
   }
-  if (plugin && typeof plugin.compileCurrentDocument === 'function') {
-    plugin.compileCurrentDocument(plugin.currentDocId || plugin.getActiveDocumentId?.())
+  const targetDocId = props.currentDocId || plugin?.currentDocId || plugin?.getActiveDocumentId?.()
+  if (plugin && typeof plugin.compileCurrentDocument === 'function' && targetDocId) {
+    plugin.compileCurrentDocument(targetDocId, { reason: 'explicit' })
   }
 }
 
 async function onToggleUnorderedMarkers(enabled: boolean) {
   setRuntimeSettings({ showUnorderedListMarkers: enabled })
+  applyGlobalDisplaySettingImmediate({ showUnorderedListMarkers: enabled })
   if (plugin && typeof plugin.saveGlobalSettings === 'function') {
     await plugin.saveGlobalSettings({ showUnorderedListMarkers: enabled })
   }
-  if (plugin && typeof plugin.compileCurrentDocument === 'function') {
-    plugin.compileCurrentDocument(plugin.currentDocId || plugin.getActiveDocumentId?.())
+  const targetDocId = props.currentDocId || plugin?.currentDocId || plugin?.getActiveDocumentId?.()
+  if (plugin && typeof plugin.compileCurrentDocument === 'function' && targetDocId) {
+    plugin.compileCurrentDocument(targetDocId, { reason: 'explicit' })
   }
 }
 
 async function onToggleOrderedMarkers(enabled: boolean) {
   setRuntimeSettings({ showOrderedListMarkers: enabled })
+  applyGlobalDisplaySettingImmediate({ showOrderedListMarkers: enabled })
   if (plugin && typeof plugin.saveGlobalSettings === 'function') {
     await plugin.saveGlobalSettings({ showOrderedListMarkers: enabled })
   }
-  if (plugin && typeof plugin.compileCurrentDocument === 'function') {
-    plugin.compileCurrentDocument(plugin.currentDocId || plugin.getActiveDocumentId?.())
+  const targetDocId = props.currentDocId || plugin?.currentDocId || plugin?.getActiveDocumentId?.()
+  if (plugin && typeof plugin.compileCurrentDocument === 'function' && targetDocId) {
+    plugin.compileCurrentDocument(targetDocId, { reason: 'explicit' })
   }
 }
 
@@ -740,13 +747,14 @@ function getBgPreviewStyle(bgValue: string): Record<string, string> {
   return { background: bg }
 }
 
-defineProps<{
+const props = defineProps<{
   docTheme: string
   docBackground?: string
   docAspectRatio: string
   docDefaultTransition: string
   docSpacing?: string
   isBatchProcessing?: boolean
+  currentDocId?: string
 }>()
 
 const emit = defineEmits<{

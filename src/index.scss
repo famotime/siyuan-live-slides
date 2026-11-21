@@ -19,6 +19,13 @@ svg.slides-icon,
   flex-shrink: 0;
 }
 
+svg:has(> use[xlink\:href="#iconSlides"]),
+svg:has(> use[href="#iconSlides"]),
+.spm-dialog-icon {
+  fill: none !important;
+  stroke: currentColor !important;
+}
+
 /* 2. 主容器与整体环境 */
 .spm-slides-inspector {
   display: flex;

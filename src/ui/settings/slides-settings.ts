@@ -470,7 +470,7 @@ export function createSlidesSettings(plugin: ISlidesSettingsHost) {
   const olMarkerToggleWrap = createSwitchWrap(olMarkerToggle)
 
   setting.addItem({
-    title: "固定特定标题大小",
+    title: "固定页面标题大小",
     description: "开启后限制正文大标题在幻灯片中不超出安全展示画幅",
     actionElement: headingSizeToggleWrap,
   })

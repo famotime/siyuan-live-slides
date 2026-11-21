@@ -78,9 +78,12 @@ function buildCompiledBlockIndex(doc: ISlidesDocument): Set<string> {
 }
 
 // 专属 SVG 幻灯片放映图标
-const ICON_SLIDES_SVG = `<symbol id="iconSlides" viewBox="0 0 1024 1024">
-  <path fill="currentColor" d="M128 160h768c35.3 0 64 28.7 64 64v480c0 35.3-28.7 64-64 64H128c-35.3 0-64-28.7-64-64V224c0-35.3 28.7-64 64-64z m64 64v480h640V224H192z m128 640h384v64H320z"/>
-  <path fill="currentColor" d="M416 336l256 144-256 144z"/>
+const ICON_SLIDES_SVG = `<symbol id="iconSlides" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="0.833" stroke-linecap="round" stroke-linejoin="round">
+  <g fill="none" stroke="currentColor" stroke-width="0.833" stroke-linecap="round" stroke-linejoin="round" style="fill: none !important; stroke: currentColor !important; stroke-width: 0.833 !important; stroke-linecap: round; stroke-linejoin: round;">
+    <path d="M5 2.25 L11.75 2.25 C12.855 2.25 13.75 3.145 13.75 4.25 L13.75 11"/>
+    <rect x="2.25" y="4.75" width="9" height="9" rx="2"/>
+    <path d="M5.75 7.25 L7.75 9.25 L5.75 11.25"/>
+  </g>
 </symbol>`
 
 import {

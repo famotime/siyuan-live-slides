@@ -7,7 +7,7 @@ import SlidesInspectorDockView from './ui/dock/SlidesInspectorDockView.vue'
 import { WebSandboxBridge } from './engine/web-sandbox-bridge'
 import { globalCompileConsumerGate } from './sync/compile-consumer-gate'
 import type { ICompileConsumerHost } from './sync/compile-consumer-gate'
-import type { IActiveBlockInfo, ISlidesDocument } from './types/slides-protocol'
+import type { IActiveBlockInfo, ISlidesDocument, ISlidesPluginConfig } from './types/slides-protocol'
 import { isFeatureDisabled } from './feature-flags/feature-flags'
 import { detectSiYuanThemeMode } from './utils/color-utils'
 
@@ -52,6 +52,13 @@ export function mountPreviewTab(element: HTMLElement, pluginInstance: Plugin): a
   const mounted = previewTabApp.mount(element)
   previewTabInstance = mounted
   disposePreviewConsumer = registerConsumer('preview', element, pluginInstance)
+
+  // 挂载瞬间若宿主已持有最新编译成功的文档快照，立即同步给新挂载的页签实例，避免页签初次打开时呈现空文档/单页状态
+  const latestDoc = (pluginInstance as any)?.latestCompiledDoc
+  if (latestDoc && typeof (mounted as any)?.updateDocument === 'function') {
+    ;(mounted as any).updateDocument(latestDoc, latestDoc.docId)
+  }
+
   return mounted
 }
 
@@ -173,6 +180,36 @@ export function updateDockDocument(doc: ISlidesDocument, targetDocId?: string): 
   // 更新演讲者控制台页签（同窗口宿主直连，与 Dock 同源通路）
   if (presenterTabInstance?.updateDocument) {
     presenterTabInstance.updateDocument(doc)
+  }
+}
+
+/**
+ * 立即热应用全局演示视觉配置（固定标题大小、列表标记显示等）到所有打开的预览窗口与沙箱
+ */
+export function applyGlobalDisplaySettingImmediate(partialConfig: Partial<ISlidesPluginConfig>): void {
+  // 1. 同窗口分屏预览页签即时更新
+  if (previewTabInstance?.applyConfigUpdate) {
+    previewTabInstance.applyConfigUpdate(partialConfig)
+  }
+  // 2. 沙箱桥接器即时推送
+  globalSandboxBridge.updateConfig(partialConfig)
+
+  // 3. 跨窗口广播信道推送远端独立预览窗口
+  try {
+    const channel = new BroadcastChannel('siyuan-slides-sync')
+    channel.postMessage({
+      type: 'SYNC_CONFIG',
+      config: partialConfig,
+      updatedAt: Date.now(),
+    })
+    channel.close()
+  } catch (err) {
+    // 忽略广播错误
+  }
+
+  // 4. 同步给演讲者控制台
+  if (presenterTabInstance?.applyConfigUpdate) {
+    presenterTabInstance.applyConfigUpdate(partialConfig)
   }
 }
 

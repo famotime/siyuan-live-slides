@@ -1426,8 +1426,8 @@
     }
 
     /* 全局特定标题大小规范化 (除封面外页首首个标题按 H2 1.7rem，表头多栏内首个标题按 H3 1.3rem) */
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slides-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
     :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
     :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slide-content-wrapper:not(.layout-cover) > .layout-header-section .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
     :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slide-content-wrapper:not(.layout-cover) > :not(.layout-cols-grid):not(.layout-two-cols):not(.layout-image-left):not(.layout-image-right):first-child :is(h1, h2, h3, h4, h5, h6) {
@@ -2347,9 +2347,9 @@
     .slide-list-item > h5, .slide-list-item h5.slide-list-item-title { font-size: 1.0rem !important; }
     .slide-list-item > h6, .slide-list-item h6.slide-list-item-title { font-size: 0.95rem !important; }
 
-    /* 全局特定标题大小规范化强制覆盖 (确保在列表项字号之后生效) */
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slides-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    /* 全局特定标题大小规范化强制覆盖 (确保在列表项字号之后生效，除封面外) */
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       font-size: 1.7rem !important;
       font-weight: 600 !important;
       line-height: 1.25 !important;
@@ -3590,7 +3590,7 @@
                     v-for="(block, bIdx) in headerBlocks"
                     :key="block.id"
                     class="slide-block"
-                    :class="[bIdx === 0 ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :class="[(bIdx === 0 && currentSlide.frontmatter?.layout !== 'cover') ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                     :style="getBlockMotionStyle(block)"
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
@@ -3714,7 +3714,7 @@
                     v-for="(block, bIdx) in normalBlocks"
                     :key="block.id"
                     class="slide-block"
-                    :class="[bIdx === 0 ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :class="[(bIdx === 0 && currentSlide.frontmatter?.layout !== 'cover') ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                     :style="getBlockMotionStyle(block)"
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
@@ -3778,7 +3778,7 @@
                     v-for="(block, bIdx) in normalBlocks"
                     :key="block.id"
                     class="slide-block"
-                    :class="[bIdx === 0 ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :class="[(bIdx === 0 && currentSlide.frontmatter?.layout !== 'cover') ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                     :style="getBlockMotionStyle(block)"
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
@@ -3826,7 +3826,7 @@
                     v-for="(block, bIdx) in normalBlocks"
                     :key="block.id"
                     class="slide-block"
-                    :class="[bIdx === 0 ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :class="[(bIdx === 0 && currentSlide.frontmatter?.layout !== 'cover') ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                     :style="getBlockMotionStyle(block)"
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
@@ -3964,7 +3964,7 @@
                   v-for="(block, bIdx) in normalBlocks"
                   :key="block.id"
                   class="slide-block"
-                  :class="[bIdx === 0 ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                  :class="[(bIdx === 0 && currentSlide.frontmatter?.layout !== 'cover') ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                   :style="getBlockMotionStyle(block)"
                   :data-block-id="block.id"
                   @click="onBlockClick(block.id, $event)"
@@ -3992,7 +3992,7 @@
                   v-for="(block, bIdx) in normalBlocks"
                   :key="block.id"
                   class="slide-block"
-                  :class="[bIdx === 0 ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                  :class="[(bIdx === 0 && currentSlide.frontmatter?.layout !== 'cover') ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                   :style="getBlockMotionStyle(block)"
                   :data-block-id="block.id"
                   @click="onBlockClick(block.id, $event)"
@@ -7643,7 +7643,12 @@
                 prevStepOrSlide()
                 syncAutoplayVideos()
               } else if (e.data?.type === "SYNC_SLIDES") {
+                if (e.data.config) {
+                  config.value = { ...config.value, ...e.data.config }
+                  applyConfigThemeMode(config.value)
+                }
                 if (e.data.slides) slides.value = e.data.slides
+              } else if (e.data?.type === "SYNC_CONFIG") {
                 if (e.data.config) {
                   config.value = { ...config.value, ...e.data.config }
                   applyConfigThemeMode(config.value)
@@ -8605,6 +8610,18 @@
           if (!data || data.source !== "siyuan-slides-host") return
 
           switch (data.action) {
+            case "HOST_PING":
+            case "PING":
+              window.parent.postMessage({
+                source: "siyuan-slides-client",
+                action: "CLIENT_READY",
+                payload: {
+                  currentPage: currentPageIndex.value,
+                  totalPages: totalPages.value
+                }
+              }, "*")
+              break
+
             case "UPDATE_SLIDES":
               if (data.payload.customThemeCss) {
                 let styleTag = document.getElementById("siyuan-custom-theme-styles")
@@ -8614,6 +8631,10 @@
                   document.head.appendChild(styleTag)
                 }
                 styleTag.textContent = data.payload.customThemeCss
+              }
+              if (data.payload.config) {
+                config.value = { ...config.value, ...data.payload.config }
+                applyConfigThemeMode(config.value)
               }
               if (data.payload.slides) {
                 slides.value = data.payload.slides
@@ -8628,10 +8649,26 @@
                   setTimeout(syncAutoplayVideos, 350)
                 })
               }
-              if (data.payload.config) {
+              break
+
+            case "CONFIG_UPDATE":
+            case "UPDATE_CONFIG":
+              if (data.payload?.config) {
                 config.value = { ...config.value, ...data.payload.config }
                 applyConfigThemeMode(config.value)
               }
+              break
+
+            case "FORCE_REFRESH":
+              if (data.payload?.config) {
+                config.value = { ...config.value, ...data.payload.config }
+                applyConfigThemeMode(config.value)
+              }
+              updateScale()
+              nextTick(() => {
+                triggerSlideAnimations()
+                syncAutoplayVideos()
+              })
               break
 
             case "NAVIGATE_PAGE":
@@ -8651,9 +8688,10 @@
             case "HIGHLIGHT_ELEMENT":
               if (data.payload.targetBlockId) {
                 highlightedBlockId.value = data.payload.targetBlockId
-                // 如果该块在其他页，自动跳到该页
+                // 如果该块在其他页，自动跳到该页（支持顶级块与嵌套在列表/超级块/分栏内的深层子块）
                 for (let i = 0; i < slides.value.length; i++) {
-                  if (slides.value[i].blocks.some(b => b.id === data.payload.targetBlockId)) {
+                  const s = slides.value[i]
+                  if (s.allBlockIds?.includes(data.payload.targetBlockId) || s.blocks.some(b => b.id === data.payload.targetBlockId)) {
                     if (currentPageIndex.value !== i + 1) {
                       currentPageIndex.value = i + 1
                       notifySlideChanged()

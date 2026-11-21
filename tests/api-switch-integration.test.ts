@@ -546,7 +546,7 @@ describe("siyuan-api-switch 集成与 AI 服务全链路测试", () => {
       // 2. 网络伺服与排版标记应拆解为思源原生的独立项
       const webServeItem = items.find((i: any) => i.title === "启用网络伺服链接外跳")
       const webServeUrlItem = items.find((i: any) => i.title === "伺服主机地址")
-      const headingItem = items.find((i: any) => i.title === "固定特定标题大小")
+      const headingItem = items.find((i: any) => i.title === "固定页面标题大小")
       const ulItem = items.find((i: any) => i.title === "无序列表圆点前缀标记")
       const olItem = items.find((i: any) => i.title === "有序列表数字序号标记")
 

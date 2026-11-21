@@ -162,6 +162,7 @@
         :doc-default-transition="docDefaultTransition"
         :doc-spacing="docSpacing"
         :is-batch-processing="isBatchProcessing"
+        :current-doc-id="currentDocId"
         @update:doc-theme="onDocThemeChange"
         @update:doc-background="onDocBackgroundChange"
         @update:doc-aspect-ratio="onDocAspectRatioChange"

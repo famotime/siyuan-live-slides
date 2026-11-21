@@ -29,6 +29,7 @@ export class CursorTracker {
 
   /**
    * 重建 Block ID 到 Page Index (1-based) 的映射索引字典
+   * 包含分页起始分割线、正文直接块以及 allBlockIds 中包含的所有深层嵌套子块（列表、超级块、分栏等）
    */
   public updateSlidesIndex(slides: ISlidesVirtualPage[]): void {
     this.blockToPageMap.clear()
@@ -37,8 +38,17 @@ export class CursorTracker {
       if (slide.startBlockId && slide.startBlockId !== this.currentDocId) {
         this.blockToPageMap.set(slide.startBlockId, slide.pageIndex)
       }
+      if (Array.isArray(slide.allBlockIds)) {
+        for (const id of slide.allBlockIds) {
+          if (id && id !== this.currentDocId) {
+            this.blockToPageMap.set(id, slide.pageIndex)
+          }
+        }
+      }
       for (const block of slide.blocks) {
-        this.blockToPageMap.set(block.id, slide.pageIndex)
+        if (block?.id) {
+          this.blockToPageMap.set(block.id, slide.pageIndex)
+        }
       }
     }
   }

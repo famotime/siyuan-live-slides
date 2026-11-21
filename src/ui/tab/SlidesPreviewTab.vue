@@ -207,7 +207,7 @@ import { usePreviewExport } from './usePreviewExport'
 import { usePeekDrawerState } from './usePeekDrawerState'
 import { isFeatureEnabled } from '@/feature-flags/feature-flags'
 import { createPageJumpInput, isEditableTarget } from './page-jump-input'
-import type { ISlidesDocument } from '@/types/slides-protocol'
+import type { ISlidesDocument, ISlidesPluginConfig } from '@/types/slides-protocol'
 import { detectSiYuanThemeMode, observeSiYuanThemeMode } from '@/utils/color-utils'
 
 const plugin = inject<Plugin>('plugin')
@@ -298,9 +298,11 @@ const iframeSrc = ref('/plugins/siyuan-live-slides/slides-client/index.html')
 
 function onSandboxIframeLoad() {
   sandboxBridge.resetReady()
+  sandboxBridge.ping()
 }
 
 let unbindSlideChanged: (() => void) | null = null
+let unbindClientReady: (() => void) | null = null
 let unbindBlockClicked: (() => void) | null = null
 let unbindOpenInEditor: (() => void) | null = null
 let unbindOpenPeekDrawer: (() => void) | null = null
@@ -314,11 +316,22 @@ onMounted(() => {
     // P1-A 修复：iframe 自行导航/重载时重置就绪态，握手窗口内的消息转入待发队列，
     // 避免 isReady 残留 true 导致 postMessage 打进死窗口静默丢失（resetReady 此前是死代码）
     sandboxIframeRef.value.addEventListener('load', onSandboxIframeLoad)
+    sandboxBridge.ping()
   }
 
   unbindSlideChanged = sandboxBridge.onSlideChanged((page, total) => {
     currentPage.value = page
     totalPages.value = total
+  })
+
+  unbindClientReady = sandboxBridge.onClientReady(() => {
+    if (latestDoc) {
+      sandboxBridge.updateSlides(
+        latestDoc.slides,
+        { ...latestDoc.config, hostThemeMode: detectSiYuanThemeMode() },
+        latestDoc.customThemeCss,
+      )
+    }
   })
 
   unbindBlockClicked = sandboxBridge.onBlockClicked((blockId, page) => {
@@ -385,6 +398,7 @@ onUnmounted(() => {
   if (unbindToggleFullscreen) unbindToggleFullscreen()
   if (unbindOpenPresenter) unbindOpenPresenter()
   if (unbindSlideChanged) unbindSlideChanged()
+  if (unbindClientReady) unbindClientReady()
   if (unbindBlockClicked) unbindBlockClicked()
   if (unbindOpenInEditor) unbindOpenInEditor()
   sandboxBridge.detach()
@@ -439,9 +453,28 @@ function onNextPage() {
   }
 }
 
-function onRefresh() {
+async function onRefresh() {
+  const currentSettings = getRuntimeSettings()
+  const docId = latestDoc?.docId || renderedDocId || (plugin as any)?.currentDocId || (plugin as any)?.getActiveDocumentId?.()
+
+  // 1. 若当前已有文档快照，立即融合最新全局排版设置（固定特定标题大小、列表前缀显示等）并推向沙箱
+  if (latestDoc) {
+    latestDoc.config = {
+      ...latestDoc.config,
+      normalizeHeadingSizes: currentSettings.normalizeHeadingSizes,
+      showUnorderedListMarkers: currentSettings.showUnorderedListMarkers,
+      showOrderedListMarkers: currentSettings.showOrderedListMarkers,
+    }
+    sandboxBridge.updateSlides(
+      latestDoc.slides,
+      { ...latestDoc.config, hostThemeMode: detectSiYuanThemeMode() },
+      latestDoc.customThemeCss,
+    )
+  }
+
+  // 2. 显式发起重新编译（明确携带 docId，指定 reason: 'explicit' 突破消费者门闩）
   if (plugin && typeof (plugin as any).compileCurrentDocument === 'function') {
-    ;(plugin as any).compileCurrentDocument()
+    await (plugin as any).compileCurrentDocument(docId, { reason: 'explicit' })
   } else if (plugin?.eventBus && typeof (plugin.eventBus as any).emit === 'function') {
     ;(plugin.eventBus as any).emit('slides:request-compile' as any)
   }
@@ -556,6 +589,19 @@ defineExpose({
     if (plugin && typeof (plugin as any).updatePreviewTabHeader === 'function') {
       ;(plugin as any).updatePreviewTabHeader('', doc.docId)
     }
+  },
+  applyConfigUpdate(partialConfig: Partial<ISlidesPluginConfig>) {
+    if (latestDoc) {
+      latestDoc.config = { ...latestDoc.config, ...partialConfig }
+      sandboxBridge.updateSlides(
+        latestDoc.slides,
+        { ...latestDoc.config, hostThemeMode: detectSiYuanThemeMode() },
+        latestDoc.customThemeCss,
+      )
+    }
+  },
+  getDocId() {
+    return renderedDocId || latestDoc?.docId || ''
   },
   navigateToBlock(blockId: string) {
     cursorTracker.onCursorFocusBlock(blockId)

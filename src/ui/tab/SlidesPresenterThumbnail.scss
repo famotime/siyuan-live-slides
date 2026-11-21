@@ -1057,8 +1057,8 @@
     display: none !important;
   }
 
-  /* 全局标题字号规范化 */
-  &[data-normalize-headings="true"] .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+  /* 全局标题字号规范化 (除封面外) */
+  &[data-normalize-headings="true"] .slide-content:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
   &[data-normalize-headings="true"] .slide-content:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6) {
     font-size: 1.7rem !important;
     font-weight: 600 !important;

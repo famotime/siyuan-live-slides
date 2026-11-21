@@ -204,7 +204,7 @@ describe("v0.8.0 Enhancements: Heading Normalization, Multi-col Center & Lightbo
       expect(pdfCss).toContain(".has-superblock-cols .pdf-col > *:first-child :is(h1, h2, h3, h4, h5, h6)")
       expect(pdfCss).toContain(".has-superblock-cols .slides-col-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title)")
 
-      // 固定特定标题大小选项中同样包含居中声明，两者协同无冲突
+      // 固定页面标题大小选项中同样包含居中声明，两者协同无冲突
       expect(htmlCss).toContain('data-normalize-headings="true"] .has-superblock-cols .slides-col-first-heading-block')
       expect(pdfCss).toContain('data-normalize-headings="true"] .has-superblock-cols .slides-col-first-heading-block')
     })

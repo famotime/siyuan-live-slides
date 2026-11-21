@@ -757,8 +757,8 @@ export function generatePdfExportStyles(options?: {
     }
 
     /* 全局特定标题大小规范化 (除封面外页首首个标题按 H2 1.7rem，表头多栏内首个标题按 H3 1.3rem) */
-    [data-normalize-headings="true"] .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    [data-normalize-headings="true"] .slides-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .pdf-slide:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .pdf-slide:not(.layout-cover) .slides-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
     [data-normalize-headings="true"] .pdf-slide:not(.layout-cover) > :is(.pdf-block, .slide-block):first-child :is(h1, h2, h3, h4, h5, h6),
     [data-normalize-headings="true"] .pdf-slide:not(.layout-cover) > .layout-header-section :is(.pdf-block, .slide-block):first-child :is(h1, h2, h3, h4, h5, h6),
     [data-normalize-headings="true"] .pdf-slide:not(.layout-cover) > :not(.layout-cols-wrapper):not(.pdf-two-cols-wrapper):not(.layout-image-cols-grid):first-child :is(h1, h2, h3, h4, h5, h6) {
@@ -999,8 +999,8 @@ export function generatePdfExportStyles(options?: {
     .pdf-list li > h4, li > h4.slide-list-item-title { font-size: 1.1rem !important; }
 
     /* 全局特定标题大小规范化后置强力锁定 (防止被列表项内部字号覆盖) */
-    [data-normalize-headings="true"] .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
-    [data-normalize-headings="true"] .slides-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    [data-normalize-headings="true"] .pdf-slide:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
+    [data-normalize-headings="true"] .pdf-slide:not(.layout-cover) .slides-page-first-heading-block:is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
       font-size: 1.7rem !important;
       font-weight: 600 !important;
       line-height: 1.25 !important;

@@ -18,6 +18,7 @@ export type THostToSlidesAction =
   | "TOGGLE_OVERVIEW"
   | "START_IMAGE_EXPORT"
   | "CANCEL_IMAGE_EXPORT"
+  | "HOST_PING"
 
 export interface IHostToSlidesMessage {
   source: "siyuan-slides-host"

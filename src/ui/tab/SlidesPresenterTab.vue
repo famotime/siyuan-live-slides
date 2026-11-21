@@ -721,6 +721,11 @@ defineExpose({
     // P1-D1：文档切换时直灌数据同步重置页码与步进，避免角标停留在超出新文档页数的陈旧页码
     adoptSlides(doc?.docId || '')
   },
+  applyConfigUpdate(partialConfig: Record<string, any>) {
+    if (docConfig.value) {
+      docConfig.value = { ...docConfig.value, ...partialConfig }
+    }
+  },
 })
 </script>
 
