@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, afterEach, vi } from "vitest"
+import { describe, expect, it, beforeEach, afterEach, afterAll, vi } from "vitest"
 import { reactive } from "vue"
 import { useBlockMotionSection } from "../src/ui/components/useBlockMotionSection"
 import { MOTION_PRESETS } from "../src/ui/components/motion-presets"
@@ -44,7 +44,14 @@ function createHarness(overrides: Partial<{
 }
 
 describe("useBlockMotionSection (块级动效领域解耦)", () => {
+  const origElementAnimations = JSON.parse(JSON.stringify(FEATURE_FLAGS.elementAnimations))
+
   beforeEach(() => {
+    // 默认测试上下文开启全部动效，确保领域方法与试播舞台功能完整受测
+    FEATURE_FLAGS.elementAnimations.entrance.enabled = true
+    FEATURE_FLAGS.elementAnimations.emphasis.enabled = true
+    FEATURE_FLAGS.elementAnimations.text.enabled = true
+
     vi.useFakeTimers()
     // node 环境无 rAF：用 16ms 定时器模拟帧驱动
     vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) =>
@@ -55,6 +62,10 @@ describe("useBlockMotionSection (块级动效领域解耦)", () => {
   afterEach(() => {
     vi.unstubAllGlobals()
     vi.useRealTimers()
+  })
+
+  afterAll(() => {
+    FEATURE_FLAGS.elementAnimations = JSON.parse(JSON.stringify(origElementAnimations))
   })
 
   describe("motionPresetOptions (预设选项派生自 motion-presets 单一来源)", () => {
@@ -303,6 +314,9 @@ describe("useBlockMotionSection (块级动效领域解耦)", () => {
     })
 
     it("1. 默认全部开启时：availableAnimTabs 包含 3 项且 showTabSwitch 为 true (显示 tab 切换栏)", () => {
+      FEATURE_FLAGS.elementAnimations.entrance.enabled = true
+      FEATURE_FLAGS.elementAnimations.emphasis.enabled = true
+      FEATURE_FLAGS.elementAnimations.text.enabled = true
       const { section } = createHarness()
       expect(section.availableAnimTabs.value).toEqual(["entrance", "emphasis", "text"])
       expect(section.showTabSwitch.value).toBe(true)
@@ -313,7 +327,9 @@ describe("useBlockMotionSection (块级动效领域解耦)", () => {
     })
 
     it("2. 部分关闭 (开启 2 项)：showTabSwitch 仍为 true，tab 仅包含开启项", () => {
+      FEATURE_FLAGS.elementAnimations.entrance.enabled = true
       FEATURE_FLAGS.elementAnimations.emphasis.enabled = false
+      FEATURE_FLAGS.elementAnimations.text.enabled = true
       const { section } = createHarness()
       expect(section.availableAnimTabs.value).toEqual(["entrance", "text"])
       expect(section.showTabSwitch.value).toBe(true)

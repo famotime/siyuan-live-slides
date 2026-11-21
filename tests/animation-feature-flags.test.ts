@@ -17,34 +17,49 @@ const ALL_CATEGORIES: ElementAnimationCategoryKey[] = [
 ]
 
 describe("Animation FeatureFlags (元素动效三大分类及微动效构建期功能开关)", () => {
-  it("默认状态下 elementAnimations 三大分类（入场、持续强调、文本动效）均为启用状态", () => {
-    for (const cat of ALL_CATEGORIES) {
-      expect(FEATURE_FLAGS.elementAnimations[cat].enabled).toBe(true)
-      expect(isElementAnimationEnabled(cat)).toBe(true)
-    }
+  it("默认状态下发布配置符合构建预期（入场开启、持续强调与文本动效关闭）", () => {
+    expect(FEATURE_FLAGS.elementAnimations.entrance.enabled).toBe(true)
+    expect(isElementAnimationEnabled("entrance")).toBe(true)
+    expect(FEATURE_FLAGS.elementAnimations.emphasis.enabled).toBe(false)
+    expect(isElementAnimationEnabled("emphasis")).toBe(false)
+    expect(FEATURE_FLAGS.elementAnimations.text.enabled).toBe(false)
+    expect(isElementAnimationEnabled("text")).toBe(false)
     expect(isAnyElementAnimationEnabled()).toBe(true)
   })
 
-  it("默认状态下各分类下的所有具体微动效预设均为启用状态", () => {
-    for (const key of ENTRANCE_EFFECT_KEYS) {
-      expect(FEATURE_FLAGS.elementAnimations.entrance.effects[key]).toBe(true)
-      expect(isAnimationEnabled(key)).toBe(true)
+  it("在分类启用状态下各分类下的所有具体微动效预设均为启用状态", () => {
+    const origConfig = JSON.parse(JSON.stringify(FEATURE_FLAGS.elementAnimations))
+    try {
+      FEATURE_FLAGS.elementAnimations.entrance.enabled = true
+      FEATURE_FLAGS.elementAnimations.emphasis.enabled = true
+      FEATURE_FLAGS.elementAnimations.text.enabled = true
+
+      for (const key of ENTRANCE_EFFECT_KEYS) {
+        expect(FEATURE_FLAGS.elementAnimations.entrance.effects[key]).toBe(true)
+        expect(isAnimationEnabled(key)).toBe(true)
+      }
+      for (const key of EMPHASIS_EFFECT_KEYS) {
+        expect(FEATURE_FLAGS.elementAnimations.emphasis.effects[key]).toBe(true)
+        expect(isAnimationEnabled(key)).toBe(true)
+      }
+      for (const key of TEXT_EFFECT_KEYS) {
+        expect(FEATURE_FLAGS.elementAnimations.text.effects[key]).toBe(true)
+        expect(isAnimationEnabled(key)).toBe(true)
+      }
+      // 未指定动效类型时，判定是否有任意持续强调或文本动效开启
+      expect(isAnimationEnabled()).toBe(true)
+    } finally {
+      FEATURE_FLAGS.elementAnimations = origConfig
     }
-    for (const key of EMPHASIS_EFFECT_KEYS) {
-      expect(FEATURE_FLAGS.elementAnimations.emphasis.effects[key]).toBe(true)
-      expect(isAnimationEnabled(key)).toBe(true)
-    }
-    for (const key of TEXT_EFFECT_KEYS) {
-      expect(FEATURE_FLAGS.elementAnimations.text.effects[key]).toBe(true)
-      expect(isAnimationEnabled(key)).toBe(true)
-    }
-    // 未指定动效类型时，判定是否有任意持续强调或文本动效开启
-    expect(isAnimationEnabled()).toBe(true)
   })
 
   it("支持三大分类部分关闭：单项分类关闭不影响其余分类及其下具体动效", () => {
     const origConfig = JSON.parse(JSON.stringify(FEATURE_FLAGS.elementAnimations))
     try {
+      FEATURE_FLAGS.elementAnimations.entrance.enabled = true
+      FEATURE_FLAGS.elementAnimations.emphasis.enabled = true
+      FEATURE_FLAGS.elementAnimations.text.enabled = true
+
       // 1. 关闭入场过渡
       FEATURE_FLAGS.elementAnimations.entrance.enabled = false
       expect(isElementAnimationEnabled("entrance")).toBe(false)
@@ -83,6 +98,10 @@ describe("Animation FeatureFlags (元素动效三大分类及微动效构建期�
   it("支持各分类下具体动效的细粒度开关控制", () => {
     const origConfig = JSON.parse(JSON.stringify(FEATURE_FLAGS.elementAnimations))
     try {
+      FEATURE_FLAGS.elementAnimations.entrance.enabled = true
+      FEATURE_FLAGS.elementAnimations.emphasis.enabled = true
+      FEATURE_FLAGS.elementAnimations.text.enabled = true
+
       // 关闭入场过渡中的 bounce
       FEATURE_FLAGS.elementAnimations.entrance.effects.bounce = false
       expect(isAnimationEnabled("bounce")).toBe(false)

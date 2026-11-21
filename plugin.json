@@ -2,7 +2,7 @@
   "name": "siyuan-live-slides",
   "author": "Quincy Zou",
   "url": "https://github.com/famotime/siyuan-live-slides",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "minAppVersion": "3.8.5",
   "disabledInPublish": true,
   "backends": [
@@ -18,28 +18,26 @@
   ],
   "displayName": {
     "default": "Live Slides",
-    "en": "Live Slides",
     "zh-CN": "即现"
   },
   "description": {
-    "default": "Notes as presentations, content as thought.",
-    "en": "Notes as presentations, content as thought.",
-    "zh-CN": "笔记即演示，内容即思想。"
+    "default": "Notes as presentations, content as thought. Bring your content to live slides.",
+    "zh-CN": "内容即思想，笔记即演示。让演讲回归内容，让思想即刻呈现。"
   },
   "readme": {
-    "default": "README.md",
-    "en": "README.md",
-    "zh-CN": "README_zh_CN.md"
+    "default": "README.md"
   },
   "icon": "icon.webp",
   "preview": "preview.webp",
   "keywords": [
-    "siyuan",
-    "live-slides",
+    "PPT",
     "slides",
     "slidev",
     "presentation",
-    "vue3",
-    "vite"
+    "powerpoint",
+    "deck",
+    "演示",
+    "演讲",
+    "幻灯片"
   ]
 }

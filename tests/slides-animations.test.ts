@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, beforeAll, afterAll } from "vitest"
 import { parseElementAttrs } from "../src/compiler/scope-mapper"
 import { buildSlidesDocument } from "../src/compiler/slides-ast-builder"
 import { convertBlockToHtml } from "../src/export/markdown-renderer"
@@ -11,6 +11,17 @@ import { getStandaloneClientRuntimeScript } from "../src/export/standalone-clien
 import { FEATURE_FLAGS } from "../src/feature-flags/feature-flags"
 
 describe("Slides Animations (微动效与强调体系)", () => {
+  const origElementAnimations = JSON.parse(JSON.stringify(FEATURE_FLAGS.elementAnimations))
+
+  beforeAll(() => {
+    FEATURE_FLAGS.elementAnimations.entrance.enabled = true
+    FEATURE_FLAGS.elementAnimations.emphasis.enabled = true
+    FEATURE_FLAGS.elementAnimations.text.enabled = true
+  })
+
+  afterAll(() => {
+    FEATURE_FLAGS.elementAnimations = JSON.parse(JSON.stringify(origElementAnimations))
+  })
 
   describe("1. 属性解析 (scope-mapper)", () => {
     it("正确解析 custom-slides-anim 与 JSON 格式的 custom-slides-anim-props", () => {
