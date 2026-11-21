@@ -46,6 +46,7 @@ function extractInlineFunction(source: string, name: string): string {
 function evalInlineFunction(source: string, name: string, isTypeScript = false): (href: string) => any {
   const raw = extractInlineFunction(source, name)
   const jsSource = isTypeScript ? raw.replace(/:\s*(string|boolean|number)\b/g, "") : raw
+  // eslint-disable-next-line no-new-func -- 测试需动态求值从组件源码中抽取的内联函数
   return new Function(`${jsSource}; return ${name}`)() as (href: string) => any
 }
 
@@ -60,7 +61,7 @@ const LOCAL_HTML_CASES: Array<[string, boolean]> = [
   ["../docs/demo.html", true],
   ["D:\\SiYuan\\data\\assets\\demo.html", true],
   ["file:///D:/SiYuan/data/assets/demo.html", true],
-  ["/plugins/siyuan-live-slides/slides-client/presenter.html", true],
+  ["/plugins/foo/index.html", true],
   // 保持原生行为
   ["https://sli.dev/guide/index.html", false],
   ["http://localhost:8080/demo.html", false],
@@ -89,7 +90,7 @@ const PEEK_URL_CASES: Array<[string, string, boolean]> = [
   ["/assets/demo.html?download=true", "/assets/demo.html?download=true", false],
   // 非 HTML 资源与插件目录资源无需该参数
   ["assets/cover.png", "/assets/cover.png", false],
-  ["/plugins/siyuan-live-slides/slides-client/presenter.html", "/plugins/siyuan-live-slides/slides-client/presenter.html", false],
+  ["/plugins/foo/help.html", "/plugins/foo/help.html", false],
   ["demo.html", "/demo.html", false],
   ["./docs/demo.html", "/docs/demo.html", false],
   ["../docs/demo.html", "/docs/demo.html", false],
@@ -246,7 +247,8 @@ describe("本地 HTML 链接速览：客户端拦截器与宿主归一化逻辑�
       "utf-8",
     )
     expect(drawerSource).toContain("resolvePeekUrl(urlInputValue.value)")
-    // 地址栏不再无脑补全 https://
+    // 地址栏不再无脑补全 https://（断言字面量本身包含 ${} 模板占位文本，非性能问题）
+    // eslint-disable-next-line no-template-curly-in-string
     expect(drawerSource).not.toContain("target = `https://${target}`")
   })
 })

@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, afterEach, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 import { parseElementAttrs } from "../src/compiler/scope-mapper"
 import { buildSlidesDocument } from "../src/compiler/slides-ast-builder"
 import { convertBlockToHtml } from "../src/export/markdown-renderer"
@@ -7,60 +7,10 @@ import {
   ATTR_ELEM_ANIM_PROPS,
   ATTR_ELEM_MOTION,
 } from "../src/types/slides-protocol"
-import {
-  startCountUp,
-  startTypewriter,
-  runSlideAnimations,
-  resetSlideAnimations,
-} from "../src/export/standalone-runtime-sections/animation-runtime"
+import { getStandaloneClientRuntimeScript } from "../src/export/standalone-client-runtime"
 import { FEATURE_FLAGS } from "../src/feature-flags/feature-flags"
 
-function createMockEl(tag = "div", attrs: Record<string, string> = {}) {
-  const children: any[] = []
-  const classList = new Set<string>()
-  const attributeMap: Record<string, string> = { ...attrs }
-  const el: any = {
-    tagName: tag.toUpperCase(),
-    textContent: "",
-    className: "",
-    children,
-    classList: {
-      add: (c: string) => classList.add(c),
-      remove: (c: string) => classList.delete(c),
-      contains: (c: string) => classList.has(c),
-    },
-    getAttribute: (k: string) => attributeMap[k] ?? null,
-    setAttribute: (k: string, v: string) => { attributeMap[k] = String(v) },
-    removeAttribute: (k: string) => { delete attributeMap[k] },
-    hasAttribute: (k: string) => k in attributeMap,
-    querySelector: (sel: string) => {
-      for (const child of children) {
-        if (sel === ".slides-countup-target" && child.classList.contains("slides-countup-target")) return child
-      }
-      return null
-    },
-    querySelectorAll: (sel: string) => {
-      const res: any[] = []
-      if (sel === "[data-slides-anim]") {
-        for (const child of children) {
-          if (child.hasAttribute("data-slides-anim")) res.push(child)
-        }
-      }
-      return res
-    },
-    appendChild: (child: any) => {
-      children.push(child)
-      return child
-    },
-  }
-  return el
-}
-
 describe("Slides Animations (微动效与强调体系)", () => {
-  beforeEach(() => {
-    (globalThis as any).requestAnimationFrame = (fn: any) => setTimeout(fn, 10)
-    ;(globalThis as any).cancelAnimationFrame = (id: any) => clearTimeout(id)
-  })
 
   describe("1. 属性解析 (scope-mapper)", () => {
     it("正确解析 custom-slides-anim 与 JSON 格式的 custom-slides-anim-props", () => {
@@ -175,65 +125,34 @@ describe("Slides Animations (微动效与强调体系)", () => {
     })
   })
 
-  describe("4. 轻量调度器运行时 (animation-runtime)", () => {
-    it("CountUp 调度器能按预期设置初始文本并可提前取消", () => {
-      const el = createMockEl("span")
-      const cancel = startCountUp(el, {
-        from: 0,
-        to: 100,
-        prefix: "$",
-        suffix: "k",
-        decimals: 1,
-        duration: 1000,
-      })
-      expect(el.textContent).toBe("$0.0k")
-      expect(typeof cancel).toBe("function")
-      cancel()
+  describe("4. 生产播放器运行时调度器 (slide-rendering 内联副本)", () => {
+    // 生产播放器执行的 runSlideAnimations 位于 slide-rendering.ts 的运行时脚本内联副本中，
+    // 此处直接对拼装后的生产脚本断言，避免再出现「测试测的是没在跑的代码」的假保障；
+    // 精确字节级回归由 tests/standalone-runtime-sections.test.ts 的快照基线兜底。
+    const script = getStandaloneClientRuntimeScript()
+
+    it("运行时包含 runSlideAnimations 调度器并在进入页面时自动执行", () => {
+      expect(script).toContain("function runSlideAnimations(container)")
+      expect(script).toContain('container.querySelectorAll("[data-slides-anim]")')
+      expect(script).toContain("runSlideAnimations(stage);")
     })
 
-    it("Typewriter 调度器能清空并逐步打印文本，且支持提前取消", () => {
-      const el = createMockEl("p")
-      el.textContent = "待打字长句"
-      const cancel = startTypewriter(el, "待打字长句", { duration: 800 })
-      expect(el.textContent).toBe("")
-      expect(typeof cancel).toBe("function")
-      cancel()
+    it("CountUp 分支使用 easeOutExpo 曲线与生产选择器链（含 strong 回退）", () => {
+      expect(script).toContain('"data-countup-to"')
+      expect(script).toContain('"data-countup-from"')
+      expect(script).toContain("easeOutExpo")
+      expect(script).toContain('".slides-countup-target"')
+      expect(script).toContain("strong")
     })
 
-    it("runSlideAnimations 与 resetSlideAnimations 正常处理容器内的微动效节点", () => {
-      const container = createMockEl("div")
-      const node1 = createMockEl("div", {
-        "data-slides-anim": "countup",
-        "data-countup-from": "0",
-        "data-countup-to": "99",
-        "data-countup-suffix": "%",
-      })
-      node1.textContent = "99%"
-      container.appendChild(node1)
-
-      const cancelAll = runSlideAnimations(container)
-      expect(typeof cancelAll).toBe("function")
-      expect(node1.textContent).toBe("0%")
-
-      resetSlideAnimations(container)
-      expect(node1.textContent).toBe("99%")
-      cancelAll()
+    it("Typewriter 分支基于 data-anim-original 原文逐步打印", () => {
+      expect(script).toContain('animType === "typewriter"')
+      expect(script).toContain('"data-anim-original"')
+      expect(script).toContain("fullText.slice(0, idx)")
     })
 
-    it("带有 v-click-hidden 的节点在 runSlideAnimations 时被自动跳过", () => {
-      const container = createMockEl("div")
-      const node = createMockEl("div", {
-        "data-slides-anim": "countup",
-        "data-countup-to": "88",
-      })
-      node.classList.add("v-click-hidden")
-      node.textContent = "原始未展示文本"
-      container.appendChild(node)
-
-      const cancelAll = runSlideAnimations(container)
-      // 处于隐藏状态时不应被提前修改或触发调度
-      expect(node.textContent).toBe("原始未展示文本")
-      cancelAll()
+    it("带有 v-click-hidden 的节点被调度器自动跳过", () => {
+      expect(script).toContain('node.classList.contains("v-click-hidden")')
     })
   })
 

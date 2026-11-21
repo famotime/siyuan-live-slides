@@ -395,7 +395,7 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
       if (typeof document !== "undefined") {
         const divId = ctx.currentPageDividerId.value || (ctx.activeBlockType.value === "hr" || ctx.activeBlockType.value === "NodeThematicBreak" ? ctx.activeBlockId.value : "")
         const activeId = ctx.activeBlockId.value
-        let scopeElements: Element[] = []
+        const scopeElements: Element[] = []
 
         if (divId) {
           const divEl = document.querySelector(`.protyle-wysiwyg [data-node-id="${divId}"]`)
@@ -423,7 +423,7 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
         }
 
         const candidates: IFourCandidate[] = []
-        let lastHeaderId: string | undefined = undefined
+        let lastHeaderId: string | undefined
 
         for (const el of scopeElements) {
           const dt = el.getAttribute("data-type")

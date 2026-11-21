@@ -89,7 +89,7 @@ import { Protyle, openWindow } from 'siyuan'
 import { sql } from '@/api'
 import SlidesIcon from '@/ui/components/SlidesIcon.vue'
 import { globalSettingsState, buildSiYuanWebUrl, getRuntimeSettings } from '@/settings'
-import { getRuntimeModule } from '@/engine/runtime-node'
+import { openUrlInSystemBrowser } from '@/engine/runtime-node'
 
 const emit = defineEmits<{
   (e: 'external-jump', url: string): void
@@ -274,16 +274,7 @@ function openInSystemBrowser() {
   const targetUrl = buildSiYuanWebUrl(settings.webServeUrl, currentBlockId.value, {
     focus: !isDoc.value,
   })
-  if (typeof window !== 'undefined') {
-    const electron = getRuntimeModule('electron')
-    if (electron?.shell?.openExternal) {
-      electron.shell.openExternal(targetUrl).catch(() => {
-        window.open(targetUrl, '_blank')
-      })
-    } else {
-      window.open(targetUrl, '_blank')
-    }
-  }
+  openUrlInSystemBrowser(targetUrl)
   emit('external-jump', targetUrl)
 }
 

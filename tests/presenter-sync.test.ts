@@ -18,6 +18,7 @@ describe("usePresenterSync (演讲者视图广播与沙箱同步协调)", () => 
       public onmessage: ((ev: any) => void) | null = null
       constructor(name: string) {
         this.name = name
+        // eslint-disable-next-line ts/no-this-alias -- Mock 构造器需登记最后创建的实例供断言使用
         lastChannelInstance = this
       }
       postMessage(data: any) {

@@ -1,4 +1,4 @@
-import { type ComputedRef, type Ref } from "vue"
+import type { ComputedRef, Ref } from "vue"
 import { setBlockAttrs } from "@/api"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
 import { syncDomBlockAttrs } from "@/sync/dom-attr-sync"

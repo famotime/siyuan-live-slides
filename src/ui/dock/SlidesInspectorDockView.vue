@@ -635,10 +635,8 @@ const {
 // 场景 A 事件
 async function onLayoutChange(val: string) {
   if (val === 'clover') {
-    const success = await applyCloverLayout()
-    if (!success) {
-      return
-    }
+    // 四叶草版式由 applyCloverLayout 全权负责（内部含失败提示），无论成败都不再写普通 layout 属性
+    await applyCloverLayout()
   } else {
     // 页面版式必须作为页面级属性写入分页符或首页根，严禁作为普通块属性写入当前选中的段落
     savePageAttr(ATTR_PAGE_LAYOUT, val)
@@ -678,7 +676,7 @@ function onMaskInitialChange(val: string) {
 function onApplySuperBlockLayout(info: any) {
   if (!info) return
   const layout = info.recommendedLayout || (info.colCount && info.colCount >= 2 ? 'cols-header' : 'two-cols')
-  const ratio = info.ratio || (info.colCount ? Array(info.colCount).fill(1).join(':') : '1:1')
+  const ratio = info.ratio || (info.colCount ? Array.from({ length: info.colCount }, () => 1).join(':') : '1:1')
   applyPageLayoutAndRatio(layout, ratio)
 }
 

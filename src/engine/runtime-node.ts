@@ -151,3 +151,21 @@ export function resolvePhysicalPath(virtualPath: string): string {
 
   return virtualPath
 }
+
+/**
+ * 经系统默认浏览器打开外部链接
+ * 桌面端优先 Electron shell.openExternal，失败或非 Electron 环境降级 window.open
+ */
+export function openUrlInSystemBrowser(targetUrl: string): void {
+  if (typeof window === "undefined") {
+    return
+  }
+  const electron = getRuntimeModule("electron")
+  if (electron?.shell?.openExternal) {
+    electron.shell.openExternal(targetUrl).catch(() => {
+      window.open(targetUrl, "_blank")
+    })
+  } else {
+    window.open(targetUrl, "_blank")
+  }
+}

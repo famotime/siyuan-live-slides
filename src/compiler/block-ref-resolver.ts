@@ -15,7 +15,7 @@ export interface IBlockRefInfo {
  * 3. ((block-id 无引号文本))
  * 4. ((block-id)) - 无锚文本
  */
-export const BLOCK_REF_REGEX = /\(\(([0-9a-zA-Z-]+)(?:\s*(?:'([^']*)'|"([^"]*)"|([^\)]+?)))?\s*\)\)/g
+const BLOCK_REF_REGEX = /\(\(([0-9a-zA-Z-]+)(?:\s*(?:'([^']*)'|"([^"]*)"|([^\)]+?)))?\s*\)\)/g
 
 /**
  * 抽取文本中的所有块引用标记

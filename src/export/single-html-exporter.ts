@@ -282,7 +282,7 @@ export function buildStandaloneHtml(
 ): string {
   const title = options?.title || "即现文稿"
   let processedSlides = doc.slides
-  let processedConfig = { ...doc.config }
+  const processedConfig = { ...doc.config }
   let processedCustomThemeCss = doc.customThemeCss
 
   // 若提供 Base64 字典，将各块、frontmatter 及配置中匹配到的本地资产 URL 替换为 Base64
@@ -332,7 +332,7 @@ export function buildStandaloneHtml(
         : slide.noteBlocks
       const notes = replaceText(slide.notes || "")
 
-      let frontmatter = slide.frontmatter ? { ...slide.frontmatter } : slide.frontmatter
+      const frontmatter = slide.frontmatter ? { ...slide.frontmatter } : slide.frontmatter
       if (frontmatter) {
         for (const [key, val] of Object.entries(frontmatter)) {
           if (typeof val === "string") {

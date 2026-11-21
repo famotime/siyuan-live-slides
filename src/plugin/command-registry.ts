@@ -19,6 +19,7 @@ import { identifyAndNormalizeDocumentNotes } from "@/sync/notes-normalizer"
 import { runAutoAnimationForDocument } from "@/sync/auto-animation-normalizer"
 import type { ISlidesDocument } from "@/types/slides-protocol"
 import { runHeadlessImageExport, resolveDocumentTitle } from "@/export/image-exporter"
+import { t } from "@/utils/i18n"
 
 export interface ISlidesPluginHost extends Plugin {
   currentDocId: string
@@ -35,7 +36,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
   // 1. 下方分屏演示预览
   plugin.addCommand({
     langKey: "slidesPresentation",
-    langText: "即现: 在文档下方开启分屏演示预览",
+    langText: t("slidesPresentation", "即现: 在文档下方开启分屏演示预览"),
     hotkey: "⌥P",
     enabled: () => true,
     execute: () => {
@@ -47,7 +48,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
   if (!isFeatureDisabled("import")) {
     plugin.addCommand({
       langKey: "slidesImport",
-      langText: "即现: 导入 Slidev 演示文档 (.md / .zip)",
+      langText: t("slidesImport", "即现: 导入 Slidev 演示文档 (.md / .zip)"),
       hotkey: "⌥I",
       enabled: () => true,
       execute: () => {
@@ -62,7 +63,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
   // 3. 初始化当前文档演示属性
   plugin.addCommand({
     langKey: "slidesInitAttrs",
-    langText: "即现: 初始化当前文档演示属性",
+    langText: t("slidesInitAttrs", "即现: 初始化当前文档演示属性"),
     hotkey: "",
     enabled: () => true,
     execute: async () => {
@@ -86,7 +87,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
   if (!isFeatureDisabled("smartSplit") && !isFeatureDisabled("aiScript")) {
     plugin.addCommand({
       langKey: "slidesAiSplit",
-      langText: "即现: 智能大纲断页建议与自动分页",
+      langText: t("slidesAiSplit", "即现: 智能大纲断页建议与自动分页"),
       hotkey: "",
       enabled: () => true,
       execute: () => runAiAutoSplit(plugin),
@@ -94,7 +95,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
 
     plugin.addCommand({
       langKey: "slidesClearDividers",
-      langText: "即现: 清除当前文档分页线",
+      langText: t("slidesClearDividers", "即现: 清除当前文档分页线"),
       hotkey: "",
       enabled: () => true,
       execute: () => clearSlideDividers(plugin),
@@ -105,7 +106,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
   if (!isFeatureDisabled("aiScript")) {
     plugin.addCommand({
       langKey: "slidesAiNotes",
-      langText: "即现 AI: 自动为当前文档生成演讲者提词卡 (Notes)",
+      langText: t("slidesAiNotes", "即现 AI: 自动为当前文档生成演讲者提词卡 (Notes)"),
       hotkey: "",
       enabled: () => true,
       execute: async () => {
@@ -168,7 +169,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
   if (!isFeatureDisabled("speakerNotesBlocks")) {
     plugin.addCommand({
       langKey: "slidesIdentifyNotes",
-      langText: "即现: 识别正文讲稿块并规范化",
+      langText: t("slidesIdentifyNotes", "即现: 识别正文讲稿块并规范化"),
       hotkey: "",
       enabled: () => true,
       execute: async () => {
@@ -198,7 +199,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
   if (!isFeatureDisabled("smartAnimation")) {
     plugin.addCommand({
       langKey: "slidesAutoAnimate",
-      langText: "即现: 智能配置演示动效",
+      langText: t("slidesAutoAnimate", "即现: 智能配置演示动效"),
       hotkey: "",
       enabled: () => true,
       execute: async () => {
@@ -227,7 +228,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
   // 8. 统计全库转场效果分布
   plugin.addCommand({
     langKey: "slidesBatchTransitions",
-    langText: "即现协同: 统计全库转场效果分布",
+    langText: t("slidesBatchTransitions", "即现协同: 统计全库转场效果分布"),
     hotkey: "",
     enabled: () => true,
     execute: async () => {
@@ -242,7 +243,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
   // 9. 复制即现预设属性模板至剪贴板
   plugin.addCommand({
     langKey: "slidesExportTemplates",
-    langText: "即现协同: 复制即现预设属性模板至剪贴板",
+    langText: t("slidesExportTemplates", "即现协同: 复制即现预设属性模板至剪贴板"),
     hotkey: "",
     enabled: () => true,
     execute: async () => {
@@ -260,7 +261,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
   // 10. 批量替换全库淡入淡出转场为滑动
   plugin.addCommand({
     langKey: "slidesBatchReplaceTransition",
-    langText: "即现协同: 批量替换全库淡入淡出转场为滑动 (fade -> slide-left)",
+    langText: t("slidesBatchReplaceTransition", "即现协同: 批量替换全库淡入淡出转场为滑动 (fade -> slide-left)"),
     hotkey: "",
     enabled: () => true,
     execute: async () => {
@@ -281,7 +282,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
   if (!isFeatureDisabled("presenterMode")) {
     plugin.addCommand({
       langKey: "slidesPresenterMode",
-      langText: "即现: 打开双屏演讲者控制台 (Presenter Mode)",
+      langText: t("slidesPresenterMode", "即现: 打开双屏演讲者控制台 (Presenter Mode)"),
       hotkey: "⌥M",
       enabled: () => true,
       execute: () => {
@@ -295,7 +296,7 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
     let isCommandExportingImages = false
     plugin.addCommand({
       langKey: "slidesExportImagesZip",
-      langText: "即现: 逐页导出幻灯片为高清图片包 (ZIP)",
+      langText: t("slidesExportImagesZip", "即现: 逐页导出幻灯片为高清图片包 (ZIP)"),
       hotkey: "",
       enabled: () => true,
       execute: async () => {

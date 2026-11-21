@@ -70,7 +70,7 @@ export function detectPresentationFormat(
 /**
  * 提取文本中引用的媒体资源路径 (排除 http/https/data:)
  */
-export function extractLocalAssetPaths(text: string): string[] {
+function extractLocalAssetPaths(text: string): string[] {
   const assets: string[] = []
   function addPath(raw: string) {
     const clean = raw.trim().replace(/^['"]|['"]$/g, "")
@@ -107,7 +107,7 @@ export function extractLocalAssetPaths(text: string): string[] {
 /**
  * 获取 Node/Electron 本地模块 (fs / path)
  */
-export function getLocalNodeModule(name: string): any {
+function getLocalNodeModule(name: string): any {
   try {
     if (typeof window !== "undefined" && typeof (window as any).require === "function") {
       return (window as any).require(name)
@@ -125,7 +125,7 @@ export function getLocalNodeModule(name: string): any {
 /**
  * 安全尝试从本地文件系统读取二进制资产 (适用于 Node / Electron 桌面宿主环境)
  */
-export function tryReadLocalBinary(absOrRelPath: string, candidateBaseDirs: string[] = []): Uint8Array | null {
+function tryReadLocalBinary(absOrRelPath: string, candidateBaseDirs: string[] = []): Uint8Array | null {
   try {
     const fs = getLocalNodeModule("fs")
     const path = getLocalNodeModule("path")

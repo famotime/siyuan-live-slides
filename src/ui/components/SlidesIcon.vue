@@ -555,24 +555,6 @@
       <path d="m3 21 9-9" />
     </g>
 
-    <!-- 图左版式图标 -->
-    <g v-else-if="name === 'image-left'">
-      <rect x="2" y="4" width="20" height="16" rx="2" />
-      <rect x="4" y="6" width="6" height="12" rx="1" />
-      <line x1="13" y1="8" x2="19" y2="8" />
-      <line x1="13" y1="12" x2="19" y2="12" />
-      <line x1="13" y1="16" x2="17" y2="16" />
-    </g>
-
-    <!-- 图右版式图标 -->
-    <g v-else-if="name === 'image-right'">
-      <rect x="2" y="4" width="20" height="16" rx="2" />
-      <rect x="14" y="6" width="6" height="12" rx="1" />
-      <line x1="5" y1="8" x2="11" y2="8" />
-      <line x1="5" y1="12" x2="11" y2="12" />
-      <line x1="5" y1="16" x2="9" y2="16" />
-    </g>
-
     <!-- 帮助 / 问号 (Help / Info) -->
     <g v-else-if="name === 'help' || name === 'question' || name === 'info'">
       <circle cx="12" cy="12" r="10" />

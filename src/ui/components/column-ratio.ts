@@ -6,8 +6,8 @@
  */
 
 /** 比例段数合法上下界 */
-export const MIN_RATIO_COLUMNS = 2
-export const MAX_RATIO_COLUMNS = 6
+const MIN_RATIO_COLUMNS = 2
+const MAX_RATIO_COLUMNS = 6
 
 /**
  * 解析比例字符串的栏数（段数）
@@ -23,5 +23,5 @@ export function countRatioColumns(ratio: string | undefined | null): number {
 
 /** 生成 cols 栏的均分比例（如 3 栏 → '1:1:1'） */
 export function buildEqualRatio(cols: number): string {
-  return Array(Math.max(cols, MIN_RATIO_COLUMNS)).fill('1').join(':')
+  return Array.from({ length: Math.max(cols, MIN_RATIO_COLUMNS) }, () => '1').join(':')
 }

@@ -14,11 +14,11 @@ import zipPack from "vite-plugin-zip-pack"
 
 const pluginInfo = require("./plugin.json")
 
-function syncToSiyuanPlugin(targetDir: string) {
+function syncToSiyuanPlugin(targetDir: string, extraSyncDir?: string) {
   return {
     name: "sync-to-siyuan",
     closeBundle() {
-      const targetDirs = [targetDir, "D:/SiYuan_data/data/plugins/siyuan-live-slides"].filter(Boolean)
+      const targetDirs = [targetDir, extraSyncDir].filter(Boolean) as string[]
       for (const tDir of targetDirs) {
         if (!fs.existsSync(path.dirname(tDir))) {
           continue
@@ -58,14 +58,12 @@ function syncToSiyuanPlugin(targetDir: string) {
 export default defineConfig(({
   mode,
 }) => {
-
-  console.log('mode=>', mode)
   const env = loadEnv(mode, process.cwd())
   const {
     VITE_SIYUAN_WORKSPACE_PATH,
+    // 可选的第二同步目标（如另一套思源工作空间），未配置则跳过
+    VITE_SIYUAN_EXTRA_SYNC_DIR,
   } = env
-  console.log('env=>', env)
-
 
   const siyuanWorkspacePath = VITE_SIYUAN_WORKSPACE_PATH
   let devDistDir = './dev'
@@ -80,10 +78,6 @@ export default defineConfig(({
   const args = minimist(process.argv.slice(2))
   const isWatch = args.watch || args.w || false
   const distDir = isWatch ? devDistDir : "./dist"
-
-  console.log()
-  console.log("isWatch=>", isWatch)
-  console.log("distDir=>", distDir)
 
   return {
     resolve: {
@@ -122,7 +116,7 @@ export default defineConfig(({
           },
         ],
       }),
-      syncToSiyuanPlugin(devDistDir),
+      syncToSiyuanPlugin(devDistDir, VITE_SIYUAN_EXTRA_SYNC_DIR),
     ],
 
     // https://github.com/vitejs/vite/issues/1930

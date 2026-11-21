@@ -21,6 +21,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json --noUnusedLocals true --noUnusedParameters true",
     "changelog:extract": "node ./scripts/extract-changelog.mjs",
+    "sync:vendor": "node ./scripts/sync-vendor-assets.mjs",
     "preinstall": "npx --yes only-allow pnpm",
     "worktree:add": "node ./scripts/worktree.mjs add",
     "worktree:list": "node ./scripts/worktree.mjs list",

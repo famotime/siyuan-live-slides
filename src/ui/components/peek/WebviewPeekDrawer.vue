@@ -211,7 +211,7 @@ export {
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import SlidesIcon from '@/ui/components/SlidesIcon.vue'
-import { isDesktopEnvironment, isRemoteKernelHost, getRuntimeModule } from '@/engine/runtime-node'
+import { isDesktopEnvironment, isRemoteKernelHost, openUrlInSystemBrowser } from '@/engine/runtime-node'
 import { resolvePeekUrl } from '@/utils/peek-url'
 import { useWebviewPeekControls } from '@/ui/components/peek/useWebviewPeekControls'
 import { MOBILE_USER_AGENT, getInitialViewMode, saveViewMode, describePeekNetError } from '@/ui/components/peek/peek-webview-utils'
@@ -562,16 +562,7 @@ async function copyUrl() {
 
 function openInSystemBrowser() {
   const targetUrl = currentUrl.value
-  if (typeof window !== 'undefined') {
-    const electron = getRuntimeModule('electron')
-    if (electron?.shell?.openExternal) {
-      electron.shell.openExternal(targetUrl).catch(() => {
-        window.open(targetUrl, '_blank')
-      })
-    } else {
-      window.open(targetUrl, '_blank')
-    }
-  }
+  openUrlInSystemBrowser(targetUrl)
   emit('external-jump', targetUrl)
 }
 </script>

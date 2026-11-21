@@ -35,6 +35,7 @@ import { CompileScheduler } from "@/sync/compile-scheduler"
 import { InspectorSyncThrottle } from "@/sync/inspector-sync-cache"
 import { isMultiBlockSelected } from "@/sync/selection-mirror"
 import type { ISlidesDocument } from "@/types/slides-protocol"
+import { setI18nMessages } from "@/utils/i18n"
 import "@/index.scss"
 
 /** 自动编译防抖时长：编辑器事务停歇该时长后才向内核发起编译 */
@@ -129,7 +130,10 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
     const frontEnd = getFrontend()
     this.isMobile = frontEnd === "mobile" || frontEnd === "browser-mobile"
 
-    // 0. 加载全局持久化配置
+    // 0. 注册内核注入的 i18n 文案（命令面板等入口据此输出当前界面语言）
+    setI18nMessages((this as unknown as { i18n?: Record<string, string> }).i18n)
+
+    // 0.5 加载全局持久化配置
     await this.loadGlobalSettings()
     this.apiSwitchBridge = new ApiSwitchBridge({
       pluginName: this.name,
@@ -156,6 +160,7 @@ export default class SiYuanLiveSlidesPlugin extends SyPlugin implements ISlidesP
     registerPluginCommands(this)
 
     // 4. 注册下方分屏预览页签
+    // eslint-disable-next-line ts/no-this-alias -- addTab 回调内需同时访问外层插件实例与回调 this
     const self = this
     this.addTab({
       type: TAB_TYPE,

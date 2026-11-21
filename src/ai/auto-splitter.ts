@@ -21,7 +21,7 @@ export interface ISplitOptions {
 /**
  * 提取一、二、三级标题层级（若非一二三级标题则返回 null）
  */
-export function getHeadingLevel(block: ISiYuanBlockNode): 1 | 2 | 3 | null {
+function getHeadingLevel(block: ISiYuanBlockNode): 1 | 2 | 3 | null {
   if (block.type === "h") {
     if (block.subType === "h1") return 1
     if (block.subType === "h2") return 2
@@ -37,7 +37,7 @@ export function getHeadingLevel(block: ISiYuanBlockNode): 1 | 2 | 3 | null {
 /**
  * 向上查找距离当前块最近的一个实质块（包含物理分页符，跳过纯空白块）
  */
-export function findPreviousSignificantBlock(
+function findPreviousSignificantBlock(
   blocks: ISiYuanBlockNode[],
   currentIndex: number,
 ): ISiYuanBlockNode | null {
@@ -56,7 +56,7 @@ export function findPreviousSignificantBlock(
  * 包含图片、长文本、列表、引用的块（权重 2）；
  * 常规短段落（权重 1）；空块（权重 0）。
  */
-export function getBlockWeight(block: ISiYuanBlockNode): number {
+function getBlockWeight(block: ISiYuanBlockNode): number {
   const type = block.type
   if (type === "c" || type === "code" || type === "t" || type === "table" || type === "s" || type === "super") {
     return 3
@@ -78,7 +78,7 @@ export function getBlockWeight(block: ISiYuanBlockNode): number {
 /**
  * 依据标题及紧随其后的页面内容，前瞻推断最匹配的 Slidev 版式
  */
-export function inferSlideLayout(
+function inferSlideLayout(
   headingLevel: 1 | 2 | 3 | null,
   followingBlocks: ISiYuanBlockNode[],
 ): string {

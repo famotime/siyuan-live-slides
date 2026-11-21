@@ -663,7 +663,7 @@ export function parseSlidesPresentation(
 /**
  * 提取 Markdown 与 HTML 标签中的本地与网络媒体资源路径
  */
-export function extractAssetReferences(markdown: string): string[] {
+function extractAssetReferences(markdown: string): string[] {
   const assets: string[] = []
 
   const mdRegex = /!\[.*?\]\((.*?)\)/g

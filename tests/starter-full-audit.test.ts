@@ -4,9 +4,9 @@ import { describe, expect, it } from "vitest"
 import { parseSlidesPresentation, splitSlidesMarkdownChunks } from "../src/compiler/slides-importer"
 import { buildSlidesDocument } from "../src/compiler/slides-ast-builder"
 
-const starterPath = "D:/MyCodingProjects/slidev/demo/starter/slides.md"
-const subPath = "D:/MyCodingProjects/slidev/demo/starter/pages/imported-slides.md"
-const snippetPath = "D:/MyCodingProjects/slidev/demo/starter/snippets/external.ts"
+const starterPath = "D:/GitHub/slidev/demo/starter/slides.md"
+const subPath = "D:/GitHub/slidev/demo/starter/pages/imported-slides.md"
+const snippetPath = "D:/GitHub/slidev/demo/starter/snippets/external.ts"
 const hasStarter = fs.existsSync(starterPath)
 
 describe.skipIf(!hasStarter)("Full Audit: Starter Demo Import & Round-trip", () => {
@@ -59,7 +59,7 @@ describe.skipIf(!hasStarter)("Full Audit: Starter Demo Import & Round-trip", () 
     expect(res.docRootAttrs["custom-slides-drawings"]).toBe(JSON.stringify({ persist: false }))
 
     const resBaseDir = parseSlidesPresentation(content, {
-      baseDir: "D:/MyCodingProjects/slidev/demo/starter",
+      baseDir: "D:/GitHub/slidev/demo/starter",
     })
     expect(resBaseDir.totalSlides).toBe(16)
     const s14BaseDir = resBaseDir.slides[13]
@@ -70,7 +70,7 @@ describe.skipIf(!hasStarter)("Full Audit: Starter Demo Import & Round-trip", () 
   it("should accurately round-trip compile into SiYuan blocks and build valid SlidevDocument", () => {
     const content = fs.readFileSync(starterPath, "utf-8")
     const res = parseSlidesPresentation(content, {
-      baseDir: "D:/MyCodingProjects/slidev/demo/starter",
+      baseDir: "D:/GitHub/slidev/demo/starter",
       cleanSlots: false,
     })
 
@@ -120,7 +120,7 @@ describe.skipIf(!hasStarter)("Full Audit: Starter Demo Import & Round-trip", () 
         codeBuf = []
       }
 
-      for (let l of lines) {
+      for (const l of lines) {
         if (!inCode && l.trimStart().startsWith("```")) {
           flushP()
           inCode = true

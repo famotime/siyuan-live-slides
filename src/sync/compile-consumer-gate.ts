@@ -29,7 +29,7 @@ export type TConsumerVisibility = "none" | "hidden" | "visible"
  * （app/src/layout/Wnd.ts 的 panelElement.classList.add("fn__none")），
  * 而插件 addTab/addDock 拿到的正是该面板元素。类名检查不触发布局，可作为零成本的可信信号。
  */
-export function isHostHiddenElement(el: HTMLElement | null | undefined): boolean {
+function isHostHiddenElement(el: HTMLElement | null | undefined): boolean {
   if (!el || typeof el.closest !== "function") return false
   return Boolean(el.closest(".fn__none"))
 }

@@ -24,7 +24,7 @@ export interface ITestAiConnectionResult {
  * 协议值域归一化，与思源内核及 siyuan-api-switch 对齐
  * 思源内核原生识别 openai / openai-responses / anthropic-messages / systemone
  */
-export function normalizeAiProtocol(raw?: string | null): string {
+function normalizeAiProtocol(raw?: string | null): string {
   const val = (raw || '').trim().toLowerCase()
   if (val === 'anthropic' || val === 'anthropic-messages') return 'anthropic-messages'
   if (val === 'openai-responses') return 'openai-responses'

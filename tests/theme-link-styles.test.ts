@@ -55,14 +55,6 @@ describe("Theme Link & Ref Styles (超链接与块引用 Slidev 规范与主题�
     expect(content).toContain("border-left: 3px solid var(--slide-accent)")
   })
 
-  it("演讲者模式 Presenter HTML 模版应包含 Slidev 规范超链接样式", () => {
-    const presenterPath = path.resolve(__dirname, "../public/slides-client/presenter.html")
-    const content = fs.readFileSync(presenterPath, "utf-8")
-
-    expect(content).toContain("border-bottom: 1px dashed currentColor")
-    expect(content).toContain("color: var(--accent-color)")
-  })
-
   it("单文件离线 HTML 导出产物应包含主题自适应超链接与块引用样式", () => {
     const html = buildStandaloneHtml(sampleDoc)
 

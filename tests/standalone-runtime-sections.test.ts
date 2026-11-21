@@ -44,6 +44,7 @@ describe("standalone client runtime 分节拼装 (RF-018)", () => {
       }
     }
     expect(sf.parseDiagnostics.length).toBe(0)
+    // eslint-disable-next-line no-new-func -- 运行时脚本语法可解析性守卫
     expect(() => new Function(script)).not.toThrow()
   })
 

@@ -3,7 +3,7 @@ import { setBlockAttrs } from "@/api"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
 import { syncDomBlockAttrs } from "@/sync/dom-attr-sync"
 import type { ISlidesBlockItem, ISlidesDocument, ISlidesVirtualPage } from "@/types/slides-protocol"
-import { ATTR_ELEM_CLICK, ATTR_ELEM_MOTION, ATTR_ELEM_NOTE } from "@/types/slides-protocol"
+import { ATTR_ELEM_CLICK, ATTR_ELEM_MOTION, ATTR_ELEM_NOTE, isHeadingBlock } from "@/types/slides-protocol"
 
 export interface IAnimatableItem {
   id: string
@@ -33,20 +33,6 @@ export interface IAutoAnimateDeps {
   showMessageFn?: typeof showMessage
   onSuccessNotice?: (msg: string) => void
   compileCurrentDocFn?: () => Promise<void>
-}
-
-/**
- * 判断块是否属于标题块 (h1 - h6)
- */
-export function isHeadingBlock(block: any): boolean {
-  if (!block) return false
-  const t = String(block.type || "").toLowerCase()
-  if (t === "h" || t === "nodeheading") return true
-  const sub = String(block.subType || "").toLowerCase()
-  if (/^h[1-6]$/.test(sub)) return true
-  const md = String(block.rawMarkdown || block.markdown || "").trim()
-  if (/^#{1,6}\s+/.test(md)) return true
-  return false
 }
 
 /**

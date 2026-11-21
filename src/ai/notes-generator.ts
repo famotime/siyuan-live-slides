@@ -10,7 +10,7 @@ export interface INotesGenerationResult {
 /**
  * 递归抽取块及其子树中包含的所有人类可读文本
  */
-export function extractDeepTextFromBlock(b: any): string {
+function extractDeepTextFromBlock(b: any): string {
   if (!b) return ""
   const parts: string[] = []
 

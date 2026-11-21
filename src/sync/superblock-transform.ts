@@ -21,7 +21,7 @@ export function generateBlockId(): string {
 /**
  * 查找当前处于激活/可见状态的主编辑区
  */
-export function findActiveEditor(): HTMLElement | null {
+function findActiveEditor(): HTMLElement | null {
   if (typeof document === "undefined") return null
   return (
     document.querySelector(".layout__wnd--active .protyle-wysiwyg") ||

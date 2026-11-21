@@ -36,7 +36,7 @@ export function isHorizontalSuperBlock(node: ISiYuanBlockNode): boolean {
 
   // 2. 检查 node.ial 或 DOM 属性 (思源官方: data-sb-layout="col")
   if (node.ial) {
-    const layout = (node.ial["data-sb-layout"] || node.ial["layout"] || "").toLowerCase()
+    const layout = (node.ial["data-sb-layout"] || node.ial.layout || "").toLowerCase()
     if (layout === "col" || layout === "h") return true
     if (layout === "row" || layout === "v") return false
   }
@@ -327,19 +327,6 @@ export function getContentChildren(node: ISiYuanBlockNode): ISiYuanBlockNode[] {
     }
     return true
   })
-}
-
-/**
- * 判断是否为标题块 (NodeHeading 'h' 或 h1~h6 或 Markdown # 标题)
- */
-export function isHeadingBlock(node: ISiYuanBlockNode): boolean {
-  if (!node) return false
-  const t = (node.type || "").toLowerCase()
-  if (t === "h" || t === "nodeheading") return true
-  if (/^h[1-6]$/i.test(node.subType || "")) return true
-  const md = (node.markdown || node.content || "").trim()
-  if (/^#{1,6}\s+/.test(md)) return true
-  return false
 }
 
 import {

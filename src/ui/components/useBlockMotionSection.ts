@@ -324,7 +324,7 @@ export function useBlockMotionSection(source: IBlockMotionSource, emit: IBlockMo
         const startTime = performance.now()
         currentStageCountUpValue.value = from.toFixed(decimals)
 
-        const easeOutExpo = (t: number) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t))
+        const easeOutExpo = (t: number) => (t === 1 ? 1 : 1 - 2 ** (-10 * t))
         function update(now: number) {
           const elapsed = now - startTime
           const progress = Math.min(1, Math.max(0, elapsed / duration))

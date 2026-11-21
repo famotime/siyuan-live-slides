@@ -1,8 +1,8 @@
 import JSZip from "jszip"
 import type { IParsedSlidesPresentation } from "./slides-importer"
 
-export const MEDIA_EXTENSIONS = /\.(?:png|jpe?g|gif|svg|webp|avif|ico|bmp|tiff?|mp4|webm|mp3|wav|ogg)$/i
-export const CODE_EXTENSIONS = /\.(?:ts|js|mjs|cjs|jsx|tsx|vue|json|css|scss|less|html|py|rs|go|java|c|cpp|h|sh|bash|yaml|yml|toml)$/i
+const MEDIA_EXTENSIONS = /\.(?:png|jpe?g|gif|svg|webp|avif|ico|bmp|tiff?|mp4|webm|mp3|wav|ogg)$/i
+const CODE_EXTENSIONS = /\.(?:ts|js|mjs|cjs|jsx|tsx|vue|json|css|scss|less|html|py|rs|go|java|c|cpp|h|sh|bash|yaml|yml|toml)$/i
 
 export interface IExtractedAssetItem {
   zipPath: string

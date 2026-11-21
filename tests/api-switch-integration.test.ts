@@ -40,7 +40,7 @@ class MockDOMElement {
     }
   }
   children: MockDOMElement[] = []
-  listeners: Record<string, Function[]> = {}
+  listeners: Record<string, Array<(...args: any[]) => void>> = {}
   attributes: Record<string, string> = {}
 
   constructor(tagName: string) {
@@ -60,12 +60,12 @@ class MockDOMElement {
     return child
   }
 
-  addEventListener(event: string, fn: Function) {
+  addEventListener(event: string, fn: (...args: any[]) => void) {
     if (!this.listeners[event]) this.listeners[event] = []
     this.listeners[event].push(fn)
   }
 
-  removeEventListener(event: string, fn: Function) {
+  removeEventListener(event: string, fn: (...args: any[]) => void) {
     if (!this.listeners[event]) return
     this.listeners[event] = this.listeners[event].filter(f => f !== fn)
   }

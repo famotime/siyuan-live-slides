@@ -95,9 +95,9 @@ describe("Lightbox Image Wheel Zoom & Pan (放映灯箱图片滚轮缩放与平�
       // 模拟视口与图片中心: 原中心位于 (500, 400)
       const origCenterX = 500
       const origCenterY = 400
-      let currentScale = 1.0
-      let currentTx = 0
-      let currentTy = 0
+      const currentScale = 1.0
+      const currentTx = 0
+      const currentTy = 0
 
       // 用户鼠标指向 (600, 450)
       const mouseX = 600

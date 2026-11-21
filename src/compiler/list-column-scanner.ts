@@ -3,6 +3,7 @@ import {
   ATTR_ELEM_SLOT,
   ATTR_PAGE_LAYOUT,
   isColsHeaderLayout,
+  isHeadingBlock,
 } from "../types/slides-protocol"
 import { isPageBreak } from "./scope-mapper"
 import { isListItemNode } from "../utils/markdown-utils"
@@ -10,7 +11,6 @@ import {
   detectSuperBlockImageLayout,
   extractSuperBlockWidthRatios,
   getContentChildren,
-  isHeadingBlock,
   isHorizontalSuperBlock,
   isImageBlock,
   isSuperBlock,

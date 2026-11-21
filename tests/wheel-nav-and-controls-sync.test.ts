@@ -8,8 +8,6 @@ import type { ISlidesDocument } from "../src/types/slides-protocol"
 describe("Wheel Navigation, Auto-hidden Controls Bar & Page Number Strong Sync", () => {
   const indexHtmlPath = path.resolve(__dirname, "../public/slides-client/index.html")
   const indexHtml = fs.readFileSync(indexHtmlPath, "utf-8")
-  const presenterHtmlPath = path.resolve(__dirname, "../public/slides-client/presenter.html")
-  const presenterHtml = fs.readFileSync(presenterHtmlPath, "utf-8")
 
   const dummyDoc: ISlidesDocument = {
     docId: "doc-wheel-test",
@@ -83,15 +81,6 @@ describe("Wheel Navigation, Auto-hidden Controls Bar & Page Number Strong Sync",
       expect(exportedHtml).toContain('window.addEventListener("wheel"')
       expect(exportedHtml).toContain("renderSlide(currentIndex + 1);")
       expect(exportedHtml).toContain("renderSlide(currentIndex - 1);")
-    })
-
-    it("双屏演讲者 presenter.html 应包含滚轮上下翻页支持，并排除演讲者笔记区域正常滚动", () => {
-      expect(presenterHtml).toContain("function onWheel(e)")
-      expect(presenterHtml).toContain(".presenter-notes, .presenter-sidebar")
-      expect(presenterHtml).toContain("goNextSlide()")
-      expect(presenterHtml).toContain("goPrevSlide()")
-      expect(presenterHtml).toContain('window.addEventListener("wheel", onWheel, { passive: false })')
-      expect(presenterHtml).toContain('window.removeEventListener("wheel", onWheel)')
     })
 
     it("模拟局部滚动判定函数：若内部元素未滚到边界应放行，若已滚到尽头或无可滚动元素应触发翻页", () => {

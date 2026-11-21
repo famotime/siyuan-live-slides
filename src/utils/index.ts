@@ -8,7 +8,7 @@ export * from "./markdown-utils"
  */
 export function getDomByVueComponent(component: Component): HTMLElement {
   if (typeof document === "undefined") {
-    throw new Error("getDomByVueComponent can only be run in DOM environments")
+    throw new TypeError("getDomByVueComponent can only be run in DOM environments")
   }
   const div = document.createElement("div")
   const app = createApp(component)

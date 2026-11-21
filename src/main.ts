@@ -154,10 +154,6 @@ export function unmountInspectorDock(_element?: HTMLElement): void {
   }
 }
 
-// 兼容别名（历史遗留，暂无调用方）
-export const mountDock = mountInspectorDock
-export const unmountDock = unmountInspectorDock
-
 // 3. 数据调度与联动桥梁
 export function updateDockDocument(doc: ISlidesDocument, targetDocId?: string): void {
   // 更新右侧配置面板

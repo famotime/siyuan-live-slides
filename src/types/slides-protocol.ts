@@ -91,14 +91,26 @@ export function isColsHeaderLayout(layout?: string): boolean {
 }
 
 /**
- * 判断块是否为标题块（支持思源简短类型 h、完整 NodeHeading、subType h1~h6、Markdown # 标题前缀）
+ * 判断块是否为标题块（唯一规范实现）
+ *
+ * 鸭子类型参数兼容三类宿主：编译模型 ISlidesBlockItem（rawMarkdown/content/rawNode）、
+ * 内核 AST 节点 ISiYuanBlockNode（markdown/content）与测试用普通对象。
+ * 支持思源简短类型 h、完整 NodeHeading（大小写不敏感）、subType h1~h6、Markdown # 标题前缀。
  */
-export function isHeadingBlock(b?: ISlidesBlockItem): boolean {
+export function isHeadingBlock(b?: {
+  type?: string
+  subType?: string
+  rawNode?: { subType?: string }
+  rawMarkdown?: string
+  markdown?: string
+  content?: string
+}): boolean {
   if (!b) return false
-  if (b.type === "h" || b.type === "NodeHeading") return true
-  const sub = b.subType || b.rawNode?.subType || ""
-  if (/^h[1-6]$/i.test(sub)) return true
-  const md = (b.rawMarkdown || b.content || "").trim()
+  const t = String(b.type || "").toLowerCase()
+  if (t === "h" || t === "nodeheading") return true
+  const sub = String(b.rawNode?.subType || b.subType || "").toLowerCase()
+  if (/^h[1-6]$/.test(sub)) return true
+  const md = String(b.rawMarkdown || b.markdown || b.content || "").trim()
   if (/^#{1,6}\s+/.test(md)) return true
   return false
 }

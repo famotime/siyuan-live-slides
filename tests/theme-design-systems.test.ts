@@ -201,6 +201,7 @@ describe("Theme Design Systems & Contrast Guard (三大主题鲜明特色与亮�
         }
         expect(end).toBeGreaterThan(0)
         const fnBody = slice.slice(0, end)
+        // eslint-disable-next-line no-new-func -- 测试需动态求值从沙箱脚本中抽取的 isLightColor
         return new Function(`${fnBody}; return isLightColor;`)() as (c?: string) => boolean | null
       }
 

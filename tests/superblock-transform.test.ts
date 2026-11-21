@@ -50,6 +50,7 @@ class MockElement {
   }
 
   closest(sel: string): MockElement | null {
+    // eslint-disable-next-line ts/no-this-alias -- 模拟 DOM closest 沿父链回溯的惯用写法
     let cur: MockElement | null = this
     while (cur) {
       if (cur.matches(sel)) return cur

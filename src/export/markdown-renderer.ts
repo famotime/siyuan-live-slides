@@ -70,7 +70,7 @@ export function parseShikiRanges(shikiPattern?: string): Set<number> | "all" {
 /**
  * 允许在 Markdown 行内安全放行的通用语义 HTML 标签白名单
  */
-export const SAFE_INLINE_HTML_TAGS = new Set([
+const SAFE_INLINE_HTML_TAGS = new Set([
   "kbd", "mark", "sub", "sup", "span", "a", "br", "b", "i", "u", "s",
   "del", "em", "strong", "code", "small", "abbr", "ruby", "rt", "rp", "v-mark",
   "img", "video", "source", "picture",
@@ -206,7 +206,7 @@ export function renderMarkdownTable(tableLines: string[], tableClassName = "pdf-
   return `<table class="${tableClassName}">${theadHtml}<tbody>${tbodyRows}</tbody></table>`
 }
 
-export function escapeCodeHtml(str: string): string {
+function escapeCodeHtml(str: string): string {
   return String(str || "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -261,7 +261,7 @@ export interface IBlockRenderOptions {
 /**
  * 从页面提取用于目录显示的标题与层级
  */
-export function extractSlideTitleAndLevel(slide: ISlidesVirtualPage, fallbackIndex: number) {
+function extractSlideTitleAndLevel(slide: ISlidesVirtualPage, fallbackIndex: number) {
   if (!slide) return null
   const fm = slide.frontmatter || {}
   if (fm.hideInToc === true || fm.hideInToc === "true") {

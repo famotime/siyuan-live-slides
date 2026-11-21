@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest"
+import { isHeadingBlock } from "../src/types/slides-protocol"
 import {
-  isHeadingBlock,
   isListItemBlock,
   flattenSlideContentItems,
   scanSlideForAutoAnimation,
