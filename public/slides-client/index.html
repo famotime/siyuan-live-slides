@@ -6472,9 +6472,6 @@
             if (!block.clicks || getBlockClickClass(block) === "v-click-visible") {
               const animType = String(block.anim.type).toLowerCase().trim()
               classes.push("slides-anim-" + animType)
-              if (animType === "typewriter") {
-                classes.push("slides-typewriter-cursor")
-              }
             }
           }
 
@@ -8666,7 +8663,7 @@
               }
               updateScale()
               nextTick(() => {
-                triggerSlideAnimations()
+                triggerSlideAnimations(true)
                 syncAutoplayVideos()
               })
               break
@@ -8765,18 +8762,67 @@
           triggerSlideAnimations()
         })
 
-        let activeAnimCleanups = []
-        function triggerSlideAnimations() {
+        const activeAnimCleanups = new Set()
+        const animNodeCleanups = new WeakMap()
+
+        function clearAllActiveAnimations() {
           activeAnimCleanups.forEach(c => { try { c() } catch(e){} })
-          activeAnimCleanups = []
+          activeAnimCleanups.clear()
+        }
+
+        function cleanupNodeAnim(node) {
+          const prevCancel = animNodeCleanups.get(node)
+          if (prevCancel) {
+            try { prevCancel() } catch(e){}
+            activeAnimCleanups.delete(prevCancel)
+            animNodeCleanups.delete(node)
+          }
+        }
+
+        function getAnimTargetEl(node, animType) {
+          if (animType === "countup") {
+            return node.querySelector(".slides-countup-target") || node.querySelector("p, h1, h2, h3, h4, h5, h6, span, strong") || node
+          }
+          if (animType === "typewriter") {
+            return node.querySelector("p, h1, h2, h3, h4, h5, h6, span, code") || node
+          }
+          return node
+        }
+
+        function triggerSlideAnimations(reset = false) {
+          if (reset) {
+            clearAllActiveAnimations()
+          }
           nextTick(() => {
             const container = document.querySelector(".slide-viewport") || document.body
             const nodes = container.querySelectorAll("[data-slides-anim]")
             nodes.forEach(node => {
-              if (node.closest(".v-click-hidden") || node.classList.contains("v-click-hidden")) return
               const animType = node.getAttribute("data-slides-anim")
+              if (animType !== "countup" && animType !== "typewriter") return
+              const targetEl = getAnimTargetEl(node, animType)
+              const isHidden = !!(node.closest(".v-click-hidden") || node.classList.contains("v-click-hidden"))
+
+              if (isHidden) {
+                cleanupNodeAnim(node)
+                targetEl.removeAttribute("data-anim-played")
+                if (targetEl.hasAttribute("data-anim-original")) {
+                  targetEl.textContent = targetEl.getAttribute("data-anim-original") || ""
+                }
+                if (animType === "typewriter") {
+                  node.classList.remove("slides-typewriter-cursor")
+                  targetEl.classList.remove("slides-typewriter-cursor")
+                }
+                return
+              }
+
+              if (!reset && targetEl.getAttribute("data-anim-played") === "true") {
+                return
+              }
+
+              cleanupNodeAnim(node)
+              targetEl.setAttribute("data-anim-played", "true")
+
               if (animType === "countup") {
-                const targetEl = node.querySelector(".slides-countup-target") || node.querySelector("p, h1, h2, h3, h4, h5, h6, span, strong") || node
                 if (!targetEl.getAttribute("data-anim-original")) {
                   targetEl.setAttribute("data-anim-original", targetEl.textContent || "")
                 }
@@ -8795,21 +8841,29 @@
                   prefix: prefixVal,
                   suffix: suffixVal,
                 })
-                activeAnimCleanups.push(cancel)
+                animNodeCleanups.set(node, cancel)
+                activeAnimCleanups.add(cancel)
               } else if (animType === "typewriter") {
-                const targetEl = node.querySelector("p, h1, h2, h3, h4, h5, h6, span, code") || node
+                if (targetEl !== node) {
+                  node.classList.remove("slides-typewriter-cursor")
+                }
+                targetEl.classList.add("slides-typewriter-cursor")
                 if (!targetEl.getAttribute("data-anim-original")) {
                   targetEl.setAttribute("data-anim-original", targetEl.textContent || "")
                 }
                 const fullText = targetEl.getAttribute("data-anim-original") || targetEl.textContent || ""
                 const durationVal = parseInt(node.getAttribute("data-anim-duration") || "1500", 10)
                 const cancel = startTypewriter(targetEl, fullText, { duration: durationVal })
-                activeAnimCleanups.push(cancel)
+                animNodeCleanups.set(node, cancel)
+                activeAnimCleanups.add(cancel)
               }
             })
           })
         }
 
+        watch(currentPageIndex, () => {
+          clearAllActiveAnimations()
+        })
         watch([currentPageIndex, currentStep], () => {
           triggerSlideAnimations()
         })

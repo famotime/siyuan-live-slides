@@ -697,6 +697,10 @@ export function getSlideRenderingSection(): string {
               requestAnimationFrame(update);
             } else if (animType === "typewriter") {
               const targetEl = node.querySelector("p, h1, h2, h3, h4, h5, h6, span, code") || node;
+              if (targetEl !== node) {
+                node.classList.remove("slides-typewriter-cursor");
+                targetEl.classList.add("slides-typewriter-cursor");
+              }
               if (!targetEl.getAttribute("data-anim-original")) {
                 targetEl.setAttribute("data-anim-original", targetEl.textContent || "");
               }

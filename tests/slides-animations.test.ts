@@ -156,10 +156,12 @@ describe("Slides Animations (微动效与强调体系)", () => {
       expect(script).toContain("strong")
     })
 
-    it("Typewriter 分支基于 data-anim-original 原文逐步打印", () => {
+    it("Typewriter 分支基于 data-anim-original 原文逐步打印，并将光标类名挂载到文本目标元素", () => {
       expect(script).toContain('animType === "typewriter"')
       expect(script).toContain('"data-anim-original"')
       expect(script).toContain("fullText.slice(0, idx)")
+      expect(script).toContain('node.classList.remove("slides-typewriter-cursor")')
+      expect(script).toContain('targetEl.classList.add("slides-typewriter-cursor")')
     })
 
     it("带有 v-click-hidden 的节点被调度器自动跳过", () => {
