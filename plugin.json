@@ -11,9 +11,6 @@
     "darwin",
     "docker"
   ],
-  "kernels": [
-    "all"
-  ],
   "frontends": [
     "desktop",
     "desktop-window",
