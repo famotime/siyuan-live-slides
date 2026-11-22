@@ -229,5 +229,57 @@ describe("Theme Styles Generator (思源笔记调色板与字体样式生成器)
     expect(html).toContain("领域</span>：从为知笔记到思源笔记</h3>")
     expect(html).not.toContain("{: style=")
   })
+
+  it("cleanAndTransformInlineKramdown 支持含标点/括号/多属性顺序的行内样式解析", () => {
+    expect(cleanAndTransformInlineKramdown('重点：内容！{: style="color: red; font-size: 24px;"}')).toBe(
+      '<span style="color: red; font-size: 24px;">重点：内容！</span>',
+    )
+    expect(cleanAndTransformInlineKramdown('**关键点**{: id="s1" style="background-color: yellow;"}')).toBe(
+      '<span style="background-color: yellow;">**关键点**</span>',
+    )
+    expect(cleanAndTransformInlineKramdown('==高亮=={: style="font-size: 28px;"}')).toBe(
+      '<span style="font-size: 28px;">==高亮==</span>',
+    )
+  })
+
+  it("convertBlockToHtml 当块级 style 含 font-size 与 color 时注入继承标记类", () => {
+    const html = convertBlockToHtml({
+      id: "b-styled",
+      type: "p",
+      content: "大字号文本",
+      rawMarkdown: "大字号文本",
+      attributes: {
+        style: "color: var(--b3-font-color2); font-size: 32px;",
+      },
+    })
+    expect(html).toContain("slide-styled-block")
+    expect(html).toContain("slide-block--custom-font-size")
+    expect(html).toContain("slide-block--custom-color")
+    expect(DEFAULT_SIYUAN_PALETTE_CSS).toContain(".slide-block--custom-font-size")
+    expect(DEFAULT_SIYUAN_PALETTE_CSS).toContain(".slide-block--custom-color")
+    expect(DEFAULT_SIYUAN_PALETTE_CSS).toContain('.slide-viewport[data-theme="dark"]')
+  })
+
+  it("行尾加粗+颜色 (Kramdown Span IAL) 编译与渲染不丢色，且兼容 **文字{: style=...}** 写法", () => {
+    const doc = buildSlidesDocument("doc-bold-color", {}, [
+      {
+        id: "p-bold-end",
+        root_id: "doc-bold-color",
+        type: "p",
+        content: "这是重点文字",
+        markdown: '这是**重点文字**{: style="color: var(--b3-font-color1);"}',
+        ial: { id: "p-bold-end" },
+      },
+    ])
+    const block = doc.slides[0].blocks[0]
+    expect(block.rawMarkdown).toContain('<span style="color: var(--b3-font-color1);">**重点文字**</span>')
+    const html = convertBlockToHtml(block)
+    expect(html).toContain('<span style="color: var(--b3-font-color1);"><strong>重点文字</strong></span>')
+
+    // 加粗内部带局部样式：不应把前导 ** 吞进 span 导致加粗失效
+    expect(cleanAndTransformInlineKramdown('**文字{: style="color: red;"}**')).toBe(
+      '**<span style="color: red;">文字</span>**',
+    )
+  })
 })
 

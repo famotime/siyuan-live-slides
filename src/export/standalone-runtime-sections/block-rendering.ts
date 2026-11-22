@@ -32,9 +32,115 @@ export function getBlockRenderingSection(): string {
         return valid;
       }
 
+      function escapeInlineHtml(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function cleanInlineKramdownStandalone(text) {
+        if (!text || typeof text !== "string") return "";
+        const codeTokens = [];
+        let safeText = text.replace(/\\x60([^\\x60]+)\\x60/g, function(m) {
+          codeTokens.push(m);
+          return "%%INLINE_CODE_" + (codeTokens.length - 1) + "%%";
+        });
+        safeText = safeText.replace(/(<\\/[a-zA-Z0-9_-]+>)\\s*\\{:[^}]*\\}/g, "$1");
+        const extractStyle = function(attrBody) {
+          const m = attrBody.match(/\\bstyle\\s*=\\s*(?:"([^"]*)"|'([^']*)')/i);
+          return m ? (m[1] ?? m[2] ?? "").trim() : null;
+        };
+        const wrapSyntax = function(pattern) {
+          safeText = safeText.replace(pattern, function(full, content, attrBody) {
+            const styleVal = extractStyle(attrBody);
+            return styleVal ? '<span style="' + styleVal + '">' + content + '</span>' : full;
+          });
+        };
+        wrapSyntax(/(\\[[^\\]]+\\]\\([^)]+\\))\\s*\\{:\\s*([^}]*)\\}/g);
+        wrapSyntax(/(\\*\\*[^*]+\\*\\*)\\s*\\{:\\s*([^}]*)\\}/g);
+        wrapSyntax(/(__[^_]+__)\\s*\\{:\\s*([^}]*)\\}/g);
+        wrapSyntax(/(==[^=]+==)\\s*\\{:\\s*([^}]*)\\}/g);
+        wrapSyntax(/(\\*[^*]+\\*)\\s*\\{:\\s*([^}]*)\\}/g);
+        wrapSyntax(/(~~[^~]+~~)\\s*\\{:\\s*([^}]*)\\}/g);
+        safeText = safeText.replace(/([^\\s<>]+)\\s*\\{:\\s*([^}]*)\\}/gu, function(full, content, attrBody) {
+          const styleVal = extractStyle(attrBody);
+          if (!styleVal) return full;
+          const leadingDelim = content.match(/^(\\*\\*|__|==|~~|\\*)(.+)$/);
+          if (leadingDelim) {
+            return leadingDelim[1] + '<span style="' + styleVal + '">' + leadingDelim[2] + '</span>';
+          }
+          return '<span style="' + styleVal + '">' + content + '</span>';
+        });
+        safeText = safeText.replace(/\\{:[^}]*\\}/g, "");
+        safeText = safeText.replace(/%%INLINE_CODE_(\\d+)%%/g, function(_, idx) {
+          return codeTokens[parseInt(idx, 10)] || "";
+        });
+        return safeText;
+      }
+
+      const SAFE_STANDALONE_INLINE_TAGS = new Set([
+        "kbd", "mark", "sub", "sup", "span", "a", "br", "b", "i", "u", "s",
+        "del", "em", "strong", "code", "small", "abbr", "ruby", "rt", "rp", "v-mark",
+        "img", "video", "source", "picture"
+      ]);
+
+      function formatInlineStandalone(text) {
+        if (!text) return "";
+        const preprocessed = cleanInlineKramdownStandalone(text);
+        const tokens = [];
+        const tokenized = preprocessed.replace(/<\\/?([a-zA-Z0-9_-]+)(?:\\s+[^<>]*)?\\/?>/g, function(tagMatch, tagName) {
+          const lowerTag = tagName.toLowerCase();
+          if (!SAFE_STANDALONE_INLINE_TAGS.has(lowerTag)) return tagMatch;
+          if (/on\\w+\\s*=|javascript:/i.test(tagMatch)) return tagMatch;
+          if (lowerTag === "v-mark") {
+            const tm = tagMatch.match(/type=["']?([a-zA-Z-]+)["']?/);
+            const mt = tm ? tm[1] : "circle";
+            tokens.push(tagMatch.startsWith("</") ? "</mark>" : '<mark class="v-mark v-mark--' + mt + '">');
+            return "%%SAFE_HTML_" + (tokens.length - 1) + "%%";
+          }
+          tokens.push(tagMatch);
+          return "%%SAFE_HTML_" + (tokens.length - 1) + "%%";
+        });
+        let res = escapeInlineHtml(tokenized);
+        res = res.replace(/\\$([^$\\n]+)\\$/g, '<span class="katex-inline font-math"><em>$1</em></span>');
+        res = res.replace(/!\\[(.*?)\\]\\((.*?)\\)/g, function(_, alt, url) {
+          const isGif = /\\.gif(?:\\?|$)/i.test(url);
+          return '<img alt="' + alt + '" src="' + url + '" class="' + (isGif ? "slide-inline-img list-item-gif" : "slide-inline-img") + '" />';
+        });
+        res = res.replace(/\\[(.*?)\\]\\((.*?)\\)/g, function(_, title, url) {
+          if (url.startsWith("siyuan://blocks/")) {
+            const blockId = url.replace("siyuan://blocks/", "").split("?")[0];
+            return '<a href="' + url + '" data-ref-id="' + blockId + '" class="slides-ref-tag">🔗 ' + title + '</a>';
+          }
+          return '<a href="' + url + '" target="_blank" rel="noopener noreferrer" class="slides-link">' + title + '</a>';
+        });
+        res = res.replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>");
+        res = res.replace(/\\*(.*?)\\*/g, "<em>$1</em>");
+        res = res.replace(/~~(.*?)~~/g, "<del>$1</del>");
+        res = res.replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
+        res = res.replace(/%%SAFE_HTML_(\\d+)%%/g, function(_, idxStr) {
+          return tokens[parseInt(idxStr, 10)] || "";
+        });
+        return res;
+      }
+
       function renderBlock(block, extraClass) {
         const div = document.createElement("div");
         div.className = "slide-block" + (extraClass ? " " + extraClass : "");
+        const rawBlockStyle = (block && (block.attributes?.style || block.ial?.style)) || "";
+        if (rawBlockStyle) {
+          div.style.cssText = rawBlockStyle;
+          div.classList.add("slide-styled-block");
+          if (/\\bfont-size\\s*:/i.test(rawBlockStyle)) {
+            div.classList.add("slide-block--custom-font-size");
+          }
+          if (/(?:^|;)\\s*color\\s*:/i.test(rawBlockStyle)) {
+            div.classList.add("slide-block--custom-color");
+          }
+        }
         if (block && block.motion && block.motion.preset && block.motion.preset !== "none") {
           div.classList.add("slides-motion-" + block.motion.preset.toLowerCase());
           if (typeof block.motion.duration === "number" && block.motion.duration > 0) {
@@ -139,7 +245,7 @@ export function getBlockRenderingSection(): string {
 
         if (hMatch) {
           const level = hMatch[1].length;
-          let th = hMatch[2].trim().replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
+          let th = formatInlineStandalone(hMatch[2].trim());
           div.innerHTML = "<h" + level + ">" + th + "</h" + level + ">";
         }
         else if (md.startsWith("\\x60\\x60\\x60")) {
@@ -155,7 +261,7 @@ export function getBlockRenderingSection(): string {
           const heightStyle = customMaxHeight ? ' style="max-height:' + customMaxHeight + ';overflow-y:auto;"' : "";
           div.innerHTML = "<pre" + heightStyle + "><code>" + md.slice(3, -3) + "</code></pre>";
         }
-        else if (md.startsWith("> ")) div.innerHTML = "<blockquote><p>" + md.slice(2) + "</p></blockquote>";
+        else if (md.startsWith("> ")) div.innerHTML = "<blockquote><p>" + formatInlineStandalone(md.slice(2)) + "</p></blockquote>";
         else if ((/<video\\b/i.test(md) || (block && (block.type === "video" || block.type === "NodeVideo"))) && !/^(\\s*)([-*+]|\\d+\\.)\\s+/m.test(md) && !hasHeadingTag && !md.includes("\\n")) {
           div.classList.add("slide-video-container", "slide-media-container", "slide-media-block");
           const isAutoplay = block && block.attributes && block.attributes["custom-slides-autoplay"] === "true";
@@ -251,10 +357,10 @@ export function getBlockRenderingSection(): string {
             const fhm = firstL.match(/^(#{1,6})\\s+(.*)$/);
             if (fhm) {
               const lvl = fhm[1].length;
-              let th = fhm[2].trim().replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
+              let th = formatInlineStandalone(fhm[2].trim());
               lParts.push('<h' + lvl + ' class="slide-list-item-title">' + th + '</h' + lvl + '>');
             } else {
-              let th = firstL.trim().replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
+              let th = formatInlineStandalone(firstL.trim());
               lParts.push('<p class="slide-list-item-title">' + th + '</p>');
             }
             if (leadLines.length > 1) {
@@ -262,7 +368,7 @@ export function getBlockRenderingSection(): string {
               let pL = [];
               const flushLeadP = () => {
                 if (pL.length > 0) {
-                  let txt = pL.map(l => l.replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>")).join("<br/>");
+                  let txt = pL.map(l => formatInlineStandalone(l)).join("<br/>");
                   lParts.push('<p class="slide-list-item-desc">' + txt + '</p>');
                   pL = [];
                 }
@@ -272,7 +378,7 @@ export function getBlockRenderingSection(): string {
                 if (hm) {
                   flushLeadP();
                   const lvl = hm[1].length;
-                  let th = hm[2].trim().replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
+                  let th = formatInlineStandalone(hm[2].trim());
                   lParts.push('<h' + lvl + ' class="slide-list-item-title">' + th + '</h' + lvl + '>');
                 } else {
                   pL.push(l);
@@ -294,14 +400,14 @@ export function getBlockRenderingSection(): string {
             const nClass = lvl > 0 ? " slide-list-item--nested" : "";
             const clsAttr = nClass ? ' class="' + nClass.trim() + '"' : "";
             if (!hasHeading) {
-              let h = lines.map(l => l.replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>")).join("<br/>");
+              let h = lines.map(l => formatInlineStandalone(l)).join("<br/>");
               return '<li' + clsAttr + nStyle + '>' + h + med + '</li>';
             }
             const parts = [];
             let pLines = [];
             const flushP = () => {
               if (pLines.length > 0) {
-                let ph = pLines.map(l => l.replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>")).join("<br/>");
+                let ph = pLines.map(l => formatInlineStandalone(l)).join("<br/>");
                 parts.push('<p class="slide-list-item-desc">' + ph + '</p>');
                 pLines = [];
               }
@@ -311,7 +417,7 @@ export function getBlockRenderingSection(): string {
               if (hm) {
                 flushP();
                 const hl = hm[1].length;
-                let th = hm[2].trim().replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
+                let th = formatInlineStandalone(hm[2].trim());
                 parts.push('<h' + hl + ' class="slide-list-item-title">' + th + '</h' + hl + '>');
               } else {
                 pLines.push(l);
@@ -369,7 +475,7 @@ export function getBlockRenderingSection(): string {
               if (hm) {
                 isFirstParagraph = false;
                 const hl = hm[1].length;
-                let th = hm[2].trim().replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
+                let th = formatInlineStandalone(hm[2].trim());
                 return '<h' + hl + ' class="slide-list-item-title">' + th + '</h' + hl + '>';
               }
               const im = t.match(/^!\\[(.*?)\\]\\((.*?)\\)$/);
@@ -383,14 +489,14 @@ export function getBlockRenderingSection(): string {
                 isFirstParagraph = false;
                 const subLines = t.split(/\\r?\\n/).map(l => l.trim()).filter(Boolean);
                 if (subLines.length === 1) {
-                  let ph = subLines[0].replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
+                  let ph = formatInlineStandalone(subLines[0]);
                   return '<p class="slide-list-item-title">' + ph + '</p>';
                 }
-                let titleHtml = subLines[0].replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
-                let descHtml = subLines.slice(1).map(l => l.replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>")).join("<br/>");
+                let titleHtml = formatInlineStandalone(subLines[0]);
+                let descHtml = subLines.slice(1).map(l => formatInlineStandalone(l)).join("<br/>");
                 return '<p class="slide-list-item-title">' + titleHtml + '</p>\\n<p class="slide-list-item-desc">' + descHtml + '</p>';
               }
-              let ph = t.replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
+              let ph = formatInlineStandalone(t);
               return '<p class="slide-list-item-desc">' + ph + '</p>';
             }).filter(Boolean);
             div.innerHTML = htmlParts.join("\\n");
@@ -400,7 +506,7 @@ export function getBlockRenderingSection(): string {
               div.classList.add("slide-media-container", "slide-media-block", "slide-block--image");
               div.innerHTML = '<img alt="' + imgMatch[1] + '" src="' + imgMatch[2] + '" class="slide-media-img" />';
             } else {
-              let html = md.replace(/\\*\\*(.*?)\\*\\*/g, "<strong>$1</strong>").replace(/\\x60([^\\x60]+)\\x60/g, "<code>$1</code>");
+              let html = formatInlineStandalone(md);
               const pCls = (block && block.isColFirst) ? ' class="slide-list-item-title"' : '';
               div.innerHTML = "<p" + pCls + ">" + html + "</p>";
             }

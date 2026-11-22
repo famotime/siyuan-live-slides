@@ -239,6 +239,7 @@ const defaultDeps: IDocumentCompilerDeps = {
 export class DocumentCompilerService {
   private deps: IDocumentCompilerDeps
   private attrOverrides = new Map<string, Record<string, string>>()
+  private styleOverrides = new Map<string, string>()
   private trackedListSuperBlocks = new Map<string, ITrackedListSuperBlock[]>()
   /** 诊断：已提示过"索引树回退"的文档 id，避免持续编辑时刷屏 */
   private fallbackWarnedDocId = ""
@@ -293,12 +294,25 @@ export class DocumentCompilerService {
   }
 
   /**
+   * 写入块原生样式属性 (style) 的即时覆盖缓存（支持空字符串以清除旧索引中的 style）
+   */
+  public setBlockStyleOverride(id: string, style?: string | null): void {
+    if (!id) return
+    this.styleOverrides.set(id, style ? String(style) : "")
+  }
+
+  /**
    * 清除特定块或属性的即时覆盖缓存
    */
   public clearBlockAttrOverride(id: string, key?: string): void {
     if (!id) return
     if (!key) {
       this.attrOverrides.delete(id)
+      this.styleOverrides.delete(id)
+      return
+    }
+    if (key === "style") {
+      this.styleOverrides.delete(id)
       return
     }
     const existing = this.attrOverrides.get(id)
@@ -315,6 +329,7 @@ export class DocumentCompilerService {
    */
   public clearAllOverrides(): void {
     this.attrOverrides.clear()
+    this.styleOverrides.clear()
     this.trackedListSuperBlocks.clear()
   }
 
@@ -392,6 +407,14 @@ export class DocumentCompilerService {
         const override = this.attrOverrides.get(id)
         if (override) {
           Object.assign(ialMap, override)
+        }
+        if (this.styleOverrides.has(id)) {
+          const styleVal = this.styleOverrides.get(id)
+          if (styleVal) {
+            ialMap.style = styleVal
+          } else {
+            delete ialMap.style
+          }
         }
         return ialMap
       }
@@ -526,6 +549,14 @@ export class DocumentCompilerService {
                 const cOverride = this.attrOverrides.get(c.id)
                 if (cOverride) {
                   Object.assign(cIalMap, cOverride)
+                }
+                if (this.styleOverrides.has(c.id)) {
+                  const styleVal = this.styleOverrides.get(c.id)
+                  if (styleVal) {
+                    cIalMap.style = styleVal
+                  } else {
+                    delete cIalMap.style
+                  }
                 }
                 return {
                   id: c.id,

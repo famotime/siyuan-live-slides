@@ -40,7 +40,8 @@ export const DEFAULT_SIYUAN_PALETTE_CSS = `/* SiYuan Note Built-in Font & Backgr
 :root,
 html:not(.dark),
 [data-theme="light"],
-[data-theme-mode="light"] {
+[data-theme-mode="light"],
+.slide-viewport[data-theme="light"] {
   /* 思源基础卡片与主题色 (浅色模式 daylight) */
   --b3-card-error-color: #790600;
   --b3-card-error-background: #f5d1cf;
@@ -94,7 +95,8 @@ html.dark,
 [data-theme="dark"],
 [data-theme-mode="dark"],
 .theme-dark,
-.dark {
+.dark,
+.slide-viewport[data-theme="dark"] {
   /* 思源基础卡片与主题色 (深色模式 midnight) */
   --b3-card-error-color: rgb(243, 153, 147);
   --b3-card-error-background: #442724;
@@ -200,6 +202,36 @@ html.dark,
   box-sizing: border-box;
   margin: 6px 0;
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* 块级显式字体大小继承：防止内层 rem 固定字号规则覆盖思源块级字号 */
+.slide-block--custom-font-size p,
+.slide-block--custom-font-size h1,
+.slide-block--custom-font-size h2,
+.slide-block--custom-font-size h3,
+.slide-block--custom-font-size h4,
+.slide-block--custom-font-size h5,
+.slide-block--custom-font-size h6,
+.slide-block--custom-font-size li,
+.slide-block--custom-font-size blockquote,
+.slide-block--custom-font-size .slide-list-item-title,
+.slide-block--custom-font-size .slide-list-item-desc {
+  font-size: inherit !important;
+}
+
+/* 块级显式文字颜色继承：确保内层标题/段落继承块级前景色（同时保留行内 span 局部高亮） */
+.slide-block--custom-color p,
+.slide-block--custom-color h1,
+.slide-block--custom-color h2,
+.slide-block--custom-color h3,
+.slide-block--custom-color h4,
+.slide-block--custom-color h5,
+.slide-block--custom-color h6,
+.slide-block--custom-color li,
+.slide-block--custom-color blockquote,
+.slide-block--custom-color .slide-list-item-title,
+.slide-block--custom-color .slide-list-item-desc {
+  color: inherit !important;
 }
 
 /* 行内带背景色文本的精美圆角与微边距 */

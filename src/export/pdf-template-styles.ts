@@ -516,6 +516,32 @@ export function generatePdfExportStyles(options?: {
     .pdf-block h3 { font-size: 1.4rem; font-weight: 600; margin-bottom: 8px; }
     .pdf-block h4 { font-size: 1.2rem; font-weight: 600; margin-bottom: 6px; }
     .pdf-block p { font-size: 1.15rem; color: inherit; }
+    .slide-block--custom-font-size p,
+    .slide-block--custom-font-size h1,
+    .slide-block--custom-font-size h2,
+    .slide-block--custom-font-size h3,
+    .slide-block--custom-font-size h4,
+    .slide-block--custom-font-size h5,
+    .slide-block--custom-font-size h6,
+    .slide-block--custom-font-size li,
+    .slide-block--custom-font-size blockquote,
+    .slide-block--custom-font-size .slide-list-item-title,
+    .slide-block--custom-font-size .slide-list-item-desc {
+      font-size: inherit !important;
+    }
+    .slide-block--custom-color p,
+    .slide-block--custom-color h1,
+    .slide-block--custom-color h2,
+    .slide-block--custom-color h3,
+    .slide-block--custom-color h4,
+    .slide-block--custom-color h5,
+    .slide-block--custom-color h6,
+    .slide-block--custom-color li,
+    .slide-block--custom-color blockquote,
+    .slide-block--custom-color .slide-list-item-title,
+    .slide-block--custom-color .slide-list-item-desc {
+      color: inherit !important;
+    }
     .pdf-code,
     pre {
       background: #f1f5f9;

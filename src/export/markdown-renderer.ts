@@ -457,6 +457,12 @@ export function convertBlockToHtml(
   if (rawBlockStyle) {
     styleParts.push(rawBlockStyle)
     styledClass = " slide-styled-block"
+    if (/\bfont-size\s*:/i.test(rawBlockStyle)) {
+      styledClass += " slide-block--custom-font-size"
+    }
+    if (/(?:^|;)\s*color\s*:/i.test(rawBlockStyle)) {
+      styledClass += " slide-block--custom-color"
+    }
   }
 
   if (styleParts.length > 0) {

@@ -316,11 +316,12 @@ export function buildSlidesDocument(
 
       let rawMd = extractBlockMarkdown(itemNode)
 
-      // 解析并剥离 Kramdown 尾部 IAL 属性标记 {: ... }
+      // 解析并剥离独立成行的块级 Kramdown 尾部 IAL 属性标记 {: ... }
+      // 注意：不能误切行尾的行内 Span IAL（如 **加粗文字**{: style="color: ..."}），否则会导致行尾样式丢失
       let combinedIal = itemNode.ial ? { ...itemNode.ial } : {}
-      const inlineIalMatch = rawMd.match(/\{:\s*([^}]+)\s*\}\s*$/)
+      const inlineIalMatch = rawMd.match(/(?:^|\r?\n)[ \t]*(\{:\s*[^}]+\s*\})\s*$/)
       if (inlineIalMatch) {
-        const parsedInline = parseKramdownIAL(inlineIalMatch[0])
+        const parsedInline = parseKramdownIAL(inlineIalMatch[1])
         combinedIal = { ...parsedInline, ...combinedIal }
         rawMd = rawMd.slice(0, inlineIalMatch.index).trim()
       }

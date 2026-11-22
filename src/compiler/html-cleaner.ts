@@ -489,10 +489,19 @@ export function convertHtmlToCleanMarkdown(html: string): string {
 }
 
 /**
+ * 从 Kramdown IAL 属性字符串中提取 style="..." 的值（不限制 style 在属性列表中的位置）
+ */
+function extractStyleFromKramdownAttrs(attrBody: string): string | null {
+  const m = attrBody.match(/\bstyle\s*=\s*(?:"([^"]*)"|'([^']*)')/i)
+  if (!m) return null
+  return (m[1] ?? m[2] ?? "").trim()
+}
+
+/**
  * 清洗并转换思源笔记独有的 Kramdown 行内 IAL 属性标记
  * 1. 剔除紧跟在 HTML 行内标签 (如 </span>) 后的冗余 Kramdown Span IAL ({: style="..."})
- * 2. 将紧随行内 Markdown 语法 (**加粗**、*斜体*、~~删除线~~、[链接](url)) 后的 {: style="..."} 转换为 <span style="..."> 包裹
- * 3. 将紧随文本单词/中文词组后的 {: style="..."} 转换为 <span style="..."> 包裹
+ * 2. 将紧随行内 Markdown 语法 (**加粗**、*斜体*、~~删除线~~、[链接](url)、==高亮==、__加粗__) 后的 {: ... style="..."} 转换为 <span style="..."> 包裹
+ * 3. 将紧随文本词组/含标点片段后的 {: ... style="..."} 转换为 <span style="..."> 包裹
  * 4. 彻底剥离任何残留的思源行内元数据 IAL ({: custom-xxx="..."} 等)，防止在演示中泄漏代码
  */
 export function cleanAndTransformInlineKramdown(text: string): string {
@@ -508,14 +517,30 @@ export function cleanAndTransformInlineKramdown(text: string): string {
   // 2. 移除紧跟在 HTML 闭合标签后的冗余 Kramdown Span IAL（如 </span>{: style="..."}）
   safeText = safeText.replace(/(<\/[a-zA-Z0-9_-]+>)\s*\{:[^}]*\}/g, "$1")
 
-  // 3. 处理 Markdown 行内加粗/斜体/删除线/链接后的 {: style="..."}
-  safeText = safeText.replace(/(\[[^\]]+\]\([^)]+\))\s*\{:\s*style=["']([^"']*)["'][^}]*\}/g, '<span style="$2">$1</span>')
-  safeText = safeText.replace(/(\*\*[^*]+\*\*)\s*\{:\s*style=["']([^"']*)["'][^}]*\}/g, '<span style="$2">$1</span>')
-  safeText = safeText.replace(/(\*[^*]+\*)\s*\{:\s*style=["']([^"']*)["'][^}]*\}/g, '<span style="$2">$1</span>')
-  safeText = safeText.replace(/(~~[^~]+~~)\s*\{:\s*style=["']([^"']*)["'][^}]*\}/g, '<span style="$2">$1</span>')
+  // 3. 处理 Markdown 行内语法后的 {: ... style="..." ...}（不限制 style 出现位置）
+  const wrapSyntaxWithStyle = (pattern: RegExp) => {
+    safeText = safeText.replace(pattern, (full, content: string, attrBody: string) => {
+      const styleVal = extractStyleFromKramdownAttrs(attrBody)
+      return styleVal ? `<span style="${styleVal}">${content}</span>` : full
+    })
+  }
+  wrapSyntaxWithStyle(/(\[[^\]]+\]\([^)]+\))\s*\{:\s*([^}]*)\}/g)
+  wrapSyntaxWithStyle(/(\*\*[^*]+\*\*)\s*\{:\s*([^}]*)\}/g)
+  wrapSyntaxWithStyle(/(__[^_]+__)\s*\{:\s*([^}]*)\}/g)
+  wrapSyntaxWithStyle(/(==[^=]+==)\s*\{:\s*([^}]*)\}/g)
+  wrapSyntaxWithStyle(/(\*[^*]+\*)\s*\{:\s*([^}]*)\}/g)
+  wrapSyntaxWithStyle(/(~~[^~]+~~)\s*\{:\s*([^}]*)\}/g)
 
-  // 4. 处理纯词组/中文字符后的 {: style="..."} (例如: 领域{: style="color: red;"})
-  safeText = safeText.replace(/([\p{L}\p{N}_\-]+)\s*\{:\s*style=["']([^"']*)["'][^}]*\}/gu, '<span style="$2">$1</span>')
+  // 4. 处理纯词组/中文字符/含标点片段后的 {: ... style="..." ...} (例如: 领域{: style="color: red;"} 或 **文字{: style="color: red;"}**)
+  safeText = safeText.replace(/([^\s<>]+)\s*\{:\s*([^}]*)\}/gu, (full, content: string, attrBody: string) => {
+    const styleVal = extractStyleFromKramdownAttrs(attrBody)
+    if (!styleVal) return full
+    const leadingDelim = content.match(/^(\*\*|__|==|~~|\*)(.+)$/)
+    if (leadingDelim) {
+      return `${leadingDelim[1]}<span style="${styleVal}">${leadingDelim[2]}</span>`
+    }
+    return `<span style="${styleVal}">${content}</span>`
+  })
 
   // 5. 移除任何剩余的行内 Kramdown 属性标记 {: ... }（如 {: custom-id="..."}、{: id="..."} 等思源元数据）
   safeText = safeText.replace(/\{:[^}]*\}/g, "")

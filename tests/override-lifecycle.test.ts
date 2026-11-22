@@ -102,6 +102,51 @@ describe("覆盖层生命周期治理 (P1-F1)", () => {
     syncDomSpy.mockRestore()
     setOverrideSpy.mockRestore()
   })
+
+  it("updateAttrs 事务中的 style 变更应即时同步至编译器样式覆盖层并支持清除", async () => {
+    const coordinator = new InspectorSyncCoordinator()
+    const setStyleSpy = vi.spyOn(globalDocumentCompiler, "setBlockStyleOverride")
+
+    coordinator.patchThematicBreakTransactions({
+      cmd: "transactions",
+      data: [
+        {
+          doOperations: [
+            {
+              action: "updateAttrs",
+              id: "style-block-1",
+              data: {
+                old: {},
+                new: { style: "color: var(--b3-font-color1); font-size: 28px;" },
+              },
+            },
+          ],
+        },
+      ],
+    })
+    expect(setStyleSpy).toHaveBeenCalledWith("style-block-1", "color: var(--b3-font-color1); font-size: 28px;")
+
+    coordinator.patchThematicBreakTransactions({
+      cmd: "transactions",
+      data: [
+        {
+          doOperations: [
+            {
+              action: "updateAttrs",
+              id: "style-block-1",
+              data: {
+                old: { style: "color: var(--b3-font-color1); font-size: 28px;" },
+                new: {},
+              },
+            },
+          ],
+        },
+      ],
+    })
+    expect(setStyleSpy).toHaveBeenCalledWith("style-block-1", "")
+    setStyleSpy.mockRestore()
+    globalDocumentCompiler.clearBlockAttrOverride("style-block-1")
+  })
 })
 
 describe("ApiSwitchBridge 生命周期状态重置 (P1-F2)", () => {

@@ -26,7 +26,8 @@
     :root,
     html:not(.dark),
     [data-theme="light"],
-    [data-theme-mode="light"] {
+    [data-theme-mode="light"],
+    .slide-viewport[data-theme="light"] {
       /* 思源基础卡片与主题色 (浅色模式 daylight) */
       --b3-card-error-color: #790600;
       --b3-card-error-background: #f5d1cf;
@@ -80,7 +81,8 @@
     [data-theme="dark"],
     [data-theme-mode="dark"],
     .theme-dark,
-    .dark {
+    .dark,
+    .slide-viewport[data-theme="dark"] {
       /* 思源基础卡片与主题色 (深色模式 midnight) */
       --b3-card-error-color: rgb(243, 153, 147);
       --b3-card-error-background: #442724;
@@ -186,6 +188,35 @@
       box-sizing: border-box;
       margin: 6px 0;
       transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    /* 块级显式字体大小与前景色继承（防止内层 rem/主题规则覆盖） */
+    .slide-block--custom-font-size p,
+    .slide-block--custom-font-size h1,
+    .slide-block--custom-font-size h2,
+    .slide-block--custom-font-size h3,
+    .slide-block--custom-font-size h4,
+    .slide-block--custom-font-size h5,
+    .slide-block--custom-font-size h6,
+    .slide-block--custom-font-size li,
+    .slide-block--custom-font-size blockquote,
+    .slide-block--custom-font-size .slide-list-item-title,
+    .slide-block--custom-font-size .slide-list-item-desc {
+      font-size: inherit !important;
+    }
+
+    .slide-block--custom-color p,
+    .slide-block--custom-color h1,
+    .slide-block--custom-color h2,
+    .slide-block--custom-color h3,
+    .slide-block--custom-color h4,
+    .slide-block--custom-color h5,
+    .slide-block--custom-color h6,
+    .slide-block--custom-color li,
+    .slide-block--custom-color blockquote,
+    .slide-block--custom-color .slide-list-item-title,
+    .slide-block--custom-color .slide-list-item-desc {
+      color: inherit !important;
     }
 
     /* 行内带背景色文本的精美圆角与微边距 */
@@ -4166,6 +4197,10 @@
     function formatInlineMarkdown(text) {
       if (!text) return ""
 
+      if (typeof cleanAndTransformInlineKramdown === "function") {
+        text = cleanAndTransformInlineKramdown(text)
+      }
+
       // 1. 抽取并保护安全内联 HTML 标签（避免被全局 escapeHtml 误伤转义）
       const tokens = []
       const tokenized = text.replace(/<\/?([a-zA-Z0-9_-]+)(?:\s+[^<>]*)?\/?>/g, (tagMatch, tagName) => {
@@ -6473,6 +6508,12 @@
           const rawStyle = block?.attributes?.style || block?.ial?.style || ""
           if (rawStyle) {
             classes.push("slide-styled-block")
+            if (/\bfont-size\s*:/i.test(rawStyle)) {
+              classes.push("slide-block--custom-font-size")
+            }
+            if (/(?:^|;)\s*color\s*:/i.test(rawStyle)) {
+              classes.push("slide-block--custom-color")
+            }
           }
 
           if (block && block.motion && block.motion.preset && block.motion.preset !== "none") {
@@ -6565,6 +6606,12 @@
           "img", "video", "source", "picture"
         ])
 
+        function extractStyleFromKramdownAttrs(attrBody) {
+          const m = attrBody.match(/\bstyle\s*=\s*(?:"([^"]*)"|'([^']*)')/i)
+          if (!m) return null
+          return (m[1] ?? m[2] ?? "").trim()
+        }
+
         // 清洗并转换思源笔记独有的 Kramdown 行内 IAL 属性标记
         function cleanAndTransformInlineKramdown(text) {
           if (!text || typeof text !== "string") return ""
@@ -6579,14 +6626,30 @@
           // 2. 移除紧跟在 HTML 闭合标签后的冗余 Kramdown Span IAL（如 </span>{: style="..."}）
           safeText = safeText.replace(/(<\/[a-zA-Z0-9_-]+>)\s*\{:[^}]*\}/g, "$1")
 
-          // 3. 处理 Markdown 行内加粗/斜体/删除线/链接后的 {: style="..."}
-          safeText = safeText.replace(/(\[[^\]]+\]\([^)]+\))\s*\{:\s*style=["']([^"']*)["'][^}]*\}/g, '<span style="$2">$1</span>')
-          safeText = safeText.replace(/(\*\*[^*]+\*\*)\s*\{:\s*style=["']([^"']*)["'][^}]*\}/g, '<span style="$2">$1</span>')
-          safeText = safeText.replace(/(\*[^*]+\*)\s*\{:\s*style=["']([^"']*)["'][^}]*\}/g, '<span style="$2">$1</span>')
-          safeText = safeText.replace(/(~~[^~]+~~)\s*\{:\s*style=["']([^"']*)["'][^}]*\}/g, '<span style="$2">$1</span>')
+          // 3. 处理 Markdown 行内语法后的 {: ... style="..." ...}（不限制 style 出现位置）
+          const wrapSyntaxWithStyle = (pattern) => {
+            safeText = safeText.replace(pattern, (full, content, attrBody) => {
+              const styleVal = extractStyleFromKramdownAttrs(attrBody)
+              return styleVal ? `<span style="${styleVal}">${content}</span>` : full
+            })
+          }
+          wrapSyntaxWithStyle(/(\[[^\]]+\]\([^)]+\))\s*\{:\s*([^}]*)\}/g)
+          wrapSyntaxWithStyle(/(\*\*[^*]+\*\*)\s*\{:\s*([^}]*)\}/g)
+          wrapSyntaxWithStyle(/(__[^_]+__)\s*\{:\s*([^}]*)\}/g)
+          wrapSyntaxWithStyle(/(==[^=]+==)\s*\{:\s*([^}]*)\}/g)
+          wrapSyntaxWithStyle(/(\*[^*]+\*)\s*\{:\s*([^}]*)\}/g)
+          wrapSyntaxWithStyle(/(~~[^~]+~~)\s*\{:\s*([^}]*)\}/g)
 
-          // 4. 处理纯词组/中文字符后的 {: style="..."} (例如: 领域{: style="color: red;"})
-          safeText = safeText.replace(/([\p{L}\p{N}_\-]+)\s*\{:\s*style=["']([^"']*)["'][^}]*\}/gu, '<span style="$2">$1</span>')
+          // 4. 处理纯词组/中文字符/含标点片段后的 {: ... style="..." ...}
+          safeText = safeText.replace(/([^\s<>]+)\s*\{:\s*([^}]*)\}/gu, (full, content, attrBody) => {
+            const styleVal = extractStyleFromKramdownAttrs(attrBody)
+            if (!styleVal) return full
+            const leadingDelim = content.match(/^(\*\*|__|==|~~|\*)(.+)$/)
+            if (leadingDelim) {
+              return `${leadingDelim[1]}<span style="${styleVal}">${leadingDelim[2]}</span>`
+            }
+            return `<span style="${styleVal}">${content}</span>`
+          })
 
           // 5. 移除任何剩余的行内 Kramdown 属性标记 {: ... }（如 {: custom-id="..."}、{: id="..."} 等思源元数据）
           safeText = safeText.replace(/\{:[^}]*\}/g, "")

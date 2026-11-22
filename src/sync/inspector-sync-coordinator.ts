@@ -533,6 +533,14 @@ export class InspectorSyncCoordinator {
                   diff[k] = String(v ?? "")
                 }
               }
+              // 同步思源原生外观样式属性 (style: 颜色/底色/字号) 至编译器即时覆盖层，避免索引滞后
+              if ("style" in newAttrs || "style" in oldAttrs) {
+                const nextStyle = "style" in newAttrs ? String(newAttrs.style ?? "") : ""
+                const prevStyle = "style" in oldAttrs ? String(oldAttrs.style ?? "") : ""
+                if (nextStyle !== prevStyle) {
+                  globalDocumentCompiler.setBlockStyleOverride(op.id, nextStyle)
+                }
+              }
               if (Object.keys(diff).length === 0) {
                 continue
               }
