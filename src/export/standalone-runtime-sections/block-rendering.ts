@@ -66,6 +66,9 @@ export function getBlockRenderingSection(): string {
           }
         }
         const md = block.rawMarkdown || block.content || "";
+        if (block && block.isListContinuation && !block.isListItem) {
+          div.classList.add("slide-list-continuation");
+        }
 
         if (md.includes('class="slides-block-ref"') || md.includes('class="slides-ref-tag"')) {
           div.innerHTML = md;

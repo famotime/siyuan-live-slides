@@ -241,4 +241,40 @@ describe("列表项解包与对齐一致性 (解决同列表块末项偏左问�
     expect(b1?.rawMarkdown).toBe("- 项一")
     expect(b2?.rawMarkdown).toBe("- 项二（带插槽）")
   })
+
+  it("场景 7：列表项解包后，首个子块之后的纯文本延续段不得被标记为列表项，也不渲染 ul/li 圆点", () => {
+    const doc = buildSlidesDocument("doc-continuation", { "custom-slides-layout": "image-right" }, [
+      {
+        id: "list-cont",
+        type: "l",
+        children: [
+          {
+            id: "it-cont",
+            type: "i",
+            children: [
+              { id: "p-main", type: "p", markdown: "列表项主文本" },
+              { id: "p-plain", type: "p", markdown: "列表项下的纯文本说明" },
+            ],
+          },
+        ],
+      },
+      { id: "img-c", type: "p", markdown: "![img](test.png)", ial: { "custom-slides-role": "image-right" } },
+    ])
+
+    const slide = doc.slides[0]
+    const main = slide.blocks.find(b => b.id === "p-main")
+    const plain = slide.blocks.find(b => b.id === "p-plain")
+
+    expect(main?.isListItem).toBe(true)
+    expect(main?.rawMarkdown).toBe("- 列表项主文本")
+    expect(plain?.isListItem).toBe(false)
+    expect(plain?.isListContinuation).toBe(true)
+    expect(plain?.rawMarkdown).not.toMatch(/^[-*+]\s+/)
+
+    const html = convertBlockToHtml(plain!)
+    expect(html).not.toContain("<ul")
+    expect(html).not.toContain("<li")
+    expect(html).toContain("slide-list-continuation")
+    expect(html).toContain("列表项下的纯文本说明")
+  })
 })

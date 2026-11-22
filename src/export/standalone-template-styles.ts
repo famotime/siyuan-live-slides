@@ -1052,6 +1052,22 @@ export function generateStandaloneExportStyles(customInlineStyles?: any): string
       display: none !important;
     }
 
+    /* 列表项下的延续正文（无前缀纯文本）：与列表文字左对齐，但不显示圆点/序号 */
+    .slide-list-continuation {
+      list-style: none !important;
+      display: block !important;
+      padding-left: 28px;
+    }
+    .slide-list-continuation::marker {
+      content: "" !important;
+    }
+    :is(.layout-two-cols, .layout-cols-header, .layout-two-cols-header, .layout-three-cols, .layout-three-cols-header, .two-cols-left, .two-cols-right, .three-cols-col, .col, .pdf-col) .slide-list-continuation {
+      padding-left: calc(1.25em + 0.2em);
+    }
+    [data-hide-unordered-markers="true"][data-hide-ordered-markers="true"] .slide-list-continuation {
+      padding-left: 0 !important;
+    }
+
     .slide-list-item-desc,
     .pdf-list li > p {
       margin-top: 4px !important;

@@ -129,6 +129,7 @@ export function buildSlidesDocument(
     let foundLayout: string | undefined
     let foundImage: string | undefined
     let foundRatio: string | undefined
+    let foundImageBlockId: string | undefined
 
     const scanNode = (node: ISiYuanBlockNode) => {
       if (foundLayout) return
@@ -138,6 +139,7 @@ export function buildSlidesDocument(
         foundLayout = sb.layout
         foundImage = sb.imageUrl
         foundRatio = sb.ratio
+        foundImageBlockId = sb.imageNode?.id
         return
       }
 
@@ -150,6 +152,7 @@ export function buildSlidesDocument(
           foundLayout = elemAttrs.imageLayout
           foundImage = imgUrl
           foundRatio = node.ial?.[ATTR_PAGE_LAYOUT_RATIO]
+          foundImageBlockId = node.id
           return
         }
       }
@@ -167,13 +170,17 @@ export function buildSlidesDocument(
       if (foundLayout) break
     }
 
-    return { foundLayout, foundImage, foundRatio }
+    return { foundLayout, foundImage, foundRatio, foundImageBlockId }
   }
 
   const applyPreScannedLayout = (page: ISlidesVirtualPage, pageNodes: ISiYuanBlockNode[]) => {
-    const { foundLayout, foundImage, foundRatio } = detectPageTopLevelLayout(pageNodes)
+    const { foundLayout, foundImage, foundRatio, foundImageBlockId } = detectPageTopLevelLayout(pageNodes)
     if (foundLayout) {
       page.frontmatter.layout = foundLayout
+      // 记录配图来源块：该块已在侧边栏渲染，正文内容流中必须排除，避免左右两侧重复出现
+      if (foundImageBlockId) {
+        page.imageBlockId = foundImageBlockId
+      }
       if (foundImage) {
         page.frontmatter.image = rewriteSingleAssetUrl(foundImage, options)
       }
@@ -278,6 +285,8 @@ export function buildSlidesDocument(
         defaultSlot?: string
         isParentListUnpacked?: boolean
         isListItem?: boolean
+        /** 列表项解包后首个有效子块之后的“正文延续块”（无列表前缀），只缩进对齐，不显示圆点/序号 */
+        isListContinuation?: boolean
         listLevel?: number
         listContext?: {
           isOrdered?: boolean
@@ -444,6 +453,10 @@ export function buildSlidesDocument(
       if (elemAttrs.imageLayout === "image-left" || elemAttrs.imageLayout === "image-right") {
         const imgUrl = extractImageUrl(rawMd, itemNode.content)
         if (imgUrl) {
+          // 预扫描已确认该块为本页配图来源：仅在侧边栏渲染，不进入正文内容流
+          if (itemNode.id && itemNode.id === currentPage.imageBlockId) {
+            return
+          }
           if (!isImageLayoutPage) {
             currentPage.frontmatter.layout = elemAttrs.imageLayout
             currentPage.frontmatter.image = rewriteSingleAssetUrl(imgUrl, options)
@@ -708,7 +721,10 @@ export function buildSlidesDocument(
             parentClicks: childParentClicks,
             parentContainerId: childParentContainerId,
             defaultSlot: targetSlot,
-            isListItem: true,
+            // 仅首个有效子块（带列表前缀的主文本）才是列表项；其后的纯文本子块属于该列表项的延续正文，
+            // 不得继承 isListItem，否则渲染器兜底会为其补上圆点/序号
+            isListItem: !hasContent || isThisFirstValid,
+            isListContinuation: hasContent && !isThisFirstValid,
           })
         }
         return
@@ -871,6 +887,7 @@ export function buildSlidesDocument(
         : undefined
 
       const isListItem = Boolean(inheritedContext?.isListItem || isListItemNode(itemNode))
+      const isListContinuation = Boolean(inheritedContext?.isListContinuation && !isListItem)
       const blockItem: ISlidesBlockItem = {
         id: itemNode.id,
         type: itemNode.type,
@@ -888,6 +905,7 @@ export function buildSlidesDocument(
         attrs: effectiveAttrs,
         rawNode: itemNode,
         isListItem,
+        ...(isListContinuation ? { isListContinuation: true } : {}),
       }
 
       currentPage.blocks.push(blockItem)

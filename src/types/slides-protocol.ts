@@ -261,6 +261,8 @@ export interface ISlidesBlockItem {
   rawNode?: ISiYuanBlockNode
   isColFirst?: boolean
   isListItem?: boolean
+  /** 列表项下的延续正文块（无列表前缀）：缩进对齐但不显示圆点/序号 */
+  isListContinuation?: boolean
 }
 
 export type ISlidesBlock = ISlidesBlockItem
@@ -276,6 +278,8 @@ export interface ISlidesVirtualPage {
   blocks: ISlidesBlockItem[]
   rawMarkdown: string
   allBlockIds?: string[]
+  /** 图左/图右版式下作为侧边配图来源的图片块 ID（该块不进入正文内容流） */
+  imageBlockId?: string
 }
 
 /** 整个文档解析后生成的虚拟幻灯片文档模型 */

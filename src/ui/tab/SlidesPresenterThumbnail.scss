@@ -1091,6 +1091,17 @@
     padding-left: 0 !important;
   }
 
+  /* 列表项下的延续正文（无前缀纯文本）：与列表文字左对齐，但不显示圆点/序号 */
+  .slide-list-continuation {
+    list-style: none !important;
+    display: block !important;
+    padding-left: 28px;
+  }
+
+  &[data-hide-unordered-markers="true"][data-hide-ordered-markers="true"] .slide-list-continuation {
+    padding-left: 0 !important;
+  }
+
   /* 多媒体自适应约束 */
   .slide-media-block,
   .slide-media-container,

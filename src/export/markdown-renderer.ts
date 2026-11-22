@@ -467,7 +467,8 @@ export function convertBlockToHtml(
   const extraClass = options?.extraClassName ? ` ${options.extraClassName}` : ""
   const resolvedBlockClass = options?.blockClassResolver ? options.blockClassResolver(block) : ""
   const resolvedClassPart = resolvedBlockClass ? ` ${resolvedBlockClass}` : ""
-  const containerClass = `${baseContainerClass}${motionClass}${styledClass}${extraClass}${resolvedClassPart}`
+  const continuationClass = block.isListContinuation && !block.isListItem ? " slide-list-continuation" : ""
+  const containerClass = `${baseContainerClass}${motionClass}${styledClass}${extraClass}${resolvedClassPart}${continuationClass}`
   const md = (block.rawMarkdown || block.content || "").trim()
 
   if (!md) {
