@@ -1,3 +1,5 @@
+import { INLINE_MD_IMAGE_REGEX } from "../utils/markdown-utils"
+
 /**
  * 递归/深度优先匹配并替换指定 class 的 <div> 容器，正确处理嵌套 <div> 标签闭合
  */
@@ -514,6 +516,15 @@ export function cleanAndTransformInlineKramdown(text: string): string {
     return `%%INLINE_CODE_${codeTokens.length - 1}%%`
   })
 
+  // 1.5 保护 Markdown 图片语法 ![alt](url) 并剥离紧随其后的思源 Span IAL（如 {: style="width: ..."}）
+  // 防止后续 [title](url) 链接规则与词组规则把图片拆成 "!<span ...>[alt](url)</span>" 导致图片退化为 !alt 超链接
+  const imgTokens: string[] = []
+  const imgPattern = new RegExp(INLINE_MD_IMAGE_REGEX.source, "g")
+  safeText = safeText.replace(imgPattern, (_match, alt: string, dest: string) => {
+    imgTokens.push(`![${alt}](${dest})`)
+    return `%%INLINE_IMG_${imgTokens.length - 1}%%`
+  })
+
   // 2. 移除紧跟在 HTML 闭合标签后的冗余 Kramdown Span IAL（如 </span>{: style="..."}）
   safeText = safeText.replace(/(<\/[a-zA-Z0-9_-]+>)\s*\{:[^}]*\}/g, "$1")
 
@@ -545,7 +556,8 @@ export function cleanAndTransformInlineKramdown(text: string): string {
   // 5. 移除任何剩余的行内 Kramdown 属性标记 {: ... }（如 {: custom-id="..."}、{: id="..."} 等思源元数据）
   safeText = safeText.replace(/\{:[^}]*\}/g, "")
 
-  // 6. 还原行内代码
+  // 6. 还原 Markdown 图片与行内代码（先还原图片，确保图片 alt 内含行内代码时也能正确还原）
+  safeText = safeText.replace(/%%INLINE_IMG_(\d+)%%/g, (_, idx) => imgTokens[parseInt(idx, 10)] || "")
   safeText = safeText.replace(/%%INLINE_CODE_(\d+)%%/g, (_, idx) => codeTokens[parseInt(idx, 10)] || "")
 
   return safeText

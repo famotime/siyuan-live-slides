@@ -79,12 +79,12 @@ export function rewriteAssetPaths(
 
   let result = content
 
-  // 1. 替换 Markdown 图片语法: ![alt](assets/xxx.png) 或 ![alt](./assets/xxx.png)
+  // 1. 替换 Markdown 图片语法: ![alt](assets/xxx.png) 或 ![alt](./assets/xxx.png)（兼容文件名含成对括号及可选 title 后缀）
   result = result.replace(
-    /!\[(.*?)\]\(((?:\.\/|\/)?assets\/[^\s)]+)\)/g,
-    (_, alt, path) => {
+    /!\[((?:\\.|[^\]\n])*)\]\(\s*((?:\.\/|\/)?assets\/[^()\s]+(?:\([^()\s]*\)[^()\s]*)*)([^()\n]*)\)/g,
+    (_, alt, path, suffix) => {
       const target = rewriteSingleAssetUrl(path, options)
-      return `![${alt}](${target})`
+      return `![${alt}](${target}${suffix || ""})`
     },
   )
 

@@ -41,12 +41,31 @@ export function getBlockRenderingSection(): string {
           .replace(/'/g, "&#039;");
       }
 
+      function extractCleanImageUrlStandalone(rawDest) {
+        const trimmed = (rawDest || "").trim();
+        if (!trimmed) return "";
+        if (trimmed.startsWith("<")) {
+          const endAngle = trimmed.indexOf(">");
+          if (endAngle > 1) return trimmed.slice(1, endAngle).trim();
+        }
+        const titleMatch = trimmed.match(/^(\\S+?)(?:\\s+(?:"[^"]*"|'[^']*'|&quot;.*?&quot;|&#039;.*?&#039;|=\\S+))+$/);
+        return titleMatch ? titleMatch[1] : trimmed;
+      }
+
+      const INLINE_MD_IMG_RE_STR = "!\\\\[((?:\\\\\\\\.|[^\\\\]\\\\n])*)\\\\]\\\\(([^()\\\\n]*(?:\\\\([^()\\\\n]*\\\\)[^()\\\\n]*)*)\\\\)(?:[ \\\\t]*\\\\{:[^}]*\\\\})*";
+      const BLOCK_MD_IMG_RE = new RegExp("^" + INLINE_MD_IMG_RE_STR + "$");
+
       function cleanInlineKramdownStandalone(text) {
         if (!text || typeof text !== "string") return "";
         const codeTokens = [];
         let safeText = text.replace(/\\x60([^\\x60]+)\\x60/g, function(m) {
           codeTokens.push(m);
           return "%%INLINE_CODE_" + (codeTokens.length - 1) + "%%";
+        });
+        const imgTokens = [];
+        safeText = safeText.replace(new RegExp(INLINE_MD_IMG_RE_STR, "g"), function(_, alt, dest) {
+          imgTokens.push("![" + alt + "](" + dest + ")");
+          return "%%INLINE_IMG_" + (imgTokens.length - 1) + "%%";
         });
         safeText = safeText.replace(/(<\\/[a-zA-Z0-9_-]+>)\\s*\\{:[^}]*\\}/g, "$1");
         const extractStyle = function(attrBody) {
@@ -75,6 +94,9 @@ export function getBlockRenderingSection(): string {
           return '<span style="' + styleVal + '">' + content + '</span>';
         });
         safeText = safeText.replace(/\\{:[^}]*\\}/g, "");
+        safeText = safeText.replace(/%%INLINE_IMG_(\\d+)%%/g, function(_, idx) {
+          return imgTokens[parseInt(idx, 10)] || "";
+        });
         safeText = safeText.replace(/%%INLINE_CODE_(\\d+)%%/g, function(_, idx) {
           return codeTokens[parseInt(idx, 10)] || "";
         });
@@ -106,7 +128,8 @@ export function getBlockRenderingSection(): string {
         });
         let res = escapeInlineHtml(tokenized);
         res = res.replace(/\\$([^$\\n]+)\\$/g, '<span class="katex-inline font-math"><em>$1</em></span>');
-        res = res.replace(/!\\[(.*?)\\]\\((.*?)\\)/g, function(_, alt, url) {
+        res = res.replace(new RegExp(INLINE_MD_IMG_RE_STR, "g"), function(_, alt, rawDest) {
+          const url = extractCleanImageUrlStandalone(rawDest);
           const isGif = /\\.gif(?:\\?|$)/i.test(url);
           return '<img alt="' + alt + '" src="' + url + '" class="' + (isGif ? "slide-inline-img list-item-gif" : "slide-inline-img") + '" />';
         });
@@ -306,10 +329,11 @@ export function getBlockRenderingSection(): string {
               continue;
             }
             if (items.length > 0) {
-              const im = tr.match(/^!\\[(.*?)\\]\\((.*?)\\)(?:\\{:?[^}]*\\})?$/);
+              const im = tr.match(BLOCK_MD_IMG_RE);
               if (im) {
-                const isGif = /\\.gif(?:\\?|$)/i.test(im[2]);
-                items[items.length - 1].media.push('<div class="slide-list-media"><img alt="' + im[1] + '" src="' + im[2] + '" class="' + (isGif ? 'list-item-gif' : 'list-item-img') + '" /></div>');
+                const cleanUrl = extractCleanImageUrlStandalone(im[2]);
+                const isGif = /\\.gif(?:\\?|$)/i.test(cleanUrl);
+                items[items.length - 1].media.push('<div class="slide-list-media"><img alt="' + escapeInlineHtml(im[1]) + '" src="' + cleanUrl + '" class="' + (isGif ? 'list-item-gif' : 'list-item-img') + '" /></div>');
                 continue;
               }
               const hm = tr.match(/^<img\\b[\\s\\S]*?\\/?>$/i);
@@ -445,7 +469,7 @@ export function getBlockRenderingSection(): string {
               if (current.length > 0) { subBlocks.push(current.join("\\n")); current = []; }
               continue;
             }
-            if (/^!\\[.*?\\]\\(.*?\\)$/.test(trimmed)) {
+            if (BLOCK_MD_IMG_RE.test(trimmed)) {
               if (current.length > 0) { subBlocks.push(current.join("\\n")); current = []; }
               subBlocks.push(trimmed);
               continue;
@@ -478,9 +502,9 @@ export function getBlockRenderingSection(): string {
                 let th = formatInlineStandalone(hm[2].trim());
                 return '<h' + hl + ' class="slide-list-item-title">' + th + '</h' + hl + '>';
               }
-              const im = t.match(/^!\\[(.*?)\\]\\((.*?)\\)$/);
+              const im = t.match(BLOCK_MD_IMG_RE);
               if (im) {
-                return '<div class="slide-media-block slide-media-container slide-list-media"><img alt="' + im[1] + '" src="' + im[2] + '" class="slide-media-img" /></div>';
+                return '<div class="slide-media-block slide-media-container slide-list-media"><img alt="' + escapeInlineHtml(im[1]) + '" src="' + extractCleanImageUrlStandalone(im[2]) + '" class="slide-media-img" /></div>';
               }
               if (/<video\\b/i.test(t)) {
                 return '<div class="slide-media-block slide-video-container slide-media-container">' + t + '</div>';
@@ -501,10 +525,10 @@ export function getBlockRenderingSection(): string {
             }).filter(Boolean);
             div.innerHTML = htmlParts.join("\\n");
           } else {
-            const imgMatch = md.match(/^!\\[(.*?)\\]\\((.*?)\\)$/);
+            const imgMatch = md.match(BLOCK_MD_IMG_RE);
             if (imgMatch) {
               div.classList.add("slide-media-container", "slide-media-block", "slide-block--image");
-              div.innerHTML = '<img alt="' + imgMatch[1] + '" src="' + imgMatch[2] + '" class="slide-media-img" />';
+              div.innerHTML = '<img alt="' + escapeInlineHtml(imgMatch[1]) + '" src="' + extractCleanImageUrlStandalone(imgMatch[2]) + '" class="slide-media-img" />';
             } else {
               let html = formatInlineStandalone(md);
               const pCls = (block && block.isColFirst) ? ' class="slide-list-item-title"' : '';

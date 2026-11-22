@@ -80,4 +80,21 @@ describe("standalone client runtime 分节拼装 (RF-018)", () => {
     ].join("")
     expect(joined).toBe(getStandaloneClientRuntimeScript())
   })
+
+  it("block-rendering 分节的 cleanInlineKramdownStandalone 与 formatInlineStandalone 应正确处理带 IAL 的图片", () => {
+    const code = getBlockRenderingSection()
+    const factory = new Function(`
+      ${code}
+      return { cleanInlineKramdownStandalone, formatInlineStandalone, BLOCK_MD_IMG_RE, extractCleanImageUrlStandalone }
+    `)
+    const { cleanInlineKramdownStandalone, formatInlineStandalone, BLOCK_MD_IMG_RE, extractCleanImageUrlStandalone } = factory()
+
+    const resized = '![image](assets/shot(1).png){: style="width: 344px;"}'
+    expect(cleanInlineKramdownStandalone(resized)).toBe("![image](assets/shot(1).png)")
+    const html = formatInlineStandalone(resized)
+    expect(html).toContain('<img alt="image" src="assets/shot(1).png" class="slide-inline-img" />')
+    expect(html).not.toContain("!<a")
+    expect(BLOCK_MD_IMG_RE.test(resized)).toBe(true)
+    expect(extractCleanImageUrlStandalone('assets/a.png "title"')).toBe("assets/a.png")
+  })
 })

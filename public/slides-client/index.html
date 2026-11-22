@@ -4242,7 +4242,15 @@
       res = res.replace(/\$([^$\n]+)\$/g, '<span class="katex-inline font-math"><em>$1</em></span>')
 
       // 3.1.5 行内图片语法 ![alt](src)
-      res = res.replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, url) => {
+      res = res.replace(/!\[((?:\\.|[^\]\n])*)\]\(([^()\n]*(?:\([^()\n]*\)[^()\n]*)*)\)(?:[ \t]*\{:[^}]*\})*/g, (match, alt, rawDest) => {
+        const trimmedDest = (rawDest || "").trim()
+        let url = trimmedDest
+        if (trimmedDest.startsWith("<") && trimmedDest.indexOf(">") > 1) {
+          url = trimmedDest.slice(1, trimmedDest.indexOf(">")).trim()
+        } else {
+          const titleMatch = trimmedDest.match(/^(\S+?)(?:\s+(?:"[^"]*"|'[^']*'|&quot;.*?&quot;|&#039;.*?&#039;|=\S+))+$/)
+          if (titleMatch) url = titleMatch[1]
+        }
         const isGif = /\.gif(?:\?|$)/i.test(url)
         const cls = isGif ? "slide-inline-img list-item-gif" : "slide-inline-img"
         return `<img alt="${alt}" src="${url}" class="${cls}" />`
@@ -6612,6 +6620,20 @@
           return (m[1] ?? m[2] ?? "").trim()
         }
 
+        function extractCleanImageUrl(rawDest) {
+          const trimmed = (rawDest || "").trim()
+          if (!trimmed) return ""
+          if (trimmed.startsWith("<")) {
+            const endAngle = trimmed.indexOf(">")
+            if (endAngle > 1) return trimmed.slice(1, endAngle).trim()
+          }
+          const titleMatch = trimmed.match(/^(\S+?)(?:\s+(?:"[^"]*"|'[^']*'|&quot;.*?&quot;|&#039;.*?&#039;|=\S+))+$/)
+          return titleMatch ? titleMatch[1] : trimmed
+        }
+
+        const INLINE_MD_IMAGE_REGEX = /!\[((?:\\.|[^\]\n])*)\]\(([^()\n]*(?:\([^()\n]*\)[^()\n]*)*)\)(?:[ \t]*\{:[^}]*\})*/g
+        const BLOCK_MD_IMAGE_REGEX = /^!\[((?:\\.|[^\]\n])*)\]\(([^()\n]*(?:\([^()\n]*\)[^()\n]*)*)\)(?:[ \t]*\{:[^}]*\})*$/
+
         // 清洗并转换思源笔记独有的 Kramdown 行内 IAL 属性标记
         function cleanAndTransformInlineKramdown(text) {
           if (!text || typeof text !== "string") return ""
@@ -6621,6 +6643,13 @@
           let safeText = text.replace(/`([^`]+)`/g, (match) => {
             codeTokens.push(match)
             return `%%INLINE_CODE_${codeTokens.length - 1}%%`
+          })
+
+          // 1.5 保护 Markdown 图片语法 ![alt](url) 并剥离紧随其后的思源 Span IAL（如 {: style="width: ..."}）
+          const imgTokens = []
+          safeText = safeText.replace(new RegExp(INLINE_MD_IMAGE_REGEX.source, "g"), (_match, alt, dest) => {
+            imgTokens.push(`![${alt}](${dest})`)
+            return `%%INLINE_IMG_${imgTokens.length - 1}%%`
           })
 
           // 2. 移除紧跟在 HTML 闭合标签后的冗余 Kramdown Span IAL（如 </span>{: style="..."}）
@@ -6654,7 +6683,8 @@
           // 5. 移除任何剩余的行内 Kramdown 属性标记 {: ... }（如 {: custom-id="..."}、{: id="..."} 等思源元数据）
           safeText = safeText.replace(/\{:[^}]*\}/g, "")
 
-          // 6. 还原行内代码
+          // 6. 还原 Markdown 图片与行内代码
+          safeText = safeText.replace(/%%INLINE_IMG_(\d+)%%/g, (_, idx) => imgTokens[parseInt(idx, 10)] || "")
           safeText = safeText.replace(/%%INLINE_CODE_(\d+)%%/g, (_, idx) => codeTokens[parseInt(idx, 10)] || "")
 
           return safeText
@@ -6707,7 +6737,8 @@
           res = res.replace(/\$([^$\n]+)\$/g, '<span class="katex-inline font-math"><em>$1</em></span>')
 
           // 3.1.5 行内图片语法 ![alt](src)
-          res = res.replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, url) => {
+          res = res.replace(new RegExp(INLINE_MD_IMAGE_REGEX.source, "g"), (match, alt, rawDest) => {
+            const url = extractCleanImageUrl(rawDest)
             const isGif = /\.gif(?:\?|$)/i.test(url)
             const cls = isGif ? "slide-inline-img list-item-gif" : "slide-inline-img"
             return `<img alt="${alt}" src="${url}" class="${cls}" />`
@@ -6849,13 +6880,14 @@
 
             // 检查列表项下属的缩进多媒体（GIF、普通图片或视频）
             if (items.length > 0) {
-              const mdImgMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)(?:\{:?[^}]*\})?$/)
+              const mdImgMatch = trimmed.match(BLOCK_MD_IMAGE_REGEX)
               if (mdImgMatch) {
-                const isGif = /\.gif(?:\?|$)/i.test(mdImgMatch[2])
+                const cleanUrl = extractCleanImageUrl(mdImgMatch[2])
+                const isGif = /\.gif(?:\?|$)/i.test(cleanUrl)
                 const cls = isGif ? "list-item-gif" : "list-item-img"
                 if (!items[items.length - 1].media) items[items.length - 1].media = []
                 items[items.length - 1].media.push(
-                  `<div class="slide-list-media"><img alt="${escapeHtml(mdImgMatch[1])}" src="${mdImgMatch[2]}" class="${cls}" /></div>`
+                  `<div class="slide-list-media"><img alt="${escapeHtml(mdImgMatch[1])}" src="${cleanUrl}" class="${cls}" /></div>`
                 )
                 continue
               }
@@ -7190,9 +7222,9 @@
           }
 
           // 8. 图片语法 ![alt](src)
-          const imgMatch = md.match(/^!\[(.*?)\]\((.*?)\)$/)
+          const imgMatch = md.match(BLOCK_MD_IMAGE_REGEX)
           if (imgMatch) {
-            return `<div class="slide-media-container"><img alt="${escapeHtml(imgMatch[1])}" src="${imgMatch[2]}" class="slide-media-img" /></div>`
+            return `<div class="slide-media-container"><img alt="${escapeHtml(imgMatch[1])}" src="${extractCleanImageUrl(imgMatch[2])}" class="slide-media-img" /></div>`
           }
 
           // 9. 任务列表与有序/无序列表（支持单项、多项完整渲染）
@@ -7298,7 +7330,7 @@
             }
 
             // 遇到独立图片行：单独作为一个子块
-            if (/^!\[.*?\]\(.*?\)$/.test(trimmed)) {
+            if (BLOCK_MD_IMAGE_REGEX.test(trimmed)) {
               if (current.length > 0) {
                 subBlocks.push(current.join("\n"))
                 current = []
@@ -7345,11 +7377,12 @@
             }
 
             // 2. 图片
-            const imgMatch = trimmedSub.match(/^!\[(.*?)\]\((.*?)\)$/)
+            const imgMatch = trimmedSub.match(BLOCK_MD_IMAGE_REGEX)
             if (imgMatch) {
-              const isGif = /\.gif(?:\?|$)/i.test(imgMatch[2])
+              const cleanUrl = extractCleanImageUrl(imgMatch[2])
+              const isGif = /\.gif(?:\?|$)/i.test(cleanUrl)
               const cls = isGif ? "list-item-gif" : "list-item-img slide-media-img"
-              return `<div class="slide-media-block slide-media-container slide-list-media"><img alt="${escapeHtml(imgMatch[1])}" src="${imgMatch[2]}" class="${cls}" /></div>`
+              return `<div class="slide-media-block slide-media-container slide-list-media"><img alt="${escapeHtml(imgMatch[1])}" src="${cleanUrl}" class="${cls}" /></div>`
             }
 
             // 3. 视频

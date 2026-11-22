@@ -3,6 +3,7 @@ import { escapeHtml } from "./markdown-renderer"
 import { generateStandaloneExportStyles } from "./standalone-template-styles"
 import { getStandaloneClientRuntimeScript } from "./standalone-client-runtime"
 import { resolveEffectiveColorSchema } from "../utils/color-utils"
+import { extractCleanImageUrl } from "../utils/markdown-utils"
 
 export interface ICollectAssetsOptions {
   /** 自定义资源拉取函数（用于测试或宿主环境桥接） */
@@ -43,11 +44,11 @@ export function extractDocAssetUrls(doc: ISlidesDocument, includeRemote = false)
 
   const scanText = (text?: string) => {
     if (!text || typeof text !== "string") return
-    // 1. Markdown 图片语法 ![alt](url)
-    const mdRegex = /!\[.*?\]\((.+?)\)/g
+    // 1. Markdown 图片语法 ![alt](url)（支持 URL 内成对括号与可选 title 后缀）
+    const mdRegex = /!\[(?:\\.|[^\]\n])*\]\(([^()\n]*(?:\([^()\n]*\)[^()\n]*)*)\)/g
     let match: RegExpExecArray | null
     while ((match = mdRegex.exec(text)) !== null) {
-      if (match[1]) checkAndAdd(match[1])
+      if (match[1]) checkAndAdd(extractCleanImageUrl(match[1]))
     }
     // 2. HTML 标签中的 src 属性
     const htmlRegex = /<(?:img|video|audio|source)\b[^>]*?\bsrc=["'](.*?)["']/gi

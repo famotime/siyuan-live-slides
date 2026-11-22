@@ -1,6 +1,7 @@
 import type { ISlidesBlockItem, ISlidesVirtualPage } from "../types/slides-protocol"
 import { cleanAndTransformInlineKramdown } from "../compiler/html-cleaner"
 import { normalizeMaxHeight } from "../compiler/directive-wrapper"
+import { BLOCK_MD_IMAGE_REGEX, extractCleanImageUrl, INLINE_MD_IMAGE_REGEX } from "../utils/markdown-utils"
 import {
   formatLeadContent,
   formatListItemContent,
@@ -126,7 +127,8 @@ export function formatInlineMarkdown(text: string): string {
   res = res.replace(/\$([^$\n]+)\$/g, '<span class="katex-inline font-math"><em>$1</em></span>')
 
   // 3.1.5 行内图片语法 ![alt](src)（必须在普通超链接之前匹配，防止将图片解析为破坏链接）
-  res = res.replace(/!\[(.*?)\]\((.*?)\)/g, (_match, alt, url) => {
+  res = res.replace(new RegExp(INLINE_MD_IMAGE_REGEX.source, "g"), (_match, alt, rawDest) => {
+    const url = extractCleanImageUrl(rawDest)
     const isGif = /\.gif(?:\?|$)/i.test(url)
     const cls = isGif ? "slide-inline-img list-item-gif" : "slide-inline-img"
     return `<img alt="${alt}" src="${url}" class="${cls}" />`
@@ -633,10 +635,11 @@ export function convertBlockToHtml(
   }
 
   // 8. 图片
-  const imgMatch = md.match(/^!\[(.*?)\]\((.*?)\)$/)
+  const imgMatch = md.match(BLOCK_MD_IMAGE_REGEX)
   if (imgMatch) {
+    const cleanUrl = extractCleanImageUrl(imgMatch[2])
     const imgClass = options?.imageClassName || "pdf-image slide-media-img"
-    return `<div class="${containerClass} ${containerClass}--image slide-media-block slide-media-container"${motionStyle}><img alt="${escapeHtml(imgMatch[1])}" src="${imgMatch[2]}" class="${imgClass}" /></div>`
+    return `<div class="${containerClass} ${containerClass}--image slide-media-block slide-media-container"${motionStyle}><img alt="${escapeHtml(imgMatch[1])}" src="${cleanUrl}" class="${imgClass}" /></div>`
   }
 
   // 9. 任务列表与有序/无序列表（支持单项、多项及带导语的列表）

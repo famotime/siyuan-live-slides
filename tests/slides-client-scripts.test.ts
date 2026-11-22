@@ -28,4 +28,36 @@ describe("slides-client 静态页内联脚本语法守卫", () => {
   it("index.html 内联脚本必须可完整解析", () => {
     assertScriptsParse(resolve(__dirname, "../public/slides-client/index.html"))
   })
+
+  it("index.html 中的 cleanAndTransformInlineKramdown 与 formatInlineMarkdown 应正确渲染带 IAL 的图片", () => {
+    const html = readFileSync(resolve(__dirname, "../public/slides-client/index.html"), "utf8")
+    const helperStart = html.indexOf("function extractStyleFromKramdownAttrs(attrBody)")
+    const helperEnd = html.indexOf("function renderMarkdownTable(tableLines)")
+    expect(helperStart).toBeGreaterThan(-1)
+    expect(helperEnd).toBeGreaterThan(helperStart)
+
+    const snippet = html.slice(helperStart, helperEnd)
+    const factory = new Function(`
+      function escapeHtml(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;")
+      }
+      ${snippet}
+      return { cleanAndTransformInlineKramdown, formatInlineMarkdown, BLOCK_MD_IMAGE_REGEX, extractCleanImageUrl }
+    `)
+    const { cleanAndTransformInlineKramdown, formatInlineMarkdown, BLOCK_MD_IMAGE_REGEX, extractCleanImageUrl } = factory()
+
+    const resized = '![image](http://127.0.0.1:6806/assets/a(1).png){: style="width: 344px;"}'
+    expect(cleanAndTransformInlineKramdown(resized)).toBe("![image](http://127.0.0.1:6806/assets/a(1).png)")
+    const rendered = formatInlineMarkdown(resized)
+    expect(rendered).toContain('<img alt="image" src="http://127.0.0.1:6806/assets/a(1).png" class="slide-inline-img" />')
+    expect(rendered).not.toContain("!<a")
+    expect(rendered).not.toContain("slides-link")
+    expect(BLOCK_MD_IMAGE_REGEX.test(resized)).toBe(true)
+    expect(extractCleanImageUrl('assets/foo.png "title"')).toBe("assets/foo.png")
+  })
 })

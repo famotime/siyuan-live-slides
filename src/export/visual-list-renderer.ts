@@ -1,6 +1,7 @@
 import type { ISlidesBlockItem } from "../types/slides-protocol"
 import { escapeHtml, formatInlineMarkdown } from "./markdown-renderer"
 import type { IBlockRenderOptions } from "./markdown-renderer"
+import { BLOCK_MD_IMAGE_REGEX, extractCleanImageUrl } from "../utils/markdown-utils"
 
 /**
  * 格式化列表项内嵌富文本，支持内嵌标题识别
@@ -170,13 +171,14 @@ export function renderMarkdownList(
 
     // 检查列表项下属的缩进多媒体（GIF、普通图片或视频）
     if (items.length > 0) {
-      const mdImgMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)(?:\{:?[^}]*\})?$/)
+      const mdImgMatch = trimmed.match(BLOCK_MD_IMAGE_REGEX)
       if (mdImgMatch) {
-        const isGif = /\.gif(?:\?|$)/i.test(mdImgMatch[2])
+        const cleanUrl = extractCleanImageUrl(mdImgMatch[2])
+        const isGif = /\.gif(?:\?|$)/i.test(cleanUrl)
         const cls = isGif ? "list-item-gif" : "list-item-img"
         if (!items[items.length - 1].media) items[items.length - 1].media = []
         items[items.length - 1].media!.push(
-          `<div class="slide-list-media"><img alt="${escapeHtml(mdImgMatch[1])}" src="${mdImgMatch[2]}" class="${cls}" /></div>`
+          `<div class="slide-list-media"><img alt="${escapeHtml(mdImgMatch[1])}" src="${cleanUrl}" class="${cls}" /></div>`
         )
         continue
       }
@@ -301,7 +303,7 @@ export function renderCompoundMarkdown(
     }
 
     // 遇到独立图片行：单独作为一个子块
-    if (/^!\[.*?\]\(.*?\)$/.test(trimmed)) {
+    if (BLOCK_MD_IMAGE_REGEX.test(trimmed)) {
       if (current.length > 0) {
         subBlocks.push(current.join("\n"))
         current = []
@@ -349,11 +351,12 @@ export function renderCompoundMarkdown(
     }
 
     // 2. 图片
-    const imgMatch = trimmedSub.match(/^!\[(.*?)\]\((.*?)\)$/)
+    const imgMatch = trimmedSub.match(BLOCK_MD_IMAGE_REGEX)
     if (imgMatch) {
-      const isGif = /\.gif(?:\?|$)/i.test(imgMatch[2])
+      const cleanUrl = extractCleanImageUrl(imgMatch[2])
+      const isGif = /\.gif(?:\?|$)/i.test(cleanUrl)
       const imgClass = options?.imageClassName || (isGif ? "list-item-gif" : "pdf-image slide-media-img")
-      return `<div class="${containerClass} ${containerClass}--image slide-media-block slide-media-container slide-list-media"><img alt="${escapeHtml(imgMatch[1])}" src="${imgMatch[2]}" class="${imgClass}" /></div>`
+      return `<div class="${containerClass} ${containerClass}--image slide-media-block slide-media-container slide-list-media"><img alt="${escapeHtml(imgMatch[1])}" src="${cleanUrl}" class="${imgClass}" /></div>`
     }
 
     // 3. 视频

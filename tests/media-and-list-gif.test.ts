@@ -371,5 +371,119 @@ describe("Media and List GIF Support (MP4 视频与列表项内 GIF 支持)", ()
       expect(html).not.toContain("20261005172839-qtb6rn7")
       expect(html).not.toContain('{: style="width: 344px;"}')
     })
+
+    it("带思源行内 IAL 属性的 ![image](...) 不得被误拆为 !<span ...>[image](...)</span> 链接", async () => {
+      const { cleanAndTransformInlineKramdown } = await import("../src/compiler/html-cleaner")
+
+      // 1. 典型思源缩放图片：![image](assets/xxx.png){: style="width: 344px;"}
+      const resizedImg = '![image](assets/timer-20260401.png){: style="width: 344px;"}'
+      expect(cleanAndTransformInlineKramdown(resizedImg)).toBe("![image](assets/timer-20260401.png)")
+      const inlineHtml = formatInlineMarkdown(resizedImg)
+      expect(inlineHtml).toContain('<img alt="image" src="assets/timer-20260401.png" class="slide-inline-img" />')
+      expect(inlineHtml).not.toContain("!<a")
+      expect(inlineHtml).not.toContain("slides-link")
+
+      // 2. 带 parent-style 与双 IAL 标记
+      const parentStyledImg = '![image](assets/shot(1).png){: style="width: 280px;" parent-style="text-align: center;"}'
+      expect(cleanAndTransformInlineKramdown(parentStyledImg)).toBe("![image](assets/shot(1).png)")
+      expect(convertBlockToHtml({ id: "img-p1", rawMarkdown: parentStyledImg })).toContain(
+        '<img alt="image" src="assets/shot(1).png" class="pdf-image slide-media-img" />',
+      )
+
+      // 3. 空 alt、含空格 alt 及 title 后缀
+      expect(cleanAndTransformInlineKramdown('![](assets/empty.png){: style="width: 200px;"}')).toBe(
+        "![](assets/empty.png)",
+      )
+      expect(cleanAndTransformInlineKramdown('![my image](assets/foo.png "预览图"){: style="width: 200px;"}')).toBe(
+        '![my image](assets/foo.png "预览图")',
+      )
+      expect(formatInlineMarkdown('![my image](assets/foo.png "预览图"){: style="width: 200px;"}')).toContain(
+        '<img alt="my image" src="assets/foo.png" class="slide-inline-img" />',
+      )
+
+      // 4. 链接套图片与普通带样式超链接均应正常保留
+      expect(
+        cleanAndTransformInlineKramdown('[![logo](assets/logo.png){: style="width: 80px;"}](https://siyuan.io){: style="color: red;"}'),
+      ).toBe('<span style="color: red;">[![logo](assets/logo.png)](https://siyuan.io)</span>')
+      expect(
+        cleanAndTransformInlineKramdown('[普通链接](https://siyuan.io){: style="color: red;"}'),
+      ).toBe('<span style="color: red;">[普通链接](https://siyuan.io)</span>')
+
+      // 5. 行内代码中的图片语法与 IAL 保持原样不破坏
+      expect(
+        cleanAndTransformInlineKramdown('`![code](assets/a.png){: style="width: 100px;"}`'),
+      ).toBe('`![code](assets/a.png){: style="width: 100px;"}`')
+    })
+
+    it("四栏超级块列表中包含缩放属性的图片在编译与渲染后应正确重写 assets URL 并输出 img", () => {
+      const blocks: ISiYuanBlockNode[] = [
+        {
+          id: "h1",
+          type: "h",
+          markdown: "## AI 创建的番茄钟",
+          ial: {},
+        },
+        {
+          id: "sb-4cols",
+          type: "s",
+          subType: "col",
+          markdown: "",
+          ial: {},
+          children: [
+            {
+              id: "l1",
+              type: "l",
+              markdown: "",
+              children: [
+                {
+                  id: "i1",
+                  type: "i",
+                  markdown: "",
+                  children: [
+                    { id: "i1-t", type: "p", markdown: "“构建高级优雅的番茄钟应用”" },
+                    { id: "i1-img", type: "p", markdown: "![image](assets/col1.png)" },
+                  ],
+                },
+              ],
+            },
+            {
+              id: "l4",
+              type: "l",
+              markdown: "",
+              children: [
+                {
+                  id: "i4",
+                  type: "i",
+                  markdown: "",
+                  children: [
+                    { id: "i4-t", type: "p", markdown: "“更完善的交互”" },
+                    {
+                      id: "i4-img",
+                      type: "p",
+                      markdown: '![image](assets/col4.png){: style="width: 344px;"}',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+
+      const doc = buildSlidesDocument(
+        "doc-4cols-img-ial",
+        { "custom-slides-layout": "cols-header" },
+        blocks,
+        { baseUrl: "http://127.0.0.1:6806" },
+      )
+      expect(doc.slides).toHaveLength(1)
+      const col4ImgBlock = doc.slides[0].blocks.find(b => b.id === "i4-img")
+      expect(col4ImgBlock).toBeDefined()
+      expect(col4ImgBlock!.rawMarkdown).toBe("![image](http://127.0.0.1:6806/assets/col4.png)")
+
+      const rendered = convertBlockToHtml(col4ImgBlock!)
+      expect(rendered).toContain('<img alt="image" src="http://127.0.0.1:6806/assets/col4.png"')
+      expect(rendered).not.toContain("!<a")
+    })
   })
 })

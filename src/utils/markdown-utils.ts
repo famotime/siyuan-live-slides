@@ -1,6 +1,33 @@
 import type { ISiYuanBlockNode } from "../types/slides-protocol"
 
 /**
+ * 匹配行内 Markdown 图片语法（支持 URL 中包含成对括号与尾部 Kramdown Span IAL）
+ */
+export const INLINE_MD_IMAGE_REGEX = /!\[((?:\\.|[^\]\n])*)\]\(([^()\n]*(?:\([^()\n]*\)[^()\n]*)*)\)(?:[ \t]*\{:[^}]*\})*/g
+
+/**
+ * 匹配整块单张 Markdown 图片语法（支持 URL 中包含成对括号与尾部 Kramdown Span IAL）
+ */
+export const BLOCK_MD_IMAGE_REGEX = /^!\[((?:\\.|[^\]\n])*)\]\(([^()\n]*(?:\([^()\n]*\)[^()\n]*)*)\)(?:[ \t]*\{:[^}]*\})*$/
+
+/**
+ * 从 Markdown 图片括号内原始目标中提取纯净 URL（剥离可选的 "title"、'title' 或 =WxH 后缀）
+ */
+export function extractCleanImageUrl(rawDest: string): string {
+  const trimmed = (rawDest || "").trim()
+  if (!trimmed) return ""
+  if (trimmed.startsWith("<")) {
+    const endAngle = trimmed.indexOf(">")
+    if (endAngle > 1) return trimmed.slice(1, endAngle).trim()
+  }
+  const titleOrSizeMatch = trimmed.match(/^(\S+?)(?:\s+(?:"[^"]*"|'[^']*'|&quot;.*?&quot;|&#039;.*?&#039;|=\S+))+$/)
+  if (titleOrSizeMatch) {
+    return titleOrSizeMatch[1]
+  }
+  return trimmed
+}
+
+/**
  * 从块的 Markdown 文本或纯文本中提取第一张图片的 URL
  * 支持标准 Markdown 图片、HTML <img> 标签以及直接图片资源路径
  */
@@ -8,8 +35,8 @@ export function extractImageUrl(markdown?: string, content?: string): string | n
   const text = (markdown || content || "").trim()
   if (!text) return null
 
-  // 1. Markdown 图片语法: ![alt](url) 或 ![alt](url "title") 或 ![alt](url =widthxheight)
-  const mdMatch = text.match(/!\[[\s\S]*?\]\(\s*([^\s)]+)(?:\s+(?:=["']?[^"'\s)]*["']?|["'][^"']*["']))*?\s*\)/)
+  // 1. Markdown 图片语法: ![alt](url) 或 ![alt](url "title") 或 ![alt](url =widthxheight)（兼容 URL 内成对括号）
+  const mdMatch = text.match(/!\[(?:\\.|[^\]])*?\]\(\s*([^\s()]+(?:\([^()\s]*\)[^\s()]*)*)(?:\s+(?:=["']?[^"'\s)]*["']?|["'][^"']*["']))*?\s*\)/)
   if (mdMatch) {
     return mdMatch[1].trim()
   }
