@@ -50,8 +50,8 @@ describe("Wheel Navigation, Auto-hidden Controls Bar & Page Number Strong Sync",
     it("内置沙箱 index.html 控制条 .controls-bar 默认应为 opacity: 0，悬浮时变为 opacity: 1", () => {
       // 默认隐藏
       expect(indexHtml).toMatch(/\.controls-bar\s*\{[^}]*opacity:\s*0;/s)
-      // 扩展悬浮感应热区
-      expect(indexHtml).toContain(".controls-bar::before")
+      // 扩展悬浮感应热区（需置于底层 z-index: -1，避免遮挡按钮触发 hover 闪烁）
+      expect(indexHtml).toMatch(/\.controls-bar::before\s*\{[^}]*z-index:\s*-1;/s)
       // 鼠标悬浮或聚焦时展示
       expect(indexHtml).toMatch(/\.controls-bar:hover,\s*\.controls-bar:focus-within\s*\{[^}]*opacity:\s*1;/s)
     })
@@ -59,7 +59,7 @@ describe("Wheel Navigation, Auto-hidden Controls Bar & Page Number Strong Sync",
     it("单文件独立导出 CSS 中 .controls 默认应为 opacity: 0，悬浮时变为 opacity: 1", () => {
       const styles = generateStandaloneExportStyles()
       expect(styles).toMatch(/\.controls\s*\{[^}]*opacity:\s*0;/s)
-      expect(styles).toContain(".controls::before")
+      expect(styles).toMatch(/\.controls::before\s*\{[^}]*z-index:\s*-1;/s)
       expect(styles).toMatch(/\.controls:hover,\s*\.controls:focus-within\s*\{[^}]*opacity:\s*1;/s)
     })
   })

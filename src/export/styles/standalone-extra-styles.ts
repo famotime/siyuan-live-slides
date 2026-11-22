@@ -262,12 +262,12 @@ export function getStandaloneExtraStyles(): string {
       transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .controls::before {
-      content: ""; position: absolute; top: -20px; bottom: -16px; left: -24px; right: -24px;
+      content: ""; position: absolute; top: -20px; bottom: -16px; left: -24px; right: -24px; z-index: -1;
     }
     .controls:hover, .controls:focus-within {
       opacity: 1; transform: translateY(-2px);
     }
-    .controls button { background: transparent; border: none; color: inherit; cursor: pointer; padding: 2px 6px; }
+    .controls button { position: relative; z-index: 1; background: transparent; border: none; color: inherit; cursor: pointer; padding: 2px 6px; }
 
     /* Slidev Native Icons & Interactive Buttons */
     .slidev-icon-btn {

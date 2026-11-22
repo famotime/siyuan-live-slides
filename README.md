@@ -22,7 +22,7 @@
 
 平时参加一些行业峰会，那些在领域内深耕多年的技术专家和学术带头人的分享胶片都很朴实无华，基本就是几行要点文字。我感觉使用 skill 花费大量 token 和时间修改 PPT，是一种本末倒置。
 
-![processed image](https://raw.githubusercontent.com/famotime/siyuan-live-slides/main/assets/Gemini_Generated_Image_lpgwmmlpgwmmlpgw-20261026222649-vysvko4_edited_1793024869512.quickedit-compress-10-1794128063440-20261108165423-vhnc1mv.webp)
+![processed image](https://raw.githubusercontent.com/famotime/siyuan-live-slides/main/assets/20261108165423-vhnc1mv.webp)
 
 但后来我想明白了，这是因为不同场合的交流诉求不同。在职场的很多汇报场景里，雕琢 PPT 往往是向上争取资源与好评价的手段。大家花费海量精力去美化胶片，本质上是在用自己的时间为决策者降低阅读门槛，以此展现工作态度并精准传递诉求。在这种情境下，能帮忙分担美化工作量的 Skill 自然有很高的实用价值。
 
