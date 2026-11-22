@@ -21,6 +21,8 @@ describe("Block Selection Highlight Toggle (演示与预览界面块级蓝色边
 
     it("若命中子元素图片、视频或超链接，优先响应媒体放大或链接跳转，不直接取消方框", () => {
       expect(indexHtml).toMatch(/const img = e\.target\.closest\('img'\)[\s\S]*?openLightbox\('img'/)
+      expect(indexHtml).toMatch(/const vid = e\.target\.closest\('video'\)[\s\S]*?openLightbox\('video'/)
+      expect(indexHtml).not.toContain("!vid.hasAttribute('controls')")
       expect(indexHtml).toMatch(/const linkEl = e\.target\.closest\('a'\)[\s\S]*?OPEN_PEEK_DRAWER/)
     })
 

@@ -2424,6 +2424,7 @@
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
       background: transparent;
       outline: none;
+      cursor: zoom-in;
     }
 
     /* 列表项下的多媒体（GIF、静态图片、视频）：自适应排版且严格限制在 li 容器与视口内部，顶部对齐 */
@@ -7406,10 +7407,17 @@
               return
             }
             const vid = e.target.closest('video')
-            if (vid && vid.src && !vid.closest('.slides-lightbox') && !vid.hasAttribute('controls')) {
-              e.stopPropagation()
-              openLightbox('video', vid.src)
-              return
+            if (vid && !vid.closest('.slides-lightbox')) {
+              const vidSrc = vid.currentSrc || vid.getAttribute('src') || vid.src || vid.querySelector('source')?.src || ''
+              if (vidSrc) {
+                e.preventDefault()
+                e.stopPropagation()
+                if (!vid.paused) {
+                  vid.pause()
+                }
+                openLightbox('video', vidSrc)
+                return
+              }
             }
             const refEl = e.target.closest('[data-ref-id]')
             if (refEl) {
