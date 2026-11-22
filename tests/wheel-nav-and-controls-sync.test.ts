@@ -121,4 +121,13 @@ describe("Wheel Navigation, Auto-hidden Controls Bar & Page Number Strong Sync",
       expect(indexHtml).toMatch(/action:\s*"CLIENT_READY",[\s\S]*?currentPage:\s*currentPageIndex\.value[\s\S]*?totalPages:\s*totalPages\.value/)
     })
   })
+
+  describe("4. 浮动工具栏切换明暗主题后允许继续调整全局主题与背景", () => {
+    it("内置沙箱应记录 manualThemeOverride，并在未修改 colorSchema 的全局配置更新时保留手动明暗状态", () => {
+      expect(indexHtml).toContain("const manualThemeOverride = ref(null)")
+      expect(indexHtml).toMatch(/function toggleTheme\(\)[\s\S]*?manualThemeOverride\.value = nextDark \? "dark" : "light"/)
+      expect(indexHtml).toMatch(/const applyConfigThemeMode = \(cfg\) => \{[\s\S]*?if \(schemaChanged\)[\s\S]*?manualThemeOverride\.value = null[\s\S]*?if \(manualThemeOverride\.value === "light" \|\| manualThemeOverride\.value === "dark"\)/)
+      expect(indexHtml).toMatch(/parentThemeObserver = new MutationObserver\([\s\S]*?manualThemeOverride\.value === null/)
+    })
+  })
 })

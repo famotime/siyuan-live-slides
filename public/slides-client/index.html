@@ -4873,8 +4873,19 @@
           } catch (e) {}
           return "light"
         }
+        let lastAppliedColorSchema = undefined
+        const manualThemeOverride = ref(null)
         const applyConfigThemeMode = (cfg) => {
           const schema = cfg?.colorSchema
+          const schemaChanged = lastAppliedColorSchema !== undefined && schema !== lastAppliedColorSchema
+          lastAppliedColorSchema = schema
+          if (schemaChanged) {
+            manualThemeOverride.value = null
+          }
+          if (manualThemeOverride.value === "light" || manualThemeOverride.value === "dark") {
+            isDarkTheme.value = manualThemeOverride.value === "dark"
+            return
+          }
           if (schema === "light") {
             isDarkTheme.value = false
           } else if (schema === "dark") {
@@ -7357,7 +7368,9 @@
         }
 
         function toggleTheme() {
-          isDarkTheme.value = !isDarkTheme.value
+          const nextDark = !isDarkTheme.value
+          isDarkTheme.value = nextDark
+          manualThemeOverride.value = nextDark ? "dark" : "light"
         }
 
         function toggleFullScreen() {
@@ -8914,7 +8927,11 @@
             const hostRoot = window.parent && window.parent !== window ? window.parent.document?.documentElement : null
             if (hostRoot) {
               parentThemeObserver = new MutationObserver(() => {
-                if (config.value?.colorSchema !== "light" && config.value?.colorSchema !== "dark") {
+                if (
+                  config.value?.colorSchema !== "light" &&
+                  config.value?.colorSchema !== "dark" &&
+                  manualThemeOverride.value === null
+                ) {
                   const hostMode = detectHostSiYuanThemeMode()
                   config.value = { ...config.value, hostThemeMode: hostMode }
                   isDarkTheme.value = hostMode === "dark"
