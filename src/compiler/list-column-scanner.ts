@@ -16,19 +16,72 @@ import {
   isSuperBlock,
 } from "./superblock-scanner"
 
+export interface IListSuperBlockColumn {
+  /** 该栏位的容器节点（NodeList 或单个 NodeListItem） */
+  containerNode: ISiYuanBlockNode
+  /** 该栏位包含的所有顶层列表项节点 */
+  items: ISiYuanBlockNode[]
+}
+
 export interface IListSuperBlockDetection {
   superBlockNode: ISiYuanBlockNode
   nestedSuperBlocks?: ISiYuanBlockNode[]
+  /** 逻辑栏数（严格按横向超级块的列数计算，单个 NodeList 内含多个列表项归属同一栏） */
   count: number
   layout: "cols-header" | "two-cols-header" | "three-cols-header"
+  /** 按栏位顺序展平的所有顶层列表项节点（与 slots 一一对应） */
   items: ISiYuanBlockNode[]
+  /** 与 items 一一对应的插槽名（同栏内多个列表项共享同一个 col-N） */
   slots: string[]
+  /** 按栏位分组的结构化列表信息 */
+  columns?: IListSuperBlockColumn[]
   ratio?: string
 }
 
 export interface IExtractedListColumns {
   items: ISiYuanBlockNode[]
+  columns: IListSuperBlockColumn[]
   nestedSuperBlocks: ISiYuanBlockNode[]
+}
+
+/**
+ * 递归提取单个横向分栏子块对应的逻辑栏位单元：
+ * 1. 若为横向超级块（且非图文超级块），递归展开其直接子块对应的各栏位（兼容两两嵌套的横向多栏超级块）
+ * 2. 若为列表容器 NodeList ('l')，整体严格作为 1 个栏位，其内部所有顶层列表项归属同一栏，绝不拆分成多栏
+ * 3. 若为单个列表项 NodeListItem ('i')，作为 1 个栏位返回
+ */
+export function extractListColumns(node: ISiYuanBlockNode): IListSuperBlockColumn[] {
+  if (!node) return []
+
+  // 1. 横向超级块递归展开（仅展平嵌套横向超级块，不拆分纵向列表容器）
+  if (isSuperBlock(node) && isHorizontalSuperBlock(node) && !detectSuperBlockImageLayout(node)) {
+    const ch = getContentChildren(node)
+    const columns: IListSuperBlockColumn[] = []
+    for (const c of ch) {
+      columns.push(...extractListColumns(c))
+    }
+    return columns
+  }
+
+  // 2. 列表容器 NodeList ('l') 整体代表 1 个栏位
+  const t = (node.type || "").toLowerCase()
+  const isListContainer = t === "l" || t === "nodelist" || t === "list"
+  if (isListContainer) {
+    if (node.children && node.children.length > 0) {
+      const listChildren = node.children.filter(isListItemNode)
+      if (listChildren.length > 0) {
+        return [{ containerNode: node, items: listChildren }]
+      }
+    }
+    return [{ containerNode: node, items: [node] }]
+  }
+
+  // 3. 单个列表项节点代表 1 个栏位
+  if (isListItemNode(node)) {
+    return [{ containerNode: node, items: [node] }]
+  }
+
+  return []
 }
 
 /**
@@ -97,13 +150,12 @@ export function extractListUnits(node: ISiYuanBlockNode): ISiYuanBlockNode[] {
 }
 
 /**
- * 递归展开并提取超级块内的逻辑列表分栏项
+ * 递归展开并提取超级块内的逻辑列表分栏
  * 支持以下形态：
- * 1. 扁平 2 栏：[Item1, Item2]
- * 2. 扁平 3 栏：[Item1, Item2, Item3]
- * 3. 嵌套形态 A (col1-2 + col3)：外层 [内层横向超级块(Item1, Item2), Item3] 或 [包含2项的列表, 1项列表]
- * 4. 嵌套形态 B (col1 + col2-3)：外层 [Item1, 内层横向超级块(Item2, Item3)] 或 [1项列表, 包含2项的列表]
- * 5. 单子块冗余超级块包装解包
+ * 1. 扁平 2~6 栏：[List1, List2, ...]（每个列表块严格作为 1 栏，内部包含多个列表项仍归属同一栏）
+ * 2. 嵌套形态 A (col1-2 + col3)：外层 [内层横向超级块(List1, List2), List3]
+ * 3. 嵌套形态 B (col1 + col2-3)：外层 [List1, 内层横向超级块(List2, List3)]
+ * 4. 单子块冗余横向超级块包装解包
  */
 export function extractListSuperBlockItems(node: ISiYuanBlockNode): IExtractedListColumns | null {
   if (!node || !isSuperBlock(node)) return null
@@ -121,42 +173,36 @@ export function extractListSuperBlockItems(node: ISiYuanBlockNode): IExtractedLi
     if (innerRes) {
       return {
         items: innerRes.items,
+        columns: innerRes.columns,
         nestedSuperBlocks: [contentChildren[0], ...innerRes.nestedSuperBlocks],
       }
     }
     return null
   }
 
-  // 收集内层嵌套的所有超级块节点用于追踪
+  // 递归收集内层嵌套的所有横向超级块节点用于追踪
   const nestedSbs: ISiYuanBlockNode[] = []
-  for (const c of contentChildren) {
-    if (isSuperBlock(c)) {
-      nestedSbs.push(c)
-      const subSbs = c.children?.filter(isSuperBlock) || []
-      nestedSbs.push(...subSbs)
-    }
-  }
-
-  // 遍历所有子块提取列表单元，自适应 2~N 栏（上限 6 栏）及嵌套形态
-  const unitsPerChild: ISiYuanBlockNode[][] = contentChildren.map(extractListUnits)
-  if (unitsPerChild.length >= 2 && unitsPerChild.every(u => u.length > 0)) {
-    const allUnits = unitsPerChild.flat()
-    if (allUnits.length >= 2 && allUnits.length <= 6) {
-      return {
-        items: allUnits,
-        nestedSuperBlocks: nestedSbs,
+  const collectNestedSbs = (nodes: ISiYuanBlockNode[]) => {
+    for (const c of nodes) {
+      if (isSuperBlock(c) && isHorizontalSuperBlock(c)) {
+        nestedSbs.push(c)
+        if (c.children && c.children.length > 0) {
+          collectNestedSbs(c.children)
+        }
       }
     }
   }
+  collectNestedSbs(contentChildren)
 
-  // 容错处理：若外层为 2 个子块但内含嵌套形态（如 2 项 + 1 项，或 1 项 + 2 项）
-  if (contentChildren.length === 2) {
-    const u0 = extractListUnits(contentChildren[0])
-    const u1 = extractListUnits(contentChildren[1])
-
-    if (u0.length + u1.length >= 2 && u0.length + u1.length <= 6 && (u0.length > 0 || u1.length > 0)) {
+  // 按横向栏位提取，自适应 2~6 栏及嵌套横向超级块形态；
+  // 单个列表容器内含多个列表项时保持在同一栏位，绝不拆成多栏
+  const colsPerChild: IListSuperBlockColumn[][] = contentChildren.map(extractListColumns)
+  if (colsPerChild.length >= 2 && colsPerChild.every(cols => cols.length > 0)) {
+    const allColumns = colsPerChild.flat()
+    if (allColumns.length >= 2 && allColumns.length <= 6) {
       return {
-        items: [...u0, ...u1],
+        items: allColumns.flatMap(col => col.items),
+        columns: allColumns,
         nestedSuperBlocks: nestedSbs,
       }
     }
@@ -166,7 +212,7 @@ export function extractListSuperBlockItems(node: ISiYuanBlockNode): IExtractedLi
 }
 
 /**
- * 检测超级块是否为包含 2~N 个列表项的横向分栏超级块（支持自适应 2~6 栏）
+ * 检测超级块是否为包含 2~6 栏列表的横向分栏超级块（支持自适应 2~6 栏）
  */
 export function detectListSuperBlock(node: ISiYuanBlockNode): IListSuperBlockDetection | null {
   if (!node || !isSuperBlock(node)) return null
@@ -178,13 +224,20 @@ export function detectListSuperBlock(node: ISiYuanBlockNode): IListSuperBlockDet
   const extracted = extractListSuperBlockItems(node)
   if (!extracted) return null
 
-  const { items, nestedSuperBlocks } = extracted
-  if (items.length < 2 || items.length > 6) {
+  const { columns, items, nestedSuperBlocks } = extracted
+  if (columns.length < 2 || columns.length > 6) {
     return null
   }
 
   const detectedRatio = extractSuperBlockWidthRatios(node) || undefined
-  const count = items.length
+  const count = columns.length
+  const slots: string[] = []
+  for (let colIdx = 0; colIdx < columns.length; colIdx++) {
+    const colSlot = `col-${colIdx + 1}`
+    for (let k = 0; k < columns[colIdx].items.length; k++) {
+      slots.push(colSlot)
+    }
+  }
 
   return {
     superBlockNode: node,
@@ -192,7 +245,8 @@ export function detectListSuperBlock(node: ISiYuanBlockNode): IListSuperBlockDet
     count,
     layout: "cols-header",
     items,
-    slots: items.map((_, i) => `col-${i + 1}`),
+    slots,
+    columns,
     ratio: detectedRatio,
   }
 }
@@ -221,7 +275,7 @@ export function collectAllLeafListItems(node: ISiYuanBlockNode): ISiYuanBlockNod
 }
 
 /**
- * 检测是否为非 2~6 项的列表超级块（例如拖出后仅剩 1 项，或超出 6 栏）
+ * 检测是否为非 2~6 栏的列表超级块（例如拖出后仅剩 1 栏，或超出 6 栏）
  */
 export function isInvalidListSuperBlock(
   node: ISiYuanBlockNode,
@@ -230,17 +284,28 @@ export function isInvalidListSuperBlock(
   if (!isHorizontalSuperBlock(node)) return null
   if (detectSuperBlockImageLayout(node)) return null
 
-  const leaves = collectAllLeafListItems(node)
-  if (!leaves || leaves.length === 0) return null
+  const contentChildren = getContentChildren(node)
+  if (contentChildren.length === 0) return null
 
-  // 有效项数为 2 到 6 栏时属于有效分栏超级块
-  if (leaves.length >= 2 && leaves.length <= 6) {
+  const allColumns: IListSuperBlockColumn[] = []
+  for (const child of contentChildren) {
+    const cols = extractListColumns(child)
+    if (cols.length === 0) {
+      return null
+    }
+    allColumns.push(...cols)
+  }
+
+  if (allColumns.length === 0) return null
+
+  // 有效栏数为 2 到 6 栏时属于有效分栏超级块
+  if (allColumns.length >= 2 && allColumns.length <= 6) {
     return null
   }
 
   return {
     superBlockNode: node,
-    items: leaves,
+    items: allColumns.flatMap(col => col.items),
   }
 }
 
@@ -260,26 +325,20 @@ export interface IFourComponentSuperBlockMatch {
 }
 
 /**
- * 提取超级块中包含的 4 个组件（优先列表项，兼容直接子块）
+ * 提取超级块中包含的 4 个组件（优先列表分栏，兼容直接子块）
  */
 export function extractFourComponentSuperBlock(node: ISiYuanBlockNode): ISiYuanBlockNode[] | null {
   if (!node || !isSuperBlock(node)) return null
   if (!isHorizontalSuperBlock(node)) return null
   if (detectSuperBlockImageLayout(node)) return null
 
-  // 1. 优先检查列表分栏项 (包括扁平 4 栏及嵌套 2x2 等展开形态)
+  // 1. 优先检查按栏位提取的 4 栏列表超级块 (包括扁平 4 栏及嵌套 2x2 等横向展开形态)
   const listItemsRes = extractListSuperBlockItems(node)
-  if (listItemsRes && listItemsRes.items.length === 4) {
-    return listItemsRes.items
+  if (listItemsRes && listItemsRes.columns.length === 4) {
+    return listItemsRes.columns.map(col => (col.items.length === 1 ? col.items[0] : col.containerNode))
   }
 
-  // 2. 检查收集的所有叶子列表项
-  const leaves = collectAllLeafListItems(node)
-  if (leaves && leaves.length === 4) {
-    return leaves
-  }
-
-  // 3. 兼容直接包含 4 个有效内容子块的超级块（段落、卡片等）
+  // 2. 兼容直接包含 4 个有效内容子块的超级块（段落、卡片等）
   const contentChildren = getContentChildren(node)
   if (contentChildren.length === 4) {
     return contentChildren
@@ -547,25 +606,49 @@ export function scanAndTagListSuperBlocks(
         }
       }
 
-      // 2.3 检查并按当前顺序配置各列表项的 slot
+      // 2.3 检查并按当前栏位顺序配置各列表容器与列表项的 slot
       const currentItemIds: string[] = []
-      for (let i = 0; i < items.length; i++) {
-        const it = items[i]
-        const expectedSlot = slots[i]
-        currentItemIds.push(it.id)
-        const currentSlot = it.ial?.[ATTR_ELEM_SLOT] || ""
-        if (currentSlot !== expectedSlot) {
-          recordChange(it.id, { [ATTR_ELEM_SLOT]: expectedSlot }, { [ATTR_ELEM_SLOT]: currentSlot })
-          if (!it.ial) {
-            it.ial = {}
+      const columns = matchedDetection.columns || items.map((it, idx) => ({
+        containerNode: it,
+        items: [it],
+        slot: slots[idx],
+      }))
+      for (let colIdx = 0; colIdx < columns.length; colIdx++) {
+        const col = columns[colIdx]
+        const expectedSlot = `col-${colIdx + 1}`
+
+        // 若栏位根块是独立的 NodeList 容器（非列表项本身），同步其内存 slot 并在历史持久化值冲突时自愈修正
+        if (col.containerNode && !col.items.includes(col.containerNode)) {
+          const containerSlot = col.containerNode.ial?.[ATTR_ELEM_SLOT] || ""
+          if (containerSlot && containerSlot !== expectedSlot) {
+            recordChange(
+              col.containerNode.id,
+              { [ATTR_ELEM_SLOT]: expectedSlot },
+              { [ATTR_ELEM_SLOT]: containerSlot },
+            )
           }
-          it.ial[ATTR_ELEM_SLOT] = expectedSlot
+          if (!col.containerNode.ial) {
+            col.containerNode.ial = {}
+          }
+          col.containerNode.ial[ATTR_ELEM_SLOT] = expectedSlot
         }
-        if (it.children && it.children.length > 0) {
-          for (const c of it.children) {
-            if (!c.ial) c.ial = {}
-            if (c.ial[ATTR_ELEM_SLOT] !== expectedSlot) {
-              c.ial[ATTR_ELEM_SLOT] = expectedSlot
+
+        for (const it of col.items) {
+          currentItemIds.push(it.id)
+          const currentSlot = it.ial?.[ATTR_ELEM_SLOT] || ""
+          if (currentSlot !== expectedSlot) {
+            recordChange(it.id, { [ATTR_ELEM_SLOT]: expectedSlot }, { [ATTR_ELEM_SLOT]: currentSlot })
+            if (!it.ial) {
+              it.ial = {}
+            }
+            it.ial[ATTR_ELEM_SLOT] = expectedSlot
+          }
+          if (it.children && it.children.length > 0) {
+            for (const c of it.children) {
+              if (!c.ial) c.ial = {}
+              if (c.ial[ATTR_ELEM_SLOT] !== expectedSlot) {
+                c.ial[ATTR_ELEM_SLOT] = expectedSlot
+              }
             }
           }
         }

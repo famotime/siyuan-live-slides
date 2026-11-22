@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
   detectListSuperBlock,
+  extractListColumns,
   extractListSuperBlockItems,
   extractListUnits,
   isInvalidListSuperBlock,
@@ -126,6 +127,63 @@ describe("ListColumnScanner (多栏列表超级块扫描与槽位分配)", () =>
     expect(result.newTracked.length).toBe(1)
     expect(result.newTracked[0].layout).toBe("cols-header")
     expect(result.newTracked[0].itemIds).toEqual(["col-left", "col-right"])
+  })
+
+  it("extractListColumns 与 detectListSuperBlock 应将含多个列表项的单个 NodeList 保持为同一栏，不误拆为 3 栏", () => {
+    const sbTwoLists: ISiYuanBlockNode = {
+      id: "sb-two-lists",
+      type: "s",
+      subType: "col",
+      children: [
+        {
+          id: "list-1",
+          type: "l",
+          children: [
+            { id: "i1a", type: "i", content: "第一栏项 1" },
+            { id: "i1b", type: "i", content: "第一栏项 2" },
+          ],
+        },
+        {
+          id: "list-2",
+          type: "l",
+          children: [
+            { id: "i2a", type: "i", content: "第二栏项 1" },
+          ],
+        },
+      ],
+    }
+
+    const cols = extractListColumns(sbTwoLists)
+    expect(cols.length).toBe(2)
+    expect(cols[0].items.map(it => it.id)).toEqual(["i1a", "i1b"])
+    expect(cols[1].items.map(it => it.id)).toEqual(["i2a"])
+
+    const det = detectListSuperBlock(sbTwoLists)
+    expect(det).not.toBeNull()
+    expect(det?.count).toBe(2)
+    expect(det?.items.map(it => it.id)).toEqual(["i1a", "i1b", "i2a"])
+    expect(det?.slots).toEqual(["col-1", "col-1", "col-2"])
+
+    // 若横向超级块内仅剩 1 个包含 2 项的 NodeList，应判定为无效单栏而非 2 栏
+    const sbSingleListWithTwoItems: ISiYuanBlockNode = {
+      id: "sb-single-list",
+      type: "s",
+      subType: "col",
+      children: [
+        {
+          id: "list-only",
+          type: "l",
+          children: [
+            { id: "i1", type: "i", content: "项 1" },
+            { id: "i2", type: "i", content: "项 2" },
+          ],
+        },
+      ],
+    }
+    expect(detectListSuperBlock(sbSingleListWithTwoItems)).toBeNull()
+    const invalid = isInvalidListSuperBlock(sbSingleListWithTwoItems)
+    expect(invalid).not.toBeNull()
+    expect(invalid?.items.map(it => it.id)).toEqual(["i1", "i2"])
   })
 })
 

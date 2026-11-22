@@ -333,6 +333,7 @@ import {
   collectAllLeafListItems,
   detectListSuperBlock,
   extractFourComponentSuperBlock,
+  extractListColumns,
   extractListSuperBlockItems,
   extractListUnits,
   findFourComponentSuperBlockInPage,
@@ -342,6 +343,7 @@ import {
 import type {
   IExtractedListColumns,
   IFourComponentSuperBlockMatch,
+  IListSuperBlockColumn,
   IListSuperBlockDetection,
   IListSuperBlockTagChange,
   IScanListSuperBlocksResult,
@@ -352,6 +354,7 @@ export {
   collectAllLeafListItems,
   detectListSuperBlock,
   extractFourComponentSuperBlock,
+  extractListColumns,
   extractListSuperBlockItems,
   extractListUnits,
   findFourComponentSuperBlockInPage,
@@ -361,6 +364,7 @@ export {
 export type {
   IExtractedListColumns,
   IFourComponentSuperBlockMatch,
+  IListSuperBlockColumn,
   IListSuperBlockDetection,
   IListSuperBlockTagChange,
   IScanListSuperBlocksResult,

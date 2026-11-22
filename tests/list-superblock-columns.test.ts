@@ -881,8 +881,8 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       expect(mockSetAttrs).toHaveBeenCalledWith("item-b-3", { [ATTR_ELEM_SLOT]: "col-3" })
     })
 
-    it("列表容器形态：超级块包含 1 个双项 NodeList 与 1 个单项 NodeList，正确展开解构成独立三栏", async () => {
-      const docId = "doc-nodelist-3cols"
+    it("列表容器形态：两个列表块组成超级块且第 1 栏包含 2 个列表项时，严格按左右 2 栏均分，绝不拆成 3 栏", async () => {
+      const docId = "doc-nodelist-2cols-multi-items"
       const mockSetAttrs = vi.fn().mockResolvedValue({})
       const mockSql = vi.fn().mockResolvedValue([])
 
@@ -893,21 +893,21 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
           type: "s",
           subType: "col",
           children: [
-            // 第一列容器：包含 2 个列表项
+            // 第一栏列表块：包含 2 个列表项，应同归 col-1
             {
               id: "list-container-1",
               type: "l",
               children: [
-                { id: "sub-it-1", type: "i", markdown: "- 模块 1：网关接入" },
-                { id: "sub-it-2", type: "i", markdown: "- 模块 2：服务治理" },
+                { id: "sub-it-1", type: "i", markdown: "- 模块 1：网关接入", content: "模块 1：网关接入" },
+                { id: "sub-it-2", type: "i", markdown: "- 模块 2：服务治理", content: "模块 2：服务治理" },
               ],
             },
-            // 第二列容器：包含 1 个列表项
+            // 第二栏列表块：包含 1 个列表项，应归 col-2
             {
               id: "list-container-2",
               type: "l",
               children: [
-                { id: "sub-it-3", type: "i", markdown: "- 模块 3：可观测中心" },
+                { id: "sub-it-3", type: "i", markdown: "- 模块 3：可观测中心", content: "模块 3：可观测中心" },
               ],
             },
           ],
@@ -925,13 +925,145 @@ describe("List Superblock Columns Auto-Matching & Dynamic Drag Sync", () => {
       const page = doc.slides[0]
 
       expect(page.frontmatter.layout).toBe("cols-header")
-      expect(page.blocks.find(b => b.slot === "col-1")?.rawMarkdown).toContain("模块 1：网关接入")
-      expect(page.blocks.find(b => b.slot === "col-2")?.rawMarkdown).toContain("模块 2：服务治理")
-      expect(page.blocks.find(b => b.slot === "col-3")?.rawMarkdown).toContain("模块 3：可观测中心")
+      const col1Blocks = page.blocks.filter(b => b.slot === "col-1")
+      const col2Blocks = page.blocks.filter(b => b.slot === "col-2")
+      const col3Blocks = page.blocks.filter(b => b.slot === "col-3")
+
+      expect(col1Blocks.length).toBe(2)
+      expect(col1Blocks[0].rawMarkdown).toContain("模块 1：网关接入")
+      expect(col1Blocks[1].rawMarkdown).toContain("模块 2：服务治理")
+      expect(col2Blocks.length).toBe(1)
+      expect(col2Blocks[0].rawMarkdown).toContain("模块 3：可观测中心")
+      expect(col3Blocks.length).toBe(0)
 
       expect(mockSetAttrs).toHaveBeenCalledWith("sub-it-1", { [ATTR_ELEM_SLOT]: "col-1" })
-      expect(mockSetAttrs).toHaveBeenCalledWith("sub-it-2", { [ATTR_ELEM_SLOT]: "col-2" })
-      expect(mockSetAttrs).toHaveBeenCalledWith("sub-it-3", { [ATTR_ELEM_SLOT]: "col-3" })
+      expect(mockSetAttrs).toHaveBeenCalledWith("sub-it-2", { [ATTR_ELEM_SLOT]: "col-1" })
+      expect(mockSetAttrs).toHaveBeenCalledWith("sub-it-3", { [ATTR_ELEM_SLOT]: "col-2" })
+
+      // 验证 HTML 渲染严格为左右 2 栏均分，不包含第 3 栏
+      const html = renderSlideBlocksToHtml(page)
+      expect(html).toContain("layout-two-cols-header-container")
+      expect(html).toContain("grid-template-columns: repeat(2, 1fr);")
+      expect(html).toContain("pdf-col--left")
+      expect(html).toContain("pdf-col--right")
+      expect(html).not.toContain("pdf-col--3")
+      expect(html).not.toContain("layout-three-cols-grid")
+    })
+
+    it("历史脏属性自愈：第 1 栏第 2 个列表项与第 2 栏残留 col-2/col-3 时，重新编译应自动修正回 2 栏", async () => {
+      const docId = "doc-nodelist-heal-dirty-slots"
+      const mockSetAttrs = vi.fn().mockResolvedValue({})
+      const mockSql = vi.fn().mockResolvedValue([])
+
+      const mockBlocks: ISiYuanBlockNode[] = [
+        {
+          id: "h-title",
+          type: "h",
+          markdown: "# 对比分析",
+          content: "对比分析",
+        },
+        {
+          id: "sb-2lists",
+          type: "s",
+          subType: "col",
+          children: [
+            {
+              id: "list-left",
+              type: "l",
+              children: [
+                {
+                  id: "li-l1",
+                  type: "i",
+                  ial: { [ATTR_ELEM_SLOT]: "col-1" },
+                  children: [{ id: "p-l1", type: "p", markdown: "左栏第一项", content: "左栏第一项" }],
+                },
+                {
+                  id: "li-l2",
+                  type: "i",
+                  // 模拟旧版本误写的脏属性 col-2（此前导致居中显示成 3 栏中的中间栏）
+                  ial: { [ATTR_ELEM_SLOT]: "col-2" },
+                  children: [{ id: "p-l2", type: "p", markdown: "左栏第二项", content: "左栏第二项" }],
+                },
+              ],
+            },
+            {
+              id: "list-right",
+              type: "l",
+              children: [
+                {
+                  id: "li-r1",
+                  type: "i",
+                  // 模拟旧版本误写的脏属性 col-3
+                  ial: { [ATTR_ELEM_SLOT]: "col-3" },
+                  children: [{ id: "p-r1", type: "p", markdown: "右栏第一项", content: "右栏第一项" }],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+
+      const compiler = new DocumentCompilerService({
+        getBlockAttrs: vi.fn().mockResolvedValue({ [ATTR_PAGE_LAYOUT]: "cols-header" }),
+        getChildBlocks: vi.fn().mockResolvedValue(mockBlocks),
+        setBlockAttrs: mockSetAttrs,
+        sql: mockSql,
+      })
+
+      const doc = await compiler.compile(docId)
+      const page = doc.slides[0]
+
+      expect(mockSetAttrs).toHaveBeenCalledWith("li-l2", { [ATTR_ELEM_SLOT]: "col-1" })
+      expect(mockSetAttrs).toHaveBeenCalledWith("li-r1", { [ATTR_ELEM_SLOT]: "col-2" })
+
+      const col1Blocks = page.blocks.filter(b => b.slot === "col-1")
+      const col2Blocks = page.blocks.filter(b => b.slot === "col-2")
+      expect(col1Blocks.map(b => b.id)).toEqual(["p-l1", "p-l2"])
+      expect(col2Blocks.map(b => b.id)).toEqual(["p-r1"])
+      expect(page.blocks.some(b => b.slot === "col-3")).toBe(false)
+
+      const html = renderSlideBlocksToHtml(page)
+      expect(html).toContain("grid-template-columns: repeat(2, 1fr);")
+      expect(html).not.toContain("pdf-col--3")
+      // 确认左栏第二项留在左栏内，未跑进右栏
+      const leftColHtml = html.split('pdf-col--right')[0]
+      expect(leftColHtml).toContain("左栏第一项")
+      expect(leftColHtml).toContain("左栏第二项")
+      expect(leftColHtml).not.toContain("右栏第一项")
+    })
+
+    it("直接调用 buildSlidesDocument（无预写 slot）：2 个列表块组成超级块且第 1 栏含 2 项时也应保持 2 栏均分", () => {
+      const blocks: ISiYuanBlockNode[] = [
+        { id: "h1", type: "h", markdown: "# 标题", content: "标题" },
+        {
+          id: "sb",
+          type: "s",
+          subType: "col",
+          children: [
+            {
+              id: "l1",
+              type: "l",
+              children: [
+                { id: "i1a", type: "i", children: [{ id: "p1a", type: "p", markdown: "左 1", content: "左 1" }] },
+                { id: "i1b", type: "i", children: [{ id: "p1b", type: "p", markdown: "左 2", content: "左 2" }] },
+              ],
+            },
+            {
+              id: "l2",
+              type: "l",
+              children: [
+                { id: "i2a", type: "i", children: [{ id: "p2a", type: "p", markdown: "右 1", content: "右 1" }] },
+              ],
+            },
+          ],
+        },
+      ]
+
+      const doc = buildSlidesDocument("doc-direct-2cols", { [ATTR_PAGE_LAYOUT]: "cols-header" }, blocks)
+      const page = doc.slides[0]
+      expect(page.blocks.filter(b => b.slot === "col-1").map(b => b.id)).toEqual(["p1a", "p1b"])
+      expect(page.blocks.filter(b => b.slot === "col-2").map(b => b.id)).toEqual(["p2a"])
+      expect(page.blocks.some(b => b.slot === "col-3")).toBe(false)
     })
   })
 

@@ -28,6 +28,7 @@ import {
 } from "./scope-mapper"
 import {
   cleanCardListItemMarkdown,
+  detectListSuperBlock,
   detectSuperBlockImageLayout,
   extractImageUrl,
   isListItemNode,
@@ -462,6 +463,26 @@ export function buildSlidesDocument(
         itemNode.children &&
         itemNode.children.length > 0
       ) {
+        const isMultiColPage =
+          isColsHeaderLayout(currentPage.frontmatter.layout) ||
+          currentPage.frontmatter.layout === "clover"
+        const detectedListCols =
+          isMultiColPage && !inheritedContext?.defaultSlot
+            ? detectListSuperBlock(itemNode)
+            : null
+
+        if (detectedListCols?.columns && detectedListCols.columns.length >= 2) {
+          for (let colIdx = 0; colIdx < detectedListCols.columns.length; colIdx++) {
+            const col = detectedListCols.columns[colIdx]
+            processBlockNode(col.containerNode, {
+              ...inheritedContext,
+              defaultSlot: `col-${colIdx + 1}`,
+              parentContainerId: itemNode.id || inheritedContext?.parentContainerId,
+            })
+          }
+          return
+        }
+
         // P1-C2 修复：超级块展开与列表容器展开语义对齐——内部子标题属于容器局部标题，
         // 传入 parentContainerId 阻止其压入全局大纲栈，杜绝后续无关块继承容器内标题的 slot/clicks/motion
         for (const childNode of itemNode.children) {
