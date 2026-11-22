@@ -552,16 +552,22 @@ export class DocumentCompilerService {
         await populateChildrenRecursively(blockNodes)
       }
 
-      // 5.6 递归冒泡与双向同步多媒体播放控制属性 (custom-slides-autoplay, custom-slides-muted 等)
+      // 5.6 递归冒泡与双向同步多媒体播放控制属性 (仅限视频播放控制属性，严禁冒泡 clicks/motion/slot 等动效与排版属性)
+      const VIDEO_MEDIA_ATTRS = new Set([
+        "custom-slides-autoplay",
+        "custom-slides-loop",
+        "custom-slides-muted",
+        "custom-slides-controls",
+      ])
       const syncMediaAttrsInTree = (nodes: ISiYuanBlockNode[]) => {
         for (const node of nodes) {
           if (node.children && node.children.length > 0) {
             syncMediaAttrsInTree(node.children)
-            // 向上合并子节点中视频块的属性到父块
+            // 向上合并子节点中视频块的播放属性到父块
             for (const child of node.children) {
               if (child.ial) {
                 for (const [k, v] of Object.entries(child.ial)) {
-                  if (k.startsWith("custom-slides-") && !node.ial?.[k]) {
+                  if (VIDEO_MEDIA_ATTRS.has(k) && !node.ial?.[k]) {
                     if (!node.ial) node.ial = {}
                     node.ial[k] = v
                   }
@@ -571,7 +577,7 @@ export class DocumentCompilerService {
             // 向下传递父容器设置的视频属性给包含视频的子块
             if (node.ial) {
               for (const [k, v] of Object.entries(node.ial)) {
-                if (k.startsWith("custom-slides-")) {
+                if (VIDEO_MEDIA_ATTRS.has(k)) {
                   for (const child of node.children) {
                     const isVid = child.type === "video" || child.type === "NodeVideo" || /<video\b/i.test(child.markdown || child.content || "")
                     if (isVid && !child.ial?.[k]) {

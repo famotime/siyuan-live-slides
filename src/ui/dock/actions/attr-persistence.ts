@@ -110,6 +110,21 @@ export function createAttrPersistence(ctx: IInspectorActionsContext): IAttrPersi
       globalDocumentCompiler.setBlockAttrOverride(parentId, { [ATTR_ELEM_CLICK]: clickVal })
       syncDomBlockAttrs(parentId, { [ATTR_ELEM_CLICK]: clickVal })
       setBlockAttrs(parentId, { [ATTR_ELEM_CLICK]: clickVal }).catch(() => {})
+    } else if (
+      ATTR_ELEM_CLICK in attrs &&
+      (ctx.activeBlockType.value === "NodeListItem" || ctx.activeBlockType.value === "i") &&
+      typeof document !== "undefined"
+    ) {
+      const liEl = document.querySelector(`.protyle-wysiwyg [data-node-id="${targetId}"]`) ||
+                   document.querySelector(`[data-node-id="${targetId}"]`)
+      const firstChild = liEl?.querySelector(':scope > [data-node-id], :scope > div > [data-node-id]')
+      const firstChildId = firstChild?.getAttribute("data-node-id")
+      if (firstChildId && firstChildId !== targetId && firstChild?.getAttribute("data-type") !== "NodeList") {
+        const clickVal = attrs[ATTR_ELEM_CLICK]
+        globalDocumentCompiler.setBlockAttrOverride(firstChildId, { [ATTR_ELEM_CLICK]: clickVal })
+        syncDomBlockAttrs(firstChildId, { [ATTR_ELEM_CLICK]: clickVal })
+        setBlockAttrs(firstChildId, { [ATTR_ELEM_CLICK]: clickVal }).catch(() => {})
+      }
     }
 
     if (ATTR_PAGE_LAYOUT in attrs) {

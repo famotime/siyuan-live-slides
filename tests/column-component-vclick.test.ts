@@ -707,4 +707,443 @@ describe("表头多栏分栏内组件逐步呈现 (v-click) 级联调度集成�
       expect(getBlockClickStatus(img2, 2, plan)).toBe("v-click-visible")
     })
   })
+
+  describe("5. 嵌套子列表逐步呈现继承与独立步进控制", () => {
+    it("场景 5.1：常规版式下父列表项设置 +1，子列表项 1 关闭、子列表项 2 开启 +1 时，子项 1 跟随父项第 1 步同现，子项 2 第 2 步出现", () => {
+      const mockBlocks: ISiYuanBlockNode[] = [
+        {
+          id: "list-root",
+          type: "l",
+          children: [
+            {
+              id: "parent-item-1",
+              type: "i",
+              ial: { [ATTR_ELEM_CLICK]: "+1" },
+              children: [
+                {
+                  id: "parent-p-1",
+                  type: "p",
+                  markdown: "父列表项 1",
+                  ial: { [ATTR_ELEM_CLICK]: "+1" },
+                },
+                {
+                  id: "sub-list-1",
+                  type: "l",
+                  children: [
+                    {
+                      id: "child-item-1",
+                      type: "i",
+                      ial: { [ATTR_ELEM_CLICK]: "" }, // 显式关闭逐步呈现
+                      children: [
+                        { id: "child-p-1", type: "p", markdown: "子列表项 1.1（关闭）", ial: { [ATTR_ELEM_CLICK]: "" } },
+                      ],
+                    },
+                    {
+                      id: "child-item-2",
+                      type: "i",
+                      ial: { [ATTR_ELEM_CLICK]: "+1" }, // 开启逐步呈现
+                      children: [
+                        { id: "child-p-2", type: "p", markdown: "子列表项 1.2（开启）", ial: { [ATTR_ELEM_CLICK]: "+1" } },
+                      ],
+                    },
+                    {
+                      id: "child-item-3",
+                      type: "i",
+                      ial: { [ATTR_ELEM_CLICK]: "+1" }, // 再顺延一步
+                      children: [
+                        { id: "child-p-3", type: "p", markdown: "子列表项 1.3（开启）" },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              id: "parent-item-2",
+              type: "i",
+              ial: { [ATTR_ELEM_CLICK]: "+1" },
+              children: [
+                { id: "parent-p-2", type: "p", markdown: "父列表项 2", ial: { [ATTR_ELEM_CLICK]: "+1" } },
+              ],
+            },
+          ],
+        },
+      ]
+
+      const doc = buildSlidesDocument("doc-nested", { [ATTR_PAGE_LAYOUT]: "default" }, mockBlocks)
+      const page = doc.slides[0]
+
+      const parentP1 = page.blocks.find(b => b.id === "parent-p-1")!
+      const childP1 = page.blocks.find(b => b.id === "child-p-1")!
+      const childP2 = page.blocks.find(b => b.id === "child-p-2")!
+      const childP3 = page.blocks.find(b => b.id === "child-p-3")!
+      const parentP2 = page.blocks.find(b => b.id === "parent-p-2")!
+
+      expect(parentP1).toBeDefined()
+      expect(childP1).toBeDefined()
+      expect(childP2).toBeDefined()
+      expect(childP3).toBeDefined()
+      expect(parentP2).toBeDefined()
+
+      expect(childP1.clicks).toBeUndefined()
+      expect(childP1.parentContainerId).toBe("parent-item-1")
+      expect(childP1.parentClicks).toBe("+1")
+
+      const plan = computeSlideClicksPlan(page.blocks)
+      expect(plan.maxStep).toBe(4)
+
+      // Step 0: 全隐藏
+      expect(getBlockClickStatus(parentP1, 0, plan)).toBe("v-click-hidden")
+      expect(getBlockClickStatus(childP1, 0, plan)).toBe("v-click-hidden")
+      expect(getBlockClickStatus(childP2, 0, plan)).toBe("v-click-hidden")
+      expect(getBlockClickStatus(childP3, 0, plan)).toBe("v-click-hidden")
+      expect(getBlockClickStatus(parentP2, 0, plan)).toBe("v-click-hidden")
+
+      // Step 1: 父项 1 与关闭逐步呈现的子项 1.1 同时出现
+      expect(getBlockClickStatus(parentP1, 1, plan)).toBe("v-click-visible")
+      expect(getBlockClickStatus(childP1, 1, plan)).toBe("v-click-visible")
+      expect(getBlockClickStatus(childP2, 1, plan)).toBe("v-click-hidden")
+      expect(getBlockClickStatus(childP3, 1, plan)).toBe("v-click-hidden")
+      expect(getBlockClickStatus(parentP2, 1, plan)).toBe("v-click-hidden")
+
+      // Step 2: 子项 1.2 出现
+      expect(getBlockClickStatus(childP2, 2, plan)).toBe("v-click-visible")
+      expect(getBlockClickStatus(childP3, 2, plan)).toBe("v-click-hidden")
+
+      // Step 3: 子项 1.3 出现
+      expect(getBlockClickStatus(childP3, 3, plan)).toBe("v-click-visible")
+      expect(getBlockClickStatus(parentP2, 3, plan)).toBe("v-click-hidden")
+
+      // Step 4: 父项 2 出现
+      expect(getBlockClickStatus(parentP2, 4, plan)).toBe("v-click-visible")
+    })
+
+    it("场景 5.2：分栏版式 (cols-header) 下子列表被强制展开，所有关闭逐步呈现的子列表项必须与父列表项同拍出现，且保留列表圆点", () => {
+      const mockBlocks: ISiYuanBlockNode[] = [
+        {
+          id: "list-root",
+          type: "l",
+          children: [
+            {
+              id: "parent-col-1",
+              type: "i",
+              ial: {
+                [ATTR_ELEM_SLOT]: "col-1",
+                [ATTR_ELEM_CLICK]: "+1",
+              },
+              children: [
+                { id: "p-col-1", type: "p", markdown: "### 栏目一", ial: { [ATTR_ELEM_CLICK]: "+1" } },
+                {
+                  id: "sub-list-col-1",
+                  type: "l",
+                  children: [
+                    {
+                      id: "sub-item-1",
+                      type: "i",
+                      children: [{ id: "sub-p-1", type: "p", markdown: "要点 A（关闭逐步）" }],
+                    },
+                    {
+                      id: "sub-item-2",
+                      type: "i",
+                      children: [{ id: "sub-p-2", type: "p", markdown: "要点 B（关闭逐步）" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+
+      const doc = buildSlidesDocument("doc-col-nested", { [ATTR_PAGE_LAYOUT]: "cols-header" }, mockBlocks)
+      const page = doc.slides[0]
+
+      const parentP = page.blocks.find(b => b.id === "p-col-1")!
+      const subP1 = page.blocks.find(b => b.id === "sub-p-1")!
+      const subP2 = page.blocks.find(b => b.id === "sub-p-2")!
+
+      expect(subP1.clicks).toBeUndefined()
+      expect(subP2.clicks).toBeUndefined()
+      expect(subP1.rawMarkdown).toMatch(/^-\s+要点 A/)
+      expect(subP2.rawMarkdown).toMatch(/^-\s+要点 B/)
+
+      const plan = computeSlideClicksPlan(page.blocks)
+      expect(plan.maxStep).toBe(1)
+
+      expect(getBlockClickStatus(parentP, 0, plan)).toBe("v-click-hidden")
+      expect(getBlockClickStatus(subP1, 0, plan)).toBe("v-click-hidden")
+      expect(getBlockClickStatus(subP2, 0, plan)).toBe("v-click-hidden")
+
+      expect(getBlockClickStatus(parentP, 1, plan)).toBe("v-click-visible")
+      expect(getBlockClickStatus(subP1, 1, plan)).toBe("v-click-visible")
+      expect(getBlockClickStatus(subP2, 1, plan)).toBe("v-click-visible")
+    })
+
+    it("场景 5.3：多级嵌套中，关闭逐步呈现的子项即使包含孙级子块（多子块复合项），也与父列表项同拍；开启逐步呈现的子项及其关闭的孙项在后续步同拍", () => {
+      const mockBlocks: ISiYuanBlockNode[] = [
+        {
+          id: "list-root",
+          type: "l",
+          children: [
+            {
+              id: "parent-1",
+              type: "i",
+              ial: { [ATTR_ELEM_CLICK]: "+1" },
+              children: [
+                { id: "parent-1-p", type: "p", markdown: "父项" },
+                {
+                  id: "sub-list",
+                  type: "l",
+                  children: [
+                    {
+                      id: "child-closed",
+                      type: "i",
+                      children: [
+                        { id: "child-closed-p", type: "p", markdown: "子项 1（关闭但带图）" },
+                        { id: "child-closed-img", type: "p", markdown: "![图](assets/a.png)" },
+                      ],
+                    },
+                    {
+                      id: "child-open",
+                      type: "i",
+                      ial: { [ATTR_ELEM_CLICK]: "+1" },
+                      children: [
+                        { id: "child-open-p", type: "p", markdown: "子项 2（开启 +1）" },
+                        {
+                          id: "grandchild-list",
+                          type: "l",
+                          children: [
+                            {
+                              id: "grandchild-closed",
+                              type: "i",
+                              children: [{ id: "grandchild-closed-p", type: "p", markdown: "孙项 2.1（关闭）" }],
+                            },
+                            {
+                              id: "grandchild-open",
+                              type: "i",
+                              ial: { [ATTR_ELEM_CLICK]: "+1" },
+                              children: [{ id: "grandchild-open-p", type: "p", markdown: "孙项 2.2（开启 +1）" }],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+
+      const doc = buildSlidesDocument("doc-deep-nested", { [ATTR_PAGE_LAYOUT]: "default" }, mockBlocks)
+      const page = doc.slides[0]
+      const plan = computeSlideClicksPlan(page.blocks)
+
+      const parent1P = page.blocks.find(b => b.id === "parent-1-p")!
+      const childClosedP = page.blocks.find(b => b.id === "child-closed-p")!
+      const childClosedImg = page.blocks.find(b => b.id === "child-closed-img")!
+      const childOpenP = page.blocks.find(b => b.id === "child-open-p")!
+      const grandchildClosedP = page.blocks.find(b => b.id === "grandchild-closed-p")!
+      const grandchildOpenP = page.blocks.find(b => b.id === "grandchild-open-p")!
+
+      expect(plan.maxStep).toBe(3)
+
+      // Step 1: parent-1 + child-closed (含其图片) 同时出现
+      expect(getBlockClickStatus(parent1P, 1, plan)).toBe("v-click-visible")
+      expect(getBlockClickStatus(childClosedP, 1, plan)).toBe("v-click-visible")
+      expect(getBlockClickStatus(childClosedImg, 1, plan)).toBe("v-click-visible")
+      expect(getBlockClickStatus(childOpenP, 1, plan)).toBe("v-click-hidden")
+
+      // Step 2: child-open + grandchild-closed 同时出现
+      expect(getBlockClickStatus(childOpenP, 2, plan)).toBe("v-click-visible")
+      expect(getBlockClickStatus(grandchildClosedP, 2, plan)).toBe("v-click-visible")
+      expect(getBlockClickStatus(grandchildOpenP, 2, plan)).toBe("v-click-hidden")
+
+      // Step 3: grandchild-open 出现
+      expect(getBlockClickStatus(grandchildOpenP, 3, plan)).toBe("v-click-visible")
+    })
+
+    it("场景 5.4：父列表项关闭逐步呈现时，关闭的子列表项初始即显，仅开启逐步呈现的子列表项按顺序逐步出现", () => {
+      const mockBlocks: ISiYuanBlockNode[] = [
+        {
+          id: "list-root",
+          type: "l",
+          children: [
+            {
+              id: "parent-item",
+              type: "i",
+              children: [
+                { id: "parent-p", type: "p", markdown: "父项（关闭）" },
+                {
+                  id: "sub-list",
+                  type: "l",
+                  children: [
+                    {
+                      id: "child-1",
+                      type: "i",
+                      children: [{ id: "child-p-1", type: "p", markdown: "子项 1（关闭）" }],
+                    },
+                    {
+                      id: "child-2",
+                      type: "i",
+                      ial: { [ATTR_ELEM_CLICK]: "+1" },
+                      children: [{ id: "child-p-2", type: "p", markdown: "子项 2（开启 +1）" }],
+                    },
+                    {
+                      id: "child-3",
+                      type: "i",
+                      ial: { [ATTR_ELEM_CLICK]: "+1" },
+                      children: [{ id: "child-p-3", type: "p", markdown: "子项 3（开启 +1）" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+
+      const doc = buildSlidesDocument("doc-parent-off", { [ATTR_PAGE_LAYOUT]: "default" }, mockBlocks)
+      const page = doc.slides[0]
+      const plan = computeSlideClicksPlan(page.blocks)
+
+      const parentP = page.blocks.find(b => b.id === "parent-p")!
+      const childP1 = page.blocks.find(b => b.id === "child-p-1")!
+      const childP2 = page.blocks.find(b => b.id === "child-p-2")!
+      const childP3 = page.blocks.find(b => b.id === "child-p-3")!
+
+      expect(plan.maxStep).toBe(2)
+
+      // Step 0: 父项与子项 1 初始可见
+      expect(getBlockClickStatus(parentP, 0, plan)).toBe("v-click-visible")
+      expect(getBlockClickStatus(childP1, 0, plan)).toBe("v-click-visible")
+      expect(getBlockClickStatus(childP2, 0, plan)).toBe("v-click-hidden")
+      expect(getBlockClickStatus(childP3, 0, plan)).toBe("v-click-hidden")
+
+      // Step 1: 子项 2 出现
+      expect(getBlockClickStatus(childP2, 1, plan)).toBe("v-click-visible")
+      expect(getBlockClickStatus(childP3, 1, plan)).toBe("v-click-hidden")
+
+      // Step 2: 子项 3 出现
+      expect(getBlockClickStatus(childP3, 2, plan)).toBe("v-click-visible")
+    })
+
+    it("场景 5.5：经 DocumentCompilerService.compile 完整编译时，子列表项设置 +1 绝不向上冒泡污染关闭逐步呈现的父列表项", async () => {
+      const docId = "doc-compile-child-click"
+      const compiler = new DocumentCompilerService({
+        getBlockAttrs: vi.fn().mockResolvedValue({}),
+        getChildBlocks: vi.fn().mockImplementation((id: string) => {
+          if (id === docId) {
+            return Promise.resolve([
+              { id: "list-root", type: "l", markdown: "- 父项" },
+            ])
+          }
+          if (id === "list-root") {
+            return Promise.resolve([
+              { id: "parent-item", type: "i", markdown: "父项", ial: '{: custom-slides-click=""}' },
+            ])
+          }
+          if (id === "parent-item") {
+            return Promise.resolve([
+              { id: "parent-p", type: "p", markdown: "父项主文本", content: "父项主文本", ial: '{: custom-slides-click=""}' },
+              { id: "sub-list", type: "l", markdown: "- 子项 1\n- 子项 2" },
+            ])
+          }
+          if (id === "sub-list") {
+            return Promise.resolve([
+              { id: "child-item-1", type: "i", markdown: "子项 1" },
+              { id: "child-item-2", type: "i", markdown: "子项 2" },
+            ])
+          }
+          if (id === "child-item-1") {
+            return Promise.resolve([
+              { id: "child-p-1", type: "p", markdown: "子项 1", content: "子项 1", ial: '{: custom-slides-click="+1"}' },
+            ])
+          }
+          if (id === "child-item-2") {
+            return Promise.resolve([
+              { id: "child-p-2", type: "p", markdown: "子项 2", content: "子项 2", ial: '{: custom-slides-click="+1"}' },
+            ])
+          }
+          return Promise.resolve([])
+        }),
+        sql: vi.fn().mockResolvedValue([]),
+      })
+
+      const doc = await compiler.compile(docId)
+      const page = doc.slides[0]
+      const plan = computeSlideClicksPlan(page.blocks)
+
+      const parentP = page.blocks.find(b => b.id === "parent-p")!
+      const childP1 = page.blocks.find(b => b.id === "child-p-1")!
+      const childP2 = page.blocks.find(b => b.id === "child-p-2")!
+
+      expect(parentP).toBeDefined()
+      expect(parentP.clicks).toBeUndefined()
+      expect(parentP.parentClicks).toBeUndefined()
+      expect(plan.maxStep).toBe(2)
+
+      // 父列表项必须在 step 0 立即出现
+      expect(getBlockClickStatus(parentP, 0, plan)).toBe("v-click-visible")
+      expect(getBlockClickStatus(childP1, 0, plan)).toBe("v-click-hidden")
+      expect(getBlockClickStatus(childP2, 0, plan)).toBe("v-click-hidden")
+
+      // 子列表项按顺序逐步出现
+      expect(getBlockClickStatus(childP1, 1, plan)).toBe("v-click-visible")
+      expect(getBlockClickStatus(childP2, 1, plan)).toBe("v-click-hidden")
+      expect(getBlockClickStatus(childP2, 2, plan)).toBe("v-click-visible")
+    })
+
+    it("场景 5.6：经 DocumentCompilerService.compile 完整编译时，列表项下子内容（段落/图片/视频）设置 +1 绝不向上冒泡到列表项本身", async () => {
+      const docId = "doc-compile-item-content-click"
+      const compiler = new DocumentCompilerService({
+        getBlockAttrs: vi.fn().mockResolvedValue({}),
+        getChildBlocks: vi.fn().mockImplementation((id: string) => {
+          if (id === docId) {
+            return Promise.resolve([
+              { id: "list-root", type: "l", markdown: "- 列表项" },
+            ])
+          }
+          if (id === "list-root") {
+            return Promise.resolve([
+              { id: "item-1", type: "i", markdown: "列表项标题" },
+            ])
+          }
+          if (id === "item-1") {
+            return Promise.resolve([
+              { id: "item-p-main", type: "p", markdown: "列表项标题（立即出现）", content: "列表项标题（立即出现）" },
+              { id: "item-p-sub", type: "p", markdown: "列表项下说明（逐步出现）", content: "列表项下说明（逐步出现）", ial: '{: custom-slides-click="+1"}' },
+              { id: "item-vid-sub", type: "video", markdown: '<video src="assets/demo.mp4"></video>', ial: '{: custom-slides-click="+1" custom-slides-autoplay="true"}' },
+            ])
+          }
+          return Promise.resolve([])
+        }),
+        sql: vi.fn().mockResolvedValue([]),
+      })
+
+      const doc = await compiler.compile(docId)
+      const page = doc.slides[0]
+      const plan = computeSlideClicksPlan(page.blocks)
+
+      const mainP = page.blocks.find(b => b.id === "item-p-main")!
+      const subP = page.blocks.find(b => b.id === "item-p-sub")!
+      const subVid = page.blocks.find(b => b.id === "item-vid-sub")!
+
+      expect(mainP.clicks).toBeUndefined()
+      expect(mainP.parentClicks).toBeUndefined()
+      expect(subVid.attributes?.["custom-slides-autoplay"]).toBe("true")
+      expect(plan.maxStep).toBe(2)
+
+      // 列表项本身立即出现，下属内容逐步呈现
+      expect(getBlockClickStatus(mainP, 0, plan)).toBe("v-click-visible")
+      expect(getBlockClickStatus(subP, 0, plan)).toBe("v-click-hidden")
+      expect(getBlockClickStatus(subVid, 0, plan)).toBe("v-click-hidden")
+
+      expect(getBlockClickStatus(subP, 1, plan)).toBe("v-click-visible")
+      expect(getBlockClickStatus(subVid, 1, plan)).toBe("v-click-hidden")
+
+      expect(getBlockClickStatus(subVid, 2, plan)).toBe("v-click-visible")
+    })
+  })
 })

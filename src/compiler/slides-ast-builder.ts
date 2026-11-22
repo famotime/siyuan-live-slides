@@ -277,6 +277,7 @@ export function buildSlidesDocument(
         defaultSlot?: string
         isParentListUnpacked?: boolean
         isListItem?: boolean
+        listLevel?: number
         listContext?: {
           isOrdered?: boolean
           itemIndex?: number
@@ -483,21 +484,26 @@ export function buildSlidesDocument(
       )
 
       // 展开带有分栏插槽、显式拆分、多子块复合项或多媒体的列表容器子项 (NodeList 'l')
+      const hasNodeUnpackAttr = (n: ISiYuanBlockNode): boolean => {
+        if (
+          n.ial?.[ATTR_ELEM_SLOT] ||
+          n.ial?.[ATTR_ELEM_CLICK] ||
+          n.ial?.[ATTR_ELEM_ROLE] ||
+          n.ial?.[ATTR_PAGE_LAYOUT] ||
+          n.ial?.["custom-slides-role"] ||
+          n.ial?.["custom-slides-layout"]
+        ) {
+          return true
+        }
+        if (n.children && n.children.length > 0) {
+          if (n.children.length >= 2) return true
+          return n.children.some(hasNodeUnpackAttr)
+        }
+        return false
+      }
       const hasUnpackChild = Boolean(
         itemNode.children &&
-        itemNode.children.some(c =>
-          c.ial?.[ATTR_ELEM_SLOT] ||
-          c.ial?.[ATTR_ELEM_CLICK] ||
-          (c.children && c.children.length >= 2) ||
-          (c.children && c.children.some(sub =>
-            sub.ial?.[ATTR_ELEM_CLICK] ||
-            sub.ial?.[ATTR_ELEM_SLOT] ||
-            sub.ial?.[ATTR_ELEM_ROLE] ||
-            sub.ial?.[ATTR_PAGE_LAYOUT] ||
-            sub.ial?.["custom-slides-role"] ||
-            sub.ial?.["custom-slides-layout"]
-          ))
-        )
+        itemNode.children.some(hasNodeUnpackAttr)
       )
 
       if (
@@ -512,6 +518,12 @@ export function buildSlidesDocument(
         )
       ) {
         const isOrderedList = /^\s*\d+\.\s+/m.test(itemNode.markdown || "") || itemNode.subType === "o" || (itemNode as any).subtype === "o"
+        const nextListLevel = (inheritedContext?.listLevel ?? -1) + 1
+        // 若列表容器自身显式配置了 clicks，为其分配独立容器标识；否则透传外层容器上下文（如父列表项）
+        const listParentClicks = elemAttrs.clicks || inheritedContext?.parentClicks
+        const listParentContainerId = elemAttrs.clicks
+          ? (itemNode.id || inheritedContext?.parentContainerId)
+          : inheritedContext?.parentContainerId
         for (let idx = 0; idx < itemNode.children.length; idx++) {
           const childNode = itemNode.children[idx]
           if (elemAttrs.slot && (!childNode.ial || !childNode.ial[ATTR_ELEM_SLOT])) {
@@ -520,10 +532,12 @@ export function buildSlidesDocument(
           }
           processBlockNode(childNode, {
             ...inheritedContext,
-            parentClicks: elemAttrs.clicks || inheritedContext?.parentClicks,
+            parentClicks: listParentClicks,
+            parentContainerId: listParentContainerId,
             defaultSlot: elemAttrs.slot || inheritedContext?.defaultSlot,
             isParentListUnpacked: true,
             isListItem: true,
+            listLevel: nextListLevel,
             listContext: {
               isOrdered: isOrderedList,
               itemIndex: idx + 1,
@@ -551,16 +565,37 @@ export function buildSlidesDocument(
         // 查找首个有内容的有效子块（代表主容器自身的主文本）
         const hasMultipleChildren = Boolean(itemNode.children && itemNode.children.length >= 2)
         const firstValidChild = itemNode.children.find(c => Boolean((c.markdown || c.content || "").trim())) || itemNode.children[0]
-        const firstChildClicks = firstValidChild?.ial?.[ATTR_ELEM_CLICK] || firstValidChild?.ial?.["custom-slides-click"]
+        const firstChildIsContainer = Boolean(
+          firstValidChild && (
+            isListItemNode(firstValidChild) ||
+            firstValidChild.type === "l" ||
+            firstValidChild.type === "NodeList" ||
+            firstValidChild.type === "list"
+          )
+        )
+        const firstChildClicks = firstChildIsContainer
+          ? undefined
+          : (firstValidChild?.ial?.[ATTR_ELEM_CLICK] || firstValidChild?.ial?.["custom-slides-click"])
+        const hasExplicitEmptyClick = Boolean(
+          itemNode.ial &&
+          ATTR_ELEM_CLICK in itemNode.ial &&
+          !String(itemNode.ial[ATTR_ELEM_CLICK] || "").trim()
+        )
 
         // 确定容器 clicks：
         // 1. 若列表项自身配置了 clicks，以自身为准；
-        // 2. 若列表项自身未配置，但包含多个子块（首行文本+子组件）且首行文本配置了 clicks，提升为容器 clicks；
-        // 3. 否则继承外部 parentClicks
-        const shouldLiftFirstChild = Boolean(!elemAttrs.clicks && hasMultipleChildren && firstChildClicks)
-        const containerClicks = elemAttrs.clicks || (shouldLiftFirstChild ? firstChildClicks : undefined) || inheritedContext?.parentClicks
-        const containerId = itemNode.id || inheritedContext?.parentContainerId
+        // 2. 若列表项自身未配置（且未显式关闭），但包含多个子块（首行文本+子组件）且首行文本配置了 clicks，提升为容器 clicks；
+        // 3. 否则说明当前列表项未开启自身 clicks，若有父容器 clicks 则沿用父容器归属，保持与父级同拍出现
+        const shouldLiftFirstChild = Boolean(!elemAttrs.clicks && !hasExplicitEmptyClick && hasMultipleChildren && firstChildClicks)
+        const selfClicks = elemAttrs.clicks || (shouldLiftFirstChild ? firstChildClicks : undefined)
+        const hasOwnContainerClicks = Boolean(selfClicks)
+        const containerClicks = selfClicks || inheritedContext?.parentClicks
+        const hasInheritedParentGroup = Boolean(!hasOwnContainerClicks && inheritedContext?.parentContainerId && inheritedContext?.parentClicks)
+        const containerId = hasInheritedParentGroup
+          ? inheritedContext!.parentContainerId
+          : (itemNode.id || inheritedContext?.parentContainerId)
         const targetSlot = elemAttrs.slot || inheritedContext?.defaultSlot
+        const isNestedListItem = (inheritedContext?.listLevel ?? 0) > 0
 
         let isFirstValidChild = true
         for (const childNode of itemNode.children) {
@@ -575,8 +610,8 @@ export function buildSlidesDocument(
           if (isThisFirstValid) {
             // 判定当前是否真正属于多栏卡片容器：
             // 仅在四叶草 clover、表头多栏 cols-header 或双栏 two-cols 卡片，且非图文分栏 (image-right/image-left) 下，
-            // 列表项作为多栏的独立卡片时，才清洗首行标题的列表标记；
-            // 在常规正文（单栏、图文混排 image-right/image-left）下，列表项必须完整保留或补齐标准的列表前缀符号！
+            // 顶层列表项作为多栏的独立卡片时，才清洗首行标题的列表标记；
+            // 在常规正文或嵌套子列表下，列表项必须完整保留或补齐标准的列表前缀符号！
             const isImageLayout = currentPage.frontmatter.layout === "image-right" || currentPage.frontmatter.layout === "image-left"
             const isMultiColsPage = !isImageLayout && Boolean(
               currentPage.frontmatter.layout === "clover" ||
@@ -585,7 +620,7 @@ export function buildSlidesDocument(
               isColsHeaderLayout(currentPage.frontmatter.layout) ||
               currentPage.frontmatter.layout === "two-cols"
             )
-            const isCardCol = isMultiColsPage && Boolean(
+            const isCardCol = !isNestedListItem && isMultiColsPage && Boolean(
               inheritedContext?.defaultSlot ||
               elemAttrs.slot ||
               itemNode.ial?.[ATTR_ELEM_SLOT]
@@ -625,29 +660,32 @@ export function buildSlidesDocument(
           }
 
           // 首行有效子块代表主容器自身的主文本，归入基础层：
-          // 当容器存在 clicks（无论是自身配置还是多子块下由首行提升）且存在多个子块时，
-          // 首行子块清除自身独立 clicks，仅作为基础层继承 parentClicks: containerClicks，
-          // 绝不保留自身独立的 clicks，避免首行文本被调度引擎顺延至第二步，
-          // 从而保证首行文本与同容器内未显式配置 clicks 的子组件（如图片）严格在同一个 step 同时呈现！
+          // 1. 当自身容器开启 clicks 且存在多个子块时，首行子块清除独立 clicks，仅依赖 parentClicks/parentContainerId 与子组件同拍；
+          // 2. 当自身容器开启 clicks 且仅含单个子块时，将 clicks 落于唯一子块，parentClicks/parentContainerId 沿用外层上下文，避免同一块既算容器又算自身导致步数翻倍；
+          // 3. 当自身容器未开启 clicks 时（如子列表项关闭逐步呈现），绝不向子块注入父级 clicks，仅透传父容器归属以便跟随父级同拍出现。
           let childToProcess = childNode
-          if (isThisFirstValid && containerClicks && hasMultipleChildren) {
+          let childParentClicks = containerClicks
+          let childParentContainerId = containerId
+          if (hasOwnContainerClicks && hasMultipleChildren && isThisFirstValid) {
             childToProcess = {
               ...childNode,
               ial: { ...(childNode.ial || {}) },
             }
             delete childToProcess.ial[ATTR_ELEM_CLICK]
             delete childToProcess.ial["custom-slides-click"]
-          } else if (!hasMultipleChildren && containerClicks) {
+          } else if (hasOwnContainerClicks && !hasMultipleChildren) {
             childToProcess = {
               ...childNode,
-              ial: { ...(childNode.ial || {}), [ATTR_ELEM_CLICK]: containerClicks },
+              ial: { ...(childNode.ial || {}), [ATTR_ELEM_CLICK]: selfClicks! },
             }
+            childParentClicks = inheritedContext?.parentClicks
+            childParentContainerId = inheritedContext?.parentContainerId || itemNode.id
           }
 
           processBlockNode(childToProcess, {
             ...inheritedContext,
-            parentClicks: containerClicks,
-            parentContainerId: containerId,
+            parentClicks: childParentClicks,
+            parentContainerId: childParentContainerId,
             defaultSlot: targetSlot,
             isListItem: true,
           })
@@ -704,7 +742,7 @@ export function buildSlidesDocument(
       const headingLevel = getBlockHeadingLevel(itemNode)
 
       let effectiveSlot: string | undefined = elemAttrs.slot
-      let effectiveClicks: string | undefined = elemAttrs.clicks
+      let effectiveClicks: string | undefined = elemAttrs.clicks || undefined
       let effectiveMotion: ISlidesMotionConfig | undefined = elemAttrs.motion
       let effectiveAttrs: Record<string, string> = { ...(itemNode.ial || {}) }
 
