@@ -102,6 +102,7 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     onToggleVideoMuted: layout.onToggleVideoMuted,
     onToggleVideoControls: layout.onToggleVideoControls,
     onImageRoleChange: layout.onImageRoleChange,
+    syncPageImageLayout: layout.syncPageImageLayout,
     onToggleNoteBlock: notes.onToggleNoteBlock,
     createNoteBlockOnCurrentSlide: notes.createNoteBlockOnCurrentSlide,
     onAddNoteBlock: notes.onAddNoteBlock,

@@ -579,6 +579,7 @@ const {
   onToggleVideoMuted,
   onToggleVideoControls,
   onImageRoleChange,
+  syncPageImageLayout,
   onToggleNoteBlock,
   onAddNoteBlock,
   onLocateNoteBlock,
@@ -635,6 +636,8 @@ const {
 
 // 场景 A 事件
 async function onLayoutChange(val: string) {
+  // 图左/图右：先把本页配图标记到对应图片块（其它版式则清除残留标记），再写入页面版式，由后者统一触发重编译
+  await syncPageImageLayout(val)
   if (val === 'clover') {
     // 四叶草版式由 applyCloverLayout 全权负责（内部含失败提示），无论成败都不再写普通 layout 属性
     await applyCloverLayout()
@@ -678,7 +681,7 @@ function onApplySuperBlockLayout(info: any) {
   if (!info) return
   const layout = info.recommendedLayout || (info.colCount && info.colCount >= 2 ? 'cols-header' : 'two-cols')
   const ratio = info.ratio || (info.colCount ? Array.from({ length: info.colCount }, () => 1).join(':') : '1:1')
-  applyPageLayoutAndRatio(layout, ratio)
+  syncPageImageLayout(layout).finally(() => applyPageLayoutAndRatio(layout, ratio))
 }
 
 function onApplySuperBlockRatio(ratio: string) {

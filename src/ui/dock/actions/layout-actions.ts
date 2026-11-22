@@ -1,7 +1,7 @@
 import { confirm, showMessage } from "siyuan"
 import { deleteBlock, insertBlock, setBlockAttrs } from "@/api"
 import { globalDocumentCompiler } from "@/compiler/document-compiler"
-import { extractImageUrl, findFourComponentSuperBlockInPage } from "@/compiler/superblock-scanner"
+import { extractImageUrl, findFourComponentSuperBlockInPage, isImageBlock } from "@/compiler/superblock-scanner"
 import { syncDomBlockAttrs } from "@/sync/dom-attr-sync"
 import {
   ATTR_ELEM_CLICK,
@@ -138,6 +138,62 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
         [ATTR_PAGE_LAYOUT]: role,
         [ATTR_ELEM_ROLE]: "",
       })
+    }
+  }
+
+  /**
+   * 页面版式切换时同步图文配图标记：
+   * - 切到 image-left / image-right：将本页配图来源块（已有来源优先，否则取正文流中最后一张纯图片块）
+   *   标记为对应版式，并清除同页其它残留的图左/图右标记，保证配图仅出现在侧边栏；
+   * - 切到其它版式：清除本页所有图左/图右标记，避免残留标记在预扫描时把页面版式强制改回图文版式。
+   */
+  async function syncPageImageLayout(layout: string): Promise<void> {
+    const slide = ctx.targetSlide.value
+    if (!slide) return
+
+    const isImageLayout = layout === ROLE_IMAGE_LEFT || layout === ROLE_IMAGE_RIGHT
+    const blocks = slide.blocks || []
+    const nodeOf = (b: any) => b.rawNode || { id: b.id, type: b.type, markdown: b.rawMarkdown, content: b.content, ial: b.attributes || b.attrs || b.ial }
+    const layoutOf = (b: any): string => {
+      const ial = b.rawNode?.ial || b.attributes || b.attrs || b.ial || {}
+      return ial[ATTR_PAGE_LAYOUT] || ""
+    }
+    const isMarked = (v: string) => v === ROLE_IMAGE_LEFT || v === ROLE_IMAGE_RIGHT
+
+    // 当前携带图左/图右标记的块（含已被提取到侧边栏、不在正文流中的来源块）
+    const markedIds = new Map<string, string>()
+    for (const b of blocks) {
+      if (b.id && isMarked(layoutOf(b))) markedIds.set(b.id, layoutOf(b))
+    }
+    if (slide.imageBlockId) markedIds.set(slide.imageBlockId, markedIds.get(slide.imageBlockId) || "")
+
+    let sourceId = ""
+    if (isImageLayout) {
+      sourceId = slide.imageBlockId || ""
+      if (!sourceId) {
+        for (let i = blocks.length - 1; i >= 0; i--) {
+          const b = blocks[i]
+          const role = (b.attributes || b.attrs || b.ial || {})[ATTR_ELEM_ROLE]
+          if (!b.id || role === "background") continue
+          if (isImageBlock(nodeOf(b))) {
+            sourceId = b.id
+            break
+          }
+        }
+      }
+    }
+
+    const writes: Array<[string, string]> = []
+    if (sourceId && markedIds.get(sourceId) !== layout) writes.push([sourceId, layout])
+    for (const id of markedIds.keys()) {
+      if (id !== sourceId) writes.push([id, ""])
+    }
+
+    for (const [id, value] of writes) {
+      const updates = { [ATTR_PAGE_LAYOUT]: value }
+      globalDocumentCompiler.setBlockAttrOverride(id, updates)
+      syncDomBlockAttrs(id, updates)
+      await setBlockAttrs(id, updates).catch(() => {})
     }
   }
 
@@ -650,6 +706,7 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
     onToggleVideoMuted,
     onToggleVideoControls,
     onImageRoleChange,
+    syncPageImageLayout,
     toggleElemClick,
     onElemClickStepChange,
     onElemMotionChange,
