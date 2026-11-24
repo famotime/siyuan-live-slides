@@ -302,7 +302,7 @@ export function renderSlideBlocksToHtml(
     const contentHtml = blocks.map((b, idx) => convertBlockToHtml(b, idx === 0 ? { ...options, extraClassName: "slides-page-first-heading-block" } : options)).join("\n")
     const imgUrl = slide.frontmatter?.image || slide.frontmatter?.background || ""
     const imgHtml = `<div class="pdf-image-col" style="background-image:url('${escapeHtml(imgUrl)}');background-size:cover;background-position:center;background-repeat:no-repeat;width:100%;height:100%;position:relative;overflow:hidden;"><img src="${escapeHtml(imgUrl)}" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;" onerror="this.style.display='none'" alt="Slide cover" /></div>`
-    const contentCol = `<div class="pdf-content-col" style="padding:48px 56px;display:flex;flex-direction:column;justify-content:flex-start;height:100%;box-sizing:border-box;overflow-y:auto;">${contentHtml}</div>`
+    const contentCol = `<div class="pdf-content-col" style="padding:var(--slides-padding-y, 36px) var(--slides-padding-x, 56px);display:flex;flex-direction:column;justify-content:flex-start;height:100%;box-sizing:border-box;overflow-y:auto;">${contentHtml}</div>`
 
     const cols = isImageRight ? `${contentCol}\n${imgHtml}` : `${imgHtml}\n${contentCol}`
     const gridCols = parseRatioToGridCols(slide.frontmatter?.layoutRatio, 2)

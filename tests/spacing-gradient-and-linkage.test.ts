@@ -5,6 +5,8 @@ import { generateStandaloneExportStyles } from "../src/export/standalone-templat
 import { generatePdfExportStyles } from "../src/export/pdf-template-styles"
 import { buildStandaloneHtml } from "../src/export/single-html-exporter"
 import { buildPrintableHtml } from "../src/export/pdf-exporter"
+import { renderSlideBlocksToHtml } from "../src/export/slide-layout-renderer"
+import { getStandaloneClientRuntimeScript } from "../src/export/standalone-client-runtime"
 import type { ISlidesDocument } from "../src/types/slides-protocol"
 
 describe("页面排版间距体系优化 (Spacing Gradient & Hierarchy Linkage)", () => {
@@ -170,6 +172,47 @@ describe("页面排版间距体系优化 (Spacing Gradient & Hierarchy Linkage)"
       expect(pageInspectorCode).toContain("标准排版：外衬 32/48px，块距 14px，行高 1.60")
       expect(pageInspectorCode).toContain("宽松排版：外衬 52/72px，块距 22px，行高 1.75")
       expect(pageInspectorCode).toContain("覆盖本页内衬、内容间隙与正文行距")
+    })
+  })
+
+  describe("5. 图右 / 图左 (image-right / image-left) 页边距一致性", () => {
+    it("standalone 样式与 slides-client 实时预览端均不应在 layout-image-right / layout-image-left 上清零 --slides-padding-* 变量", () => {
+      const css = generateStandaloneExportStyles()
+      expect(css).toContain(".image-right-content, .image-left-content")
+      expect(css).toContain("padding: var(--slides-padding-y, 32px) var(--slides-padding-x, 48px);")
+      expect(css).not.toMatch(/\.slide-content\.layout-image-right[^{]*\{[^}]*--slides-padding-x:\s*0px/)
+      expect(css).not.toMatch(/\.slide-content\.layout-image-left[^{]*\{[^}]*--slides-padding-x:\s*0px/)
+      expect(css).toContain(".slide-content.layout-image-right > .slides-mask-body-container--has-mask")
+
+      const clientHtml = fs.readFileSync(indexPath, "utf8")
+      expect(clientHtml).not.toMatch(/\.slide-content-wrapper\.layout-image-right[^{]*\{[^}]*--slides-padding-x:\s*0px/)
+      expect(clientHtml).not.toMatch(/\.slide-content-wrapper\.layout-image-left[^{]*\{[^}]*--slides-padding-x:\s*0px/)
+      expect(clientHtml).toContain(".slide-content-wrapper.layout-image-right > .slides-mask-body-container--has-mask")
+    })
+
+    it("PDF 与缩略图公共渲染器在 image-right / image-left 下应使用 --slides-padding-y / --slides-padding-x", () => {
+      for (const layout of ["image-right", "image-left"] as const) {
+        const html = renderSlideBlocksToHtml({
+          pageIndex: 1,
+          pageId: `page-${layout}`,
+          frontmatter: { layout, image: "https://example.com/a.png" },
+          blocks: [
+            { id: "h1", type: "h", subtype: "h1", rawMarkdown: "# Title", content: "Title" },
+            { id: "p1", type: "p", rawMarkdown: "Body text", content: "Body text" },
+          ],
+        })
+        expect(html).toContain("padding:var(--slides-padding-y, 36px) var(--slides-padding-x, 56px);")
+        expect(html).not.toContain("padding:48px 56px;")
+      }
+    })
+
+    it("standalone 运行时脚本在 image-right / image-left 下应将首块标题渲染进 contentCol 以共享页边距", () => {
+      const script = getStandaloneClientRuntimeScript()
+      const idx = script.indexOf('slide.frontmatter?.layout === "image-right"')
+      expect(idx).toBeGreaterThan(-1)
+      const snippet = script.slice(idx, idx + 1200)
+      expect(snippet).not.toContain('container.appendChild(renderBlock(pageFirstH')
+      expect(snippet).toContain('contentCol.appendChild(renderBlock(block, block === pageFirstH ? "slides-page-first-heading-block" : ""))')
     })
   })
 })

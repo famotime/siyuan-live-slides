@@ -393,10 +393,6 @@ export function getSlideRenderingSection(): string {
           const allBlocks = slide.blocks || [];
           const pageFirstH = !isCover ? allBlocks.find(isHeadingBlock) : null;
 
-          if (pageFirstH) {
-            container.appendChild(renderBlock(pageFirstH, "slides-page-first-heading-block"));
-          }
-
           const bodyWrap = document.createElement("div");
           bodyWrap.className = "slides-mask-body-container" + (currentMaskConfig ? " slides-mask-body-container--has-mask" : "");
           bodyWrap.style.display = "flex";
@@ -411,8 +407,7 @@ export function getSlideRenderingSection(): string {
           contentCol.className = isImageRight ? "image-right-content" : "image-left-content";
 
           for (const block of allBlocks) {
-            if (block === pageFirstH) continue;
-            contentCol.appendChild(renderBlock(block, ""));
+            contentCol.appendChild(renderBlock(block, block === pageFirstH ? "slides-page-first-heading-block" : ""));
           }
 
           const imgCol = document.createElement("div");

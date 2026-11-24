@@ -3412,13 +3412,14 @@
       margin-top: calc(-1 * var(--slides-padding-y, 32px)) !important;
       padding-top: var(--slides-padding-y, 32px) !important;
     }
-    /* 针对全屏零内边距特殊布局（如 image-right/image-left），重置内边距变量避免越界 */
-    .slide-content-wrapper.layout-image-right,
-    .slide-content-wrapper.layout-image-left,
-    .slide-content.layout-image-right,
-    .slide-content.layout-image-left {
-      --slides-padding-x: 0px !important;
-      --slides-padding-y: 0px !important;
+    /* 针对全屏零内边距特殊布局（如 image-right/image-left），仅重置蒙版容器的负边距扩展，保留 --slides-padding-* 变量供文字区使用 */
+    .slide-content-wrapper.layout-image-right > .slides-mask-body-container--has-mask,
+    .slide-content-wrapper.layout-image-left > .slides-mask-body-container--has-mask,
+    .slide-content.layout-image-right > .slides-mask-body-container--has-mask,
+    .slide-content.layout-image-left > .slides-mask-body-container--has-mask {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
     }
     /* 蒙版运动总图层：纯 GPU Compositor 硬件加速 translate3d */
     .slides-mask-layer {
