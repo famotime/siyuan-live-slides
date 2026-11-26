@@ -18,6 +18,7 @@ import { PropertyManagerBridge } from "@/synergy/property-manager-bridge"
 import { identifyAndNormalizeDocumentNotes } from "@/sync/notes-normalizer"
 import { runAutoAnimationForDocument } from "@/sync/auto-animation-normalizer"
 import type { ISlidesDocument } from "@/types/slides-protocol"
+import { hasAllSlidesHidden } from "@/types/slides-protocol"
 import { runHeadlessImageExport, resolveDocumentTitle } from "@/export/image-exporter"
 import { t } from "@/utils/i18n"
 
@@ -315,8 +316,12 @@ export function registerPluginCommands(plugin: ISlidesPluginHost): void {
             showMessage("请先打开并放映一篇思源笔记文档")
             return
           }
-          showMessage("正在启动后台沙箱并逐页导出幻灯片图片...")
           const doc = plugin.latestCompiledDoc
+          if (hasAllSlidesHidden(doc)) {
+            showMessage("当前文档所有页面均已隐藏，无可导出的可见幻灯片")
+            return
+          }
+          showMessage("正在启动后台沙箱并逐页导出幻灯片图片...")
           const title = await resolveDocumentTitle(doc, plugin.currentDocId, plugin)
           const res = await runHeadlessImageExport(doc, {
             title,

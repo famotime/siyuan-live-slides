@@ -208,6 +208,7 @@ import { usePeekDrawerState } from './usePeekDrawerState'
 import { isFeatureEnabled } from '@/feature-flags/feature-flags'
 import { createPageJumpInput, isEditableTarget } from './page-jump-input'
 import type { ISlidesDocument, ISlidesPluginConfig } from '@/types/slides-protocol'
+import { filterVisibleSlides, getVisibleSlidesDoc } from '@/types/slides-protocol'
 import { detectSiYuanThemeMode, observeSiYuanThemeMode } from '@/utils/color-utils'
 
 const plugin = inject<Plugin>('plugin')
@@ -577,13 +578,14 @@ defineExpose({
       pinnedDocId.value = doc.docId
     }
 
-    totalPages.value = doc.slides.length
+    const visibleDoc = getVisibleSlidesDoc(doc)
+    totalPages.value = visibleDoc.slides.length
     cursorTracker.setDocId(doc.docId)
     cursorTracker.updateSlidesIndex(doc.slides)
     sandboxBridge.updateSlides(
-      doc.slides,
-      { ...doc.config, hostThemeMode: detectSiYuanThemeMode() },
-      doc.customThemeCss,
+      visibleDoc.slides,
+      { ...visibleDoc.config, hostThemeMode: detectSiYuanThemeMode() },
+      visibleDoc.customThemeCss,
     )
 
     if (plugin && typeof (plugin as any).updatePreviewTabHeader === 'function') {
@@ -593,9 +595,14 @@ defineExpose({
   applyConfigUpdate(partialConfig: Partial<ISlidesPluginConfig>) {
     if (latestDoc) {
       latestDoc.config = { ...latestDoc.config, ...partialConfig }
+      const visibleSlides = filterVisibleSlides(latestDoc.slides)
       sandboxBridge.updateSlides(
-        latestDoc.slides,
-        { ...latestDoc.config, hostThemeMode: detectSiYuanThemeMode() },
+        visibleSlides,
+        {
+          ...latestDoc.config,
+          allSlidesHidden: (latestDoc.slides?.length || 0) > 0 && visibleSlides.length === 0,
+          hostThemeMode: detectSiYuanThemeMode(),
+        },
         latestDoc.customThemeCss,
       )
     }

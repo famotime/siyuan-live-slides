@@ -78,6 +78,7 @@
         :page-image="pageImage"
         :page-notes="currentSlideNotes"
         :page-index="targetPageIndex"
+        :page-hide="isPageHidden"
         :is-generating-notes="isGeneratingNotes"
         :can-convert-to-super-block="canConvertToSuperBlock"
         @update:page-layout="onLayoutChange"
@@ -98,6 +99,7 @@
         @open-setting="onOpenSetting"
         @insert-divider-after="onInsertDividerAfter"
         @delete-divider="onDeleteCurrentBlock"
+        @toggle-page-hide="onTogglePageHide"
         @convert-to-super-block="onConvertToSuperBlock"
       />
 
@@ -224,6 +226,7 @@ import {
   ATTR_PAGE_MASK_RATIO,
   ATTR_PAGE_MASK_STYLE,
   ATTR_PAGE_MASK_INITIAL,
+  ATTR_PAGE_HIDE,
   ATTR_PAGE_TRANSITION,
   ATTR_PAGE_BACKGROUND,
   ATTR_PAGE_IMAGE,
@@ -465,6 +468,13 @@ const pageMaskInitial = pageAttrResolver.resolvePageAttr({
   attrKey: ATTR_PAGE_MASK_INITIAL,
   fallback: () => targetSlide.value?.frontmatter?.maskInitial || 'hidden',
 })
+const pageHide = pageAttrResolver.resolvePageAttr({
+  attrKey: ATTR_PAGE_HIDE,
+  fallback: () => Boolean(targetSlide.value?.frontmatter?.hide),
+})
+const isPageHidden = computed(() => {
+  return pageHide.value === true || pageHide.value === 'true'
+})
 
 export type { IDetectedSuperBlockInfo } from '@/ui/dock/useSuperBlockInspector'
 
@@ -675,6 +685,10 @@ function onMaskStyleChange(val: string) {
 
 function onMaskInitialChange(val: string) {
   savePageAttr(ATTR_PAGE_MASK_INITIAL, val)
+}
+
+function onTogglePageHide() {
+  savePageAttr(ATTR_PAGE_HIDE, isPageHidden.value ? '' : 'true')
 }
 
 function onApplySuperBlockLayout(info: any) {

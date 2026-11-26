@@ -1,4 +1,5 @@
 import type { ISlidesDocument } from "../types/slides-protocol"
+import { getVisibleSlidesDoc } from "../types/slides-protocol"
 import {
   convertBlockToHtml,
   escapeHtml,
@@ -27,21 +28,22 @@ export interface IPdfExportOptions {
  * 构建高保真可打印 / 导出 PDF 的独立 HTML 结构
  */
 export function buildPrintableHtml(doc: ISlidesDocument, options?: IPdfExportOptions): string {
+  const visibleDoc = getVisibleSlidesDoc(doc)
   const title = options?.title || "即现讲义"
   const pageRatio = options?.pageRatio || "16:9"
   const showNotes = options?.showNotes ?? true
   const showPageNumber = options?.showPageNumber ?? true
-  const globalTheme = options?.theme || resolveEffectiveColorSchema(doc.config.colorSchema)
-  const slidesTheme = doc.config.theme || "apple-basic"
+  const globalTheme = options?.theme || resolveEffectiveColorSchema(visibleDoc.config.colorSchema)
+  const slidesTheme = visibleDoc.config.theme || "apple-basic"
 
-  const slidesHtml = doc.slides.map((slide, idx) => {
+  const slidesHtml = visibleDoc.slides.map((slide, idx) => {
     const layout = slide.frontmatter.layout || "default"
     const pageSp = slide.frontmatter.spacing
-    const spacing = (pageSp && pageSp !== "inherit") ? pageSp : (doc.config.spacing || "normal")
+    const spacing = (pageSp && pageSp !== "inherit") ? pageSp : (visibleDoc.config.spacing || "normal")
     const contentHtml = renderSlideBlocksToHtml(slide)
-    const pageNumText = `${idx + 1} / ${doc.slides.length}`
+    const pageNumText = `${idx + 1} / ${visibleDoc.slides.length}`
 
-    const bg = slide.frontmatter.background || doc.config.background
+    const bg = slide.frontmatter.background || visibleDoc.config.background
     const isLightBg = isLightColor(bg)
     const pageTheme = isLightBg === true ? "light" : (isLightBg === false ? "dark" : globalTheme)
     const bgStyle = bg && !/^(http|\/|data:|assets\/)/.test(bg) ? `background: ${escapeHtml(bg)};` : ""

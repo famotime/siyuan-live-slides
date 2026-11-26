@@ -1,9 +1,17 @@
 import type { WebSandboxBridge } from "../engine/web-sandbox-bridge"
 import type { ISlidesVirtualPage } from "../types/slides-protocol"
+import { isSlideHidden } from "../types/slides-protocol"
 import { DebounceController } from "./debounce-controller"
 
+interface IBlockPageMeta {
+  visiblePageIndex: number | null
+  rawPageIndex: number
+  isHidden: boolean
+  startBlockId?: string
+}
+
 export class CursorTracker {
-  private blockToPageMap = new Map<string, number>()
+  private blockToPageMap = new Map<string, IBlockPageMeta>()
   private debounceCtrl = new DebounceController()
   private activeBlockId = ""
   private activePageIndex = 1
@@ -28,36 +36,46 @@ export class CursorTracker {
   }
 
   /**
-   * 重建 Block ID 到 Page Index (1-based) 的映射索引字典
+   * 重建 Block ID 到页码与可见性的映射索引字典
    * 包含分页起始分割线、正文直接块以及 allBlockIds 中包含的所有深层嵌套子块（列表、超级块、分栏等）
    */
   public updateSlidesIndex(slides: ISlidesVirtualPage[]): void {
     this.blockToPageMap.clear()
 
+    let visibleCounter = 0
     for (const slide of slides) {
+      const hidden = isSlideHidden(slide)
+      const visiblePageIndex = hidden ? null : ++visibleCounter
+      const meta: IBlockPageMeta = {
+        visiblePageIndex,
+        rawPageIndex: slide.pageIndex,
+        isHidden: hidden,
+        startBlockId: slide.startBlockId,
+      }
+
       if (slide.startBlockId && slide.startBlockId !== this.currentDocId) {
-        this.blockToPageMap.set(slide.startBlockId, slide.pageIndex)
+        this.blockToPageMap.set(slide.startBlockId, meta)
       }
       if (Array.isArray(slide.allBlockIds)) {
         for (const id of slide.allBlockIds) {
           if (id && id !== this.currentDocId) {
-            this.blockToPageMap.set(id, slide.pageIndex)
+            this.blockToPageMap.set(id, meta)
           }
         }
       }
       for (const block of slide.blocks) {
         if (block?.id) {
-          this.blockToPageMap.set(block.id, slide.pageIndex)
+          this.blockToPageMap.set(block.id, meta)
         }
       }
     }
   }
 
   /**
-   * 查找块归属的页码
+   * 查找块归属的可见页码（隐藏页返回 null）
    */
   public getPageByBlockId(blockId: string): number | null {
-    return this.blockToPageMap.get(blockId) ?? null
+    return this.blockToPageMap.get(blockId)?.visiblePageIndex ?? null
   }
 
   /**
@@ -77,17 +95,29 @@ export class CursorTracker {
       return
     }
 
-    const targetPage = this.getPageByBlockId(blockId)
-    if (!targetPage) {
+    const meta = this.blockToPageMap.get(blockId)
+    if (!meta) {
       this.debounceCtrl.cancel("cursor-navigate")
       return
     }
 
     this.debounceCtrl.debounce("cursor-navigate", () => {
-      this.activePageIndex = targetPage
-      if (this.bridge) {
-        this.bridge.navigatePage(targetPage)
-        this.bridge.highlightElement(blockId)
+      if (meta.isHidden) {
+        if (this.bridge) {
+          this.bridge.showHiddenPlaceholder?.({
+            pageIndex: meta.rawPageIndex,
+            startBlockId: meta.startBlockId,
+          })
+        }
+        return
+      }
+      if (meta.visiblePageIndex) {
+        this.activePageIndex = meta.visiblePageIndex
+        if (this.bridge) {
+          this.bridge.showHiddenPlaceholder?.(null)
+          this.bridge.navigatePage(meta.visiblePageIndex)
+          this.bridge.highlightElement(blockId)
+        }
       }
     }, 100)
   }

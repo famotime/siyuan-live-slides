@@ -2,6 +2,13 @@
   <div class="spm-section spm-section--page">
     <div class="spm-section-header">
       <span>幻灯片页面设置{{ pageIndex ? ` (第 ${pageIndex} 页)` : '' }}</span>
+      <span
+        v-if="pageHide"
+        class="spm-hidden-badge b3-tooltips b3-tooltips__sw"
+        aria-label="本页已隐藏，预览、放映与导出时将跳过"
+      >
+        已隐藏
+      </span>
     </div>
 
     <!-- 页面版式选择卡片 -->
@@ -541,7 +548,15 @@
         </button>
         <button
           class="spm-btn-action b3-tooltips b3-tooltips__s"
-          style="grid-column: 1 / -1;"
+          :class="{ 'is-active-hide': pageHide }"
+          :aria-label="pageHide ? '取消隐藏，恢复在预览与放映中展示此页' : '隐藏此页，预览、放映与导出时跳过不展示'"
+          @click="$emit('togglePageHide')"
+        >
+          <SlidesIcon :name="pageHide ? 'eye' : 'eye-off'" />
+          <span>{{ pageHide ? '取消隐藏' : '隐藏此页' }}</span>
+        </button>
+        <button
+          class="spm-btn-action b3-tooltips b3-tooltips__s"
           :class="{ 'is-disabled': !canConvertToSuperBlock }"
           :disabled="!canConvertToSuperBlock"
           :aria-label="canConvertToSuperBlock ? '将当前选中的多个块或列表项合并为横向超级块' : '请在编辑区选中多个块，或选中一个列表/列表项'"
@@ -579,6 +594,7 @@ const props = defineProps<{
   pageMaskInitial?: string
   detectedSbRatio?: string
   detectedSbInfo?: any
+  pageHide?: boolean
   canConvertToSuperBlock?: boolean
   isGeneratingNotes?: boolean
 }>()
@@ -602,6 +618,7 @@ const emit = defineEmits<{
   (e: 'openSetting'): void
   (e: 'insertDividerAfter'): void
   (e: 'deleteDivider'): void
+  (e: 'togglePageHide'): void
   (e: 'convertToSuperBlock'): void
 }>()
 
@@ -658,6 +675,25 @@ const presetImages = [
   display: inline-flex;
   align-items: center;
   gap: 4px;
+}
+
+.spm-hidden-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.16);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  margin-left: auto;
+}
+
+.spm-btn-action.is-active-hide {
+  border-color: rgba(245, 158, 11, 0.55);
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
 }
 
 .spm-btn-primary {

@@ -19,6 +19,7 @@ import {
   resolveDocumentTitle,
 } from '@/export/image-exporter'
 import type { ISlidesDocument } from '@/types/slides-protocol'
+import { hasAllSlidesHidden } from '@/types/slides-protocol'
 
 /** 导出编排的宿主上下文 */
 export interface IPreviewExportOptions {
@@ -85,13 +86,22 @@ export function usePreviewExport(
     }
   }
 
+  function ensureHasVisibleSlides(doc: ISlidesDocument | null): doc is ISlidesDocument {
+    if (!doc) {
+      services.showMessage('请先在主编辑区打开幻灯片文档')
+      return false
+    }
+    if (hasAllSlidesHidden(doc)) {
+      services.showMessage('当前文档所有页面均已隐藏，无可导出的可见幻灯片')
+      return false
+    }
+    return true
+  }
+
   async function onExportHtml() {
     await runExclusiveExport('html', async () => {
       const doc = getLatestDoc()
-      if (!doc) {
-        services.showMessage('请先在主编辑区打开幻灯片文档')
-        return
-      }
+      if (!ensureHasVisibleSlides(doc)) return
       const title = await services.resolveDocumentTitle(doc, (plugin as any)?.currentDocId, plugin)
       services.showMessage('正在导出单文件离线 HTML（内联媒体资源中...）', 2000)
       const html = await services.exportStandaloneHtml(doc, { title })
@@ -104,10 +114,7 @@ export function usePreviewExport(
 
   function onExportPdf() {
     const doc = getLatestDoc()
-    if (!doc) {
-      services.showMessage('请先在主编辑区打开幻灯片文档')
-      return
-    }
+    if (!ensureHasVisibleSlides(doc)) return
     const ok = services.triggerPdfExport(doc)
     if (ok) {
       services.showMessage('已唤起打印视窗，请在打印选项中选择「另存为 PDF」')
@@ -123,10 +130,7 @@ export function usePreviewExport(
     try {
       await runExclusiveExport('all-images', async () => {
         const doc = getLatestDoc()
-        if (!doc) {
-          services.showMessage('请先在主编辑区打开幻灯片文档')
-          return
-        }
+        if (!ensureHasVisibleSlides(doc)) return
         services.showMessage('正在逐页导出幻灯片图片...', 2000)
         const title = await services.resolveDocumentTitle(doc, (plugin as any)?.currentDocId, plugin)
         const res = await services.exportAllSlidesZip(sandboxBridge, {
@@ -149,10 +153,7 @@ export function usePreviewExport(
   async function onExportCurrentSlide() {
     await runExclusiveExport('current-slide', async () => {
       const doc = getLatestDoc()
-      if (!doc) {
-        services.showMessage('请先在主编辑区打开幻灯片文档')
-        return
-      }
+      if (!ensureHasVisibleSlides(doc)) return
       services.showMessage('正在导出当前幻灯片图片...', 1500)
       const res = await services.exportCurrentSlideImage(sandboxBridge)
       if (res.success && res.dataUrl) {
@@ -171,10 +172,7 @@ export function usePreviewExport(
   async function onCopyCurrentSlide() {
     await runExclusiveExport('copy-slide', async () => {
       const doc = getLatestDoc()
-      if (!doc) {
-        services.showMessage('请先在主编辑区打开幻灯片文档')
-        return
-      }
+      if (!ensureHasVisibleSlides(doc)) return
       services.showMessage('正在复制当前幻灯片截图到剪贴板...', 1500)
       const res = await services.exportCurrentSlideImage(sandboxBridge)
       if (res.success && res.dataUrl) {

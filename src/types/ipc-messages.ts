@@ -18,6 +18,7 @@ export type THostToSlidesAction =
   | "TOGGLE_OVERVIEW"
   | "START_IMAGE_EXPORT"
   | "CANCEL_IMAGE_EXPORT"
+  | "SHOW_HIDDEN_PLACEHOLDER"
   | "HOST_PING"
 
 export interface IHostToSlidesMessage {
@@ -28,6 +29,11 @@ export interface IHostToSlidesMessage {
     slides?: ISlidesVirtualPage[]
     // 目标跳转页码 (1-based)
     pageIndex?: number
+    // 隐藏页占位提示信息（传入 null 表示清除占位）
+    hiddenPageInfo?: {
+      pageIndex: number
+      startBlockId?: string
+    } | null
     // 目标页内步进 (0-based, v-click / mask step)
     step?: number
     // 目标高亮聚焦的块 ID

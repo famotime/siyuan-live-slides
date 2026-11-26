@@ -28,6 +28,7 @@ export const ATTR_PAGE_MASK = "custom-slides-mask"
 export const ATTR_PAGE_MASK_RATIO = "custom-slides-mask-ratio"
 export const ATTR_PAGE_MASK_STYLE = "custom-slides-mask-style"
 export const ATTR_PAGE_MASK_INITIAL = "custom-slides-mask-initial"
+export const ATTR_PAGE_HIDE = "custom-slides-hide"
 
 // 3. 元素动效级与内容属性常量 (Element Scope)
 export const ATTR_ELEM_CLICK = "custom-slides-click"
@@ -55,6 +56,8 @@ export interface ISlidesPluginConfig {
   colorSchema: "auto" | "dark" | "light"
   /** 运行时由宿主注入的思源当前明暗模式（不持久化到块属性） */
   hostThemeMode?: "light" | "dark"
+  /** 运行时标志：原文档非空但所有页面均被隐藏（不持久化到块属性） */
+  allSlidesHidden?: boolean
   spacing?: "compact" | "normal" | "loose"
   background?: string
   normalizeHeadingSizes?: boolean
@@ -129,6 +132,7 @@ export interface ISlidePageFrontmatter {
   maskRatio?: string
   maskStyle?: "solid" | "blur" | string
   maskInitial?: "hidden" | "revealed" | string
+  hide?: boolean
   [key: string]: any
 }
 
@@ -322,4 +326,53 @@ export interface IActiveBlockInfo {
   parentContainerId?: string
   parentContainerSlot?: string
   parentContainerClicks?: string
+}
+
+/**
+ * 判断单个幻灯片页面是否处于隐藏状态
+ */
+export function isSlideHidden(slide?: ISlidesVirtualPage | null): boolean {
+  const hide = slide?.frontmatter?.hide as unknown
+  return hide === true || hide === "true"
+}
+
+/**
+ * 过滤掉隐藏页面，并按可见顺序连续重排 pageIndex (1-based)
+ */
+export function filterVisibleSlides(slides?: ISlidesVirtualPage[] | null): ISlidesVirtualPage[] {
+  if (!Array.isArray(slides) || slides.length === 0) return []
+  const visible: ISlidesVirtualPage[] = []
+  for (const slide of slides) {
+    if (!isSlideHidden(slide)) {
+      visible.push({
+        ...slide,
+        pageIndex: visible.length + 1,
+      })
+    }
+  }
+  return visible
+}
+
+/**
+ * 判断演示文档是否"非空但所有页面均被隐藏"
+ */
+export function hasAllSlidesHidden(doc?: ISlidesDocument | null): boolean {
+  const rawSlides = doc?.slides
+  return Array.isArray(rawSlides) && rawSlides.length > 0 && filterVisibleSlides(rawSlides).length === 0
+}
+
+/**
+ * 返回仅包含可见页面的演示文档副本（用于预览、放映、概览及各类导出）
+ */
+export function getVisibleSlidesDoc(doc: ISlidesDocument): ISlidesDocument {
+  const rawSlides = doc.slides || []
+  const visibleSlides = filterVisibleSlides(rawSlides)
+  return {
+    ...doc,
+    config: {
+      ...doc.config,
+      allSlidesHidden: rawSlides.length > 0 && visibleSlides.length === 0,
+    },
+    slides: visibleSlides,
+  }
 }

@@ -3,6 +3,7 @@ import { showMessage } from "siyuan"
 import { triggerPdfExport } from "@/export/pdf-exporter"
 import { exportStandaloneHtml, downloadHtmlFile } from "@/export/single-html-exporter"
 import { runHeadlessImageExport, resolveDocumentTitle } from "@/export/image-exporter"
+import { hasAllSlidesHidden } from "@/types/slides-protocol"
 import { createAttrPersistence, type IInspectorActionsContext } from "./actions/attr-persistence"
 import { createNotesActions } from "./actions/notes-actions"
 import { createLayoutActions } from "./actions/layout-actions"
@@ -32,12 +33,22 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     isBatchProcessing: notes.isBatchProcessing,
   })
 
-  async function onExportHtml() {
-    if (!ctx.latestDoc.value) {
-      showMessage("请先在主编辑区打开幻灯片文档")
-      return
-    }
+  function ensureHasVisibleSlides() {
     const doc = ctx.latestDoc.value
+    if (!doc) {
+      showMessage("请先在主编辑区打开幻灯片文档")
+      return null
+    }
+    if (hasAllSlidesHidden(doc)) {
+      showMessage("当前文档所有页面均已隐藏，无可导出的可见幻灯片")
+      return null
+    }
+    return doc
+  }
+
+  async function onExportHtml() {
+    const doc = ensureHasVisibleSlides()
+    if (!doc) return
     const title = await resolveDocumentTitle(doc, ctx.currentDocId?.value, ctx.plugin)
     showMessage("正在导出单文件离线 HTML（内联媒体资源中...）", 2000)
     const html = await exportStandaloneHtml(doc, { title })
@@ -48,11 +59,9 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
   }
 
   function onExportPdf() {
-    if (!ctx.latestDoc.value) {
-      showMessage("请先在主编辑区打开幻灯片文档")
-      return
-    }
-    const ok = triggerPdfExport(ctx.latestDoc.value)
+    const doc = ensureHasVisibleSlides()
+    if (!doc) return
+    const ok = triggerPdfExport(doc)
     if (ok) {
       showMessage("已唤起打印视窗，请在打印选项中选择「另存为 PDF」")
     }
@@ -65,14 +74,11 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
       showMessage("正在导出图片中，请稍候...", 2000)
       return
     }
-    if (!ctx.latestDoc.value) {
-      showMessage("请先在主编辑区打开幻灯片文档")
-      return
-    }
+    const doc = ensureHasVisibleSlides()
+    if (!doc) return
     isExportingImages.value = true
     try {
       showMessage("正在启动后台沙箱并逐页导出幻灯片图片...")
-      const doc = ctx.latestDoc.value
       const title = await resolveDocumentTitle(doc, ctx.currentDocId?.value, ctx.plugin)
       const res = await runHeadlessImageExport(doc, {
         title,

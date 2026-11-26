@@ -3234,6 +3234,30 @@
       text-align: center;
     }
 
+    .slides-hidden-placeholder {
+      gap: 10px;
+      opacity: 0.85;
+    }
+
+    .slides-hidden-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      background: rgba(245, 158, 11, 0.14);
+      color: #d97706;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+    }
+
+    .slides-hidden-desc {
+      font-size: 0.95rem;
+      opacity: 0.72;
+      margin: 0;
+    }
+
     /* Slidev Native Icons & Interactive Buttons */
     .slidev-icon-btn {
       display: inline-flex !important;
@@ -3553,7 +3577,16 @@
         <div class="ambient-glow" v-if="currentSlideThemeMode === 'dark'"></div>
         <transition :name="transitionClass" mode="out-in">
           <div
-            v-if="currentSlide"
+            v-if="hiddenPagePlaceholder"
+            :key="'hidden-' + hiddenPagePlaceholder.pageIndex"
+            class="empty-state slides-hidden-placeholder"
+          >
+            <span class="slides-hidden-badge">第 {{ hiddenPagePlaceholder.pageIndex }} 页已隐藏</span>
+            <p class="slides-hidden-desc">预览翻页、放映与导出时将跳过此页，可在右侧配置面板取消隐藏</p>
+          </div>
+
+          <div
+            v-else-if="currentSlide"
             :key="currentSlide.pageIndex"
             class="slide-content-wrapper"
             :class="['layout-' + (currentSlide.frontmatter.layout || 'default'), 'spacing-' + currentSpacing, currentSlide.frontmatter.class, currentSlide.frontmatter.layoutClass]"
@@ -4045,7 +4078,11 @@
           </div>
 
           <div v-else class="empty-state">
-            <p>等待思源笔记文档载入...</p>
+            <template v-if="config && config.allSlidesHidden">
+              <span class="slides-hidden-badge">所有页面均已隐藏</span>
+              <p class="slides-hidden-desc" style="margin-top: 10px;">当前文档的幻灯片页面均已设置为隐藏，请先取消至少一页的隐藏状态</p>
+            </template>
+            <p v-else>等待思源笔记文档载入...</p>
           </div>
         </transition>
       </div>
@@ -4882,6 +4919,7 @@
         const currentPageIndex = ref(1) // 1-based
         const currentStep = ref(0) // 当前页内 v-click 步进计数
         const highlightedBlockId = ref("")
+        const hiddenPagePlaceholder = ref(null) // 光标跟随命中隐藏页时的占位提示
         const isKeyboardFrozen = ref(false)
         const isCapturingImages = ref(false)
         let isCaptureCancelled = false
@@ -7440,6 +7478,7 @@
 
         // 翻页与步进调度
         function nextStepOrSlide() {
+          hiddenPagePlaceholder.value = null
           if (currentStep.value < maxStepInCurrentSlide.value) {
             currentStep.value++
             notifySlideChanged()
@@ -7453,6 +7492,7 @@
         }
 
         function prevStepOrSlide() {
+          hiddenPagePlaceholder.value = null
           if (currentStep.value > 0) {
             currentStep.value--
             notifySlideChanged()
@@ -8790,6 +8830,7 @@
               break
 
             case "NAVIGATE_PAGE":
+              hiddenPagePlaceholder.value = null
               if (typeof data.payload.pageIndex === "number") {
                 currentPageIndex.value = Math.max(1, Math.min(data.payload.pageIndex, totalPages.value || 1))
                 currentStep.value = typeof data.payload.step === "number" ? Math.max(0, data.payload.step) : 0
@@ -8803,7 +8844,12 @@
               }
               break
 
+            case "SHOW_HIDDEN_PLACEHOLDER":
+              hiddenPagePlaceholder.value = data.payload?.hiddenPageInfo || null
+              break
+
             case "HIGHLIGHT_ELEMENT":
+              hiddenPagePlaceholder.value = null
               if (data.payload.targetBlockId) {
                 highlightedBlockId.value = data.payload.targetBlockId
                 // 如果该块在其他页，自动跳到该页（支持顶级块与嵌套在列表/超级块/分栏内的深层子块）
@@ -9077,6 +9123,7 @@
           currentPageIndex,
           totalPages,
           currentSlide,
+          hiddenPagePlaceholder,
           currentStep,
           jumpDisplay,
           jumpInvalid,

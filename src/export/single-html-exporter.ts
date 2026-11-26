@@ -1,4 +1,5 @@
 import type { ISlidesDocument, ISlidesBlockItem } from "../types/slides-protocol"
+import { getVisibleSlidesDoc } from "../types/slides-protocol"
 import { escapeHtml } from "./markdown-renderer"
 import { generateStandaloneExportStyles } from "./standalone-template-styles"
 import { getStandaloneClientRuntimeScript } from "./standalone-client-runtime"
@@ -23,6 +24,7 @@ export interface IStandaloneHtmlOptions extends ICollectAssetsOptions {
  * 递归扫描演示文档中包含的所有媒体资源 URL
  */
 export function extractDocAssetUrls(doc: ISlidesDocument, includeRemote = false): string[] {
+  const visibleDoc = getVisibleSlidesDoc(doc)
   const urls = new Set<string>()
 
   const checkAndAdd = (str?: string) => {
@@ -74,12 +76,12 @@ export function extractDocAssetUrls(doc: ISlidesDocument, includeRemote = false)
   }
 
   // 1. 全局配置背景
-  if (doc.config?.background) {
-    checkAndAdd(doc.config.background)
+  if (visibleDoc.config?.background) {
+    checkAndAdd(visibleDoc.config.background)
   }
 
   // 2. 遍历 slides
-  for (const slide of doc.slides || []) {
+  for (const slide of visibleDoc.slides || []) {
     if (slide.frontmatter) {
       for (const val of Object.values(slide.frontmatter)) {
         if (typeof val === "string") {
@@ -107,7 +109,7 @@ export function extractDocAssetUrls(doc: ISlidesDocument, includeRemote = false)
 
   // 3. 全局 JSON 正则扫描二次兜底，确保非常规位置的 assets 资源无遗漏
   try {
-    const jsonStr = JSON.stringify(doc)
+    const jsonStr = JSON.stringify(visibleDoc)
     const assetRegex = /(?:https?:\/\/[^\s"'<>\)\\]+)?(?:\.\/|\/)?assets\/[^\s"'<>\)\\]+/g
     const matches = jsonStr.match(assetRegex)
     if (matches) {
@@ -281,10 +283,11 @@ export function buildStandaloneHtml(
   doc: ISlidesDocument,
   options?: IStandaloneHtmlOptions,
 ): string {
+  const visibleDoc = getVisibleSlidesDoc(doc)
   const title = options?.title || "即现文稿"
-  let processedSlides = doc.slides
-  const processedConfig = { ...doc.config }
-  let processedCustomThemeCss = doc.customThemeCss
+  let processedSlides = visibleDoc.slides
+  const processedConfig = { ...visibleDoc.config }
+  let processedCustomThemeCss = visibleDoc.customThemeCss
 
   // 若提供 Base64 字典，将各块、frontmatter 及配置中匹配到的本地资产 URL 替换为 Base64
   if (options?.inlineAssetBase64Map && Object.keys(options.inlineAssetBase64Map).length > 0) {
@@ -325,7 +328,7 @@ export function buildStandaloneHtml(
       processedCustomThemeCss = replaceText(processedCustomThemeCss)
     }
 
-    processedSlides = (doc.slides || []).map(slide => {
+    processedSlides = (visibleDoc.slides || []).map(slide => {
       const slideMd = replaceText(slide.rawMarkdown || "")
       const newBlocks = (slide.blocks || []).map(replaceInBlock)
       const newNoteBlocks = Array.isArray(slide.noteBlocks)

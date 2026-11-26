@@ -8,6 +8,7 @@ import { WebSandboxBridge } from './engine/web-sandbox-bridge'
 import { globalCompileConsumerGate } from './sync/compile-consumer-gate'
 import type { ICompileConsumerHost } from './sync/compile-consumer-gate'
 import type { IActiveBlockInfo, ISlidesDocument, ISlidesPluginConfig } from './types/slides-protocol'
+import { getVisibleSlidesDoc } from './types/slides-protocol'
 import { isFeatureDisabled } from './feature-flags/feature-flags'
 import { detectSiYuanThemeMode } from './utils/color-utils'
 
@@ -110,17 +111,18 @@ export function unmountPresenterTab(_element?: HTMLElement): void {
  * SYNC_SLIDES 后自行更新），保证大屏窗口持续获得编辑刷新
  */
 function broadcastDocToRemoteSandbox(doc: ISlidesDocument): void {
+  const visibleDoc = getVisibleSlidesDoc(doc)
   try {
     const channel = new BroadcastChannel('siyuan-slides-sync')
     channel.postMessage({
       type: 'SYNC_SLIDES',
-      slides: doc.slides || [],
+      slides: visibleDoc.slides || [],
       config: {
-        ...(doc.config || {}),
-        hostThemeMode: doc.config?.hostThemeMode || detectSiYuanThemeMode(),
+        ...(visibleDoc.config || {}),
+        hostThemeMode: visibleDoc.config?.hostThemeMode || detectSiYuanThemeMode(),
       },
       // P1-D2：附带数据身份与写入时刻，接收端据此拒绝残留旧文档窗口的迟到应答
-      docId: doc.docId || '',
+      docId: visibleDoc.docId || '',
       slidesUpdatedAt: Date.now(),
     })
     channel.close()
@@ -172,8 +174,9 @@ export function updateDockDocument(doc: ISlidesDocument, targetDocId?: string): 
   if (previewTabInstance?.updateDocument) {
     previewTabInstance.updateDocument(doc, targetDocId)
   } else {
-    // 即使页签未挂载，沙箱桥接器也自动缓存当前文档数据
-    globalSandboxBridge.updateSlides(doc.slides, doc.config)
+    // 即使页签未挂载，沙箱桥接器也自动缓存当前文档可见数据
+    const visibleDoc = getVisibleSlidesDoc(doc)
+    globalSandboxBridge.updateSlides(visibleDoc.slides, visibleDoc.config)
     broadcastDocToRemoteSandbox(doc)
   }
 

@@ -114,7 +114,12 @@ export class WebSandboxBridge {
     }
 
     if (!this.iframe?.contentWindow || !this.isReady) {
-      if (action === "UPDATE_SLIDES" || action === "NAVIGATE_PAGE" || action === "CONFIG_UPDATE") {
+      if (
+        action === "UPDATE_SLIDES"
+        || action === "NAVIGATE_PAGE"
+        || action === "CONFIG_UPDATE"
+        || action === "SHOW_HIDDEN_PLACEHOLDER"
+      ) {
         const existingIdx = this.pendingMessages.findIndex(m => m.action === action)
         if (existingIdx !== -1) {
           this.pendingMessages[existingIdx] = message
@@ -183,6 +188,13 @@ export class WebSandboxBridge {
    */
   public highlightElement(targetBlockId: string): void {
     this.postMessage("HIGHLIGHT_ELEMENT", { targetBlockId })
+  }
+
+  /**
+   * 在预览光标跟随命中隐藏页时展示占位提示（传 null 清除占位提示）
+   */
+  public showHiddenPlaceholder(hiddenPageInfo: { pageIndex: number; startBlockId?: string } | null): void {
+    this.postMessage("SHOW_HIDDEN_PLACEHOLDER", { hiddenPageInfo })
   }
 
   /**

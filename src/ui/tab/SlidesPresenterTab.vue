@@ -206,8 +206,8 @@
       <div class="empty-icon-wrap">
         <SlidesIcon name="refresh" class="empty-icon" />
       </div>
-      <h2>等待大屏放映数据</h2>
-      <p>未检测到活跃的幻灯片数据，请先开启大屏放映端。</p>
+      <h2>{{ docConfig?.allSlidesHidden ? '所有页面均已隐藏' : '等待大屏放映数据' }}</h2>
+      <p>{{ docConfig?.allSlidesHidden ? '当前文档的幻灯片页面均已设置为隐藏，请先取消至少一页的隐藏状态。' : '未检测到活跃的幻灯片数据，请先开启大屏放映端。' }}</p>
       <div class="empty-actions">
         <button
           class="btn-empty-action b3-tooltips b3-tooltips__n"
@@ -308,6 +308,7 @@ import { ref, computed, watch, nextTick, onMounted, onUnmounted, inject } from '
 import type { Plugin } from 'siyuan'
 import SlidesIcon from '@/ui/components/SlidesIcon.vue'
 import { WebSandboxBridge } from '@/engine/web-sandbox-bridge'
+import { filterVisibleSlides } from '@/types/slides-protocol'
 import type {
   ISlidesDocument,
   ISlidesPluginConfig,
@@ -712,11 +713,16 @@ onUnmounted(() => {
 
 defineExpose({
   updateDocument(doc: ISlidesDocument) {
-    if (doc?.slides?.length) {
-      slides.value = doc.slides
+    const rawSlides = doc?.slides || []
+    const visibleSlides = filterVisibleSlides(rawSlides)
+    if (rawSlides.length > 0) {
+      slides.value = visibleSlides
     }
     if (doc?.config) {
-      docConfig.value = doc.config
+      docConfig.value = {
+        ...doc.config,
+        allSlidesHidden: rawSlides.length > 0 && visibleSlides.length === 0,
+      }
     }
     // P1-D1：文档切换时直灌数据同步重置页码与步进，避免角标停留在超出新文档页数的陈旧页码
     adoptSlides(doc?.docId || '')

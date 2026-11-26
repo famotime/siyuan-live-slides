@@ -40,6 +40,7 @@ import {
   ATTR_PAGE_NOTES,
   ATTR_PAGE_SLIDE,
   ATTR_PAGE_TRANSITION,
+  ATTR_PAGE_HIDE,
 } from "../types/slides-protocol"
 import { isAnimationEnabled, isElementAnimationEnabled } from "../feature-flags/feature-flags"
 
@@ -187,6 +188,11 @@ export function parsePageAttrs(
     frontmatter.maskInitial = attrs[ATTR_PAGE_MASK_INITIAL].trim()
   }
 
+  if (attrs[ATTR_PAGE_HIDE] !== undefined) {
+    const rawHide = attrs[ATTR_PAGE_HIDE].trim().toLowerCase()
+    frontmatter.hide = rawHide === "true"
+  }
+
   if (attrs[ATTR_PAGE_NOTES]) {
     notes = attrs[ATTR_PAGE_NOTES].trim()
   }
@@ -210,6 +216,7 @@ export function parsePageAttrs(
         ATTR_PAGE_SPACING,
         ATTR_PAGE_NOTES,
         ATTR_PAGE_SLIDE,
+        ATTR_PAGE_HIDE,
       ].includes(k)
     ) {
       const propKey = k.replace(/^custom-slides-/, "")

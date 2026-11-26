@@ -2,6 +2,7 @@ import JSZip from "jszip"
 import { WebSandboxBridge } from "../engine/web-sandbox-bridge"
 import { resolveDocumentTitle, sanitizeFileName } from "../plugin/preview-tab-title"
 import type { ISlidesDocument } from "../types/slides-protocol"
+import { getVisibleSlidesDoc, hasAllSlidesHidden } from "../types/slides-protocol"
 
 export { resolveDocumentTitle, sanitizeFileName }
 
@@ -207,6 +208,10 @@ export async function runHeadlessImageExport(
   doc: ISlidesDocument,
   options?: IImageExportOptions,
 ): Promise<{ success: boolean; total?: number; error?: string }> {
+  if (hasAllSlidesHidden(doc)) {
+    return { success: false, error: "当前文档所有页面均已隐藏，无可导出的可见幻灯片" }
+  }
+  const visibleDoc = getVisibleSlidesDoc(doc)
   if (typeof document === "undefined") {
     return { success: false, error: "环境不支持 DOM 沙箱挂载" }
   }
@@ -235,14 +240,14 @@ export async function runHeadlessImageExport(
       })
     })
 
-    bridge.updateSlides(doc.slides, doc.config)
+    bridge.updateSlides(visibleDoc.slides, visibleDoc.config)
     await new Promise(r => setTimeout(r, 250))
 
     if (options?.mode === "current") {
       const res = await exportCurrentSlideImage(bridge, options)
       return { success: res.success, total: 1, error: res.error }
     } else {
-      const title = options?.title || (await resolveDocumentTitle(doc, doc.docId))
+      const title = options?.title || (await resolveDocumentTitle(visibleDoc, visibleDoc.docId))
       return await exportAllSlidesZip(bridge, { ...options, title })
     }
   } catch (err: any) {
