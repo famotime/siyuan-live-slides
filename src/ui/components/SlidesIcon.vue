@@ -568,6 +568,23 @@
       <line x1="12" y1="17" x2="12.01" y2="17" />
     </g>
 
+    <!-- 对齐图标 (Align Left / Center / Right) -->
+    <g v-else-if="name === 'align-left'">
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="15" y2="12" />
+      <line x1="3" y1="18" x2="18" y2="18" />
+    </g>
+    <g v-else-if="name === 'align-center'">
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="6" y1="12" x2="18" y2="12" />
+      <line x1="4" y1="18" x2="20" y2="18" />
+    </g>
+    <g v-else-if="name === 'align-right'">
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="9" y1="12" x2="21" y2="12" />
+      <line x1="6" y1="18" x2="21" y2="18" />
+    </g>
+
     <!-- 默认兜底图标 (幻灯片画板) -->
     <g v-else>
       <rect x="2" y="3" width="20" height="14" rx="2" />

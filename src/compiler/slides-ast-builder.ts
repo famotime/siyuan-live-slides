@@ -4,12 +4,14 @@ import type {
   ISlidesDocument,
   ISlidesMotionConfig,
   ISlidesVirtualPage,
+  TSlideElemAlign,
 } from "../types/slides-protocol"
 import {
   ATTR_ELEM_CLICK,
   ATTR_ELEM_MOTION,
   ATTR_ELEM_ANIM,
   ATTR_ELEM_SLOT,
+  ATTR_ELEM_ALIGN,
   ATTR_ELEM_ROLE,
   ATTR_PAGE_LAYOUT,
   ATTR_PAGE_LAYOUT_RATIO,
@@ -283,6 +285,7 @@ export function buildSlidesDocument(
         parentClicks?: string
         parentContainerId?: string
         defaultSlot?: string
+        defaultAlign?: TSlideElemAlign
         isParentListUnpacked?: boolean
         isListItem?: boolean
         /** 列表项解包后首个有效子块之后的“正文延续块”（无列表前缀），只缩进对齐，不显示圆点/序号 */
@@ -555,6 +558,9 @@ export function buildSlidesDocument(
         )
       ) {
         const isOrderedList = /^\s*\d+\.\s+/m.test(itemNode.markdown || "") || itemNode.subType === "o" || (itemNode as any).subtype === "o"
+        const firstChildMd = itemNode.children[0]?.markdown || ""
+        const startOrderMatch = isOrderedList ? (firstChildMd || itemNode.markdown || "").match(/^\s*(\d+)\.\s+/) : null
+        let nextOrderedIndex = startOrderMatch ? parseInt(startOrderMatch[1], 10) : 1
         const nextListLevel = (inheritedContext?.listLevel ?? -1) + 1
         // 若列表容器自身显式配置了 clicks，为其分配独立容器标识；否则透传外层容器上下文（如父列表项）
         const listParentClicks = elemAttrs.clicks || inheritedContext?.parentClicks
@@ -563,6 +569,9 @@ export function buildSlidesDocument(
           : inheritedContext?.parentContainerId
         for (let idx = 0; idx < itemNode.children.length; idx++) {
           const childNode = itemNode.children[idx]
+          const selfOrderMatch = isOrderedList ? (childNode.markdown || "").match(/^\s*(\d+)\.\s+/) : null
+          const itemIndex = selfOrderMatch ? parseInt(selfOrderMatch[1], 10) : nextOrderedIndex
+          nextOrderedIndex = itemIndex + 1
           if (elemAttrs.slot && (!childNode.ial || !childNode.ial[ATTR_ELEM_SLOT])) {
             if (!childNode.ial) childNode.ial = {}
             childNode.ial[ATTR_ELEM_SLOT] = elemAttrs.slot
@@ -572,6 +581,7 @@ export function buildSlidesDocument(
             parentClicks: listParentClicks,
             parentContainerId: listParentContainerId,
             defaultSlot: elemAttrs.slot || inheritedContext?.defaultSlot,
+            defaultAlign: elemAttrs.align || inheritedContext?.defaultAlign,
             isParentListUnpacked: true,
             isListItem: true,
             listLevel: nextListLevel,
@@ -579,7 +589,7 @@ export function buildSlidesDocument(
             isParentMarkerStripped: false,
             listContext: {
               isOrdered: isOrderedList,
-              itemIndex: idx + 1,
+              itemIndex,
             },
           })
         }
@@ -730,6 +740,7 @@ export function buildSlidesDocument(
             parentClicks: childParentClicks,
             parentContainerId: childParentContainerId,
             defaultSlot: targetSlot,
+            defaultAlign: elemAttrs.align || inheritedContext?.defaultAlign,
             listLevel: rawListLevel,
             listLevelOffset: listLevelOffset + (isCardCol ? 1 : 0),
             isParentMarkerStripped: isThisFirstValid ? false : isCardCol,
@@ -897,6 +908,10 @@ export function buildSlidesDocument(
       const normMaxHeight = elemAttrs.maxHeight
         ? normalizeMaxHeight(elemAttrs.maxHeight)
         : undefined
+      const effectiveAlign = elemAttrs.align || inheritedContext?.defaultAlign
+      if (effectiveAlign && !effectiveAttrs[ATTR_ELEM_ALIGN]) {
+        effectiveAttrs[ATTR_ELEM_ALIGN] = effectiveAlign
+      }
 
       const isListNodeBlock = itemNode.type === "l" || itemNode.type === "NodeList" || itemNode.type === "list"
       const isListItem = Boolean(inheritedContext?.isListItem || isListItemNode(itemNode))
@@ -925,6 +940,7 @@ export function buildSlidesDocument(
         shikiLines: elemAttrs.shikiLines,
         maxHeight: normMaxHeight,
         slot: effectiveSlot,
+        ...(effectiveAlign ? { align: effectiveAlign } : {}),
         attributes: effectiveAttrs,
         attrs: effectiveAttrs,
         rawNode: itemNode,

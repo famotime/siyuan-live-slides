@@ -547,3 +547,55 @@ export function getSharedLayoutStyles(): string {
     .pdf-col * {
   `;
 }
+
+/**
+ * 元素级独立水平对齐覆盖样式（置于模板末尾确保高于版式默认与规范化标题居中优先级）
+ */
+export function getElementAlignmentStyles(): string {
+  const dirs: Array<{ dir: "left" | "center" | "right"; flexAlign: string; marginLeft: string; marginRight: string }> = [
+    { dir: "left", flexAlign: "flex-start", marginLeft: "0", marginRight: "auto" },
+    { dir: "center", flexAlign: "center", marginLeft: "auto", marginRight: "auto" },
+    { dir: "right", flexAlign: "flex-end", marginLeft: "auto", marginRight: "0" },
+  ]
+
+  return dirs.map(({ dir, flexAlign, marginLeft, marginRight }) => {
+    const listPositionRule = dir === "left"
+      ? `
+    :is(.slide-block, .pdf-block).slide-align--left :is(ul, ol, .slide-list, .pdf-list) {
+      text-align: left !important;
+    }`
+      : `
+    :is(.slide-block, .pdf-block).slide-align--${dir} :is(ul, ol, .slide-list, .pdf-list) {
+      padding-left: 0 !important;
+      text-align: ${dir} !important;
+    }
+    :is(.slide-block, .pdf-block).slide-align--${dir} :is(ul, ol, .slide-list, .pdf-list) > li,
+    :is(.slide-block, .pdf-block).slide-align--${dir} li.slide-list-item {
+      list-style-position: inside !important;
+      margin-left: 0 !important;
+      padding-left: 0 !important;
+      text-align: ${dir} !important;
+    }
+    :is(.slide-block, .pdf-block).slide-list-continuation.slide-align--${dir} {
+      --slides-cont-base: 0px !important;
+      padding-left: 0 !important;
+    }`
+
+    return `
+    :is(.slide-block, .pdf-block).slide-align--${dir},
+    :is(.slide-block, .pdf-block).slide-align--${dir} :is(h1, h2, h3, h4, h5, h6, p, blockquote, .slide-list-item-title, .slide-list-item-desc, li, li *),
+    .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--${dir},
+    .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--${dir} :is(h1, h2, h3, h4, h5, h6, p, .slide-list-item-title, .slide-list-item-desc, li, li *),
+    [data-normalize-headings="true"] .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--${dir} :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+      text-align: ${dir} !important;
+    }${listPositionRule}
+    :is(.slide-block, .pdf-block).slide-align--${dir}:is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-block--image, .slide-block--video, :has(img), :has(video)),
+    :is(.slide-block, .pdf-block).slide-align--${dir} :is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-list-media) {
+      align-items: ${flexAlign} !important;
+    }
+    :is(.slide-block, .pdf-block).slide-align--${dir} :is(img, video, .slide-media-img, .slide-video-player, .list-item-gif) {
+      margin-left: ${marginLeft} !important;
+      margin-right: ${marginRight} !important;
+    }`
+  }).join("\n")
+}

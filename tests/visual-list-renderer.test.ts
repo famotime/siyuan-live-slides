@@ -20,6 +20,14 @@ describe("VisualListRenderer (列表渲染器与复合块拆解)", () => {
     expect(orHtml).toContain("<li>第一项</li>")
     expect(orHtml).toContain("<li>第二项</li>")
 
+    const unpackedOrderedHtml = renderMarkdownList("2. 文档组织\n")
+    expect(unpackedOrderedHtml).toContain('<ol class="pdf-list pdf-list--ordered" start="2">')
+    expect(unpackedOrderedHtml).toContain("<li>文档组织</li>")
+
+    const skippedOrderedHtml = renderMarkdownList("1. 父项\n  1. 子项\n3. 跳号项")
+    expect(skippedOrderedHtml).toContain('value="1"')
+    expect(skippedOrderedHtml).toContain('value="3"')
+
     const taskMd = "- [x] 已完成\n- [ ] 未完成"
     const taskHtml = renderMarkdownList(taskMd)
     expect(taskHtml).toContain('class="pdf-task-item"')

@@ -112,6 +112,7 @@
         :elem-anim-props="elemAnimProps"
         :active-block-content="activeBlockContent"
         :elem-slot="elemSlot"
+        :elem-align="elemAlign"
         :elem-shiki-lines="elemShikiLines"
         :elem-max-height="elemMaxHeight"
         :is-code-block="isCodeBlock"
@@ -144,6 +145,7 @@
         @update:elem-motion="onElemMotionChange"
         @update:elem-anim="onElemAnimChange"
         @update:elem-slot="onElemSlotChange"
+        @update:elem-align="onElemAlignChange"
         @update:elem-shiki-lines="onElemShikiLinesChange"
         @update:elem-max-height="onElemMaxHeightChange"
         @apply-super-block-layout="onApplySuperBlockLayout"
@@ -236,6 +238,7 @@ import {
   ATTR_ELEM_ANIM,
   ATTR_ELEM_ANIM_PROPS,
   ATTR_ELEM_SLOT,
+  ATTR_ELEM_ALIGN,
   ATTR_ELEM_SHIKI_LINES,
   ATTR_ELEM_MAX_HEIGHT,
   ATTR_ELEM_NOTE,
@@ -514,6 +517,7 @@ const {
   elemAnimProps,
   activeBlockContent,
   elemSlot,
+  elemAlign,
 } = useActiveBlockState({
   activeBlockId,
   targetSlide,
@@ -564,6 +568,7 @@ const hasBlockAttrs = computed(() => {
     activeBlockAttrs.value[ATTR_ELEM_ANIM] ||
     activeBlockAttrs.value[ATTR_ELEM_ANIM_PROPS] ||
     activeBlockAttrs.value[ATTR_ELEM_SLOT] ||
+    activeBlockAttrs.value[ATTR_ELEM_ALIGN] ||
     activeBlockAttrs.value[ATTR_ELEM_SHIKI_LINES] ||
     activeBlockAttrs.value[ATTR_ELEM_NOTE] ||
     activeBlockAttrs.value['slides-note'] ||
@@ -605,6 +610,7 @@ const {
   onElemMotionChange,
   onElemAnimChange,
   onElemSlotChange,
+  onElemAlignChange,
   onElemShikiLinesChange,
   onElemMaxHeightChange,
   onSetTwoColsContrast,

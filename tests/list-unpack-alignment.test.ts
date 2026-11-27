@@ -182,7 +182,8 @@ describe("列表项解包与对齐一致性 (解决同列表块末项偏左问�
     const html2 = convertBlockToHtml(b2!)
 
     expect(html1).toContain("<ol")
-    expect(html2).toContain("<ol")
+    expect(html1).not.toContain('start="1"')
+    expect(html2).toContain('<ol class="pdf-list pdf-list--ordered" start="2">')
     expect(html1).toContain("pdf-list-item")
     expect(html2).toContain("pdf-list-item")
   })
@@ -469,7 +470,7 @@ describe("列表项解包与对齐一致性 (解决同列表块末项偏左问�
     expect(thumbScss).toContain("ul > li.slide-list-item--nested")
   })
 
-  it("场景 11：预览客户端 (public/slides-client/index.html) 与导出端均同步居中栏标题左侧对齐变量 (--col-title-inset) 与延续列表样式", async () => {
+  it("场景 11：已移除 --col-title-inset 与 syncSuperblockColTitleInsets，同时保留延续列表对齐与无标记修复", async () => {
     const fs = await import("fs")
     const path = await import("path")
     const { generateStandaloneExportStyles } = await import("../src/export/standalone-template-styles")
@@ -479,17 +480,218 @@ describe("列表项解包与对齐一致性 (解决同列表块末项偏左问�
       path.join(__dirname, "../public/slides-client/index.html"),
       "utf8",
     )
+    const thumbScss = fs.readFileSync(
+      path.join(__dirname, "../src/ui/tab/SlidesPresenterThumbnail.scss"),
+      "utf8",
+    )
 
-    expect(clientHtml).toContain("syncSuperblockColTitleInsets")
-    expect(clientHtml).toContain("--col-title-inset")
+    expect(clientHtml).not.toContain("syncSuperblockColTitleInsets")
+    expect(clientHtml).not.toContain("--col-title-inset")
     expect(clientHtml).toContain("slide-list-continuation--no-marker")
     expect(clientHtml).toContain("--slides-list-level")
     expect(clientHtml).toContain("ul > li.slide-list-item--nested")
     expect(clientHtml).not.toMatch(/\.layout-cols-grid\s+\.slide-list-item\s*\{[^}]*list-style-type:\s*disc\s*!important/)
 
+    expect(thumbScss).not.toContain("--col-title-inset")
+
     for (const css of [generateStandaloneExportStyles(), generatePdfExportStyles()]) {
-      expect(css).toContain("--col-title-inset")
-      expect(css).toContain("padding-left: calc(var(--col-title-inset, 0px) + 0.9rem) !important;")
+      expect(css).not.toContain("--col-title-inset")
+      expect(css).not.toContain("calc(var(--col-title-inset, 0px)")
     }
+  })
+
+  it("场景 12：custom-slides-align 属性支持解析、列表拆包继承、不跨标题继承与 HTML 类名输出", async () => {
+    const { ATTR_ELEM_ALIGN } = await import("../src/types/slides-protocol")
+    const { parseElementAttrs } = await import("../src/compiler/scope-mapper")
+    const { buildSlidesDocument } = await import("../src/compiler/slides-ast-builder")
+    const { convertBlockToHtml } = await import("../src/export/markdown-renderer")
+
+    expect(parseElementAttrs({ [ATTR_ELEM_ALIGN]: "center" }).align).toBe("center")
+    expect(parseElementAttrs({ [ATTR_ELEM_ALIGN]: "left" }).align).toBe("left")
+    expect(parseElementAttrs({ [ATTR_ELEM_ALIGN]: "right" }).align).toBe("right")
+    expect(parseElementAttrs({ [ATTR_ELEM_ALIGN]: "invalid" as string }).align).toBeUndefined()
+
+    const docAst: any[] = [
+      {
+        id: "h-1",
+        type: "NodeHeading",
+        subtype: "h2",
+        markdown: "## 标题",
+        ial: { [ATTR_ELEM_ALIGN]: "right" },
+      },
+      {
+        id: "p-after-h",
+        type: "NodeParagraph",
+        markdown: "普通段落不应继承上一标题的对齐方式",
+      },
+      {
+        id: "list-1",
+        type: "NodeList",
+        subtype: "u",
+        ial: { [ATTR_ELEM_ALIGN]: "center" },
+        children: [
+          {
+            id: "li-1",
+            type: "NodeListItem",
+            subtype: "u",
+            children: [
+              {
+                id: "li-1-p1",
+                type: "NodeParagraph",
+                markdown: "列表首段继承居中",
+              },
+              {
+                id: "li-1-p2",
+                type: "NodeParagraph",
+                markdown: "显式左对齐覆盖父列表",
+                ial: { [ATTR_ELEM_ALIGN]: "left" },
+              },
+            ],
+          },
+        ],
+      },
+    ]
+
+    const doc = buildSlidesDocument("doc-align-1", {}, docAst)
+    const blocks = doc.slides[0].blocks
+    const headingBlock = blocks.find((b) => b.id === "h-1")
+    const paraAfterHeading = blocks.find((b) => b.id === "p-after-h")
+    const listFirstPara = blocks.find((b) => b.id === "li-1-p1")
+    const listOverridePara = blocks.find((b) => b.id === "li-1-p2")
+
+    expect(headingBlock?.align).toBe("right")
+    expect(paraAfterHeading?.align).toBeUndefined()
+    expect(listFirstPara?.align).toBe("center")
+    expect(listOverridePara?.align).toBe("left")
+
+    const headingHtml = convertBlockToHtml(headingBlock!)
+    const overrideHtml = convertBlockToHtml(listOverridePara!)
+    expect(headingHtml).toContain("slide-align--right")
+    expect(overrideHtml).toContain("slide-align--left")
+  })
+
+  it("场景 13：预览端、导出端与演讲者缩略图均包含 .slide-align--left/center/right 样式覆盖规则", async () => {
+    const fs = await import("fs")
+    const path = await import("path")
+    const { generateStandaloneExportStyles } = await import("../src/export/standalone-template-styles")
+    const { generatePdfExportStyles } = await import("../src/export/pdf-template-styles")
+
+    const clientHtml = fs.readFileSync(
+      path.join(__dirname, "../public/slides-client/index.html"),
+      "utf8",
+    )
+    const thumbScss = fs.readFileSync(
+      path.join(__dirname, "../src/ui/tab/SlidesPresenterThumbnail.scss"),
+      "utf8",
+    )
+
+    for (const content of [
+      clientHtml,
+      thumbScss,
+      generateStandaloneExportStyles(),
+      generatePdfExportStyles(),
+    ]) {
+      expect(content).toContain(".slide-align--left")
+      expect(content).toContain(".slide-align--center")
+      expect(content).toContain(".slide-align--right")
+    }
+  })
+
+  it("场景 14：元素配置侧栏 (BlockInspectorSection.vue) 底部包含默认折叠的「高级设置」对齐控制", async () => {
+    const fs = await import("fs")
+    const path = await import("path")
+    const sfc = fs.readFileSync(
+      path.join(__dirname, "../src/ui/components/BlockInspectorSection.vue"),
+      "utf8",
+    )
+
+    expect(sfc).toContain("isBlockAdvancedExpanded = ref(false)")
+    expect(sfc).toContain("spm-advanced-menu")
+    expect(sfc).toContain("高级设置")
+    expect(sfc).toContain("elemAlign")
+    expect(sfc).toContain("update:elemAlign")
+    expect(sfc).toContain("ALIGN_OPTIONS")
+  })
+
+  it("场景 15：多栏卡片内解包的有序子列表（及非 1 起始列表）在预览端与导出端保留 start/value 序号", async () => {
+    const fs = await import("fs")
+    const path = await import("path")
+
+    const colSuperBlock: ISiYuanBlockNode = {
+      id: "sb-ordered-card",
+      type: "NodeSuperBlock",
+      subType: "col",
+      children: [
+        {
+          id: "col-1-list",
+          type: "l",
+          subType: "u",
+          children: [
+            {
+              id: "col-1-li",
+              type: "i",
+              children: [{ id: "col-1-p", type: "p", markdown: "左栏标题", content: "左栏标题" }],
+            },
+          ],
+        },
+        {
+          id: "col-2-list",
+          type: "l",
+          subType: "u",
+          children: [
+            {
+              id: "col-2-li",
+              type: "i",
+              children: [
+                { id: "col-2-p", type: "p", markdown: "LLM Wiki 产品化思考", content: "LLM Wiki 产品化思考" },
+                {
+                  id: "col-2-nested-ol",
+                  type: "l",
+                  subType: "o",
+                  children: [
+                    {
+                      id: "col-2-ol-i1",
+                      type: "i",
+                      children: [{ id: "col-2-ol-p1", type: "p", markdown: "产品形态", content: "产品形态" }],
+                    },
+                    {
+                      id: "col-2-ol-i2",
+                      type: "i",
+                      children: [{ id: "col-2-ol-p2", type: "p", markdown: "文档组织", content: "文档组织" }],
+                    },
+                    {
+                      id: "col-2-ol-i3",
+                      type: "i",
+                      children: [{ id: "col-2-ol-p3", type: "p", markdown: "Wiki", content: "Wiki" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+
+    const doc = buildSlidesDocument("doc-ordered-card", { "custom-slides-layout": "two-cols-header" }, [colSuperBlock])
+    const blocks = doc.slides[0].blocks
+    const b1 = blocks.find((b) => b.id === "col-2-ol-p1")!
+    const b2 = blocks.find((b) => b.id === "col-2-ol-p2")!
+    const b3 = blocks.find((b) => b.id === "col-2-ol-p3")!
+
+    expect(b1.rawMarkdown).toBe("1. 产品形态")
+    expect(b2.rawMarkdown).toBe("2. 文档组织")
+    expect(b3.rawMarkdown).toBe("3. Wiki")
+
+    expect(convertBlockToHtml(b1)).toContain('<ol class="pdf-list pdf-list--ordered">')
+    expect(convertBlockToHtml(b2)).toContain('<ol class="pdf-list pdf-list--ordered" start="2">')
+    expect(convertBlockToHtml(b3)).toContain('<ol class="pdf-list pdf-list--ordered" start="3">')
+
+    const clientHtml = fs.readFileSync(
+      path.join(__dirname, "../public/slides-client/index.html"),
+      "utf8",
+    )
+    expect(clientHtml).toContain("start=\"${orderedStart}\"")
+    expect(clientHtml).toContain("value=\"${item.order}\"")
   })
 })

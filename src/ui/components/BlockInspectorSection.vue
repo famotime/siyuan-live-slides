@@ -671,10 +671,61 @@
         </button>
       </div>
     </div>
+
+    <!-- 5. 元素高级设置（默认折叠，需手动点击展开） -->
+    <div class="spm-advanced-menu" :class="{ 'is-expanded': isBlockAdvancedExpanded }">
+      <button
+        type="button"
+        class="spm-advanced-toggle b3-tooltips b3-tooltips__nw"
+        :aria-expanded="isBlockAdvancedExpanded"
+        :aria-label="isBlockAdvancedExpanded ? '点击收起高级设置' : '点击展开元素对齐等高级设置'"
+        @click="isBlockAdvancedExpanded = !isBlockAdvancedExpanded"
+      >
+        <span class="spm-advanced-toggle-label">
+          <SlidesIcon name="settings" class="spm-advanced-settings-icon" />
+          <span class="spm-advanced-title">高级设置</span>
+          <span class="spm-advanced-pill">{{ alignBadgeLabel }}</span>
+        </span>
+        <span class="spm-advanced-toggle-action">
+          <span class="spm-advanced-state-text">{{ isBlockAdvancedExpanded ? '收起' : '展开' }}</span>
+          <SlidesIcon name="chevron-right" class="spm-advanced-chevron" />
+        </span>
+      </button>
+
+      <div v-if="isBlockAdvancedExpanded" class="spm-advanced-content">
+        <div class="spm-card-control">
+          <div class="spm-control-header">
+            <div class="spm-control-title-group">
+              <div
+                class="spm-control-title b3-tooltips b3-tooltips__se"
+                aria-label="独立覆写当前元素在幻灯片中的水平对齐方式"
+              >
+                <SlidesIcon name="align-left" />
+                <span>对齐方式</span>
+              </div>
+            </div>
+          </div>
+          <div class="spm-segmented-group">
+            <button
+              v-for="item in ALIGN_OPTIONS"
+              :key="item.value || 'default'"
+              type="button"
+              class="spm-segmented-item"
+              :class="{ active: (elemAlign || '') === item.value }"
+              @click="$emit('update:elemAlign', item.value)"
+            >
+              <SlidesIcon v-if="item.icon" :name="item.icon" />
+              <span>{{ item.label }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import SlidesIcon from '@/ui/components/SlidesIcon.vue'
 import MotionSelector from '@/ui/components/MotionSelector.vue'
 import {
@@ -692,6 +743,7 @@ const props = defineProps<{
   elemAnimProps?: string
   activeBlockContent?: string
   elemSlot: string
+  elemAlign?: string
   elemShikiLines: string
   elemMaxHeight?: string
   isCodeBlock: boolean
@@ -751,6 +803,7 @@ const emit = defineEmits<{
   (e: 'update:elemMotion', val: string): void
   (e: 'update:elemAnim', val: string, propsJson?: string): void
   (e: 'update:elemSlot', val: string): void
+  (e: 'update:elemAlign', val: string): void
   (e: 'update:elemShikiLines', val: string): void
   (e: 'update:elemMaxHeight', val: string): void
   (e: 'applySuperBlockLayout', info: any): void
@@ -810,5 +863,21 @@ const {
   },
   emit,
 )
+
+const isBlockAdvancedExpanded = ref(false)
+const ALIGN_OPTIONS = [
+  { value: '', label: '默认', icon: '' },
+  { value: 'left', label: '居左', icon: 'align-left' },
+  { value: 'center', label: '居中', icon: 'align-center' },
+  { value: 'right', label: '居右', icon: 'align-right' },
+] as const
+
+const alignBadgeLabel = computed(() => {
+  const cur = (props.elemAlign || '').trim().toLowerCase()
+  if (cur === 'left') return '居左'
+  if (cur === 'center') return '居中'
+  if (cur === 'right') return '居右'
+  return '对齐方式'
+})
 </script>
 

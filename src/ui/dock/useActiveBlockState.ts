@@ -13,6 +13,7 @@ import {
   ATTR_ELEM_ANIM,
   ATTR_ELEM_ANIM_PROPS,
   ATTR_ELEM_SLOT,
+  ATTR_ELEM_ALIGN,
   type ISlidesBlockItem,
   type ISlidesVirtualPage,
 } from '@/types/slides-protocol'
@@ -94,6 +95,16 @@ export function useActiveBlockState(source: IActiveBlockStateSource) {
     return ''
   })
 
+  const elemAlign = computed(() => {
+    const raw = source.activeBlockAttrs.value[ATTR_ELEM_ALIGN]
+    if (raw !== undefined) {
+      const norm = raw.trim().toLowerCase()
+      return norm === 'left' || norm === 'center' || norm === 'right' ? norm : ''
+    }
+    if (matchedBlock.value?.align) return matchedBlock.value.align
+    return ''
+  })
+
   return {
     matchedBlock,
     elemClick,
@@ -102,6 +113,7 @@ export function useActiveBlockState(source: IActiveBlockStateSource) {
     elemAnimProps,
     activeBlockContent,
     elemSlot,
+    elemAlign,
   }
 }
 

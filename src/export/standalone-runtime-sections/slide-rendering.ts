@@ -1,12 +1,8 @@
-import { COL_TITLE_INSET_SYNC_SCRIPT } from "../../utils/col-alignment"
-
 /**
  * 整页幻灯片装配渲染与版式容器分发
  */
 export function getSlideRenderingSection(): string {
-  return `      ${COL_TITLE_INSET_SYNC_SCRIPT.trim()}
-
-      function renderSlide(idx, direction) {
+  return `      function renderSlide(idx, direction) {
         if (slides.length === 0) return;
         currentIndex = Math.max(0, Math.min(idx, slides.length - 1));
         const slide = slides[currentIndex];
@@ -720,9 +716,6 @@ export function getSlideRenderingSection(): string {
           });
         }
         runSlideAnimations(stage);
-        requestAnimationFrame(function() {
-          syncSuperblockColTitleInsets(container);
-        });
       }
 
       // Lightbox 控制逻辑

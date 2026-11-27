@@ -1016,24 +1016,6 @@
     content: normal !important;
     display: inline !important;
   }
-  .has-superblock-cols :is(.col, .pdf-col) > *:first-child :is(.slide-list-item-title, h1, h2, h3, h4, h5, h6) ~ :is(ul, ol, .slide-list, .pdf-list) {
-    padding-left: calc(var(--col-title-inset, 0px) + 0.9rem) !important;
-  }
-  .has-superblock-cols :is(.col, .pdf-col) > *:first-child :is(.slide-list-item-title, h1, h2, h3, h4, h5, h6) ~ .slide-list-item-desc {
-    padding-left: var(--col-title-inset, 0px) !important;
-  }
-  .has-superblock-cols :is(.col, .pdf-col) :is(ul, ol, .slide-list, .pdf-list) {
-    padding-left: 0.9rem !important;
-  }
-  .has-superblock-cols :is(.col, .pdf-col) li {
-    padding-left: 0.15rem !important;
-  }
-  .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block):not(:first-child):has(> ul, > ol, > .slide-list, > .pdf-list) {
-    padding-left: var(--col-title-inset, 0px) !important;
-  }
-  .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block):not(:first-child):not(.slide-list-continuation):not(.slide-media-block):not(.slide-media-container):not(.slide-video-container):not(.slide-block--image):not(.slide-block--video):not(:has(> ul, > ol, > .slide-list, > .pdf-list, img, video)) {
-    padding-left: var(--col-title-inset, 0px) !important;
-  }
 
   .pdf-col ul,
   .two-cols-left ul,
@@ -1122,24 +1104,11 @@
     --slides-cont-base: 1.45rem;
   }
 
-  .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block):not(:first-child).slide-list-continuation {
-    --slides-cont-base: calc(var(--col-title-inset, 0px) + 1.05rem);
-  }
-
-  .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block):not(:first-child).slide-list-continuation.slide-list-continuation--no-marker {
-    --slides-cont-base: var(--col-title-inset, 0px) !important;
-  }
-
   .slide-list-continuation.slide-list-continuation--no-marker,
   &[data-hide-unordered-markers="true"] .slide-list-continuation.slide-list-continuation--unordered,
   &[data-hide-ordered-markers="true"] .slide-list-continuation.slide-list-continuation--ordered,
   &[data-hide-unordered-markers="true"][data-hide-ordered-markers="true"] .slide-list-continuation {
     --slides-cont-base: 0px !important;
-  }
-
-  &[data-hide-unordered-markers="true"] .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block):not(:first-child).slide-list-continuation.slide-list-continuation--unordered,
-  &[data-hide-ordered-markers="true"] .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block):not(:first-child).slide-list-continuation.slide-list-continuation--ordered {
-    --slides-cont-base: var(--col-title-inset, 0px) !important;
   }
 
   .slide-list-continuation:is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-block--image, .slide-block--video, :has(img), :has(video)) {
@@ -1375,5 +1344,87 @@
     outline-offset: 3px;
     border-radius: 6px;
     transition: outline-color 0.2s ease;
+  }
+
+  /* 元素级独立水平对齐覆盖 */
+  :is(.slide-block, .pdf-block).slide-align--left,
+  :is(.slide-block, .pdf-block).slide-align--left :is(h1, h2, h3, h4, h5, h6, p, blockquote, .slide-list-item-title, .slide-list-item-desc, li, li *),
+  .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--left,
+  .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--left :is(h1, h2, h3, h4, h5, h6, p, .slide-list-item-title, .slide-list-item-desc, li, li *),
+  &[data-normalize-headings="true"] .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--left :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    text-align: left !important;
+  }
+  :is(.slide-block, .pdf-block).slide-align--left :is(ul, ol, .slide-list, .pdf-list) {
+    text-align: left !important;
+  }
+  :is(.slide-block, .pdf-block).slide-align--left:is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-block--image, .slide-block--video, :has(img), :has(video)),
+  :is(.slide-block, .pdf-block).slide-align--left :is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-list-media) {
+    align-items: flex-start !important;
+  }
+  :is(.slide-block, .pdf-block).slide-align--left :is(img, video, .slide-media-img, .slide-video-player, .list-item-gif) {
+    margin-left: 0 !important;
+    margin-right: auto !important;
+  }
+
+  :is(.slide-block, .pdf-block).slide-align--center,
+  :is(.slide-block, .pdf-block).slide-align--center :is(h1, h2, h3, h4, h5, h6, p, blockquote, .slide-list-item-title, .slide-list-item-desc, li, li *),
+  .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--center,
+  .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--center :is(h1, h2, h3, h4, h5, h6, p, .slide-list-item-title, .slide-list-item-desc, li, li *),
+  &[data-normalize-headings="true"] .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--center :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    text-align: center !important;
+  }
+  :is(.slide-block, .pdf-block).slide-align--center :is(ul, ol, .slide-list, .pdf-list) {
+    padding-left: 0 !important;
+    text-align: center !important;
+  }
+  :is(.slide-block, .pdf-block).slide-align--center :is(ul, ol, .slide-list, .pdf-list) > li,
+  :is(.slide-block, .pdf-block).slide-align--center li.slide-list-item {
+    list-style-position: inside !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    text-align: center !important;
+  }
+  :is(.slide-block, .pdf-block).slide-list-continuation.slide-align--center {
+    --slides-cont-base: 0px !important;
+    padding-left: 0 !important;
+  }
+  :is(.slide-block, .pdf-block).slide-align--center:is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-block--image, .slide-block--video, :has(img), :has(video)),
+  :is(.slide-block, .pdf-block).slide-align--center :is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-list-media) {
+    align-items: center !important;
+  }
+  :is(.slide-block, .pdf-block).slide-align--center :is(img, video, .slide-media-img, .slide-video-player, .list-item-gif) {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  :is(.slide-block, .pdf-block).slide-align--right,
+  :is(.slide-block, .pdf-block).slide-align--right :is(h1, h2, h3, h4, h5, h6, p, blockquote, .slide-list-item-title, .slide-list-item-desc, li, li *),
+  .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--right,
+  .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--right :is(h1, h2, h3, h4, h5, h6, p, .slide-list-item-title, .slide-list-item-desc, li, li *),
+  &[data-normalize-headings="true"] .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--right :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+    text-align: right !important;
+  }
+  :is(.slide-block, .pdf-block).slide-align--right :is(ul, ol, .slide-list, .pdf-list) {
+    padding-left: 0 !important;
+    text-align: right !important;
+  }
+  :is(.slide-block, .pdf-block).slide-align--right :is(ul, ol, .slide-list, .pdf-list) > li,
+  :is(.slide-block, .pdf-block).slide-align--right li.slide-list-item {
+    list-style-position: inside !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    text-align: right !important;
+  }
+  :is(.slide-block, .pdf-block).slide-list-continuation.slide-align--right {
+    --slides-cont-base: 0px !important;
+    padding-left: 0 !important;
+  }
+  :is(.slide-block, .pdf-block).slide-align--right:is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-block--image, .slide-block--video, :has(img), :has(video)),
+  :is(.slide-block, .pdf-block).slide-align--right :is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-list-media) {
+    align-items: flex-end !important;
+  }
+  :is(.slide-block, .pdf-block).slide-align--right :is(img, video, .slide-media-img, .slide-video-player, .list-item-gif) {
+    margin-left: auto !important;
+    margin-right: 0 !important;
   }
 }

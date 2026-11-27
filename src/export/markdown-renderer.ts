@@ -488,16 +488,20 @@ export function convertBlockToHtml(
   const resolvedBlockClass = options?.blockClassResolver ? options.blockClassResolver(block) : ""
   const resolvedClassPart = resolvedBlockClass ? ` ${resolvedBlockClass}` : ""
   const continuationClass = continuationClasses.length > 0 ? ` ${continuationClasses.join(" ")}` : ""
-  const containerClass = `${baseContainerClass}${motionClass}${styledClass}${extraClass}${resolvedClassPart}${continuationClass}`
+  const alignVal = block.align || block.attributes?.["custom-slides-align"] || block.attrs?.["custom-slides-align"]
+  const normAlign = alignVal === "left" || alignVal === "center" || alignVal === "right" ? alignVal : ""
+  const alignClass = normAlign ? ` slide-align--${normAlign}` : ""
+  const alignAttr = normAlign ? ` data-slides-align="${normAlign}"` : ""
+  const containerClass = `${baseContainerClass}${motionClass}${styledClass}${extraClass}${resolvedClassPart}${continuationClass}${alignClass}`
   const md = (block.rawMarkdown || block.content || "").trim()
 
   if (!md) {
-    return `<div class="${containerClass}"${motionStyle}></div>`
+    return `<div class="${containerClass}"${alignAttr}${motionStyle}></div>`
   }
 
   // 1. 若已经是渲染好的思源引用或标签，直接内联
   if (md.includes('class="slides-block-ref"') || md.includes('class="slides-ref-tag"')) {
-    return `<div class="${containerClass}"${motionStyle}>${md}</div>`
+    return `<div class="${containerClass}"${alignAttr}${motionStyle}>${md}</div>`
   }
 
   // 2. 独立公式块 $$...$$
@@ -657,7 +661,7 @@ export function convertBlockToHtml(
   // 9. 任务列表与有序/无序列表（支持单项、多项及带导语的列表）
   const listHtml = renderMarkdownList(md, options, block)
   if (listHtml) {
-    return `<div class="${containerClass} pdf-list-item"${motionStyle}>${listHtml}</div>`
+    return `<div class="${containerClass} pdf-list-item"${alignAttr}${motionStyle}>${listHtml}</div>`
   }
 
   // 10. Toc 目录组件
@@ -685,6 +689,6 @@ export function convertBlockToHtml(
   // 11. 普通段落 (仅当作为超级块分栏首项时赋予 slide-list-item-title)
   const isColFirst = Boolean(block.isColFirst)
   const pClass = isColFirst ? ' class="slide-list-item-title"' : ""
-  return `<div class="${containerClass}"${motionStyle}><p${pClass}>${formatInlineMarkdown(md)}</p></div>`
+  return `<div class="${containerClass}"${alignAttr}${motionStyle}><p${pClass}>${formatInlineMarkdown(md)}</p></div>`
 }
 

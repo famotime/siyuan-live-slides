@@ -37,6 +37,7 @@ export const ATTR_ELEM_ANIM = "custom-slides-anim"
 export const ATTR_ELEM_ANIM_PROPS = "custom-slides-anim-props"
 export const ATTR_ELEM_SHIKI_LINES = "custom-slides-shiki-lines"
 export const ATTR_ELEM_SLOT = "custom-slides-slot"
+export const ATTR_ELEM_ALIGN = "custom-slides-align"
 export const ATTR_ELEM_NOTE = "custom-slides-note"
 export const ATTR_ELEM_ROLE = "custom-slides-role"
 export const ATTR_ELEM_MAX_HEIGHT = "custom-slides-max-height"
@@ -242,6 +243,9 @@ export interface ISlideAnimConfig {
   [key: string]: any
 }
 
+/** 页面元素水平对齐覆盖方式 */
+export type TSlideElemAlign = "left" | "center" | "right"
+
 /** 单个元素块的数据项 */
 export interface ISlidesBlockItem {
   id: string
@@ -273,6 +277,8 @@ export interface ISlidesBlockItem {
   listType?: "unordered" | "ordered"
   /** 父列表项是否已作为分栏首项剥离了列表标记（剥离后其直属延续正文应归零缩进） */
   isParentMarkerStripped?: boolean
+  /** 块级独立水平对齐覆盖（覆盖页面/分栏默认对齐） */
+  align?: TSlideElemAlign
 }
 
 export type ISlidesBlock = ISlidesBlockItem

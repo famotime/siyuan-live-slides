@@ -125,6 +125,7 @@ export function useInspectorActions(ctx: IInspectorActionsContext) {
     onElemMotionChange: layout.onElemMotionChange,
     onElemAnimChange: layout.onElemAnimChange,
     onElemSlotChange: layout.onElemSlotChange,
+    onElemAlignChange: layout.onElemAlignChange,
     onElemShikiLinesChange: layout.onElemShikiLinesChange,
     onElemMaxHeightChange: layout.onElemMaxHeightChange,
     onSetTwoColsContrast: layout.onSetTwoColsContrast,

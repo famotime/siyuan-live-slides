@@ -11,7 +11,6 @@ import {
 } from "./pdf-template-styles"
 import type { TPdfPageRatio } from "./pdf-template-styles"
 import { isLightColor, resolveEffectiveColorSchema } from "../utils/color-utils"
-import { COL_TITLE_INSET_SYNC_SCRIPT } from "../utils/col-alignment"
 
 export { convertBlockToHtml as convertBlockToPrintHtml, escapeHtml, formatInlineMarkdown }
 export type { TPdfPageRatio }
@@ -78,15 +77,6 @@ export function buildPrintableHtml(doc: ISlidesDocument, options?: IPdfExportOpt
 </head>
 <body data-normalize-headings="${doc.config.normalizeHeadingSizes ? 'true' : 'false'}" data-hide-unordered-markers="${doc.config.showUnorderedListMarkers === false ? 'true' : 'false'}" data-hide-ordered-markers="${doc.config.showOrderedListMarkers === false ? 'true' : 'false'}">
   ${slidesHtml}
-  <script>
-    ${COL_TITLE_INSET_SYNC_SCRIPT}
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", function() { syncSuperblockColTitleInsets(document); });
-    } else {
-      syncSuperblockColTitleInsets(document);
-    }
-    window.addEventListener("beforeprint", function() { syncSuperblockColTitleInsets(document); });
-  </script>
 </body>
 </html>`
 }

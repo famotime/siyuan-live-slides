@@ -329,7 +329,6 @@ import {
 } from '@/utils/color-utils'
 import { usePresenterTimer } from './usePresenterTimer'
 import { usePresenterSync } from './usePresenterSync'
-import { syncSuperblockColTitleInsets } from '@/utils/col-alignment'
 
 const plugin = inject<Plugin>('plugin')
 const sandboxBridge = inject<WebSandboxBridge>('sandboxBridge', new WebSandboxBridge())
@@ -383,14 +382,12 @@ function measurePreviewContainers() {
       width: currentPreviewRef.value.clientWidth,
       height: currentPreviewRef.value.clientHeight,
     }
-    syncSuperblockColTitleInsets(currentPreviewRef.value)
   }
   if (nextPreviewRef.value) {
     nextContainerSize.value = {
       width: nextPreviewRef.value.clientWidth,
       height: nextPreviewRef.value.clientHeight,
     }
-    syncSuperblockColTitleInsets(nextPreviewRef.value)
   }
 }
 
@@ -492,17 +489,6 @@ const nextSlideHtml = computed(() =>
     allSlides: slides.value,
     pageIndex: currentPage.value + 1,
   }),
-)
-
-watch(
-  [currentSlideHtml, nextSlideHtml, isNormalizeHeadings],
-  () => {
-    void nextTick(() => {
-      syncSuperblockColTitleInsets(currentPreviewRef.value)
-      syncSuperblockColTitleInsets(nextPreviewRef.value)
-    })
-  },
-  { flush: 'post', immediate: true },
 )
 
 const currentSlideTitle = computed(() => {

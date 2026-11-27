@@ -1,5 +1,5 @@
 import { generateCompleteSiYuanThemeCss } from "../compiler/theme-styles-generator"
-import { getSharedLayoutStyles } from "./styles/shared-layout-styles"
+import { getElementAlignmentStyles, getSharedLayoutStyles } from "./styles/shared-layout-styles"
 
 export type TPdfPageRatio = "16:9" | "4:3" | "A4-landscape" | "A4-portrait"
 
@@ -680,24 +680,6 @@ export function generatePdfExportStyles(options?: {
     .has-superblock-cols .pdf-col > *:first-child :is(.slide-list-item-title, h1, h2, h3, h4, h5, h6) ~ :is(ul, ol) > li:first-child * {
       text-align: left !important;
     }
-    .has-superblock-cols :is(.col, .pdf-col) > *:first-child :is(.slide-list-item-title, h1, h2, h3, h4, h5, h6) ~ :is(ul, ol, .slide-list, .pdf-list) {
-      padding-left: calc(var(--col-title-inset, 0px) + 0.9rem) !important;
-    }
-    .has-superblock-cols :is(.col, .pdf-col) > *:first-child :is(.slide-list-item-title, h1, h2, h3, h4, h5, h6) ~ .slide-list-item-desc {
-      padding-left: var(--col-title-inset, 0px) !important;
-    }
-    .has-superblock-cols :is(.col, .pdf-col) :is(ul, ol, .slide-list, .pdf-list) {
-      padding-left: 0.9rem !important;
-    }
-    .has-superblock-cols :is(.col, .pdf-col) li {
-      padding-left: 0.15rem !important;
-    }
-    .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block):not(:first-child):has(> ul, > ol, > .slide-list, > .pdf-list) {
-      padding-left: var(--col-title-inset, 0px) !important;
-    }
-    .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block):not(:first-child):not(.slide-list-continuation):not(.slide-media-block):not(.slide-media-container):not(.slide-video-container):not(.slide-block--image):not(.slide-block--video):not(:has(> ul, > ol, > .slide-list, > .pdf-list, img, video)) {
-      padding-left: var(--col-title-inset, 0px) !important;
-    }
 
     /* 全局特定标题大小规范化 (除封面外页首首个标题按 H2 1.7rem，表头多栏内首个标题按 H3 1.3rem) */
     [data-normalize-headings="true"] .pdf-slide:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
@@ -1053,21 +1035,11 @@ export function generatePdfExportStyles(options?: {
     :is(.layout-two-cols, .layout-cols-header, .layout-two-cols-header, .layout-three-cols, .layout-three-cols-header, .two-cols-left, .two-cols-right, .three-cols-col, .col, .pdf-col) .slide-list-continuation {
       --slides-cont-base: 1.45rem;
     }
-    .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block):not(:first-child).slide-list-continuation {
-      --slides-cont-base: calc(var(--col-title-inset, 0px) + 1.05rem);
-    }
-    .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block):not(:first-child).slide-list-continuation.slide-list-continuation--no-marker {
-      --slides-cont-base: var(--col-title-inset, 0px) !important;
-    }
     .slide-list-continuation.slide-list-continuation--no-marker,
     [data-hide-unordered-markers="true"] .slide-list-continuation.slide-list-continuation--unordered,
     [data-hide-ordered-markers="true"] .slide-list-continuation.slide-list-continuation--ordered,
     [data-hide-unordered-markers="true"][data-hide-ordered-markers="true"] .slide-list-continuation {
       --slides-cont-base: 0px !important;
-    }
-    [data-hide-unordered-markers="true"] .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block):not(:first-child).slide-list-continuation.slide-list-continuation--unordered,
-    [data-hide-ordered-markers="true"] .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block):not(:first-child).slide-list-continuation.slide-list-continuation--ordered {
-      --slides-cont-base: var(--col-title-inset, 0px) !important;
     }
     .slide-list-continuation:is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-block--image, .slide-block--video, :has(img), :has(video)) {
       padding-left: 0 !important;
@@ -1281,6 +1253,8 @@ export function generatePdfExportStyles(options?: {
     }
 
     ${getSharedLayoutStyles()}
+
+    ${getElementAlignmentStyles()}
 
       /* PDF 打印讲义下禁用动态蒙版遮挡，保证内容 100% 完整可见 */
       .slides-mask-layer,

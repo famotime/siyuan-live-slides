@@ -1477,7 +1477,7 @@
       text-align: center !important;
     }
 
-    /* 栏内说明段落与列表项：左对齐，并与居中首项标题左侧边缘对齐 */
+    /* 栏内说明段落与列表项：默认左对齐，自然阅读排版 */
     .layout-cols-grid.has-superblock-cols .col .slide-list-item-desc,
     .layout-cols-grid.has-superblock-cols .col li:not(:first-child) {
       text-align: left !important;
@@ -1486,7 +1486,7 @@
       list-style: disc !important;
       list-style-type: disc !important;
       text-align: left !important;
-      padding-left: 0.15rem !important;
+      padding-left: 0.2rem !important;
       width: auto !important;
     }
     .has-superblock-cols :is(.col, .pdf-col) > *:first-child :is(.slide-list-item-title, h1, h2, h3, h4, h5, h6) ~ :is(ul, ol, .slide-list, .pdf-list) > li:first-child::marker {
@@ -1495,24 +1495,6 @@
     }
     .has-superblock-cols :is(.col, .pdf-col) > *:first-child :is(.slide-list-item-title, h1, h2, h3, h4, h5, h6) ~ :is(ul, ol, .slide-list, .pdf-list) > li:first-child * {
       text-align: left !important;
-    }
-    .has-superblock-cols :is(.col, .pdf-col) > *:first-child :is(.slide-list-item-title, h1, h2, h3, h4, h5, h6) ~ :is(ul, ol, .slide-list, .pdf-list) {
-      padding-left: calc(var(--col-title-inset, 0px) + 0.9rem) !important;
-    }
-    .has-superblock-cols :is(.col, .pdf-col) > *:first-child :is(.slide-list-item-title, h1, h2, h3, h4, h5, h6) ~ .slide-list-item-desc {
-      padding-left: var(--col-title-inset, 0px) !important;
-    }
-    .has-superblock-cols :is(.col, .pdf-col) :is(ul, ol, .slide-list, .pdf-list) {
-      padding-left: 0.9rem !important;
-    }
-    .has-superblock-cols :is(.col, .pdf-col) li {
-      padding-left: 0.15rem !important;
-    }
-    .has-superblock-cols :is(.col, .pdf-col) > .slide-block:not(:first-child):has(> ul, > ol, > .slide-list, > .pdf-list) {
-      padding-left: var(--col-title-inset, 0px) !important;
-    }
-    .has-superblock-cols :is(.col, .pdf-col) > .slide-block:not(:first-child):not(.slide-list-continuation):not(.slide-media-block):not(.slide-media-container):not(.slide-video-container):not(.slide-block--image):not(.slide-block--video):not(:has(> ul, > ol, > .slide-list, > .pdf-list, img, video)) {
-      padding-left: var(--col-title-inset, 0px) !important;
     }
 
     /* 全局特定标题大小规范化 (除封面外页首首个标题按 H2 1.7rem，表头多栏内首个标题按 H3 1.3rem) */
@@ -1596,21 +1578,11 @@
     :is(.layout-two-cols, .layout-cols-header, .layout-two-cols-header, .layout-three-cols, .layout-three-cols-header, .two-cols-left, .two-cols-right, .three-cols-col, .col, .pdf-col) .slide-list-continuation {
       --slides-cont-base: 1.45rem;
     }
-    .has-superblock-cols :is(.col, .pdf-col) > .slide-block:not(:first-child).slide-list-continuation {
-      --slides-cont-base: calc(var(--col-title-inset, 0px) + 1.05rem);
-    }
-    .has-superblock-cols :is(.col, .pdf-col) > .slide-block:not(:first-child).slide-list-continuation.slide-list-continuation--no-marker {
-      --slides-cont-base: var(--col-title-inset, 0px) !important;
-    }
     .slide-list-continuation.slide-list-continuation--no-marker,
     :is(.slide-stage-container[data-hide-unordered-markers="true"], [data-hide-unordered-markers="true"]) .slide-list-continuation.slide-list-continuation--unordered,
     :is(.slide-stage-container[data-hide-ordered-markers="true"], [data-hide-ordered-markers="true"]) .slide-list-continuation.slide-list-continuation--ordered,
     :is(.slide-stage-container[data-hide-unordered-markers="true"][data-hide-ordered-markers="true"], [data-hide-unordered-markers="true"][data-hide-ordered-markers="true"]) .slide-list-continuation {
       --slides-cont-base: 0px !important;
-    }
-    :is(.slide-stage-container[data-hide-unordered-markers="true"], [data-hide-unordered-markers="true"]) .has-superblock-cols :is(.col, .pdf-col) > .slide-block:not(:first-child).slide-list-continuation.slide-list-continuation--unordered,
-    :is(.slide-stage-container[data-hide-ordered-markers="true"], [data-hide-ordered-markers="true"]) .has-superblock-cols :is(.col, .pdf-col) > .slide-block:not(:first-child).slide-list-continuation.slide-list-continuation--ordered {
-      --slides-cont-base: var(--col-title-inset, 0px) !important;
     }
     .slide-list-continuation:is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-block--image, .slide-block--video, :has(img), :has(video)) {
       padding-left: 0 !important;
@@ -3657,6 +3629,88 @@
     .slides-mask-layer--counter-clockwise .slides-mask-divider-line,
     .slides-mask-divider-line--counter-clockwise {
       transform: translateY(-50%) rotate(-90deg);
+    }
+
+    /* 元素级独立水平对齐覆盖（高于版式默认与规范化标题居中） */
+    :is(.slide-block, .pdf-block).slide-align--left,
+    :is(.slide-block, .pdf-block).slide-align--left :is(h1, h2, h3, h4, h5, h6, p, blockquote, .slide-list-item-title, .slide-list-item-desc, li, li *),
+    .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--left,
+    .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--left :is(h1, h2, h3, h4, h5, h6, p, .slide-list-item-title, .slide-list-item-desc, li, li *),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--left :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+      text-align: left !important;
+    }
+    :is(.slide-block, .pdf-block).slide-align--left :is(ul, ol, .slide-list, .pdf-list) {
+      text-align: left !important;
+    }
+    :is(.slide-block, .pdf-block).slide-align--left:is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-block--image, .slide-block--video, :has(img), :has(video)),
+    :is(.slide-block, .pdf-block).slide-align--left :is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-list-media) {
+      align-items: flex-start !important;
+    }
+    :is(.slide-block, .pdf-block).slide-align--left :is(img, video, .slide-media-img, .slide-video-player, .list-item-gif) {
+      margin-left: 0 !important;
+      margin-right: auto !important;
+    }
+
+    :is(.slide-block, .pdf-block).slide-align--center,
+    :is(.slide-block, .pdf-block).slide-align--center :is(h1, h2, h3, h4, h5, h6, p, blockquote, .slide-list-item-title, .slide-list-item-desc, li, li *),
+    .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--center,
+    .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--center :is(h1, h2, h3, h4, h5, h6, p, .slide-list-item-title, .slide-list-item-desc, li, li *),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--center :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+      text-align: center !important;
+    }
+    :is(.slide-block, .pdf-block).slide-align--center :is(ul, ol, .slide-list, .pdf-list) {
+      padding-left: 0 !important;
+      text-align: center !important;
+    }
+    :is(.slide-block, .pdf-block).slide-align--center :is(ul, ol, .slide-list, .pdf-list) > li,
+    :is(.slide-block, .pdf-block).slide-align--center li.slide-list-item {
+      list-style-position: inside !important;
+      margin-left: 0 !important;
+      padding-left: 0 !important;
+      text-align: center !important;
+    }
+    :is(.slide-block, .pdf-block).slide-list-continuation.slide-align--center {
+      --slides-cont-base: 0px !important;
+      padding-left: 0 !important;
+    }
+    :is(.slide-block, .pdf-block).slide-align--center:is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-block--image, .slide-block--video, :has(img), :has(video)),
+    :is(.slide-block, .pdf-block).slide-align--center :is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-list-media) {
+      align-items: center !important;
+    }
+    :is(.slide-block, .pdf-block).slide-align--center :is(img, video, .slide-media-img, .slide-video-player, .list-item-gif) {
+      margin-left: auto !important;
+      margin-right: auto !important;
+    }
+
+    :is(.slide-block, .pdf-block).slide-align--right,
+    :is(.slide-block, .pdf-block).slide-align--right :is(h1, h2, h3, h4, h5, h6, p, blockquote, .slide-list-item-title, .slide-list-item-desc, li, li *),
+    .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--right,
+    .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--right :is(h1, h2, h3, h4, h5, h6, p, .slide-list-item-title, .slide-list-item-desc, li, li *),
+    :is(.slide-stage-container[data-normalize-headings="true"], [data-normalize-headings="true"]) .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block).slide-align--right :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title) {
+      text-align: right !important;
+    }
+    :is(.slide-block, .pdf-block).slide-align--right :is(ul, ol, .slide-list, .pdf-list) {
+      padding-left: 0 !important;
+      text-align: right !important;
+    }
+    :is(.slide-block, .pdf-block).slide-align--right :is(ul, ol, .slide-list, .pdf-list) > li,
+    :is(.slide-block, .pdf-block).slide-align--right li.slide-list-item {
+      list-style-position: inside !important;
+      margin-left: 0 !important;
+      padding-left: 0 !important;
+      text-align: right !important;
+    }
+    :is(.slide-block, .pdf-block).slide-list-continuation.slide-align--right {
+      --slides-cont-base: 0px !important;
+      padding-left: 0 !important;
+    }
+    :is(.slide-block, .pdf-block).slide-align--right:is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-block--image, .slide-block--video, :has(img), :has(video)),
+    :is(.slide-block, .pdf-block).slide-align--right :is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-list-media) {
+      align-items: flex-end !important;
+    }
+    :is(.slide-block, .pdf-block).slide-align--right :is(img, video, .slide-media-img, .slide-video-player, .list-item-gif) {
+      margin-left: auto !important;
+      margin-right: 0 !important;
     }
   </style>
   <script src="./assets/vue.global.prod.js"></script>
@@ -6701,6 +6755,10 @@
               classes.push("slide-list-continuation--no-marker")
             }
           }
+          const alignVal = block && (block.align || block.attributes?.["custom-slides-align"] || block.attrs?.["custom-slides-align"])
+          if (alignVal === "left" || alignVal === "center" || alignVal === "right") {
+            classes.push("slide-align--" + alignVal)
+          }
           const rawStyle = block?.attributes?.style || block?.ial?.style || ""
           if (rawStyle) {
             classes.push("slide-styled-block")
@@ -7021,6 +7079,7 @@
           const leadLines = []
           const items = []
           let isOrdered = false
+          let orderedStart
 
           for (let i = 0; i < lines.length; i++) {
             const line = lines[i]
@@ -7053,15 +7112,20 @@
               continue
             }
 
-            const orderedMatch = line.match(/^(\s*)\d+\.\s+(.*)$/)
+            const orderedMatch = line.match(/^(\s*)(\d+)\.\s+(.*)$/)
             if (orderedMatch) {
-              if (items.length === 0) isOrdered = true
+              const order = parseInt(orderedMatch[2], 10)
+              if (items.length === 0) {
+                isOrdered = true
+                if (!Number.isNaN(order)) orderedStart = order
+              }
               const indent = orderedMatch[1].length
               const level = Math.floor(indent / 2)
               items.push({
                 type: 'ordered',
                 level,
-                text: orderedMatch[2],
+                order: Number.isNaN(order) ? undefined : order,
+                text: orderedMatch[3],
                 media: []
               })
               continue
@@ -7226,28 +7290,42 @@
 
           const listTag = isOrdered ? 'ol' : 'ul'
           const listClass = isOrdered ? 'slide-list slide-list--ordered' : 'slide-list slide-list--unordered'
+          const startAttr = (isOrdered && typeof orderedStart === 'number' && orderedStart !== 1) ? ` start="${orderedStart}"` : ''
           const baseLevel = (block && typeof block.listLevel === 'number') ? block.listLevel : 0
+          let olCounter = (isOrdered && typeof orderedStart === 'number') ? orderedStart : 1
           const itemsHtml = items.map(item => {
             const formatted = formatListItemContent(item.text)
             const mediaHtml = (item.media && item.media.length > 0)
               ? `\n${item.media.join("\n")}`
               : ""
             const level = baseLevel + (item.level || 0)
+            const markerStyle = item.type === 'unordered'
+              ? `list-style-type:${level % 2 === 1 ? 'circle' : 'square'} !important;`
+              : (item.type === 'ordered' ? 'list-style-type:decimal !important;' : '')
             const nestedStyle = level > 0
-              ? ` style="--slides-list-level:${level};margin-left:${(level * 1.25).toFixed(2)}em;${item.type === 'unordered' ? `list-style-type:${level % 2 === 1 ? 'circle' : 'square'} !important;` : ''}"`
+              ? ` style="--slides-list-level:${level};margin-left:${(level * 1.25).toFixed(2)}em;${markerStyle}"`
               : ""
             const nestedClass = level > 0 ? " slide-list-item--nested" : ""
             const clsAttr = `slide-list-item${nestedClass}`
+            let valueAttr = ""
+            if (item.type === 'ordered' && typeof item.order === 'number') {
+              if (item.order !== olCounter) {
+                valueAttr = ` value="${item.order}"`
+              }
+              olCounter = item.order + 1
+            } else {
+              olCounter += 1
+            }
             if (item.type === 'task') {
               const checkedAttr = item.checked ? ' checked=""' : ''
               return `<li class="${clsAttr} slide-task-item"${nestedStyle}><label><input type="checkbox" disabled=""${checkedAttr}/> <span>${formatted}</span></label>${mediaHtml}</li>`
             }
-            return `<li class="${clsAttr}"${nestedStyle}>${formatted}${mediaHtml}</li>`
+            return `<li class="${clsAttr}"${valueAttr}${nestedStyle}>${formatted}${mediaHtml}</li>`
           }).join('\n')
 
           const leadHtml = formatLeadContent(leadLines)
 
-          return `${leadHtml}<${listTag} class="${listClass}">\n${itemsHtml}\n</${listTag}>`
+          return `${leadHtml}<${listTag} class="${listClass}"${startAttr}>\n${itemsHtml}\n</${listTag}>`
         }
 
         function normalizeClientMaxHeight(val) {
@@ -8116,7 +8194,9 @@
               styleAttr = ' style="--slides-list-level:' + block.listLevel + '"'
             }
           }
-          return '<div class="slide-block' + firstH + abs + cont + '"' + styleAttr + ">" + renderBlockHtml(block) + "</div>"
+          const alignVal = block && (block.align || block.attributes?.["custom-slides-align"] || block.attrs?.["custom-slides-align"])
+          const alignCls = (alignVal === "left" || alignVal === "center" || alignVal === "right") ? (" slide-align--" + alignVal) : ""
+          return '<div class="slide-block' + firstH + abs + cont + alignCls + '"' + styleAttr + ">" + renderBlockHtml(block) + "</div>"
         }
 
         // 镜像主渲染路径的版式结构，把任意一页渲染为静态缩略图 HTML（不含蒙版与交互态）
@@ -9195,60 +9275,11 @@
           })
         }
 
-        function syncSuperblockColTitleInsets(root) {
-          const scope = root || stageContainerRef.value || document
-          if (!scope || typeof document.createRange !== "function") return
-          const cols = scope.querySelectorAll(".has-superblock-cols .col, .has-superblock-cols .pdf-col")
-          cols.forEach((col) => {
-            const firstBlock = col.querySelector(":scope > .slide-block:first-child, :scope > .pdf-block:first-child, :scope > *:first-child")
-            if (!firstBlock) {
-              col.style.setProperty("--col-title-inset", "0px")
-              return
-            }
-            const titleEl = firstBlock.matches("h1,h2,h3,h4,h5,h6,.slide-list-item-title")
-              ? firstBlock
-              : firstBlock.querySelector("h1,h2,h3,h4,h5,h6,.slide-list-item-title,li:first-child,p:first-child")
-            if (!titleEl || !(titleEl.textContent || "").trim()) {
-              col.style.setProperty("--col-title-inset", "0px")
-              return
-            }
-            const cs = window.getComputedStyle(titleEl)
-            if (cs.textAlign !== "center") {
-              col.style.setProperty("--col-title-inset", "0px")
-              return
-            }
-            const blockRect = firstBlock.getBoundingClientRect()
-            if (!firstBlock.offsetWidth || !blockRect.width) return
-            const scale = blockRect.width / firstBlock.offsetWidth
-            if (!scale || !isFinite(scale)) return
-            const range = document.createRange()
-            range.selectNodeContents(titleEl)
-            const rects = Array.from(range.getClientRects()).filter((r) => r.width > 0.5 && r.height > 0.5)
-            if (rects.length === 0) {
-              col.style.setProperty("--col-title-inset", "0px")
-              return
-            }
-            const minLeft = Math.min(...rects.map((r) => r.left))
-            const insetPx = Math.max(0, (minLeft - blockRect.left) / scale)
-            col.style.setProperty("--col-title-inset", insetPx.toFixed(2) + "px")
-          })
-        }
-
-        function scheduleColTitleInsetSync() {
-          nextTick(() => {
-            requestAnimationFrame(() => syncSuperblockColTitleInsets())
-          })
-        }
-
         watch(currentPageIndex, () => {
           clearAllActiveAnimations()
         })
         watch([currentPageIndex, currentStep], () => {
           triggerSlideAnimations()
-          scheduleColTitleInsetSync()
-        })
-        watch([() => slides.value, () => config.value?.normalizeHeadingSizes, () => config.value?.spacing], () => {
-          scheduleColTitleInsetSync()
         })
 
         let resizeObserver = null
@@ -9264,7 +9295,6 @@
           if (window.ResizeObserver && stageContainerRef.value) {
             resizeObserver = new ResizeObserver(() => {
               updateScale()
-              syncSuperblockColTitleInsets()
             })
             resizeObserver.observe(stageContainerRef.value)
           }
@@ -9272,7 +9302,6 @@
             updateScale()
             syncAutoplayVideos()
             triggerSlideAnimations()
-            scheduleColTitleInsetSync()
           })
 
           // 告知宿主客户端沙箱已准备就绪并上报初始页码

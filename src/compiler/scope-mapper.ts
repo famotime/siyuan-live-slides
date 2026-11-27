@@ -4,6 +4,7 @@ import type {
   ISlidesMotionConfig,
   ISlideAnimConfig,
   ISlidesPluginConfig,
+  TSlideElemAlign,
 } from "../types/slides-protocol"
 import {
   ATTR_DOC_ASPECT_RATIO,
@@ -27,6 +28,7 @@ import {
   ROLE_IMAGE_RIGHT,
   ATTR_ELEM_SHIKI_LINES,
   ATTR_ELEM_SLOT,
+  ATTR_ELEM_ALIGN,
   ATTR_PAGE_BACKGROUND,
   ATTR_PAGE_CLASS,
   ATTR_PAGE_IMAGE,
@@ -243,6 +245,7 @@ export function parseElementAttrs(
   shikiLines?: string
   maxHeight?: string
   slot?: "left" | "right" | "default" | string
+  align?: TSlideElemAlign
   isNote?: boolean
   isBackground?: boolean
   imageLayout?: "image-left" | "image-right" | string
@@ -255,6 +258,7 @@ export function parseElementAttrs(
     shikiLines?: string
     maxHeight?: string
     slot?: string
+    align?: TSlideElemAlign
     isNote?: boolean
     isBackground?: boolean
     imageLayout?: string
@@ -344,6 +348,13 @@ export function parseElementAttrs(
 
   if (attrs[ATTR_ELEM_SLOT]) {
     result.slot = attrs[ATTR_ELEM_SLOT].trim()
+  }
+
+  if (attrs[ATTR_ELEM_ALIGN]) {
+    const rawAlign = attrs[ATTR_ELEM_ALIGN].trim().toLowerCase()
+    if (rawAlign === "left" || rawAlign === "center" || rawAlign === "right") {
+      result.align = rawAlign
+    }
   }
 
   if (attrs.style && attrs.style.trim()) {

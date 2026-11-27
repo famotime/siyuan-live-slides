@@ -115,11 +115,13 @@ export function renderMarkdownList(
   const items: Array<{
     type: "unordered" | "ordered" | "task"
     level?: number
+    order?: number
     checked?: boolean
     text: string
     media?: string[]
   }> = []
   let isOrdered = false
+  let orderedStart: number | undefined
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]
@@ -152,15 +154,20 @@ export function renderMarkdownList(
       continue
     }
 
-    const orderedMatch = line.match(/^(\s*)\d+\.\s+(.*)$/)
+    const orderedMatch = line.match(/^(\s*)(\d+)\.\s+(.*)$/)
     if (orderedMatch) {
-      if (items.length === 0) isOrdered = true
+      const order = parseInt(orderedMatch[2], 10)
+      if (items.length === 0) {
+        isOrdered = true
+        if (!Number.isNaN(order)) orderedStart = order
+      }
       const indent = orderedMatch[1].length
       const level = Math.floor(indent / 2)
       items.push({
         type: "ordered",
         level,
-        text: orderedMatch[2],
+        order: Number.isNaN(order) ? undefined : order,
+        text: orderedMatch[3],
         media: [],
       })
       continue
@@ -243,28 +250,42 @@ export function renderMarkdownList(
 
   const listTag = isOrdered ? "ol" : "ul"
   const baseListClass = options?.listClassName || (isOrdered ? "pdf-list pdf-list--ordered" : "pdf-list pdf-list--unordered")
+  const startAttr = (isOrdered && typeof orderedStart === "number" && orderedStart !== 1) ? ` start="${orderedStart}"` : ""
   const baseLevel = block?.listLevel ?? 0
+  let olCounter = (isOrdered && typeof orderedStart === "number") ? orderedStart : 1
   const itemsHtml = items.map(item => {
     const formatted = formatListItemContent(item.text)
     const mediaHtml = (item.media && item.media.length > 0)
       ? `\n${item.media.join("\n")}`
       : ""
     const level = baseLevel + (item.level || 0)
+    const markerStyle = item.type === "unordered"
+      ? `list-style-type:${level % 2 === 1 ? "circle" : "square"} !important;`
+      : (item.type === "ordered" ? "list-style-type:decimal !important;" : "")
     const nestedStyle = level > 0
-      ? ` style="--slides-list-level:${level};margin-left:${(level * 1.25).toFixed(2)}em;${item.type === 'unordered' ? `list-style-type:${level % 2 === 1 ? 'circle' : 'square'} !important;` : ''}"`
+      ? ` style="--slides-list-level:${level};margin-left:${(level * 1.25).toFixed(2)}em;${markerStyle}"`
       : ""
     const nestedClass = level > 0 ? " slide-list-item--nested" : ""
+    let valueAttr = ""
+    if (item.type === "ordered" && typeof item.order === "number") {
+      if (item.order !== olCounter) {
+        valueAttr = ` value="${item.order}"`
+      }
+      olCounter = item.order + 1
+    } else {
+      olCounter += 1
+    }
     if (item.type === "task") {
       const checkedAttr = item.checked ? ' checked=""' : ""
       return `<li class="pdf-task-item${nestedClass}"${nestedStyle}><label><input type="checkbox" disabled=""${checkedAttr}/> <span>${formatted}</span></label>${mediaHtml}</li>`
     }
     const classAttr = nestedClass ? ` class="${nestedClass.trim()}"` : ""
-    return `<li${classAttr}${nestedStyle}>${formatted}${mediaHtml}</li>`
+    return `<li${classAttr}${valueAttr}${nestedStyle}>${formatted}${mediaHtml}</li>`
   }).join("\n")
 
   const leadHtml = formatLeadContent(leadLines)
 
-  return `${leadHtml}<${listTag} class="${baseListClass}">\n${itemsHtml}\n</${listTag}>`
+  return `${leadHtml}<${listTag} class="${baseListClass}"${startAttr}>\n${itemsHtml}\n</${listTag}>`
 }
 
 /**

@@ -13,6 +13,7 @@ import {
   ATTR_ELEM_ROLE,
   ATTR_ELEM_SHIKI_LINES,
   ATTR_ELEM_SLOT,
+  ATTR_ELEM_ALIGN,
   ATTR_PAGE_BACKGROUND,
   ATTR_PAGE_IMAGE,
   ATTR_PAGE_LAYOUT,
@@ -239,6 +240,16 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
     }
   }
 
+  function onElemAlignChange(align: string) {
+    const norm = (align || "").trim().toLowerCase()
+    const currentAlign = (ctx.activeBlockAttrs.value[ATTR_ELEM_ALIGN] || "").trim().toLowerCase()
+    if (!norm || currentAlign === norm) {
+      saveAttr(ATTR_ELEM_ALIGN, "")
+    } else if (norm === "left" || norm === "center" || norm === "right") {
+      saveAttr(ATTR_ELEM_ALIGN, norm)
+    }
+  }
+
   function onElemShikiLinesChange(val: string) {
     ctx.elemShikiLines.value = val
     saveAttr(ATTR_ELEM_SHIKI_LINES, val)
@@ -272,6 +283,7 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
           [ATTR_ELEM_ANIM]: "",
           [ATTR_ELEM_ANIM_PROPS]: "",
           [ATTR_ELEM_SLOT]: "",
+          [ATTR_ELEM_ALIGN]: "",
           [ATTR_ELEM_SHIKI_LINES]: "",
           [ATTR_ELEM_MAX_HEIGHT]: "",
           [ATTR_ELEM_NOTE]: "",
@@ -712,6 +724,7 @@ export function createLayoutActions(ctx: IInspectorActionsContext, deps: ILayout
     onElemMotionChange,
     onElemAnimChange,
     onElemSlotChange,
+    onElemAlignChange,
     onElemShikiLinesChange,
     onElemMaxHeightChange,
     onSetTwoColsContrast,

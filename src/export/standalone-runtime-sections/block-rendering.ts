@@ -220,6 +220,11 @@ export function getBlockRenderingSection(): string {
             div.style.setProperty("--slides-list-level", String(block.listLevel));
           }
         }
+        const alignVal = block && (block.align || (block.attributes && block.attributes["custom-slides-align"]) || (block.attrs && block.attrs["custom-slides-align"]));
+        if (alignVal === "left" || alignVal === "center" || alignVal === "right") {
+          div.classList.add("slide-align--" + alignVal);
+          div.setAttribute("data-slides-align", alignVal);
+        }
 
         if (md.includes('class="slides-block-ref"') || md.includes('class="slides-ref-tag"')) {
           div.innerHTML = md;
@@ -331,6 +336,7 @@ export function getBlockRenderingSection(): string {
           div.classList.add("pdf-list-item");
           const lines = md.split("\\n");
           let isOrdered = false;
+          let orderedStart;
           const items = [];
           const leadLines = [];
           for (let i = 0; i < lines.length; i++) {
@@ -338,16 +344,20 @@ export function getBlockRenderingSection(): string {
             const tr = line.trim();
             if (!tr || /^\\{:.*?\\}$/.test(tr)) continue;
             const um = line.match(/^(\\s*)[-*+]\\s+(.*)$/);
-            const om = line.match(/^(\\s*)\\d+\\.\\s+(.*)$/);
+            const om = line.match(/^(\\s*)(\\d+)\\.\\s+(.*)$/);
             if (um) {
               const indent = um[1].length;
               items.push({ type: "unordered", level: Math.floor(indent / 2), text: um[2], media: [] });
               continue;
             }
             if (om) {
-              if (items.length === 0) isOrdered = true;
+              const order = parseInt(om[2], 10);
+              if (items.length === 0) {
+                isOrdered = true;
+                if (!Number.isNaN(order)) orderedStart = order;
+              }
               const indent = om[1].length;
-              items.push({ type: "ordered", level: Math.floor(indent / 2), text: om[2], media: [] });
+              items.push({ type: "ordered", level: Math.floor(indent / 2), order: Number.isNaN(order) ? undefined : order, text: om[3], media: [] });
               continue;
             }
             if (items.length > 0) {
@@ -437,18 +447,30 @@ export function getBlockRenderingSection(): string {
 
           const tag = isOrdered ? "ol" : "ul";
           const listCls = isOrdered ? "pdf-list pdf-list--ordered" : "pdf-list pdf-list--unordered";
+          const startAttr = (isOrdered && typeof orderedStart === "number" && orderedStart !== 1) ? ' start="' + orderedStart + '"' : "";
           const baseLevel = (block && typeof block.listLevel === "number") ? block.listLevel : 0;
+          let olCounter = (isOrdered && typeof orderedStart === "number") ? orderedStart : 1;
           const liHtml = items.map(it => {
             const med = it.media && it.media.length ? "\\n" + it.media.join("\\n") : "";
             const lines = (it.text || "").split("\\n").map(l => l.trim()).filter(Boolean);
             const hasHeading = lines.some(l => /^#{1,6}\\s+/.test(l));
             const lvl = baseLevel + (it.level || 0);
-            const nStyle = lvl > 0 ? ' style="--slides-list-level:' + lvl + ';margin-left:' + (lvl * 1.25).toFixed(2) + 'em;' + (it.type === 'unordered' ? 'list-style-type:' + (lvl % 2 === 1 ? 'circle' : 'square') + ' !important;' : '') + '"' : "";
+            const markerCss = it.type === 'unordered'
+              ? ('list-style-type:' + (lvl % 2 === 1 ? 'circle' : 'square') + ' !important;')
+              : (it.type === 'ordered' ? 'list-style-type:decimal !important;' : '');
+            const nStyle = lvl > 0 ? ' style="--slides-list-level:' + lvl + ';margin-left:' + (lvl * 1.25).toFixed(2) + 'em;' + markerCss + '"' : "";
             const nClass = lvl > 0 ? " slide-list-item--nested" : "";
             const clsAttr = nClass ? ' class="' + nClass.trim() + '"' : "";
+            let valAttr = "";
+            if (it.type === "ordered" && typeof it.order === "number") {
+              if (it.order !== olCounter) valAttr = ' value="' + it.order + '"';
+              olCounter = it.order + 1;
+            } else {
+              olCounter += 1;
+            }
             if (!hasHeading) {
               let h = lines.map(l => formatInlineStandalone(l)).join("<br/>");
-              return '<li' + clsAttr + nStyle + '>' + h + med + '</li>';
+              return '<li' + clsAttr + valAttr + nStyle + '>' + h + med + '</li>';
             }
             const parts = [];
             let pLines = [];
@@ -471,9 +493,9 @@ export function getBlockRenderingSection(): string {
               }
             }
             flushP();
-            return '<li' + clsAttr + nStyle + '>' + parts.join("\\n") + med + '</li>';
+            return '<li' + clsAttr + valAttr + nStyle + '>' + parts.join("\\n") + med + '</li>';
           }).join("\\n");
-          div.innerHTML = leadHtml + '<' + tag + ' class="' + listCls + '">\\n' + liHtml + '\\n</' + tag + '>';
+          div.innerHTML = leadHtml + '<' + tag + ' class="' + listCls + '"' + startAttr + '>\\n' + liHtml + '\\n</' + tag + '>';
         }
         else {
           // 复合块（包含换行、标题或媒体）高保真解析
