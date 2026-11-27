@@ -340,16 +340,16 @@
       color: var(--slide-text-secondary) !important;
     }
     /* 默认科技风：仅正文各版式每页首个主标题带 Accent 垂直指示条、微渐变科技底纹与 Accent 标题色 */
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:first-child :is(h1, h2, h3) {
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6) {
       color: var(--slide-accent);
       border-left: 4px solid var(--slide-accent);
       padding: 4px 14px;
@@ -359,16 +359,16 @@
       letter-spacing: -0.015em;
     }
     /* 科技风后续标题与分栏子标题：仅应用主题字体，不应用主题强调色与垂直指示条标记 */
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .layout-header-section > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .slides-mask-body-container > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .col :is(h1, h2, h3, h4),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:not(:first-child) :is(h1, h2, h3, h4) {
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .layout-header-section > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .slides-mask-body-container > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .col :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6) {
       color: inherit;
       border-left: none !important;
       background: none !important;
@@ -428,7 +428,9 @@
     .slides-theme-seriph h1,
     .slides-theme-seriph h2,
     .slides-theme-seriph h3,
-    .slides-theme-seriph h4 {
+    .slides-theme-seriph h4,
+    .slides-theme-seriph h5,
+    .slides-theme-seriph h6 {
       font-family: var(--slide-font) !important;
       letter-spacing: 0.025em;
       font-weight: 700;
@@ -450,16 +452,16 @@
       color: var(--slide-text-secondary);
     }
     /* 优雅学术风：仅正文各版式每页首个主标题采用琥珀金棕衬线字与通栏双层渐淡学术底线 */
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:first-child :is(h1, h2, h3) {
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6) {
       position: relative;
       display: block;
       color: var(--slide-accent);
@@ -467,16 +469,16 @@
       padding-bottom: 10px;
       margin-bottom: 14px;
     }
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:first-child :is(h1, h2, h3)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:first-child :is(h1, h2, h3)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:first-child :is(h1, h2, h3)::after {
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6)::after {
       content: "";
       position: absolute;
       left: 0;
@@ -487,30 +489,30 @@
       pointer-events: none;
     }
     /* 衬线风后续标题与分栏子标题：仅应用主题字体，不应用主题强调色与学术底线标记 */
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .layout-header-section > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .slides-mask-body-container > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .col :is(h1, h2, h3, h4),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:not(:first-child) :is(h1, h2, h3, h4) {
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .layout-header-section > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .slides-mask-body-container > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .col :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6) {
       color: inherit;
       border-bottom: none !important;
       padding-bottom: 0 !important;
     }
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) > .slide-block:not(:first-child) :is(h1, h2, h3, h4)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .layout-header-section > .slide-block:not(:first-child) :is(h1, h2, h3, h4)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .slides-mask-body-container > .slide-block:not(:first-child) :is(h1, h2, h3, h4)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .col :is(h1, h2, h3, h4)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:not(:first-child) :is(h1, h2, h3, h4)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:not(:first-child) :is(h1, h2, h3, h4)::after,
-    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:not(:first-child) :is(h1, h2, h3, h4)::after {
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .layout-header-section > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .slides-mask-body-container > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .col :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6)::after {
       display: none !important;
     }
     .slides-theme-seriph blockquote {
@@ -579,7 +581,10 @@
     }
     .slides-theme-apple-basic h1,
     .slides-theme-apple-basic h2,
-    .slides-theme-apple-basic h3 {
+    .slides-theme-apple-basic h3,
+    .slides-theme-apple-basic h4,
+    .slides-theme-apple-basic h5,
+    .slides-theme-apple-basic h6 {
       letter-spacing: -0.035em;
       font-weight: 800;
     }
@@ -600,16 +605,16 @@
       opacity: 1 !important;
     }
     /* 极简发布会风：仅正文各版式每页首个主标题保持彻底去装饰化，依靠超大字重、紧凑字距与充沛留白建立层次 */
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:first-child :is(h1, h2, h3),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:first-child :is(h1, h2, h3) {
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6) {
       border: none !important;
       background: none !important;
       padding: 0 !important;
@@ -618,16 +623,16 @@
       font-weight: 800 !important;
     }
     /* 苹果风后续标题与分栏子标题：仅应用主题字体，不强加超大字重 */
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .layout-header-section > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .slides-mask-body-container > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .col :is(h1, h2, h3, h4),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:not(:first-child) :is(h1, h2, h3, h4) {
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .layout-header-section > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .slides-mask-body-container > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .col :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .image-left-content > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .image-right-content > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .intro-info-col > .slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6) {
       color: inherit;
       border: none !important;
       padding: 0 !important;
@@ -653,6 +658,9 @@
     .slide-viewport[style*="background-image"] .slide-content-wrapper h1,
     .slide-viewport[style*="background-image"] .slide-content-wrapper h2,
     .slide-viewport[style*="background-image"] .slide-content-wrapper h3,
+    .slide-viewport[style*="background-image"] .slide-content-wrapper h4,
+    .slide-viewport[style*="background-image"] .slide-content-wrapper h5,
+    .slide-viewport[style*="background-image"] .slide-content-wrapper h6,
     .slide-viewport[style*="background-image"] .slide-content-wrapper p,
     .slide-viewport[style*="background-image"] .slide-content-wrapper li {
       text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75), 0 2px 8px rgba(0, 0, 0, 0.45);
@@ -660,6 +668,9 @@
     [data-theme="light"].slide-viewport[style*="background-image"] .slide-content-wrapper h1,
     [data-theme="light"].slide-viewport[style*="background-image"] .slide-content-wrapper h2,
     [data-theme="light"].slide-viewport[style*="background-image"] .slide-content-wrapper h3,
+    [data-theme="light"].slide-viewport[style*="background-image"] .slide-content-wrapper h4,
+    [data-theme="light"].slide-viewport[style*="background-image"] .slide-content-wrapper h5,
+    [data-theme="light"].slide-viewport[style*="background-image"] .slide-content-wrapper h6,
     [data-theme="light"].slide-viewport[style*="background-image"] .slide-content-wrapper p,
     [data-theme="light"].slide-viewport[style*="background-image"] .slide-content-wrapper li {
       text-shadow: 0 1px 3px rgba(255, 255, 255, 0.85);
@@ -698,38 +709,39 @@
     }
 
     /* 正文页首标题在存在背景图时退回高对比文字色，在用户自定义块级字色时优先保留实际文字色（装饰保留） */
-    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3),
-    .slides-overview-canvas[style*="background-image"] .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3),
-    .slides-overview-canvas[style*="background-image"] .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3) {
+    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6),
+    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3, h4, h5, h6),
+    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slide-viewport[style*="background-image"] .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slides-overview-canvas[style*="background-image"] .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-overview-canvas[style*="background-image"] .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6),
+    .slides-overview-canvas[style*="background-image"] .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3, h4, h5, h6) {
       color: var(--slide-text);
     }
-    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3),
-    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3) {
+    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6),
+    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3, h4, h5, h6),
+    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3, h4, h5, h6) {
       background: linear-gradient(90deg, color-mix(in srgb, var(--slide-accent) 22%, rgba(15, 23, 42, 0.36)), transparent 80%);
     }
-    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3),
-    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3),
-    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3),
-    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3),
-    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3),
-    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3),
-    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3) {
+    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6),
+    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) > .slides-mask-body-container > .slide-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .layout-header-section :is(h1, h2, h3, h4, h5, h6),
+    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    [data-theme="light"].slide-viewport[style*="background-image"].slides-theme-tech .slide-content-wrapper:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3, h4, h5, h6) {
       background: linear-gradient(90deg, color-mix(in srgb, var(--slide-accent) 18%, rgba(255, 255, 255, 0.55)), transparent 80%);
     }
-    .slide-content-wrapper:not(.layout-cover) .slide-block[style^="color:"] :is(h1, h2, h3),
-    .slide-content-wrapper:not(.layout-cover) .slide-block[style*=" color:"] :is(h1, h2, h3),
-    .slide-content-wrapper:not(.layout-cover) .slide-block[style*=";color:"] :is(h1, h2, h3) {
+    .slide-content-wrapper:not(.layout-cover) .slide-block[style^="color:"] :is(h1, h2, h3, h4, h5, h6),
+    .slide-content-wrapper:not(.layout-cover) .slide-block[style*=" color:"] :is(h1, h2, h3, h4, h5, h6),
+    .slide-content-wrapper:not(.layout-cover) .slide-block[style*=";color:"] :is(h1, h2, h3, h4, h5, h6) {
       color: inherit !important;
     }
 
@@ -2020,6 +2032,9 @@
     .slide-block h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: var(--slides-title-margin-bottom, 12px); }
     .slide-block h2 { font-size: 1.7rem; font-weight: 600; margin-bottom: calc(var(--slides-title-margin-bottom, 10px) * 0.85); }
     .slide-block h3 { font-size: 1.3rem; font-weight: 600; margin-bottom: calc(var(--slides-title-margin-bottom, 8px) * 0.75); }
+    .slide-block h4 { font-size: 1.2rem; font-weight: 600; margin-bottom: calc(var(--slides-title-margin-bottom, 8px) * 0.65); }
+    .slide-block h5 { font-size: 1.12rem; font-weight: 600; margin-bottom: calc(var(--slides-title-margin-bottom, 8px) * 0.55); }
+    .slide-block h6 { font-size: 1.05rem; font-weight: 600; margin-bottom: calc(var(--slides-title-margin-bottom, 8px) * 0.5); }
     .slide-block p { font-size: 1.15rem; line-height: var(--slides-line-height, 1.6); }
 
     .slide-block pre {
@@ -3607,6 +3622,7 @@
                       class="slide-block"
                       :class="[
                         (rIdx === 0 && bIdx === 0) ? 'slides-page-first-heading-block' : '',
+                        getPageFirstThemeHeadingClass(block),
                         getBlockClickClass(block),
                         getBlockMotionClass(block),
                         getHeadingNormalizeClass(block),
@@ -3659,7 +3675,7 @@
                     v-for="(block, bIdx) in headerBlocks"
                     :key="block.id"
                     class="slide-block"
-                    :class="[(bIdx === 0 && currentSlide.frontmatter?.layout !== 'cover') ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :class="[(bIdx === 0 && currentSlide.frontmatter?.layout !== 'cover') ? 'slides-page-first-heading-block' : '', getPageFirstThemeHeadingClass(block), getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                     :style="getBlockMotionStyle(block)"
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
@@ -3783,7 +3799,7 @@
                     v-for="(block, bIdx) in normalBlocks"
                     :key="block.id"
                     class="slide-block"
-                    :class="[(bIdx === 0 && currentSlide.frontmatter?.layout !== 'cover') ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :class="[(bIdx === 0 && currentSlide.frontmatter?.layout !== 'cover') ? 'slides-page-first-heading-block' : '', getPageFirstThemeHeadingClass(block), getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                     :style="getBlockMotionStyle(block)"
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
@@ -3847,7 +3863,7 @@
                     v-for="(block, bIdx) in normalBlocks"
                     :key="block.id"
                     class="slide-block"
-                    :class="[(bIdx === 0 && currentSlide.frontmatter?.layout !== 'cover') ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :class="[(bIdx === 0 && currentSlide.frontmatter?.layout !== 'cover') ? 'slides-page-first-heading-block' : '', getPageFirstThemeHeadingClass(block), getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                     :style="getBlockMotionStyle(block)"
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
@@ -3895,7 +3911,7 @@
                     v-for="(block, bIdx) in normalBlocks"
                     :key="block.id"
                     class="slide-block"
-                    :class="[(bIdx === 0 && currentSlide.frontmatter?.layout !== 'cover') ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                    :class="[(bIdx === 0 && currentSlide.frontmatter?.layout !== 'cover') ? 'slides-page-first-heading-block' : '', getPageFirstThemeHeadingClass(block), getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                     :style="getBlockMotionStyle(block)"
                     :data-block-id="block.id"
                     @click="onBlockClick(block.id, $event)"
@@ -4033,7 +4049,7 @@
                   v-for="(block, bIdx) in normalBlocks"
                   :key="block.id"
                   class="slide-block"
-                  :class="[(bIdx === 0 && currentSlide.frontmatter?.layout !== 'cover') ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                  :class="[(bIdx === 0 && currentSlide.frontmatter?.layout !== 'cover') ? 'slides-page-first-heading-block' : '', getPageFirstThemeHeadingClass(block), getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                   :style="getBlockMotionStyle(block)"
                   :data-block-id="block.id"
                   @click="onBlockClick(block.id, $event)"
@@ -4061,7 +4077,7 @@
                   v-for="(block, bIdx) in normalBlocks"
                   :key="block.id"
                   class="slide-block"
-                  :class="[(bIdx === 0 && currentSlide.frontmatter?.layout !== 'cover') ? 'slides-page-first-heading-block' : '', getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
+                  :class="[(bIdx === 0 && currentSlide.frontmatter?.layout !== 'cover') ? 'slides-page-first-heading-block' : '', getPageFirstThemeHeadingClass(block), getBlockClickClass(block), getBlockMotionClass(block), getHeadingNormalizeClass(block), { highlighted: block.id === highlightedBlockId, 'slide-block--absolute': isAbsoluteBlock(block) }]"
                   :style="getBlockMotionStyle(block)"
                   :data-block-id="block.id"
                   @click="onBlockClick(block.id, $event)"
@@ -5941,6 +5957,32 @@
           }
           return ids;
         });
+
+        const pageFirstThemeHeadingBlockId = computed(() => {
+          if (!currentSlide.value) return null;
+          const fm = currentSlide.value.frontmatter || {};
+          if (fm.layout === "cover") return null;
+
+          if (isColsHeader(fm.layout)) {
+            if (headerBlocks.value.length > 0) {
+              const hb = headerBlocks.value.find(isHeadingBlock);
+              if (hb) return hb.id;
+            }
+            return null;
+          }
+          if (fm.layout === "fact") {
+            const fb = factHeaderBlock.value;
+            return fb && isHeadingBlock(fb) ? fb.id : null;
+          }
+          const all = (currentSlide.value.blocks || []).filter(b => b.slot !== "slot-divider-right");
+          const found = all.find(isHeadingBlock);
+          return found ? found.id : null;
+        });
+
+        function getPageFirstThemeHeadingClass(block) {
+          if (!block || !pageFirstThemeHeadingBlockId.value) return "";
+          return block.id === pageFirstThemeHeadingBlockId.value ? "slides-page-first-heading-block" : "";
+        }
 
         function getHeadingNormalizeClass(block) {
           if (!config.value?.normalizeHeadingSizes) return "";
@@ -7950,9 +7992,10 @@
           }
         }
 
-        function buildThumbBlockHtml(block) {
+        function buildThumbBlockHtml(block, isPageFirstHeading) {
           const abs = isAbsoluteBlock(block) ? " slide-block--absolute" : ""
-          return '<div class="slide-block' + abs + '">' + renderBlockHtml(block) + "</div>"
+          const firstH = isPageFirstHeading ? " slides-page-first-heading-block" : ""
+          return '<div class="slide-block' + firstH + abs + '">' + renderBlockHtml(block) + "</div>"
         }
 
         // 镜像主渲染路径的版式结构，把任意一页渲染为静态缩略图 HTML（不含蒙版与交互态）
@@ -7960,16 +8003,19 @@
           if (!slide) return ""
           const fm = slide.frontmatter || {}
           const layout = fm.layout || "default"
+          const isCover = layout === "cover"
           const g = buildLayoutGroups(slide)
           const cls = fm.class ? " " + fm.class : ""
           const layoutCls = fm.layoutClass ? " " + fm.layoutClass : ""
           const gridStyleObj = (layout === 'clover') ? {} : getLayoutGridStyle(slide, g.colsCount)
           const gridStyle = Object.entries(gridStyleObj).map(([k, v]) => k + ":" + v).join(";")
           const spacing = (fm.spacing && fm.spacing !== "inherit") ? fm.spacing : (config.value?.spacing || "normal")
+          const headerFirstH = !isCover ? (g.header || []).find(isHeadingBlock) : null
+          const normalFirstH = !isCover ? (g.normal || []).find(isHeadingBlock) : null
           let body = ""
           if (isColsHeader(layout)) {
             const headerHtml = g.header.length > 0
-              ? '<div class="two-cols-header-top three-cols-header-top cols-header-top layout-header-section">' + g.header.map(buildThumbBlockHtml).join("") + "</div>"
+              ? '<div class="two-cols-header-top three-cols-header-top cols-header-top layout-header-section">' + g.header.map(b => buildThumbBlockHtml(b, b === headerFirstH)).join("") + "</div>"
               : ""
             const colCls = (g.colsCount === 2 ? " layout-two-cols" : "") + (g.colsCount === 3 ? " layout-three-cols" : "") + (layout === "clover" ? " layout-clover-grid" : "") + (g.isSuperCols ? " has-superblock-cols" : "")
             body = headerHtml
@@ -7981,28 +8027,28 @@
                     + (g.colsCount === 3 ? " three-cols-col three-cols-col--" + (colIdx + 1) : "")
                     + (layout === "clover" ? " clover-col clover-col--" + (colIdx + 1) : "")
                     + cls
-                  return '<div class="' + c + '">' + (colBlocks || []).map(buildThumbBlockHtml).join("") + "</div>"
+                  return '<div class="' + c + '">' + (colBlocks || []).map(b => buildThumbBlockHtml(b, false)).join("") + "</div>"
                 }).join("")
               + "</div>"
           } else if (layout === "two-cols") {
             body = '<div class="layout-two-cols' + layoutCls + '" style="' + gridStyle + '">'
-              + '<div class="two-cols-left' + cls + '">' + (g.multiCol[0] || []).map(buildThumbBlockHtml).join("") + "</div>"
-              + '<div class="two-cols-right' + cls + '">' + (g.multiCol[1] || []).map(buildThumbBlockHtml).join("") + "</div>"
+              + '<div class="two-cols-left' + cls + '">' + (g.multiCol[0] || []).map(b => buildThumbBlockHtml(b, false)).join("") + "</div>"
+              + '<div class="two-cols-right' + cls + '">' + (g.multiCol[1] || []).map(b => buildThumbBlockHtml(b, false)).join("") + "</div>"
               + "</div>"
           } else if (layout === "image-right" || layout === "image-left") {
             const url = getSlideCoverUrl(slide)
             const imgHtml = url ? '<img class="' + (layout === "image-right" ? "image-right-img" : "image-left-img") + '" src="' + String(url).replace(/"/g, "&quot;") + '" alt="Slide cover" />' : ""
             const contentCls = layout === "image-right" ? "image-right-content" : "image-left-content"
             const imgCls = layout === "image-right" ? "image-right-img-container" : "image-left-img-container"
-            const content = '<div class="' + contentCls + cls + '">' + g.normal.map(buildThumbBlockHtml).join("") + "</div>"
+            const content = '<div class="' + contentCls + cls + '">' + g.normal.map(b => buildThumbBlockHtml(b, b === normalFirstH)).join("") + "</div>"
             const imgBox = '<div class="' + imgCls + '">' + imgHtml + "</div>"
             body = '<div class="layout-' + layout + '" style="' + gridStyle + '">' + (layout === "image-right" ? content + imgBox : imgBox + content) + "</div>"
           } else if (layout === "intro") {
             const url = getSlideCoverUrl(slide)
             const avatarHtml = url ? '<div class="intro-avatar-box"><img class="intro-avatar-img" src="' + String(url).replace(/"/g, "&quot;") + '" alt="Avatar" /></div>' : '<div class="intro-avatar-box intro-avatar-placeholder"><svg class="intro-avatar-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>'
-            body = '<div class="layout-intro-container"><div class="intro-avatar-col">' + avatarHtml + '</div><div class="intro-info-col">' + g.normal.map(buildThumbBlockHtml).join("") + '</div></div>'
+            body = '<div class="layout-intro-container"><div class="intro-avatar-col">' + avatarHtml + '</div><div class="intro-info-col">' + g.normal.map(b => buildThumbBlockHtml(b, b === normalFirstH)).join("") + '</div></div>'
           } else if (layout === "quote") {
-            body = '<div class="layout-quote-container"><div class="quote-watermark-icon">“</div><div class="quote-content-body">' + g.normal.map(buildThumbBlockHtml).join("") + '</div></div>'
+            body = '<div class="layout-quote-container"><div class="quote-watermark-icon">“</div><div class="quote-content-body">' + g.normal.map(b => buildThumbBlockHtml(b, b === normalFirstH)).join("") + '</div></div>'
           } else if (layout === "fact") {
             const rawLines = []
             if (g.normal.length === 1 && g.normal[0].children && g.normal[0].children.length >= 1) {
@@ -8041,11 +8087,11 @@
               items = items[0].children
             }
             const steps = items.map(function(b, idx) {
-              return '<div class="timeline-step-item"><div class="timeline-node-container"><div class="timeline-node-badge">' + (idx + 1) + '</div></div><div class="timeline-step-content">' + buildThumbBlockHtml(b) + '</div></div>'
+              return '<div class="timeline-step-item"><div class="timeline-node-container"><div class="timeline-node-badge">' + (idx + 1) + '</div></div><div class="timeline-step-content">' + buildThumbBlockHtml(b, false) + '</div></div>'
             }).join("")
             body = '<div class="layout-timeline-container"><div class="timeline-track-wrapper">' + steps + '</div></div>'
           } else {
-            body = g.normal.map(buildThumbBlockHtml).join("")
+            body = g.normal.map(b => buildThumbBlockHtml(b, b === normalFirstH)).join("")
           }
           const z = typeof fm.zoom === "number" && fm.zoom > 0 ? fm.zoom : (typeof fm.zoom === "string" && parseFloat(fm.zoom) > 0 ? parseFloat(fm.zoom) : 1)
           const zoomStyle = z !== 1 ? 'width:' + (100 / z) + '%;height:' + (100 / z) + '%;transform-origin:top left;transform:scale(' + z + ');' : ""
@@ -9199,6 +9245,7 @@
           onLightboxImgClick,
           onLightboxBackdropClick,
           onLightboxDblClick,
+          getPageFirstThemeHeadingClass,
           getHeadingNormalizeClass,
           currentSlideMaskConfig,
           maskLayerStyle,

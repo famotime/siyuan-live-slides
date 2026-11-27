@@ -571,5 +571,76 @@ describe("Theme Design Systems & Contrast Guard (三大主题鲜明特色与亮�
       const htmlFact = renderSlideBlocksToHtml(dummySlide("fact"))
       expect(htmlFact).toContain("slides-page-first-heading-block")
     })
+
+    it("H4~H6 作为每页首个页面标题时在四大渲染端均生效三大主题可视化效果，后续内容标题与分栏子标题保持隔离", () => {
+      const indexHtml = fs.readFileSync(path.resolve(__dirname, "../public/slides-client/index.html"), "utf-8")
+      const standaloneCss = generateStandaloneExportStyles()
+      const presenterThumbPath = path.resolve(__dirname, "../src/ui/tab/SlidesPresenterThumbnail.scss")
+      const presenterSource = fs.readFileSync(path.resolve(__dirname, "../src/ui/tab/SlidesPresenterTab.vue"), "utf-8") + (fs.existsSync(presenterThumbPath) ? fs.readFileSync(presenterThumbPath, "utf-8") : "")
+      const pdfCss = generatePdfExportStyles()
+
+      // 1. Live Web Sandbox (index.html)：三大主题首标题、重置规则、背景保护、自定义字色及非首块标题标记
+      expect(indexHtml).toContain(".slides-theme-tech .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6)")
+      expect(indexHtml).toContain(".slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6)")
+      expect(indexHtml).toContain(".slides-theme-seriph .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6)::after")
+      expect(indexHtml).toContain(".slides-theme-apple-basic .slide-content-wrapper:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6)")
+      expect(indexHtml).toContain(".slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6)")
+      expect(indexHtml).toContain(".slide-block[style^=\"color:\"] :is(h1, h2, h3, h4, h5, h6)")
+      expect(indexHtml).toContain("getPageFirstThemeHeadingClass")
+
+      // 2. Standalone Single-HTML Export
+      expect(standaloneCss).toContain(".slides-theme-tech .slide-content:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6)")
+      expect(standaloneCss).toContain(".slides-theme-seriph .slide-content:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6)")
+      expect(standaloneCss).toContain(".slides-theme-seriph .slide-content:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6)::after")
+      expect(standaloneCss).toContain(".slides-theme-apple-basic .slide-content:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6)")
+      expect(standaloneCss).toContain(".slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6)")
+      expect(standaloneCss).toContain(".slide-viewport .slide-block[style^=\"color:\"] h4")
+      expect(standaloneCss).toContain(".slide-viewport .slide-block[style^=\"color:\"] h6")
+
+      // 3. Presenter Tab Thumbnail Preview
+      expect(presenterSource).toContain("&.slides-theme-tech .slide-content:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6)")
+      expect(presenterSource).toContain("&.slides-theme-seriph .slide-content:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6)")
+      expect(presenterSource).toContain("&.slides-theme-seriph .slide-content:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6)::after")
+      expect(presenterSource).toContain("&.slides-theme-apple-basic .slide-content:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6)")
+      expect(presenterSource).toContain(".slide-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6)")
+      expect(presenterSource).toContain(".slide-block[style^=\"color:\"] h4")
+      expect(presenterSource).toContain(".slide-block[style^=\"color:\"] h6")
+
+      // 4. PDF Print Export
+      expect(pdfCss).toContain(".slides-theme-tech:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6)")
+      expect(pdfCss).toContain(".slides-theme-seriph:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6)")
+      expect(pdfCss).toContain(".slides-theme-seriph:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6)::after")
+      expect(pdfCss).toContain(".slides-theme-apple-basic:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6)")
+      expect(pdfCss).toContain(".pdf-block:not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6)")
+      expect(pdfCss).toContain(".pdf-slide-page .pdf-block[style^=\"color:\"] h4")
+      expect(pdfCss).toContain(".pdf-slide-page .pdf-block[style^=\"color:\"] h6")
+
+      // 5. 渲染器针对 H4~H6 页面标题（含前置非标题块场景）及后续内容标题的打标隔离
+      const slideWithH5FirstAndH4Second: any = {
+        pageIndex: 2,
+        frontmatter: { layout: "default" },
+        blocks: [
+          { id: "p0", type: "p", content: "引导段落", rawMarkdown: "引导段落" },
+          { id: "h5", type: "h", subType: "h5", content: "五级页面主标题", rawMarkdown: "##### 五级页面主标题" },
+          { id: "h4", type: "h", subType: "h4", content: "后续四级内容标题", rawMarkdown: "#### 后续四级内容标题" },
+        ],
+      }
+      const renderedDefault = renderSlideBlocksToHtml(slideWithH5FirstAndH4Second)
+      expect(renderedDefault).toMatch(/class="[^"]*slides-page-first-heading-block[^"]*"[^>]*><h5/)
+      expect(renderedDefault).not.toMatch(/class="[^"]*slides-page-first-heading-block[^"]*"[^>]*><h4/)
+
+      const renderedImgRight = renderSlideBlocksToHtml({
+        ...slideWithH5FirstAndH4Second,
+        frontmatter: { layout: "image-right", image: "assets/cover.png" },
+      })
+      expect(renderedImgRight).toMatch(/class="[^"]*slides-page-first-heading-block[^"]*"[^>]*><h5/)
+      expect(renderedImgRight).not.toMatch(/class="[^"]*slides-page-first-heading-block[^"]*"[^>]*><h4/)
+
+      const renderedCover = renderSlideBlocksToHtml({
+        ...slideWithH5FirstAndH4Second,
+        frontmatter: { layout: "cover" },
+      })
+      expect(renderedCover).not.toContain("slides-page-first-heading-block")
+    })
   })
 })

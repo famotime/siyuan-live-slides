@@ -299,7 +299,7 @@ export function renderSlideBlocksToHtml(
   // 3. 右侧图片版式 (image-right) 与 左侧图片版式 (image-left)
   if (layout === "image-right" || layout === "image-left") {
     const isImageRight = layout === "image-right"
-    const contentHtml = blocks.map((b, idx) => convertBlockToHtml(b, idx === 0 ? { ...options, extraClassName: "slides-page-first-heading-block" } : options)).join("\n")
+    const contentHtml = blocks.map(b => convertBlockToHtml(b, b === pageFirstH ? { ...options, extraClassName: "slides-page-first-heading-block" } : options)).join("\n")
     const imgUrl = slide.frontmatter?.image || slide.frontmatter?.background || ""
     const imgHtml = `<div class="pdf-image-col" style="background-image:url('${escapeHtml(imgUrl)}');background-size:cover;background-position:center;background-repeat:no-repeat;width:100%;height:100%;position:relative;overflow:hidden;"><img src="${escapeHtml(imgUrl)}" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;" onerror="this.style.display='none'" alt="Slide cover" /></div>`
     const contentCol = `<div class="pdf-content-col" style="padding:var(--slides-padding-y, 36px) var(--slides-padding-x, 56px);display:flex;flex-direction:column;justify-content:flex-start;height:100%;box-sizing:border-box;overflow-y:auto;">${contentHtml}</div>`
@@ -529,7 +529,7 @@ export function renderSlideBlocksToHtml(
       if (avatarUrl && md.includes(avatarUrl)) return false
       return true
     })
-    const contentHtml = contentBlocks.map((b, idx) => convertBlockToHtml(b, idx === 0 ? { ...options, extraClassName: "slides-page-first-heading-block" } : options)).join("\n")
+    const contentHtml = contentBlocks.map(b => convertBlockToHtml(b, b === pageFirstH ? { ...options, extraClassName: "slides-page-first-heading-block" } : options)).join("\n")
 
     const avatarHtml = avatarUrl
       ? `<div class="intro-avatar-box"><img class="intro-avatar-img" src="${escapeHtml(avatarUrl)}" alt="Avatar" onerror="this.style.display='none'" /></div>`
@@ -545,7 +545,7 @@ export function renderSlideBlocksToHtml(
 
   // 7. 居中版式 (center)
   if (layout === "center") {
-    const innerHtml = blocks.map((b, idx) => convertBlockToHtml(b, idx === 0 ? { ...options, extraClassName: "slides-page-first-heading-block" } : options)).join("\n")
+    const innerHtml = blocks.map(b => convertBlockToHtml(b, b === pageFirstH ? { ...options, extraClassName: "slides-page-first-heading-block" } : options)).join("\n")
     return `<div class="layout-center-container">${innerHtml}</div>`
   }
 

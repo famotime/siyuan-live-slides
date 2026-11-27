@@ -109,31 +109,17 @@ export function generatePdfExportStyles(options?: {
       color: #f1f5f9;
     }
     /* 默认科技风：仅正文各版式每页首个主标题带 Accent 垂直指示条、微渐变科技底纹与 Accent 标题色 */
-    .slides-theme-tech:not(.layout-cover) .layout-header-section h1,
-    .slides-theme-tech:not(.layout-cover) .layout-header-section h2,
-    .slides-theme-tech:not(.layout-cover) .layout-header-section h3,
-    .slides-theme-tech:not(.layout-cover) .cols-header-top h1,
-    .slides-theme-tech:not(.layout-cover) .cols-header-top h2,
-    .slides-theme-tech:not(.layout-cover) .cols-header-top h3,
-    .slides-theme-tech:not(.layout-cover) .two-cols-header-top h1,
-    .slides-theme-tech:not(.layout-cover) .two-cols-header-top h2,
-    .slides-theme-tech:not(.layout-cover) .two-cols-header-top h3,
-    .slides-theme-tech:not(.layout-cover) .three-cols-header-top h1,
-    .slides-theme-tech:not(.layout-cover) .three-cols-header-top h2,
-    .slides-theme-tech:not(.layout-cover) .three-cols-header-top h3,
-    .slides-theme-tech:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h1,
-    .slides-theme-tech:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h2,
-    .slides-theme-tech:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h3,
-    .slides-theme-tech:not(.layout-cover) .slides-page-first-heading-block h1,
-    .slides-theme-tech:not(.layout-cover) .slides-page-first-heading-block h2,
-    .slides-theme-tech:not(.layout-cover) .slides-page-first-heading-block h3,
-    .slides-theme-tech:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h1,
-    .slides-theme-tech:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h2,
-    .slides-theme-tech:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h3,
-    .slides-theme-tech:not(.layout-cover) .image-left-content > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-tech:not(.layout-cover) .image-right-content > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-tech:not(.layout-cover) .intro-info-col > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-tech:not(.layout-cover) .pdf-content-col > .pdf-block:first-child :is(h1, h2, h3) {
+    .slides-theme-tech:not(.layout-cover) .layout-header-section :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech:not(.layout-cover) .cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech:not(.layout-cover) .image-left-content > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech:not(.layout-cover) .image-right-content > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech:not(.layout-cover) .intro-info-col > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech:not(.layout-cover) .pdf-content-col > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6) {
       color: #059669;
       border-left: 4px solid #059669;
       padding: 4px 14px;
@@ -142,49 +128,31 @@ export function generatePdfExportStyles(options?: {
       border-radius: 0 6px 6px 0;
       letter-spacing: -0.015em;
     }
-    .theme-dark.slides-theme-tech:not(.layout-cover) .layout-header-section h1,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .layout-header-section h2,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .layout-header-section h3,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .cols-header-top h1,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .cols-header-top h2,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .cols-header-top h3,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .two-cols-header-top h1,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .two-cols-header-top h2,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .two-cols-header-top h3,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .three-cols-header-top h1,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .three-cols-header-top h2,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .three-cols-header-top h3,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h1,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h2,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h3,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .slides-page-first-heading-block h1,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .slides-page-first-heading-block h2,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .slides-page-first-heading-block h3,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h1,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h2,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h3,
-    .theme-dark.slides-theme-tech:not(.layout-cover) .image-left-content > .pdf-block:first-child :is(h1, h2, h3),
-    .theme-dark.slides-theme-tech:not(.layout-cover) .image-right-content > .pdf-block:first-child :is(h1, h2, h3),
-    .theme-dark.slides-theme-tech:not(.layout-cover) .intro-info-col > .pdf-block:first-child :is(h1, h2, h3),
-    .theme-dark.slides-theme-tech:not(.layout-cover) .pdf-content-col > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-tech:not(.layout-cover) .image-left-content > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-tech:not(.layout-cover) .image-right-content > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-tech:not(.layout-cover) .intro-info-col > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-tech:not(.layout-cover) .pdf-content-col > .pdf-block:first-child :is(h1, h2, h3) {
+    .theme-dark.slides-theme-tech:not(.layout-cover) .layout-header-section :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-tech:not(.layout-cover) .cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-tech:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-tech:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-tech:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-tech:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-tech:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-tech:not(.layout-cover) .image-left-content > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-tech:not(.layout-cover) .image-right-content > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-tech:not(.layout-cover) .intro-info-col > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-tech:not(.layout-cover) .pdf-content-col > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6) {
       color: #10b981;
       border-left-color: #10b981;
       background: linear-gradient(90deg, rgba(16, 185, 129, 0.14), transparent 76%);
     }
     /* 科技风后续标题与分栏子标题：仅应用主题字体，不应用强调色与垂直指示条标记 */
-    .slides-theme-tech:not(.layout-cover) .pdf-block:not(.slides-page-first-heading-block) :is(h1, h2, h3, h4),
-    .slides-theme-tech:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4),
-    .slides-theme-tech:not(.layout-cover) .col :is(h1, h2, h3, h4),
-    .slides-theme-tech:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4),
-    .slides-theme-tech:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4),
-    .slides-theme-tech:not(.layout-cover) .image-left-content > .pdf-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-tech:not(.layout-cover) .image-right-content > .pdf-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-tech:not(.layout-cover) .intro-info-col > .pdf-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-tech:not(.layout-cover) .pdf-content-col > .pdf-block:not(:first-child) :is(h1, h2, h3, h4) {
+    .slides-theme-tech:not(.layout-cover) .pdf-block:not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech:not(.layout-cover) .col :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech:not(.layout-cover) .image-left-content > .pdf-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech:not(.layout-cover) .image-right-content > .pdf-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech:not(.layout-cover) .intro-info-col > .pdf-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech:not(.layout-cover) .pdf-content-col > .pdf-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6) {
       color: inherit;
       border-left: none !important;
       background: none !important;
@@ -205,31 +173,17 @@ export function generatePdfExportStyles(options?: {
       color: #f5f2eb;
     }
     /* 优雅学术风：仅正文各版式每页首个主标题采用琥珀金棕衬线字与通栏双层渐淡学术底线 */
-    .slides-theme-seriph:not(.layout-cover) .layout-header-section h1,
-    .slides-theme-seriph:not(.layout-cover) .layout-header-section h2,
-    .slides-theme-seriph:not(.layout-cover) .layout-header-section h3,
-    .slides-theme-seriph:not(.layout-cover) .cols-header-top h1,
-    .slides-theme-seriph:not(.layout-cover) .cols-header-top h2,
-    .slides-theme-seriph:not(.layout-cover) .cols-header-top h3,
-    .slides-theme-seriph:not(.layout-cover) .two-cols-header-top h1,
-    .slides-theme-seriph:not(.layout-cover) .two-cols-header-top h2,
-    .slides-theme-seriph:not(.layout-cover) .two-cols-header-top h3,
-    .slides-theme-seriph:not(.layout-cover) .three-cols-header-top h1,
-    .slides-theme-seriph:not(.layout-cover) .three-cols-header-top h2,
-    .slides-theme-seriph:not(.layout-cover) .three-cols-header-top h3,
-    .slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h1,
-    .slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h2,
-    .slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h3,
-    .slides-theme-seriph:not(.layout-cover) .slides-page-first-heading-block h1,
-    .slides-theme-seriph:not(.layout-cover) .slides-page-first-heading-block h2,
-    .slides-theme-seriph:not(.layout-cover) .slides-page-first-heading-block h3,
-    .slides-theme-seriph:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h1,
-    .slides-theme-seriph:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h2,
-    .slides-theme-seriph:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h3,
-    .slides-theme-seriph:not(.layout-cover) .image-left-content > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph:not(.layout-cover) .image-right-content > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph:not(.layout-cover) .intro-info-col > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph:not(.layout-cover) .pdf-content-col > .pdf-block:first-child :is(h1, h2, h3) {
+    .slides-theme-seriph:not(.layout-cover) .layout-header-section :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph:not(.layout-cover) .cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph:not(.layout-cover) .image-left-content > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph:not(.layout-cover) .image-right-content > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph:not(.layout-cover) .intro-info-col > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph:not(.layout-cover) .pdf-content-col > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6) {
       display: block;
       position: relative;
       color: #b45309;
@@ -237,31 +191,17 @@ export function generatePdfExportStyles(options?: {
       padding-bottom: 10px;
       margin-bottom: 14px;
     }
-    .slides-theme-seriph:not(.layout-cover) .layout-header-section h1::after,
-    .slides-theme-seriph:not(.layout-cover) .layout-header-section h2::after,
-    .slides-theme-seriph:not(.layout-cover) .layout-header-section h3::after,
-    .slides-theme-seriph:not(.layout-cover) .cols-header-top h1::after,
-    .slides-theme-seriph:not(.layout-cover) .cols-header-top h2::after,
-    .slides-theme-seriph:not(.layout-cover) .cols-header-top h3::after,
-    .slides-theme-seriph:not(.layout-cover) .two-cols-header-top h1::after,
-    .slides-theme-seriph:not(.layout-cover) .two-cols-header-top h2::after,
-    .slides-theme-seriph:not(.layout-cover) .two-cols-header-top h3::after,
-    .slides-theme-seriph:not(.layout-cover) .three-cols-header-top h1::after,
-    .slides-theme-seriph:not(.layout-cover) .three-cols-header-top h2::after,
-    .slides-theme-seriph:not(.layout-cover) .three-cols-header-top h3::after,
-    .slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h1::after,
-    .slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h2::after,
-    .slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h3::after,
-    .slides-theme-seriph:not(.layout-cover) .slides-page-first-heading-block h1::after,
-    .slides-theme-seriph:not(.layout-cover) .slides-page-first-heading-block h2::after,
-    .slides-theme-seriph:not(.layout-cover) .slides-page-first-heading-block h3::after,
-    .slides-theme-seriph:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h1::after,
-    .slides-theme-seriph:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h2::after,
-    .slides-theme-seriph:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h3,
-    .slides-theme-seriph:not(.layout-cover) .image-left-content > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph:not(.layout-cover) .image-right-content > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph:not(.layout-cover) .intro-info-col > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph:not(.layout-cover) .pdf-content-col > .pdf-block:first-child :is(h1, h2, h3)::after {
+    .slides-theme-seriph:not(.layout-cover) .layout-header-section :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph:not(.layout-cover) .cols-header-top :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph:not(.layout-cover) .image-left-content > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph:not(.layout-cover) .image-right-content > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph:not(.layout-cover) .intro-info-col > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph:not(.layout-cover) .pdf-content-col > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6)::after {
       content: "";
       position: absolute;
       left: 0;
@@ -271,87 +211,57 @@ export function generatePdfExportStyles(options?: {
       pointer-events: none;
       background: linear-gradient(90deg, #b45309 0%, rgba(180, 83, 9, 0.35) 50%, transparent 92%);
     }
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .layout-header-section h1,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .layout-header-section h2,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .layout-header-section h3,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .cols-header-top h1,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .cols-header-top h2,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .cols-header-top h3,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .two-cols-header-top h1,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .two-cols-header-top h2,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .two-cols-header-top h3,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .three-cols-header-top h1,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .three-cols-header-top h2,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .three-cols-header-top h3,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h1,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h2,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h3,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .slides-page-first-heading-block h1,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .slides-page-first-heading-block h2,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .slides-page-first-heading-block h3,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h1,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h2,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h3,
-    .slides-theme-seriph:not(.layout-cover) .image-left-content > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph:not(.layout-cover) .image-right-content > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph:not(.layout-cover) .intro-info-col > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph:not(.layout-cover) .pdf-content-col > .pdf-block:first-child :is(h1, h2, h3) {
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .layout-header-section :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .image-left-content > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .image-right-content > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .intro-info-col > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .pdf-content-col > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6) {
       color: #f59e0b;
       border-bottom-color: rgba(245, 158, 11, 0.45);
     }
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .layout-header-section h1::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .layout-header-section h2::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .layout-header-section h3::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .cols-header-top h1::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .cols-header-top h2::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .cols-header-top h3::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .two-cols-header-top h1::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .two-cols-header-top h2::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .two-cols-header-top h3::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .three-cols-header-top h1::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .three-cols-header-top h2::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .three-cols-header-top h3::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h1::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h2::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h3::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .slides-page-first-heading-block h1::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .slides-page-first-heading-block h2::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .slides-page-first-heading-block h3::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h1::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h2::after,
-    .theme-dark.slides-theme-seriph:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h3,
-    .slides-theme-seriph:not(.layout-cover) .image-left-content > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph:not(.layout-cover) .image-right-content > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph:not(.layout-cover) .intro-info-col > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-seriph:not(.layout-cover) .pdf-content-col > .pdf-block:first-child :is(h1, h2, h3)::after {
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .layout-header-section :is(h1, h2, h3, h4, h5, h6)::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .cols-header-top :is(h1, h2, h3, h4, h5, h6)::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3, h4, h5, h6)::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3, h4, h5, h6)::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6)::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6)::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6)::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .image-left-content > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6)::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .image-right-content > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6)::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .intro-info-col > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6)::after,
+    .theme-dark.slides-theme-seriph:not(.layout-cover) .pdf-content-col > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6)::after {
       background: linear-gradient(90deg, #f59e0b 0%, rgba(245, 158, 11, 0.35) 50%, transparent 92%);
     }
     /* 衬线风后续标题与分栏子标题：仅应用主题字体，不应用主题强调色与双线眉批标记 */
-    .slides-theme-seriph:not(.layout-cover) .pdf-block:not(.slides-page-first-heading-block) :is(h1, h2, h3, h4),
-    .slides-theme-seriph:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4),
-    .slides-theme-seriph:not(.layout-cover) .col :is(h1, h2, h3, h4),
-    .slides-theme-seriph:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4),
-    .slides-theme-seriph:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4),
-    .slides-theme-seriph:not(.layout-cover) .image-left-content > .pdf-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-seriph:not(.layout-cover) .image-right-content > .pdf-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-seriph:not(.layout-cover) .intro-info-col > .pdf-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-seriph:not(.layout-cover) .pdf-content-col > .pdf-block:not(:first-child) :is(h1, h2, h3, h4) {
+    .slides-theme-seriph:not(.layout-cover) .pdf-block:not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph:not(.layout-cover) .col :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph:not(.layout-cover) .image-left-content > .pdf-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph:not(.layout-cover) .image-right-content > .pdf-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph:not(.layout-cover) .intro-info-col > .pdf-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-seriph:not(.layout-cover) .pdf-content-col > .pdf-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6) {
       color: inherit;
       border-bottom: none !important;
       padding: 0 !important;
     }
-    .slides-theme-seriph:not(.layout-cover) .pdf-block:not(.slides-page-first-heading-block) :is(h1, h2, h3, h4)::after,
-    .slides-theme-seriph:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4)::after,
-    .slides-theme-seriph:not(.layout-cover) .col :is(h1, h2, h3, h4)::after,
-    .slides-theme-seriph:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4)::after,
-    .slides-theme-seriph:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4)::after,
-    .slides-theme-seriph:not(.layout-cover) .image-left-content > .pdf-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-seriph:not(.layout-cover) .image-right-content > .pdf-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-seriph:not(.layout-cover) .intro-info-col > .pdf-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-seriph:not(.layout-cover) .pdf-content-col > .pdf-block:not(:first-child) :is(h1, h2, h3, h4)::after {
+    .slides-theme-seriph:not(.layout-cover) .pdf-block:not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph:not(.layout-cover) .col :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph:not(.layout-cover) .image-left-content > .pdf-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph:not(.layout-cover) .image-right-content > .pdf-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph:not(.layout-cover) .intro-info-col > .pdf-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6)::after,
+    .slides-theme-seriph:not(.layout-cover) .pdf-content-col > .pdf-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6)::after {
       display: none !important;
-    } {
-      background: linear-gradient(90deg, #f59e0b 0%, rgba(245, 158, 11, 0.35) 50%, transparent 92%);
     }
 
     /* 3. 极简发布会主题 Apple Basic (Swiss Minimal) */
@@ -367,41 +277,27 @@ export function generatePdfExportStyles(options?: {
       background: #000000;
       color: #ffffff;
     }
-    .slides-theme-apple-basic .pdf-block h1 {
+    .slides-theme-apple-basic .pdf-block :is(h1, h2, h3, h4, h5, h6) {
       color: #000000;
       font-weight: 800;
       letter-spacing: -0.035em;
     }
-    .theme-dark.slides-theme-apple-basic .pdf-block h1 {
+    .theme-dark.slides-theme-apple-basic .pdf-block :is(h1, h2, h3, h4, h5, h6) {
       color: #ffffff;
       font-weight: 800;
       letter-spacing: -0.035em;
     }
-    .slides-theme-apple-basic:not(.layout-cover) .layout-header-section h1,
-    .slides-theme-apple-basic:not(.layout-cover) .layout-header-section h2,
-    .slides-theme-apple-basic:not(.layout-cover) .layout-header-section h3,
-    .slides-theme-apple-basic:not(.layout-cover) .cols-header-top h1,
-    .slides-theme-apple-basic:not(.layout-cover) .cols-header-top h2,
-    .slides-theme-apple-basic:not(.layout-cover) .cols-header-top h3,
-    .slides-theme-apple-basic:not(.layout-cover) .two-cols-header-top h1,
-    .slides-theme-apple-basic:not(.layout-cover) .two-cols-header-top h2,
-    .slides-theme-apple-basic:not(.layout-cover) .two-cols-header-top h3,
-    .slides-theme-apple-basic:not(.layout-cover) .three-cols-header-top h1,
-    .slides-theme-apple-basic:not(.layout-cover) .three-cols-header-top h2,
-    .slides-theme-apple-basic:not(.layout-cover) .three-cols-header-top h3,
-    .slides-theme-apple-basic:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h1,
-    .slides-theme-apple-basic:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h2,
-    .slides-theme-apple-basic:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h3,
-    .slides-theme-apple-basic:not(.layout-cover) .slides-page-first-heading-block h1,
-    .slides-theme-apple-basic:not(.layout-cover) .slides-page-first-heading-block h2,
-    .slides-theme-apple-basic:not(.layout-cover) .slides-page-first-heading-block h3,
-    .slides-theme-apple-basic:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h1,
-    .slides-theme-apple-basic:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h2,
-    .slides-theme-apple-basic:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h3,
-    .slides-theme-apple-basic:not(.layout-cover) .image-left-content > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-apple-basic:not(.layout-cover) .image-right-content > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-apple-basic:not(.layout-cover) .intro-info-col > .pdf-block:first-child :is(h1, h2, h3),
-    .slides-theme-apple-basic:not(.layout-cover) .pdf-content-col > .pdf-block:first-child :is(h1, h2, h3) {
+    .slides-theme-apple-basic:not(.layout-cover) .layout-header-section :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic:not(.layout-cover) .cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic:not(.layout-cover) .image-left-content > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic:not(.layout-cover) .image-right-content > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic:not(.layout-cover) .intro-info-col > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic:not(.layout-cover) .pdf-content-col > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6) {
       border: none !important;
       background: none !important;
       padding: 0 !important;
@@ -410,67 +306,44 @@ export function generatePdfExportStyles(options?: {
       font-weight: 800 !important;
     }
     /* 苹果风后续标题与分栏子标题：应用苹果字体，保持自然文本间距与色彩 */
-    .slides-theme-apple-basic:not(.layout-cover) .pdf-block:not(.slides-page-first-heading-block) :is(h1, h2, h3, h4),
-    .slides-theme-apple-basic:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4),
-    .slides-theme-apple-basic:not(.layout-cover) .col :is(h1, h2, h3, h4),
-    .slides-theme-apple-basic:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4),
-    .slides-theme-apple-basic:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4),
-    .slides-theme-apple-basic:not(.layout-cover) .image-left-content > .pdf-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-apple-basic:not(.layout-cover) .image-right-content > .pdf-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-apple-basic:not(.layout-cover) .intro-info-col > .pdf-block:not(:first-child) :is(h1, h2, h3, h4),
-    .slides-theme-apple-basic:not(.layout-cover) .pdf-content-col > .pdf-block:not(:first-child) :is(h1, h2, h3, h4) {
+    .slides-theme-apple-basic:not(.layout-cover) .pdf-block:not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic:not(.layout-cover) .pdf-col :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic:not(.layout-cover) .col :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic:not(.layout-cover) .two-cols-left :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic:not(.layout-cover) .two-cols-right :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic:not(.layout-cover) .image-left-content > .pdf-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic:not(.layout-cover) .image-right-content > .pdf-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic:not(.layout-cover) .intro-info-col > .pdf-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-apple-basic:not(.layout-cover) .pdf-content-col > .pdf-block:not(:first-child):not(.slides-page-first-heading-block) :is(h1, h2, h3, h4, h5, h6) {
       border: none !important;
       background: none !important;
       padding: 0 !important;
     }
     /* 页面存在背景图时，内容页顶部标题回退高对比文字与局部衬底，保留用户块级前景色 */
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .layout-header-section h1,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .layout-header-section h2,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .layout-header-section h3,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .cols-header-top h1,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .cols-header-top h2,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .cols-header-top h3,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .two-cols-header-top h1,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .two-cols-header-top h2,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .two-cols-header-top h3,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .three-cols-header-top h1,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .three-cols-header-top h2,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .three-cols-header-top h3,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h1,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h2,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h3,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .slides-page-first-heading-block h1,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .slides-page-first-heading-block h2,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .slides-page-first-heading-block h3,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h1,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h2,
-    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child h3 {
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .layout-header-section :is(h1, h2, h3, h4, h5, h6),
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .two-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .three-cols-header-top :is(h1, h2, h3, h4, h5, h6),
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6),
+    .pdf-slide-page[style*="background-image"]:not(.layout-cover) .slides-mask-body-container > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6) {
       color: #0f172a;
       text-shadow: 0 1px 3px rgba(255, 255, 255, 0.85);
     }
-    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover) .layout-header-section h1,
-    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover) .layout-header-section h2,
-    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover) .layout-header-section h3,
-    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h1,
-    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h2,
-    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h3 {
+    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover) .layout-header-section :is(h1, h2, h3, h4, h5, h6),
+    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .pdf-slide-page.theme-dark[style*="background-image"]:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6) {
       color: #f8fafc;
       text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
     }
-    .slides-theme-tech.pdf-slide-page[style*="background-image"]:not(.layout-cover) .layout-header-section h1,
-    .slides-theme-tech.pdf-slide-page[style*="background-image"]:not(.layout-cover) .layout-header-section h2,
-    .slides-theme-tech.pdf-slide-page[style*="background-image"]:not(.layout-cover) .layout-header-section h3,
-    .slides-theme-tech.pdf-slide-page[style*="background-image"]:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h1,
-    .slides-theme-tech.pdf-slide-page[style*="background-image"]:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h2,
-    .slides-theme-tech.pdf-slide-page[style*="background-image"]:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h3 {
+    .slides-theme-tech.pdf-slide-page[style*="background-image"]:not(.layout-cover) .layout-header-section :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech.pdf-slide-page[style*="background-image"]:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech.pdf-slide-page[style*="background-image"]:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6) {
       background: linear-gradient(90deg, rgba(255, 255, 255, 0.55), transparent 82%);
     }
-    .slides-theme-tech.theme-dark.pdf-slide-page[style*="background-image"]:not(.layout-cover) .layout-header-section h1,
-    .slides-theme-tech.theme-dark.pdf-slide-page[style*="background-image"]:not(.layout-cover) .layout-header-section h2,
-    .slides-theme-tech.theme-dark.pdf-slide-page[style*="background-image"]:not(.layout-cover) .layout-header-section h3,
-    .slides-theme-tech.theme-dark.pdf-slide-page[style*="background-image"]:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h1,
-    .slides-theme-tech.theme-dark.pdf-slide-page[style*="background-image"]:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h2,
-    .slides-theme-tech.theme-dark.pdf-slide-page[style*="background-image"]:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child h3 {
+    .slides-theme-tech.theme-dark.pdf-slide-page[style*="background-image"]:not(.layout-cover) .layout-header-section :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech.theme-dark.pdf-slide-page[style*="background-image"]:not(.layout-cover) .pdf-slide-body > .pdf-block:first-child :is(h1, h2, h3, h4, h5, h6),
+    .slides-theme-tech.theme-dark.pdf-slide-page[style*="background-image"]:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6) {
       background: linear-gradient(90deg, rgba(15, 23, 42, 0.42), transparent 82%);
     }
     .pdf-slide-page .pdf-block[style^="color:"] h1,
@@ -481,7 +354,16 @@ export function generatePdfExportStyles(options?: {
     .pdf-slide-page .pdf-block[style*=";color:"] h2,
     .pdf-slide-page .pdf-block[style^="color:"] h3,
     .pdf-slide-page .pdf-block[style*=" color:"] h3,
-    .pdf-slide-page .pdf-block[style*=";color:"] h3 {
+    .pdf-slide-page .pdf-block[style*=";color:"] h3,
+    .pdf-slide-page .pdf-block[style^="color:"] h4,
+    .pdf-slide-page .pdf-block[style*=" color:"] h4,
+    .pdf-slide-page .pdf-block[style*=";color:"] h4,
+    .pdf-slide-page .pdf-block[style^="color:"] h5,
+    .pdf-slide-page .pdf-block[style*=" color:"] h5,
+    .pdf-slide-page .pdf-block[style*=";color:"] h5,
+    .pdf-slide-page .pdf-block[style^="color:"] h6,
+    .pdf-slide-page .pdf-block[style*=" color:"] h6,
+    .pdf-slide-page .pdf-block[style*=";color:"] h6 {
       color: inherit !important;
     }
     .slides-theme-apple-basic .pdf-code,
@@ -515,6 +397,8 @@ export function generatePdfExportStyles(options?: {
     .pdf-block h2 { font-size: 1.9rem; font-weight: 700; color: #1d4ed8; margin-bottom: 10px; }
     .pdf-block h3 { font-size: 1.4rem; font-weight: 600; margin-bottom: 8px; }
     .pdf-block h4 { font-size: 1.2rem; font-weight: 600; margin-bottom: 6px; }
+    .pdf-block h5 { font-size: 1.12rem; font-weight: 600; margin-bottom: 5px; }
+    .pdf-block h6 { font-size: 1.05rem; font-weight: 600; margin-bottom: 4px; }
     .pdf-block p { font-size: 1.15rem; color: inherit; }
     .slide-block--custom-font-size p,
     .slide-block--custom-font-size h1,
