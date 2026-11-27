@@ -275,6 +275,221 @@ describe("列表项解包与对齐一致性 (解决同列表块末项偏左问�
     expect(html).not.toContain("<ul")
     expect(html).not.toContain("<li")
     expect(html).toContain("slide-list-continuation")
+    expect(html).toContain("slide-list-continuation--unordered")
+    expect(html).not.toContain("slide-list-continuation--no-marker")
     expect(html).toContain("列表项下的纯文本说明")
+  })
+
+  it("场景 8：多栏超级块卡片首项剥离圆点后，其直属普通文本归零缩进、直属子列表作一级列表起始、媒体块居中", async () => {
+    const { renderSlideBlocksToHtml } = await import("../src/export/markdown-renderer")
+
+    const doc = buildSlidesDocument("doc-card-align", { "custom-slides-layout": "cols-header" }, [
+      { id: "h-top", type: "h", markdown: "## 怎么做出差异化呢？", content: "怎么做出差异化呢？" },
+      {
+        id: "sb-cols",
+        type: "s",
+        subType: "col",
+        children: [
+          {
+            id: "l-col1",
+            type: "l",
+            children: [
+              {
+                id: "i-col1",
+                type: "i",
+                children: [
+                  { id: "p-c1-title", type: "p", markdown: "这么多手写笔记……" },
+                  { id: "p-c1-img", type: "p", markdown: "![img1](assets/1.png)" },
+                ],
+              },
+            ],
+          },
+          {
+            id: "l-col2",
+            type: "l",
+            children: [
+              {
+                id: "i-col2",
+                type: "i",
+                children: [
+                  { id: "p-c2-title", type: "p", markdown: "人们希望手写什么呢？" },
+                  { id: "p-c2-plain", type: "p", markdown: "我画的还不错吧？" },
+                  { id: "p-c2-img", type: "p", markdown: "![img2](assets/2.png)" },
+                ],
+              },
+            ],
+          },
+          {
+            id: "l-col3",
+            type: "l",
+            children: [
+              {
+                id: "i-col3",
+                type: "i",
+                children: [
+                  { id: "p-c3-title", type: "p", markdown: "找到需求背后的心理诉求" },
+                  {
+                    id: "l-c3-sub",
+                    type: "l",
+                    children: [
+                      {
+                        id: "i-c3-sub1",
+                        type: "i",
+                        children: [
+                          { id: "p-c3-sub1", type: "p", markdown: "直属子项" },
+                          {
+                            id: "l-c3-grand",
+                            type: "l",
+                            children: [
+                              {
+                                id: "i-c3-grand1",
+                                type: "i",
+                                children: [{ id: "p-c3-grand1", type: "p", markdown: "孙级子项" }],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+
+    const slide = doc.slides[0]
+    const plain2 = slide.blocks.find(b => b.id === "p-c2-plain")
+    const sub3 = slide.blocks.find(b => b.id === "p-c3-sub1")
+    const grand3 = slide.blocks.find(b => b.id === "p-c3-grand1")
+
+    expect(plain2?.isListContinuation).toBe(true)
+    expect(plain2?.isParentMarkerStripped).toBe(true)
+    expect(plain2?.listLevel).toBe(0)
+
+    // 卡片首项已剥离圆点，其直属子列表降为 level 0，孙级子列表为 level 1
+    expect(sub3?.isListItem).toBe(true)
+    expect(sub3?.listLevel).toBe(0)
+    expect(grand3?.isListItem).toBe(true)
+    expect(grand3?.listLevel).toBe(1)
+
+    const slideHtml = renderSlideBlocksToHtml(slide)
+    expect(slideHtml).toContain("slide-list-continuation--no-marker")
+    expect(slideHtml).toContain("--slides-list-level:1")
+    expect(slideHtml).toContain("slide-list-item--nested")
+  })
+
+  it("场景 9：常规列表解包后，子列表项与子列表下普通文本保留嵌套层级（--slides-list-level），且同栏第二项延续文本仍保留缩进", async () => {
+    const { renderSlideBlocksToHtml } = await import("../src/export/markdown-renderer")
+
+    const doc = buildSlidesDocument("doc-nested-unpack", { "custom-slides-layout": "image-right" }, [
+      {
+        id: "l-root",
+        type: "l",
+        subType: "o",
+        markdown: "1. 父项\n   父项延续\n   - 子项\n     子项延续",
+        children: [
+          {
+            id: "i-parent",
+            type: "i",
+            children: [
+              { id: "p-parent", type: "p", markdown: "父项" },
+              { id: "p-parent-cont", type: "p", markdown: "父项延续" },
+              {
+                id: "l-sub",
+                type: "l",
+                children: [
+                  {
+                    id: "i-sub",
+                    type: "i",
+                    children: [
+                      { id: "p-sub", type: "p", markdown: "子项" },
+                      { id: "p-sub-cont", type: "p", markdown: "子项延续" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      { id: "img-right", type: "p", markdown: "![img](assets/r.png)", ial: { "custom-slides-role": "image-right" } },
+    ])
+
+    const slide = doc.slides[0]
+    const parentCont = slide.blocks.find(b => b.id === "p-parent-cont")
+    const subItem = slide.blocks.find(b => b.id === "p-sub")
+    const subCont = slide.blocks.find(b => b.id === "p-sub-cont")
+
+    expect(parentCont?.isListContinuation).toBe(true)
+    expect(parentCont?.listType).toBe("ordered")
+    expect(parentCont?.listLevel).toBe(0)
+    expect(parentCont?.isParentMarkerStripped).toBeUndefined()
+
+    expect(subItem?.isListItem).toBe(true)
+    expect(subItem?.listLevel).toBe(1)
+    expect(subItem?.listType).toBe("unordered")
+
+    expect(subCont?.isListContinuation).toBe(true)
+    expect(subCont?.listLevel).toBe(1)
+    expect(subCont?.listType).toBe("unordered")
+
+    const slideHtml = renderSlideBlocksToHtml(slide)
+    expect(slideHtml).toContain("slide-list-continuation--ordered")
+    expect(slideHtml).toContain("slide-list-continuation--unordered")
+    expect(slideHtml).toContain("slide-list-item--nested")
+    expect(slideHtml).toContain("--slides-list-level:1")
+    expect(slideHtml).toContain("margin-left:1.25em")
+  })
+
+  it("场景 10：三端样式与隐藏标记规则不覆盖嵌套子列表缩进，并支持按列表类型归零延续文本与排除媒体块", async () => {
+    const { generateStandaloneExportStyles } = await import("../src/export/standalone-template-styles")
+    const { generatePdfExportStyles } = await import("../src/export/pdf-template-styles")
+    const fs = await import("fs")
+    const path = await import("path")
+    const thumbScss = fs.readFileSync(
+      path.join(__dirname, "../src/ui/tab/SlidesPresenterThumbnail.scss"),
+      "utf8",
+    )
+
+    for (const css of [generateStandaloneExportStyles(), generatePdfExportStyles()]) {
+      expect(css).toContain(".pdf-col li:not(.slide-list-item--nested)")
+      expect(css).toContain(".slide-list-continuation--no-marker")
+      expect(css).toContain('[data-hide-unordered-markers="true"] .slide-list-continuation.slide-list-continuation--unordered')
+      expect(css).toContain('[data-hide-ordered-markers="true"] .slide-list-continuation.slide-list-continuation--ordered')
+      expect(css).toContain('[data-hide-unordered-markers="true"] ul > li.slide-list-item--nested')
+      expect(css).toContain(".slide-list-continuation:is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-block--image, .slide-block--video, :has(img), :has(video))")
+    }
+
+    expect(thumbScss).toContain(".pdf-col li:not(.slide-list-item--nested)")
+    expect(thumbScss).toContain(".slide-list-continuation--no-marker")
+    expect(thumbScss).toContain(".slide-list-continuation.slide-list-continuation--unordered")
+    expect(thumbScss).toContain("ul > li.slide-list-item--nested")
+  })
+
+  it("场景 11：预览客户端 (public/slides-client/index.html) 与导出端均同步居中栏标题左侧对齐变量 (--col-title-inset) 与延续列表样式", async () => {
+    const fs = await import("fs")
+    const path = await import("path")
+    const { generateStandaloneExportStyles } = await import("../src/export/standalone-template-styles")
+    const { generatePdfExportStyles } = await import("../src/export/pdf-template-styles")
+
+    const clientHtml = fs.readFileSync(
+      path.join(__dirname, "../public/slides-client/index.html"),
+      "utf8",
+    )
+
+    expect(clientHtml).toContain("syncSuperblockColTitleInsets")
+    expect(clientHtml).toContain("--col-title-inset")
+    expect(clientHtml).toContain("slide-list-continuation--no-marker")
+    expect(clientHtml).toContain("--slides-list-level")
+    expect(clientHtml).toContain("ul > li.slide-list-item--nested")
+    expect(clientHtml).not.toMatch(/\.layout-cols-grid\s+\.slide-list-item\s*\{[^}]*list-style-type:\s*disc\s*!important/)
+
+    for (const css of [generateStandaloneExportStyles(), generatePdfExportStyles()]) {
+      expect(css).toContain("--col-title-inset")
+      expect(css).toContain("padding-left: calc(var(--col-title-inset, 0px) + 0.9rem) !important;")
+    }
   })
 })

@@ -665,6 +665,39 @@ export function generatePdfExportStyles(options?: {
     .has-superblock-cols .pdf-col li:not(:first-child) {
       text-align: left !important;
     }
+    /* 当卡片首项已提取为标题后紧跟子列表时，恢复子列表首项的圆点与左对齐 */
+    .has-superblock-cols .pdf-col > *:first-child :is(.slide-list-item-title, h1, h2, h3, h4, h5, h6) ~ :is(ul, ol) > li:first-child {
+      list-style: disc !important;
+      list-style-type: disc !important;
+      text-align: left !important;
+      padding-left: 0.2rem !important;
+      width: auto !important;
+    }
+    .has-superblock-cols .pdf-col > *:first-child :is(.slide-list-item-title, h1, h2, h3, h4, h5, h6) ~ :is(ul, ol) > li:first-child::marker {
+      content: normal !important;
+      display: inline !important;
+    }
+    .has-superblock-cols .pdf-col > *:first-child :is(.slide-list-item-title, h1, h2, h3, h4, h5, h6) ~ :is(ul, ol) > li:first-child * {
+      text-align: left !important;
+    }
+    .has-superblock-cols :is(.col, .pdf-col) > *:first-child :is(.slide-list-item-title, h1, h2, h3, h4, h5, h6) ~ :is(ul, ol, .slide-list, .pdf-list) {
+      padding-left: calc(var(--col-title-inset, 0px) + 0.9rem) !important;
+    }
+    .has-superblock-cols :is(.col, .pdf-col) > *:first-child :is(.slide-list-item-title, h1, h2, h3, h4, h5, h6) ~ .slide-list-item-desc {
+      padding-left: var(--col-title-inset, 0px) !important;
+    }
+    .has-superblock-cols :is(.col, .pdf-col) :is(ul, ol, .slide-list, .pdf-list) {
+      padding-left: 0.9rem !important;
+    }
+    .has-superblock-cols :is(.col, .pdf-col) li {
+      padding-left: 0.15rem !important;
+    }
+    .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block):not(:first-child):has(> ul, > ol, > .slide-list, > .pdf-list) {
+      padding-left: var(--col-title-inset, 0px) !important;
+    }
+    .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block):not(:first-child):not(.slide-list-continuation):not(.slide-media-block):not(.slide-media-container):not(.slide-video-container):not(.slide-block--image):not(.slide-block--video):not(:has(> ul, > ol, > .slide-list, > .pdf-list, img, video)) {
+      padding-left: var(--col-title-inset, 0px) !important;
+    }
 
     /* 全局特定标题大小规范化 (除封面外页首首个标题按 H2 1.7rem，表头多栏内首个标题按 H3 1.3rem) */
     [data-normalize-headings="true"] .pdf-slide:not(.layout-cover) .slides-page-first-heading-block :is(h1, h2, h3, h4, h5, h6, .slide-list-item-title),
@@ -777,11 +810,11 @@ export function generatePdfExportStyles(options?: {
       max-width: 100% !important;
       box-sizing: border-box !important;
     }
-    .pdf-list-item {
-      padding-left: 20px;
+    div.pdf-list-item {
+      padding-left: 0;
     }
     .pdf-list {
-      padding-left: 24px;
+      padding-left: 28px;
       margin: calc(var(--slides-block-gap, 14px) * 0.6) 0;
       display: flex;
       flex-direction: column;
@@ -824,7 +857,7 @@ export function generatePdfExportStyles(options?: {
     .layout-cols-grid .pdf-list--unordered {
       list-style: disc !important;
       list-style-type: disc !important;
-      padding-left: 1.25em !important;
+      padding-left: 1.25rem !important;
       margin-left: 0 !important;
       margin-top: 0 !important;
       margin-bottom: 8px !important;
@@ -849,7 +882,7 @@ export function generatePdfExportStyles(options?: {
     .layout-cols-grid .pdf-list--ordered {
       list-style: decimal !important;
       list-style-type: decimal !important;
-      padding-left: 1.25em !important;
+      padding-left: 1.25rem !important;
       margin-left: 0 !important;
       margin-top: 0 !important;
       margin-bottom: 8px !important;
@@ -867,14 +900,25 @@ export function generatePdfExportStyles(options?: {
     .three-cols-col li,
     .col li,
     .pdf-col li,
-    .pdf-col .pdf-list-item {
-      padding-left: 0.2em !important;
-      margin-left: 0 !important;
+    .pdf-col li.pdf-list-item {
+      padding-left: 0.2rem !important;
       margin-bottom: var(--slides-list-gap, 6px) !important;
       flex: 0 0 auto !important;
       height: auto !important;
       display: list-item !important;
       line-height: var(--slides-line-height, 1.6) !important;
+    }
+    .layout-two-cols li:not(.slide-list-item--nested),
+    .layout-cols-header li:not(.slide-list-item--nested),
+    .layout-two-cols-header li:not(.slide-list-item--nested),
+    .layout-three-cols li:not(.slide-list-item--nested),
+    .layout-three-cols-header li:not(.slide-list-item--nested),
+    .two-cols-left li:not(.slide-list-item--nested),
+    .two-cols-right li:not(.slide-list-item--nested),
+    .three-cols-col li:not(.slide-list-item--nested),
+    .col li:not(.slide-list-item--nested),
+    .pdf-col li:not(.slide-list-item--nested) {
+      margin-left: 0 !important;
     }
     .layout-two-cols ul ul,
     .layout-three-cols ul ul,
@@ -882,7 +926,7 @@ export function generatePdfExportStyles(options?: {
     .pdf-col ul ul {
       list-style: circle !important;
       list-style-type: circle !important;
-      padding-left: 1.25em !important;
+      padding-left: 1.4375rem !important;
       margin-top: 4px !important;
       margin-bottom: 4px !important;
     }
@@ -945,15 +989,24 @@ export function generatePdfExportStyles(options?: {
       display: list-item !important;
     }
 
-    /* 隐藏无序列表前缀标记 */
+    /* 隐藏无序列表前缀标记（保留嵌套子列表的层级缩进） */
     [data-hide-unordered-markers="true"] :is(ul, .slide-list, .slide-list--unordered, .pdf-list, .pdf-list--unordered),
-    [data-hide-unordered-markers="true"] :is(ul, .slide-list, .slide-list--unordered, .pdf-list, .pdf-list--unordered) > li,
-    [data-hide-unordered-markers="true"] li.slide-list-item,
-    [data-hide-unordered-markers="true"] ul > li {
+    [data-hide-unordered-markers="true"] :is(ul, .slide-list, .slide-list--unordered, .pdf-list, .pdf-list--unordered) > li:not(.slide-list-item--nested),
+    [data-hide-unordered-markers="true"] li.slide-list-item:not(.slide-list-item--nested),
+    [data-hide-unordered-markers="true"] ul > li:not(.slide-list-item--nested) {
       list-style: none !important;
       list-style-type: none !important;
       padding-left: 0 !important;
       margin-left: 0 !important;
+    }
+    [data-hide-unordered-markers="true"] ul > li.slide-list-item--nested {
+      list-style: none !important;
+      list-style-type: none !important;
+      padding-left: 0 !important;
+      margin-left: calc(var(--slides-list-level, 1) * 1.4375rem) !important;
+    }
+    [data-hide-unordered-markers="true"] :is(ul, ol) ul {
+      padding-left: 1.4375rem !important;
     }
     [data-hide-unordered-markers="true"] :is(ul, .slide-list, .slide-list--unordered, .pdf-list, .pdf-list--unordered) > li::marker,
     [data-hide-unordered-markers="true"] li.slide-list-item::marker {
@@ -961,15 +1014,24 @@ export function generatePdfExportStyles(options?: {
       display: none !important;
     }
 
-    /* 隐藏有序列表前缀标记 */
+    /* 隐藏有序列表前缀标记（保留嵌套子列表的层级缩进） */
     [data-hide-ordered-markers="true"] :is(ol, .slide-list, .slide-list--ordered, .pdf-list, .pdf-list--ordered),
-    [data-hide-ordered-markers="true"] :is(ol, .slide-list, .slide-list--ordered, .pdf-list, .pdf-list--ordered) > li,
-    [data-hide-ordered-markers="true"] li.slide-list-item,
-    [data-hide-ordered-markers="true"] ol > li {
+    [data-hide-ordered-markers="true"] :is(ol, .slide-list, .slide-list--ordered, .pdf-list, .pdf-list--ordered) > li:not(.slide-list-item--nested),
+    [data-hide-ordered-markers="true"] li.slide-list-item:not(.slide-list-item--nested),
+    [data-hide-ordered-markers="true"] ol > li:not(.slide-list-item--nested) {
       list-style: none !important;
       list-style-type: none !important;
       padding-left: 0 !important;
       margin-left: 0 !important;
+    }
+    [data-hide-ordered-markers="true"] ol > li.slide-list-item--nested {
+      list-style: none !important;
+      list-style-type: none !important;
+      padding-left: 0 !important;
+      margin-left: calc(var(--slides-list-level, 1) * 1.4375rem) !important;
+    }
+    [data-hide-ordered-markers="true"] :is(ul, ol) ol {
+      padding-left: 1.4375rem !important;
     }
     [data-hide-ordered-markers="true"] :is(ol, .slide-list, .slide-list--ordered, .pdf-list, .pdf-list--ordered) > li::marker,
     [data-hide-ordered-markers="true"] li.slide-list-item::marker {
@@ -977,19 +1039,37 @@ export function generatePdfExportStyles(options?: {
       display: none !important;
     }
 
-    /* 列表项下的延续正文（无前缀纯文本）：与列表文字左对齐，但不显示圆点/序号 */
+    /* 列表项下的延续正文（无前缀纯文本）：与父列表项文字左侧精准对齐 */
     .slide-list-continuation {
       list-style: none !important;
       display: block !important;
-      padding-left: 28px;
+      --slides-cont-base: 28px;
+      --slides-cont-step: 1.4375rem;
+      padding-left: calc(var(--slides-cont-base) + var(--slides-list-level, 0) * var(--slides-cont-step));
     }
     .slide-list-continuation::marker {
       content: "" !important;
     }
     :is(.layout-two-cols, .layout-cols-header, .layout-two-cols-header, .layout-three-cols, .layout-three-cols-header, .two-cols-left, .two-cols-right, .three-cols-col, .col, .pdf-col) .slide-list-continuation {
-      padding-left: calc(1.25em + 0.2em);
+      --slides-cont-base: 1.45rem;
     }
+    .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block):not(:first-child).slide-list-continuation {
+      --slides-cont-base: calc(var(--col-title-inset, 0px) + 1.05rem);
+    }
+    .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block):not(:first-child).slide-list-continuation.slide-list-continuation--no-marker {
+      --slides-cont-base: var(--col-title-inset, 0px) !important;
+    }
+    .slide-list-continuation.slide-list-continuation--no-marker,
+    [data-hide-unordered-markers="true"] .slide-list-continuation.slide-list-continuation--unordered,
+    [data-hide-ordered-markers="true"] .slide-list-continuation.slide-list-continuation--ordered,
     [data-hide-unordered-markers="true"][data-hide-ordered-markers="true"] .slide-list-continuation {
+      --slides-cont-base: 0px !important;
+    }
+    [data-hide-unordered-markers="true"] .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block):not(:first-child).slide-list-continuation.slide-list-continuation--unordered,
+    [data-hide-ordered-markers="true"] .has-superblock-cols :is(.col, .pdf-col) > :is(.slide-block, .pdf-block):not(:first-child).slide-list-continuation.slide-list-continuation--ordered {
+      --slides-cont-base: var(--col-title-inset, 0px) !important;
+    }
+    .slide-list-continuation:is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-block--image, .slide-block--video, :has(img), :has(video)) {
       padding-left: 0 !important;
     }
 

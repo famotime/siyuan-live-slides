@@ -243,14 +243,15 @@ export function renderMarkdownList(
 
   const listTag = isOrdered ? "ol" : "ul"
   const baseListClass = options?.listClassName || (isOrdered ? "pdf-list pdf-list--ordered" : "pdf-list pdf-list--unordered")
+  const baseLevel = block?.listLevel ?? 0
   const itemsHtml = items.map(item => {
     const formatted = formatListItemContent(item.text)
     const mediaHtml = (item.media && item.media.length > 0)
       ? `\n${item.media.join("\n")}`
       : ""
-    const level = item.level || 0
+    const level = baseLevel + (item.level || 0)
     const nestedStyle = level > 0
-      ? ` style="margin-left:${(level * 1.25).toFixed(2)}em;${item.type === 'unordered' ? `list-style-type:${level % 2 === 1 ? 'circle' : 'square'} !important;` : ''}"`
+      ? ` style="--slides-list-level:${level};margin-left:${(level * 1.25).toFixed(2)}em;${item.type === 'unordered' ? `list-style-type:${level % 2 === 1 ? 'circle' : 'square'} !important;` : ''}"`
       : ""
     const nestedClass = level > 0 ? " slide-list-item--nested" : ""
     if (item.type === "task") {

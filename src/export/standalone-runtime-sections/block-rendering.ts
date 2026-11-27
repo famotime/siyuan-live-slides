@@ -26,8 +26,23 @@ export function getBlockRenderingSection(): string {
         const md = (first.rawMarkdown || first.content || "").trim();
         const isList = /^(?:[-*+]|\\d+\\.)\\s+/.test(md) || first.type === "i" || first.type === "l";
         if (isList) {
+          const hadPrefix = /^(?:[-*+]|\\d+\\.)\\s+/.test(md);
           first.rawMarkdown = cleanCardListItemMarkdown(first.rawMarkdown || first.content || "");
           first.content = first.rawMarkdown;
+          if (hadPrefix && first.parentContainerId) {
+            const baseLevel = typeof first.listLevel === "number" ? first.listLevel : 0;
+            for (let i = 1; i < valid.length; i++) {
+              const sib = valid[i];
+              if (sib.parentContainerId === first.parentContainerId) {
+                const sibLvl = typeof sib.listLevel === "number" ? sib.listLevel : 0;
+                if (sib.isListContinuation && sibLvl === baseLevel) {
+                  sib.isParentMarkerStripped = true;
+                } else if (sibLvl > baseLevel) {
+                  sib.listLevel = Math.max(0, sibLvl - 1);
+                }
+              }
+            }
+          }
         }
         return valid;
       }
@@ -197,6 +212,13 @@ export function getBlockRenderingSection(): string {
         const md = block.rawMarkdown || block.content || "";
         if (block && block.isListContinuation && !block.isListItem) {
           div.classList.add("slide-list-continuation");
+          div.classList.add(block.listType === "ordered" ? "slide-list-continuation--ordered" : "slide-list-continuation--unordered");
+          if (block.isParentMarkerStripped) {
+            div.classList.add("slide-list-continuation--no-marker");
+          }
+          if (typeof block.listLevel === "number" && block.listLevel > 0) {
+            div.style.setProperty("--slides-list-level", String(block.listLevel));
+          }
         }
 
         if (md.includes('class="slides-block-ref"') || md.includes('class="slides-ref-tag"')) {
@@ -415,12 +437,13 @@ export function getBlockRenderingSection(): string {
 
           const tag = isOrdered ? "ol" : "ul";
           const listCls = isOrdered ? "pdf-list pdf-list--ordered" : "pdf-list pdf-list--unordered";
+          const baseLevel = (block && typeof block.listLevel === "number") ? block.listLevel : 0;
           const liHtml = items.map(it => {
             const med = it.media && it.media.length ? "\\n" + it.media.join("\\n") : "";
             const lines = (it.text || "").split("\\n").map(l => l.trim()).filter(Boolean);
             const hasHeading = lines.some(l => /^#{1,6}\\s+/.test(l));
-            const lvl = it.level || 0;
-            const nStyle = lvl > 0 ? ' style="margin-left:' + (lvl * 1.25).toFixed(2) + 'em;' + (it.type === 'unordered' ? 'list-style-type:' + (lvl % 2 === 1 ? 'circle' : 'square') + ' !important;' : '') + '"' : "";
+            const lvl = baseLevel + (it.level || 0);
+            const nStyle = lvl > 0 ? ' style="--slides-list-level:' + lvl + ';margin-left:' + (lvl * 1.25).toFixed(2) + 'em;' + (it.type === 'unordered' ? 'list-style-type:' + (lvl % 2 === 1 ? 'circle' : 'square') + ' !important;' : '') + '"' : "";
             const nClass = lvl > 0 ? " slide-list-item--nested" : "";
             const clsAttr = nClass ? ' class="' + nClass.trim() + '"' : "";
             if (!hasHeading) {

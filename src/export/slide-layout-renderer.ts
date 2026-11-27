@@ -12,6 +12,35 @@ export interface IRenderSlideOptions extends IBlockRenderOptions {
 }
 
 /**
+ * 剥离分栏首项列表标记，并同步更新同列表项下的直属延续正文与子列表层级
+ */
+function stripColFirstListPrefix(list: ISlidesBlockItem[]): ISlidesBlockItem[] {
+  const valid = list.filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
+  if (valid.length === 0) return valid
+  const first = valid[0]
+  const md = (first.rawMarkdown || first.content || "").trim()
+  const isList = isListItemNode(first) || /^(?:[-*+]|\d+\.)\s+/.test(md)
+  if (isList) {
+    const hadPrefix = /^(?:[-*+]|\d+\.)\s+/.test(md)
+    first.rawMarkdown = cleanCardListItemMarkdown(first.rawMarkdown || first.content || "")
+    first.content = first.rawMarkdown
+    if (hadPrefix && first.parentContainerId) {
+      const baseLevel = first.listLevel ?? 0
+      for (const sibling of valid.slice(1)) {
+        if (sibling.parentContainerId === first.parentContainerId) {
+          if (sibling.isListContinuation && (sibling.listLevel ?? 0) === baseLevel) {
+            sibling.isParentMarkerStripped = true
+          } else if ((sibling.listLevel ?? 0) > baseLevel) {
+            sibling.listLevel = Math.max(0, (sibling.listLevel ?? 0) - 1)
+          }
+        }
+      }
+    }
+  }
+  return valid
+}
+
+/**
  * 渲染单个幻灯片页面的所有块，支持多种标准版式（two-cols, cols-header, two-cols-header, three-cols-header, cover, fact, image-left, image-right 等）
  */
 export function renderSlideBlocksToHtml(
@@ -39,20 +68,8 @@ export function renderSlideBlocksToHtml(
       rightBlocks = blocks.slice(mid)
     }
 
-    const cleanFirstList = (list: ISlidesBlockItem[]) => {
-      const valid = list.filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
-      if (valid.length > 0) {
-        const first = valid[0]
-        const md = (first.rawMarkdown || first.content || "").trim()
-        const isList = isListItemNode(first) || /^(?:[-*+]|\d+\.)\s+/.test(md)
-        if (isList) {
-          first.rawMarkdown = cleanCardListItemMarkdown(first.rawMarkdown || first.content || "")
-          first.content = first.rawMarkdown
-        }
-      }
-    }
-    cleanFirstList(leftBlocks)
-    cleanFirstList(rightBlocks)
+    stripColFirstListPrefix(leftBlocks)
+    stripColFirstListPrefix(rightBlocks)
 
     const leftHtml = leftBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
     const rightHtml = rightBlocks.map(b => convertBlockToHtml(b, options)).join("\n")
@@ -135,16 +152,11 @@ export function renderSlideBlocksToHtml(
       (isColsHeaderLayout(layout) && hasColSlots)
 
     const renderColBlockToHtml = (colBlocks: ISlidesBlockItem[]) => {
-      const validBlocks = colBlocks.filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
+      const validBlocks = isSuperBlockCols
+        ? stripColFirstListPrefix(colBlocks)
+        : colBlocks.filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
       if (isSuperBlockCols && validBlocks.length > 0) {
-        const first = validBlocks[0]
-        const md = (first.rawMarkdown || first.content || "").trim()
-        const isList = isListItemNode(first) || /^(?:[-*+]|\d+\.)\s+/.test(md)
-        if (isList) {
-          first.rawMarkdown = cleanCardListItemMarkdown(first.rawMarkdown || first.content || "")
-          first.content = first.rawMarkdown
-        }
-        first.isColFirst = true
+        validBlocks[0].isColFirst = true
       }
       const colFirstH = isSuperBlockCols ? validBlocks.find(isHeadingBlock) : null
       return validBlocks.map(b => {

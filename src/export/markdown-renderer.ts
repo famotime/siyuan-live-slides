@@ -467,6 +467,18 @@ export function convertBlockToHtml(
     }
   }
 
+  const continuationClasses: string[] = []
+  if (block.isListContinuation && !block.isListItem) {
+    continuationClasses.push("slide-list-continuation")
+    continuationClasses.push(block.listType === "ordered" ? "slide-list-continuation--ordered" : "slide-list-continuation--unordered")
+    if (block.isParentMarkerStripped) {
+      continuationClasses.push("slide-list-continuation--no-marker")
+    }
+    if (typeof block.listLevel === "number" && block.listLevel > 0) {
+      styleParts.push(`--slides-list-level:${block.listLevel}`)
+    }
+  }
+
   if (styleParts.length > 0) {
     motionStyle = ` style="${escapeHtml(styleParts.join(";"))}"`
   }
@@ -475,7 +487,7 @@ export function convertBlockToHtml(
   const extraClass = options?.extraClassName ? ` ${options.extraClassName}` : ""
   const resolvedBlockClass = options?.blockClassResolver ? options.blockClassResolver(block) : ""
   const resolvedClassPart = resolvedBlockClass ? ` ${resolvedBlockClass}` : ""
-  const continuationClass = block.isListContinuation && !block.isListItem ? " slide-list-continuation" : ""
+  const continuationClass = continuationClasses.length > 0 ? ` ${continuationClasses.join(" ")}` : ""
   const containerClass = `${baseContainerClass}${motionClass}${styledClass}${extraClass}${resolvedClassPart}${continuationClass}`
   const md = (block.rawMarkdown || block.content || "").trim()
 

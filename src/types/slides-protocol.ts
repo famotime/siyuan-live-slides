@@ -267,6 +267,12 @@ export interface ISlidesBlockItem {
   isListItem?: boolean
   /** 列表项下的延续正文块（无列表前缀）：缩进对齐但不显示圆点/序号 */
   isListContinuation?: boolean
+  /** 列表项嵌套层级（0 表示顶层列表项，1 表示二级子列表项，以此类推） */
+  listLevel?: number
+  /** 所属列表类型（用于按无序/有序分别匹配隐藏标记配置） */
+  listType?: "unordered" | "ordered"
+  /** 父列表项是否已作为分栏首项剥离了列表标记（剥离后其直属延续正文应归零缩进） */
+  isParentMarkerStripped?: boolean
 }
 
 export type ISlidesBlock = ISlidesBlockItem

@@ -1348,14 +1348,29 @@
     .layout-two-cols .slide-list-item,
     .layout-three-cols .slide-list-item,
     .layout-cols-grid .slide-list-item {
-      padding-left: 0.2em !important;
-      margin-left: 0 !important;
+      padding-left: 0.2rem !important;
       margin-bottom: 6px !important;
       flex: 0 0 auto !important;
       height: auto !important;
       display: list-item !important;
       line-height: 1.6 !important;
-      list-style-type: disc !important;
+    }
+
+    .layout-two-cols li:not(.slide-list-item--nested),
+    .layout-two-cols-header li:not(.slide-list-item--nested),
+    .layout-three-cols li:not(.slide-list-item--nested),
+    .layout-three-cols-header li:not(.slide-list-item--nested),
+    .layout-cols-header li:not(.slide-list-item--nested),
+    .layout-cols-grid li:not(.slide-list-item--nested),
+    .two-cols-left li:not(.slide-list-item--nested),
+    .two-cols-right li:not(.slide-list-item--nested),
+    .three-cols-col li:not(.slide-list-item--nested),
+    .col li:not(.slide-list-item--nested),
+    .pdf-col li:not(.slide-list-item--nested),
+    .layout-two-cols .slide-list-item:not(.slide-list-item--nested),
+    .layout-three-cols .slide-list-item:not(.slide-list-item--nested),
+    .layout-cols-grid .slide-list-item:not(.slide-list-item--nested) {
+      margin-left: 0 !important;
     }
 
     .layout-two-cols ul ul,
@@ -1363,7 +1378,7 @@
     .three-cols-col ul ul {
       list-style: circle !important;
       list-style-type: circle !important;
-      padding-left: 1.25em !important;
+      padding-left: 1.4375rem !important;
       margin-top: 4px !important;
       margin-bottom: 4px !important;
     }
@@ -1462,10 +1477,42 @@
       text-align: center !important;
     }
 
-    /* 栏内说明段落与列表项：左对齐，自然阅读排版 */
+    /* 栏内说明段落与列表项：左对齐，并与居中首项标题左侧边缘对齐 */
     .layout-cols-grid.has-superblock-cols .col .slide-list-item-desc,
     .layout-cols-grid.has-superblock-cols .col li:not(:first-child) {
       text-align: left !important;
+    }
+    .has-superblock-cols :is(.col, .pdf-col) > *:first-child :is(.slide-list-item-title, h1, h2, h3, h4, h5, h6) ~ :is(ul, ol, .slide-list, .pdf-list) > li:first-child {
+      list-style: disc !important;
+      list-style-type: disc !important;
+      text-align: left !important;
+      padding-left: 0.15rem !important;
+      width: auto !important;
+    }
+    .has-superblock-cols :is(.col, .pdf-col) > *:first-child :is(.slide-list-item-title, h1, h2, h3, h4, h5, h6) ~ :is(ul, ol, .slide-list, .pdf-list) > li:first-child::marker {
+      content: normal !important;
+      display: inline !important;
+    }
+    .has-superblock-cols :is(.col, .pdf-col) > *:first-child :is(.slide-list-item-title, h1, h2, h3, h4, h5, h6) ~ :is(ul, ol, .slide-list, .pdf-list) > li:first-child * {
+      text-align: left !important;
+    }
+    .has-superblock-cols :is(.col, .pdf-col) > *:first-child :is(.slide-list-item-title, h1, h2, h3, h4, h5, h6) ~ :is(ul, ol, .slide-list, .pdf-list) {
+      padding-left: calc(var(--col-title-inset, 0px) + 0.9rem) !important;
+    }
+    .has-superblock-cols :is(.col, .pdf-col) > *:first-child :is(.slide-list-item-title, h1, h2, h3, h4, h5, h6) ~ .slide-list-item-desc {
+      padding-left: var(--col-title-inset, 0px) !important;
+    }
+    .has-superblock-cols :is(.col, .pdf-col) :is(ul, ol, .slide-list, .pdf-list) {
+      padding-left: 0.9rem !important;
+    }
+    .has-superblock-cols :is(.col, .pdf-col) li {
+      padding-left: 0.15rem !important;
+    }
+    .has-superblock-cols :is(.col, .pdf-col) > .slide-block:not(:first-child):has(> ul, > ol, > .slide-list, > .pdf-list) {
+      padding-left: var(--col-title-inset, 0px) !important;
+    }
+    .has-superblock-cols :is(.col, .pdf-col) > .slide-block:not(:first-child):not(.slide-list-continuation):not(.slide-media-block):not(.slide-media-container):not(.slide-video-container):not(.slide-block--image):not(.slide-block--video):not(:has(> ul, > ol, > .slide-list, > .pdf-list, img, video)) {
+      padding-left: var(--col-title-inset, 0px) !important;
     }
 
     /* 全局特定标题大小规范化 (除封面外页首首个标题按 H2 1.7rem，表头多栏内首个标题按 H3 1.3rem) */
@@ -1490,14 +1537,23 @@
       text-align: center !important;
     }
 
-    /* 隐藏无序列表前缀标记 */
+    /* 隐藏无序列表前缀标记（保留嵌套子列表的层级缩进） */
     :is(.slide-stage-container[data-hide-unordered-markers="true"], [data-hide-unordered-markers="true"]) :is(ul, .slide-list, .slide-list--unordered, .pdf-list--unordered),
-    :is(.slide-stage-container[data-hide-unordered-markers="true"], [data-hide-unordered-markers="true"]) :is(ul, .slide-list, .slide-list--unordered, .pdf-list--unordered) > li,
-    :is(.slide-stage-container[data-hide-unordered-markers="true"], [data-hide-unordered-markers="true"]) li.slide-list-item {
+    :is(.slide-stage-container[data-hide-unordered-markers="true"], [data-hide-unordered-markers="true"]) :is(ul, .slide-list, .slide-list--unordered, .pdf-list--unordered) > li:not(.slide-list-item--nested),
+    :is(.slide-stage-container[data-hide-unordered-markers="true"], [data-hide-unordered-markers="true"]) li.slide-list-item:not(.slide-list-item--nested) {
       list-style: none !important;
       list-style-type: none !important;
       padding-left: 0 !important;
       margin-left: 0 !important;
+    }
+    :is(.slide-stage-container[data-hide-unordered-markers="true"], [data-hide-unordered-markers="true"]) ul > li.slide-list-item--nested {
+      list-style: none !important;
+      list-style-type: none !important;
+      padding-left: 0 !important;
+      margin-left: calc(var(--slides-list-level, 1) * 1.4375rem) !important;
+    }
+    :is(.slide-stage-container[data-hide-unordered-markers="true"], [data-hide-unordered-markers="true"]) :is(ul, ol) ul {
+      padding-left: 1.4375rem !important;
     }
     :is(.slide-stage-container[data-hide-unordered-markers="true"], [data-hide-unordered-markers="true"]) :is(ul, .slide-list, .slide-list--unordered, .pdf-list--unordered) > li::marker,
     :is(.slide-stage-container[data-hide-unordered-markers="true"], [data-hide-unordered-markers="true"]) li.slide-list-item::marker {
@@ -1505,19 +1561,59 @@
       display: none !important;
     }
 
-    /* 隐藏有序列表前缀标记 */
+    /* 隐藏有序列表前缀标记（保留嵌套子列表的层级缩进） */
     :is(.slide-stage-container[data-hide-ordered-markers="true"], [data-hide-ordered-markers="true"]) :is(ol, .slide-list, .slide-list--ordered, .pdf-list--ordered),
-    :is(.slide-stage-container[data-hide-ordered-markers="true"], [data-hide-ordered-markers="true"]) :is(ol, .slide-list, .slide-list--ordered, .pdf-list--ordered) > li,
-    :is(.slide-stage-container[data-hide-ordered-markers="true"], [data-hide-ordered-markers="true"]) li.slide-list-item {
+    :is(.slide-stage-container[data-hide-ordered-markers="true"], [data-hide-ordered-markers="true"]) :is(ol, .slide-list, .slide-list--ordered, .pdf-list--ordered) > li:not(.slide-list-item--nested),
+    :is(.slide-stage-container[data-hide-ordered-markers="true"], [data-hide-ordered-markers="true"]) li.slide-list-item:not(.slide-list-item--nested) {
       list-style: none !important;
       list-style-type: none !important;
       padding-left: 0 !important;
       margin-left: 0 !important;
     }
+    :is(.slide-stage-container[data-hide-ordered-markers="true"], [data-hide-ordered-markers="true"]) ol > li.slide-list-item--nested {
+      list-style: none !important;
+      list-style-type: none !important;
+      padding-left: 0 !important;
+      margin-left: calc(var(--slides-list-level, 1) * 1.4375rem) !important;
+    }
+    :is(.slide-stage-container[data-hide-ordered-markers="true"], [data-hide-ordered-markers="true"]) :is(ul, ol) ol {
+      padding-left: 1.4375rem !important;
+    }
     :is(.slide-stage-container[data-hide-ordered-markers="true"], [data-hide-ordered-markers="true"]) :is(ol, .slide-list, .slide-list--ordered, .pdf-list--ordered) > li::marker,
     :is(.slide-stage-container[data-hide-ordered-markers="true"], [data-hide-ordered-markers="true"]) li.slide-list-item::marker {
       content: "" !important;
       display: none !important;
+    }
+
+    /* 列表项下的延续正文（无前缀纯文本）：与父列表项文字左侧精准对齐 */
+    .slide-list-continuation {
+      list-style: none !important;
+      display: block !important;
+      --slides-cont-base: 28px;
+      --slides-cont-step: 1.4375rem;
+      padding-left: calc(var(--slides-cont-base) + var(--slides-list-level, 0) * var(--slides-cont-step)) !important;
+    }
+    :is(.layout-two-cols, .layout-cols-header, .layout-two-cols-header, .layout-three-cols, .layout-three-cols-header, .two-cols-left, .two-cols-right, .three-cols-col, .col, .pdf-col) .slide-list-continuation {
+      --slides-cont-base: 1.45rem;
+    }
+    .has-superblock-cols :is(.col, .pdf-col) > .slide-block:not(:first-child).slide-list-continuation {
+      --slides-cont-base: calc(var(--col-title-inset, 0px) + 1.05rem);
+    }
+    .has-superblock-cols :is(.col, .pdf-col) > .slide-block:not(:first-child).slide-list-continuation.slide-list-continuation--no-marker {
+      --slides-cont-base: var(--col-title-inset, 0px) !important;
+    }
+    .slide-list-continuation.slide-list-continuation--no-marker,
+    :is(.slide-stage-container[data-hide-unordered-markers="true"], [data-hide-unordered-markers="true"]) .slide-list-continuation.slide-list-continuation--unordered,
+    :is(.slide-stage-container[data-hide-ordered-markers="true"], [data-hide-ordered-markers="true"]) .slide-list-continuation.slide-list-continuation--ordered,
+    :is(.slide-stage-container[data-hide-unordered-markers="true"][data-hide-ordered-markers="true"], [data-hide-unordered-markers="true"][data-hide-ordered-markers="true"]) .slide-list-continuation {
+      --slides-cont-base: 0px !important;
+    }
+    :is(.slide-stage-container[data-hide-unordered-markers="true"], [data-hide-unordered-markers="true"]) .has-superblock-cols :is(.col, .pdf-col) > .slide-block:not(:first-child).slide-list-continuation.slide-list-continuation--unordered,
+    :is(.slide-stage-container[data-hide-ordered-markers="true"], [data-hide-ordered-markers="true"]) .has-superblock-cols :is(.col, .pdf-col) > .slide-block:not(:first-child).slide-list-continuation.slide-list-continuation--ordered {
+      --slides-cont-base: var(--col-title-inset, 0px) !important;
+    }
+    .slide-list-continuation:is(.slide-media-block, .slide-media-container, .slide-video-container, .slide-block--image, .slide-block--video, :has(img), :has(video)) {
+      padding-left: 0 !important;
     }
 
     /* 图左与图右版式完全保留用户原始标题大小，不受规范化影响 */
@@ -5620,20 +5716,36 @@
             : (isColsHeader(layout) ? blocks.some(b => b.slot && /^col-\d+$/i.test(b.slot)) : false)
           const rem = blocks.filter(b => !header.includes(b))
           let multiCol = distributeNColumns(rem, colsCount)
-          if (isSuperCols) {
-            multiCol = multiCol.map(colList => {
-              const valid = (colList || []).filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
-              if (valid.length === 0) return valid
-              const first = valid[0]
-              const md = (first.rawMarkdown || first.content || "").trim()
-              const isList = /^(?:[-*+]|\d+\.)\s+/.test(md) || first.type === "i" || first.type === "l"
-              if (isList) {
-                first.rawMarkdown = cleanCardListItemMarkdown(first.rawMarkdown || first.content || "")
-                first.content = first.rawMarkdown
+          const cleanColBlockList = (colList) => {
+            const valid = (colList || []).filter(b => Boolean((b.rawMarkdown || b.content || "").trim()))
+            if (valid.length === 0) return valid
+            const first = valid[0]
+            const md = (first.rawMarkdown || first.content || "").trim()
+            const isList = /^(?:[-*+]|\d+\.)\s+/.test(md) || first.type === "i" || first.type === "l"
+            if (isList) {
+              const hadPrefix = /^(?:[-*+]|\d+\.)\s+/.test(md)
+              first.rawMarkdown = cleanCardListItemMarkdown(first.rawMarkdown || first.content || "")
+              first.content = first.rawMarkdown
+              if (hadPrefix && first.parentContainerId) {
+                const baseLevel = typeof first.listLevel === "number" ? first.listLevel : 0
+                for (let i = 1; i < valid.length; i++) {
+                  const sib = valid[i]
+                  if (sib.parentContainerId === first.parentContainerId) {
+                    const sibLvl = typeof sib.listLevel === "number" ? sib.listLevel : 0
+                    if (sib.isListContinuation && sibLvl === baseLevel) {
+                      sib.isParentMarkerStripped = true
+                    } else if (sibLvl > baseLevel) {
+                      sib.listLevel = Math.max(0, sibLvl - 1)
+                    }
+                  }
+                }
               }
-              first.isColFirst = true
-              return valid
-            })
+            }
+            first.isColFirst = true
+            return valid
+          }
+          if (isSuperCols) {
+            multiCol = multiCol.map(cleanColBlockList)
           }
           const isColSlot = (b) => {
             const s = (b.slot || "").trim().toLowerCase();
@@ -5729,19 +5841,7 @@
                   cols = distributeNColumns(currentGroup, maxCol);
                 }
 
-                const cleanedCols = cols.map(colList => {
-                  const valid = (colList || []).filter(b => Boolean((b.rawMarkdown || b.content || "").trim()));
-                  if (valid.length === 0) return valid;
-                  const first = valid[0];
-                  const md = (first.rawMarkdown || first.content || "").trim();
-                  const isList = /^(?:[-*+]|\d+\.)\s+/.test(md) || first.type === "i" || first.type === "l";
-                  if (isList) {
-                    first.rawMarkdown = cleanCardListItemMarkdown(first.rawMarkdown || first.content || "");
-                    first.content = first.rawMarkdown;
-                  }
-                  first.isColFirst = true;
-                  return valid;
-                });
+                const cleanedCols = cols.map(cleanColBlockList);
                 flowRows.push({ type: "grid", cols: cleanedCols, targetCols: maxCol });
               }
               currentGroup = [];
@@ -6594,6 +6694,13 @@
         // 获取块的微动效类及排版增强类
         function getBlockMotionClass(block) {
           const classes = []
+          if (block && block.isListContinuation && !block.isListItem) {
+            classes.push("slide-list-continuation")
+            classes.push(block.listType === "ordered" ? "slide-list-continuation--ordered" : "slide-list-continuation--unordered")
+            if (block.isParentMarkerStripped) {
+              classes.push("slide-list-continuation--no-marker")
+            }
+          }
           const rawStyle = block?.attributes?.style || block?.ial?.style || ""
           if (rawStyle) {
             classes.push("slide-styled-block")
@@ -6631,6 +6738,10 @@
           const rawStyle = block.attributes?.style || block.ial?.style || ""
           if (rawStyle) {
             Object.assign(style, parseCssStyleString(rawStyle))
+          }
+
+          if (block.isListContinuation && !block.isListItem && typeof block.listLevel === "number" && block.listLevel > 0) {
+            style["--slides-list-level"] = String(block.listLevel)
           }
 
           if (block.motion) {
@@ -7115,14 +7226,15 @@
 
           const listTag = isOrdered ? 'ol' : 'ul'
           const listClass = isOrdered ? 'slide-list slide-list--ordered' : 'slide-list slide-list--unordered'
+          const baseLevel = (block && typeof block.listLevel === 'number') ? block.listLevel : 0
           const itemsHtml = items.map(item => {
             const formatted = formatListItemContent(item.text)
             const mediaHtml = (item.media && item.media.length > 0)
               ? `\n${item.media.join("\n")}`
               : ""
-            const level = item.level || 0
+            const level = baseLevel + (item.level || 0)
             const nestedStyle = level > 0
-              ? ` style="margin-left:${(level * 1.25).toFixed(2)}em;${item.type === 'unordered' ? `list-style-type:${level % 2 === 1 ? 'circle' : 'square'} !important;` : ''}"`
+              ? ` style="--slides-list-level:${level};margin-left:${(level * 1.25).toFixed(2)}em;${item.type === 'unordered' ? `list-style-type:${level % 2 === 1 ? 'circle' : 'square'} !important;` : ''}"`
               : ""
             const nestedClass = level > 0 ? " slide-list-item--nested" : ""
             const clsAttr = `slide-list-item${nestedClass}`
@@ -7995,7 +8107,16 @@
         function buildThumbBlockHtml(block, isPageFirstHeading) {
           const abs = isAbsoluteBlock(block) ? " slide-block--absolute" : ""
           const firstH = isPageFirstHeading ? " slides-page-first-heading-block" : ""
-          return '<div class="slide-block' + firstH + abs + '">' + renderBlockHtml(block) + "</div>"
+          let cont = ""
+          let styleAttr = ""
+          if (block && block.isListContinuation && !block.isListItem) {
+            cont = " slide-list-continuation " + (block.listType === "ordered" ? "slide-list-continuation--ordered" : "slide-list-continuation--unordered")
+            if (block.isParentMarkerStripped) cont += " slide-list-continuation--no-marker"
+            if (typeof block.listLevel === "number" && block.listLevel > 0) {
+              styleAttr = ' style="--slides-list-level:' + block.listLevel + '"'
+            }
+          }
+          return '<div class="slide-block' + firstH + abs + cont + '"' + styleAttr + ">" + renderBlockHtml(block) + "</div>"
         }
 
         // 镜像主渲染路径的版式结构，把任意一页渲染为静态缩略图 HTML（不含蒙版与交互态）
@@ -9074,11 +9195,60 @@
           })
         }
 
+        function syncSuperblockColTitleInsets(root) {
+          const scope = root || stageContainerRef.value || document
+          if (!scope || typeof document.createRange !== "function") return
+          const cols = scope.querySelectorAll(".has-superblock-cols .col, .has-superblock-cols .pdf-col")
+          cols.forEach((col) => {
+            const firstBlock = col.querySelector(":scope > .slide-block:first-child, :scope > .pdf-block:first-child, :scope > *:first-child")
+            if (!firstBlock) {
+              col.style.setProperty("--col-title-inset", "0px")
+              return
+            }
+            const titleEl = firstBlock.matches("h1,h2,h3,h4,h5,h6,.slide-list-item-title")
+              ? firstBlock
+              : firstBlock.querySelector("h1,h2,h3,h4,h5,h6,.slide-list-item-title,li:first-child,p:first-child")
+            if (!titleEl || !(titleEl.textContent || "").trim()) {
+              col.style.setProperty("--col-title-inset", "0px")
+              return
+            }
+            const cs = window.getComputedStyle(titleEl)
+            if (cs.textAlign !== "center") {
+              col.style.setProperty("--col-title-inset", "0px")
+              return
+            }
+            const blockRect = firstBlock.getBoundingClientRect()
+            if (!firstBlock.offsetWidth || !blockRect.width) return
+            const scale = blockRect.width / firstBlock.offsetWidth
+            if (!scale || !isFinite(scale)) return
+            const range = document.createRange()
+            range.selectNodeContents(titleEl)
+            const rects = Array.from(range.getClientRects()).filter((r) => r.width > 0.5 && r.height > 0.5)
+            if (rects.length === 0) {
+              col.style.setProperty("--col-title-inset", "0px")
+              return
+            }
+            const minLeft = Math.min(...rects.map((r) => r.left))
+            const insetPx = Math.max(0, (minLeft - blockRect.left) / scale)
+            col.style.setProperty("--col-title-inset", insetPx.toFixed(2) + "px")
+          })
+        }
+
+        function scheduleColTitleInsetSync() {
+          nextTick(() => {
+            requestAnimationFrame(() => syncSuperblockColTitleInsets())
+          })
+        }
+
         watch(currentPageIndex, () => {
           clearAllActiveAnimations()
         })
         watch([currentPageIndex, currentStep], () => {
           triggerSlideAnimations()
+          scheduleColTitleInsetSync()
+        })
+        watch([() => slides.value, () => config.value?.normalizeHeadingSizes, () => config.value?.spacing], () => {
+          scheduleColTitleInsetSync()
         })
 
         let resizeObserver = null
@@ -9094,6 +9264,7 @@
           if (window.ResizeObserver && stageContainerRef.value) {
             resizeObserver = new ResizeObserver(() => {
               updateScale()
+              syncSuperblockColTitleInsets()
             })
             resizeObserver.observe(stageContainerRef.value)
           }
@@ -9101,6 +9272,7 @@
             updateScale()
             syncAutoplayVideos()
             triggerSlideAnimations()
+            scheduleColTitleInsetSync()
           })
 
           // 告知宿主客户端沙箱已准备就绪并上报初始页码

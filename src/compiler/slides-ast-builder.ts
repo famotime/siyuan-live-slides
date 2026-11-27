@@ -288,6 +288,8 @@ export function buildSlidesDocument(
         /** 列表项解包后首个有效子块之后的“正文延续块”（无列表前缀），只缩进对齐，不显示圆点/序号 */
         isListContinuation?: boolean
         listLevel?: number
+        listLevelOffset?: number
+        isParentMarkerStripped?: boolean
         listContext?: {
           isOrdered?: boolean
           itemIndex?: number
@@ -573,6 +575,8 @@ export function buildSlidesDocument(
             isParentListUnpacked: true,
             isListItem: true,
             listLevel: nextListLevel,
+            listLevelOffset: inheritedContext?.listLevelOffset ?? 0,
+            isParentMarkerStripped: false,
             listContext: {
               isOrdered: isOrderedList,
               itemIndex: idx + 1,
@@ -630,7 +634,25 @@ export function buildSlidesDocument(
           ? inheritedContext!.parentContainerId
           : (itemNode.id || inheritedContext?.parentContainerId)
         const targetSlot = elemAttrs.slot || inheritedContext?.defaultSlot
-        const isNestedListItem = (inheritedContext?.listLevel ?? 0) > 0
+        const rawListLevel = inheritedContext?.listLevel ?? 0
+        const listLevelOffset = inheritedContext?.listLevelOffset ?? 0
+        const effectiveListLevel = Math.max(0, rawListLevel - listLevelOffset)
+        const isNestedListItem = effectiveListLevel > 0
+
+        const isImageLayout = currentPage.frontmatter.layout === "image-right" || currentPage.frontmatter.layout === "image-left"
+        const isMultiColsPage = !isImageLayout && Boolean(
+          currentPage.frontmatter.layout === "clover" ||
+          currentPage.frontmatter.layout === "timeline" ||
+          currentPage.frontmatter.layout === "steps" ||
+          isColsHeaderLayout(currentPage.frontmatter.layout) ||
+          currentPage.frontmatter.layout === "two-cols"
+        )
+        const effectiveColSlot = targetSlot || itemNode.ial?.[ATTR_ELEM_SLOT]
+        const hasPrecedingInSlot = Boolean(
+          effectiveColSlot &&
+          currentPage.blocks.some(b => b.slot === effectiveColSlot && Boolean((b.rawMarkdown || b.content || "").trim()))
+        )
+        const isCardCol = !isNestedListItem && !hasPrecedingInSlot && isMultiColsPage && Boolean(effectiveColSlot)
 
         let isFirstValidChild = true
         for (const childNode of itemNode.children) {
@@ -645,24 +667,10 @@ export function buildSlidesDocument(
           if (isThisFirstValid) {
             // 判定当前是否真正属于多栏卡片容器：
             // 仅在四叶草 clover、表头多栏 cols-header 或双栏 two-cols 卡片，且非图文分栏 (image-right/image-left) 下，
-            // 顶层列表项作为多栏的独立卡片时，才清洗首行标题的列表标记；
-            // 在常规正文或嵌套子列表下，列表项必须完整保留或补齐标准的列表前缀符号！
-            const isImageLayout = currentPage.frontmatter.layout === "image-right" || currentPage.frontmatter.layout === "image-left"
-            const isMultiColsPage = !isImageLayout && Boolean(
-              currentPage.frontmatter.layout === "clover" ||
-              currentPage.frontmatter.layout === "timeline" ||
-              currentPage.frontmatter.layout === "steps" ||
-              isColsHeaderLayout(currentPage.frontmatter.layout) ||
-              currentPage.frontmatter.layout === "two-cols"
-            )
-            const isCardCol = !isNestedListItem && isMultiColsPage && Boolean(
-              inheritedContext?.defaultSlot ||
-              elemAttrs.slot ||
-              itemNode.ial?.[ATTR_ELEM_SLOT]
-            )
-
+            // 顶层首个列表项作为多栏的独立卡片标题时，才清洗首行标题的列表标记；
+            // 在常规正文、同栏后续项或嵌套子列表下，列表项必须完整保留或补齐标准的列表前缀符号！
             if (isCardCol) {
-              // 仅在真正的分栏卡片布局下，列表项作为卡片，首行标题才清洗列表前缀
+              // 仅在真正的分栏卡片首项下，列表项作为卡片标题，首行标题才清洗列表前缀
               if (childNode.markdown) {
                 childNode.markdown = cleanCardListItemMarkdown(childNode.markdown)
               }
@@ -722,6 +730,9 @@ export function buildSlidesDocument(
             parentClicks: childParentClicks,
             parentContainerId: childParentContainerId,
             defaultSlot: targetSlot,
+            listLevel: rawListLevel,
+            listLevelOffset: listLevelOffset + (isCardCol ? 1 : 0),
+            isParentMarkerStripped: isThisFirstValid ? false : isCardCol,
             // 仅首个有效子块（带列表前缀的主文本）才是列表项；其后的纯文本子块属于该列表项的延续正文，
             // 不得继承 isListItem，否则渲染器兜底会为其补上圆点/序号
             isListItem: !hasContent || isThisFirstValid,
@@ -887,8 +898,20 @@ export function buildSlidesDocument(
         ? normalizeMaxHeight(elemAttrs.maxHeight)
         : undefined
 
+      const isListNodeBlock = itemNode.type === "l" || itemNode.type === "NodeList" || itemNode.type === "list"
       const isListItem = Boolean(inheritedContext?.isListItem || isListItemNode(itemNode))
       const isListContinuation = Boolean(inheritedContext?.isListContinuation && !isListItem)
+      const effectiveListLevel = isListNodeBlock
+        ? (inheritedContext?.listLevel !== undefined
+            ? Math.max(0, (inheritedContext.listLevel + 1) - (inheritedContext.listLevelOffset ?? 0))
+            : 0)
+        : Math.max(0, (inheritedContext?.listLevel ?? 0) - (inheritedContext?.listLevelOffset ?? 0))
+      const resolvedListType: "unordered" | "ordered" | undefined = isListNodeBlock
+        ? ((/^\s*\d+\.\s+/m.test(rawMd) || itemNode.subType === "o" || (itemNode as any).subtype === "o") ? "ordered" : "unordered")
+        : inheritedContext?.listContext
+          ? (inheritedContext.listContext.isOrdered ? "ordered" : "unordered")
+          : (isListItem ? (/^\s*\d+\.\s+/m.test(rawMd) ? "ordered" : "unordered") : undefined)
+
       const blockItem: ISlidesBlockItem = {
         id: itemNode.id,
         type: itemNode.type,
@@ -907,6 +930,9 @@ export function buildSlidesDocument(
         rawNode: itemNode,
         isListItem,
         ...(isListContinuation ? { isListContinuation: true } : {}),
+        ...(isListItem || isListContinuation ? { listLevel: effectiveListLevel } : {}),
+        ...((isListItem || isListContinuation) && resolvedListType ? { listType: resolvedListType } : {}),
+        ...(isListContinuation && inheritedContext?.isParentMarkerStripped ? { isParentMarkerStripped: true } : {}),
       }
 
       currentPage.blocks.push(blockItem)
@@ -929,8 +955,21 @@ export function buildSlidesDocument(
       const md = (first.rawMarkdown || first.content || "").trim()
       const isList = isListItemNode(first) || /^(?:[-*+]|\d+\.)\s+/.test(md)
       if (isList) {
+        const hadPrefix = /^(?:[-*+]|\d+\.)\s+/.test(md)
         first.rawMarkdown = cleanCardListItemMarkdown(first.rawMarkdown || first.content || "")
         first.content = first.rawMarkdown
+        if (hadPrefix && first.parentContainerId) {
+          const baseLevel = first.listLevel ?? 0
+          for (const sibling of valid.slice(1)) {
+            if (sibling.parentContainerId === first.parentContainerId) {
+              if (sibling.isListContinuation && (sibling.listLevel ?? 0) === baseLevel) {
+                sibling.isParentMarkerStripped = true
+              } else if ((sibling.listLevel ?? 0) > baseLevel) {
+                sibling.listLevel = Math.max(0, (sibling.listLevel ?? 0) - 1)
+              }
+            }
+          }
+        }
       }
     }
 
